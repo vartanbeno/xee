@@ -6,6 +6,7 @@
  * - Go to the "Get Grammar" tab
  * - Fill in the URL of the XPath specification, https://www.w3.org/TR/2017/REC-xpath-31-20170321/
  * - Go to the "Edit Grammar" tab, select save
+ * Do the same for the grammars included by URL.
  */
 
 XPath    ::= Expr
