@@ -521,7 +521,7 @@ CommentContents = { Char+ ~ (Char* ~ (":(" | ":)") ~ Char*) }
 
 // NCName   ::= Name - (Char* ':' Char*)
 // /* An XML Name, minus the ":" */
-NCName = { Name ~ (Char* ~ ":" ~ Char*) }
+NCName = @{ !(Char* ~ ":" ~ Char*) ~ Name }
 // QName    ::= PrefixedName
 // | UnprefixedName
 QName = { PrefixedName | UnprefixedName }
