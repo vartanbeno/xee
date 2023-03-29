@@ -14,4 +14,12 @@ mod tests {
         let unsuccessful_parse = XPathParser::parse(Rule::Char, "\u{10}");
         assert!(unsuccessful_parse.is_err());
     }
+
+    #[test]
+    fn test_xpath() {
+        let successful_parse = XPathParser::parse(Rule::Xpath, "/a/c");
+        assert!(successful_parse.is_ok());
+        let unsuccessful_parse = XPathParser::parse(Rule::Xpath, ")(");
+        assert!(unsuccessful_parse.is_err());
+    }
 }

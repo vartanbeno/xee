@@ -1,3 +1,6 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ Comment }
+
 // XPath    ::= Expr
 Xpath = { Expr }
 // ParamList
