@@ -1,0 +1,21 @@
+[package]
+name = "xee-xpath"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XPath implementation"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath"
+homepage = "https://github.com/Paligo/xee-xpath"
+
+[dependencies]
+xot = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.21.2", features = ["yaml", "glob"] }
+rstest = "0.16.0"
+test-generator = "0.3.0"
+xot = { workspace = true, features = ["proptest"] }

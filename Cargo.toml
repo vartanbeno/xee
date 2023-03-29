@@ -1,0 +1,14 @@
+[workspace]
+members = [
+  "xee-xpath",
+]
+# even if all crates are set to edition 2021, we still need to force the
+# resolver to 2
+# https://github.com/gfx-rs/wgpu/issues/2356#issuecomment-1005134986
+resolver = "2"
+
+[workspace.dependencies]
+xot = "0.13.1"
+
+[profile.test.package.xot]
+opt-level = 3
