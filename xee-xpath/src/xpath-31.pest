@@ -1,0 +1,9 @@
+// any Unicode character, excluding the surrogate blocks, FFFE, and FFFF.
+Char = {
+    "\u{09}"
+  | "\u{0A}"
+  | "\u{0D}"
+  | '\u{20}'..'\u{D7FF}'
+  | '\u{E000}'..'\u{FFFD}'
+  | '\u{10000}'..'\u{10FFFF}'
+}
