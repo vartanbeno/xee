@@ -1,3 +1,10 @@
+// parse XPath via pest
+
+// XXX extra-grammatical constraints still need to be handled:
+// https://www.w3.org/TR/xpath-31/#extra-grammatical-constraints
+// XXX reserved function names still need to be handled:
+// https://www.w3.org/TR/xpath-31/#id-reserved-fn-names
+
 #[derive(Parser)]
 #[grammar = "xpath-31.pest"]
 pub struct XPathParser;
