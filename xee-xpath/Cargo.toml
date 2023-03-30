@@ -12,6 +12,7 @@ documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee-xpath"
 
 [dependencies]
+ordered-float = "3.6.0"
 pest = "2.5.6"
 pest_derive = "2.5.6"
 xot = { workspace = true }

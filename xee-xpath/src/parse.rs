@@ -5,14 +5,20 @@
 // XXX reserved function names still need to be handled:
 // https://www.w3.org/TR/xpath-31/#id-reserved-fn-names
 
+use pest::iterators::Pairs;
+use pest::Parser;
+
 #[derive(Parser)]
 #[grammar = "xpath-31.pest"]
-pub struct XPathParser;
+struct XPathParser;
+
+pub(crate) fn parse(xpath: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
+    XPathParser::parse(Rule::Xpath, xpath)
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pest::Parser;
 
     #[test]
     fn test_char() {
