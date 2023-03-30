@@ -45,4 +45,11 @@ mod tests {
         let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar");
         assert!(successful_parse.is_ok());
     }
+
+    // #[test]
+    // fn test_xpath_flatten() {
+    //     let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar").unwrap();
+
+    //     println!("{:#?}", flattened);
+    // }
 }
