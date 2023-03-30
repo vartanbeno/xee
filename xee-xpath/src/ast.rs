@@ -70,7 +70,7 @@ pub(crate) struct QuantifiedExprClause {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum PrimaryExpr {
     Literal(Literal),
-    VarRef(VarRef),
+    VarRef(EQName),
     Expr(Vec<ExprSingle>),
     ContextItem,
     FunctionCall(FunctionCall),
@@ -186,7 +186,7 @@ pub(crate) struct ArrowExpr {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ArrowFunctionSpecifier {
     Name(EQName),
-    VarRef(VarRef),
+    VarRef(EQName),
     Expr(Vec<ExprSingle>),
 }
 
@@ -227,11 +227,6 @@ pub(crate) enum Literal {
     IntegerLiteral(i64),
     DoubleLiteral(OrderedFloat<f64>),
     StringLiteral(String),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct VarRef {
-    pub(crate) name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
