@@ -239,7 +239,7 @@ Literal = { NumericLiteral | StringLiteral }
 
 // NumericLiteral
 // ::= IntegerLiteral | DecimalLiteral | DoubleLiteral
-NumericLiteral = { IntegerLiteral | DecimalLiteral | DoubleLiteral }
+NumericLiteral = { DecimalLiteral | DoubleLiteral | IntegerLiteral }
 
 // VarRef   ::= "$" VarName
 VarRef = { "$" ~ VarName }
@@ -466,7 +466,7 @@ EQName = { QName | URIQualifiedName }
 
 // IntegerLiteral
 // ::= Digits
-IntegerLiteral = { Digits }
+IntegerLiteral = @{ Digits }
 
 // DecimalLiteral
 // ::= ("." Digits) | (Digits "." [0-9]*)

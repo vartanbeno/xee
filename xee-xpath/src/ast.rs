@@ -1,5 +1,9 @@
 use ordered_float::OrderedFloat;
 
+pub(crate) enum Node {
+    Literal(Literal),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
     // at least one entry
@@ -12,6 +16,7 @@ pub(crate) enum ExprSingle {
     LetExpr(LetExpr),
     QuantifiedExpr(QuantifiedExpr),
     IfExpr(IfExpr),
+    SingleExpr(InstanceOfExpr),
     BinaryExpr(BinaryExpr),
 }
 
@@ -223,10 +228,10 @@ pub(crate) struct DecimalLiteral {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Literal {
-    DecimalLiteral(DecimalLiteral),
-    IntegerLiteral(i64),
-    DoubleLiteral(OrderedFloat<f64>),
-    StringLiteral(String),
+    Decimal(DecimalLiteral),
+    Integer(i64),
+    Double(OrderedFloat<f64>),
+    String(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -269,7 +274,7 @@ pub(crate) struct Param {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct PostfixExpr {
     pub(crate) primary: PrimaryExpr,
-    pub(crate) postfix: Postfix,
+    pub(crate) postfix: Vec<Postfix>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

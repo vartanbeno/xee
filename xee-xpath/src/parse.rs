@@ -10,7 +10,7 @@ use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "xpath-31.pest"]
-struct XPathParser;
+pub(crate) struct XPathParser;
 
 pub(crate) fn parse(xpath: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
     XPathParser::parse(Rule::Xpath, xpath)
@@ -50,6 +50,8 @@ mod tests {
     fn test_xpath_absolute_path() {
         let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar");
         assert!(successful_parse.is_ok());
+        // println!("{:#?}", successful_parse.unwrap().count());
+        //println!("{:#?}", successful_parse.unwrap());
     }
 
     // #[test]
