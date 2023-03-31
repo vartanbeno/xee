@@ -105,12 +105,33 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
 
             // ast::ExprSingle::Path(pair_to_path_expr(pair))
         }
+        Rule::AdditiveExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let op = pairs.next();
+            if let Some(op) = op {
+                let operator = match op.as_rule() {
+                    Rule::Plus => ast::Operator::Add,
+                    Rule::Minus => ast::Operator::Sub,
+                    _ => {
+                        panic!("unhandled AdditiveExpr {:?}", op.as_rule())
+                    }
+                };
+                let right_pair = pairs.next().unwrap();
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
         Rule::OrExpr
         | Rule::AndExpr
         | Rule::ComparisonExpr
         | Rule::StringConcatExpr
         | Rule::RangeExpr
-        | Rule::AdditiveExpr
         | Rule::MultiplicativeExpr
         | Rule::UnionExpr
         | Rule::IntersectExceptExpr => {
@@ -459,5 +480,28 @@ mod tests {
                 operator: ast::ApplyOperator::Unary(vec![ast::UnaryOperator::Minus]),
             })
         );
+    }
+
+    #[test]
+    fn test_additive_expr() {
+        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 + 2").unwrap();
+        let pair = pairs.next().unwrap();
+        let expr = expr_single(pair);
+        assert_eq!(
+            expr,
+            ast::ExprSingle::Binary(ast::BinaryExpr {
+                operator: ast::Operator::Add,
+                left: ast::PathExpr {
+                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                        ast::Literal::Integer(1)
+                    ))]
+                },
+                right: ast::PathExpr {
+                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                        ast::Literal::Integer(2)
+                    ))]
+                }
+            })
+        )
     }
 }

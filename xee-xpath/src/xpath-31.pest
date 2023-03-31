@@ -75,7 +75,7 @@ RangeExpr = { AdditiveExpr ~ ("to" ~ AdditiveExpr)? }
 
 // AdditiveExpr
 // ::= MultiplicativeExpr ( ("+" | "-") MultiplicativeExpr )*
-AdditiveExpr = { MultiplicativeExpr ~ (("+" | "-") ~ MultiplicativeExpr)* }
+AdditiveExpr = { MultiplicativeExpr ~ ((Plus | Minus) ~ MultiplicativeExpr)* }
 
 // MultiplicativeExpr
 // ::= UnionExpr ( ("*" | "div" | "idiv" | "mod") UnionExpr )*
