@@ -172,4 +172,20 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_float_lowercase_e() {
+        let mut pairs = XPathParser::parse(Rule::Literal, "1.5e0").unwrap();
+        let pair = pairs.next().unwrap();
+        let literal = pair_to_literal(pair);
+        assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
+    }
+
+    #[test]
+    fn test_float_upper_e() {
+        let mut pairs = XPathParser::parse(Rule::Literal, "1.5E0").unwrap();
+        let pair = pairs.next().unwrap();
+        let literal = pair_to_literal(pair);
+        assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
+    }
 }

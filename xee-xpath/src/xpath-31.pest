@@ -239,7 +239,7 @@ Literal = { NumericLiteral | StringLiteral }
 
 // NumericLiteral
 // ::= IntegerLiteral | DecimalLiteral | DoubleLiteral
-NumericLiteral = { DecimalLiteral | DoubleLiteral | IntegerLiteral }
+NumericLiteral = { DoubleLiteral | DecimalLiteral | IntegerLiteral }
 
 // VarRef   ::= "$" VarName
 VarRef = { "$" ~ VarName }
