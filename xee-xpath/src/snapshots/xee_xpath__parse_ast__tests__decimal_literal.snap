@@ -1,0 +1,10 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_literal(\"1.5\")"
+---
+Decimal(
+    DecimalLiteral {
+        value: 15,
+        fraction_digits: 1,
+    },
+)

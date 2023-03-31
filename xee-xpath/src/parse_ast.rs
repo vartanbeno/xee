@@ -325,70 +325,51 @@ mod tests {
     use insta::assert_debug_snapshot;
     use pest::Parser;
 
+    fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
+    where
+        F: Fn(Pair<Rule>) -> T,
+    {
+        let mut pairs = XPathParser::parse(rule, input).unwrap();
+        let pair = pairs.next().unwrap();
+        f(pair)
+    }
+
+    fn parse_expr_single(input: &str) -> ast::ExprSingle {
+        parse_rule(Rule::ExprSingle, input, expr_single)
+    }
+
+    fn parse_literal(input: &str) -> ast::Literal {
+        parse_rule(Rule::Literal, input, literal_to_literal)
+    }
+
     #[test]
     fn test_integer_literal() {
-        let mut pairs = XPathParser::parse(Rule::Literal, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(literal, ast::Literal::Integer(1));
+        assert_debug_snapshot!(parse_literal("1"));
     }
 
     #[test]
     fn test_decimal_literal() {
-        let mut pairs = XPathParser::parse(Rule::Literal, "1.5").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(
-            literal,
-            ast::Literal::Decimal(ast::DecimalLiteral {
-                value: 15,
-                fraction_digits: 1
-            })
-        );
+        assert_debug_snapshot!(parse_literal("1.5"));
     }
 
     #[test]
     fn test_decimal_literal_no_after() {
-        let mut pairs = XPathParser::parse(Rule::Literal, "1.").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(
-            literal,
-            ast::Literal::Decimal(ast::DecimalLiteral {
-                value: 1,
-                fraction_digits: 0
-            })
-        );
+        assert_debug_snapshot!(parse_literal("1."));
     }
 
     #[test]
     fn test_decimal_literal_no_before() {
-        let mut pairs = XPathParser::parse(Rule::Literal, ".5").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(
-            literal,
-            ast::Literal::Decimal(ast::DecimalLiteral {
-                value: 5,
-                fraction_digits: 1
-            })
-        );
+        assert_debug_snapshot!(parse_literal(".5"));
     }
 
     #[test]
     fn test_float_lowercase_e() {
-        let mut pairs = XPathParser::parse(Rule::Literal, "1.5e0").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
+        assert_debug_snapshot!(parse_literal("1.5e0"));
     }
 
     #[test]
     fn test_float_upper_e() {
-        let mut pairs = XPathParser::parse(Rule::Literal, "1.5E0").unwrap();
-        let pair = pairs.next().unwrap();
-        let literal = literal_to_literal(pair);
-        assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
+        assert_debug_snapshot!(parse_literal("1.5E0"));
     }
 
     #[test]
@@ -517,12 +498,6 @@ mod tests {
                 }
             })
         )
-    }
-
-    fn parse_expr_single(input: &str) -> ast::ExprSingle {
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, input).unwrap();
-        let pair = pairs.next().unwrap();
-        expr_single(pair)
     }
 
     #[test]
