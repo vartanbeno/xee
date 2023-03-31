@@ -1,7 +1,7 @@
 use crate::ast;
 use crate::interpret::Operation;
 
-fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Operation>) {
+fn compile_expr_single<'a>(expr_single: &'a ast::ExprSingle, operations: &mut Vec<Operation<'a>>) {
     match expr_single {
         ast::ExprSingle::Path(path_expr) => {
             compile_path_expr(path_expr, operations);
@@ -16,6 +16,9 @@ fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Opera
                 ast::Operator::Sub => {
                     operations.push(Operation::Sub);
                 }
+                ast::Operator::Concat => {
+                    operations.push(Operation::Concat);
+                }
                 _ => {
                     panic!("not supported yet");
                 }
@@ -27,14 +30,20 @@ fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Opera
     }
 }
 
-fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>) {
+fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Operation<'a>>) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
         if let ast::PrimaryExpr::Literal(literal) = primary_expr {
-            if let ast::Literal::Integer(i) = literal {
-                operations.push(Operation::IntegerLiteral(*i));
-            } else {
-                panic!("literal not an integer literal");
+            match literal {
+                ast::Literal::Integer(i) => {
+                    operations.push(Operation::IntegerLiteral(*i));
+                }
+                ast::Literal::String(s) => {
+                    operations.push(Operation::StringLiteral(s));
+                }
+                _ => {
+                    panic!("literal type not supported yet");
+                }
             }
         } else {
             panic!("primary expression not a literal");
@@ -63,5 +72,15 @@ mod tests {
         let mut interpreter = Interpreter::new();
         interpreter.interpret(&operations);
         assert_eq!(interpreter.stack.pop().unwrap().as_integer(), 3);
+    }
+
+    #[test]
+    fn test_string_concat() {
+        let expr_single = parse_expr_single("'a' || 'b'");
+        let mut operations = Vec::new();
+        compile_expr_single(&expr_single, &mut operations);
+        let mut interpreter = Interpreter::new();
+        interpreter.interpret(&operations);
+        assert_eq!(interpreter.stack.pop().unwrap().as_string(), "ab");
     }
 }

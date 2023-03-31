@@ -1,9 +1,11 @@
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum StackEntry {
+pub(crate) enum StackEntry<'a> {
     Integer(i64),
+    StringRef(&'a str),
+    OwnedString(String),
 }
 
-impl StackEntry {
+impl<'a> StackEntry<'a> {
     pub(crate) fn as_integer(&self) -> i64 {
         match self {
             StackEntry::Integer(i) => *i,
@@ -12,25 +14,36 @@ impl StackEntry {
             }
         }
     }
+    pub(crate) fn as_string(&'a self) -> &'a str {
+        match self {
+            StackEntry::StringRef(s) => s,
+            StackEntry::OwnedString(s) => s.as_str(),
+            _ => {
+                panic!("not a string");
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Operation {
+pub(crate) enum Operation<'a> {
     Add,
     Sub,
+    Concat,
     IntegerLiteral(i64),
+    StringLiteral(&'a str),
 }
 
-pub(crate) struct Interpreter {
-    pub(crate) stack: Vec<StackEntry>,
+pub(crate) struct Interpreter<'a> {
+    pub(crate) stack: Vec<StackEntry<'a>>,
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
     pub(crate) fn new() -> Self {
         Self { stack: Vec::new() }
     }
 
-    pub(crate) fn interpret(&mut self, operations: &[Operation]) {
+    pub(crate) fn interpret(&mut self, operations: &'a [Operation]) {
         for operation in operations {
             match operation {
                 Operation::Add => {
@@ -45,8 +58,19 @@ impl Interpreter {
                     self.stack
                         .push(StackEntry::Integer(a.as_integer() - b.as_integer()));
                 }
+                Operation::Concat => {
+                    let a = self.stack.pop().unwrap();
+                    let b = self.stack.pop().unwrap();
+                    let a = a.as_string();
+                    let b = b.as_string();
+                    let c = format!("{}{}", b, a);
+                    self.stack.push(StackEntry::OwnedString(c));
+                }
                 Operation::IntegerLiteral(i) => {
                     self.stack.push(StackEntry::Integer(*i));
+                }
+                Operation::StringLiteral(s) => {
+                    self.stack.push(StackEntry::StringRef(s));
                 }
             }
         }
