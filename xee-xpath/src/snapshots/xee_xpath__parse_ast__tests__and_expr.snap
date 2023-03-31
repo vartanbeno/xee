@@ -1,0 +1,31 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"1 and 2\")"
+---
+Binary(
+    BinaryExpr {
+        operator: And,
+        left: PathExpr {
+            steps: [
+                PrimaryExpr(
+                    Literal(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                ),
+            ],
+        },
+        right: PathExpr {
+            steps: [
+                PrimaryExpr(
+                    Literal(
+                        Integer(
+                            2,
+                        ),
+                    ),
+                ),
+            ],
+        },
+    },
+)

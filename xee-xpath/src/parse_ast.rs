@@ -141,8 +141,21 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
-        Rule::AndExpr
-        | Rule::ComparisonExpr
+        Rule::AndExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let right_pair = pairs.next();
+            if let Some(right_pair) = right_pair {
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator: ast::Operator::And,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
+        Rule::ComparisonExpr
         | Rule::StringConcatExpr
         | Rule::RangeExpr
         | Rule::MultiplicativeExpr
@@ -431,5 +444,10 @@ mod tests {
     #[test]
     fn test_or_expr() {
         assert_debug_snapshot!(parse_expr_single("1 or 2"));
+    }
+
+    #[test]
+    fn test_and_expr() {
+        assert_debug_snapshot!(parse_expr_single("1 and 2"));
     }
 }
