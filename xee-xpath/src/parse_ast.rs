@@ -226,21 +226,6 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
     }
 }
 
-// fn apply_expr(pair: Pair<Rule>) -> ast::ApplyExpr {
-//     match pair.as_rule() {
-//         Rule::SimpleMapExpr => {}
-//         Rule::UnaryExpr => {}
-//         Rule::ArrowExpr => {}
-//         Rule::CastExpr => {}
-//         Rule::CastableExpr => {}
-//         Rule::TreatExpr => {}
-//         Rule::InstanceOfExpr => {}
-//         _ => {
-//             panic!("unhandled ApplyExpr {:?}", pair.as_rule())
-//         }
-//     }
-// }
-
 fn path_expr_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
     debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
     let pair = pair.into_inner().next().unwrap();
@@ -352,34 +337,6 @@ fn numeric_literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
         }
     }
 }
-
-// fn pair_to_ast(pair: Pair<Rule>) -> Result<ast::XPath, Error> {
-//     match pair.as_rule() {
-//         Rule::Xpath => {
-//             let mut ast = ast::XPath { exprs: vec![] };
-//             for pair in pair.into_inner() {
-//                 let expr = pair_to_ast(pair)?;
-//                 ast.exprs.push(expr);
-//             }
-//             Ok(ast)
-//         }
-//         _ => {}
-//     }
-//     Ok(ast::XPath { exprs: vec![] })
-// }
-
-// pub(crate) fn parse_ast(xpath: &str) -> Result<ast::XPath, Error> {
-//     match parse(xpath) {
-//         Ok(mut pairs) => {
-//             let ast = pair_to_ast(pairs.next().unwrap());
-//             match ast {
-//                 Ok(ast) => Ok(ast),
-//                 Err(e) => Err(Error {}),
-//             }
-//         }
-//         Err(e) => Err(Error {}),
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
