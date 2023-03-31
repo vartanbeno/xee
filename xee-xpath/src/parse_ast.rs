@@ -18,12 +18,11 @@ fn pair_to_ast_node(pair: Pair<Rule>) -> Result<ast::Node, Error> {
     }
 }
 
-fn pair_to_primary_expr(pair: Pair<Rule>) -> Result<ast::PrimaryExpr, Error> {
+fn pair_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
+    debug_assert_eq!(pair.as_rule(), Rule::PrimaryExpr);
+    let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::Literal => {
-            let literal = pair.into_inner().next().unwrap();
-            Ok(ast::PrimaryExpr::Literal(pair_to_literal(literal)))
-        }
+        Rule::Literal => ast::PrimaryExpr::Literal(pair_to_literal(pair)),
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -31,13 +30,11 @@ fn pair_to_primary_expr(pair: Pair<Rule>) -> Result<ast::PrimaryExpr, Error> {
 }
 
 fn pair_to_literal(pair: Pair<Rule>) -> ast::Literal {
+    debug_assert_eq!(pair.as_rule(), Rule::Literal);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::StringLiteral => ast::Literal::String(pair.as_str().to_string()),
-        Rule::NumericLiteral => {
-            let numeric_literal = pair.into_inner().next().unwrap();
-            pair_to_numeric_literal(numeric_literal)
-        }
+        Rule::NumericLiteral => pair_to_numeric_literal(pair),
         _ => {
             panic!("unhandled literal: {:?}", pair.as_rule())
         }
@@ -45,7 +42,8 @@ fn pair_to_literal(pair: Pair<Rule>) -> ast::Literal {
 }
 
 fn pair_to_numeric_literal(pair: Pair<Rule>) -> ast::Literal {
-    println!("pair_to_numeric_literal: {:#?}", pair);
+    debug_assert_eq!(pair.as_rule(), Rule::NumericLiteral);
+    let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::IntegerLiteral => {
             let s = pair.as_str();
@@ -187,5 +185,16 @@ mod tests {
         let pair = pairs.next().unwrap();
         let literal = pair_to_literal(pair);
         assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
+    }
+
+    #[test]
+    fn test_primary_expr_literal() {
+        let mut pairs = XPathParser::parse(Rule::PrimaryExpr, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let primary_expr = pair_to_primary_expr(pair);
+        assert_eq!(
+            primary_expr,
+            ast::PrimaryExpr::Literal(ast::Literal::Integer(1))
+        );
     }
 }
