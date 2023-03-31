@@ -1,0 +1,24 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"-1\")"
+---
+Apply(
+    ApplyExpr {
+        path_expr: PathExpr {
+            steps: [
+                PrimaryExpr(
+                    Literal(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                ),
+            ],
+        },
+        operator: Unary(
+            [
+                Minus,
+            ],
+        ),
+    },
+)

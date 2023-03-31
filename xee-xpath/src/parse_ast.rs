@@ -342,6 +342,22 @@ mod tests {
         parse_rule(Rule::Literal, input, literal_to_literal)
     }
 
+    fn parse_primary_expr(input: &str) -> ast::PrimaryExpr {
+        parse_rule(Rule::PrimaryExpr, input, primary_expr_to_primary_expr)
+    }
+
+    fn parse_step_expr(input: &str) -> ast::StepExpr {
+        parse_rule(Rule::StepExpr, input, step_expr_to_step_expr)
+    }
+
+    fn parse_relative_path_expr(input: &str) -> Vec<ast::StepExpr> {
+        parse_rule(Rule::RelativePathExpr, input, relative_path_expr_to_steps)
+    }
+
+    fn parse_path_expr(input: &str) -> ast::PathExpr {
+        parse_rule(Rule::PathExpr, input, path_expr_to_path_expr)
+    }
+
     #[test]
     fn test_integer_literal() {
         assert_debug_snapshot!(parse_literal("1"));
@@ -374,111 +390,42 @@ mod tests {
 
     #[test]
     fn test_primary_expr_literal() {
-        let mut pairs = XPathParser::parse(Rule::PrimaryExpr, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let primary_expr = primary_expr_to_primary_expr(pair);
-        assert_eq!(
-            primary_expr,
-            ast::PrimaryExpr::Literal(ast::Literal::Integer(1))
-        );
+        assert_debug_snapshot!(parse_primary_expr("1"));
     }
 
     #[test]
     fn test_step_expr() {
-        let mut pairs = XPathParser::parse(Rule::StepExpr, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let step_expr = step_expr_to_step_expr(pair);
-        assert_eq!(
-            step_expr,
-            ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(ast::Literal::Integer(1)))
-        );
+        assert_debug_snapshot!(parse_step_expr("1"));
     }
 
     #[test]
     fn test_relative_path() {
-        let mut pairs = XPathParser::parse(Rule::RelativePathExpr, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let steps = relative_path_expr_to_steps(pair);
-        assert_eq!(
-            steps,
-            vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                ast::Literal::Integer(1)
-            ))]
-        );
+        assert_debug_snapshot!(parse_relative_path_expr("1"));
     }
 
     #[test]
     fn test_path_expr() {
-        let mut pairs = XPathParser::parse(Rule::PathExpr, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let step_expr = path_expr_to_path_expr(pair);
-        assert_eq!(
-            step_expr,
-            ast::PathExpr {
-                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                    ast::Literal::Integer(1)
-                ),)]
-            }
-        );
+        assert_debug_snapshot!(parse_path_expr("1"));
     }
 
     #[test]
     fn test_integer_expr_single() {
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let expr = expr_single(pair);
-        assert_eq!(
-            expr,
-            ast::ExprSingle::Path(ast::PathExpr {
-                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                    ast::Literal::Integer(1)
-                ))]
-            })
-        );
+        assert_debug_snapshot!(parse_expr_single("1"));
     }
 
     #[test]
     fn test_simple_map_expr() {
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 ! 2").unwrap();
-        let pair = pairs.next().unwrap();
-        let expr = expr_single(pair);
-        assert_eq!(
-            expr,
-            ast::ExprSingle::Apply(ast::ApplyExpr {
-                path_expr: ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                        ast::Literal::Integer(1)
-                    ))]
-                },
-                operator: ast::ApplyOperator::SimpleMap(vec![ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                        ast::Literal::Integer(2)
-                    ))]
-                }]),
-            })
-        );
+        assert_debug_snapshot!(parse_expr_single("1 ! 2"));
     }
 
     #[test]
     fn test_unary_expr() {
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, "-1").unwrap();
-        let pair = pairs.next().unwrap();
-        let expr = expr_single(pair);
-        assert_eq!(
-            expr,
-            ast::ExprSingle::Apply(ast::ApplyExpr {
-                path_expr: ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                        ast::Literal::Integer(1)
-                    ))]
-                },
-                operator: ast::ApplyOperator::Unary(vec![ast::UnaryOperator::Minus]),
-            })
-        );
+        assert_debug_snapshot!(parse_expr_single("-1"));
     }
 
     #[test]
     fn test_additive_expr() {
+        assert_debug_snapshot!(parse_expr_single("1 + 2"));
         let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 + 2").unwrap();
         let pair = pairs.next().unwrap();
         let expr = expr_single(pair);

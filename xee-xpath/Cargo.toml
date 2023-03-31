@@ -18,7 +18,7 @@ pest_derive = "2.5.6"
 xot = { workspace = true }
 
 [dev-dependencies]
-insta = { version = "1.21.2", features = ["yaml", "glob"] }
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
 rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }

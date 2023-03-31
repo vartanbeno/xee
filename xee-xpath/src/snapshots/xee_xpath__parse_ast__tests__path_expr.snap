@@ -1,0 +1,15 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_path_expr(\"1\")"
+---
+PathExpr {
+    steps: [
+        PrimaryExpr(
+            Literal(
+                Integer(
+                    1,
+                ),
+            ),
+        ),
+    ],
+}
