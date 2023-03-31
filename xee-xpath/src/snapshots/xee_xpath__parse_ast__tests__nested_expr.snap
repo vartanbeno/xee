@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-assertion_line: 512
 expression: "parse_expr_single(\"1 + (2 * 3)\")"
 ---
 Binary(
