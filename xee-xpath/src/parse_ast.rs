@@ -10,7 +10,7 @@ fn pair_to_ast_node(pair: Pair<Rule>) -> Result<ast::Node, Error> {
     match pair.as_rule() {
         Rule::Literal => {
             let literal = pair.into_inner().next().unwrap();
-            Ok(ast::Node::Literal(pair_to_literal(literal)))
+            Ok(ast::Node::Literal(literal_to_literal(literal)))
         }
         _ => {
             panic!("unhandled rule: {:?}", pair.as_rule())
@@ -18,30 +18,46 @@ fn pair_to_ast_node(pair: Pair<Rule>) -> Result<ast::Node, Error> {
     }
 }
 
-fn pair_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
+fn postfix_expr_to_postfix_expr(pair: Pair<Rule>) -> ast::PostfixExpr {
+    debug_assert_eq!(pair.as_rule(), Rule::PostfixExpr);
+    match pair.as_rule() {
+        Rule::PostfixExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            ast::PostfixExpr {
+                primary: primary_expr_to_primary_expr(pair),
+                postfix: vec![],
+            }
+        }
+        _ => {
+            panic!("unhandled PostfixExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
     debug_assert_eq!(pair.as_rule(), Rule::PrimaryExpr);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::Literal => ast::PrimaryExpr::Literal(pair_to_literal(pair)),
+        Rule::Literal => ast::PrimaryExpr::Literal(literal_to_literal(pair)),
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
     }
 }
 
-fn pair_to_literal(pair: Pair<Rule>) -> ast::Literal {
+fn literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
     debug_assert_eq!(pair.as_rule(), Rule::Literal);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::StringLiteral => ast::Literal::String(pair.as_str().to_string()),
-        Rule::NumericLiteral => pair_to_numeric_literal(pair),
+        Rule::NumericLiteral => numeric_literal_to_literal(pair),
         _ => {
             panic!("unhandled literal: {:?}", pair.as_rule())
         }
     }
 }
 
-fn pair_to_numeric_literal(pair: Pair<Rule>) -> ast::Literal {
+fn numeric_literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
     debug_assert_eq!(pair.as_rule(), Rule::NumericLiteral);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
@@ -125,7 +141,7 @@ mod tests {
     fn test_integer_literal() {
         let mut pairs = XPathParser::parse(Rule::Literal, "1").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(literal, ast::Literal::Integer(1));
     }
 
@@ -133,7 +149,7 @@ mod tests {
     fn test_decimal_literal() {
         let mut pairs = XPathParser::parse(Rule::Literal, "1.5").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(
             literal,
             ast::Literal::Decimal(ast::DecimalLiteral {
@@ -147,7 +163,7 @@ mod tests {
     fn test_decimal_literal_no_after() {
         let mut pairs = XPathParser::parse(Rule::Literal, "1.").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(
             literal,
             ast::Literal::Decimal(ast::DecimalLiteral {
@@ -161,7 +177,7 @@ mod tests {
     fn test_decimal_literal_no_before() {
         let mut pairs = XPathParser::parse(Rule::Literal, ".5").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(
             literal,
             ast::Literal::Decimal(ast::DecimalLiteral {
@@ -175,7 +191,7 @@ mod tests {
     fn test_float_lowercase_e() {
         let mut pairs = XPathParser::parse(Rule::Literal, "1.5e0").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
     }
 
@@ -183,7 +199,7 @@ mod tests {
     fn test_float_upper_e() {
         let mut pairs = XPathParser::parse(Rule::Literal, "1.5E0").unwrap();
         let pair = pairs.next().unwrap();
-        let literal = pair_to_literal(pair);
+        let literal = literal_to_literal(pair);
         assert_eq!(literal, ast::Literal::Double(OrderedFloat(1.5)));
     }
 
@@ -191,10 +207,24 @@ mod tests {
     fn test_primary_expr_literal() {
         let mut pairs = XPathParser::parse(Rule::PrimaryExpr, "1").unwrap();
         let pair = pairs.next().unwrap();
-        let primary_expr = pair_to_primary_expr(pair);
+        let primary_expr = primary_expr_to_primary_expr(pair);
         assert_eq!(
             primary_expr,
             ast::PrimaryExpr::Literal(ast::Literal::Integer(1))
+        );
+    }
+
+    #[test]
+    fn test_postfix_expr() {
+        let mut pairs = XPathParser::parse(Rule::PostfixExpr, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let postfix_expr = postfix_expr_to_postfix_expr(pair);
+        assert_eq!(
+            postfix_expr,
+            ast::PostfixExpr {
+                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
+                postfix: vec![]
+            }
         );
     }
 }
