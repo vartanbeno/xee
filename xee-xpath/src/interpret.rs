@@ -47,23 +47,23 @@ impl<'a> Interpreter<'a> {
         for operation in operations {
             match operation {
                 Operation::Add => {
-                    let a = self.stack.pop().unwrap();
                     let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
                     self.stack
                         .push(StackEntry::Integer(a.as_integer() + b.as_integer()));
                 }
                 Operation::Sub => {
-                    let a = self.stack.pop().unwrap();
                     let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
                     self.stack
                         .push(StackEntry::Integer(a.as_integer() - b.as_integer()));
                 }
                 Operation::Concat => {
-                    let a = self.stack.pop().unwrap();
                     let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
                     let a = a.as_string();
                     let b = b.as_string();
-                    let c = format!("{}{}", b, a);
+                    let c = format!("{}{}", a, b);
                     self.stack.push(StackEntry::OwnedString(c));
                 }
                 Operation::IntegerLiteral(i) => {

@@ -33,8 +33,8 @@ fn compile_expr_single<'a>(expr_single: &'a ast::ExprSingle, operations: &mut Ve
 fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Operation<'a>>) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
-        if let ast::PrimaryExpr::Literal(literal) = primary_expr {
-            match literal {
+        match primary_expr {
+            ast::PrimaryExpr::Literal(literal) => match literal {
                 ast::Literal::Integer(i) => {
                     operations.push(Operation::IntegerLiteral(*i));
                 }
@@ -44,9 +44,16 @@ fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Oper
                 _ => {
                     panic!("literal type not supported yet");
                 }
+            },
+            ast::PrimaryExpr::Expr(expressions) => {
+                // XXX doesn't really handle multiple expressions properly yet
+                for expr in expressions {
+                    compile_expr_single(expr, operations);
+                }
             }
-        } else {
-            panic!("primary expression not a literal");
+            _ => {
+                panic!("not supported yet");
+            }
         }
     } else {
         panic!("not a primary expression");
@@ -91,5 +98,15 @@ mod tests {
         let mut interpreter = Interpreter::new();
         interpreter.interpret(&operations);
         assert_eq!(interpreter.stack.pop().unwrap().as_string(), "ab");
+    }
+
+    #[test]
+    fn test_nested() {
+        let expr_single = parse_expr_single("1 + (8 - 2)");
+        let mut operations = Vec::new();
+        compile_expr_single(&expr_single, &mut operations);
+        let mut interpreter = Interpreter::new();
+        interpreter.interpret(&operations);
+        assert_eq!(interpreter.stack.pop().unwrap().as_integer(), 7);
     }
 }
