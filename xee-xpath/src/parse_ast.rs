@@ -18,6 +18,43 @@ fn pair_to_ast_node(pair: Pair<Rule>) -> Result<ast::Node, Error> {
     }
 }
 
+fn path_expr_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
+    debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::RelativePathExpr => ast::PathExpr {
+            steps: relative_path_expr_to_steps(pair),
+        },
+        _ => {
+            panic!("unhandled PathExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn relative_path_expr_to_steps(pair: Pair<Rule>) -> Vec<ast::StepExpr> {
+    debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::StepExpr => {
+            vec![step_expr_to_step_expr(pair)]
+        }
+        _ => {
+            panic!("unhandled RelativePathExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
+    debug_assert_eq!(pair.as_rule(), Rule::StepExpr);
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::PostfixExpr => ast::StepExpr::PostfixExpr(postfix_expr_to_postfix_expr(pair)),
+        _ => {
+            panic!("unhandled StepExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
 fn postfix_expr_to_postfix_expr(pair: Pair<Rule>) -> ast::PostfixExpr {
     debug_assert_eq!(pair.as_rule(), Rule::PostfixExpr);
     match pair.as_rule() {
@@ -224,6 +261,50 @@ mod tests {
             ast::PostfixExpr {
                 primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
                 postfix: vec![]
+            }
+        );
+    }
+
+    #[test]
+    fn test_step_expr_postfix() {
+        let mut pairs = XPathParser::parse(Rule::StepExpr, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let step_expr = step_expr_to_step_expr(pair);
+        assert_eq!(
+            step_expr,
+            ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
+                postfix: vec![]
+            })
+        );
+    }
+
+    #[test]
+    fn test_relative_path_expr_postfix() {
+        let mut pairs = XPathParser::parse(Rule::RelativePathExpr, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let steps = relative_path_expr_to_steps(pair);
+        assert_eq!(
+            steps,
+            vec![ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
+                postfix: vec![]
+            })]
+        );
+    }
+
+    #[test]
+    fn test_path_expr() {
+        let mut pairs = XPathParser::parse(Rule::PathExpr, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let step_expr = path_expr_to_path_expr(pair);
+        assert_eq!(
+            step_expr,
+            ast::PathExpr {
+                steps: vec![ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+                    primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
+                    postfix: vec![]
+                })]
             }
         );
     }
