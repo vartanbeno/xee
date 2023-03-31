@@ -149,7 +149,7 @@ pub(crate) struct ApplyExpr {
 pub(crate) enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
-    Arrow(Arrow),
+    Arrow(Vec<(ArrowFunctionSpecifier, Vec<Argument>)>),
     Cast(SingleType),
     Castable(SingleType),
     Treat(SequenceType),
@@ -166,12 +166,6 @@ pub(crate) enum UnaryOperator {
 pub(crate) struct SingleType {
     pub(crate) name: EQName,
     pub(crate) question_mark: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Arrow {
-    pub(crate) specifiers: Vec<(ArrowFunctionSpecifier, Vec<Argument>)>,
-    pub(crate) step_expr: Option<StepExpr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
