@@ -1,9 +1,5 @@
 use ordered_float::OrderedFloat;
 
-pub(crate) enum Node {
-    Literal(Literal),
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
     // at least one entry
@@ -12,12 +8,16 @@ pub(crate) struct XPath {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ExprSingle {
-    ForExpr(ForExpr),
-    LetExpr(LetExpr),
-    QuantifiedExpr(QuantifiedExpr),
-    IfExpr(IfExpr),
-    SingleExpr(InstanceOfExpr),
-    BinaryExpr(BinaryExpr),
+    // a path expression
+    Path(PathExpr),
+    // something applied to a path expression
+    Apply(ApplyExpr),
+    // combine two path expressions
+    Binary(BinaryExpr),
+    For(ForExpr),
+    Let(LetExpr),
+    Quantified(QuantifiedExpr),
+    If(IfExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -95,8 +95,8 @@ pub(crate) enum UnaryLookup {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct BinaryExpr {
     pub(crate) operator: Operator,
-    pub(crate) left: Box<InstanceOfExpr>,
-    pub(crate) right: Box<InstanceOfExpr>,
+    pub(crate) left: PathExpr,
+    pub(crate) right: PathExpr,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -140,9 +140,20 @@ pub(crate) enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct UnaryExpr {
-    pub(crate) value_expr: ValueExpr,
-    pub(crate) unary_operators: Vec<UnaryOperator>,
+pub(crate) struct ApplyExpr {
+    pub(crate) path_expr: PathExpr,
+    pub(crate) operator: ApplyOperator,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum ApplyOperator {
+    SimpleMap(Vec<PathExpr>),
+    Unary(Vec<UnaryOperator>),
+    Arrow(Arrow),
+    Cast(SingleType),
+    Castable(SingleType),
+    Treat(SequenceType),
+    InstanceOf(SequenceType),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -152,38 +163,13 @@ pub(crate) enum UnaryOperator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct InstanceOfExpr {
-    pub(crate) treat_expr: TreatExpr,
-    pub(crate) type_: Option<SequenceType>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TreatExpr {
-    pub(crate) castable_expr: CastableExpr,
-    pub(crate) type_: SequenceType,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct CastableExpr {
-    pub(crate) cast_expr: CastExpr,
-    pub(crate) type_: Option<SingleType>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct SingleType {
     pub(crate) name: EQName,
     pub(crate) question_mark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct CastExpr {
-    pub(crate) unary_expr: ArrowExpr,
-    pub(crate) type_: Option<SingleType>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ArrowExpr {
-    pub(crate) unary_expr: UnaryExpr,
+pub(crate) struct Arrow {
     pub(crate) specifiers: Vec<(ArrowFunctionSpecifier, Vec<Argument>)>,
     pub(crate) step_expr: Option<StepExpr>,
 }
@@ -193,15 +179,6 @@ pub(crate) enum ArrowFunctionSpecifier {
     Name(EQName),
     VarRef(EQName),
     Expr(Vec<ExprSingle>),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ValueExpr(SimpleMapExpr);
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SimpleMapExpr {
-    pub(crate) path_expr: PathExpr,
-    pub(crate) mapping_operators: Vec<PathExpr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -272,12 +249,6 @@ pub(crate) struct Param {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct PostfixExpr {
-    pub(crate) primary: PrimaryExpr,
-    pub(crate) postfix: Vec<Postfix>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Postfix {
     // vec contains at least 1 element
     Predicate(Vec<ExprSingle>),
@@ -300,7 +271,11 @@ pub(crate) struct PathExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum StepExpr {
-    PostfixExpr(PostfixExpr),
+    PrimaryExpr(PrimaryExpr),
+    PostfixExpr {
+        primary: PrimaryExpr,
+        postfixes: Vec<Postfix>,
+    },
     AxisStep(AxisStep),
 }
 

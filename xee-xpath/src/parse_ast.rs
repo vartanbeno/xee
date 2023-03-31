@@ -6,17 +6,33 @@ use crate::parse::{parse, Rule};
 
 pub struct Error {}
 
-fn pair_to_ast_node(pair: Pair<Rule>) -> Result<ast::Node, Error> {
-    match pair.as_rule() {
-        Rule::Literal => {
-            let literal = pair.into_inner().next().unwrap();
-            Ok(ast::Node::Literal(literal_to_literal(literal)))
-        }
-        _ => {
-            panic!("unhandled rule: {:?}", pair.as_rule())
-        }
+fn struct_wrap<T, W>(pair: Pair<Rule>, outer_rule: Rule, inner_rule: Rule, wrap: W) -> T
+where
+    W: Fn(Pair<Rule>) -> T,
+{
+    debug_assert_eq!(pair.as_rule(), outer_rule);
+    let pair = pair.into_inner().next().unwrap();
+    if pair.as_rule() == inner_rule {
+        wrap(pair)
+    } else {
+        panic!("unhandled {:?}", pair.as_rule())
     }
 }
+
+// fn apply_expr(pair: Pair<Rule>) -> ast::ApplyExpr {
+//     match pair.as_rule() {
+//         Rule::SimpleMapExpr => {}
+//         Rule::UnaryExpr => {}
+//         Rule::ArrowExpr => {}
+//         Rule::CastExpr => {}
+//         Rule::CastableExpr => {}
+//         Rule::TreatExpr => {}
+//         Rule::InstanceOfExpr => {}
+//         _ => {
+//             panic!("unhandled ApplyExpr {:?}", pair.as_rule())
+//         }
+//     }
+// }
 
 fn path_expr_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
     debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
@@ -48,25 +64,15 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
     debug_assert_eq!(pair.as_rule(), Rule::StepExpr);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::PostfixExpr => ast::StepExpr::PostfixExpr(postfix_expr_to_postfix_expr(pair)),
-        _ => {
-            panic!("unhandled StepExpr: {:?}", pair.as_rule())
-        }
-    }
-}
-
-fn postfix_expr_to_postfix_expr(pair: Pair<Rule>) -> ast::PostfixExpr {
-    debug_assert_eq!(pair.as_rule(), Rule::PostfixExpr);
-    match pair.as_rule() {
         Rule::PostfixExpr => {
             let pair = pair.into_inner().next().unwrap();
-            ast::PostfixExpr {
+            ast::StepExpr::PostfixExpr {
                 primary: primary_expr_to_primary_expr(pair),
-                postfix: vec![],
+                postfixes: vec![],
             }
         }
         _ => {
-            panic!("unhandled PostfixExpr: {:?}", pair.as_rule())
+            panic!("unhandled StepExpr: {:?}", pair.as_rule())
         }
     }
 }
@@ -252,30 +258,16 @@ mod tests {
     }
 
     #[test]
-    fn test_postfix_expr() {
-        let mut pairs = XPathParser::parse(Rule::PostfixExpr, "1").unwrap();
-        let pair = pairs.next().unwrap();
-        let postfix_expr = postfix_expr_to_postfix_expr(pair);
-        assert_eq!(
-            postfix_expr,
-            ast::PostfixExpr {
-                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                postfix: vec![]
-            }
-        );
-    }
-
-    #[test]
     fn test_step_expr_postfix() {
         let mut pairs = XPathParser::parse(Rule::StepExpr, "1").unwrap();
         let pair = pairs.next().unwrap();
         let step_expr = step_expr_to_step_expr(pair);
         assert_eq!(
             step_expr,
-            ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+            ast::StepExpr::PostfixExpr {
                 primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                postfix: vec![]
-            })
+                postfixes: vec![]
+            }
         );
     }
 
@@ -286,10 +278,10 @@ mod tests {
         let steps = relative_path_expr_to_steps(pair);
         assert_eq!(
             steps,
-            vec![ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+            vec![ast::StepExpr::PostfixExpr {
                 primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                postfix: vec![]
-            })]
+                postfixes: vec![]
+            }]
         );
     }
 
@@ -301,10 +293,10 @@ mod tests {
         assert_eq!(
             step_expr,
             ast::PathExpr {
-                steps: vec![ast::StepExpr::PostfixExpr(ast::PostfixExpr {
+                steps: vec![ast::StepExpr::PostfixExpr {
                     primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                    postfix: vec![]
-                })]
+                    postfixes: vec![]
+                }]
             }
         );
     }
