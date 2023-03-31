@@ -1,8 +1,10 @@
+use crate::parse::XPathParser;
 use ordered_float::OrderedFloat;
 use pest::iterators::Pair;
+use pest::Parser;
 
 use crate::ast;
-use crate::parse::{parse, Rule};
+use crate::parse::Rule;
 
 pub struct Error {}
 
@@ -372,25 +374,23 @@ fn numeric_literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
     }
 }
 
+fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
+where
+    F: Fn(Pair<Rule>) -> T,
+{
+    let mut pairs = XPathParser::parse(rule, input).unwrap();
+    let pair = pairs.next().unwrap();
+    f(pair)
+}
+
+pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
+    parse_rule(Rule::ExprSingle, input, expr_single)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse::XPathParser;
     use insta::assert_debug_snapshot;
-    use pest::Parser;
-
-    fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
-    where
-        F: Fn(Pair<Rule>) -> T,
-    {
-        let mut pairs = XPathParser::parse(rule, input).unwrap();
-        let pair = pairs.next().unwrap();
-        f(pair)
-    }
-
-    fn parse_expr_single(input: &str) -> ast::ExprSingle {
-        parse_rule(Rule::ExprSingle, input, expr_single)
-    }
 
     fn parse_literal(input: &str) -> ast::Literal {
         parse_rule(Rule::Literal, input, literal_to_literal)
