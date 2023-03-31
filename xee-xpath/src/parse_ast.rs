@@ -18,6 +18,94 @@ where
         panic!("unhandled {:?}", pair.as_rule())
     }
 }
+fn pair_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
+    let expr_single = expr_single(pair);
+    ast::PathExpr {
+        steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![
+            expr_single,
+        ]))],
+    }
+}
+
+fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
+    match pair.as_rule() {
+        Rule::PathExpr => ast::ExprSingle::Path(path_expr_to_path_expr(pair)),
+        Rule::SimpleMapExpr => {
+            let mut pairs = pair.into_inner();
+            let path_expr_pair = pairs.next().unwrap();
+            let simple_map_path_exprs = pairs.map(pair_to_path_expr).collect::<Vec<_>>();
+            if !simple_map_path_exprs.is_empty() {
+                let path_expr = pair_to_path_expr(path_expr_pair);
+                ast::ExprSingle::Apply(ast::ApplyExpr {
+                    path_expr,
+                    operator: ast::ApplyOperator::SimpleMap(simple_map_path_exprs),
+                })
+            } else {
+                expr_single(path_expr_pair)
+                // ast::ExprSingle::Path(path_expr)
+            }
+        }
+        Rule::UnaryExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::ArrowExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::CastExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::CastableExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::TreatExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::InstanceofExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::OrExpr
+        | Rule::AndExpr
+        | Rule::ComparisonExpr
+        | Rule::StringConcatExpr
+        | Rule::RangeExpr
+        | Rule::AdditiveExpr
+        | Rule::MultiplicativeExpr
+        | Rule::UnionExpr
+        | Rule::IntersectExceptExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+        }
+        Rule::ValueExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+        }
+        Rule::ExprSingle => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+        }
+        _ => {
+            panic!("unhandled ExprSingle {:?}", pair.as_rule())
+        }
+    }
+}
 
 // fn apply_expr(pair: Pair<Rule>) -> ast::ApplyExpr {
 //     match pair.as_rule() {
@@ -66,10 +154,7 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
     match pair.as_rule() {
         Rule::PostfixExpr => {
             let pair = pair.into_inner().next().unwrap();
-            ast::StepExpr::PostfixExpr {
-                primary: primary_expr_to_primary_expr(pair),
-                postfixes: vec![],
-            }
+            ast::StepExpr::PrimaryExpr(primary_expr_to_primary_expr(pair))
         }
         _ => {
             panic!("unhandled StepExpr: {:?}", pair.as_rule())
@@ -258,30 +343,26 @@ mod tests {
     }
 
     #[test]
-    fn test_step_expr_postfix() {
+    fn test_step_expr() {
         let mut pairs = XPathParser::parse(Rule::StepExpr, "1").unwrap();
         let pair = pairs.next().unwrap();
         let step_expr = step_expr_to_step_expr(pair);
         assert_eq!(
             step_expr,
-            ast::StepExpr::PostfixExpr {
-                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                postfixes: vec![]
-            }
+            ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(ast::Literal::Integer(1)))
         );
     }
 
     #[test]
-    fn test_relative_path_expr_postfix() {
+    fn test_relative_path() {
         let mut pairs = XPathParser::parse(Rule::RelativePathExpr, "1").unwrap();
         let pair = pairs.next().unwrap();
         let steps = relative_path_expr_to_steps(pair);
         assert_eq!(
             steps,
-            vec![ast::StepExpr::PostfixExpr {
-                primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                postfixes: vec![]
-            }]
+            vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                ast::Literal::Integer(1)
+            ))]
         );
     }
 
@@ -293,11 +374,25 @@ mod tests {
         assert_eq!(
             step_expr,
             ast::PathExpr {
-                steps: vec![ast::StepExpr::PostfixExpr {
-                    primary: ast::PrimaryExpr::Literal(ast::Literal::Integer(1)),
-                    postfixes: vec![]
-                }]
+                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                    ast::Literal::Integer(1)
+                ),)]
             }
+        );
+    }
+
+    #[test]
+    fn test_integer_expr_single() {
+        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1").unwrap();
+        let pair = pairs.next().unwrap();
+        let expr = expr_single(pair);
+        assert_eq!(
+            expr,
+            ast::ExprSingle::Path(ast::PathExpr {
+                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                    ast::Literal::Integer(1)
+                ))]
+            })
         );
     }
 }
