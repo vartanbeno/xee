@@ -1,0 +1,31 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: expr
+---
+Binary(
+    BinaryExpr {
+        operator: Or,
+        left: PathExpr {
+            steps: [
+                PrimaryExpr(
+                    Literal(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                ),
+            ],
+        },
+        right: PathExpr {
+            steps: [
+                PrimaryExpr(
+                    Literal(
+                        Integer(
+                            2,
+                        ),
+                    ),
+                ),
+            ],
+        },
+    },
+)

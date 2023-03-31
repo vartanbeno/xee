@@ -127,8 +127,21 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
-        Rule::OrExpr
-        | Rule::AndExpr
+        Rule::OrExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let right_pair = pairs.next();
+            if let Some(right_pair) = right_pair {
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator: ast::Operator::Or,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
+        Rule::AndExpr
         | Rule::ComparisonExpr
         | Rule::StringConcatExpr
         | Rule::RangeExpr
@@ -309,6 +322,7 @@ fn numeric_literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
 mod tests {
     use super::*;
     use crate::parse::XPathParser;
+    use insta::assert_debug_snapshot;
     use pest::Parser;
 
     #[test]
@@ -503,5 +517,13 @@ mod tests {
                 }
             })
         )
+    }
+
+    #[test]
+    fn test_or_expr() {
+        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 or 2").unwrap();
+        let pair = pairs.next().unwrap();
+        let expr = expr_single(pair);
+        assert_debug_snapshot!(expr);
     }
 }
