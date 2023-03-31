@@ -46,13 +46,34 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 })
             } else {
                 expr_single(path_expr_pair)
-                // ast::ExprSingle::Path(path_expr)
             }
         }
         Rule::UnaryExpr => {
-            let pair = pair.into_inner().next().unwrap();
-            expr_single(pair)
-            // ast::ExprSingle::Path(pair_to_path_expr(pair))
+            let mut plus_minus = vec![];
+            for pair in pair.into_inner() {
+                match pair.as_rule() {
+                    Rule::Minus => {
+                        plus_minus.push(ast::UnaryOperator::Minus);
+                    }
+                    Rule::Plus => {
+                        plus_minus.push(ast::UnaryOperator::Plus);
+                    }
+                    Rule::ValueExpr => {
+                        if plus_minus.is_empty() {
+                            return expr_single(pair);
+                        }
+                        let path_expr = pair_to_path_expr(pair);
+                        return ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::Unary(plus_minus),
+                        });
+                    }
+                    _ => {
+                        panic!("unhandled unary {:?}", pair.as_rule())
+                    }
+                }
+            }
+            unreachable!();
         }
         Rule::ArrowExpr => {
             let pair = pair.into_inner().next().unwrap();
@@ -418,6 +439,24 @@ mod tests {
                         ast::Literal::Integer(2)
                     ))]
                 }]),
+            })
+        );
+    }
+
+    #[test]
+    fn test_unary_expr() {
+        let mut pairs = XPathParser::parse(Rule::ExprSingle, "-1").unwrap();
+        let pair = pairs.next().unwrap();
+        let expr = expr_single(pair);
+        assert_eq!(
+            expr,
+            ast::ExprSingle::Apply(ast::ApplyExpr {
+                path_expr: ast::PathExpr {
+                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
+                        ast::Literal::Integer(1)
+                    ))]
+                },
+                operator: ast::ApplyOperator::Unary(vec![ast::UnaryOperator::Minus]),
             })
         );
     }

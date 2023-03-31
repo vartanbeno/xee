@@ -110,7 +110,10 @@ ArrowExpr = { UnaryExpr ~ ("=>" ~ ArrowFunctionSpecifier ~ ArgumentList)* }
 
 // UnaryExpr
 // ::= ("-" | "+")* ValueExpr
-UnaryExpr = { ("-" | "+")* ~ ValueExpr }
+UnaryExpr = { (Minus | Plus)* ~ ValueExpr }
+
+Minus = { "-" }
+Plus  = { "+" }
 
 // ValueExpr
 // ::= SimpleMapExpr
