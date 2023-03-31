@@ -426,25 +426,6 @@ mod tests {
     #[test]
     fn test_additive_expr() {
         assert_debug_snapshot!(parse_expr_single("1 + 2"));
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 + 2").unwrap();
-        let pair = pairs.next().unwrap();
-        let expr = expr_single(pair);
-        assert_eq!(
-            expr,
-            ast::ExprSingle::Binary(ast::BinaryExpr {
-                operator: ast::Operator::Add,
-                left: ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                        ast::Literal::Integer(1)
-                    ))]
-                },
-                right: ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Literal(
-                        ast::Literal::Integer(2)
-                    ))]
-                }
-            })
-        )
     }
 
     #[test]
