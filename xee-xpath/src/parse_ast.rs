@@ -519,11 +519,14 @@ mod tests {
         )
     }
 
+    fn parse_expr_single(input: &str) -> ast::ExprSingle {
+        let mut pairs = XPathParser::parse(Rule::ExprSingle, input).unwrap();
+        let pair = pairs.next().unwrap();
+        expr_single(pair)
+    }
+
     #[test]
     fn test_or_expr() {
-        let mut pairs = XPathParser::parse(Rule::ExprSingle, "1 or 2").unwrap();
-        let pair = pairs.next().unwrap();
-        let expr = expr_single(pair);
-        assert_debug_snapshot!(expr);
+        assert_debug_snapshot!(parse_expr_single("1 or 2"));
     }
 }
