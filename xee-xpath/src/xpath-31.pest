@@ -79,7 +79,12 @@ AdditiveExpr = { MultiplicativeExpr ~ ((Plus | Minus) ~ MultiplicativeExpr)* }
 
 // MultiplicativeExpr
 // ::= UnionExpr ( ("*" | "div" | "idiv" | "mod") UnionExpr )*
-MultiplicativeExpr = { UnionExpr ~ (("*" | "div" | "idiv" | "mod") ~ UnionExpr)* }
+MultiplicativeExpr = { UnionExpr ~ ((Mult | Div | IDiv | Mod) ~ UnionExpr)* }
+
+Mult = { "*" }
+Div  = { "div" }
+IDiv = { "idiv" }
+Mod  = { "mod" }
 
 // UnionExpr
 // ::= IntersectExceptExpr ( ("union" | "|") IntersectExceptExpr )*

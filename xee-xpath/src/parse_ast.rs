@@ -127,6 +127,30 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
+        Rule::MultiplicativeExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let op = pairs.next();
+            if let Some(op) = op {
+                let operator = match op.as_rule() {
+                    Rule::Mult => ast::Operator::Mul,
+                    Rule::Div => ast::Operator::Div,
+                    Rule::IDiv => ast::Operator::IDiv,
+                    Rule::Mod => ast::Operator::Mod,
+                    _ => {
+                        panic!("unhandled MultiplicativeExpr {:?}", op.as_rule())
+                    }
+                };
+                let right_pair = pairs.next().unwrap();
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
         Rule::OrExpr => {
             let mut pairs = pair.into_inner();
             let left_pair = pairs.next().unwrap();
@@ -204,10 +228,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
-        Rule::RangeExpr
-        | Rule::MultiplicativeExpr
-        | Rule::UnionExpr
-        | Rule::IntersectExceptExpr => {
+        Rule::RangeExpr | Rule::UnionExpr | Rule::IntersectExceptExpr => {
             let pair = pair.into_inner().next().unwrap();
             expr_single(pair)
             // ast::ExprSingle::Path(pair_to_path_expr(pair))
@@ -216,7 +237,15 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
             let pair = pair.into_inner().next().unwrap();
             expr_single(pair)
         }
+        Rule::ParenthesizedExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+        }
         Rule::ExprSingle => {
+            let pair = pair.into_inner().next().unwrap();
+            expr_single(pair)
+        }
+        Rule::Expr => {
             let pair = pair.into_inner().next().unwrap();
             expr_single(pair)
         }
@@ -271,6 +300,11 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::Literal => ast::PrimaryExpr::Literal(literal_to_literal(pair)),
+        Rule::ParenthesizedExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            // XXX what if parentheses are empty?
+            ast::PrimaryExpr::Expr(vec![expr_single(pair)])
+        }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -471,5 +505,10 @@ mod tests {
     #[test]
     fn test_concat_expr() {
         assert_debug_snapshot!(parse_expr_single("'a' || 'b'"));
+    }
+
+    #[test]
+    fn test_nested_expr() {
+        assert_debug_snapshot!(parse_expr_single("1 + (2 * 3)"));
     }
 }
