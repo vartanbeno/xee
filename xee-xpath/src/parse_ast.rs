@@ -190,8 +190,21 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
-        Rule::StringConcatExpr
-        | Rule::RangeExpr
+        Rule::StringConcatExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let right_pair = pairs.next();
+            if let Some(right_pair) = right_pair {
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator: ast::Operator::Concat,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
+        Rule::RangeExpr
         | Rule::MultiplicativeExpr
         | Rule::UnionExpr
         | Rule::IntersectExceptExpr => {
@@ -283,7 +296,10 @@ fn literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
     debug_assert_eq!(pair.as_rule(), Rule::Literal);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::StringLiteral => ast::Literal::String(pair.as_str().to_string()),
+        Rule::StringLiteral => {
+            let pair = pair.into_inner().next().unwrap();
+            ast::Literal::String(pair.as_str().to_string())
+        }
         Rule::NumericLiteral => numeric_literal_to_literal(pair),
         _ => {
             panic!("unhandled literal: {:?}", pair.as_rule())
@@ -406,6 +422,11 @@ mod tests {
     }
 
     #[test]
+    fn test_string_literal() {
+        assert_debug_snapshot!(parse_literal("'foo'"));
+    }
+
+    #[test]
     fn test_integer_literal() {
         assert_debug_snapshot!(parse_literal("1"));
     }
@@ -488,5 +509,10 @@ mod tests {
     #[test]
     fn test_comparison_expr() {
         assert_debug_snapshot!(parse_expr_single("1 < 2"));
+    }
+
+    #[test]
+    fn test_concat_expr() {
+        assert_debug_snapshot!(parse_expr_single("'a' || 'b'"));
     }
 }

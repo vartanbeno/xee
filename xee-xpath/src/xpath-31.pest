@@ -502,8 +502,11 @@ DoubleLiteral = @{ (("." ~ Digits) | (Digits ~ ("." ~ '0'..'9'*)?)) ~ ("e" | "E"
 // StringLiteral
 // ::= ('"' (EscapeQuot | [^"])* '"') | ("'" (EscapeApos | [^'])* "'")
 // /* ws: explicit */
-StringLiteral = @{ DoubleQuote ~ (EscapeQuot | NonDoubleQuoteCharacter)* ~ DoubleQuote | "'" ~ (EscapeApos | NonSingleQuoteCharacter)* ~ "'" }
-DoubleQuote   =  { "\u{22}" }
+StringLiteral = ${ DoubleQuote ~ DoubleQuoteContent ~ DoubleQuote | "'" ~ SingleQuoteContent ~ "'" }
+DoubleQuote   = _{ "\u{22}" }
+
+DoubleQuoteContent = @{ (EscapeQuot | NonDoubleQuoteCharacter)* }
+SingleQuoteContent = @{ (EscapeApos | NonSingleQuoteCharacter)* }
 
 NonDoubleQuoteCharacter = { !DoubleQuote ~ ANY }
 NonSingleQuoteCharacter = { !"'" ~ ANY }
