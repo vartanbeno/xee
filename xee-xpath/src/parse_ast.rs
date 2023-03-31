@@ -155,8 +155,42 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
-        Rule::ComparisonExpr
-        | Rule::StringConcatExpr
+        Rule::ComparisonExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let op = pairs.next();
+            if let Some(op) = op {
+                let operator = match op.as_rule() {
+                    Rule::ValueEq => ast::Operator::ValueEq,
+                    Rule::ValueNe => ast::Operator::ValueNe,
+                    Rule::ValueLt => ast::Operator::ValueLt,
+                    Rule::ValueLe => ast::Operator::ValueLe,
+                    Rule::ValueGt => ast::Operator::ValueGt,
+                    Rule::ValueGe => ast::Operator::ValueGe,
+                    Rule::GenEq => ast::Operator::GenEq,
+                    Rule::GenNe => ast::Operator::GenNe,
+                    Rule::GenLt => ast::Operator::GenLt,
+                    Rule::GenLe => ast::Operator::GenLe,
+                    Rule::GenGt => ast::Operator::GenGt,
+                    Rule::GenGe => ast::Operator::GenGe,
+                    Rule::Is => ast::Operator::Is,
+                    Rule::Precedes => ast::Operator::Precedes,
+                    Rule::Follows => ast::Operator::Follows,
+                    _ => {
+                        panic!("unhandled ComparisonExpr {:?}", op.as_rule())
+                    }
+                };
+                let right_pair = pairs.next().unwrap();
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
+        Rule::StringConcatExpr
         | Rule::RangeExpr
         | Rule::MultiplicativeExpr
         | Rule::UnionExpr
@@ -449,5 +483,10 @@ mod tests {
     #[test]
     fn test_and_expr() {
         assert_debug_snapshot!(parse_expr_single("1 and 2"));
+    }
+
+    #[test]
+    fn test_comparison_expr() {
+        assert_debug_snapshot!(parse_expr_single("1 < 2"));
     }
 }

@@ -121,14 +121,32 @@ ValueExpr = { SimpleMapExpr }
 
 // GeneralComp
 // ::= "=" | "!=" | "<" | "<=" | ">" | ">="
-GeneralComp = { "=" | "!=" | "<" | "<=" | ">" | ">=" }
+GeneralComp = _{ GenEq | GenNe | GenLt | GenLe | GenGt | GenGe }
+
+GenEq = { "=" }
+GenNe = { "!=" }
+GenLt = { "<" }
+GenLe = { "<=" }
+GenGt = { ">" }
+GenGe = { ">=" }
 
 // ValueComp
 // ::= "eq" | "ne" | "lt" | "le" | "gt" | "ge"
-ValueComp = { "eq" | "ne" | "lt" | "le" | "gt" | "ge" }
+ValueComp = _{ ValueEq | ValueNe | ValueLt | ValueLe | ValueGt | ValueGe }
+
+ValueEq = { "eq" }
+ValueNe = { "ne" }
+ValueLt = { "lt" }
+ValueLe = { "le" }
+ValueGt = { "gt" }
+ValueGe = { "ge" }
 
 // NodeComp ::= "is" | "<<" | ">>"
-NodeComp = { "is" | "<<" | ">>" }
+NodeComp = _{ Is | Precedes | Follows }
+
+Is       = { "is" }
+Precedes = { "<<" }
+Follows  = { ">>" }
 
 // SimpleMapExpr
 // ::= PathExpr ("!" PathExpr)*
