@@ -236,6 +236,28 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
+        Rule::LetExpr => {
+            let mut pairs = pair.into_inner();
+            let simple_let_clause = pairs.next().unwrap();
+            let simple_let_clause_pairs = simple_let_clause.into_inner();
+            let inner_return_expr = expr_single(pairs.next().unwrap());
+            let mut return_expr = inner_return_expr;
+            for simple_let_clause_pair in simple_let_clause_pairs.rev() {
+                let mut simple_let_binding = simple_let_clause_pair.into_inner();
+                let var_name = simple_let_binding.next().unwrap();
+                let var_expr = expr_single(simple_let_binding.next().unwrap());
+                let let_expr = ast::LetExpr {
+                    var_name: ast::Name {
+                        name: var_name.as_str().to_string(),
+                        namespace: None,
+                    },
+                    var_expr: Box::new(var_expr),
+                    return_expr: Box::new(return_expr),
+                };
+                return_expr = ast::ExprSingle::Let(let_expr);
+            }
+            return_expr
+        }
         Rule::RangeExpr | Rule::UnionExpr | Rule::IntersectExceptExpr => {
             let pair = pair.into_inner().next().unwrap();
             expr_single(pair)
@@ -313,6 +335,7 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
             // XXX what if parentheses are empty?
             ast::PrimaryExpr::Expr(vec![expr_single(pair)])
         }
+        Rule::LetExpr => ast::PrimaryExpr::Expr(vec![expr_single(pair)]),
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -530,5 +553,15 @@ mod tests {
     #[test]
     fn test_xpath_multi_expr() {
         assert_debug_snapshot!(parse_xpath("1 + 2, 3 + 4"));
+    }
+
+    #[test]
+    fn test_single_let_expr() {
+        assert_debug_snapshot!(parse_expr_single("let $x := 1 return 5"));
+    }
+
+    #[test]
+    fn test_nested_let_expr() {
+        assert_debug_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
     }
 }

@@ -34,9 +34,15 @@ pub(crate) struct ForClause {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Name {
+    pub(crate) name: String,
+    pub(crate) namespace: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct LetExpr {
-    // vec contains at least 1 entry
-    pub(crate) clauses: Vec<LetClause>,
+    pub(crate) var_name: Name,
+    pub(crate) var_expr: Box<ExprSingle>,
     pub(crate) return_expr: Box<ExprSingle>,
 }
 
