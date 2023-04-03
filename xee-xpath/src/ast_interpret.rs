@@ -86,6 +86,25 @@ fn compile_expr_single(
             operations.push(Operation::LetDone);
             scope.pop_name(&let_expr.var_name);
         }
+        ast::ExprSingle::If(if_expr) => {
+            compile_expr(&if_expr.condition, scope, operations);
+            // temporary index, we can fill it in later once we've emitted
+            // then
+            let jump_else_index = operations.len();
+            operations.push(Operation::JumpIfFalse(0));
+            compile_expr_single(&if_expr.then, scope, operations);
+            // temporary index, we fill in it later once we've emitted else
+            let jump_end_index = operations.len();
+            operations.push(Operation::Jump(0));
+            // now we know the index of the else branch
+            let else_index = operations.len();
+            operations[jump_else_index] = Operation::JumpIfFalse(else_index);
+            compile_expr_single(&if_expr.else_, scope, operations);
+            // record the end of the whole if expression
+            let end_index = operations.len();
+            // go back and fill in the jump end target
+            operations[jump_end_index] = Operation::Jump(end_index);
+        }
         _ => {
             panic!("not supported yet");
         }
@@ -209,6 +228,22 @@ mod tests {
         let xpath = CompiledXPath::new("let $x := 1, $y := $x + 3 return $y + 5");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 9);
+        Ok(())
+    }
+
+    #[test]
+    fn test_if() -> Result<()> {
+        let xpath = CompiledXPath::new("if (1) then 2 else 3");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_if_false() -> Result<()> {
+        let xpath = CompiledXPath::new("if (0) then 2 else 3");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 3);
         Ok(())
     }
 }

@@ -85,6 +85,8 @@ pub(crate) enum Operation {
     Comma,
     LetDone,
     VarRef(usize),
+    Jump(usize),
+    JumpIfFalse(usize),
 }
 
 pub(crate) struct Interpreter {
@@ -108,7 +110,10 @@ impl Interpreter {
     }
 
     pub(crate) fn interpret(&mut self, operations: &[Operation]) -> Result<()> {
-        for operation in operations {
+        let mut ip = 0;
+
+        while ip < operations.len() {
+            let operation = &operations[ip];
             match operation {
                 Operation::Add => {
                     let b = self.pop();
@@ -162,9 +167,25 @@ impl Interpreter {
                     // XXX annoying that we have to clone here
                     // We could avoid this by having a StackRef variant
                     // but that would require a clone when we pop
+                    // better to make cloning cheap, which we can
+                    // as data structures are immutable
                     self.stack.push(self.stack[*index].clone());
                 }
+                Operation::Jump(new_ip) => {
+                    ip = *new_ip;
+                    continue;
+                }
+                Operation::JumpIfFalse(new_ip) => {
+                    let a = self.pop();
+                    // XXX this needs proper boolean conversion
+                    let a = a.as_integer()?;
+                    if a == 0 {
+                        ip = *new_ip;
+                        continue;
+                    }
+                }
             }
+            ip += 1;
         }
         Ok(())
     }
