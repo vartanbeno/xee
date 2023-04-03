@@ -86,15 +86,6 @@ mod tests {
     use super::*;
     use crate::interpret::Result;
 
-    // fn execute(input: &str) -> StackEntry {
-    //     let expr_single = parse_expr_single(input);
-    //     let mut operations = Vec::new();
-    //     compile_expr_single(&expr_single, &mut operations);
-    //     let mut interpreter = Interpreter::new();
-    //     interpreter.interpret(&operations);
-    //     interpreter.stack.pop().unwrap()
-    // }
-
     #[test]
     fn test_compile_expr_single() -> Result<()> {
         let expr_single = CompiledExprSingle::new("1 + 2");
