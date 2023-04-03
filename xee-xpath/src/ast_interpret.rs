@@ -1,7 +1,9 @@
 use crate::ast;
 use crate::interpret::Operation;
+use crate::interpret::{Interpreter, Result, StackEntry};
+use crate::parse_ast::parse_expr_single;
 
-fn compile_expr_single<'a>(expr_single: &'a ast::ExprSingle, operations: &mut Vec<Operation<'a>>) {
+fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Operation>) {
     match expr_single {
         ast::ExprSingle::Path(path_expr) => {
             compile_path_expr(path_expr, operations);
@@ -30,7 +32,7 @@ fn compile_expr_single<'a>(expr_single: &'a ast::ExprSingle, operations: &mut Ve
     }
 }
 
-fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Operation<'a>>) {
+fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
         match primary_expr {
@@ -39,7 +41,7 @@ fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Oper
                     operations.push(Operation::IntegerLiteral(*i));
                 }
                 ast::Literal::String(s) => {
-                    operations.push(Operation::StringLiteral(s));
+                    operations.push(Operation::StringLiteral(s.to_string()));
                 }
                 _ => {
                     panic!("literal type not supported yet");
@@ -60,10 +62,30 @@ fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Oper
     }
 }
 
+struct CompiledExprSingle {
+    ast: ast::ExprSingle,
+    operations: Vec<Operation>,
+}
+
+impl<'a> CompiledExprSingle {
+    fn new(expr_single: &str) -> Self {
+        let ast = parse_expr_single(expr_single);
+        let mut operations = Vec::new();
+        compile_expr_single(&ast, &mut operations);
+        Self { ast, operations }
+    }
+
+    fn interpret(&self) -> Result<StackEntry> {
+        let mut interpreter = Interpreter::new();
+        interpreter.interpret(&self.operations)?;
+        Ok(interpreter.stack.pop().unwrap())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interpret::{Error, Interpreter, Result, StackEntry};
+    use crate::interpret::{Interpreter, Result};
     use crate::parse_ast::parse_expr_single;
 
     // fn execute(input: &str) -> StackEntry {
@@ -77,39 +99,31 @@ mod tests {
 
     #[test]
     fn test_compile_expr_single() -> Result<()> {
-        let expr_single = parse_expr_single("1 + 2");
-        let mut operations = Vec::new();
-        compile_expr_single(&expr_single, &mut operations);
+        let expr_single = CompiledExprSingle::new("1 + 2");
+        let operations = &expr_single.operations;
         assert_eq!(operations.len(), 3);
         assert_eq!(operations[0], Operation::IntegerLiteral(1));
         assert_eq!(operations[1], Operation::IntegerLiteral(2));
         assert_eq!(operations[2], Operation::Add);
 
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations)?;
-        assert_eq!(interpreter.stack.pop().unwrap().as_integer()?, 3);
+        let result = expr_single.interpret()?;
+        assert_eq!(result.as_integer()?, 3);
         Ok(())
     }
 
     #[test]
     fn test_string_concat() -> Result<()> {
-        let expr_single = parse_expr_single("'a' || 'b'");
-        let mut operations = Vec::new();
-        compile_expr_single(&expr_single, &mut operations);
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations)?;
-        assert_eq!(interpreter.stack.pop().unwrap().as_string()?, "ab");
+        let expr_single = CompiledExprSingle::new("'a' || 'b'");
+        let result = expr_single.interpret()?;
+        assert_eq!(result.as_string()?, "ab");
         Ok(())
     }
 
     #[test]
     fn test_nested() -> Result<()> {
-        let expr_single = parse_expr_single("1 + (8 - 2)");
-        let mut operations = Vec::new();
-        compile_expr_single(&expr_single, &mut operations);
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations)?;
-        assert_eq!(interpreter.stack.pop().unwrap().as_integer()?, 7);
+        let expr_single = CompiledExprSingle::new("1 + (8 - 2)");
+        let result = expr_single.interpret()?;
+        assert_eq!(result.as_integer()?, 7);
         Ok(())
     }
 }

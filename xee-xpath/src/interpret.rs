@@ -11,22 +11,20 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum StackEntry<'a> {
+pub(crate) enum StackEntry {
     Integer(i64),
-    StringRef(&'a str),
     OwnedString(String),
 }
 
-impl<'a> StackEntry<'a> {
+impl StackEntry {
     pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
             StackEntry::Integer(i) => Ok(*i),
             _ => Err(Error::TypeError),
         }
     }
-    pub(crate) fn as_string(&'a self) -> Result<&'a str> {
+    pub(crate) fn as_string(&self) -> Result<&str> {
         match self {
-            StackEntry::StringRef(s) => Ok(s),
             StackEntry::OwnedString(s) => Ok(s.as_str()),
             _ => Err(Error::TypeError),
         }
@@ -34,25 +32,25 @@ impl<'a> StackEntry<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Operation<'a> {
+pub(crate) enum Operation {
     Add,
     Sub,
     Mul,
     Concat,
     IntegerLiteral(i64),
-    StringLiteral(&'a str),
+    StringLiteral(String),
 }
 
-pub(crate) struct Interpreter<'a> {
-    pub(crate) stack: Vec<StackEntry<'a>>,
+pub(crate) struct Interpreter {
+    pub(crate) stack: Vec<StackEntry>,
 }
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub(crate) fn new() -> Self {
         Self { stack: Vec::new() }
     }
 
-    pub(crate) fn interpret(&mut self, operations: &'a [Operation]) -> Result<()> {
+    pub(crate) fn interpret(&mut self, operations: &[Operation]) -> Result<()> {
         for operation in operations {
             match operation {
                 Operation::Add => {
@@ -88,7 +86,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(StackEntry::Integer(*i));
                 }
                 Operation::StringLiteral(s) => {
-                    self.stack.push(StackEntry::StringRef(s));
+                    self.stack.push(StackEntry::OwnedString(s.to_string()));
                 }
             }
         }
