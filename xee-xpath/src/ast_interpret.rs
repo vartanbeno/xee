@@ -70,6 +70,20 @@ fn compile_expr_single(
                 ast::Operator::Concat => {
                     operations.push(Operation::Concat);
                 }
+                ast::Operator::Range => {
+                    // left and right of range are on the stack
+
+                    // if they are the same, push left on the stack
+
+                    // if left is greater than right, push empty sequence on stack
+
+                    // otherwise, we need to create a new sequence
+                    // operations.push(Operation::NewSequence);
+
+                    // start with left of range
+
+                    // add to range
+                }
                 _ => {
                     panic!("not supported yet");
                 }

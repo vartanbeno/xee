@@ -99,10 +99,10 @@ pub(crate) enum Operation {
     VarRef(usize),
     Jump(usize),
     JumpIfFalse(usize),
-    NewSequence,
-    PushSequence,
-    IndexSequence,
-    LenSequence,
+    SequenceNew,
+    SequencePush(usize),
+    SequenceGet(usize),
+    SequenceLen(usize),
 }
 
 pub(crate) struct Interpreter {
@@ -205,27 +205,29 @@ impl Interpreter {
                         continue;
                     }
                 }
-                Operation::NewSequence => {
+                Operation::SequenceNew => {
                     self.stack.push(StackEntry::Sequence(Sequence(Vec::new())));
                 }
-                Operation::PushSequence => {
-                    let b = self.pop();
-                    let a = self.top();
-                    let mut a = a.as_sequence()?;
-                    if let StackEntry::Sequence(b) = b {
-                        for item in b.0 {
-                            a.push(item);
+                Operation::SequencePush(index) => {
+                    let a = self.pop();
+                    let seq = &self.stack[*index];
+
+                    let mut seq = seq.as_sequence()?;
+                    if let StackEntry::Sequence(a) = a {
+                        for item in &a.0 {
+                            seq.push(item.clone());
                         }
                     } else {
-                        a.push(b.as_item()?);
+                        seq.push(a.as_item()?);
                     }
                 }
-                Operation::IndexSequence => {
-                    let b = self.pop();
-                    let a = self.top();
-                    let a = a.as_sequence()?;
-                    let b = b.as_integer()?;
-                    let item = a.0[b as usize].clone();
+                Operation::SequenceGet(index) => {
+                    let a = self.pop();
+                    let seq = &self.stack[*index];
+                    let seq = seq.as_sequence()?;
+
+                    let a = a.as_integer()?;
+                    let item = seq.0[a as usize].clone();
                     match item {
                         Item::AtomicValue(Atomic::Integer(i)) => {
                             self.stack.push(StackEntry::Integer(i));
@@ -235,10 +237,10 @@ impl Interpreter {
                         }
                     }
                 }
-                Operation::LenSequence => {
-                    let a = self.top();
-                    let a = a.as_sequence()?;
-                    self.stack.push(StackEntry::Integer(a.0.len() as i64));
+                Operation::SequenceLen(index) => {
+                    let seq = &self.stack[*index];
+                    let seq = seq.as_sequence()?;
+                    self.stack.push(StackEntry::Integer(seq.0.len() as i64));
                 }
             }
             ip += 1;
