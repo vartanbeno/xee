@@ -333,10 +333,9 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
         Rule::Literal => ast::PrimaryExpr::Literal(literal_to_literal(pair)),
         Rule::ParenthesizedExpr => {
             let pair = pair.into_inner().next().unwrap();
-            // XXX what if parentheses are empty?
+            // XXX what if parentheses are empty? or multiple expr?
             ast::PrimaryExpr::Expr(vec![expr_single(pair)])
         }
-        Rule::LetExpr => ast::PrimaryExpr::Expr(vec![expr_single(pair)]),
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -560,6 +559,11 @@ mod tests {
     fn test_single_let_expr() {
         assert_debug_snapshot!(parse_expr_single("let $x := 1 return 5"));
     }
+
+    // #[test]
+    // fn test_single_let_expr_var_ref() {
+    //     assert_debug_snapshot!(parse_expr_single("let $x := 1 return $x"));
+    // }
 
     #[test]
     fn test_nested_let_expr() {
