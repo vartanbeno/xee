@@ -246,6 +246,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 let mut simple_let_binding = simple_let_clause_pair.into_inner();
                 let var_name = simple_let_binding.next().unwrap();
                 let var_expr = expr_single(simple_let_binding.next().unwrap());
+                // XXX no support for namespaced names yet
                 let let_expr = ast::LetExpr {
                     var_name: ast::Name {
                         name: var_name.as_str().to_string(),
