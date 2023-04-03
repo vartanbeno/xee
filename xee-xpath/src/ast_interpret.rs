@@ -4,8 +4,13 @@ use crate::interpret::{Interpreter, Result, StackEntry};
 use crate::parse_ast::parse_xpath;
 
 fn compile_xpath(xpath: &ast::XPath, operations: &mut Vec<Operation>) {
-    for expr in &xpath.exprs {
+    let mut iter = xpath.exprs.iter();
+    let first_expr = iter.next().unwrap();
+    compile_expr_single(first_expr, operations);
+
+    for expr in iter {
         compile_expr_single(expr, operations);
+        operations.push(Operation::Comma);
     }
 }
 
@@ -90,7 +95,7 @@ impl<'a> CompiledXPath {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interpret::Result;
+    use crate::interpret::{Atomic, Item, Result, Sequence};
 
     #[test]
     fn test_compile_expr_single() -> Result<()> {
@@ -119,6 +124,20 @@ mod tests {
         let xpath = CompiledXPath::new("1 + (8 - 2)");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 7);
+        Ok(())
+    }
+
+    #[test]
+    fn test_comma() -> Result<()> {
+        let xpath = CompiledXPath::new("1, 2");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            result.as_sequence()?,
+            Sequence(vec![
+                Item::AtomicValue(Atomic::Integer(1)),
+                Item::AtomicValue(Atomic::Integer(2))
+            ])
+        );
         Ok(())
     }
 }

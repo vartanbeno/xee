@@ -22,7 +22,21 @@ pub(crate) enum Item {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Sequence(Vec<Item>);
+pub(crate) struct Sequence(pub Vec<Item>);
+
+impl Sequence {
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub(crate) fn combine(&self, other: &Sequence) -> Sequence {
+        // XXX should not need to clone contents of sequences as they are
+        // immutable, only reference
+        let mut r = self.0.clone();
+        r.extend(other.0.clone());
+        Sequence(r)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackEntry {
@@ -44,6 +58,16 @@ impl StackEntry {
             _ => Err(Error::TypeError),
         }
     }
+
+    pub(crate) fn as_sequence(&self) -> Result<Sequence> {
+        match self {
+            StackEntry::Sequence(s) => Ok(s.clone()),
+            StackEntry::Integer(i) => Ok(Sequence(vec![Item::AtomicValue(Atomic::Integer(*i))])),
+            StackEntry::String(s) => {
+                Ok(Sequence(vec![Item::AtomicValue(Atomic::String(s.clone()))]))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,6 +78,7 @@ pub(crate) enum Operation {
     Concat,
     IntegerLiteral(i64),
     StringLiteral(String),
+    Comma,
 }
 
 pub(crate) struct Interpreter {
@@ -102,6 +127,13 @@ impl Interpreter {
                 }
                 Operation::StringLiteral(s) => {
                     self.stack.push(StackEntry::String(s.to_string()));
+                }
+                Operation::Comma => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_sequence()?;
+                    let b = b.as_sequence()?;
+                    self.stack.push(StackEntry::Sequence(a.combine(&b)));
                 }
             }
         }
