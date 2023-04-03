@@ -33,6 +33,12 @@ fn pair_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
     }
 }
 
+fn xpath(pair: Pair<Rule>) -> ast::XPath {
+    let pairs = pair.into_inner();
+    let exprs = pairs.map(expr_single).collect::<Vec<_>>();
+    ast::XPath { exprs }
+}
+
 fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
     match pair.as_rule() {
         Rule::PathExpr => ast::ExprSingle::Path(path_expr_to_path_expr(pair)),
@@ -387,6 +393,10 @@ pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
     parse_rule(Rule::ExprSingle, input, expr_single)
 }
 
+pub(crate) fn parse_xpath(input: &str) -> ast::XPath {
+    parse_rule(Rule::Expr, input, xpath)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -510,5 +520,15 @@ mod tests {
     #[test]
     fn test_nested_expr() {
         assert_debug_snapshot!(parse_expr_single("1 + (2 * 3)"));
+    }
+
+    #[test]
+    fn test_xpath_single_expr() {
+        assert_debug_snapshot!(parse_xpath("1 + 2"));
+    }
+
+    #[test]
+    fn test_xpath_multi_expr() {
+        assert_debug_snapshot!(parse_xpath("1 + 2, 3 + 4"));
     }
 }

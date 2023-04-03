@@ -11,9 +11,24 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq)]
+pub(crate) enum Atomic {
+    Integer(i64),
+    String(String),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum Item {
+    AtomicValue(Atomic),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Sequence(Vec<Item>);
+
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackEntry {
     Integer(i64),
-    OwnedString(String),
+    String(String),
+    Sequence(Sequence),
 }
 
 impl StackEntry {
@@ -25,7 +40,7 @@ impl StackEntry {
     }
     pub(crate) fn as_string(&self) -> Result<&str> {
         match self {
-            StackEntry::OwnedString(s) => Ok(s.as_str()),
+            StackEntry::String(s) => Ok(s.as_str()),
             _ => Err(Error::TypeError),
         }
     }
@@ -80,13 +95,13 @@ impl Interpreter {
                     let a = a.as_string()?;
                     let b = b.as_string()?;
                     let c = format!("{}{}", a, b);
-                    self.stack.push(StackEntry::OwnedString(c));
+                    self.stack.push(StackEntry::String(c));
                 }
                 Operation::IntegerLiteral(i) => {
                     self.stack.push(StackEntry::Integer(*i));
                 }
                 Operation::StringLiteral(s) => {
-                    self.stack.push(StackEntry::OwnedString(s.to_string()));
+                    self.stack.push(StackEntry::String(s.to_string()));
                 }
             }
         }

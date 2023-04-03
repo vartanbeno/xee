@@ -1,0 +1,35 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_xpath(\"1 + 2\")"
+---
+XPath {
+    exprs: [
+        Binary(
+            BinaryExpr {
+                operator: Add,
+                left: PathExpr {
+                    steps: [
+                        PrimaryExpr(
+                            Literal(
+                                Integer(
+                                    1,
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+                right: PathExpr {
+                    steps: [
+                        PrimaryExpr(
+                            Literal(
+                                Integer(
+                                    2,
+                                ),
+                            ),
+                        ),
+                    ],
+                },
+            },
+        ),
+    ],
+}
