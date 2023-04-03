@@ -36,6 +36,10 @@ impl Sequence {
         r.extend(other.0.clone());
         Sequence(r)
     }
+
+    pub(crate) fn push(&mut self, item: Item) {
+        self.0.push(item);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,6 +62,14 @@ impl StackEntry {
     pub(crate) fn as_string(&self) -> Result<&str> {
         match self {
             StackEntry::String(s) => Ok(s.as_str()),
+            _ => Err(Error::TypeError),
+        }
+    }
+
+    pub(crate) fn as_item(&self) -> Result<Item> {
+        match self {
+            StackEntry::Integer(i) => Ok(Item::AtomicValue(Atomic::Integer(*i))),
+            StackEntry::String(s) => Ok(Item::AtomicValue(Atomic::String(s.clone()))),
             _ => Err(Error::TypeError),
         }
     }
@@ -87,6 +99,10 @@ pub(crate) enum Operation {
     VarRef(usize),
     Jump(usize),
     JumpIfFalse(usize),
+    NewSequence,
+    PushSequence,
+    IndexSequence,
+    LenSequence,
 }
 
 pub(crate) struct Interpreter {
@@ -107,6 +123,11 @@ impl Interpreter {
         // } else {
         //     entry
         // }
+    }
+
+    #[inline]
+    pub(crate) fn top(&self) -> &StackEntry {
+        &self.stack[self.stack.len() - 1]
     }
 
     pub(crate) fn interpret(&mut self, operations: &[Operation]) -> Result<()> {
@@ -183,6 +204,41 @@ impl Interpreter {
                         ip = *new_ip;
                         continue;
                     }
+                }
+                Operation::NewSequence => {
+                    self.stack.push(StackEntry::Sequence(Sequence(Vec::new())));
+                }
+                Operation::PushSequence => {
+                    let b = self.pop();
+                    let a = self.top();
+                    let mut a = a.as_sequence()?;
+                    if let StackEntry::Sequence(b) = b {
+                        for item in b.0 {
+                            a.push(item);
+                        }
+                    } else {
+                        a.push(b.as_item()?);
+                    }
+                }
+                Operation::IndexSequence => {
+                    let b = self.pop();
+                    let a = self.top();
+                    let a = a.as_sequence()?;
+                    let b = b.as_integer()?;
+                    let item = a.0[b as usize].clone();
+                    match item {
+                        Item::AtomicValue(Atomic::Integer(i)) => {
+                            self.stack.push(StackEntry::Integer(i));
+                        }
+                        Item::AtomicValue(Atomic::String(s)) => {
+                            self.stack.push(StackEntry::String(s));
+                        }
+                    }
+                }
+                Operation::LenSequence => {
+                    let a = self.top();
+                    let a = a.as_sequence()?;
+                    self.stack.push(StackEntry::Integer(a.0.len() as i64));
                 }
             }
             ip += 1;

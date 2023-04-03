@@ -105,6 +105,27 @@ fn compile_expr_single(
             // go back and fill in the jump end target
             operations[jump_end_index] = Operation::Jump(end_index);
         }
+        ast::ExprSingle::For(for_expr) => {
+            // operations.push(Operation::NewSequence);
+            // // execute the sequence expression, placing sequence on stack
+            // compile_expr_single(&for_expr.var_expr, scope, operations);
+            // // we get the total length of the sequence
+            // operations.push(Operation::LenSequence);
+            // // the index in the sequence, start at 0
+            // operations.push(Operation::IntegerLiteral(0));
+
+            // // we know the result of the next expression is going to be placed
+            // // here on the stack
+            // let name_index = operations.len();
+            // // XXX ugh clone
+            // scope.push_name(for_expr.var_name.clone(), name_index);
+
+            // // now we take the first entry in the sequence, place it on the stack
+            // operations.push(Operation::IndexSequence);
+
+            // compile_expr_single(&for_expr.return_expr, scope, operations);
+            // scope.pop_name(&for_expr.var_name);
+        }
         _ => {
             panic!("not supported yet");
         }
