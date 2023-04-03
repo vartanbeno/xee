@@ -1094,6 +1094,7 @@ dependencies = [
  "pest_derive",
  "rstest",
  "test-generator",
+ "thiserror",
  "xot",
 ]
 

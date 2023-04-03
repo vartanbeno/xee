@@ -63,7 +63,7 @@ fn compile_path_expr<'a>(path_expr: &'a ast::PathExpr, operations: &mut Vec<Oper
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interpret::{Interpreter, StackEntry};
+    use crate::interpret::{Error, Interpreter, Result, StackEntry};
     use crate::parse_ast::parse_expr_single;
 
     // fn execute(input: &str) -> StackEntry {
@@ -76,7 +76,7 @@ mod tests {
     // }
 
     #[test]
-    fn test_compile_expr_single() {
+    fn test_compile_expr_single() -> Result<()> {
         let expr_single = parse_expr_single("1 + 2");
         let mut operations = Vec::new();
         compile_expr_single(&expr_single, &mut operations);
@@ -86,27 +86,30 @@ mod tests {
         assert_eq!(operations[2], Operation::Add);
 
         let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations);
-        assert_eq!(interpreter.stack.pop().unwrap().as_integer(), 3);
+        interpreter.interpret(&operations)?;
+        assert_eq!(interpreter.stack.pop().unwrap().as_integer()?, 3);
+        Ok(())
     }
 
     #[test]
-    fn test_string_concat() {
+    fn test_string_concat() -> Result<()> {
         let expr_single = parse_expr_single("'a' || 'b'");
         let mut operations = Vec::new();
         compile_expr_single(&expr_single, &mut operations);
         let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations);
-        assert_eq!(interpreter.stack.pop().unwrap().as_string(), "ab");
+        interpreter.interpret(&operations)?;
+        assert_eq!(interpreter.stack.pop().unwrap().as_string()?, "ab");
+        Ok(())
     }
 
     #[test]
-    fn test_nested() {
+    fn test_nested() -> Result<()> {
         let expr_single = parse_expr_single("1 + (8 - 2)");
         let mut operations = Vec::new();
         compile_expr_single(&expr_single, &mut operations);
         let mut interpreter = Interpreter::new();
-        interpreter.interpret(&operations);
-        assert_eq!(interpreter.stack.pop().unwrap().as_integer(), 7);
+        interpreter.interpret(&operations)?;
+        assert_eq!(interpreter.stack.pop().unwrap().as_integer()?, 7);
+        Ok(())
     }
 }

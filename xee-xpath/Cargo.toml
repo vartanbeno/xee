@@ -15,6 +15,7 @@ homepage = "https://github.com/Paligo/xee-xpath"
 ordered-float = "3.6.0"
 pest = "2.5.6"
 pest_derive = "2.5.6"
+thiserror = "1.0.40"
 xot = { workspace = true }
 
 [dev-dependencies]
