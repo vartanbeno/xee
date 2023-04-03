@@ -62,20 +62,19 @@ fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>)
     }
 }
 
-struct CompiledExprSingle {
-    ast: ast::ExprSingle,
+pub(crate) struct CompiledExprSingle {
     operations: Vec<Operation>,
 }
 
 impl<'a> CompiledExprSingle {
-    fn new(expr_single: &str) -> Self {
+    pub(crate) fn new(expr_single: &str) -> Self {
         let ast = parse_expr_single(expr_single);
         let mut operations = Vec::new();
         compile_expr_single(&ast, &mut operations);
-        Self { ast, operations }
+        Self { operations }
     }
 
-    fn interpret(&self) -> Result<StackEntry> {
+    pub(crate) fn interpret(&self) -> Result<StackEntry> {
         let mut interpreter = Interpreter::new();
         interpreter.interpret(&self.operations)?;
         Ok(interpreter.stack.pop().unwrap())
@@ -85,8 +84,7 @@ impl<'a> CompiledExprSingle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interpret::{Interpreter, Result};
-    use crate::parse_ast::parse_expr_single;
+    use crate::interpret::Result;
 
     // fn execute(input: &str) -> StackEntry {
     //     let expr_single = parse_expr_single(input);
