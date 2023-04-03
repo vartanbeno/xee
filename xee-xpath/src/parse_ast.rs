@@ -34,9 +34,14 @@ fn pair_to_path_expr(pair: Pair<Rule>) -> ast::PathExpr {
 }
 
 fn xpath(pair: Pair<Rule>) -> ast::XPath {
+    // let pairs = pair.into_inner();
+    // let exprs = pairs.map(expr_single).collect::<Vec<_>>();
+    ast::XPath { exprs: exprs(pair) }
+}
+
+fn exprs(pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
     let pairs = pair.into_inner();
-    let exprs = pairs.map(expr_single).collect::<Vec<_>>();
-    ast::XPath { exprs }
+    pairs.map(expr_single).collect::<Vec<_>>()
 }
 
 fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
@@ -273,6 +278,18 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 return_expr = ast::ExprSingle::For(for_expr);
             }
             return_expr
+        }
+        Rule::IfExpr => {
+            let mut pairs = pair.into_inner();
+            let condition_pair = pairs.next().unwrap();
+            let condition = exprs(condition_pair);
+            let then = expr_single(pairs.next().unwrap());
+            let else_ = expr_single(pairs.next().unwrap());
+            ast::ExprSingle::If(ast::IfExpr {
+                condition,
+                then: Box::new(then),
+                else_: Box::new(else_),
+            })
         }
         Rule::RangeExpr | Rule::UnionExpr | Rule::IntersectExceptExpr => {
             let pair = pair.into_inner().next().unwrap();
@@ -601,5 +618,10 @@ mod tests {
     #[test]
     fn test_single_for_expr() {
         assert_debug_snapshot!(parse_expr_single("for $x in 1 return 5"));
+    }
+
+    #[test]
+    fn test_if_expr() {
+        assert_debug_snapshot!(parse_expr_single("if (1) then 2 else 3"));
     }
 }
