@@ -81,7 +81,7 @@ pub(crate) struct QuantifiedExprClause {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum PrimaryExpr {
     Literal(Literal),
-    VarRef(EQName),
+    VarRef(Name),
     Expr(Vec<ExprSingle>),
     ContextItem,
     FunctionCall(FunctionCall),

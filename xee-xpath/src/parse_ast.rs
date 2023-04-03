@@ -248,10 +248,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 let var_expr = expr_single(simple_let_binding.next().unwrap());
                 // XXX no support for namespaced names yet
                 let let_expr = ast::LetExpr {
-                    var_name: ast::Name {
-                        name: var_name.as_str().to_string(),
-                        namespace: None,
-                    },
+                    var_name: var_name_to_name(var_name),
                     var_expr: Box::new(var_expr),
                     return_expr: Box::new(return_expr),
                 };
@@ -336,9 +333,22 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
             // XXX what if parentheses are empty? or multiple expr?
             ast::PrimaryExpr::Expr(vec![expr_single(pair)])
         }
+        Rule::VarRef => {
+            let pair = pair.into_inner().next().unwrap();
+            ast::PrimaryExpr::VarRef(var_name_to_name(pair))
+        }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
+    }
+}
+
+fn var_name_to_name(pair: Pair<Rule>) -> ast::Name {
+    debug_assert_eq!(pair.as_rule(), Rule::VarName);
+    // XXX no support for namespaces yet
+    ast::Name {
+        name: pair.as_str().to_string(),
+        namespace: None,
     }
 }
 
@@ -560,10 +570,10 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("let $x := 1 return 5"));
     }
 
-    // #[test]
-    // fn test_single_let_expr_var_ref() {
-    //     assert_debug_snapshot!(parse_expr_single("let $x := 1 return $x"));
-    // }
+    #[test]
+    fn test_single_let_expr_var_ref() {
+        assert_debug_snapshot!(parse_expr_single("let $x := 1 return $x"));
+    }
 
     #[test]
     fn test_nested_let_expr() {
