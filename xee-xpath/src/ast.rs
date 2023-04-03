@@ -22,15 +22,9 @@ pub(crate) enum ExprSingle {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ForExpr {
-    // vec contains at least 1 entry
-    pub(crate) clauses: Vec<ForClause>,
+    pub(crate) var_name: Name,
+    pub(crate) var_expr: Box<ExprSingle>,
     pub(crate) return_expr: Box<ExprSingle>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ForClause {
-    pub(crate) var_name: EQName,
-    pub(crate) expr: ExprSingle,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -44,12 +38,6 @@ pub(crate) struct LetExpr {
     pub(crate) var_name: Name,
     pub(crate) var_expr: Box<ExprSingle>,
     pub(crate) return_expr: Box<ExprSingle>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct LetClause {
-    pub(crate) var_name: EQName,
-    pub(crate) expr: ExprSingle,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

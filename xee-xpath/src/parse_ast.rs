@@ -238,20 +238,39 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
         }
         Rule::LetExpr => {
             let mut pairs = pair.into_inner();
-            let simple_let_clause = pairs.next().unwrap();
-            let simple_let_clause_pairs = simple_let_clause.into_inner();
+            let let_clause = pairs.next().unwrap();
+            let let_clause_pairs = let_clause.into_inner();
             let inner_return_expr = expr_single(pairs.next().unwrap());
             let mut return_expr = inner_return_expr;
-            for simple_let_clause_pair in simple_let_clause_pairs.rev() {
-                let mut simple_let_binding = simple_let_clause_pair.into_inner();
-                let var_name = simple_let_binding.next().unwrap();
-                let var_expr = expr_single(simple_let_binding.next().unwrap());
+            for let_clause_pair in let_clause_pairs.rev() {
+                let mut let_binding = let_clause_pair.into_inner();
+                let var_name = let_binding.next().unwrap();
+                let var_expr = expr_single(let_binding.next().unwrap());
                 let let_expr = ast::LetExpr {
                     var_name: var_name_to_name(var_name),
                     var_expr: Box::new(var_expr),
                     return_expr: Box::new(return_expr),
                 };
                 return_expr = ast::ExprSingle::Let(let_expr);
+            }
+            return_expr
+        }
+        Rule::ForExpr => {
+            let mut pairs = pair.into_inner();
+            let for_clause = pairs.next().unwrap();
+            let for_clause_pairs = for_clause.into_inner();
+            let inner_return_expr = expr_single(pairs.next().unwrap());
+            let mut return_expr = inner_return_expr;
+            for for_clause_pair in for_clause_pairs.rev() {
+                let mut for_binding = for_clause_pair.into_inner();
+                let var_name = for_binding.next().unwrap();
+                let var_expr = expr_single(for_binding.next().unwrap());
+                let for_expr = ast::ForExpr {
+                    var_name: var_name_to_name(var_name),
+                    var_expr: Box::new(var_expr),
+                    return_expr: Box::new(return_expr),
+                };
+                return_expr = ast::ExprSingle::For(for_expr);
             }
             return_expr
         }
@@ -577,5 +596,10 @@ mod tests {
     #[test]
     fn test_nested_let_expr() {
         assert_debug_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
+    }
+
+    #[test]
+    fn test_single_for_expr() {
+        assert_debug_snapshot!(parse_expr_single("for $x in 1 return 5"));
     }
 }
