@@ -41,8 +41,11 @@ impl Sequence {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackEntry {
     Integer(i64),
+    // we could make these references to a pool, so that the stack entry
+    // is really cheap to clone
     String(String),
     Sequence(Sequence),
+    // StackRef(usize),
 }
 
 impl StackEntry {
@@ -66,6 +69,7 @@ impl StackEntry {
             StackEntry::String(s) => {
                 Ok(Sequence(vec![Item::AtomicValue(Atomic::String(s.clone()))]))
             }
+            _ => Err(Error::TypeError),
         }
     }
 }
@@ -79,6 +83,8 @@ pub(crate) enum Operation {
     IntegerLiteral(i64),
     StringLiteral(String),
     Comma,
+    LetDone,
+    VarRef(usize),
 }
 
 pub(crate) struct Interpreter {
@@ -90,33 +96,44 @@ impl Interpreter {
         Self { stack: Vec::new() }
     }
 
+    #[inline]
+    pub(crate) fn pop(&mut self) -> StackEntry {
+        self.stack.pop().unwrap()
+        // if let StackEntry::StackRef(index) = entry {
+        //     // XXX this isn't the cheapest
+        //     self.stack[index].clone()
+        // } else {
+        //     entry
+        // }
+    }
+
     pub(crate) fn interpret(&mut self, operations: &[Operation]) -> Result<()> {
         for operation in operations {
             match operation {
                 Operation::Add => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.pop();
+                    let a = self.pop();
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
                     self.stack.push(StackEntry::Integer(a + b));
                 }
                 Operation::Sub => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.pop();
+                    let a = self.pop();
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
                     self.stack.push(StackEntry::Integer(a - b));
                 }
                 Operation::Mul => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.pop();
+                    let a = self.pop();
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
                     self.stack.push(StackEntry::Integer(a * b));
                 }
                 Operation::Concat => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.pop();
+                    let a = self.pop();
                     let a = a.as_string()?;
                     let b = b.as_string()?;
                     let c = format!("{}{}", a, b);
@@ -129,11 +146,23 @@ impl Interpreter {
                     self.stack.push(StackEntry::String(s.to_string()));
                 }
                 Operation::Comma => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.pop();
+                    let a = self.pop();
                     let a = a.as_sequence()?;
                     let b = b.as_sequence()?;
                     self.stack.push(StackEntry::Sequence(a.combine(&b)));
+                }
+                Operation::LetDone => {
+                    let b = self.pop();
+                    // pop the variable assignment
+                    let _ = self.pop();
+                    self.stack.push(b);
+                }
+                Operation::VarRef(index) => {
+                    // XXX annoying that we have to clone here
+                    // We could avoid this by having a StackRef variant
+                    // but that would require a clone when we pop
+                    self.stack.push(self.stack[*index].clone());
                 }
             }
         }

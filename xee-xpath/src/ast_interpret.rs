@@ -1,27 +1,65 @@
+use ahash::{HashMap, HashMapExt};
+
 use crate::ast;
 use crate::interpret::Operation;
 use crate::interpret::{Interpreter, Result, StackEntry};
 use crate::parse_ast::parse_xpath;
 
-fn compile_xpath(xpath: &ast::XPath, operations: &mut Vec<Operation>) {
-    let mut iter = xpath.exprs.iter();
+fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope, operations: &mut Vec<Operation>) {
+    compile_expr(&xpath.exprs, scope, operations);
+}
+
+fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope, operations: &mut Vec<Operation>) {
+    let mut iter = exprs.iter();
     let first_expr = iter.next().unwrap();
-    compile_expr_single(first_expr, operations);
+    compile_expr_single(first_expr, scope, operations);
 
     for expr in iter {
-        compile_expr_single(expr, operations);
+        compile_expr_single(expr, scope, operations);
         operations.push(Operation::Comma);
     }
 }
 
-fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Operation>) {
+#[derive(Debug)]
+struct Scope {
+    name_stacks: HashMap<ast::Name, Vec<usize>>,
+}
+
+impl Scope {
+    fn new() -> Self {
+        Self {
+            name_stacks: HashMap::new(),
+        }
+    }
+
+    fn get(&self, name: &ast::Name) -> Option<usize> {
+        let stack = self.name_stacks.get(name)?;
+        stack.last().copied()
+    }
+
+    fn push_name(&mut self, name: ast::Name, index: usize) {
+        let stack = self.name_stacks.entry(name).or_insert_with(Vec::new);
+        stack.push(index);
+    }
+
+    fn pop_name(&mut self, name: &ast::Name) {
+        let stack = self.name_stacks.get_mut(&name).unwrap();
+        stack.pop();
+    }
+}
+
+fn compile_expr_single(
+    expr_single: &ast::ExprSingle,
+    scope: &mut Scope,
+    operations: &mut Vec<Operation>,
+) {
     match expr_single {
         ast::ExprSingle::Path(path_expr) => {
-            compile_path_expr(path_expr, operations);
+            compile_path_expr(path_expr, scope, operations);
         }
         ast::ExprSingle::Binary(binary_expr) => {
-            compile_path_expr(&binary_expr.left, operations);
-            compile_path_expr(&binary_expr.right, operations);
+            compile_path_expr(&binary_expr.left, scope, operations);
+            compile_path_expr(&binary_expr.right, scope, operations);
             match binary_expr.operator {
                 ast::Operator::Add => {
                     operations.push(Operation::Add);
@@ -37,13 +75,28 @@ fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Opera
                 }
             }
         }
+        ast::ExprSingle::Let(let_expr) => {
+            // we know the result of the next expression is going to be placed
+            // here on the stack
+            let index = operations.len();
+            // XXX ugh clone
+            scope.push_name(let_expr.var_name.clone(), index);
+            compile_expr_single(&let_expr.var_expr, scope, operations);
+            compile_expr_single(&let_expr.return_expr, scope, operations);
+            operations.push(Operation::LetDone);
+            scope.pop_name(&let_expr.var_name);
+        }
         _ => {
             panic!("not supported yet");
         }
     }
 }
 
-fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>) {
+fn compile_path_expr(
+    path_expr: &ast::PathExpr,
+    scope: &mut Scope,
+    operations: &mut Vec<Operation>,
+) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
         match primary_expr {
@@ -58,11 +111,12 @@ fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>)
                     panic!("literal type not supported yet");
                 }
             },
-            ast::PrimaryExpr::Expr(expressions) => {
-                // XXX doesn't really handle multiple expressions properly yet
-                for expr in expressions {
-                    compile_expr_single(expr, operations);
-                }
+            ast::PrimaryExpr::Expr(exprs) => {
+                compile_expr(exprs, scope, operations);
+            }
+            ast::PrimaryExpr::VarRef(name) => {
+                let index = scope.get(name).unwrap();
+                operations.push(Operation::VarRef(index));
             }
             _ => {
                 panic!("not supported yet");
@@ -81,7 +135,8 @@ impl<'a> CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut operations = Vec::new();
-        compile_xpath(&ast, &mut operations);
+        let mut scope = Scope::new();
+        compile_xpath(&ast, &mut scope, &mut operations);
         Self { operations }
     }
 
@@ -138,6 +193,22 @@ mod tests {
                 Item::AtomicValue(Atomic::Integer(2))
             ])
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_let() -> Result<()> {
+        let xpath = CompiledXPath::new("let $x := 1 return $x + 2");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 3);
+        Ok(())
+    }
+
+    #[test]
+    fn test_let_nested() -> Result<()> {
+        let xpath = CompiledXPath::new("let $x := 1, $y := $x + 3 return $y + 5");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 9);
         Ok(())
     }
 }
