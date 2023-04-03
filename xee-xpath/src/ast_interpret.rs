@@ -1,7 +1,13 @@
 use crate::ast;
 use crate::interpret::Operation;
 use crate::interpret::{Interpreter, Result, StackEntry};
-use crate::parse_ast::parse_expr_single;
+use crate::parse_ast::parse_xpath;
+
+fn compile_xpath(xpath: &ast::XPath, operations: &mut Vec<Operation>) {
+    for expr in &xpath.exprs {
+        compile_expr_single(expr, operations);
+    }
+}
 
 fn compile_expr_single(expr_single: &ast::ExprSingle, operations: &mut Vec<Operation>) {
     match expr_single {
@@ -62,15 +68,15 @@ fn compile_path_expr(path_expr: &ast::PathExpr, operations: &mut Vec<Operation>)
     }
 }
 
-pub(crate) struct CompiledExprSingle {
+pub(crate) struct CompiledXPath {
     operations: Vec<Operation>,
 }
 
-impl<'a> CompiledExprSingle {
-    pub(crate) fn new(expr_single: &str) -> Self {
-        let ast = parse_expr_single(expr_single);
+impl<'a> CompiledXPath {
+    pub(crate) fn new(xpath: &str) -> Self {
+        let ast = parse_xpath(xpath);
         let mut operations = Vec::new();
-        compile_expr_single(&ast, &mut operations);
+        compile_xpath(&ast, &mut operations);
         Self { operations }
     }
 
@@ -88,30 +94,30 @@ mod tests {
 
     #[test]
     fn test_compile_expr_single() -> Result<()> {
-        let expr_single = CompiledExprSingle::new("1 + 2");
-        let operations = &expr_single.operations;
+        let xpath = CompiledXPath::new("1 + 2");
+        let operations = &xpath.operations;
         assert_eq!(operations.len(), 3);
         assert_eq!(operations[0], Operation::IntegerLiteral(1));
         assert_eq!(operations[1], Operation::IntegerLiteral(2));
         assert_eq!(operations[2], Operation::Add);
 
-        let result = expr_single.interpret()?;
+        let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 3);
         Ok(())
     }
 
     #[test]
     fn test_string_concat() -> Result<()> {
-        let expr_single = CompiledExprSingle::new("'a' || 'b'");
-        let result = expr_single.interpret()?;
+        let xpath = CompiledXPath::new("'a' || 'b'");
+        let result = xpath.interpret()?;
         assert_eq!(result.as_string()?, "ab");
         Ok(())
     }
 
     #[test]
     fn test_nested() -> Result<()> {
-        let expr_single = CompiledExprSingle::new("1 + (8 - 2)");
-        let result = expr_single.interpret()?;
+        let xpath = CompiledXPath::new("1 + (8 - 2)");
+        let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 7);
         Ok(())
     }
