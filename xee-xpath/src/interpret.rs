@@ -66,6 +66,14 @@ impl StackEntry {
         }
     }
 
+    pub(crate) fn as_bool(&self) -> Result<bool> {
+        match self {
+            StackEntry::Integer(i) => Ok(*i != 0),
+            StackEntry::String(s) => Ok(!s.is_empty()),
+            _ => Err(Error::TypeError),
+        }
+    }
+
     pub(crate) fn as_item(&self) -> Result<Item> {
         match self {
             StackEntry::Integer(i) => Ok(Item::AtomicValue(Atomic::Integer(*i))),
@@ -92,6 +100,13 @@ pub(crate) enum Operation {
     Sub,
     Mul,
     Concat,
+    // XXX we could reduce the amount of value compare opcodes by clever compilation
+    ValueEq,
+    ValueNe,
+    ValueLt,
+    ValueLe,
+    ValueGt,
+    ValueGe,
     IntegerLiteral(i64),
     StringLiteral(String),
     Comma,
@@ -165,6 +180,54 @@ impl Interpreter {
                     let c = format!("{}{}", a, b);
                     self.stack.push(StackEntry::String(c));
                 }
+                Operation::ValueEq => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a == b { 1 } else { 0 }));
+                }
+                Operation::ValueNe => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a != b { 1 } else { 0 }));
+                }
+                Operation::ValueLt => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a < b { 1 } else { 0 }));
+                }
+                Operation::ValueLe => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a <= b { 1 } else { 0 }));
+                }
+                Operation::ValueGt => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a > b { 1 } else { 0 }));
+                }
+                Operation::ValueGe => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    self.stack
+                        .push(StackEntry::Integer(if a >= b { 1 } else { 0 }));
+                }
                 Operation::IntegerLiteral(i) => {
                     self.stack.push(StackEntry::Integer(*i));
                 }
@@ -198,9 +261,8 @@ impl Interpreter {
                 }
                 Operation::JumpIfFalse(new_ip) => {
                     let a = self.pop();
-                    // XXX this needs proper boolean conversion
-                    let a = a.as_integer()?;
-                    if a == 0 {
+                    let a = a.as_bool()?;
+                    if !a {
                         ip = *new_ip;
                         continue;
                     }

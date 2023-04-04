@@ -67,6 +67,24 @@ fn compile_expr_single(
                 ast::Operator::Sub => {
                     operations.push(Operation::Sub);
                 }
+                ast::Operator::ValueEq => {
+                    operations.push(Operation::ValueEq);
+                }
+                ast::Operator::ValueNe => {
+                    operations.push(Operation::ValueNe);
+                }
+                ast::Operator::ValueLt => {
+                    operations.push(Operation::ValueLt);
+                }
+                ast::Operator::ValueLe => {
+                    operations.push(Operation::ValueLe);
+                }
+                ast::Operator::ValueGt => {
+                    operations.push(Operation::ValueGt);
+                }
+                ast::Operator::ValueGe => {
+                    operations.push(Operation::ValueGe);
+                }
                 ast::Operator::Concat => {
                     operations.push(Operation::Concat);
                 }
@@ -85,7 +103,7 @@ fn compile_expr_single(
                     // add to range
                 }
                 _ => {
-                    panic!("not supported yet");
+                    panic!("operator supported yet {:?}", binary_expr.operator);
                 }
             }
         }
@@ -279,6 +297,54 @@ mod tests {
         let xpath = CompiledXPath::new("if (0) then 2 else 3");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 3);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_eq_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 eq 1");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_eq_false() -> Result<()> {
+        let xpath = CompiledXPath::new("1 eq 2");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_ne_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 ne 2");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_ne_false() -> Result<()> {
+        let xpath = CompiledXPath::new("1 ne 1");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_lt_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 lt 2");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_value_lt_false() -> Result<()> {
+        let xpath = CompiledXPath::new("2 lt 1");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
         Ok(())
     }
 }
