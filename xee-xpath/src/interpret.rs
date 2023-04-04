@@ -96,6 +96,9 @@ impl StackEntry {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Operation {
+    Peek(usize),
+    Pop,
+    Dup,
     Add,
     Sub,
     Mul,
@@ -151,6 +154,17 @@ impl Interpreter {
         while ip < operations.len() {
             let operation = &operations[ip];
             match operation {
+                Operation::Peek(usize) => {
+                    let entry = self.stack[self.stack.len() - usize - 1].clone();
+                    self.stack.push(entry);
+                }
+                Operation::Pop => {
+                    self.pop();
+                }
+                Operation::Dup => {
+                    let entry = self.top().clone();
+                    self.stack.push(entry);
+                }
                 Operation::Add => {
                     let b = self.pop();
                     let a = self.pop();

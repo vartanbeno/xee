@@ -89,12 +89,41 @@ fn compile_expr_single(
                     operations.push(Operation::Concat);
                 }
                 ast::Operator::Range => {
-                    // left and right of range are on the stack
+                    // // left and right of range are on the stack
+                    // operations.push(Operation::Peek(2));
+                    // operations.push(Operation::Peek(1));
+                    // operations.push(Operation::ValueEq);
 
-                    // if they are the same, push left on the stack
+                    // let jump_if_equal_index = operations.len();
+                    // operations.push(Operation::JumpIfFalse(0));
 
-                    // if left is greater than right, push empty sequence on stack
+                    // operations.push(Operation::Peek(2));
+                    // operations.push(Operation::Peek(1));
+                    // operations.push(Operation::ValueGt);
 
+                    // let jump_if_greater_index = operations.len();
+                    // operations.push(Operation::JumpIfFalse(0));
+
+                    // // left and right are equal: we can just return left
+                    // operations.push(Operation::Pop);
+                    // let equal_jump_to_end = operations.len();
+                    // operations.push(Operation::Jump(0));
+
+                    // // if left is greater than right, push empty sequence on stack
+                    // operations.push(Operation::SequenceNew);
+                    // let greater_jump_to_end = operations.len();
+                    // operations.push(Operation::Jump(0));
+
+                    // // left is less than right: we need to create a sequence
+                    // let sequence_index = operations.len();
+                    // operations.push(Operation::SequenceNew);
+                    // // start index
+                    // operations.push(Operation::Peek(3));
+                    // operations.push(Operation::Dup);
+                    // operations.push(Operation::SequencePush(sequence_index));
+                    // // if start is at end, we're done
+
+                    // let end = operations.len();
                     // otherwise, we need to create a new sequence
                     // operations.push(Operation::NewSequence);
 
