@@ -181,7 +181,10 @@ struct FunctionBuilder<'a> {
 }
 
 #[must_use]
-struct JumpRef(usize);
+struct ForwardJumpRef(usize);
+
+#[must_use]
+struct BackwardJumpRef(usize);
 
 struct FunctionBuilderResult {
     name: String,
@@ -189,6 +192,16 @@ struct FunctionBuilderResult {
     start: usize,
     end: usize,
     constants: Vec<Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum Comparison {
+    Eq,
+    Ne,
+    Lt,
+    Le,
+    Gt,
+    Ge,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -214,11 +227,32 @@ impl<'a> FunctionBuilder<'a> {
         self.emit(Instruction::Const(constant_id as u16));
     }
 
-    fn loop_start(&self) -> JumpRef {
-        JumpRef(self.program.vec.len())
+    fn emit_compare(&mut self, comparison: Comparison) {
+        match comparison {
+            Comparison::Eq => self.emit(Instruction::Eq),
+            Comparison::Ne => self.emit(Instruction::Ne),
+            Comparison::Lt => self.emit(Instruction::Lt),
+            Comparison::Le => self.emit(Instruction::Le),
+            Comparison::Gt => self.emit(Instruction::Gt),
+            Comparison::Ge => self.emit(Instruction::Ge),
+        }
     }
 
-    fn emit_jump_backward(&mut self, jump_ref: JumpRef) {
+    fn emit_compare_forward(&mut self, comparison: Comparison) -> ForwardJumpRef {
+        self.emit_compare(comparison);
+        self.emit_jump_forward()
+    }
+
+    fn emit_compare_backward(&mut self, comparison: Comparison, jump_ref: BackwardJumpRef) {
+        self.emit_compare(comparison);
+        self.emit_jump_backward(jump_ref);
+    }
+
+    fn loop_start(&self) -> BackwardJumpRef {
+        BackwardJumpRef(self.program.vec.len())
+    }
+
+    fn emit_jump_backward(&mut self, jump_ref: BackwardJumpRef) {
         let current = self.program.vec.len() + 3;
         let offset = current - jump_ref.0;
         if jump_ref.0 > current {
@@ -230,18 +264,13 @@ impl<'a> FunctionBuilder<'a> {
         self.emit(Instruction::Jump(-(offset as i16)));
     }
 
-    fn emit_jump_forward(&mut self) -> JumpRef {
+    fn emit_jump_forward(&mut self) -> ForwardJumpRef {
         let index = self.program.vec.len();
         self.emit(Instruction::Jump(0));
-        JumpRef(index)
+        ForwardJumpRef(index)
     }
 
-    fn emit_lt_forward(&mut self) -> JumpRef {
-        self.emit(Instruction::Lt);
-        self.emit_jump_forward()
-    }
-
-    fn patch_jump(&mut self, jump_ref: JumpRef) {
+    fn patch_jump(&mut self, jump_ref: ForwardJumpRef) {
         let current = self.program.vec.len();
         if jump_ref.0 > current {
             panic!("can only patch forward jumps");
@@ -480,11 +509,10 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         builder.emit_constant(Value::Integer(1));
         builder.emit_constant(Value::Integer(2));
-        builder.emit(Instruction::Lt);
-        let lt_true = builder.emit_jump_forward();
+        let lt_false = builder.emit_compare_forward(Comparison::Lt);
         builder.emit_constant(Value::Integer(3));
         let end = builder.emit_jump_forward();
-        builder.patch_jump(lt_true);
+        builder.patch_jump(lt_false);
         builder.emit_constant(Value::Integer(4));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
@@ -504,11 +532,10 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         builder.emit_constant(Value::Integer(2));
         builder.emit_constant(Value::Integer(1));
-        builder.emit(Instruction::Lt);
-        let lt_true = builder.emit_jump_forward();
+        let lt_false = builder.emit_compare_forward(Comparison::Lt);
         builder.emit_constant(Value::Integer(3));
         let end = builder.emit_jump_forward();
-        builder.patch_jump(lt_true);
+        builder.patch_jump(lt_false);
         builder.emit_constant(Value::Integer(4));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
@@ -530,8 +557,7 @@ mod tests {
         let loop_start = builder.loop_start();
         builder.emit(Instruction::Dup);
         builder.emit_constant(Value::Integer(5));
-        builder.emit(Instruction::Gt);
-        let end = builder.emit_jump_forward();
+        let end = builder.emit_compare_forward(Comparison::Gt);
         builder.emit_constant(Value::Integer(1));
         builder.emit(Instruction::Sub);
         builder.emit_jump_backward(loop_start);
