@@ -320,9 +320,9 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn start(&mut self) {
+    fn start(&mut self, function_id: FunctionId) {
         self.frames.push(Frame {
-            function: FunctionId(0),
+            function: function_id,
             ip: 0,
             base: 0,
         });
@@ -485,9 +485,9 @@ mod tests {
         builder.emit(Instruction::Add);
         let function = builder.finish("main".to_string(), 0);
 
-        program.add_function(function);
+        let main_id = program.add_function(function);
         let mut interpreter = Interpreter::new(&program);
-        interpreter.start();
+        interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
         Ok(())
@@ -532,9 +532,9 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        program.add_function(function);
+        let main_id = program.add_function(function);
         let mut interpreter = Interpreter::new(&program);
-        interpreter.start();
+        interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
         Ok(())
@@ -555,9 +555,9 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        program.add_function(function);
+        let main_id = program.add_function(function);
         let mut interpreter = Interpreter::new(&program);
-        interpreter.start();
+        interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(4)]);
         Ok(())
@@ -579,9 +579,9 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        program.add_function(function);
+        let main_id = program.add_function(function);
         let mut interpreter = Interpreter::new(&program);
-        interpreter.start();
+        interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(5)]);
         Ok(())
@@ -596,14 +596,17 @@ mod tests {
     //     builder.emit_constant(Value::Integer(6));
     //     builder.emit(Instruction::Add);
     //     let inner = builder.finish("inner".to_string(), 0);
-
+    //     let inner_id = program.add_function(inner);
     //     let mut builder = FunctionBuilder::new(&mut program);
     //     builder.emit_constant(Value::Integer(1));
-    //     builder.emit_constant(Value::Function(inner));
+    //     builder.emit_constant(Value::Function(inner_id));
     //     builder.emit(Instruction::Call);
     //     builder.emit(Instruction::Add);
     //     let outer = builder.finish("outer".to_string(), 0);
-
+    //     let main_id = program.add_function(outer);
+    //     let mut interpreter = Interpreter::new(&program);
+    //     interpreter.start(main_id);
+    //     interpreter.run()?;
     //     Ok(())
     // }
 }
