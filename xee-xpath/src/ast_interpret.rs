@@ -139,25 +139,15 @@ fn compile_expr_single(
             builder.emit(Instruction::LetDone);
             scope.names.pop();
         }
-        // ast::ExprSingle::If(if_expr) => {
-        //     compile_expr(&if_expr.condition, scope, operations);
-        //     // temporary index, we can fill it in later once we've emitted
-        //     // then
-        //     let jump_else_index = operations.len();
-        //     operations.push(Operation::JumpIfFalse(0));
-        //     compile_expr_single(&if_expr.then, scope, operations);
-        //     // temporary index, we fill in it later once we've emitted else
-        //     let jump_end_index = operations.len();
-        //     operations.push(Operation::Jump(0));
-        //     // now we know the index of the else branch
-        //     let else_index = operations.len();
-        //     operations[jump_else_index] = Operation::JumpIfFalse(else_index);
-        //     compile_expr_single(&if_expr.else_, scope, operations);
-        //     // record the end of the whole if expression
-        //     let end_index = operations.len();
-        //     // go back and fill in the jump end target
-        //     operations[jump_end_index] = Operation::Jump(end_index);
-        // }
+        ast::ExprSingle::If(if_expr) => {
+            compile_expr(&if_expr.condition, scope, builder);
+            let jump_else = builder.emit_test_forward();
+            compile_expr_single(&if_expr.then, scope, builder);
+            let jump_end = builder.emit_jump_forward();
+            builder.patch_jump(jump_else);
+            compile_expr_single(&if_expr.else_, scope, builder);
+            builder.patch_jump(jump_end);
+        }
         ast::ExprSingle::For(for_expr) => {
             // operations.push(Operation::NewSequence);
             // // execute the sequence expression, placing sequence on stack
@@ -302,21 +292,21 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_if() -> Result<()> {
-    //     let xpath = CompiledXPath::new("if (1) then 2 else 3");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(result.as_integer()?, 2);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_if() -> Result<()> {
+        let xpath = CompiledXPath::new("if (1) then 2 else 3");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_if_false() -> Result<()> {
-    //     let xpath = CompiledXPath::new("if (0) then 2 else 3");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(result.as_integer()?, 3);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_if_false() -> Result<()> {
+        let xpath = CompiledXPath::new("if (0) then 2 else 3");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 3);
+        Ok(())
+    }
 
     // #[test]
     // fn test_value_eq_true() -> Result<()> {

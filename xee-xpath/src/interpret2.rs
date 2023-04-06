@@ -193,7 +193,7 @@ pub(crate) struct FunctionBuilder<'a> {
 }
 
 #[must_use]
-struct ForwardJumpRef(usize);
+pub(crate) struct ForwardJumpRef(usize);
 
 #[must_use]
 struct BackwardJumpRef(usize);
@@ -208,7 +208,7 @@ pub(crate) struct BuiltFunction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Comparison {
+pub(crate) enum Comparison {
     Eq,
     Ne,
     Lt,
@@ -251,7 +251,7 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn emit_compare_forward(&mut self, comparison: Comparison) -> ForwardJumpRef {
+    pub(crate) fn emit_compare_forward(&mut self, comparison: Comparison) -> ForwardJumpRef {
         self.emit_compare(comparison);
         self.emit_jump_forward()
     }
@@ -259,6 +259,11 @@ impl<'a> FunctionBuilder<'a> {
     fn emit_compare_backward(&mut self, comparison: Comparison, jump_ref: BackwardJumpRef) {
         self.emit_compare(comparison);
         self.emit_jump_backward(jump_ref);
+    }
+
+    pub(crate) fn emit_test_forward(&mut self) -> ForwardJumpRef {
+        self.emit(Instruction::Test);
+        self.emit_jump_forward()
     }
 
     fn loop_start(&self) -> BackwardJumpRef {
@@ -277,13 +282,13 @@ impl<'a> FunctionBuilder<'a> {
         self.emit(Instruction::Jump(-(offset as i16)));
     }
 
-    fn emit_jump_forward(&mut self) -> ForwardJumpRef {
+    pub(crate) fn emit_jump_forward(&mut self) -> ForwardJumpRef {
         let index = self.program.vec.len();
         self.emit(Instruction::Jump(0));
         ForwardJumpRef(index)
     }
 
-    fn patch_jump(&mut self, jump_ref: ForwardJumpRef) {
+    pub(crate) fn patch_jump(&mut self, jump_ref: ForwardJumpRef) {
         let current = self.program.vec.len();
         if jump_ref.0 > current {
             panic!("can only patch forward jumps");
