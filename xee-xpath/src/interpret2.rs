@@ -67,12 +67,16 @@ enum Instruction {
     Const(u16),
     Var(u16),
     Eq,
+    Ne,
     Lt,
     Le,
+    Gt,
+    Ge,
     Test,
     Jump(i16),
     Call,
     Return,
+    Dup,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
@@ -86,13 +90,17 @@ enum EncodedInstruction {
     Var,
     // comparison & control flow
     Eq,
+    Ne,
     Lt,
     Le,
+    Gt,
+    Ge,
     Test,
     Jump, // displacement encoded as 16 bit signed integer
     // functions
     Call,
     Return,
+    Dup,
 }
 
 // decode a single instruction from the slice
@@ -110,8 +118,11 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             (Instruction::Var(variable), 3)
         }
         EncodedInstruction::Eq => (Instruction::Eq, 1),
+        EncodedInstruction::Ne => (Instruction::Ne, 1),
         EncodedInstruction::Lt => (Instruction::Lt, 1),
         EncodedInstruction::Le => (Instruction::Le, 1),
+        EncodedInstruction::Gt => (Instruction::Gt, 1),
+        EncodedInstruction::Ge => (Instruction::Ge, 1),
         EncodedInstruction::Test => (Instruction::Test, 1),
         EncodedInstruction::Jump => {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
@@ -119,6 +130,7 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         }
         EncodedInstruction::Call => (Instruction::Call, 1),
         EncodedInstruction::Return => (Instruction::Return, 1),
+        EncodedInstruction::Dup => (Instruction::Dup, 1),
     }
 }
 
@@ -146,8 +158,11 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
             bytes.extend_from_slice(&variable.to_le_bytes());
         }
         Instruction::Eq => bytes.push(EncodedInstruction::Eq.to_u8().unwrap()),
+        Instruction::Ne => bytes.push(EncodedInstruction::Ne.to_u8().unwrap()),
         Instruction::Lt => bytes.push(EncodedInstruction::Lt.to_u8().unwrap()),
         Instruction::Le => bytes.push(EncodedInstruction::Le.to_u8().unwrap()),
+        Instruction::Gt => bytes.push(EncodedInstruction::Gt.to_u8().unwrap()),
+        Instruction::Ge => bytes.push(EncodedInstruction::Ge.to_u8().unwrap()),
         Instruction::Test => bytes.push(EncodedInstruction::Test.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
@@ -155,6 +170,7 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         }
         Instruction::Call => bytes.push(EncodedInstruction::Call.to_u8().unwrap()),
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
+        Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
     }
 }
 
@@ -201,12 +217,12 @@ impl<'a> FunctionBuilder<'a> {
         self.emit(Instruction::Const(constant_id as u16));
     }
 
-    fn jump_ref(&self) -> JumpRef {
+    fn loop_start(&self) -> JumpRef {
         JumpRef(self.program.vec.len())
     }
 
     fn emit_jump_backward(&mut self, jump_ref: JumpRef) {
-        let current = self.program.vec.len();
+        let current = self.program.vec.len() + 3;
         let offset = current - jump_ref.0;
         if jump_ref.0 > current {
             panic!("cannot jump forward");
@@ -221,6 +237,11 @@ impl<'a> FunctionBuilder<'a> {
         let index = self.program.vec.len();
         self.emit(Instruction::Jump(0));
         JumpRef(index)
+    }
+
+    fn emit_lt_forward(&mut self) -> JumpRef {
+        self.emit(Instruction::Lt);
+        self.emit_jump_forward()
     }
 
     fn patch_jump(&mut self, jump_ref: JumpRef) {
@@ -312,6 +333,17 @@ impl<'a> Interpreter<'a> {
                         ip += 3;
                     }
                 }
+                Instruction::Ne => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    // XXX can functions be value compared?
+                    let result = a != b;
+                    // skip the next instruction, which by construction
+                    // has to be a jump instruction, so we know its size
+                    if result {
+                        ip += 3;
+                    }
+                }
                 Instruction::Lt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
@@ -336,6 +368,30 @@ impl<'a> Interpreter<'a> {
                         ip += 3;
                     }
                 }
+                Instruction::Gt => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    let result = a > b;
+                    // skip the next instruction, which by construction
+                    // has to be a jump instruction, so we know its size
+                    if result {
+                        ip += 3;
+                    }
+                }
+                Instruction::Ge => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
+                    let result = a >= b;
+                    // skip the next instruction, which by construction
+                    // has to be a jump instruction, so we know its size
+                    if result {
+                        ip += 3;
+                    }
+                }
                 Instruction::Test => {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_integer()?;
@@ -345,6 +401,10 @@ impl<'a> Interpreter<'a> {
                     if result {
                         ip += 3;
                     }
+                }
+                Instruction::Dup => {
+                    let a = self.stack.last().unwrap().clone();
+                    self.stack.push(a);
                 }
                 // XXX do we need a TestFalse? in that case we make the previous
                 // instruction TestTrue
@@ -465,6 +525,32 @@ mod tests {
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(4)]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_loop() -> Result<()> {
+        let mut program = Program::new();
+
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.start();
+        builder.emit_constant(Value::Integer(10));
+        let loop_start = builder.loop_start();
+        builder.emit(Instruction::Dup);
+        builder.emit_constant(Value::Integer(5));
+        builder.emit(Instruction::Gt);
+        let end = builder.emit_jump_forward();
+        builder.emit_constant(Value::Integer(1));
+        builder.emit(Instruction::Sub);
+        builder.emit_jump_backward(loop_start);
+        builder.patch_jump(end);
+        let function = builder.finish("main".to_string(), 0);
+
+        let function = program.get_function(function);
+        let mut interpreter = Interpreter::new(&program, vec![function]);
+        interpreter.start();
+        interpreter.run()?;
+        assert_eq!(interpreter.stack, vec![Value::Integer(5)]);
         Ok(())
     }
 }
