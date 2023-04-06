@@ -102,11 +102,11 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Add => (Instruction::Add, 1),
         EncodedInstruction::Sub => (Instruction::Sub, 1),
         EncodedInstruction::Const => {
-            let constant = u16::from_be_bytes([bytes[1], bytes[2]]);
+            let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Const(constant), 3)
         }
         EncodedInstruction::Var => {
-            let variable = u16::from_be_bytes([bytes[1], bytes[2]]);
+            let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Var(variable), 3)
         }
         EncodedInstruction::Eq => (Instruction::Eq, 1),
@@ -114,12 +114,23 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Le => (Instruction::Le, 1),
         EncodedInstruction::Test => (Instruction::Test, 1),
         EncodedInstruction::Jump => {
-            let displacement = i16::from_be_bytes([bytes[1], bytes[2]]);
+            let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Jump(displacement), 3)
         }
         EncodedInstruction::Call => (Instruction::Call, 1),
         EncodedInstruction::Return => (Instruction::Return, 1),
     }
+}
+
+fn decode_bytes(bytes: &[u8]) -> Vec<Instruction> {
+    let mut instructions = Vec::new();
+    let mut ip = 0;
+    while ip < bytes.len() {
+        let (instruction, instruction_size) = decode_instruction(&bytes[ip..]);
+        instructions.push(instruction);
+        ip += instruction_size;
+    }
+    instructions
 }
 
 fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
@@ -128,11 +139,11 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::Sub => bytes.push(EncodedInstruction::Sub.to_u8().unwrap()),
         Instruction::Const(constant) => {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
-            bytes.extend_from_slice(&constant.to_be_bytes());
+            bytes.extend_from_slice(&constant.to_le_bytes());
         }
         Instruction::Var(variable) => {
             bytes.push(EncodedInstruction::Var.to_u8().unwrap());
-            bytes.extend_from_slice(&variable.to_be_bytes());
+            bytes.extend_from_slice(&variable.to_le_bytes());
         }
         Instruction::Eq => bytes.push(EncodedInstruction::Eq.to_u8().unwrap()),
         Instruction::Lt => bytes.push(EncodedInstruction::Lt.to_u8().unwrap()),
@@ -140,7 +151,7 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::Test => bytes.push(EncodedInstruction::Test.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
-            bytes.extend_from_slice(&displacement.to_be_bytes());
+            bytes.extend_from_slice(&displacement.to_le_bytes());
         }
         Instruction::Call => bytes.push(EncodedInstruction::Call.to_u8().unwrap()),
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
@@ -153,7 +164,8 @@ struct FunctionBuilder<'a> {
     constants: Vec<Value>,
 }
 
-struct JumpLocation(usize);
+#[must_use]
+struct JumpRef(usize);
 
 struct FunctionBuilderResult {
     name: String,
@@ -189,20 +201,40 @@ impl<'a> FunctionBuilder<'a> {
         self.emit(Instruction::Const(constant_id as u16));
     }
 
-    fn emit_jump(&mut self) -> JumpLocation {
-        let offset = self.program.vec.len();
-        self.emit(Instruction::Jump(0));
-        JumpLocation(offset)
+    fn jump_ref(&self) -> JumpRef {
+        JumpRef(self.program.vec.len())
     }
 
-    fn patch_jump(&mut self, location: JumpLocation) {
-        let offset = location.0;
-        let jump = self.program.vec.len() - offset;
-        if jump > (u16::MAX as usize) {
+    fn emit_jump_backward(&mut self, jump_ref: JumpRef) {
+        let current = self.program.vec.len();
+        let offset = current - jump_ref.0;
+        if jump_ref.0 > current {
+            panic!("cannot jump forward");
+        }
+        if offset > (u16::MAX as usize) {
             panic!("jump too far");
         }
-        self.program.vec[offset + 1] = (jump >> 8) as u8;
-        self.program.vec[offset + 2] = jump as u8;
+        self.emit(Instruction::Jump(-(offset as i16)));
+    }
+
+    fn emit_jump_forward(&mut self) -> JumpRef {
+        let index = self.program.vec.len();
+        self.emit(Instruction::Jump(0));
+        JumpRef(index)
+    }
+
+    fn patch_jump(&mut self, jump_ref: JumpRef) {
+        let current = self.program.vec.len();
+        if jump_ref.0 > current {
+            panic!("can only patch forward jumps");
+        }
+        let offset = current - jump_ref.0 - 3; // 3 for size of the jump
+        if offset > (u16::MAX as usize) {
+            panic!("jump too far");
+        }
+        let offset_bytes = offset.to_le_bytes();
+        self.program.vec[jump_ref.0 + 1] = offset_bytes[0];
+        self.program.vec[jump_ref.0 + 2] = offset_bytes[1];
     }
 
     fn finish(self, name: String, arity: usize) -> FunctionBuilderResult {
@@ -358,6 +390,81 @@ mod tests {
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_emit_jump_forward() -> Result<()> {
+        let mut program = Program::new();
+
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.start();
+        let jump = builder.emit_jump_forward();
+        builder.emit_constant(Value::Integer(3));
+        builder.patch_jump(jump);
+        builder.emit_constant(Value::Integer(4));
+        let function = builder.finish("main".to_string(), 0);
+
+        let function = program.get_function(function);
+        let instructions = decode_bytes(function.chunk);
+        assert_eq!(
+            instructions,
+            vec![
+                Instruction::Jump(3),
+                Instruction::Const(0),
+                Instruction::Const(1)
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_condition_true() -> Result<()> {
+        let mut program = Program::new();
+
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.start();
+        builder.emit_constant(Value::Integer(1));
+        builder.emit_constant(Value::Integer(2));
+        builder.emit(Instruction::Lt);
+        let lt_true = builder.emit_jump_forward();
+        builder.emit_constant(Value::Integer(3));
+        let end = builder.emit_jump_forward();
+        builder.patch_jump(lt_true);
+        builder.emit_constant(Value::Integer(4));
+        builder.patch_jump(end);
+        let function = builder.finish("main".to_string(), 0);
+
+        let function = program.get_function(function);
+        let mut interpreter = Interpreter::new(&program, vec![function]);
+        interpreter.start();
+        interpreter.run()?;
+        assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_condition_false() -> Result<()> {
+        let mut program = Program::new();
+
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.start();
+        builder.emit_constant(Value::Integer(2));
+        builder.emit_constant(Value::Integer(1));
+        builder.emit(Instruction::Lt);
+        let lt_true = builder.emit_jump_forward();
+        builder.emit_constant(Value::Integer(3));
+        let end = builder.emit_jump_forward();
+        builder.patch_jump(lt_true);
+        builder.emit_constant(Value::Integer(4));
+        builder.patch_jump(end);
+        let function = builder.finish("main".to_string(), 0);
+
+        let function = program.get_function(function);
+        let mut interpreter = Interpreter::new(&program, vec![function]);
+        interpreter.start();
+        interpreter.run()?;
+        assert_eq!(interpreter.stack, vec![Value::Integer(4)]);
         Ok(())
     }
 }
