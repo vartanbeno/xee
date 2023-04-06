@@ -11,7 +11,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct FunctionId(usize);
 
 #[derive(Debug, Clone)]
@@ -55,6 +55,13 @@ impl Value {
     fn as_integer(&self) -> Result<i64> {
         match self {
             Value::Integer(i) => Ok(*i),
+            _ => Err(Error::TypeError),
+        }
+    }
+
+    fn as_function(&self) -> Result<FunctionId> {
+        match self {
+            Value::Function(f) => Ok(*f),
             _ => Err(Error::TypeError),
         }
     }
@@ -286,7 +293,8 @@ impl<'a> FunctionBuilder<'a> {
         self.program.vec[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    fn finish(self, name: String, arity: usize) -> BuiltFunction {
+    fn finish(mut self, name: String, arity: usize) -> BuiltFunction {
+        self.emit(Instruction::Return);
         BuiltFunction {
             name,
             arity,
@@ -329,9 +337,10 @@ impl<'a> Interpreter<'a> {
     }
 
     fn run(&mut self) -> Result<()> {
-        let frame = self.frames.last_mut().unwrap();
-        let function = &self.functions[frame.function.0];
+        let frame = self.frames.last().unwrap();
 
+        let mut function = &self.functions[frame.function.0];
+        let mut base = frame.base;
         let mut ip = frame.ip;
         while ip < function.chunk.len() {
             let (instruction, instruction_size) = decode_instruction(&function.chunk[ip..]);
@@ -357,8 +366,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(function.constants[index as usize].clone());
                 }
                 Instruction::Var(index) => {
-                    self.stack
-                        .push(self.stack[frame.base + index as usize].clone());
+                    self.stack.push(self.stack[base + index as usize].clone());
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
@@ -443,13 +451,40 @@ impl<'a> Interpreter<'a> {
                         ip += 3;
                     }
                 }
+                // XXX do we need a TestFalse? in that case we make the previous
+                // instruction TestTrue
                 Instruction::Dup => {
                     let a = self.stack.last().unwrap().clone();
                     self.stack.push(a);
                 }
-                // XXX do we need a TestFalse? in that case we make the previous
-                // instruction TestTrue
-                _ => unimplemented!(),
+                Instruction::Call => {
+                    // store ip of next instruction in current frame
+                    let frame = self.frames.last_mut().unwrap();
+                    frame.ip = ip;
+
+                    // construct new frame
+                    let function_id = self.stack.pop().unwrap().as_function()?;
+                    function = &self.functions[function_id.0];
+                    let stack_size = self.stack.len();
+                    base = stack_size; // need to substract arity;
+                    ip = 0;
+                    self.frames.push(Frame {
+                        function: function_id,
+                        ip,
+                        base,
+                    });
+                }
+                Instruction::Return => {
+                    self.frames.pop();
+                    if self.frames.is_empty() {
+                        // we can't return any further
+                        break;
+                    }
+                    let frame = self.frames.last().unwrap();
+                    base = frame.base;
+                    ip = frame.ip;
+                    function = &self.functions[frame.function.0];
+                }
             }
         }
         Ok(())
@@ -511,7 +546,8 @@ mod tests {
             vec![
                 Instruction::Jump(3),
                 Instruction::Const(0),
-                Instruction::Const(1)
+                Instruction::Const(1),
+                Instruction::Return
             ]
         );
         Ok(())
@@ -587,26 +623,27 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_call() -> Result<()> {
-    //     let mut program = Program::new();
+    #[test]
+    fn test_call() -> Result<()> {
+        let mut program = Program::new();
 
-    //     let mut builder = FunctionBuilder::new(&mut program);
-    //     builder.emit_constant(Value::Integer(5));
-    //     builder.emit_constant(Value::Integer(6));
-    //     builder.emit(Instruction::Add);
-    //     let inner = builder.finish("inner".to_string(), 0);
-    //     let inner_id = program.add_function(inner);
-    //     let mut builder = FunctionBuilder::new(&mut program);
-    //     builder.emit_constant(Value::Integer(1));
-    //     builder.emit_constant(Value::Function(inner_id));
-    //     builder.emit(Instruction::Call);
-    //     builder.emit(Instruction::Add);
-    //     let outer = builder.finish("outer".to_string(), 0);
-    //     let main_id = program.add_function(outer);
-    //     let mut interpreter = Interpreter::new(&program);
-    //     interpreter.start(main_id);
-    //     interpreter.run()?;
-    //     Ok(())
-    // }
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.emit_constant(Value::Integer(5));
+        builder.emit_constant(Value::Integer(6));
+        builder.emit(Instruction::Add);
+        let inner = builder.finish("inner".to_string(), 0);
+        let inner_id = program.add_function(inner);
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.emit_constant(Value::Integer(1));
+        builder.emit_constant(Value::Function(inner_id));
+        builder.emit(Instruction::Call);
+        builder.emit(Instruction::Add);
+        let outer = builder.finish("outer".to_string(), 0);
+        let main_id = program.add_function(outer);
+        let mut interpreter = Interpreter::new(&program);
+        interpreter.start(main_id);
+        interpreter.run()?;
+        assert_eq!(interpreter.stack, vec![Value::Integer(12)]);
+        Ok(())
+    }
 }
