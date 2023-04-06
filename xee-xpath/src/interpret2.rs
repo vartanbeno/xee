@@ -17,6 +17,7 @@ struct FunctionId(usize);
 #[derive(Debug, Clone)]
 struct Program {
     vec: Vec<u8>,
+    functions: Vec<BuiltFunction>,
 }
 
 #[derive(Debug, Clone)]
@@ -186,7 +187,8 @@ struct ForwardJumpRef(usize);
 #[must_use]
 struct BackwardJumpRef(usize);
 
-struct FunctionBuilderResult {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct BuiltFunction {
     name: String,
     arity: usize,
     start: usize,
@@ -284,8 +286,8 @@ impl<'a> FunctionBuilder<'a> {
         self.program.vec[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    fn finish(self, name: String, arity: usize) -> FunctionBuilderResult {
-        FunctionBuilderResult {
+    fn finish(self, name: String, arity: usize) -> BuiltFunction {
+        BuiltFunction {
             name,
             arity,
             constants: self.constants,
@@ -296,7 +298,20 @@ impl<'a> FunctionBuilder<'a> {
 }
 
 impl<'a> Interpreter<'a> {
-    fn new(program: &'a Program, functions: Vec<Function<'a>>) -> Self {
+    fn new(program: &'a Program) -> Self {
+        let functions = program
+            .functions
+            .iter()
+            .map(|function| {
+                Function {
+                    name: function.name.clone(),
+                    arity: function.arity,
+                    chunk: &program.vec[function.start..function.end],
+                    // annoying clone
+                    constants: function.constants.clone(),
+                }
+            })
+            .collect::<Vec<_>>();
         Interpreter {
             program,
             functions,
@@ -443,16 +458,16 @@ impl<'a> Interpreter<'a> {
 
 impl Program {
     fn new() -> Self {
-        Program { vec: Vec::new() }
+        Program {
+            vec: Vec::new(),
+            functions: Vec::new(),
+        }
     }
 
-    fn get_function(&self, function: FunctionBuilderResult) -> Function {
-        Function {
-            name: function.name,
-            arity: function.arity,
-            chunk: &self.vec[function.start..function.end],
-            constants: function.constants,
-        }
+    fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
+        let id = self.functions.len();
+        self.functions.push(function);
+        FunctionId(id)
     }
 }
 
@@ -470,8 +485,8 @@ mod tests {
         builder.emit(Instruction::Add);
         let function = builder.finish("main".to_string(), 0);
 
-        let function = program.get_function(function);
-        let mut interpreter = Interpreter::new(&program, vec![function]);
+        program.add_function(function);
+        let mut interpreter = Interpreter::new(&program);
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
@@ -489,8 +504,8 @@ mod tests {
         builder.emit_constant(Value::Integer(4));
         let function = builder.finish("main".to_string(), 0);
 
-        let function = program.get_function(function);
-        let instructions = decode_bytes(function.chunk);
+        program.add_function(function);
+        let instructions = decode_bytes(&program.vec);
         assert_eq!(
             instructions,
             vec![
@@ -517,8 +532,8 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        let function = program.get_function(function);
-        let mut interpreter = Interpreter::new(&program, vec![function]);
+        program.add_function(function);
+        let mut interpreter = Interpreter::new(&program);
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
@@ -540,8 +555,8 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        let function = program.get_function(function);
-        let mut interpreter = Interpreter::new(&program, vec![function]);
+        program.add_function(function);
+        let mut interpreter = Interpreter::new(&program);
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(4)]);
@@ -564,8 +579,8 @@ mod tests {
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
-        let function = program.get_function(function);
-        let mut interpreter = Interpreter::new(&program, vec![function]);
+        program.add_function(function);
+        let mut interpreter = Interpreter::new(&program);
         interpreter.start();
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![Value::Integer(5)]);
@@ -577,17 +592,17 @@ mod tests {
     //     let mut program = Program::new();
 
     //     let mut builder = FunctionBuilder::new(&mut program);
-    //     builder.emit_constant(Value::Integer(10));
-    //     let loop_start = builder.loop_start();
-    //     builder.emit(Instruction::Dup);
     //     builder.emit_constant(Value::Integer(5));
-    //     builder.emit(Instruction::Gt);
-    //     let end = builder.emit_jump_forward();
+    //     builder.emit_constant(Value::Integer(6));
+    //     builder.emit(Instruction::Add);
+    //     let inner = builder.finish("inner".to_string(), 0);
+
+    //     let mut builder = FunctionBuilder::new(&mut program);
     //     builder.emit_constant(Value::Integer(1));
-    //     builder.emit(Instruction::Sub);
-    //     builder.emit_jump_backward(loop_start);
-    //     builder.patch_jump(end);
-    //     let function = builder.finish("main".to_string(), 0);
+    //     builder.emit_constant(Value::Function(inner));
+    //     builder.emit(Instruction::Call);
+    //     builder.emit(Instruction::Add);
+    //     let outer = builder.finish("outer".to_string(), 0);
 
     //     Ok(())
     // }
