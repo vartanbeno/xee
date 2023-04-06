@@ -193,15 +193,12 @@ struct FunctionBuilderResult {
 
 impl<'a> FunctionBuilder<'a> {
     fn new(program: &'a mut Program) -> Self {
+        let start = program.vec.len();
         FunctionBuilder {
             program,
-            start: 0,
+            start,
             constants: Vec::new(),
         }
-    }
-
-    fn start(&mut self) {
-        self.start = self.program.vec.len();
     }
 
     fn emit(&mut self, instruction: Instruction) {
@@ -439,7 +436,6 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.start();
         builder.emit_constant(Value::Integer(1));
         builder.emit_constant(Value::Integer(2));
         builder.emit(Instruction::Add);
@@ -458,7 +454,6 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.start();
         let jump = builder.emit_jump_forward();
         builder.emit_constant(Value::Integer(3));
         builder.patch_jump(jump);
@@ -483,7 +478,6 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.start();
         builder.emit_constant(Value::Integer(1));
         builder.emit_constant(Value::Integer(2));
         builder.emit(Instruction::Lt);
@@ -508,7 +502,6 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.start();
         builder.emit_constant(Value::Integer(2));
         builder.emit_constant(Value::Integer(1));
         builder.emit(Instruction::Lt);
@@ -533,7 +526,6 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.start();
         builder.emit_constant(Value::Integer(10));
         let loop_start = builder.loop_start();
         builder.emit(Instruction::Dup);
@@ -553,4 +545,24 @@ mod tests {
         assert_eq!(interpreter.stack, vec![Value::Integer(5)]);
         Ok(())
     }
+
+    // #[test]
+    // fn test_call() -> Result<()> {
+    //     let mut program = Program::new();
+
+    //     let mut builder = FunctionBuilder::new(&mut program);
+    //     builder.emit_constant(Value::Integer(10));
+    //     let loop_start = builder.loop_start();
+    //     builder.emit(Instruction::Dup);
+    //     builder.emit_constant(Value::Integer(5));
+    //     builder.emit(Instruction::Gt);
+    //     let end = builder.emit_jump_forward();
+    //     builder.emit_constant(Value::Integer(1));
+    //     builder.emit(Instruction::Sub);
+    //     builder.emit_jump_backward(loop_start);
+    //     builder.patch_jump(end);
+    //     let function = builder.finish("main".to_string(), 0);
+
+    //     Ok(())
+    // }
 }
