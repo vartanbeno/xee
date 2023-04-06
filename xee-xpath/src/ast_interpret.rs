@@ -8,11 +8,11 @@ use crate::interpret2::{
 };
 use crate::parse_ast::parse_xpath;
 
-fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope2, builder: &mut FunctionBuilder) {
+fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope, builder: &mut FunctionBuilder) {
     compile_expr(&xpath.exprs, scope, builder);
 }
 
-fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope2, builder: &mut FunctionBuilder) {
+fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope, builder: &mut FunctionBuilder) {
     let mut iter = exprs.iter();
     let first_expr = iter.next().unwrap();
     compile_expr_single(first_expr, scope, builder);
@@ -23,11 +23,11 @@ fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope2, builder: &mut Fun
     }
 }
 
-struct Scope2 {
+struct Scope {
     names: Vec<ast::Name>,
 }
 
-impl Scope2 {
+impl Scope {
     fn new() -> Self {
         Self { names: Vec::new() }
     }
@@ -42,37 +42,9 @@ impl Scope2 {
     }
 }
 
-#[derive(Debug)]
-struct Scope {
-    name_stacks: HashMap<ast::Name, Vec<usize>>,
-}
-
-impl Scope {
-    fn new() -> Self {
-        Self {
-            name_stacks: HashMap::new(),
-        }
-    }
-
-    fn get(&self, name: &ast::Name) -> Option<usize> {
-        let stack = self.name_stacks.get(name)?;
-        stack.last().copied()
-    }
-
-    fn push_name(&mut self, name: ast::Name, index: usize) {
-        let stack = self.name_stacks.entry(name).or_insert_with(Vec::new);
-        stack.push(index);
-    }
-
-    fn pop_name(&mut self, name: &ast::Name) {
-        let stack = self.name_stacks.get_mut(&name).unwrap();
-        stack.pop();
-    }
-}
-
 fn compile_expr_single(
     expr_single: &ast::ExprSingle,
-    scope: &mut Scope2,
+    scope: &mut Scope,
     builder: &mut FunctionBuilder,
 ) {
     match expr_single {
@@ -213,7 +185,7 @@ fn compile_expr_single(
     }
 }
 
-fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope2, builder: &mut FunctionBuilder) {
+fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope, builder: &mut FunctionBuilder) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
         match primary_expr {
@@ -254,7 +226,7 @@ impl<'a> CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
-        let mut scope = Scope2::new();
+        let mut scope = Scope::new();
         let mut builder = FunctionBuilder::new(&mut program);
         compile_xpath(&ast, &mut scope, &mut builder);
         let main = builder.finish("main".to_string(), 0);
