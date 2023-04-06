@@ -15,8 +15,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 struct FunctionId(usize);
 
 #[derive(Debug, Clone)]
-struct Interpreter {
-    functions: Vec<Function>,
+struct Program {
+    vec: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+struct Interpreter<'a> {
+    program: &'a Program,
+    functions: Vec<Function<'a>>,
     stack: Vec<Value>,
     frames: Vec<Frame>,
 }
@@ -29,11 +35,11 @@ struct Frame {
 }
 
 #[derive(Debug, Clone)]
-struct Function {
+struct Function<'a> {
     name: String,
     arity: usize,
     constants: Vec<Value>,
-    chunk: Vec<u8>,
+    chunk: &'a [u8],
 }
 
 // TODO: could we shrink this by pointing to a value heap with a reference
@@ -53,11 +59,13 @@ impl Value {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Instruction {
     // binary operators
     Add,
     Sub,
     Const(u16),
+    Var(u16),
     Eq,
     Lt,
     Le,
@@ -74,6 +82,8 @@ enum EncodedInstruction {
     Sub,
     // next 2 bytes is constant reference
     Const,
+    // var, next 2 bytes is a variables reference
+    Var,
     // comparison & control flow
     Eq,
     Lt,
@@ -94,6 +104,10 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Const => {
             let constant = u16::from_be_bytes([bytes[1], bytes[2]]);
             (Instruction::Const(constant), 3)
+        }
+        EncodedInstruction::Var => {
+            let variable = u16::from_be_bytes([bytes[1], bytes[2]]);
+            (Instruction::Var(variable), 3)
         }
         EncodedInstruction::Eq => (Instruction::Eq, 1),
         EncodedInstruction::Lt => (Instruction::Lt, 1),
@@ -116,6 +130,10 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
             bytes.extend_from_slice(&constant.to_be_bytes());
         }
+        Instruction::Var(variable) => {
+            bytes.push(EncodedInstruction::Var.to_u8().unwrap());
+            bytes.extend_from_slice(&variable.to_be_bytes());
+        }
         Instruction::Eq => bytes.push(EncodedInstruction::Eq.to_u8().unwrap()),
         Instruction::Lt => bytes.push(EncodedInstruction::Lt.to_u8().unwrap()),
         Instruction::Le => bytes.push(EncodedInstruction::Le.to_u8().unwrap()),
@@ -129,13 +147,91 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
     }
 }
 
-impl Interpreter {
-    fn new() -> Self {
+struct FunctionBuilder<'a> {
+    program: &'a mut Program,
+    start: usize,
+    constants: Vec<Value>,
+}
+
+struct JumpLocation(usize);
+
+struct FunctionBuilderResult {
+    name: String,
+    arity: usize,
+    start: usize,
+    end: usize,
+    constants: Vec<Value>,
+}
+
+impl<'a> FunctionBuilder<'a> {
+    fn new(program: &'a mut Program) -> Self {
+        FunctionBuilder {
+            program,
+            start: 0,
+            constants: Vec::new(),
+        }
+    }
+
+    fn start(&mut self) {
+        self.start = self.program.vec.len();
+    }
+
+    fn emit(&mut self, instruction: Instruction) {
+        encode_instruction(instruction, &mut self.program.vec);
+    }
+
+    fn emit_constant(&mut self, constant: Value) {
+        let constant_id = self.constants.len();
+        self.constants.push(constant);
+        if constant_id > (u16::MAX as usize) {
+            panic!("too many constants");
+        }
+        self.emit(Instruction::Const(constant_id as u16));
+    }
+
+    fn emit_jump(&mut self) -> JumpLocation {
+        let offset = self.program.vec.len();
+        self.emit(Instruction::Jump(0));
+        JumpLocation(offset)
+    }
+
+    fn patch_jump(&mut self, location: JumpLocation) {
+        let offset = location.0;
+        let jump = self.program.vec.len() - offset;
+        if jump > (u16::MAX as usize) {
+            panic!("jump too far");
+        }
+        self.program.vec[offset + 1] = (jump >> 8) as u8;
+        self.program.vec[offset + 2] = jump as u8;
+    }
+
+    fn finish(self, name: String, arity: usize) -> FunctionBuilderResult {
+        FunctionBuilderResult {
+            name,
+            arity,
+            constants: self.constants,
+            start: self.start,
+            end: self.program.vec.len(),
+        }
+    }
+}
+
+impl<'a> Interpreter<'a> {
+    fn new(program: &'a Program, functions: Vec<Function<'a>>) -> Self {
         Interpreter {
-            functions: Vec::new(),
+            program,
+            functions,
             stack: Vec::new(),
             frames: Vec::new(),
         }
+    }
+
+    fn start(&mut self) {
+        self.frames.push(Frame {
+            function: FunctionId(0),
+            ip: 0,
+            base: 0,
+        });
     }
 
     fn run(&mut self) -> Result<()> {
@@ -165,6 +261,10 @@ impl Interpreter {
                 }
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
+                }
+                Instruction::Var(index) => {
+                    self.stack
+                        .push(self.stack[frame.base + index as usize].clone());
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
@@ -219,6 +319,45 @@ impl Interpreter {
                 _ => unimplemented!(),
             }
         }
+        Ok(())
+    }
+}
+
+impl Program {
+    fn new() -> Self {
+        Program { vec: Vec::new() }
+    }
+
+    fn get_function(&self, function: FunctionBuilderResult) -> Function {
+        Function {
+            name: function.name,
+            arity: function.arity,
+            chunk: &self.vec[function.start..function.end],
+            constants: function.constants,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_interpreter() -> Result<()> {
+        let mut program = Program::new();
+
+        let mut builder = FunctionBuilder::new(&mut program);
+        builder.start();
+        builder.emit_constant(Value::Integer(1));
+        builder.emit_constant(Value::Integer(2));
+        builder.emit(Instruction::Add);
+        let function = builder.finish("main".to_string(), 0);
+
+        let function = program.get_function(function);
+        let mut interpreter = Interpreter::new(&program, vec![function]);
+        interpreter.start();
+        interpreter.run()?;
+        assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
         Ok(())
     }
 }
