@@ -1,22 +1,44 @@
 use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
-use crate::interpret::Operation;
-use crate::interpret::{Interpreter, Result, StackEntry};
+// use crate::interpret::Operation;
+// use crate::interpret::{Interpreter, Result, StackEntry};
+use crate::interpret2::{
+    FunctionBuilder, FunctionId, Instruction, Interpreter, Program, Result, Value,
+};
 use crate::parse_ast::parse_xpath;
 
-fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope, operations: &mut Vec<Operation>) {
-    compile_expr(&xpath.exprs, scope, operations);
+fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope2, builder: &mut FunctionBuilder) {
+    compile_expr(&xpath.exprs, scope, builder);
 }
 
-fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope, operations: &mut Vec<Operation>) {
+fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope2, builder: &mut FunctionBuilder) {
     let mut iter = exprs.iter();
     let first_expr = iter.next().unwrap();
-    compile_expr_single(first_expr, scope, operations);
+    compile_expr_single(first_expr, scope, builder);
 
     for expr in iter {
-        compile_expr_single(expr, scope, operations);
-        operations.push(Operation::Comma);
+        compile_expr_single(expr, scope, builder);
+        // operations.push(Operation::Comma);
+    }
+}
+
+struct Scope2 {
+    names: Vec<ast::Name>,
+}
+
+impl Scope2 {
+    fn new() -> Self {
+        Self { names: Vec::new() }
+    }
+
+    fn get(&self, name: &ast::Name) -> Option<usize> {
+        for (i, n) in self.names.iter().enumerate().rev() {
+            if n == name {
+                return Some(i);
+            }
+        }
+        None
     }
 }
 
@@ -50,44 +72,45 @@ impl Scope {
 
 fn compile_expr_single(
     expr_single: &ast::ExprSingle,
-    scope: &mut Scope,
-    operations: &mut Vec<Operation>,
+    scope: &mut Scope2,
+    builder: &mut FunctionBuilder,
 ) {
     match expr_single {
         ast::ExprSingle::Path(path_expr) => {
-            compile_path_expr(path_expr, scope, operations);
+            compile_path_expr(path_expr, scope, builder);
         }
         ast::ExprSingle::Binary(binary_expr) => {
-            compile_path_expr(&binary_expr.left, scope, operations);
-            compile_path_expr(&binary_expr.right, scope, operations);
+            compile_path_expr(&binary_expr.left, scope, builder);
+            compile_path_expr(&binary_expr.right, scope, builder);
             match binary_expr.operator {
                 ast::Operator::Add => {
-                    operations.push(Operation::Add);
+                    builder.emit(Instruction::Add);
                 }
                 ast::Operator::Sub => {
-                    operations.push(Operation::Sub);
+                    builder.emit(Instruction::Sub);
                 }
-                ast::Operator::ValueEq => {
-                    operations.push(Operation::ValueEq);
-                }
-                ast::Operator::ValueNe => {
-                    operations.push(Operation::ValueNe);
-                }
-                ast::Operator::ValueLt => {
-                    operations.push(Operation::ValueLt);
-                }
-                ast::Operator::ValueLe => {
-                    operations.push(Operation::ValueLe);
-                }
-                ast::Operator::ValueGt => {
-                    operations.push(Operation::ValueGt);
-                }
-                ast::Operator::ValueGe => {
-                    operations.push(Operation::ValueGe);
-                }
-                ast::Operator::Concat => {
-                    operations.push(Operation::Concat);
-                }
+                // ast::Operator::ValueEq => {
+                //     builder.emit(Instruction::ValueEq);
+                //     operations.push(Operation::ValueEq);
+                // }
+                // ast::Operator::ValueNe => {
+                //     operations.push(Operation::ValueNe);
+                // }
+                // ast::Operator::ValueLt => {
+                //     operations.push(Operation::ValueLt);
+                // }
+                // ast::Operator::ValueLe => {
+                //     operations.push(Operation::ValueLe);
+                // }
+                // ast::Operator::ValueGt => {
+                //     operations.push(Operation::ValueGt);
+                // }
+                // ast::Operator::ValueGe => {
+                //     operations.push(Operation::ValueGe);
+                // }
+                // ast::Operator::Concat => {
+                //     operations.push(Operation::Concat);
+                // }
                 ast::Operator::Range => {
                     // // left and right of range are on the stack
                     // operations.push(Operation::Peek(2));
@@ -137,35 +160,32 @@ fn compile_expr_single(
             }
         }
         ast::ExprSingle::Let(let_expr) => {
-            // we know the result of the next expression is going to be placed
-            // here on the stack
-            let index = operations.len();
             // XXX ugh clone
-            scope.push_name(let_expr.var_name.clone(), index);
-            compile_expr_single(&let_expr.var_expr, scope, operations);
-            compile_expr_single(&let_expr.return_expr, scope, operations);
-            operations.push(Operation::LetDone);
-            scope.pop_name(&let_expr.var_name);
+            scope.names.push(let_expr.var_name.clone());
+            compile_expr_single(&let_expr.var_expr, scope, builder);
+            compile_expr_single(&let_expr.return_expr, scope, builder);
+            builder.emit(Instruction::LetDone);
+            scope.names.pop();
         }
-        ast::ExprSingle::If(if_expr) => {
-            compile_expr(&if_expr.condition, scope, operations);
-            // temporary index, we can fill it in later once we've emitted
-            // then
-            let jump_else_index = operations.len();
-            operations.push(Operation::JumpIfFalse(0));
-            compile_expr_single(&if_expr.then, scope, operations);
-            // temporary index, we fill in it later once we've emitted else
-            let jump_end_index = operations.len();
-            operations.push(Operation::Jump(0));
-            // now we know the index of the else branch
-            let else_index = operations.len();
-            operations[jump_else_index] = Operation::JumpIfFalse(else_index);
-            compile_expr_single(&if_expr.else_, scope, operations);
-            // record the end of the whole if expression
-            let end_index = operations.len();
-            // go back and fill in the jump end target
-            operations[jump_end_index] = Operation::Jump(end_index);
-        }
+        // ast::ExprSingle::If(if_expr) => {
+        //     compile_expr(&if_expr.condition, scope, operations);
+        //     // temporary index, we can fill it in later once we've emitted
+        //     // then
+        //     let jump_else_index = operations.len();
+        //     operations.push(Operation::JumpIfFalse(0));
+        //     compile_expr_single(&if_expr.then, scope, operations);
+        //     // temporary index, we fill in it later once we've emitted else
+        //     let jump_end_index = operations.len();
+        //     operations.push(Operation::Jump(0));
+        //     // now we know the index of the else branch
+        //     let else_index = operations.len();
+        //     operations[jump_else_index] = Operation::JumpIfFalse(else_index);
+        //     compile_expr_single(&if_expr.else_, scope, operations);
+        //     // record the end of the whole if expression
+        //     let end_index = operations.len();
+        //     // go back and fill in the jump end target
+        //     operations[jump_end_index] = Operation::Jump(end_index);
+        // }
         ast::ExprSingle::For(for_expr) => {
             // operations.push(Operation::NewSequence);
             // // execute the sequence expression, placing sequence on stack
@@ -193,31 +213,28 @@ fn compile_expr_single(
     }
 }
 
-fn compile_path_expr(
-    path_expr: &ast::PathExpr,
-    scope: &mut Scope,
-    operations: &mut Vec<Operation>,
-) {
+fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope2, builder: &mut FunctionBuilder) {
     let first_step = &path_expr.steps[0];
     if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
         match primary_expr {
             ast::PrimaryExpr::Literal(literal) => match literal {
                 ast::Literal::Integer(i) => {
-                    operations.push(Operation::IntegerLiteral(*i));
+                    builder.emit_constant(Value::Integer(*i));
                 }
-                ast::Literal::String(s) => {
-                    operations.push(Operation::StringLiteral(s.to_string()));
-                }
+                // ast::Literal::String(s) => {
+                //     operations.push(Operation::StringLiteral(s.to_string()));
+                // }
                 _ => {
                     panic!("literal type not supported yet");
                 }
             },
             ast::PrimaryExpr::Expr(exprs) => {
-                compile_expr(exprs, scope, operations);
+                compile_expr(exprs, scope, builder);
             }
             ast::PrimaryExpr::VarRef(name) => {
                 let index = scope.get(name).unwrap();
-                operations.push(Operation::VarRef(index));
+                // XXX check for max
+                builder.emit(Instruction::Var(index as u16));
             }
             _ => {
                 panic!("not supported yet");
@@ -229,51 +246,51 @@ fn compile_path_expr(
 }
 
 pub(crate) struct CompiledXPath {
-    operations: Vec<Operation>,
+    program: Program,
+    main: FunctionId,
 }
 
 impl<'a> CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
-        let mut operations = Vec::new();
-        let mut scope = Scope::new();
-        compile_xpath(&ast, &mut scope, &mut operations);
-        Self { operations }
+        let mut program = Program::new();
+        let mut scope = Scope2::new();
+        let mut builder = FunctionBuilder::new(&mut program);
+        compile_xpath(&ast, &mut scope, &mut builder);
+        let main = builder.finish("main".to_string(), 0);
+        let main = program.add_function(main);
+        Self { program, main }
     }
 
-    pub(crate) fn interpret(&self) -> Result<StackEntry> {
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(&self.operations)?;
-        Ok(interpreter.stack.pop().unwrap())
+    pub(crate) fn interpret(&self) -> Result<Value> {
+        let mut interpreter = Interpreter::new(&self.program);
+        interpreter.start(self.main);
+        interpreter.run()?;
+        Ok(interpreter.stack().last().unwrap().clone())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interpret::{Atomic, Item, Result, Sequence};
+    // use crate::interpret::{Atomic, Item, Result, Sequence};
 
     #[test]
     fn test_compile_expr_single() -> Result<()> {
         let xpath = CompiledXPath::new("1 + 2");
-        let operations = &xpath.operations;
-        assert_eq!(operations.len(), 3);
-        assert_eq!(operations[0], Operation::IntegerLiteral(1));
-        assert_eq!(operations[1], Operation::IntegerLiteral(2));
-        assert_eq!(operations[2], Operation::Add);
 
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 3);
         Ok(())
     }
 
-    #[test]
-    fn test_string_concat() -> Result<()> {
-        let xpath = CompiledXPath::new("'a' || 'b'");
-        let result = xpath.interpret()?;
-        assert_eq!(result.as_string()?, "ab");
-        Ok(())
-    }
+    // #[test]
+    // fn test_string_concat() -> Result<()> {
+    //     let xpath = CompiledXPath::new("'a' || 'b'");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(result.as_string()?, "ab");
+    //     Ok(())
+    // }
 
     #[test]
     fn test_nested() -> Result<()> {
@@ -283,19 +300,19 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_comma() -> Result<()> {
-        let xpath = CompiledXPath::new("1, 2");
-        let result = xpath.interpret()?;
-        assert_eq!(
-            result.as_sequence()?,
-            Sequence(vec![
-                Item::AtomicValue(Atomic::Integer(1)),
-                Item::AtomicValue(Atomic::Integer(2))
-            ])
-        );
-        Ok(())
-    }
+    // #[test]
+    // fn test_comma() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1, 2");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(
+    //         result.as_sequence()?,
+    //         Sequence(vec![
+    //             Item::AtomicValue(Atomic::Integer(1)),
+    //             Item::AtomicValue(Atomic::Integer(2))
+    //         ])
+    //     );
+    //     Ok(())
+    // }
 
     #[test]
     fn test_let() -> Result<()> {
@@ -313,67 +330,67 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_if() -> Result<()> {
-        let xpath = CompiledXPath::new("if (1) then 2 else 3");
-        let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
-        Ok(())
-    }
+    // #[test]
+    // fn test_if() -> Result<()> {
+    //     let xpath = CompiledXPath::new("if (1) then 2 else 3");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(result.as_integer()?, 2);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_if_false() -> Result<()> {
-        let xpath = CompiledXPath::new("if (0) then 2 else 3");
-        let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 3);
-        Ok(())
-    }
+    // #[test]
+    // fn test_if_false() -> Result<()> {
+    //     let xpath = CompiledXPath::new("if (0) then 2 else 3");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(result.as_integer()?, 3);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_eq_true() -> Result<()> {
-        let xpath = CompiledXPath::new("1 eq 1");
-        let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_eq_true() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1 eq 1");
+    //     let result = xpath.interpret()?;
+    //     assert!(result.as_bool()?);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_eq_false() -> Result<()> {
-        let xpath = CompiledXPath::new("1 eq 2");
-        let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_eq_false() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1 eq 2");
+    //     let result = xpath.interpret()?;
+    //     assert!(!result.as_bool()?);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_ne_true() -> Result<()> {
-        let xpath = CompiledXPath::new("1 ne 2");
-        let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_ne_true() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1 ne 2");
+    //     let result = xpath.interpret()?;
+    //     assert!(result.as_bool()?);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_ne_false() -> Result<()> {
-        let xpath = CompiledXPath::new("1 ne 1");
-        let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_ne_false() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1 ne 1");
+    //     let result = xpath.interpret()?;
+    //     assert!(!result.as_bool()?);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_lt_true() -> Result<()> {
-        let xpath = CompiledXPath::new("1 lt 2");
-        let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_lt_true() -> Result<()> {
+    //     let xpath = CompiledXPath::new("1 lt 2");
+    //     let result = xpath.interpret()?;
+    //     assert!(result.as_bool()?);
+    //     Ok(())
+    // }
 
-    #[test]
-    fn test_value_lt_false() -> Result<()> {
-        let xpath = CompiledXPath::new("2 lt 1");
-        let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_value_lt_false() -> Result<()> {
+    //     let xpath = CompiledXPath::new("2 lt 1");
+    //     let result = xpath.interpret()?;
+    //     assert!(!result.as_bool()?);
+    //     Ok(())
+    // }
 }

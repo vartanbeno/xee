@@ -12,16 +12,16 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-struct FunctionId(usize);
+pub(crate) struct FunctionId(usize);
 
 #[derive(Debug, Clone)]
-struct Program {
+pub(crate) struct Program {
     vec: Vec<u8>,
     functions: Vec<BuiltFunction>,
 }
 
 #[derive(Debug, Clone)]
-struct Interpreter<'a> {
+pub(crate) struct Interpreter<'a> {
     program: &'a Program,
     functions: Vec<Function<'a>>,
     stack: Vec<Value>,
@@ -46,13 +46,13 @@ struct Function<'a> {
 // TODO: could we shrink this by pointing to a value heap with a reference
 // smaller than 64 bits?
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Value {
+pub(crate) enum Value {
     Integer(i64),
     Function(FunctionId),
 }
 
 impl Value {
-    fn as_integer(&self) -> Result<i64> {
+    pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
             Value::Integer(i) => Ok(*i),
             _ => Err(Error::TypeError),
@@ -68,7 +68,7 @@ impl Value {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Instruction {
+pub(crate) enum Instruction {
     // binary operators
     Add,
     Sub,
@@ -85,6 +85,7 @@ enum Instruction {
     Call,
     Return,
     Dup,
+    LetDone,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
@@ -109,6 +110,7 @@ enum EncodedInstruction {
     Call,
     Return,
     Dup,
+    LetDone,
 }
 
 // decode a single instruction from the slice
@@ -139,6 +141,7 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Call => (Instruction::Call, 1),
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
+        EncodedInstruction::LetDone => (Instruction::Dup, 1),
     }
 }
 
@@ -179,10 +182,11 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::Call => bytes.push(EncodedInstruction::Call.to_u8().unwrap()),
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
         Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
+        Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
     }
 }
 
-struct FunctionBuilder<'a> {
+pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     start: usize,
     constants: Vec<Value>,
@@ -195,7 +199,7 @@ struct ForwardJumpRef(usize);
 struct BackwardJumpRef(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct BuiltFunction {
+pub(crate) struct BuiltFunction {
     name: String,
     arity: usize,
     start: usize,
@@ -214,7 +218,7 @@ enum Comparison {
 }
 
 impl<'a> FunctionBuilder<'a> {
-    fn new(program: &'a mut Program) -> Self {
+    pub(crate) fn new(program: &'a mut Program) -> Self {
         let start = program.vec.len();
         FunctionBuilder {
             program,
@@ -223,11 +227,11 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn emit(&mut self, instruction: Instruction) {
+    pub(crate) fn emit(&mut self, instruction: Instruction) {
         encode_instruction(instruction, &mut self.program.vec);
     }
 
-    fn emit_constant(&mut self, constant: Value) {
+    pub(crate) fn emit_constant(&mut self, constant: Value) {
         let constant_id = self.constants.len();
         self.constants.push(constant);
         if constant_id > (u16::MAX as usize) {
@@ -293,7 +297,7 @@ impl<'a> FunctionBuilder<'a> {
         self.program.vec[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    fn finish(mut self, name: String, arity: usize) -> BuiltFunction {
+    pub(crate) fn finish(mut self, name: String, arity: usize) -> BuiltFunction {
         self.emit(Instruction::Return);
         BuiltFunction {
             name,
@@ -306,7 +310,7 @@ impl<'a> FunctionBuilder<'a> {
 }
 
 impl<'a> Interpreter<'a> {
-    fn new(program: &'a Program) -> Self {
+    pub(crate) fn new(program: &'a Program) -> Self {
         let functions = program
             .functions
             .iter()
@@ -328,7 +332,11 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn start(&mut self, function_id: FunctionId) {
+    pub(crate) fn stack(&self) -> &[Value] {
+        &self.stack
+    }
+
+    pub(crate) fn start(&mut self, function_id: FunctionId) {
         self.frames.push(Frame {
             function: function_id,
             ip: 0,
@@ -336,7 +344,7 @@ impl<'a> Interpreter<'a> {
         });
     }
 
-    fn run(&mut self) -> Result<()> {
+    pub(crate) fn run(&mut self) -> Result<()> {
         let frame = self.frames.last().unwrap();
 
         let mut function = &self.functions[frame.function.0];
@@ -485,6 +493,12 @@ impl<'a> Interpreter<'a> {
                     ip = frame.ip;
                     function = &self.functions[frame.function.0];
                 }
+                Instruction::LetDone => {
+                    let b = self.stack.pop().unwrap();
+                    // pop the variable assignment
+                    let _ = self.stack.pop();
+                    self.stack.push(b);
+                }
             }
         }
         Ok(())
@@ -492,14 +506,14 @@ impl<'a> Interpreter<'a> {
 }
 
 impl Program {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Program {
             vec: Vec::new(),
             functions: Vec::new(),
         }
     }
 
-    fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
+    pub(crate) fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
         let id = self.functions.len();
         self.functions.push(function);
         FunctionId(id)
@@ -646,4 +660,28 @@ mod tests {
         assert_eq!(interpreter.stack, vec![Value::Integer(12)]);
         Ok(())
     }
+
+    // #[test]
+    // fn test_call_with_arity() -> Result<()> {
+    //     let mut program = Program::new();
+
+    //     let mut builder = FunctionBuilder::new(&mut program);
+    //     builder.emit_constant(Value::Integer(5));
+    //     builder.emit(Instruction::Add);
+    //     let inner = builder.finish("inner".to_string(), 1);
+    //     let inner_id = program.add_function(inner);
+
+    //     let mut builder = FunctionBuilder::new(&mut program);
+    //     builder.emit_constant(Value::Integer(1));
+    //     builder.emit_constant(Value::Function(inner_id));
+    //     builder.emit(Instruction::Call);
+    //     let outer = builder.finish("outer".to_string(), 0);
+    //     let main_id = program.add_function(outer);
+
+    //     let mut interpreter = Interpreter::new(&program);
+    //     interpreter.start(main_id);
+    //     interpreter.run()?;
+    //     assert_eq!(interpreter.stack, vec![Value::Integer(6)]);
+    //     Ok(())
+    // }
 }
