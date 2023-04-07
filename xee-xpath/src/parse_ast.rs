@@ -349,8 +349,20 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::PostfixExpr => {
-            let pair = pair.into_inner().next().unwrap();
-            ast::StepExpr::PrimaryExpr(primary_expr_to_primary_expr(pair))
+            let mut pairs = pair.into_inner();
+            let primary_pair = pairs.next().unwrap();
+            let primary = primary_expr_to_primary(primary_pair);
+            let mut postfixes = vec![];
+            // possible predicate, argument list, lookup postfixes
+            for pair in pairs {
+                postfixes.push(postfix_expr_to_postfix(pair))
+            }
+            if postfixes.is_empty() {
+                ast::StepExpr::PrimaryExpr(primary)
+            } else {
+                ast::StepExpr::PostfixExpr { primary, postfixes }
+            }
+            // XXX handle axis step possibility
         }
         _ => {
             panic!("unhandled StepExpr: {:?}", pair.as_rule())
@@ -358,7 +370,7 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
     }
 }
 
-fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
+fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
     debug_assert_eq!(pair.as_rule(), Rule::PrimaryExpr);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
@@ -382,6 +394,44 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
         }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn postfix_expr_to_postfix(pair: Pair<Rule>) -> ast::Postfix {
+    match pair.as_rule() {
+        Rule::Predicate => {
+            panic!("predicate not handled yet");
+        }
+        Rule::ArgumentList => ast::Postfix::ArgumentList(argument_list_to_args(pair)),
+        Rule::Lookup => {
+            panic!("lookup not handled yet");
+        }
+        _ => {
+            panic!("unhandled postfix: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn argument_list_to_args(pair: Pair<Rule>) -> Vec<ast::Argument> {
+    debug_assert_eq!(pair.as_rule(), Rule::ArgumentList);
+    let mut args = vec![];
+    for pair in pair.into_inner() {
+        args.push(argument_to_argument(pair))
+    }
+    args
+}
+
+fn argument_to_argument(pair: Pair<Rule>) -> ast::Argument {
+    debug_assert_eq!(pair.as_rule(), Rule::Argument);
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::ExprSingle => ast::Argument::Expr(expr_single(pair)),
+        Rule::ArgumentPlaceholder => {
+            panic!("argument placeholder not yet!");
+        }
+        _ => {
+            panic!("unhandled argument: {:?}", pair.as_rule())
         }
     }
 }
@@ -553,7 +603,7 @@ mod tests {
     }
 
     fn parse_primary_expr(input: &str) -> ast::PrimaryExpr {
-        parse_rule(Rule::PrimaryExpr, input, primary_expr_to_primary_expr)
+        parse_rule(Rule::PrimaryExpr, input, primary_expr_to_primary)
     }
 
     fn parse_step_expr(input: &str) -> ast::StepExpr {
@@ -711,5 +761,10 @@ mod tests {
     #[test]
     fn test_inline_function2() {
         assert_debug_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
+    }
+
+    #[test]
+    fn test_function_call() {
+        assert_debug_snapshot!(parse_expr_single("$foo()"));
     }
 }

@@ -383,7 +383,6 @@ mod tests {
     // #[test]
     // fn test_function_without_args() -> Result<()> {
     //     let xpath = CompiledXPath::new("function() { 5 } ()");
-    //     dbg!(xpath.program.get_function(1).decoded());
     //     let result = xpath.interpret()?;
     //     assert_eq!(result.as_integer()?, 5);
     //     Ok(())
