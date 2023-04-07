@@ -22,14 +22,12 @@ impl FunctionId {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
-    vec: Vec<u8>,
-    functions: Vec<BuiltFunction>,
+    functions: Vec<Function>,
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
-    functions: Vec<Function<'a>>,
     stack: Vec<Value>,
     frames: Vec<Frame>,
 }
@@ -42,16 +40,16 @@ struct Frame {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Function<'a> {
+pub(crate) struct Function {
     name: String,
     arity: usize,
     constants: Vec<Value>,
-    chunk: &'a [u8],
+    chunk: Vec<u8>,
 }
 
-impl<'a> Function<'a> {
+impl Function {
     pub(crate) fn decoded(&self) -> Vec<Instruction> {
-        decode_instructions(self.chunk)
+        decode_instructions(&self.chunk)
     }
 }
 
@@ -222,26 +220,6 @@ pub(crate) struct ForwardJumpRef(usize);
 #[must_use]
 struct BackwardJumpRef(usize);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct BuiltFunction {
-    name: String,
-    arity: usize,
-    start: usize,
-    end: usize,
-    constants: Vec<Value>,
-}
-
-impl BuiltFunction {
-    fn into_function<'a>(self, program: &'a Program) -> Function<'a> {
-        Function {
-            name: self.name,
-            arity: self.arity,
-            chunk: &program.vec[self.start..self.end],
-            constants: self.constants,
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Comparison {
     Eq,
@@ -254,22 +232,21 @@ pub(crate) enum Comparison {
 
 pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
-    start: usize,
+    compiled: Vec<u8>,
     constants: Vec<Value>,
 }
 
 impl<'a> FunctionBuilder<'a> {
     pub(crate) fn new(program: &'a mut Program) -> Self {
-        let start = program.vec.len();
         FunctionBuilder {
             program,
-            start,
+            compiled: Vec::new(),
             constants: Vec::new(),
         }
     }
 
     pub(crate) fn emit(&mut self, instruction: Instruction) {
-        encode_instruction(instruction, &mut self.program.vec);
+        encode_instruction(instruction, &mut self.compiled);
     }
 
     pub(crate) fn emit_constant(&mut self, constant: Value) {
@@ -317,11 +294,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn loop_start(&self) -> BackwardJumpRef {
-        BackwardJumpRef(self.program.vec.len())
+        BackwardJumpRef(self.compiled.len())
     }
 
     fn emit_jump_backward(&mut self, jump_ref: BackwardJumpRef) {
-        let current = self.program.vec.len() + 3;
+        let current = self.compiled.len() + 3;
         let offset = current - jump_ref.0;
         if jump_ref.0 > current {
             panic!("cannot jump forward");
@@ -333,13 +310,13 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub(crate) fn emit_jump_forward(&mut self) -> ForwardJumpRef {
-        let index = self.program.vec.len();
+        let index = self.compiled.len();
         self.emit(Instruction::Jump(0));
         ForwardJumpRef(index)
     }
 
     pub(crate) fn patch_jump(&mut self, jump_ref: ForwardJumpRef) {
-        let current = self.program.vec.len();
+        let current = self.compiled.len();
         if jump_ref.0 > current {
             panic!("can only patch forward jumps");
         }
@@ -348,18 +325,17 @@ impl<'a> FunctionBuilder<'a> {
             panic!("jump too far");
         }
         let offset_bytes = offset.to_le_bytes();
-        self.program.vec[jump_ref.0 + 1] = offset_bytes[0];
-        self.program.vec[jump_ref.0 + 2] = offset_bytes[1];
+        self.compiled[jump_ref.0 + 1] = offset_bytes[0];
+        self.compiled[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    pub(crate) fn finish(mut self, name: String, arity: usize) -> BuiltFunction {
+    pub(crate) fn finish(mut self, name: String, arity: usize) -> Function {
         self.emit(Instruction::Return);
-        BuiltFunction {
+        Function {
             name,
             arity,
+            chunk: self.compiled,
             constants: self.constants,
-            start: self.start,
-            end: self.program.vec.len(),
         }
     }
 
@@ -367,21 +343,15 @@ impl<'a> FunctionBuilder<'a> {
         FunctionBuilder::new(self.program)
     }
 
-    pub(crate) fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
+    pub(crate) fn add_function(&mut self, function: Function) -> FunctionId {
         self.program.add_function(function)
     }
 }
 
 impl<'a> Interpreter<'a> {
     pub(crate) fn new(program: &'a Program) -> Self {
-        let functions = program
-            .functions
-            .iter()
-            .map(|function| function.clone().into_function(program))
-            .collect::<Vec<_>>();
         Interpreter {
             program,
-            functions,
             stack: Vec::new(),
             frames: Vec::new(),
         }
@@ -402,7 +372,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn run(&mut self) -> Result<()> {
         let frame = self.frames.last().unwrap();
 
-        let mut function = &self.functions[frame.function.0];
+        let mut function = &self.program.functions[frame.function.0];
         let mut base = frame.base;
         let mut ip = frame.ip;
         while ip < function.chunk.len() {
@@ -531,7 +501,7 @@ impl<'a> Interpreter<'a> {
 
                     // construct new frame
                     let function_id = self.stack.pop().unwrap().as_function()?;
-                    function = &self.functions[function_id.0];
+                    function = &self.program.functions[function_id.0];
                     let stack_size = self.stack.len();
                     base = stack_size; // need to substract arity;
                     ip = 0;
@@ -550,7 +520,7 @@ impl<'a> Interpreter<'a> {
                     let frame = self.frames.last().unwrap();
                     base = frame.base;
                     ip = frame.ip;
-                    function = &self.functions[frame.function.0];
+                    function = &self.program.functions[frame.function.0];
                 }
                 Instruction::LetDone => {
                     let b = self.stack.pop().unwrap();
@@ -567,12 +537,11 @@ impl<'a> Interpreter<'a> {
 impl Program {
     pub(crate) fn new() -> Self {
         Program {
-            vec: Vec::new(),
             functions: Vec::new(),
         }
     }
 
-    pub(crate) fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
+    pub(crate) fn add_function(&mut self, function: Function) -> FunctionId {
         let id = self.functions.len();
         if id > u16::MAX as usize {
             panic!("too many functions");
@@ -582,8 +551,8 @@ impl Program {
         FunctionId(id)
     }
 
-    pub(crate) fn get_function(&self, index: usize) -> Function {
-        self.functions[index].clone().into_function(self)
+    pub(crate) fn get_function(&self, index: usize) -> &Function {
+        &self.functions[index]
     }
 }
 
@@ -620,8 +589,8 @@ mod tests {
         builder.emit_constant(Value::Integer(4));
         let function = builder.finish("main".to_string(), 0);
 
+        let instructions = decode_instructions(&function.chunk);
         program.add_function(function);
-        let instructions = decode_instructions(&program.vec);
         assert_eq!(
             instructions,
             vec![
