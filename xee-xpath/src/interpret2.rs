@@ -14,6 +14,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(usize);
 
+impl FunctionId {
+    pub(crate) fn as_u16(&self) -> u16 {
+        self.0 as u16
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
     vec: Vec<u8>,
@@ -36,11 +42,17 @@ struct Frame {
 }
 
 #[derive(Debug, Clone)]
-struct Function<'a> {
+pub(crate) struct Function<'a> {
     name: String,
     arity: usize,
     constants: Vec<Value>,
     chunk: &'a [u8],
+}
+
+impl<'a> Function<'a> {
+    pub(crate) fn decoded(&self) -> Vec<Instruction> {
+        decode_instructions(self.chunk)
+    }
 }
 
 // TODO: could we shrink this by pointing to a value heap with a reference
@@ -80,6 +92,7 @@ pub(crate) enum Instruction {
     Add,
     Sub,
     Const(u16),
+    Function(u16),
     Var(u16),
     Eq,
     Ne,
@@ -97,14 +110,11 @@ pub(crate) enum Instruction {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
 enum EncodedInstruction {
-    // binary operators
     Add,
     Sub,
-    // next 2 bytes is constant reference
     Const,
-    // var, next 2 bytes is a variables reference
+    Function,
     Var,
-    // comparison & control flow
     Eq,
     Ne,
     Lt,
@@ -112,8 +122,7 @@ enum EncodedInstruction {
     Gt,
     Ge,
     Test,
-    Jump, // displacement encoded as 16 bit signed integer
-    // functions
+    Jump,
     Call,
     Return,
     Dup,
@@ -129,6 +138,10 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Const => {
             let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Const(constant), 3)
+        }
+        EncodedInstruction::Function => {
+            let function = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Function(function), 3)
         }
         EncodedInstruction::Var => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -152,7 +165,7 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
     }
 }
 
-fn decode_bytes(bytes: &[u8]) -> Vec<Instruction> {
+pub(crate) fn decode_instructions(bytes: &[u8]) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let mut ip = 0;
     while ip < bytes.len() {
@@ -170,6 +183,10 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::Const(constant) => {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
             bytes.extend_from_slice(&constant.to_le_bytes());
+        }
+        Instruction::Function(function_id) => {
+            bytes.push(EncodedInstruction::Function.to_u8().unwrap());
+            bytes.extend_from_slice(&function_id.to_le_bytes());
         }
         Instruction::Var(variable) => {
             bytes.push(EncodedInstruction::Var.to_u8().unwrap());
@@ -193,10 +210,10 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
     }
 }
 
-pub(crate) struct FunctionBuilder<'a> {
-    program: &'a mut Program,
-    start: usize,
-    constants: Vec<Value>,
+fn encode_instructions(instructions: Vec<Instruction>, bytes: &mut Vec<u8>) {
+    for instruction in instructions {
+        encode_instruction(instruction, bytes);
+    }
 }
 
 #[must_use]
@@ -214,6 +231,17 @@ pub(crate) struct BuiltFunction {
     constants: Vec<Value>,
 }
 
+impl BuiltFunction {
+    fn into_function<'a>(self, program: &'a Program) -> Function<'a> {
+        Function {
+            name: self.name,
+            arity: self.arity,
+            chunk: &program.vec[self.start..self.end],
+            constants: self.constants,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Comparison {
     Eq,
@@ -222,6 +250,12 @@ pub(crate) enum Comparison {
     Le,
     Gt,
     Ge,
+}
+
+pub(crate) struct FunctionBuilder<'a> {
+    program: &'a mut Program,
+    start: usize,
+    constants: Vec<Value>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -328,6 +362,14 @@ impl<'a> FunctionBuilder<'a> {
             end: self.program.vec.len(),
         }
     }
+
+    pub(crate) fn builder(&mut self) -> FunctionBuilder {
+        FunctionBuilder::new(self.program)
+    }
+
+    pub(crate) fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
+        self.program.add_function(function)
+    }
 }
 
 impl<'a> Interpreter<'a> {
@@ -335,15 +377,7 @@ impl<'a> Interpreter<'a> {
         let functions = program
             .functions
             .iter()
-            .map(|function| {
-                Function {
-                    name: function.name.clone(),
-                    arity: function.arity,
-                    chunk: &program.vec[function.start..function.end],
-                    // annoying clone
-                    constants: function.constants.clone(),
-                }
-            })
+            .map(|function| function.clone().into_function(program))
             .collect::<Vec<_>>();
         Interpreter {
             program,
@@ -393,6 +427,10 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
+                }
+                Instruction::Function(function_id) => {
+                    self.stack
+                        .push(Value::Function(FunctionId(function_id as usize)));
                 }
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
@@ -536,8 +574,16 @@ impl Program {
 
     pub(crate) fn add_function(&mut self, function: BuiltFunction) -> FunctionId {
         let id = self.functions.len();
+        if id > u16::MAX as usize {
+            panic!("too many functions");
+        }
         self.functions.push(function);
+
         FunctionId(id)
+    }
+
+    pub(crate) fn get_function(&self, index: usize) -> Function {
+        self.functions[index].clone().into_function(self)
     }
 }
 
@@ -575,7 +621,7 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         program.add_function(function);
-        let instructions = decode_bytes(&program.vec);
+        let instructions = decode_instructions(&program.vec);
         assert_eq!(
             instructions,
             vec![

@@ -8,7 +8,7 @@ Path(
             PrimaryExpr(
                 InlineFunction(
                     InlineFunction {
-                        parameters: [
+                        params: [
                             Param {
                                 name: Name {
                                     name: "x",

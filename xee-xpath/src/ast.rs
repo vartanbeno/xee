@@ -220,7 +220,7 @@ pub(crate) struct NamedFunctionRef {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct InlineFunction {
-    pub(crate) parameters: Vec<Param>,
+    pub(crate) params: Vec<Param>,
     pub(crate) return_type: Option<SequenceType>,
     pub(crate) body: Vec<ExprSingle>,
 }

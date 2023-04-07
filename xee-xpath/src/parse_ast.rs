@@ -408,10 +408,10 @@ fn inline_function_expr_to_inline_function(pair: Pair<Rule>) -> ast::InlineFunct
     debug_assert_eq!(pair.as_rule(), Rule::InlineFunctionExpr);
     let mut pairs = pair.into_inner();
     let mut next = pairs.next().unwrap();
-    let parameters = if next.as_rule() == Rule::ParamList {
-        let parameters = param_list_to_parameters(next);
+    let params = if next.as_rule() == Rule::ParamList {
+        let params = param_list_to_params(next);
         next = pairs.next().unwrap();
-        parameters
+        params
     } else {
         vec![]
     };
@@ -425,13 +425,13 @@ fn inline_function_expr_to_inline_function(pair: Pair<Rule>) -> ast::InlineFunct
     };
     let body = function_body_to_body(next);
     ast::InlineFunction {
-        parameters,
+        params,
         return_type,
         body,
     }
 }
 
-fn param_list_to_parameters(pair: Pair<Rule>) -> Vec<ast::Param> {
+fn param_list_to_params(pair: Pair<Rule>) -> Vec<ast::Param> {
     debug_assert_eq!(pair.as_rule(), Rule::ParamList);
     let mut parameters = vec![];
     for pair in pair.into_inner() {

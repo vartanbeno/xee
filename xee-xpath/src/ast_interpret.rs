@@ -200,12 +200,34 @@ fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope, builder: &mut
                 // XXX check for max
                 builder.emit(Instruction::Var(index as u16));
             }
+            ast::PrimaryExpr::InlineFunction(inline_function) => {
+                let mut nested_builder = builder.builder();
+                compile_function(inline_function, scope, &mut nested_builder);
+                let function =
+                    nested_builder.finish("inline".to_string(), inline_function.params.len());
+                let function_id = builder.add_function(function);
+                builder.emit(Instruction::Function(function_id.as_u16()));
+            }
             _ => {
                 panic!("not supported yet");
             }
         }
     } else {
         panic!("not a primary expression");
+    }
+}
+
+fn compile_function(
+    function: &ast::InlineFunction,
+    scope: &mut Scope,
+    builder: &mut FunctionBuilder,
+) {
+    for param in &function.params {
+        scope.names.push(param.name.clone());
+    }
+    compile_expr(&function.body, scope, builder);
+    for _ in &function.params {
+        scope.names.pop();
     }
 }
 
@@ -361,6 +383,7 @@ mod tests {
     // #[test]
     // fn test_function_without_args() -> Result<()> {
     //     let xpath = CompiledXPath::new("function() { 5 } ()");
+    //     dbg!(xpath.program.get_function(1).decoded());
     //     let result = xpath.interpret()?;
     //     assert_eq!(result.as_integer()?, 5);
     //     Ok(())
