@@ -767,4 +767,9 @@ mod tests {
     fn test_function_call() {
         assert_debug_snapshot!(parse_expr_single("$foo()"));
     }
+
+    #[test]
+    fn test_function_call_args() {
+        assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
+    }
 }
