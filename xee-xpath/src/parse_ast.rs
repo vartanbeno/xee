@@ -707,4 +707,9 @@ mod tests {
     fn test_inline_function() {
         assert_debug_snapshot!(parse_expr_single("function($x) { $x }"));
     }
+
+    #[test]
+    fn test_inline_function2() {
+        assert_debug_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
+    }
 }
