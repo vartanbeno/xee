@@ -440,4 +440,20 @@ mod tests {
         assert_eq!(result.as_integer()?, 5);
         Ok(())
     }
+
+    #[test]
+    fn test_function_with_args() -> Result<()> {
+        let xpath = CompiledXPath::new("function($x) { $x + 5 } ( 3 )");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 8);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_with_args2() -> Result<()> {
+        let xpath = CompiledXPath::new("function($x, $y) { $x + $y } ( 3, 5 )");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 8);
+        Ok(())
+    }
 }
