@@ -4,7 +4,7 @@ use crate::ast;
 // use crate::interpret::Operation;
 // use crate::interpret::{Interpreter, Result, StackEntry};
 use crate::interpret2::{
-    FunctionBuilder, FunctionId, Instruction, Interpreter, Program, Result, Value,
+    Comparison, FunctionBuilder, FunctionId, Instruction, Interpreter, Program, Result, Value,
 };
 use crate::parse_ast::parse_xpath;
 
@@ -61,10 +61,12 @@ fn compile_expr_single(
                 ast::Operator::Sub => {
                     builder.emit(Instruction::Sub);
                 }
-                // ast::Operator::ValueEq => {
-                //     builder.emit(Instruction::ValueEq);
-                //     operations.push(Operation::ValueEq);
-                // }
+                ast::Operator::ValueEq => builder.emit_compare_value(Comparison::Eq),
+                ast::Operator::ValueNe => builder.emit_compare_value(Comparison::Ne),
+                ast::Operator::ValueLt => builder.emit_compare_value(Comparison::Lt),
+                ast::Operator::ValueLe => builder.emit_compare_value(Comparison::Le),
+                ast::Operator::ValueGt => builder.emit_compare_value(Comparison::Gt),
+                ast::Operator::ValueGe => builder.emit_compare_value(Comparison::Ge),
                 // ast::Operator::ValueNe => {
                 //     operations.push(Operation::ValueNe);
                 // }
@@ -308,51 +310,51 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_value_eq_true() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1 eq 1");
-    //     let result = xpath.interpret()?;
-    //     assert!(result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_eq_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 eq 1");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_value_eq_false() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1 eq 2");
-    //     let result = xpath.interpret()?;
-    //     assert!(!result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_eq_false() -> Result<()> {
+        let xpath = CompiledXPath::new("1 eq 2");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_value_ne_true() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1 ne 2");
-    //     let result = xpath.interpret()?;
-    //     assert!(result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_ne_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 ne 2");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_value_ne_false() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1 ne 1");
-    //     let result = xpath.interpret()?;
-    //     assert!(!result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_ne_false() -> Result<()> {
+        let xpath = CompiledXPath::new("1 ne 1");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_value_lt_true() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1 lt 2");
-    //     let result = xpath.interpret()?;
-    //     assert!(result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_lt_true() -> Result<()> {
+        let xpath = CompiledXPath::new("1 lt 2");
+        let result = xpath.interpret()?;
+        assert!(result.as_bool()?);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_value_lt_false() -> Result<()> {
-    //     let xpath = CompiledXPath::new("2 lt 1");
-    //     let result = xpath.interpret()?;
-    //     assert!(!result.as_bool()?);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_value_lt_false() -> Result<()> {
+        let xpath = CompiledXPath::new("2 lt 1");
+        let result = xpath.interpret()?;
+        assert!(!result.as_bool()?);
+        Ok(())
+    }
 }

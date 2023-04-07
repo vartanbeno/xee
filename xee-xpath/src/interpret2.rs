@@ -59,6 +59,13 @@ impl Value {
         }
     }
 
+    pub(crate) fn as_bool(&self) -> Result<bool> {
+        match self {
+            Value::Integer(i) => Ok(*i != 0),
+            _ => Err(Error::TypeError),
+        }
+    }
+
     fn as_function(&self) -> Result<FunctionId> {
         match self {
             Value::Function(f) => Ok(*f),
@@ -249,6 +256,15 @@ impl<'a> FunctionBuilder<'a> {
             Comparison::Gt => self.emit(Instruction::Gt),
             Comparison::Ge => self.emit(Instruction::Ge),
         }
+    }
+
+    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
+        let otherwise = self.emit_compare_forward(comparison);
+        self.emit_constant(Value::Integer(1));
+        let end = self.emit_jump_forward();
+        self.patch_jump(otherwise);
+        self.emit_constant(Value::Integer(0));
+        self.patch_jump(end);
     }
 
     pub(crate) fn emit_compare_forward(&mut self, comparison: Comparison) -> ForwardJumpRef {
