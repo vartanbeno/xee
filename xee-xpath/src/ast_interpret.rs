@@ -224,7 +224,8 @@ fn compile_primary_expr(
         }
         ast::PrimaryExpr::InlineFunction(inline_function) => {
             let mut nested_builder = builder.builder();
-            compile_function(inline_function, scope, &mut nested_builder);
+            let mut nested_scope = Scope::new();
+            compile_function(inline_function, &mut nested_scope, &mut nested_builder);
             let function =
                 nested_builder.finish("inline".to_string(), inline_function.params.len());
             let function_id = builder.add_function(function);
@@ -452,6 +453,14 @@ mod tests {
     #[test]
     fn test_function_with_args2() -> Result<()> {
         let xpath = CompiledXPath::new("function($x, $y) { $x + $y } ( 3, 5 )");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 8);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_nested() -> Result<()> {
+        let xpath = CompiledXPath::new("function($x) { function($y) { $y + 2 }($x + 1) } (5)");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 8);
         Ok(())

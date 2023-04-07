@@ -524,6 +524,11 @@ impl<'a> Interpreter<'a> {
                     // truncate the stack to the base
                     self.stack.truncate(base);
 
+                    // pop off the function id we just called
+                    if !self.stack.is_empty() {
+                        self.stack.pop();
+                    }
+
                     // push back return value
                     self.stack.push(return_value);
 
