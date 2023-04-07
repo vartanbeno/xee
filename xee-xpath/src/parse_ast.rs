@@ -372,6 +372,14 @@ fn primary_expr_to_primary_expr(pair: Pair<Rule>) -> ast::PrimaryExpr {
             let pair = pair.into_inner().next().unwrap();
             ast::PrimaryExpr::VarRef(var_name_to_name(pair))
         }
+        Rule::FunctionItemExpr => {
+            let pair = pair.into_inner().next().unwrap();
+            if pair.as_rule() == Rule::InlineFunctionExpr {
+                ast::PrimaryExpr::InlineFunction(inline_function_expr_to_inline_function(pair))
+            } else {
+                panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
+            }
+        }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -385,6 +393,76 @@ fn var_name_to_name(pair: Pair<Rule>) -> ast::Name {
         name: pair.as_str().to_string(),
         namespace: None,
     }
+}
+
+fn eq_name_to_name(pair: Pair<Rule>) -> ast::Name {
+    debug_assert_eq!(pair.as_rule(), Rule::EQName);
+    // XXX no support for namespaces yet
+    ast::Name {
+        name: pair.as_str().to_string(),
+        namespace: None,
+    }
+}
+
+fn inline_function_expr_to_inline_function(pair: Pair<Rule>) -> ast::InlineFunction {
+    debug_assert_eq!(pair.as_rule(), Rule::InlineFunctionExpr);
+    let mut pairs = pair.into_inner();
+    let mut next = pairs.next().unwrap();
+    let parameters = if next.as_rule() == Rule::ParamList {
+        let parameters = param_list_to_parameters(next);
+        next = pairs.next().unwrap();
+        parameters
+    } else {
+        vec![]
+    };
+    let return_type = if next.as_rule() == Rule::SequenceType {
+        panic!("unimplemented: return type");
+        // let return_type = sequence_type(next);
+        // next = pairs.next().unwrap();
+        // Some(return_type)
+    } else {
+        None
+    };
+    let body = function_body_to_body(next);
+    ast::InlineFunction {
+        parameters,
+        return_type,
+        body,
+    }
+}
+
+fn param_list_to_parameters(pair: Pair<Rule>) -> Vec<ast::Param> {
+    debug_assert_eq!(pair.as_rule(), Rule::ParamList);
+    let mut parameters = vec![];
+    for pair in pair.into_inner() {
+        match pair.as_rule() {
+            Rule::Param => {
+                parameters.push(param_to_param(pair));
+            }
+            _ => {
+                panic!("unhandled ParamList: {:?}", pair.as_rule())
+            }
+        }
+    }
+    parameters
+}
+
+fn param_to_param(pair: Pair<Rule>) -> ast::Param {
+    debug_assert_eq!(pair.as_rule(), Rule::Param);
+    let mut pairs = pair.into_inner();
+    let name = eq_name_to_name(pairs.next().unwrap());
+    let type_ = if let Some(pair) = pairs.next() {
+        panic!("unhandled type annotation");
+    } else {
+        None
+    };
+    ast::Param { name, type_ }
+}
+
+fn function_body_to_body(pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
+    debug_assert_eq!(pair.as_rule(), Rule::FunctionBody);
+    let pair = pair.into_inner().next().unwrap();
+    exprs(pair)
 }
 
 fn literal_to_literal(pair: Pair<Rule>) -> ast::Literal {
@@ -623,5 +701,10 @@ mod tests {
     #[test]
     fn test_if_expr() {
         assert_debug_snapshot!(parse_expr_single("if (1) then 2 else 3"));
+    }
+
+    #[test]
+    fn test_inline_function() {
+        assert_debug_snapshot!(parse_expr_single("function($x) { $x }"));
     }
 }

@@ -73,7 +73,8 @@ pub(crate) enum PrimaryExpr {
     Expr(Vec<ExprSingle>),
     ContextItem,
     FunctionCall(FunctionCall),
-    FunctionItem(FunctionItem),
+    NamedFunctionRef(NamedFunctionRef),
+    InlineFunction(InlineFunction),
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
     UnaryLookup(UnaryLookup),
@@ -220,20 +221,14 @@ pub(crate) struct NamedFunctionRef {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct InlineFunction {
     pub(crate) parameters: Vec<Param>,
-    pub(crate) return_type: SequenceType,
+    pub(crate) return_type: Option<SequenceType>,
     pub(crate) body: Vec<ExprSingle>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum FunctionItem {
-    NamedFunctionRef(NamedFunctionRef),
-    InlineFunction(InlineFunction),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Param {
-    pub(crate) name: EQName,
-    pub(crate) type_: SequenceType,
+    pub(crate) name: Name,
+    pub(crate) type_: Option<SequenceType>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

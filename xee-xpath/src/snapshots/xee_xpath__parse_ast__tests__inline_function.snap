@@ -1,0 +1,42 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"function($x) { $x }\")"
+---
+Path(
+    PathExpr {
+        steps: [
+            PrimaryExpr(
+                InlineFunction(
+                    InlineFunction {
+                        parameters: [
+                            Param {
+                                name: Name {
+                                    name: "x",
+                                    namespace: None,
+                                },
+                                type_: None,
+                            },
+                        ],
+                        return_type: None,
+                        body: [
+                            Path(
+                                PathExpr {
+                                    steps: [
+                                        PrimaryExpr(
+                                            VarRef(
+                                                Name {
+                                                    name: "x",
+                                                    namespace: None,
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            ),
+        ],
+    },
+)

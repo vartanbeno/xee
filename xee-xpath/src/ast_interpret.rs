@@ -357,4 +357,12 @@ mod tests {
         assert!(!result.as_bool()?);
         Ok(())
     }
+
+    // #[test]
+    // fn test_function_without_args() -> Result<()> {
+    //     let xpath = CompiledXPath::new("function() { 5 } ()");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(result.as_integer()?, 5);
+    //     Ok(())
+    // }
 }

@@ -3,6 +3,7 @@ COMMENT    = _{ Comment }
 
 // XPath    ::= Expr
 Xpath = { Expr }
+
 // ParamList
 // ::= Param ("," Param)*
 ParamList = { Param ~ ("," ~ Param)* }
@@ -285,7 +286,11 @@ ContextItemExpr = { "." }
 // ::= EQName ArgumentList
 // /* xgc: reserved-function-names */
 // /* gn: parens */
-FunctionCall = { EQName ~ ArgumentList }
+FunctionCall = { NonReservedFunctionName ~ ArgumentList }
+
+NonReservedFunctionName = { !(ReservedFunctionName) ~ EQName }
+
+ReservedFunctionName = { "array" | "attribute" | "comment" | "document-node" | "element" | "empty-sequence" | "function" | "if" | "item" | "map" | "namespace-node" | "node" | "processing-instruction" | "schema-attribute" | "schema-element" | "switch" | "text" | "typeswitch" }
 
 // Argument ::= ExprSingle | ArgumentPlaceholder
 Argument = { ExprSingle | ArgumentPlaceholder }
