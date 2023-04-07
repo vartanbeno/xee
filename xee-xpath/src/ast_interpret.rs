@@ -179,41 +179,87 @@ fn compile_expr_single(
 
 fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope, builder: &mut FunctionBuilder) {
     let first_step = &path_expr.steps[0];
-    if let ast::StepExpr::PrimaryExpr(primary_expr) = first_step {
-        match primary_expr {
-            ast::PrimaryExpr::Literal(literal) => match literal {
-                ast::Literal::Integer(i) => {
-                    builder.emit_constant(Value::Integer(*i));
-                }
-                // ast::Literal::String(s) => {
-                //     operations.push(Operation::StringLiteral(s.to_string()));
-                // }
-                _ => {
-                    panic!("literal type not supported yet");
-                }
-            },
-            ast::PrimaryExpr::Expr(exprs) => {
-                compile_expr(exprs, scope, builder);
+    compile_step_expr(first_step, scope, builder);
+}
+
+fn compile_step_expr(step_expr: &ast::StepExpr, scope: &mut Scope, builder: &mut FunctionBuilder) {
+    match step_expr {
+        ast::StepExpr::PrimaryExpr(primary_expr) => {
+            compile_primary_expr(primary_expr, scope, builder);
+        }
+        ast::StepExpr::PostfixExpr { primary, postfixes } => {
+            compile_primary_expr(primary, scope, builder);
+            compile_postfixes(postfixes, scope, builder);
+        }
+        _ => {
+            panic!("not supported yet");
+        }
+    }
+}
+
+fn compile_primary_expr(
+    primary_expr: &ast::PrimaryExpr,
+    scope: &mut Scope,
+    builder: &mut FunctionBuilder,
+) {
+    match primary_expr {
+        ast::PrimaryExpr::Literal(literal) => match literal {
+            ast::Literal::Integer(i) => {
+                builder.emit_constant(Value::Integer(*i));
             }
-            ast::PrimaryExpr::VarRef(name) => {
-                let index = scope.get(name).unwrap();
-                // XXX check for max
-                builder.emit(Instruction::Var(index as u16));
+            // ast::Literal::String(s) => {
+            //     operations.push(Operation::StringLiteral(s.to_string()));
+            // }
+            _ => {
+                panic!("literal type not supported yet");
             }
-            ast::PrimaryExpr::InlineFunction(inline_function) => {
-                let mut nested_builder = builder.builder();
-                compile_function(inline_function, scope, &mut nested_builder);
-                let function =
-                    nested_builder.finish("inline".to_string(), inline_function.params.len());
-                let function_id = builder.add_function(function);
-                builder.emit(Instruction::Function(function_id.as_u16()));
+        },
+        ast::PrimaryExpr::Expr(exprs) => {
+            compile_expr(exprs, scope, builder);
+        }
+        ast::PrimaryExpr::VarRef(name) => {
+            let index = scope.get(name).unwrap();
+            // XXX check for max
+            builder.emit(Instruction::Var(index as u16));
+        }
+        ast::PrimaryExpr::InlineFunction(inline_function) => {
+            let mut nested_builder = builder.builder();
+            compile_function(inline_function, scope, &mut nested_builder);
+            let function =
+                nested_builder.finish("inline".to_string(), inline_function.params.len());
+            let function_id = builder.add_function(function);
+            builder.emit(Instruction::Function(function_id.as_u16()));
+        }
+        _ => {
+            panic!("not supported yet");
+        }
+    }
+}
+
+fn compile_postfixes(postfixes: &[ast::Postfix], scope: &mut Scope, builder: &mut FunctionBuilder) {
+    for postfix in postfixes {
+        match postfix {
+            ast::Postfix::ArgumentList(arguments) => {
+                for argument in arguments {
+                    compile_argument(argument, scope, builder);
+                }
+                builder.emit(Instruction::Call(arguments.len() as u8));
             }
             _ => {
                 panic!("not supported yet");
             }
         }
-    } else {
-        panic!("not a primary expression");
+    }
+}
+
+fn compile_argument(argument: &ast::Argument, scope: &mut Scope, builder: &mut FunctionBuilder) {
+    match argument {
+        ast::Argument::Expr(expr_single) => {
+            compile_expr_single(expr_single, scope, builder);
+        }
+        _ => {
+            panic!("not supported yet");
+        }
     }
 }
 
@@ -252,6 +298,13 @@ impl<'a> CompiledXPath {
         let mut interpreter = Interpreter::new(&self.program);
         interpreter.start(self.main);
         interpreter.run()?;
+        // the stack has to be 1 value, as we return the result of the expression
+        assert_eq!(
+            interpreter.stack().len(),
+            1,
+            "stack must only have 1 value but found {:?}",
+            interpreter.stack()
+        );
         Ok(interpreter.stack().last().unwrap().clone())
     }
 }
@@ -380,11 +433,11 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_function_without_args() -> Result<()> {
-    //     let xpath = CompiledXPath::new("function() { 5 } ()");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(result.as_integer()?, 5);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_function_without_args() -> Result<()> {
+        let xpath = CompiledXPath::new("function() { 5 } ()");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 5);
+        Ok(())
+    }
 }

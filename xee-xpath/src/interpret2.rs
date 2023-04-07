@@ -100,7 +100,7 @@ pub(crate) enum Instruction {
     Ge,
     Test,
     Jump(i16),
-    Call,
+    Call(u8),
     Return,
     Dup,
     LetDone,
@@ -156,10 +156,13 @@ fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Jump(displacement), 3)
         }
-        EncodedInstruction::Call => (Instruction::Call, 1),
+        EncodedInstruction::Call => {
+            let arity = bytes[1];
+            (Instruction::Call(arity), 2)
+        }
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
-        EncodedInstruction::LetDone => (Instruction::Dup, 1),
+        EncodedInstruction::LetDone => (Instruction::LetDone, 1),
     }
 }
 
@@ -201,7 +204,10 @@ fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
             bytes.extend_from_slice(&displacement.to_le_bytes());
         }
-        Instruction::Call => bytes.push(EncodedInstruction::Call.to_u8().unwrap()),
+        Instruction::Call(arity) => {
+            bytes.push(EncodedInstruction::Call.to_u8().unwrap());
+            bytes.push(arity);
+        }
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
         Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
@@ -494,16 +500,17 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.last().unwrap().clone();
                     self.stack.push(a);
                 }
-                Instruction::Call => {
+                Instruction::Call(arity) => {
                     // store ip of next instruction in current frame
                     let frame = self.frames.last_mut().unwrap();
                     frame.ip = ip;
 
-                    // construct new frame
-                    let function_id = self.stack.pop().unwrap().as_function()?;
+                    // get function id from stack, by peeking back
+                    let function_id =
+                        self.stack[self.stack.len() - (arity as usize + 1)].as_function()?;
                     function = &self.program.functions[function_id.0];
                     let stack_size = self.stack.len();
-                    base = stack_size; // need to substract arity;
+                    base = stack_size - (arity as usize);
                     ip = 0;
                     self.frames.push(Frame {
                         function: function_id,
@@ -512,9 +519,16 @@ impl<'a> Interpreter<'a> {
                     });
                 }
                 Instruction::Return => {
+                    let return_value = self.stack.pop().unwrap();
+                    // pop off function reference
+                    self.stack.pop();
+                    // push back return value
+                    self.stack.push(return_value);
+
+                    // now pop off the frame
                     self.frames.pop();
                     if self.frames.is_empty() {
-                        // we can't return any further
+                        // we can't return any further, so we're done
                         break;
                     }
                     let frame = self.frames.last().unwrap();
@@ -523,10 +537,10 @@ impl<'a> Interpreter<'a> {
                     function = &self.program.functions[frame.function.0];
                 }
                 Instruction::LetDone => {
-                    let b = self.stack.pop().unwrap();
+                    let return_value = self.stack.pop().unwrap();
                     // pop the variable assignment
                     let _ = self.stack.pop();
-                    self.stack.push(b);
+                    self.stack.push(return_value);
                 }
             }
         }
@@ -686,7 +700,7 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         builder.emit_constant(Value::Integer(1));
         builder.emit_constant(Value::Function(inner_id));
-        builder.emit(Instruction::Call);
+        builder.emit(Instruction::Call(0));
         builder.emit(Instruction::Add);
         let outer = builder.finish("outer".to_string(), 0);
         let main_id = program.add_function(outer);
