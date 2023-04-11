@@ -63,7 +63,48 @@ impl StackValue {
     }
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub(crate) struct Sequence {
-//     pub(crate) items: Vec<Item>,
-// }
+// https://www.w3.org/TR/xpath-datamodel-31/#xs-types
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum AtomicValue {
+    String(String),
+    Boolean(bool),
+    // Decimal, use a decimal type
+    Integer(i64), // is really a decimal, but special case it for now
+    Float(f32),
+    Double(f64),
+    // and many more
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum Item {
+    Atomic(AtomicValue),
+    Function(Closure),
+    // XXX or a Node
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Sequence {
+    pub(crate) items: Vec<Item>,
+}
+
+impl Sequence {
+    pub(crate) fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    pub(crate) fn singleton(&self) -> Option<&Item> {
+        if self.items.len() == 1 {
+            Some(&self.items[0])
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn push(&mut self, item: Item) {
+        self.items.push(item);
+    }
+
+    pub(crate) fn extend(&mut self, other: Sequence) {
+        self.items.extend(other.items);
+    }
+}
