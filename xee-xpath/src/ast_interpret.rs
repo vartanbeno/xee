@@ -307,7 +307,7 @@ pub(crate) struct CompiledXPath {
     main: FunctionId,
 }
 
-impl<'a> CompiledXPath {
+impl CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
