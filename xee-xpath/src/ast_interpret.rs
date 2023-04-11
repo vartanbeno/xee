@@ -3,8 +3,9 @@ use ahash::{HashMap, HashMapExt};
 use crate::ast;
 // use crate::interpret::Operation;
 // use crate::interpret::{Interpreter, Result, StackEntry};
+use crate::error::Result;
 use crate::interpret2::{
-    Comparison, FunctionBuilder, FunctionId, Instruction, Interpreter, Program, Result, Value,
+    Comparison, FunctionBuilder, FunctionId, Instruction, Interpreter, Program, Value,
 };
 use crate::parse_ast::parse_xpath;
 
