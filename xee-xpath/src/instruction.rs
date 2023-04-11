@@ -6,8 +6,9 @@ pub(crate) enum Instruction {
     Add,
     Sub,
     Const(u16),
-    Function(u16),
+    Closure(u16),
     Var(u16),
+    ClosureVar(u16),
     Eq,
     Ne,
     Lt,
@@ -27,8 +28,9 @@ enum EncodedInstruction {
     Add,
     Sub,
     Const,
-    Function,
+    Closure,
     Var,
+    ClosureVar,
     Eq,
     Ne,
     Lt,
@@ -53,13 +55,17 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Const(constant), 3)
         }
-        EncodedInstruction::Function => {
+        EncodedInstruction::Closure => {
             let function = u16::from_le_bytes([bytes[1], bytes[2]]);
-            (Instruction::Function(function), 3)
+            (Instruction::Closure(function), 3)
         }
         EncodedInstruction::Var => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Var(variable), 3)
+        }
+        EncodedInstruction::ClosureVar => {
+            let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::ClosureVar(variable), 3)
         }
         EncodedInstruction::Eq => (Instruction::Eq, 1),
         EncodedInstruction::Ne => (Instruction::Ne, 1),
@@ -101,12 +107,16 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
             bytes.extend_from_slice(&constant.to_le_bytes());
         }
-        Instruction::Function(function_id) => {
-            bytes.push(EncodedInstruction::Function.to_u8().unwrap());
+        Instruction::Closure(function_id) => {
+            bytes.push(EncodedInstruction::Closure.to_u8().unwrap());
             bytes.extend_from_slice(&function_id.to_le_bytes());
         }
         Instruction::Var(variable) => {
             bytes.push(EncodedInstruction::Var.to_u8().unwrap());
+            bytes.extend_from_slice(&variable.to_le_bytes());
+        }
+        Instruction::ClosureVar(variable) => {
+            bytes.push(EncodedInstruction::ClosureVar.to_u8().unwrap());
             bytes.extend_from_slice(&variable.to_le_bytes());
         }
         Instruction::Eq => bytes.push(EncodedInstruction::Eq.to_u8().unwrap()),

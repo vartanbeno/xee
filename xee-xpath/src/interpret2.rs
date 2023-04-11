@@ -1,7 +1,7 @@
 use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
-use crate::value::{FunctionId, Value};
+use crate::value::{Closure, FunctionId, Value};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -67,12 +67,18 @@ impl<'a> Interpreter<'a> {
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
                 }
-                Instruction::Function(function_id) => {
-                    self.stack
-                        .push(Value::Function(FunctionId(function_id as usize)));
+                Instruction::Closure(function_id) => {
+                    self.stack.push(Value::Closure(Closure {
+                        function_id: FunctionId(function_id as usize),
+                        values: Vec::new(),
+                    }));
                 }
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
+                }
+                Instruction::ClosureVar(index) => {
+                    // let closure = self.stack[base - 1].as_closure()?;
+                    // self.stack.push(closure[index as usize].clone());
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
@@ -169,8 +175,9 @@ impl<'a> Interpreter<'a> {
                     frame.ip = ip;
 
                     // get function id from stack, by peeking back
-                    let function_id =
-                        self.stack[self.stack.len() - (arity as usize + 1)].as_function()?;
+                    let closure =
+                        self.stack[self.stack.len() - (arity as usize + 1)].as_closure()?;
+                    let function_id = closure.function_id;
                     function = &self.program.functions[function_id.0];
                     let stack_size = self.stack.len();
                     base = stack_size - (arity as usize);

@@ -4,7 +4,7 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
-use crate::value::{FunctionId, Value};
+use crate::value::{Closure, FunctionId, Value};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -22,6 +22,10 @@ impl Scope {
             }
         }
         None
+    }
+
+    fn known_name(&self, name: &ast::Name) -> bool {
+        self.names.iter().any(|n| n == name)
     }
 }
 
@@ -54,6 +58,12 @@ impl Scopes {
 
     fn get(&self, name: &ast::Name) -> Option<usize> {
         self.scopes.last().unwrap().get(name)
+    }
+
+    fn is_closed_over_name(&self, name: &ast::Name) -> bool {
+        let mut scopes = self.scopes.iter();
+        scopes.next();
+        scopes.any(|s| s.known_name(name))
     }
 }
 
@@ -232,11 +242,22 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::PrimaryExpr::VarRef(name) => {
                 if let Some(index) = self.scopes.get(name) {
-                    // XXX check for max
+                    if index > u16::MAX as usize {
+                        panic!("too many variables");
+                    }
                     self.builder.emit(Instruction::Var(index as u16));
                 } else {
-                    // we add this to the closure names
-                    panic!("closure names not supported yet");
+                    // if value is in any outer scopes
+                    if self.scopes.is_closed_over_name(name) {
+                        let index = self.builder.add_closure_name(name);
+                        if index > u16::MAX as usize {
+                            panic!("too many closure variables");
+                        }
+                        self.builder.emit(Instruction::ClosureVar(index as u16));
+                    } else {
+                        // XXX this should become an actual compile error
+                        panic!("unknown variable {:?}", name);
+                    }
                 }
             }
             ast::PrimaryExpr::InlineFunction(inline_function) => {
@@ -256,7 +277,7 @@ impl<'a> InterpreterCompiler<'a> {
                     .finish("inline".to_string(), inline_function.params.len());
                 let function_id = self.builder.add_function(function);
                 self.builder
-                    .emit(Instruction::Function(function_id.as_u16()));
+                    .emit(Instruction::Closure(function_id.as_u16()));
             }
             _ => {
                 panic!("not supported yet");

@@ -1,3 +1,4 @@
+use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
 use crate::value::{Function, FunctionId, Value};
 
@@ -48,6 +49,7 @@ pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     compiled: Vec<u8>,
     constants: Vec<Value>,
+    closure_names: Vec<ast::Name>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -56,6 +58,7 @@ impl<'a> FunctionBuilder<'a> {
             program,
             compiled: Vec::new(),
             constants: Vec::new(),
+            closure_names: Vec::new(),
         }
     }
 
@@ -70,6 +73,16 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many constants");
         }
         self.emit(Instruction::Const(constant_id as u16));
+    }
+
+    pub(crate) fn add_closure_name(&mut self, name: &ast::Name) -> usize {
+        let found = self.closure_names.iter().position(|n| n == name);
+        if let Some(index) = found {
+            return index;
+        }
+        let index = self.closure_names.len();
+        self.closure_names.push(name.clone());
+        index
     }
 
     fn emit_compare(&mut self, comparison: Comparison) {
@@ -149,7 +162,7 @@ impl<'a> FunctionBuilder<'a> {
             name,
             arity,
             chunk: self.compiled,
-            closure_names: Vec::new(),
+            closure_names: self.closure_names,
             constants: self.constants,
         }
     }

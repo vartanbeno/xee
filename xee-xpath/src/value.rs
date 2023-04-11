@@ -1,3 +1,4 @@
+use crate::ast;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
 
@@ -15,7 +16,7 @@ pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<Value>,
-    pub(crate) closure_names: Vec<String>,
+    pub(crate) closure_names: Vec<ast::Name>,
     pub(crate) chunk: Vec<u8>,
 }
 
@@ -30,11 +31,12 @@ impl Function {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Value {
     Integer(i64),
-    Function(FunctionId),
+    Closure(Closure),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Closure {
-    pub(crate) function: FunctionId,
+    pub(crate) function_id: FunctionId,
     pub(crate) values: Vec<Value>,
 }
 
@@ -53,9 +55,9 @@ impl Value {
         }
     }
 
-    pub(crate) fn as_function(&self) -> Result<FunctionId> {
+    pub(crate) fn as_closure(&self) -> Result<&Closure> {
         match self {
-            Value::Function(f) => Ok(*f),
+            Value::Closure(c) => Ok(c),
             _ => Err(Error::TypeError),
         }
     }
