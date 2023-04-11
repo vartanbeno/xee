@@ -1,8 +1,4 @@
-use ahash::{HashMap, HashMapExt};
-
 use crate::ast;
-// use crate::interpret::Operation;
-// use crate::interpret::{Interpreter, Result, StackEntry};
 use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::{Comparison, FunctionBuilder, Interpreter, Program};
