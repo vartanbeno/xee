@@ -3,7 +3,7 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::{Comparison, FunctionBuilder, Interpreter, Program};
 use crate::parse_ast::parse_xpath;
-use crate::value::{Function, FunctionId, Value};
+use crate::value::{FunctionId, Value};
 
 struct Scope {
     names: Vec<ast::Name>,
