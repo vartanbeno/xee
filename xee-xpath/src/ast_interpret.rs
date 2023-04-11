@@ -25,8 +25,40 @@ impl Scope {
     }
 }
 
+struct Scopes {
+    scopes: Vec<Scope>,
+}
+
+impl Scopes {
+    fn new() -> Self {
+        Self {
+            scopes: vec![Scope::new()],
+        }
+    }
+
+    fn push_scope(&mut self) {
+        self.scopes.push(Scope::new());
+    }
+
+    fn pop_scope(&mut self) {
+        self.scopes.pop();
+    }
+
+    fn push_name(&mut self, name: &ast::Name) {
+        self.scopes.last_mut().unwrap().names.push(name.clone());
+    }
+
+    fn pop_name(&mut self) {
+        self.scopes.last_mut().unwrap().names.pop();
+    }
+
+    fn get(&self, name: &ast::Name) -> Option<usize> {
+        self.scopes.last().unwrap().get(name)
+    }
+}
+
 struct InterpreterCompiler<'a> {
-    scope: Scope,
+    scopes: &'a mut Scopes,
     builder: FunctionBuilder<'a>,
 }
 
@@ -120,11 +152,11 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::ExprSingle::Let(let_expr) => {
                 // XXX ugh clone
-                self.scope.names.push(let_expr.var_name.clone());
+                self.scopes.push_name(&let_expr.var_name);
                 self.compile_expr_single(&let_expr.var_expr);
                 self.compile_expr_single(&let_expr.return_expr);
                 self.builder.emit(Instruction::LetDone);
-                self.scope.names.pop();
+                self.scopes.pop_name();
             }
             ast::ExprSingle::If(if_expr) => {
                 self.compile_expr(&if_expr.condition);
@@ -199,19 +231,25 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_expr(exprs);
             }
             ast::PrimaryExpr::VarRef(name) => {
-                let index = self.scope.get(name).unwrap();
-                // XXX check for max
-                self.builder.emit(Instruction::Var(index as u16));
+                if let Some(index) = self.scopes.get(name) {
+                    // XXX check for max
+                    self.builder.emit(Instruction::Var(index as u16));
+                } else {
+                    // we add this to the closure names
+                    panic!("closure names not supported yet");
+                }
             }
             ast::PrimaryExpr::InlineFunction(inline_function) => {
                 let nested_builder = self.builder.builder();
-                let nested_scope = Scope::new();
+                self.scopes.push_scope();
 
                 let mut compiler = InterpreterCompiler {
                     builder: nested_builder,
-                    scope: nested_scope,
+                    scopes: self.scopes,
                 };
                 compiler.compile_function(inline_function);
+
+                compiler.scopes.pop_scope();
 
                 let function = compiler
                     .builder
@@ -255,11 +293,11 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_function(&mut self, function: &ast::InlineFunction) {
         for param in &function.params {
-            self.scope.names.push(param.name.clone());
+            self.scopes.push_name(&param.name);
         }
         self.compile_expr(&function.body);
         for _ in &function.params {
-            self.scope.names.pop();
+            self.scopes.pop_name();
         }
     }
 }
@@ -273,9 +311,12 @@ impl<'a> CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
-        let scope = Scope::new();
+        let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut program);
-        let mut compiler = InterpreterCompiler { builder, scope };
+        let mut compiler = InterpreterCompiler {
+            builder,
+            scopes: &mut scopes,
+        };
         compiler.compile_xpath(&ast);
         let main = compiler.builder.finish("main".to_string(), 0);
         let main = program.add_function(main);

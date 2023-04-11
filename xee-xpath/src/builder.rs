@@ -149,6 +149,7 @@ impl<'a> FunctionBuilder<'a> {
             name,
             arity,
             chunk: self.compiled,
+            closure_names: Vec::new(),
             constants: self.constants,
         }
     }

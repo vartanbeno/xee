@@ -15,6 +15,7 @@ pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<Value>,
+    pub(crate) closure_names: Vec<String>,
     pub(crate) chunk: Vec<u8>,
 }
 
@@ -30,6 +31,11 @@ impl Function {
 pub(crate) enum Value {
     Integer(i64),
     Function(FunctionId),
+}
+
+pub(crate) struct Closure {
+    pub(crate) function: FunctionId,
+    pub(crate) values: Vec<Value>,
 }
 
 impl Value {
