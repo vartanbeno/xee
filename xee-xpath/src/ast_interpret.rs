@@ -64,21 +64,6 @@ fn compile_expr_single(
                 ast::Operator::ValueLe => builder.emit_compare_value(Comparison::Le),
                 ast::Operator::ValueGt => builder.emit_compare_value(Comparison::Gt),
                 ast::Operator::ValueGe => builder.emit_compare_value(Comparison::Ge),
-                // ast::Operator::ValueNe => {
-                //     operations.push(Operation::ValueNe);
-                // }
-                // ast::Operator::ValueLt => {
-                //     operations.push(Operation::ValueLt);
-                // }
-                // ast::Operator::ValueLe => {
-                //     operations.push(Operation::ValueLe);
-                // }
-                // ast::Operator::ValueGt => {
-                //     operations.push(Operation::ValueGt);
-                // }
-                // ast::Operator::ValueGe => {
-                //     operations.push(Operation::ValueGe);
-                // }
                 // ast::Operator::Concat => {
                 //     operations.push(Operation::Concat);
                 // }
