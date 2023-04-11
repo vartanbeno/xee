@@ -241,24 +241,7 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_expr(exprs);
             }
             ast::PrimaryExpr::VarRef(name) => {
-                if let Some(index) = self.scopes.get(name) {
-                    if index > u16::MAX as usize {
-                        panic!("too many variables");
-                    }
-                    self.builder.emit(Instruction::Var(index as u16));
-                } else {
-                    // if value is in any outer scopes
-                    if self.scopes.is_closed_over_name(name) {
-                        let index = self.builder.add_closure_name(name);
-                        if index > u16::MAX as usize {
-                            panic!("too many closure variables");
-                        }
-                        self.builder.emit(Instruction::ClosureVar(index as u16));
-                    } else {
-                        // XXX this should become an actual compile error
-                        panic!("unknown variable {:?}", name);
-                    }
-                }
+                self.compile_var_ref(name);
             }
             ast::PrimaryExpr::InlineFunction(inline_function) => {
                 let nested_builder = self.builder.builder();
@@ -275,9 +258,19 @@ impl<'a> InterpreterCompiler<'a> {
                 let function = compiler
                     .builder
                     .finish("inline".to_string(), inline_function.params.len());
+                let amount = function.closure_names.len();
+                if amount > u8::MAX as usize {
+                    panic!("too many closure variables");
+                }
+                // now place all captured names on stack, to ensure we have the
+                // closure
+                // in reverse order so we can pop them off in the right order
+                for name in function.closure_names.iter().rev() {
+                    self.compile_var_ref(name);
+                }
                 let function_id = self.builder.add_function(function);
                 self.builder
-                    .emit(Instruction::Closure(function_id.as_u16()));
+                    .emit(Instruction::Closure(function_id.as_u16(), amount as u8));
             }
             _ => {
                 panic!("not supported yet");
@@ -319,6 +312,27 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_expr(&function.body);
         for _ in &function.params {
             self.scopes.pop_name();
+        }
+    }
+
+    fn compile_var_ref(&mut self, name: &ast::Name) {
+        if let Some(index) = self.scopes.get(name) {
+            if index > u16::MAX as usize {
+                panic!("too many variables");
+            }
+            self.builder.emit(Instruction::Var(index as u16));
+        } else {
+            // if value is in any outer scopes
+            if self.scopes.is_closed_over_name(name) {
+                let index = self.builder.add_closure_name(name);
+                if index > u16::MAX as usize {
+                    panic!("too many closure variables");
+                }
+                self.builder.emit(Instruction::ClosureVar(index as u16));
+            } else {
+                // XXX this should become an actual compile error
+                panic!("unknown variable {:?}", name);
+            }
         }
     }
 }
@@ -512,6 +526,43 @@ mod tests {
         let xpath = CompiledXPath::new("function($x) { function($y) { $y + 2 }($x + 1) } (5)");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 8);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_closure() -> Result<()> {
+        let xpath =
+            CompiledXPath::new("function() { let $x := 3 return function() { $x + 2 } }()()");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 5);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_closure_multiple_variables() -> Result<()> {
+        let xpath = CompiledXPath::new(
+            "function() { let $x := 3, $y := 1 return function() { $x - $y } }()()",
+        );
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_closure_and_arguments() -> Result<()> {
+        let xpath =
+            CompiledXPath::new("function() { let $x := 3 return function($y) { $x - $y } }()(1)");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_closure_nested() -> Result<()> {
+        let xpath =
+            CompiledXPath::new("function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 7);
         Ok(())
     }
 }

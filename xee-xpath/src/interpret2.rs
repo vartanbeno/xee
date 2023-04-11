@@ -67,18 +67,24 @@ impl<'a> Interpreter<'a> {
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
                 }
-                Instruction::Closure(function_id) => {
+                Instruction::Closure(function_id, amount) => {
+                    let mut values = Vec::new();
+                    for _ in 0..amount {
+                        values.push(self.stack.pop().unwrap());
+                    }
                     self.stack.push(Value::Closure(Closure {
                         function_id: FunctionId(function_id as usize),
-                        values: Vec::new(),
+                        values,
                     }));
                 }
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
                 }
                 Instruction::ClosureVar(index) => {
-                    // let closure = self.stack[base - 1].as_closure()?;
-                    // self.stack.push(closure[index as usize].clone());
+                    // the closure is always just below the base
+                    let closure = self.stack[base - 1].as_closure()?;
+                    // and we push the value we need onto the stack
+                    self.stack.push(closure.values[index as usize].clone());
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
