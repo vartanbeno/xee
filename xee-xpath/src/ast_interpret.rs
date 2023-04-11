@@ -5,8 +5,9 @@ use crate::ast;
 // use crate::interpret::{Interpreter, Result, StackEntry};
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret2::{Comparison, FunctionBuilder, FunctionId, Interpreter, Program, Value};
+use crate::interpret2::{Comparison, FunctionBuilder, Interpreter, Program};
 use crate::parse_ast::parse_xpath;
+use crate::value::{FunctionId, Value};
 
 fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope, builder: &mut FunctionBuilder) {
     compile_expr(&xpath.exprs, scope, builder);
