@@ -1,7 +1,8 @@
 use crate::ast;
+use crate::builder::{Comparison, FunctionBuilder, Program};
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret2::{Comparison, FunctionBuilder, Interpreter, Program};
+use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::value::{FunctionId, Value};
 
