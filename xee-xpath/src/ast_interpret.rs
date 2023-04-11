@@ -3,22 +3,7 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::{Comparison, FunctionBuilder, Interpreter, Program};
 use crate::parse_ast::parse_xpath;
-use crate::value::{FunctionId, Value};
-
-fn compile_xpath(xpath: &ast::XPath, scope: &mut Scope, builder: &mut FunctionBuilder) {
-    compile_expr(&xpath.exprs, scope, builder);
-}
-
-fn compile_expr(exprs: &[ast::ExprSingle], scope: &mut Scope, builder: &mut FunctionBuilder) {
-    let mut iter = exprs.iter();
-    let first_expr = iter.next().unwrap();
-    compile_expr_single(first_expr, scope, builder);
-
-    for expr in iter {
-        compile_expr_single(expr, scope, builder);
-        // operations.push(Operation::Comma);
-    }
-}
+use crate::value::{Function, FunctionId, Value};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -39,224 +24,242 @@ impl Scope {
     }
 }
 
-fn compile_expr_single(
-    expr_single: &ast::ExprSingle,
-    scope: &mut Scope,
-    builder: &mut FunctionBuilder,
-) {
-    match expr_single {
-        ast::ExprSingle::Path(path_expr) => {
-            compile_path_expr(path_expr, scope, builder);
-        }
-        ast::ExprSingle::Binary(binary_expr) => {
-            compile_path_expr(&binary_expr.left, scope, builder);
-            compile_path_expr(&binary_expr.right, scope, builder);
-            match binary_expr.operator {
-                ast::Operator::Add => {
-                    builder.emit(Instruction::Add);
-                }
-                ast::Operator::Sub => {
-                    builder.emit(Instruction::Sub);
-                }
-                ast::Operator::ValueEq => builder.emit_compare_value(Comparison::Eq),
-                ast::Operator::ValueNe => builder.emit_compare_value(Comparison::Ne),
-                ast::Operator::ValueLt => builder.emit_compare_value(Comparison::Lt),
-                ast::Operator::ValueLe => builder.emit_compare_value(Comparison::Le),
-                ast::Operator::ValueGt => builder.emit_compare_value(Comparison::Gt),
-                ast::Operator::ValueGe => builder.emit_compare_value(Comparison::Ge),
-                // ast::Operator::Concat => {
-                //     operations.push(Operation::Concat);
-                // }
-                ast::Operator::Range => {
-                    // // left and right of range are on the stack
-                    // operations.push(Operation::Peek(2));
-                    // operations.push(Operation::Peek(1));
-                    // operations.push(Operation::ValueEq);
+struct InterpreterCompiler<'a> {
+    scope: Scope,
+    builder: FunctionBuilder<'a>,
+}
 
-                    // let jump_if_equal_index = operations.len();
-                    // operations.push(Operation::JumpIfFalse(0));
+impl<'a> InterpreterCompiler<'a> {
+    fn compile_xpath(&mut self, xpath: &ast::XPath) {
+        self.compile_expr(&xpath.exprs);
+    }
 
-                    // operations.push(Operation::Peek(2));
-                    // operations.push(Operation::Peek(1));
-                    // operations.push(Operation::ValueGt);
+    fn compile_expr(&mut self, exprs: &[ast::ExprSingle]) {
+        let mut iter = exprs.iter();
+        let first_expr = iter.next().unwrap();
+        self.compile_expr_single(first_expr);
 
-                    // let jump_if_greater_index = operations.len();
-                    // operations.push(Operation::JumpIfFalse(0));
-
-                    // // left and right are equal: we can just return left
-                    // operations.push(Operation::Pop);
-                    // let equal_jump_to_end = operations.len();
-                    // operations.push(Operation::Jump(0));
-
-                    // // if left is greater than right, push empty sequence on stack
-                    // operations.push(Operation::SequenceNew);
-                    // let greater_jump_to_end = operations.len();
-                    // operations.push(Operation::Jump(0));
-
-                    // // left is less than right: we need to create a sequence
-                    // let sequence_index = operations.len();
-                    // operations.push(Operation::SequenceNew);
-                    // // start index
-                    // operations.push(Operation::Peek(3));
-                    // operations.push(Operation::Dup);
-                    // operations.push(Operation::SequencePush(sequence_index));
-                    // // if start is at end, we're done
-
-                    // let end = operations.len();
-                    // otherwise, we need to create a new sequence
-                    // operations.push(Operation::NewSequence);
-
-                    // start with left of range
-
-                    // add to range
-                }
-                _ => {
-                    panic!("operator supported yet {:?}", binary_expr.operator);
-                }
-            }
-        }
-        ast::ExprSingle::Let(let_expr) => {
-            // XXX ugh clone
-            scope.names.push(let_expr.var_name.clone());
-            compile_expr_single(&let_expr.var_expr, scope, builder);
-            compile_expr_single(&let_expr.return_expr, scope, builder);
-            builder.emit(Instruction::LetDone);
-            scope.names.pop();
-        }
-        ast::ExprSingle::If(if_expr) => {
-            compile_expr(&if_expr.condition, scope, builder);
-            let jump_else = builder.emit_test_forward();
-            compile_expr_single(&if_expr.then, scope, builder);
-            let jump_end = builder.emit_jump_forward();
-            builder.patch_jump(jump_else);
-            compile_expr_single(&if_expr.else_, scope, builder);
-            builder.patch_jump(jump_end);
-        }
-        ast::ExprSingle::For(for_expr) => {
-            // operations.push(Operation::NewSequence);
-            // // execute the sequence expression, placing sequence on stack
-            // compile_expr_single(&for_expr.var_expr, scope, operations);
-            // // we get the total length of the sequence
-            // operations.push(Operation::LenSequence);
-            // // the index in the sequence, start at 0
-            // operations.push(Operation::IntegerLiteral(0));
-
-            // // we know the result of the next expression is going to be placed
-            // // here on the stack
-            // let name_index = operations.len();
-            // // XXX ugh clone
-            // scope.push_name(for_expr.var_name.clone(), name_index);
-
-            // // now we take the first entry in the sequence, place it on the stack
-            // operations.push(Operation::IndexSequence);
-
-            // compile_expr_single(&for_expr.return_expr, scope, operations);
-            // scope.pop_name(&for_expr.var_name);
-        }
-        _ => {
-            panic!("not supported yet");
+        for expr in iter {
+            self.compile_expr_single(expr);
+            // operations.push(Operation::Comma);
         }
     }
-}
 
-fn compile_path_expr(path_expr: &ast::PathExpr, scope: &mut Scope, builder: &mut FunctionBuilder) {
-    let first_step = &path_expr.steps[0];
-    compile_step_expr(first_step, scope, builder);
-}
-
-fn compile_step_expr(step_expr: &ast::StepExpr, scope: &mut Scope, builder: &mut FunctionBuilder) {
-    match step_expr {
-        ast::StepExpr::PrimaryExpr(primary_expr) => {
-            compile_primary_expr(primary_expr, scope, builder);
-        }
-        ast::StepExpr::PostfixExpr { primary, postfixes } => {
-            compile_primary_expr(primary, scope, builder);
-            compile_postfixes(postfixes, scope, builder);
-        }
-        _ => {
-            panic!("not supported yet");
-        }
-    }
-}
-
-fn compile_primary_expr(
-    primary_expr: &ast::PrimaryExpr,
-    scope: &mut Scope,
-    builder: &mut FunctionBuilder,
-) {
-    match primary_expr {
-        ast::PrimaryExpr::Literal(literal) => match literal {
-            ast::Literal::Integer(i) => {
-                builder.emit_constant(Value::Integer(*i));
+    fn compile_expr_single(&mut self, expr_single: &ast::ExprSingle) {
+        match expr_single {
+            ast::ExprSingle::Path(path_expr) => {
+                self.compile_path_expr(path_expr);
             }
-            // ast::Literal::String(s) => {
-            //     operations.push(Operation::StringLiteral(s.to_string()));
-            // }
-            _ => {
-                panic!("literal type not supported yet");
-            }
-        },
-        ast::PrimaryExpr::Expr(exprs) => {
-            compile_expr(exprs, scope, builder);
-        }
-        ast::PrimaryExpr::VarRef(name) => {
-            let index = scope.get(name).unwrap();
-            // XXX check for max
-            builder.emit(Instruction::Var(index as u16));
-        }
-        ast::PrimaryExpr::InlineFunction(inline_function) => {
-            let mut nested_builder = builder.builder();
-            let mut nested_scope = Scope::new();
-            compile_function(inline_function, &mut nested_scope, &mut nested_builder);
-            let function =
-                nested_builder.finish("inline".to_string(), inline_function.params.len());
-            let function_id = builder.add_function(function);
-            builder.emit(Instruction::Function(function_id.as_u16()));
-        }
-        _ => {
-            panic!("not supported yet");
-        }
-    }
-}
+            ast::ExprSingle::Binary(binary_expr) => {
+                self.compile_path_expr(&binary_expr.left);
+                self.compile_path_expr(&binary_expr.right);
+                match binary_expr.operator {
+                    ast::Operator::Add => {
+                        self.builder.emit(Instruction::Add);
+                    }
+                    ast::Operator::Sub => {
+                        self.builder.emit(Instruction::Sub);
+                    }
+                    ast::Operator::ValueEq => self.builder.emit_compare_value(Comparison::Eq),
+                    ast::Operator::ValueNe => self.builder.emit_compare_value(Comparison::Ne),
+                    ast::Operator::ValueLt => self.builder.emit_compare_value(Comparison::Lt),
+                    ast::Operator::ValueLe => self.builder.emit_compare_value(Comparison::Le),
+                    ast::Operator::ValueGt => self.builder.emit_compare_value(Comparison::Gt),
+                    ast::Operator::ValueGe => self.builder.emit_compare_value(Comparison::Ge),
+                    // ast::Operator::Concat => {
+                    //     operations.push(Operation::Concat);
+                    // }
+                    ast::Operator::Range => {
+                        // // left and right of range are on the stack
+                        // operations.push(Operation::Peek(2));
+                        // operations.push(Operation::Peek(1));
+                        // operations.push(Operation::ValueEq);
 
-fn compile_postfixes(postfixes: &[ast::Postfix], scope: &mut Scope, builder: &mut FunctionBuilder) {
-    for postfix in postfixes {
-        match postfix {
-            ast::Postfix::ArgumentList(arguments) => {
-                for argument in arguments {
-                    compile_argument(argument, scope, builder);
+                        // let jump_if_equal_index = operations.len();
+                        // operations.push(Operation::JumpIfFalse(0));
+
+                        // operations.push(Operation::Peek(2));
+                        // operations.push(Operation::Peek(1));
+                        // operations.push(Operation::ValueGt);
+
+                        // let jump_if_greater_index = operations.len();
+                        // operations.push(Operation::JumpIfFalse(0));
+
+                        // // left and right are equal: we can just return left
+                        // operations.push(Operation::Pop);
+                        // let equal_jump_to_end = operations.len();
+                        // operations.push(Operation::Jump(0));
+
+                        // // if left is greater than right, push empty sequence on stack
+                        // operations.push(Operation::SequenceNew);
+                        // let greater_jump_to_end = operations.len();
+                        // operations.push(Operation::Jump(0));
+
+                        // // left is less than right: we need to create a sequence
+                        // let sequence_index = operations.len();
+                        // operations.push(Operation::SequenceNew);
+                        // // start index
+                        // operations.push(Operation::Peek(3));
+                        // operations.push(Operation::Dup);
+                        // operations.push(Operation::SequencePush(sequence_index));
+                        // // if start is at end, we're done
+
+                        // let end = operations.len();
+                        // otherwise, we need to create a new sequence
+                        // operations.push(Operation::NewSequence);
+
+                        // start with left of range
+
+                        // add to range
+                    }
+                    _ => {
+                        panic!("operator supported yet {:?}", binary_expr.operator);
+                    }
                 }
-                builder.emit(Instruction::Call(arguments.len() as u8));
+            }
+            ast::ExprSingle::Let(let_expr) => {
+                // XXX ugh clone
+                self.scope.names.push(let_expr.var_name.clone());
+                self.compile_expr_single(&let_expr.var_expr);
+                self.compile_expr_single(&let_expr.return_expr);
+                self.builder.emit(Instruction::LetDone);
+                self.scope.names.pop();
+            }
+            ast::ExprSingle::If(if_expr) => {
+                self.compile_expr(&if_expr.condition);
+                let jump_else = self.builder.emit_test_forward();
+                self.compile_expr_single(&if_expr.then);
+                let jump_end = self.builder.emit_jump_forward();
+                self.builder.patch_jump(jump_else);
+                self.compile_expr_single(&if_expr.else_);
+                self.builder.patch_jump(jump_end);
+            }
+            ast::ExprSingle::For(for_expr) => {
+                // operations.push(Operation::NewSequence);
+                // // execute the sequence expression, placing sequence on stack
+                // compile_expr_single(&for_expr.var_expr, scope, operations);
+                // // we get the total length of the sequence
+                // operations.push(Operation::LenSequence);
+                // // the index in the sequence, start at 0
+                // operations.push(Operation::IntegerLiteral(0));
+
+                // // we know the result of the next expression is going to be placed
+                // // here on the stack
+                // let name_index = operations.len();
+                // // XXX ugh clone
+                // scope.push_name(for_expr.var_name.clone(), name_index);
+
+                // // now we take the first entry in the sequence, place it on the stack
+                // operations.push(Operation::IndexSequence);
+
+                // compile_expr_single(&for_expr.return_expr, scope, operations);
+                // scope.pop_name(&for_expr.var_name);
             }
             _ => {
                 panic!("not supported yet");
             }
         }
     }
-}
 
-fn compile_argument(argument: &ast::Argument, scope: &mut Scope, builder: &mut FunctionBuilder) {
-    match argument {
-        ast::Argument::Expr(expr_single) => {
-            compile_expr_single(expr_single, scope, builder);
-        }
-        _ => {
-            panic!("not supported yet");
+    fn compile_path_expr(&mut self, path_expr: &ast::PathExpr) {
+        let first_step = &path_expr.steps[0];
+        self.compile_step_expr(first_step);
+    }
+
+    fn compile_step_expr(&mut self, step_expr: &ast::StepExpr) {
+        match step_expr {
+            ast::StepExpr::PrimaryExpr(primary_expr) => {
+                self.compile_primary_expr(primary_expr);
+            }
+            ast::StepExpr::PostfixExpr { primary, postfixes } => {
+                self.compile_primary_expr(primary);
+                self.compile_postfixes(postfixes);
+            }
+            _ => {
+                panic!("not supported yet");
+            }
         }
     }
-}
 
-fn compile_function(
-    function: &ast::InlineFunction,
-    scope: &mut Scope,
-    builder: &mut FunctionBuilder,
-) {
-    for param in &function.params {
-        scope.names.push(param.name.clone());
+    fn compile_primary_expr(&mut self, primary_expr: &ast::PrimaryExpr) {
+        match primary_expr {
+            ast::PrimaryExpr::Literal(literal) => match literal {
+                ast::Literal::Integer(i) => {
+                    self.builder.emit_constant(Value::Integer(*i));
+                }
+                // ast::Literal::String(s) => {
+                //     operations.push(Operation::StringLiteral(s.to_string()));
+                // }
+                _ => {
+                    panic!("literal type not supported yet");
+                }
+            },
+            ast::PrimaryExpr::Expr(exprs) => {
+                self.compile_expr(exprs);
+            }
+            ast::PrimaryExpr::VarRef(name) => {
+                let index = self.scope.get(name).unwrap();
+                // XXX check for max
+                self.builder.emit(Instruction::Var(index as u16));
+            }
+            ast::PrimaryExpr::InlineFunction(inline_function) => {
+                let nested_builder = self.builder.builder();
+                let nested_scope = Scope::new();
+
+                let mut compiler = InterpreterCompiler {
+                    builder: nested_builder,
+                    scope: nested_scope,
+                };
+                compiler.compile_function(inline_function);
+
+                let function = compiler
+                    .builder
+                    .finish("inline".to_string(), inline_function.params.len());
+                let function_id = self.builder.add_function(function);
+                self.builder
+                    .emit(Instruction::Function(function_id.as_u16()));
+            }
+            _ => {
+                panic!("not supported yet");
+            }
+        }
     }
-    compile_expr(&function.body, scope, builder);
-    for _ in &function.params {
-        scope.names.pop();
+
+    fn compile_postfixes(&mut self, postfixes: &[ast::Postfix]) {
+        for postfix in postfixes {
+            match postfix {
+                ast::Postfix::ArgumentList(arguments) => {
+                    for argument in arguments {
+                        self.compile_argument(argument);
+                    }
+                    self.builder.emit(Instruction::Call(arguments.len() as u8));
+                }
+                _ => {
+                    panic!("not supported yet");
+                }
+            }
+        }
+    }
+
+    fn compile_argument(&mut self, argument: &ast::Argument) {
+        match argument {
+            ast::Argument::Expr(expr_single) => {
+                self.compile_expr_single(expr_single);
+            }
+            _ => {
+                panic!("not supported yet");
+            }
+        }
+    }
+
+    fn compile_function(&mut self, function: &ast::InlineFunction) {
+        for param in &function.params {
+            self.scope.names.push(param.name.clone());
+        }
+        self.compile_expr(&function.body);
+        for _ in &function.params {
+            self.scope.names.pop();
+        }
     }
 }
 
@@ -269,10 +272,11 @@ impl<'a> CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
-        let mut scope = Scope::new();
-        let mut builder = FunctionBuilder::new(&mut program);
-        compile_xpath(&ast, &mut scope, &mut builder);
-        let main = builder.finish("main".to_string(), 0);
+        let scope = Scope::new();
+        let builder = FunctionBuilder::new(&mut program);
+        let mut compiler = InterpreterCompiler { builder, scope };
+        compiler.compile_xpath(&ast);
+        let main = compiler.builder.finish("main".to_string(), 0);
         let main = program.add_function(main);
         Self { program, main }
     }
