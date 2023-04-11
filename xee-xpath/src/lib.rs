@@ -10,6 +10,7 @@ extern crate num_derive;
 mod ast;
 mod ast_interpret;
 mod error;
+mod instruction;
 mod interpret;
 mod interpret2;
 mod parse;
