@@ -1,6 +1,6 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
-use crate::value::{Function, FunctionId, Value};
+use crate::value::{Function, FunctionId, StackValue};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
@@ -48,7 +48,7 @@ pub(crate) enum Comparison {
 pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     compiled: Vec<u8>,
-    constants: Vec<Value>,
+    constants: Vec<StackValue>,
     closure_names: Vec<ast::Name>,
 }
 
@@ -66,7 +66,7 @@ impl<'a> FunctionBuilder<'a> {
         encode_instruction(instruction, &mut self.compiled);
     }
 
-    pub(crate) fn emit_constant(&mut self, constant: Value) {
+    pub(crate) fn emit_constant(&mut self, constant: StackValue) {
         let constant_id = self.constants.len();
         self.constants.push(constant);
         if constant_id > (u16::MAX as usize) {
@@ -98,10 +98,10 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
         let otherwise = self.emit_compare_forward(comparison);
-        self.emit_constant(Value::Integer(1));
+        self.emit_constant(StackValue::Integer(1));
         let end = self.emit_jump_forward();
         self.patch_jump(otherwise);
-        self.emit_constant(Value::Integer(0));
+        self.emit_constant(StackValue::Integer(0));
         self.patch_jump(end);
     }
 

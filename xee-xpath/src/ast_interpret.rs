@@ -4,7 +4,7 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
-use crate::value::{Closure, FunctionId, Value};
+use crate::value::{Closure, FunctionId, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -228,7 +228,7 @@ impl<'a> InterpreterCompiler<'a> {
         match primary_expr {
             ast::PrimaryExpr::Literal(literal) => match literal {
                 ast::Literal::Integer(i) => {
-                    self.builder.emit_constant(Value::Integer(*i));
+                    self.builder.emit_constant(StackValue::Integer(*i));
                 }
                 // ast::Literal::String(s) => {
                 //     operations.push(Operation::StringLiteral(s.to_string()));
@@ -358,7 +358,7 @@ impl CompiledXPath {
         Self { program, main }
     }
 
-    pub(crate) fn interpret(&self) -> Result<Value> {
+    pub(crate) fn interpret(&self) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program);
         interpreter.start(self.main);
         interpreter.run()?;

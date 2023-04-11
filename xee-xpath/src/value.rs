@@ -15,7 +15,7 @@ impl FunctionId {
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
-    pub(crate) constants: Vec<Value>,
+    pub(crate) constants: Vec<StackValue>,
     pub(crate) closure_names: Vec<ast::Name>,
     pub(crate) chunk: Vec<u8>,
 }
@@ -26,39 +26,44 @@ impl Function {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Closure {
+    pub(crate) function_id: FunctionId,
+    pub(crate) values: Vec<StackValue>,
+}
+
 // TODO: could we shrink this by pointing to a value heap with a reference
 // smaller than 64 bits?
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Value {
+pub(crate) enum StackValue {
     Integer(i64),
     Closure(Closure),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Closure {
-    pub(crate) function_id: FunctionId,
-    pub(crate) values: Vec<Value>,
-}
-
-impl Value {
+impl StackValue {
     pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
-            Value::Integer(i) => Ok(*i),
+            StackValue::Integer(i) => Ok(*i),
             _ => Err(Error::TypeError),
         }
     }
 
     pub(crate) fn as_bool(&self) -> Result<bool> {
         match self {
-            Value::Integer(i) => Ok(*i != 0),
+            StackValue::Integer(i) => Ok(*i != 0),
             _ => Err(Error::TypeError),
         }
     }
 
     pub(crate) fn as_closure(&self) -> Result<&Closure> {
         match self {
-            Value::Closure(c) => Ok(c),
+            StackValue::Closure(c) => Ok(c),
             _ => Err(Error::TypeError),
         }
     }
 }
+
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub(crate) struct Sequence {
+//     pub(crate) items: Vec<Item>,
+// }

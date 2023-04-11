@@ -1,7 +1,7 @@
 use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
-use crate::value::{Closure, FunctionId, Value};
+use crate::value::{Closure, FunctionId, StackValue};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -13,7 +13,7 @@ struct Frame {
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
-    stack: Vec<Value>,
+    stack: Vec<StackValue>,
     frames: Vec<Frame>,
 }
 
@@ -26,7 +26,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn stack(&self) -> &[Value] {
+    pub(crate) fn stack(&self) -> &[StackValue] {
         &self.stack
     }
 
@@ -54,7 +54,7 @@ impl<'a> Interpreter<'a> {
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
                     let result = a.checked_add(b).ok_or(Error::IntegerOverflow)?;
-                    self.stack.push(Value::Integer(result));
+                    self.stack.push(StackValue::Integer(result));
                 }
                 Instruction::Sub => {
                     let b = self.stack.pop().unwrap();
@@ -62,7 +62,7 @@ impl<'a> Interpreter<'a> {
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
                     let result = a.checked_sub(b).ok_or(Error::IntegerOverflow)?;
-                    self.stack.push(Value::Integer(result));
+                    self.stack.push(StackValue::Integer(result));
                 }
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
@@ -72,7 +72,7 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..amount {
                         values.push(self.stack.pop().unwrap());
                     }
-                    self.stack.push(Value::Closure(Closure {
+                    self.stack.push(StackValue::Closure(Closure {
                         function_id: FunctionId(function_id as usize),
                         values,
                     }));
@@ -244,8 +244,8 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(Value::Integer(1));
-        builder.emit_constant(Value::Integer(2));
+        builder.emit_constant(StackValue::Integer(1));
+        builder.emit_constant(StackValue::Integer(2));
         builder.emit(Instruction::Add);
         let function = builder.finish("main".to_string(), 0);
 
@@ -253,7 +253,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
+        assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
         Ok(())
     }
 
@@ -263,9 +263,9 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let jump = builder.emit_jump_forward();
-        builder.emit_constant(Value::Integer(3));
+        builder.emit_constant(StackValue::Integer(3));
         builder.patch_jump(jump);
-        builder.emit_constant(Value::Integer(4));
+        builder.emit_constant(StackValue::Integer(4));
         let function = builder.finish("main".to_string(), 0);
 
         let instructions = decode_instructions(&function.chunk);
@@ -287,13 +287,13 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(Value::Integer(1));
-        builder.emit_constant(Value::Integer(2));
+        builder.emit_constant(StackValue::Integer(1));
+        builder.emit_constant(StackValue::Integer(2));
         let lt_false = builder.emit_compare_forward(Comparison::Lt);
-        builder.emit_constant(Value::Integer(3));
+        builder.emit_constant(StackValue::Integer(3));
         let end = builder.emit_jump_forward();
         builder.patch_jump(lt_false);
-        builder.emit_constant(Value::Integer(4));
+        builder.emit_constant(StackValue::Integer(4));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
@@ -301,7 +301,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![Value::Integer(3)]);
+        assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
         Ok(())
     }
 
@@ -310,13 +310,13 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(Value::Integer(2));
-        builder.emit_constant(Value::Integer(1));
+        builder.emit_constant(StackValue::Integer(2));
+        builder.emit_constant(StackValue::Integer(1));
         let lt_false = builder.emit_compare_forward(Comparison::Lt);
-        builder.emit_constant(Value::Integer(3));
+        builder.emit_constant(StackValue::Integer(3));
         let end = builder.emit_jump_forward();
         builder.patch_jump(lt_false);
-        builder.emit_constant(Value::Integer(4));
+        builder.emit_constant(StackValue::Integer(4));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
@@ -324,7 +324,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![Value::Integer(4)]);
+        assert_eq!(interpreter.stack, vec![StackValue::Integer(4)]);
         Ok(())
     }
 
@@ -333,12 +333,12 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(Value::Integer(10));
+        builder.emit_constant(StackValue::Integer(10));
         let loop_start = builder.loop_start();
         builder.emit(Instruction::Dup);
-        builder.emit_constant(Value::Integer(5));
+        builder.emit_constant(StackValue::Integer(5));
         let end = builder.emit_compare_forward(Comparison::Gt);
-        builder.emit_constant(Value::Integer(1));
+        builder.emit_constant(StackValue::Integer(1));
         builder.emit(Instruction::Sub);
         builder.emit_jump_backward(loop_start);
         builder.patch_jump(end);
@@ -348,7 +348,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![Value::Integer(5)]);
+        assert_eq!(interpreter.stack, vec![StackValue::Integer(5)]);
         Ok(())
     }
 }
