@@ -258,10 +258,6 @@ impl<'a> InterpreterCompiler<'a> {
                 let function = compiler
                     .builder
                     .finish("inline".to_string(), inline_function.params.len());
-                let amount = function.closure_names.len();
-                if amount > u8::MAX as usize {
-                    panic!("too many closure variables");
-                }
                 // now place all captured names on stack, to ensure we have the
                 // closure
                 // in reverse order so we can pop them off in the right order
@@ -270,7 +266,7 @@ impl<'a> InterpreterCompiler<'a> {
                 }
                 let function_id = self.builder.add_function(function);
                 self.builder
-                    .emit(Instruction::Closure(function_id.as_u16(), amount as u8));
+                    .emit(Instruction::Closure(function_id.as_u16()));
             }
             _ => {
                 panic!("not supported yet");

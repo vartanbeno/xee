@@ -33,6 +33,12 @@ pub(crate) struct Name {
     pub(crate) namespace: Option<String>,
 }
 
+impl Name {
+    pub(crate) fn new(name: String, namespace: Option<String>) -> Self {
+        Name { name, namespace }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct LetExpr {
     pub(crate) var_name: Name,

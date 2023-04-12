@@ -67,9 +67,10 @@ impl<'a> Interpreter<'a> {
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
                 }
-                Instruction::Closure(function_id, amount) => {
+                Instruction::Closure(function_id) => {
                     let mut values = Vec::new();
-                    for _ in 0..amount {
+                    let closure_function = &self.program.functions[function_id as usize];
+                    for _ in 0..closure_function.closure_names.len() {
                         values.push(self.stack.pop().unwrap());
                     }
                     self.stack.push(StackValue::Closure(Closure {
@@ -185,6 +186,7 @@ impl<'a> Interpreter<'a> {
                         self.stack[self.stack.len() - (arity as usize + 1)].as_closure()?;
                     let function_id = closure.function_id;
                     function = &self.program.functions[function_id.0];
+                    // XXX check that arity of function matches arity of call
                     let stack_size = self.stack.len();
                     base = stack_size - (arity as usize);
                     ip = 0;

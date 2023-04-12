@@ -16,4 +16,5 @@ mod interpret;
 mod interpret2;
 mod parse;
 mod parse_ast;
+mod static_context;
 mod value;

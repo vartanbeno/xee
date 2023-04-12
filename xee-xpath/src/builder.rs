@@ -82,6 +82,9 @@ impl<'a> FunctionBuilder<'a> {
         }
         let index = self.closure_names.len();
         self.closure_names.push(name.clone());
+        if index > (u16::MAX as usize) {
+            panic!("too many closure names");
+        }
         index
     }
 
