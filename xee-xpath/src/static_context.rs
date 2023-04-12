@@ -43,7 +43,7 @@ impl StaticFunction {
 
 #[derive(Debug)]
 pub(crate) struct StaticFunctions {
-    by_name: HashMap<ast::Name, StaticFunctionId>,
+    by_name: HashMap<(ast::Name, u8), StaticFunctionId>,
     by_index: Vec<StaticFunction>,
 }
 
@@ -66,14 +66,18 @@ impl StaticFunctions {
             func: bound_my_function,
         });
         by_name.insert(
-            ast::Name::new("my_function".to_string(), None),
+            (
+                ast::Name::new("my_function".to_string(), None),
+                by_index[0].parameters.len() as u8,
+            ),
             StaticFunctionId(0),
         );
         Self { by_name, by_index }
     }
 
-    pub(crate) fn get_by_name(&self, name: &ast::Name) -> Option<StaticFunctionId> {
-        self.by_name.get(name).copied()
+    pub(crate) fn get_by_name(&self, name: &ast::Name, arity: u8) -> Option<StaticFunctionId> {
+        // XXX annoying clone
+        self.by_name.get(&(name.clone(), arity)).copied()
     }
 
     pub(crate) fn get_by_index(&self, static_function_id: StaticFunctionId) -> &StaticFunction {
