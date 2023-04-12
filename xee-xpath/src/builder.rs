@@ -1,6 +1,7 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
-use crate::value::{Function, FunctionId, StackValue};
+use crate::static_context::StaticFunction;
+use crate::value::{Function, FunctionId, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
@@ -73,6 +74,10 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many constants");
         }
         self.emit(Instruction::Const(constant_id as u16));
+    }
+
+    pub(crate) fn emit_static_function(&mut self, static_function_id: StaticFunctionId) {
+        self.emit(Instruction::StaticFunction(static_function_id.as_u16()));
     }
 
     pub(crate) fn add_closure_name(&mut self, name: &ast::Name) -> usize {

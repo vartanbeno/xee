@@ -4,7 +4,8 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
-use crate::value::{Closure, FunctionId, StackValue};
+use crate::static_context::StaticContext;
+use crate::value::{FunctionId, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -258,6 +259,8 @@ impl<'a> InterpreterCompiler<'a> {
                 let function = compiler
                     .builder
                     .finish("inline".to_string(), inline_function.params.len());
+                let amount = function.closure_names.len();
+
                 // now place all captured names on stack, to ensure we have the
                 // closure
                 // in reverse order so we can pop them off in the right order
@@ -335,6 +338,7 @@ impl<'a> InterpreterCompiler<'a> {
 
 pub(crate) struct CompiledXPath {
     program: Program,
+    static_context: StaticContext,
     main: FunctionId,
 }
 
@@ -351,11 +355,16 @@ impl CompiledXPath {
         compiler.compile_xpath(&ast);
         let main = compiler.builder.finish("main".to_string(), 0);
         let main = program.add_function(main);
-        Self { program, main }
+        let static_context = StaticContext::new();
+        Self {
+            program,
+            static_context,
+            main,
+        }
     }
 
     pub(crate) fn interpret(&self) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program);
+        let mut interpreter = Interpreter::new(&self.program, &self.static_context);
         interpreter.start(self.main);
         interpreter.run()?;
         // the stack has to be 1 value, as we return the result of the expression

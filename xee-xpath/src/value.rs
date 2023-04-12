@@ -1,11 +1,21 @@
 use crate::ast;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
+use crate::static_context::StaticFunction;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
 
 impl FunctionId {
+    pub(crate) fn as_u16(&self) -> u16 {
+        self.0 as u16
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub(crate) struct StaticFunctionId(pub(crate) usize);
+
+impl StaticFunctionId {
     pub(crate) fn as_u16(&self) -> u16 {
         self.0 as u16
     }
@@ -38,6 +48,7 @@ pub(crate) struct Closure {
 pub(crate) enum StackValue {
     Integer(i64),
     Closure(Closure),
+    StaticFunction(StaticFunctionId),
 }
 
 impl StackValue {
@@ -59,6 +70,13 @@ impl StackValue {
         match self {
             StackValue::Closure(c) => Ok(c),
             _ => Err(Error::TypeError),
+        }
+    }
+
+    pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
+        match self {
+            StackValue::StaticFunction(f) => Some(*f),
+            _ => None,
         }
     }
 }

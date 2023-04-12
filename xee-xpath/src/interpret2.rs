@@ -1,7 +1,8 @@
 use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
-use crate::value::{Closure, FunctionId, StackValue};
+use crate::static_context::StaticContext;
+use crate::value::{Closure, FunctionId, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -13,14 +14,16 @@ struct Frame {
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
+    static_context: &'a StaticContext,
     stack: Vec<StackValue>,
     frames: Vec<Frame>,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program) -> Self {
+    pub(crate) fn new(program: &'a Program, static_context: &'a StaticContext) -> Self {
         Interpreter {
             program,
+            static_context,
             stack: Vec::new(),
             frames: Vec::new(),
         }
@@ -77,6 +80,11 @@ impl<'a> Interpreter<'a> {
                         function_id: FunctionId(function_id as usize),
                         values,
                     }));
+                }
+                Instruction::StaticFunction(static_function_id) => {
+                    self.stack.push(StackValue::StaticFunction(StaticFunctionId(
+                        static_function_id as usize,
+                    )));
                 }
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
@@ -181,20 +189,30 @@ impl<'a> Interpreter<'a> {
                     let frame = self.frames.last_mut().unwrap();
                     frame.ip = ip;
 
-                    // get function id from stack, by peeking back
-                    let closure =
-                        self.stack[self.stack.len() - (arity as usize + 1)].as_closure()?;
-                    let function_id = closure.function_id;
-                    function = &self.program.functions[function_id.0];
-                    // XXX check that arity of function matches arity of call
-                    let stack_size = self.stack.len();
-                    base = stack_size - (arity as usize);
-                    ip = 0;
-                    self.frames.push(Frame {
-                        function: function_id,
-                        ip,
-                        base,
-                    });
+                    // get callable from stack, by peeking back
+                    let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
+                    if let Some(static_function_id) = callable.as_static_function() {
+                        let static_function = &self
+                            .static_context
+                            .functions
+                            .get_by_index(static_function_id);
+                        let arguments = &self.stack[self.stack.len() - (arity as usize)..];
+                        let result = static_function.invoke(arguments)?;
+                        self.stack.push(result);
+                    } else {
+                        let closure = callable.as_closure()?;
+                        let function_id = closure.function_id;
+                        function = &self.program.functions[function_id.0];
+                        // XXX check that arity of function matches arity of call
+                        let stack_size = self.stack.len();
+                        base = stack_size - (arity as usize);
+                        ip = 0;
+                        self.frames.push(Frame {
+                            function: function_id,
+                            ip,
+                            base,
+                        });
+                    }
                 }
                 Instruction::Return => {
                     let return_value = self.stack.pop().unwrap();
@@ -252,7 +270,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let mut interpreter = Interpreter::new(&program);
+        let static_context = StaticContext::new();
+        let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
@@ -300,7 +319,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let mut interpreter = Interpreter::new(&program);
+        let static_context = StaticContext::new();
+        let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
@@ -323,7 +343,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let mut interpreter = Interpreter::new(&program);
+        let static_context = StaticContext::new();
+        let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![StackValue::Integer(4)]);
@@ -347,7 +368,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let mut interpreter = Interpreter::new(&program);
+        let static_context = StaticContext::new();
+        let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(interpreter.stack, vec![StackValue::Integer(5)]);
