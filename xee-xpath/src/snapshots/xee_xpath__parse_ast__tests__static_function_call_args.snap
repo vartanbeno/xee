@@ -1,0 +1,52 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"my_function(1, 2)\")"
+---
+Path(
+    PathExpr {
+        steps: [
+            PrimaryExpr(
+                FunctionCall(
+                    FunctionCall {
+                        name: Name {
+                            name: "my_function",
+                            namespace: None,
+                        },
+                        arguments: [
+                            Expr(
+                                Path(
+                                    PathExpr {
+                                        steps: [
+                                            PrimaryExpr(
+                                                Literal(
+                                                    Integer(
+                                                        1,
+                                                    ),
+                                                ),
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ),
+                            Expr(
+                                Path(
+                                    PathExpr {
+                                        steps: [
+                                            PrimaryExpr(
+                                                Literal(
+                                                    Integer(
+                                                        2,
+                                                    ),
+                                                ),
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+            ),
+        ],
+    },
+)

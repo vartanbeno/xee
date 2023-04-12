@@ -788,4 +788,9 @@ mod tests {
     fn test_static_function_call() {
         assert_debug_snapshot!(parse_expr_single("my_function()"));
     }
+
+    #[test]
+    fn test_static_function_call_args() {
+        assert_debug_snapshot!(parse_expr_single("my_function(1, 2)"));
+    }
 }

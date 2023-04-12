@@ -70,6 +70,7 @@ impl Scopes {
 
 struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
+    static_context: &'a StaticContext,
     builder: FunctionBuilder<'a>,
 }
 
@@ -251,6 +252,7 @@ impl<'a> InterpreterCompiler<'a> {
                 let mut compiler = InterpreterCompiler {
                     builder: nested_builder,
                     scopes: self.scopes,
+                    static_context: self.static_context,
                 };
                 compiler.compile_function(inline_function);
 
@@ -259,7 +261,6 @@ impl<'a> InterpreterCompiler<'a> {
                 let function = compiler
                     .builder
                     .finish("inline".to_string(), inline_function.params.len());
-                let amount = function.closure_names.len();
 
                 // now place all captured names on stack, to ensure we have the
                 // closure
@@ -270,6 +271,22 @@ impl<'a> InterpreterCompiler<'a> {
                 let function_id = self.builder.add_function(function);
                 self.builder
                     .emit(Instruction::Closure(function_id.as_u16()));
+            }
+            ast::PrimaryExpr::FunctionCall(function_call) => {
+                let arity = function_call.arguments.len();
+                if arity > u8::MAX as usize {
+                    panic!("too many arguments");
+                }
+                let function_id = self
+                    .static_context
+                    .functions
+                    .get_by_name(&function_call.name, arity as u8)
+                    .expect("static function not found");
+                self.builder.emit_static_function(function_id);
+                for argument in &function_call.arguments {
+                    self.compile_argument(argument);
+                }
+                self.builder.emit(Instruction::Call(arity as u8));
             }
             _ => {
                 panic!("not supported yet");
@@ -351,6 +368,7 @@ impl CompiledXPath {
         let mut compiler = InterpreterCompiler {
             builder,
             scopes: &mut scopes,
+            static_context: &StaticContext::new(),
         };
         compiler.compile_xpath(&ast);
         let main = compiler.builder.finish("main".to_string(), 0);
@@ -566,6 +584,14 @@ mod tests {
     fn test_function_closure_nested() -> Result<()> {
         let xpath =
             CompiledXPath::new("function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 7);
+        Ok(())
+    }
+
+    #[test]
+    fn test_static_function_call() -> Result<()> {
+        let xpath = CompiledXPath::new("my_function(5, 2)");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 7);
         Ok(())
