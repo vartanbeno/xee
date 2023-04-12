@@ -288,6 +288,14 @@ impl<'a> InterpreterCompiler<'a> {
                 }
                 self.builder.emit(Instruction::Call(arity as u8));
             }
+            ast::PrimaryExpr::NamedFunctionRef(named_function_ref) => {
+                let function_id = self
+                    .static_context
+                    .functions
+                    .get_by_name(&named_function_ref.name, named_function_ref.arity)
+                    .expect("static function not found");
+                self.builder.emit_static_function(function_id);
+            }
             _ => {
                 panic!("not supported yet");
             }
@@ -592,6 +600,14 @@ mod tests {
     #[test]
     fn test_static_function_call() -> Result<()> {
         let xpath = CompiledXPath::new("my_function(5, 2)");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 7);
+        Ok(())
+    }
+
+    #[test]
+    fn test_named_function_ref_call() -> Result<()> {
+        let xpath = CompiledXPath::new("my_function#2(5, 2)");
         let result = xpath.interpret()?;
         assert_eq!(result.as_integer()?, 7);
         Ok(())
