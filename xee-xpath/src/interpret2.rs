@@ -185,10 +185,6 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(a);
                 }
                 Instruction::Call(arity) => {
-                    // store ip of next instruction in current frame
-                    let frame = self.frames.last_mut().unwrap();
-                    frame.ip = ip;
-
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
                     if let Some(static_function_id) = callable.as_static_function() {
@@ -198,8 +194,13 @@ impl<'a> Interpreter<'a> {
                             .get_by_index(static_function_id);
                         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
                         let result = static_function.invoke(arguments)?;
+                        // truncate the stack to the base
+                        self.stack.truncate(self.stack.len() - (arity as usize + 1));
                         self.stack.push(result);
                     } else {
+                        // store ip of next instruction in current frame
+                        let frame = self.frames.last_mut().unwrap();
+                        frame.ip = ip;
                         let closure = callable.as_closure()?;
                         let function_id = closure.function_id;
                         function = &self.program.functions[function_id.0];
