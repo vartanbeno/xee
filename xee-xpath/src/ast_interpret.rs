@@ -283,10 +283,7 @@ impl<'a> InterpreterCompiler<'a> {
                     .get_by_name(&function_call.name, arity as u8)
                     .expect("static function not found");
                 self.builder.emit_static_function(function_id);
-                for argument in &function_call.arguments {
-                    self.compile_argument(argument);
-                }
-                self.builder.emit(Instruction::Call(arity as u8));
+                self.compile_call(&function_call.arguments);
             }
             ast::PrimaryExpr::NamedFunctionRef(named_function_ref) => {
                 let function_id = self
@@ -306,10 +303,7 @@ impl<'a> InterpreterCompiler<'a> {
         for postfix in postfixes {
             match postfix {
                 ast::Postfix::ArgumentList(arguments) => {
-                    for argument in arguments {
-                        self.compile_argument(argument);
-                    }
-                    self.builder.emit(Instruction::Call(arguments.len() as u8));
+                    self.compile_call(arguments);
                 }
                 _ => {
                     panic!("not supported yet");
@@ -327,6 +321,13 @@ impl<'a> InterpreterCompiler<'a> {
                 panic!("not supported yet");
             }
         }
+    }
+
+    fn compile_call(&mut self, arguments: &[ast::Argument]) {
+        for argument in arguments {
+            self.compile_argument(argument);
+        }
+        self.builder.emit(Instruction::Call(arguments.len() as u8));
     }
 
     fn compile_function(&mut self, function: &ast::InlineFunction) {
@@ -612,4 +613,12 @@ mod tests {
         assert_eq!(result.as_integer()?, 7);
         Ok(())
     }
+
+    // #[test]
+    // fn test_dynamic_call_with_placeholders() -> Result<()> {
+    //     let xpath = CompiledXPath::new("function($x, $y) { $x - $y }($, 5 )(7)");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(result.as_integer()?, 2);
+    //     Ok(())
+    // }
 }
