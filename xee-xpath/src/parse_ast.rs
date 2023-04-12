@@ -392,6 +392,17 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
                 panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
             }
         }
+        Rule::FunctionCall => {
+            let mut pairs = pair.into_inner();
+            let name = pairs.next().unwrap();
+            // unwrap NonReservedFunctionName
+            let name = name.into_inner().next().unwrap();
+            let arguments = pairs.next().unwrap();
+            ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                name: eq_name_to_name(name),
+                arguments: argument_list_to_args(arguments),
+            })
+        }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -764,12 +775,17 @@ mod tests {
     }
 
     #[test]
-    fn test_function_call() {
+    fn test_dynamic_function_call() {
         assert_debug_snapshot!(parse_expr_single("$foo()"));
     }
 
     #[test]
-    fn test_function_call_args() {
+    fn test_dynamic_function_call_args() {
         assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
+    }
+
+    #[test]
+    fn test_static_function_call() {
+        assert_debug_snapshot!(parse_expr_single("my_function()"));
     }
 }

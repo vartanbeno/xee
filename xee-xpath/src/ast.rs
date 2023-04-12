@@ -208,7 +208,7 @@ pub(crate) enum Literal {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionCall {
-    pub(crate) name: EQName,
+    pub(crate) name: Name,
     pub(crate) arguments: Vec<Argument>,
 }
 
