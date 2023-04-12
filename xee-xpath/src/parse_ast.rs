@@ -430,21 +430,20 @@ fn postfix_expr_to_postfix(pair: Pair<Rule>) -> ast::Postfix {
     }
 }
 
-fn argument_list_to_args(pair: Pair<Rule>) -> Vec<ast::Argument> {
+fn argument_list_to_args(pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
     debug_assert_eq!(pair.as_rule(), Rule::ArgumentList);
     let mut args = vec![];
     for pair in pair.into_inner() {
-        args.push(argument_to_argument(pair))
+        args.push(argument_to_expr_single(pair))
     }
     args
 }
 
-fn argument_to_argument(pair: Pair<Rule>) -> ast::Argument {
+fn argument_to_expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
     debug_assert_eq!(pair.as_rule(), Rule::Argument);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::ExprSingle => ast::Argument::Expr(expr_single(pair)),
-        Rule::ArgumentPlaceholder => ast::Argument::Placeholder,
+        Rule::ExprSingle => expr_single(pair),
         _ => {
             panic!("unhandled argument: {:?}", pair.as_rule())
         }
@@ -814,8 +813,8 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("my_function#2"));
     }
 
-    #[test]
-    fn test_dynamic_function_call_placeholder() {
-        assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, ?)"));
-    }
+    // #[test]
+    // fn test_dynamic_function_call_placeholder() {
+    //     assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, ?)"));
+    // }
 }

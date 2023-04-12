@@ -15,49 +15,45 @@ Path(
                 postfixes: [
                     ArgumentList(
                         [
-                            Expr(
-                                Binary(
-                                    BinaryExpr {
-                                        operator: Add,
-                                        left: PathExpr {
-                                            steps: [
-                                                PrimaryExpr(
-                                                    Literal(
-                                                        Integer(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                ),
-                                            ],
-                                        },
-                                        right: PathExpr {
-                                            steps: [
-                                                PrimaryExpr(
-                                                    Literal(
-                                                        Integer(
-                                                            1,
-                                                        ),
-                                                    ),
-                                                ),
-                                            ],
-                                        },
-                                    },
-                                ),
-                            ),
-                            Expr(
-                                Path(
-                                    PathExpr {
+                            Binary(
+                                BinaryExpr {
+                                    operator: Add,
+                                    left: PathExpr {
                                         steps: [
                                             PrimaryExpr(
                                                 Literal(
                                                     Integer(
-                                                        3,
+                                                        1,
                                                     ),
                                                 ),
                                             ),
                                         ],
                                     },
-                                ),
+                                    right: PathExpr {
+                                        steps: [
+                                            PrimaryExpr(
+                                                Literal(
+                                                    Integer(
+                                                        1,
+                                                    ),
+                                                ),
+                                            ),
+                                        ],
+                                    },
+                                },
+                            ),
+                            Path(
+                                PathExpr {
+                                    steps: [
+                                        PrimaryExpr(
+                                            Literal(
+                                                Integer(
+                                                    3,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                },
                             ),
                         ],
                     ),

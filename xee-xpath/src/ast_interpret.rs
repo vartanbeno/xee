@@ -312,20 +312,9 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_argument(&mut self, argument: &ast::Argument) {
-        match argument {
-            ast::Argument::Expr(expr_single) => {
-                self.compile_expr_single(expr_single);
-            }
-            _ => {
-                panic!("not supported yet");
-            }
-        }
-    }
-
-    fn compile_call(&mut self, arguments: &[ast::Argument]) {
+    fn compile_call(&mut self, arguments: &[ast::ExprSingle]) {
         for argument in arguments {
-            self.compile_argument(argument);
+            self.compile_expr_single(argument);
         }
         self.builder.emit(Instruction::Call(arguments.len() as u8));
     }

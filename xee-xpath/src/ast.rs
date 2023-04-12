@@ -150,7 +150,7 @@ pub(crate) struct ApplyExpr {
 pub(crate) enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
-    Arrow(Vec<(ArrowFunctionSpecifier, Vec<Argument>)>),
+    Arrow(Vec<(ArrowFunctionSpecifier, Vec<ExprSingle>)>),
     Cast(SingleType),
     Castable(SingleType),
     Treat(SequenceType),
@@ -209,13 +209,7 @@ pub(crate) enum Literal {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionCall {
     pub(crate) name: Name,
-    pub(crate) arguments: Vec<Argument>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Argument {
-    Expr(ExprSingle),
-    Placeholder,
+    pub(crate) arguments: Vec<ExprSingle>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -241,7 +235,7 @@ pub(crate) struct Param {
 pub(crate) enum Postfix {
     // vec contains at least 1 element
     Predicate(Vec<ExprSingle>),
-    ArgumentList(Vec<Argument>),
+    ArgumentList(Vec<ExprSingle>),
     Lookup(Lookup),
 }
 
