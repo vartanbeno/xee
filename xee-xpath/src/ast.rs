@@ -220,8 +220,8 @@ pub(crate) enum Argument {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct NamedFunctionRef {
-    pub(crate) name: EQName,
-    pub(crate) argument_count: u8,
+    pub(crate) name: Name,
+    pub(crate) arity: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

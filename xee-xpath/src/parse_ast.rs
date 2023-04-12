@@ -386,10 +386,16 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
         }
         Rule::FunctionItemExpr => {
             let pair = pair.into_inner().next().unwrap();
-            if pair.as_rule() == Rule::InlineFunctionExpr {
-                ast::PrimaryExpr::InlineFunction(inline_function_expr_to_inline_function(pair))
-            } else {
-                panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
+            match pair.as_rule() {
+                Rule::InlineFunctionExpr => {
+                    ast::PrimaryExpr::InlineFunction(inline_function_expr_to_inline_function(pair))
+                }
+                Rule::NamedFunctionRef => ast::PrimaryExpr::NamedFunctionRef(
+                    named_function_ref_to_named_function_ref(pair),
+                ),
+                _ => {
+                    panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
+                }
             }
         }
         Rule::FunctionCall => {
@@ -462,6 +468,17 @@ fn eq_name_to_name(pair: Pair<Rule>) -> ast::Name {
     ast::Name {
         name: pair.as_str().to_string(),
         namespace: None,
+    }
+}
+
+fn named_function_ref_to_named_function_ref(pair: Pair<Rule>) -> ast::NamedFunctionRef {
+    debug_assert_eq!(pair.as_rule(), Rule::NamedFunctionRef);
+    let mut pairs = pair.into_inner();
+    let name = pairs.next().unwrap();
+    let arity = pairs.next().unwrap();
+    ast::NamedFunctionRef {
+        name: eq_name_to_name(name),
+        arity: arity.as_str().parse().unwrap(),
     }
 }
 
@@ -792,5 +809,10 @@ mod tests {
     #[test]
     fn test_static_function_call_args() {
         assert_debug_snapshot!(parse_expr_single("my_function(1, 2)"));
+    }
+
+    #[test]
+    fn test_named_function_ref() {
+        assert_debug_snapshot!(parse_expr_single("my_function#2"));
     }
 }
