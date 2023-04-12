@@ -444,9 +444,7 @@ fn argument_to_argument(pair: Pair<Rule>) -> ast::Argument {
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::ExprSingle => ast::Argument::Expr(expr_single(pair)),
-        Rule::ArgumentPlaceholder => {
-            panic!("argument placeholder not yet!");
-        }
+        Rule::ArgumentPlaceholder => ast::Argument::Placeholder,
         _ => {
             panic!("unhandled argument: {:?}", pair.as_rule())
         }
@@ -814,5 +812,10 @@ mod tests {
     #[test]
     fn test_named_function_ref() {
         assert_debug_snapshot!(parse_expr_single("my_function#2"));
+    }
+
+    #[test]
+    fn test_dynamic_function_call_placeholder() {
+        assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, ?)"));
     }
 }
