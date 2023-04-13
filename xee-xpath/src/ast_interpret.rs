@@ -603,11 +603,11 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_dynamic_call_with_placeholders() -> Result<()> {
-    //     let xpath = CompiledXPath::new("function($x, $y) { $x - $y }($, 5 )(7)");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(result.as_integer()?, 2);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_static_call_with_placeholders() -> Result<()> {
+        let xpath = CompiledXPath::new("my_function(?, 2)(5)");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 7);
+        Ok(())
+    }
 }

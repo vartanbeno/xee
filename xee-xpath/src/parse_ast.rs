@@ -352,14 +352,19 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
             let mut pairs = pair.into_inner();
             let primary_pair = pairs.next().unwrap();
             let primary = primary_expr_to_primary(primary_pair);
-            let mut postfixes = vec![];
-            // possible predicate, argument list, lookup postfixes
-            for pair in pairs {
-                postfixes.push(postfix_expr_to_postfix(pair))
-            }
+            let postfixes = pairs.map(postfix_expr_to_postfix).collect::<Vec<_>>();
             if postfixes.is_empty() {
                 ast::StepExpr::PrimaryExpr(primary)
             } else {
+                let postfixes = postfixes
+                    .into_iter()
+                    .map(|postfix| match postfix {
+                        PostfixOrPlaceholdered::Postfix(postfix) => postfix,
+                        PostfixOrPlaceholdered::Placeholdered(..) => {
+                            panic!("placeholdered postfix in step expr")
+                        }
+                    })
+                    .collect::<Vec<_>>();
                 ast::StepExpr::PostfixExpr { primary, postfixes }
             }
             // XXX handle axis step possibility
@@ -404,10 +409,31 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
             // unwrap NonReservedFunctionName
             let name = name.into_inner().next().unwrap();
             let arguments = pairs.next().unwrap();
-            ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                name: eq_name_to_name(name),
-                arguments: argument_list_to_args(arguments),
-            })
+            match argument_list_to_args(arguments) {
+                ArgumentsOrPlaceholdered::Arguments(arguments) => {
+                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                        name: eq_name_to_name(name),
+                        arguments,
+                    })
+                }
+                ArgumentsOrPlaceholdered::Placeholdered(arguments, params) => {
+                    // construct an inline function that calls the underlying function,
+                    // with the reduced placeholdered params
+                    ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+                        params,
+                        return_type: None,
+                        body: vec![ast::ExprSingle::Path(ast::PathExpr {
+                            steps: vec![ast::StepExpr::PostfixExpr {
+                                primary: ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                                    name: eq_name_to_name(name),
+                                    arguments,
+                                }),
+                                postfixes: vec![],
+                            }],
+                        })],
+                    })
+                }
+            }
         }
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
@@ -415,12 +441,19 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
     }
 }
 
-fn postfix_expr_to_postfix(pair: Pair<Rule>) -> ast::Postfix {
+fn postfix_expr_to_postfix(pair: Pair<Rule>) -> PostfixOrPlaceholdered {
     match pair.as_rule() {
         Rule::Predicate => {
             panic!("predicate not handled yet");
         }
-        Rule::ArgumentList => ast::Postfix::ArgumentList(argument_list_to_args(pair)),
+        Rule::ArgumentList => match argument_list_to_args(pair) {
+            ArgumentsOrPlaceholdered::Arguments(arguments) => {
+                PostfixOrPlaceholdered::Postfix(ast::Postfix::ArgumentList(arguments))
+            }
+            ArgumentsOrPlaceholdered::Placeholdered(arguments, params) => {
+                PostfixOrPlaceholdered::Placeholdered(arguments, params)
+            }
+        },
         Rule::Lookup => {
             panic!("lookup not handled yet");
         }
@@ -430,20 +463,56 @@ fn postfix_expr_to_postfix(pair: Pair<Rule>) -> ast::Postfix {
     }
 }
 
-fn argument_list_to_args(pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
-    debug_assert_eq!(pair.as_rule(), Rule::ArgumentList);
-    let mut args = vec![];
-    for pair in pair.into_inner() {
-        args.push(argument_to_expr_single(pair))
-    }
-    args
+enum PostfixOrPlaceholdered {
+    Postfix(ast::Postfix),
+    Placeholdered(Vec<ast::ExprSingle>, Vec<ast::Param>),
 }
 
-fn argument_to_expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
+#[derive(Debug)]
+enum ArgumentsOrPlaceholdered {
+    Arguments(Vec<ast::ExprSingle>),
+    Placeholdered(Vec<ast::ExprSingle>, Vec<ast::Param>),
+}
+
+fn argument_list_to_args(pair: Pair<Rule>) -> ArgumentsOrPlaceholdered {
+    debug_assert_eq!(pair.as_rule(), Rule::ArgumentList);
+
+    let mut args = vec![];
+    let mut placeholder_index = 0;
+    let mut params = vec![];
+    for pair in pair.into_inner() {
+        let expr_single = argument_to_expr_single(pair);
+        if let Some(expr_single) = expr_single {
+            args.push(expr_single);
+        } else {
+            let param_name = format!("placeholder{}", placeholder_index);
+            let name = ast::Name {
+                name: param_name,
+                namespace: None,
+            };
+            params.push(ast::Param {
+                name: name.clone(),
+                type_: None,
+            });
+            args.push(ast::ExprSingle::Path(ast::PathExpr {
+                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::VarRef(name))],
+            }));
+            placeholder_index += 1;
+        }
+    }
+    if params.is_empty() {
+        ArgumentsOrPlaceholdered::Arguments(args)
+    } else {
+        ArgumentsOrPlaceholdered::Placeholdered(args, params)
+    }
+}
+
+fn argument_to_expr_single(pair: Pair<Rule>) -> Option<ast::ExprSingle> {
     debug_assert_eq!(pair.as_rule(), Rule::Argument);
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
-        Rule::ExprSingle => expr_single(pair),
+        Rule::ExprSingle => Some(expr_single(pair)),
+        Rule::ArgumentPlaceholder => None,
         _ => {
             panic!("unhandled argument: {:?}", pair.as_rule())
         }
