@@ -12,7 +12,6 @@ mod ast_interpret;
 mod builder;
 mod error;
 mod instruction;
-mod interpret;
 mod interpret2;
 mod parse;
 mod parse_ast;
