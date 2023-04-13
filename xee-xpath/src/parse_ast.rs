@@ -926,4 +926,9 @@ mod tests {
     fn test_dynamic_function_call_placeholder() {
         assert_debug_snapshot!(parse_expr_single("$foo(1, ?)"));
     }
+
+    #[test]
+    fn test_static_function_call_placeholder() {
+        assert_debug_snapshot!(parse_expr_single("my_function(?, 1)"));
+    }
 }
