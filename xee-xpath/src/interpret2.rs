@@ -2,7 +2,7 @@ use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
 use crate::static_context::StaticContext;
-use crate::value::{Closure, FunctionId, StackValue, StaticFunctionId};
+use crate::value::{AtomicValue, Closure, FunctionId, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -54,18 +54,24 @@ impl<'a> Interpreter<'a> {
                 Instruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_add(b).ok_or(Error::IntegerOverflow)?;
-                    self.stack.push(StackValue::Integer(result));
+                    self.stack
+                        .push(StackValue::AtomicValue(AtomicValue::Integer(result)));
                 }
                 Instruction::Sub => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_sub(b).ok_or(Error::IntegerOverflow)?;
-                    self.stack.push(StackValue::Integer(result));
+                    self.stack
+                        .push(StackValue::AtomicValue(AtomicValue::Integer(result)));
                 }
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
@@ -91,7 +97,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::ClosureVar(index) => {
                     // the closure is always just below the base
-                    let closure = self.stack[base - 1].as_closure()?;
+                    let closure = self.stack[base - 1].as_closure().ok_or(Error::TypeError)?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
@@ -123,8 +129,10 @@ impl<'a> Interpreter<'a> {
                 Instruction::Lt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a < b;
                     // skip the next instruction, which by construction
                     // has to be a jump instruction, so we know its size
@@ -135,8 +143,10 @@ impl<'a> Interpreter<'a> {
                 Instruction::Le => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a <= b;
                     // skip the next instruction, which by construction
                     // has to be a jump instruction, so we know its size
@@ -147,8 +157,10 @@ impl<'a> Interpreter<'a> {
                 Instruction::Gt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a > b;
                     // skip the next instruction, which by construction
                     // has to be a jump instruction, so we know its size
@@ -159,8 +171,10 @@ impl<'a> Interpreter<'a> {
                 Instruction::Ge => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a >= b;
                     // skip the next instruction, which by construction
                     // has to be a jump instruction, so we know its size
@@ -170,11 +184,11 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::Test => {
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_integer()?;
-                    let result = a != 0;
+                    let a = a.as_atomic_value().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(Error::TypeError)?;
                     // skip the next instruction, which by construction
                     // has to be a jump instruction, so we know its size
-                    if result {
+                    if a {
                         ip += 3;
                     }
                 }
@@ -203,7 +217,7 @@ impl<'a> Interpreter<'a> {
                         // store ip of next instruction in current frame
                         let frame = self.frames.last_mut().unwrap();
                         frame.ip = ip;
-                        let closure = callable.as_closure()?;
+                        let closure = callable.as_closure().ok_or(Error::TypeError)?;
                         let function_id = closure.function_id;
                         function = &self.program.functions[function_id.0];
                         let stack_size = self.stack.len();
@@ -266,8 +280,8 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Integer(1));
-        builder.emit_constant(StackValue::Integer(2));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(1)));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(2)));
         builder.emit(Instruction::Add);
         let function = builder.finish("main".to_string(), 0);
 
@@ -276,7 +290,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::AtomicValue(AtomicValue::Integer(3))]
+        );
         Ok(())
     }
 
@@ -286,9 +303,9 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let jump = builder.emit_jump_forward();
-        builder.emit_constant(StackValue::Integer(3));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(3)));
         builder.patch_jump(jump);
-        builder.emit_constant(StackValue::Integer(4));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(4)));
         let function = builder.finish("main".to_string(), 0);
 
         let instructions = decode_instructions(&function.chunk);
@@ -310,13 +327,13 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Integer(1));
-        builder.emit_constant(StackValue::Integer(2));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(1)));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(2)));
         let lt_false = builder.emit_compare_forward(Comparison::Lt);
-        builder.emit_constant(StackValue::Integer(3));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(3)));
         let end = builder.emit_jump_forward();
         builder.patch_jump(lt_false);
-        builder.emit_constant(StackValue::Integer(4));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(4)));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
@@ -325,7 +342,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![StackValue::Integer(3)]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::AtomicValue(AtomicValue::Integer(3))]
+        );
         Ok(())
     }
 
@@ -334,13 +354,13 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Integer(2));
-        builder.emit_constant(StackValue::Integer(1));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(2)));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(1)));
         let lt_false = builder.emit_compare_forward(Comparison::Lt);
-        builder.emit_constant(StackValue::Integer(3));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(3)));
         let end = builder.emit_jump_forward();
         builder.patch_jump(lt_false);
-        builder.emit_constant(StackValue::Integer(4));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(4)));
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
@@ -349,7 +369,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![StackValue::Integer(4)]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::AtomicValue(AtomicValue::Integer(4))]
+        );
         Ok(())
     }
 
@@ -358,12 +381,12 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Integer(10));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(10)));
         let loop_start = builder.loop_start();
         builder.emit(Instruction::Dup);
-        builder.emit_constant(StackValue::Integer(5));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(5)));
         let end = builder.emit_compare_forward(Comparison::Gt);
-        builder.emit_constant(StackValue::Integer(1));
+        builder.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(1)));
         builder.emit(Instruction::Sub);
         builder.emit_jump_backward(loop_start);
         builder.patch_jump(end);
@@ -374,7 +397,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
-        assert_eq!(interpreter.stack, vec![StackValue::Integer(5)]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::AtomicValue(AtomicValue::Integer(5))]
+        );
         Ok(())
     }
 }

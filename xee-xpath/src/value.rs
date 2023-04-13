@@ -1,7 +1,5 @@
 use crate::ast;
-use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
-use crate::static_context::StaticFunction;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
@@ -36,7 +34,7 @@ impl Function {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Closure {
     pub(crate) function_id: FunctionId,
     pub(crate) values: Vec<StackValue>,
@@ -44,32 +42,25 @@ pub(crate) struct Closure {
 
 // TODO: could we shrink this by pointing to a value heap with a reference
 // smaller than 64 bits?
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
-    Integer(i64),
+    AtomicValue(AtomicValue),
     Closure(Closure),
     StaticFunction(StaticFunctionId),
 }
 
 impl StackValue {
-    pub(crate) fn as_integer(&self) -> Result<i64> {
+    pub(crate) fn as_atomic_value(&self) -> Option<&AtomicValue> {
         match self {
-            StackValue::Integer(i) => Ok(*i),
-            _ => Err(Error::TypeError),
+            StackValue::AtomicValue(a) => Some(a),
+            _ => None,
         }
     }
 
-    pub(crate) fn as_bool(&self) -> Result<bool> {
+    pub(crate) fn as_closure(&self) -> Option<&Closure> {
         match self {
-            StackValue::Integer(i) => Ok(*i != 0),
-            _ => Err(Error::TypeError),
-        }
-    }
-
-    pub(crate) fn as_closure(&self) -> Result<&Closure> {
-        match self {
-            StackValue::Closure(c) => Ok(c),
-            _ => Err(Error::TypeError),
+            StackValue::Closure(c) => Some(c),
+            _ => None,
         }
     }
 
@@ -91,6 +82,23 @@ pub(crate) enum AtomicValue {
     Float(f32),
     Double(f64),
     // and many more
+}
+
+impl AtomicValue {
+    pub(crate) fn as_integer(&self) -> Option<i64> {
+        match self {
+            AtomicValue::Integer(i) => Some(*i),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_bool(&self) -> Option<bool> {
+        match self {
+            AtomicValue::Integer(i) => Some(*i != 0),
+            AtomicValue::Boolean(b) => Some(*b),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

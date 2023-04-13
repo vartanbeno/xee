@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
-use crate::value::{FunctionId, StackValue};
+use crate::value::{AtomicValue, FunctionId, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -230,7 +230,8 @@ impl<'a> InterpreterCompiler<'a> {
         match primary_expr {
             ast::PrimaryExpr::Literal(literal) => match literal {
                 ast::Literal::Integer(i) => {
-                    self.builder.emit_constant(StackValue::Integer(*i));
+                    self.builder
+                        .emit_constant(StackValue::AtomicValue(AtomicValue::Integer(*i)));
                 }
                 // ast::Literal::String(s) => {
                 //     operations.push(Operation::StringLiteral(s.to_string()));
@@ -399,12 +400,20 @@ mod tests {
     use super::*;
     // use crate::interpret::{Atomic, Item, Result, Sequence};
 
+    fn as_integer(value: &StackValue) -> i64 {
+        value.as_atomic_value().unwrap().as_integer().unwrap()
+    }
+
+    fn as_bool(value: &StackValue) -> bool {
+        value.as_atomic_value().unwrap().as_bool().unwrap()
+    }
+
     #[test]
     fn test_compile_expr_single() -> Result<()> {
         let xpath = CompiledXPath::new("1 + 2");
 
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 3);
+        assert_eq!(as_integer(&result), 3);
         Ok(())
     }
 
@@ -420,7 +429,7 @@ mod tests {
     fn test_nested() -> Result<()> {
         let xpath = CompiledXPath::new("1 + (8 - 2)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 7);
+        assert_eq!(as_integer(&result), 7);
         Ok(())
     }
 
@@ -442,7 +451,7 @@ mod tests {
     fn test_let() -> Result<()> {
         let xpath = CompiledXPath::new("let $x := 1 return $x + 2");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 3);
+        assert_eq!(as_integer(&result), 3);
         Ok(())
     }
 
@@ -450,7 +459,7 @@ mod tests {
     fn test_let_nested() -> Result<()> {
         let xpath = CompiledXPath::new("let $x := 1, $y := $x + 3 return $y + 5");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 9);
+        assert_eq!(as_integer(&result), 9);
         Ok(())
     }
 
@@ -458,7 +467,7 @@ mod tests {
     fn test_if() -> Result<()> {
         let xpath = CompiledXPath::new("if (1) then 2 else 3");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
+        assert_eq!(as_integer(&result), 2);
         Ok(())
     }
 
@@ -466,7 +475,7 @@ mod tests {
     fn test_if_false() -> Result<()> {
         let xpath = CompiledXPath::new("if (0) then 2 else 3");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 3);
+        assert_eq!(as_integer(&result), 3);
         Ok(())
     }
 
@@ -474,7 +483,7 @@ mod tests {
     fn test_value_eq_true() -> Result<()> {
         let xpath = CompiledXPath::new("1 eq 1");
         let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
+        assert!(as_bool(&result));
         Ok(())
     }
 
@@ -482,7 +491,7 @@ mod tests {
     fn test_value_eq_false() -> Result<()> {
         let xpath = CompiledXPath::new("1 eq 2");
         let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
+        assert!(!as_bool(&result));
         Ok(())
     }
 
@@ -490,7 +499,7 @@ mod tests {
     fn test_value_ne_true() -> Result<()> {
         let xpath = CompiledXPath::new("1 ne 2");
         let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
+        assert!(as_bool(&result));
         Ok(())
     }
 
@@ -498,7 +507,7 @@ mod tests {
     fn test_value_ne_false() -> Result<()> {
         let xpath = CompiledXPath::new("1 ne 1");
         let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
+        assert!(!as_bool(&result));
         Ok(())
     }
 
@@ -506,7 +515,7 @@ mod tests {
     fn test_value_lt_true() -> Result<()> {
         let xpath = CompiledXPath::new("1 lt 2");
         let result = xpath.interpret()?;
-        assert!(result.as_bool()?);
+        assert!(as_bool(&result));
         Ok(())
     }
 
@@ -514,7 +523,7 @@ mod tests {
     fn test_value_lt_false() -> Result<()> {
         let xpath = CompiledXPath::new("2 lt 1");
         let result = xpath.interpret()?;
-        assert!(!result.as_bool()?);
+        assert!(!as_bool(&result));
         Ok(())
     }
 
@@ -522,7 +531,7 @@ mod tests {
     fn test_function_without_args() -> Result<()> {
         let xpath = CompiledXPath::new("function() { 5 } ()");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 5);
+        assert_eq!(as_integer(&result), 5);
         Ok(())
     }
 
@@ -530,7 +539,7 @@ mod tests {
     fn test_function_with_args() -> Result<()> {
         let xpath = CompiledXPath::new("function($x) { $x + 5 } ( 3 )");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 8);
+        assert_eq!(as_integer(&result), 8);
         Ok(())
     }
 
@@ -538,7 +547,7 @@ mod tests {
     fn test_function_with_args2() -> Result<()> {
         let xpath = CompiledXPath::new("function($x, $y) { $x + $y } ( 3, 5 )");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 8);
+        assert_eq!(as_integer(&result), 8);
         Ok(())
     }
 
@@ -546,7 +555,7 @@ mod tests {
     fn test_function_nested() -> Result<()> {
         let xpath = CompiledXPath::new("function($x) { function($y) { $y + 2 }($x + 1) } (5)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 8);
+        assert_eq!(as_integer(&result), 8);
         Ok(())
     }
 
@@ -555,7 +564,7 @@ mod tests {
         let xpath =
             CompiledXPath::new("function() { let $x := 3 return function() { $x + 2 } }()()");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 5);
+        assert_eq!(as_integer(&result), 5);
         Ok(())
     }
 
@@ -565,7 +574,7 @@ mod tests {
             "function() { let $x := 3, $y := 1 return function() { $x - $y } }()()",
         );
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
+        assert_eq!(as_integer(&result), 2);
         Ok(())
     }
 
@@ -574,7 +583,7 @@ mod tests {
         let xpath =
             CompiledXPath::new("function() { let $x := 3 return function($y) { $x - $y } }()(1)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
+        assert_eq!(as_integer(&result), 2);
         Ok(())
     }
 
@@ -583,7 +592,7 @@ mod tests {
         let xpath =
             CompiledXPath::new("function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 7);
+        assert_eq!(as_integer(&result), 7);
         Ok(())
     }
 
@@ -591,7 +600,7 @@ mod tests {
     fn test_static_function_call() -> Result<()> {
         let xpath = CompiledXPath::new("my_function(5, 2)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 7);
+        assert_eq!(as_integer(&result), 7);
         Ok(())
     }
 
@@ -599,7 +608,7 @@ mod tests {
     fn test_named_function_ref_call() -> Result<()> {
         let xpath = CompiledXPath::new("my_function#2(5, 2)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 7);
+        assert_eq!(as_integer(&result), 7);
         Ok(())
     }
 
@@ -607,7 +616,7 @@ mod tests {
     fn test_static_call_with_placeholders() -> Result<()> {
         let xpath = CompiledXPath::new("my_function(?, 2)(5)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 7);
+        assert_eq!(as_integer(&result), 7);
         Ok(())
     }
 
@@ -615,7 +624,7 @@ mod tests {
     fn test_function_with_args_placeholdered() -> Result<()> {
         let xpath = CompiledXPath::new("function($x, $y) { $x - $y } ( ?, 3 ) (5)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
+        assert_eq!(as_integer(&result), 2);
         Ok(())
     }
 
@@ -623,7 +632,7 @@ mod tests {
     fn test_function_with_args_placeholdered2() -> Result<()> {
         let xpath = CompiledXPath::new("function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)");
         let result = xpath.interpret()?;
-        assert_eq!(result.as_integer()?, 2);
+        assert_eq!(as_integer(&result), 2);
         Ok(())
     }
 }

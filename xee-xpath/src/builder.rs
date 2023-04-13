@@ -1,7 +1,6 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
-use crate::static_context::StaticFunction;
-use crate::value::{Function, FunctionId, StackValue, StaticFunctionId};
+use crate::value::{AtomicValue, Function, FunctionId, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
@@ -106,10 +105,10 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
         let otherwise = self.emit_compare_forward(comparison);
-        self.emit_constant(StackValue::Integer(1));
+        self.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(1)));
         let end = self.emit_jump_forward();
         self.patch_jump(otherwise);
-        self.emit_constant(StackValue::Integer(0));
+        self.emit_constant(StackValue::AtomicValue(AtomicValue::Integer(0)));
         self.patch_jump(end);
     }
 
