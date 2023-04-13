@@ -447,21 +447,21 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_comma_sequences() -> Result<()> {
-    //     let xpath = CompiledXPath::new("(1, 2), (3, 4)");
-    //     let result = xpath.interpret()?;
+    #[test]
+    fn test_comma_sequences() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2), (3, 4)");
+        let result = xpath.interpret()?;
 
-    //     let sequence = result.as_sequence().unwrap();
-    //     let expected_sequence = Sequence::from_vec(vec![
-    //         Item::Atomic(Atomic::Integer(1)),
-    //         Item::Atomic(Atomic::Integer(2)),
-    //         Item::Atomic(Atomic::Integer(3)),
-    //         Item::Atomic(Atomic::Integer(4)),
-    //     ]);
-    //     assert_eq!(sequence.into_owned(), expected_sequence);
-    //     Ok(())
-    // }
+        let sequence = result.as_sequence().unwrap();
+        let expected_sequence = Sequence::from_vec(vec![
+            Item::Atomic(Atomic::Integer(1)),
+            Item::Atomic(Atomic::Integer(2)),
+            Item::Atomic(Atomic::Integer(3)),
+            Item::Atomic(Atomic::Integer(4)),
+        ]);
+        assert_eq!(sequence.into_owned(), expected_sequence);
+        Ok(())
+    }
 
     #[test]
     fn test_let() -> Result<()> {
