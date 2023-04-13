@@ -4,7 +4,9 @@ use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, Closure, FunctionId, Item, Sequence, StackValue, StaticFunctionId};
+use crate::value::{
+    Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId,
+};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -211,30 +213,16 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
                     if let Some(static_function_id) = callable.as_static_function() {
-                        let static_function = &self
-                            .static_context
-                            .functions
-                            .get_by_index(static_function_id);
-                        let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-                        let result = static_function.invoke(arguments)?;
-                        // truncate the stack to the base
-                        self.stack.truncate(self.stack.len() - (arity as usize + 1));
-                        self.stack.push(result);
+                        self.call_static(static_function_id, arity)?;
                     } else {
-                        // store ip of next instruction in current frame
-                        let frame = self.frames.last_mut().unwrap();
-                        frame.ip = ip;
                         let closure = callable.as_closure().ok_or(Error::TypeError)?;
-                        let function_id = closure.function_id;
-                        function = &self.program.functions[function_id.0];
-                        let stack_size = self.stack.len();
-                        base = stack_size - (arity as usize);
-                        ip = 0;
-                        self.frames.push(Frame {
-                            function: function_id,
-                            ip,
-                            base,
-                        });
+                        self.call_closure(
+                            closure.function_id,
+                            arity,
+                            &mut ip,
+                            &mut base,
+                            &mut function,
+                        )?;
                     }
                 }
                 Instruction::Return => {
@@ -288,9 +276,78 @@ impl<'a> Interpreter<'a> {
                             self.stack.push(StackValue::Sequence(sequence));
                         }
                     }
-                }
+                } // Instruction::For => {
+                  // let closure = self.stack.pop().unwrap();
+                  // let sequence = self.stack.pop().unwrap();
+
+                  // let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                  // let closure = closure.as_closure().ok_or(Error::TypeError)?;
+
+                  // let mut new_sequence = Sequence::new();
+
+                  // for item in sequence.into_owned().items {
+                  //     dbg!(&item);
+                  //     // place argument on stack
+                  //     match item {
+                  //         Item::Atomic(atomic) => {
+                  //             self.stack.push(StackValue::Atomic(atomic));
+                  //         }
+                  //         Item::Function(closure) => {
+                  //             self.stack.push(StackValue::Closure(closure));
+                  //         }
+                  //     }
+                  //     self.call_closure(
+                  //         closure.function_id,
+                  //         1,
+                  //         &mut ip,
+                  //         &mut base,
+                  //         &mut function,
+                  //     )?;
+                  //     self.run()?;
+
+                  //     // return value should be added to new sequence
+                  //     new_sequence.push_stack_value(self.stack.pop().unwrap());
+                  // }
+                  // self.stack.push(StackValue::Sequence(new_sequence));
+                  // }
             }
         }
+        Ok(())
+    }
+
+    fn call_static(&mut self, static_function_id: StaticFunctionId, arity: u8) -> Result<()> {
+        let static_function = &self
+            .static_context
+            .functions
+            .get_by_index(static_function_id);
+        let arguments = &self.stack[self.stack.len() - (arity as usize)..];
+        let result = static_function.invoke(arguments)?;
+        // truncate the stack to the base
+        self.stack.truncate(self.stack.len() - (arity as usize + 1));
+        self.stack.push(result);
+        Ok(())
+    }
+
+    fn call_closure(
+        &mut self,
+        function_id: FunctionId,
+        arity: u8,
+        ip: &mut usize,
+        base: &mut usize,
+        function: &mut &'a Function,
+    ) -> Result<()> {
+        // store ip of next instruction in current frame
+        let frame = self.frames.last_mut().unwrap();
+        frame.ip = *ip;
+        *function = &self.program.functions[function_id.0];
+        let stack_size = self.stack.len();
+        *base = stack_size - (arity as usize);
+        *ip = 0;
+        self.frames.push(Frame {
+            function: function_id,
+            ip: *ip,
+            base: *base,
+        });
         Ok(())
     }
 }

@@ -146,6 +146,15 @@ impl Sequence {
         }
     }
 
+    pub(crate) fn push_stack_value(&mut self, value: StackValue) {
+        match value {
+            StackValue::Atomic(a) => self.items.push(Item::Atomic(a)),
+            StackValue::Closure(c) => self.items.push(Item::Function(c)),
+            StackValue::Sequence(s) => self.extend(s),
+            _ => panic!("unexpected stack value"),
+        }
+    }
+
     pub(crate) fn push(&mut self, item: Item) {
         self.items.push(item);
     }

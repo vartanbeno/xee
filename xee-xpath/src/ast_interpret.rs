@@ -123,7 +123,6 @@ impl<'a> InterpreterCompiler<'a> {
                 }
             }
             ast::ExprSingle::Let(let_expr) => {
-                // XXX ugh clone
                 self.scopes.push_name(&let_expr.var_name);
                 self.compile_expr_single(&let_expr.var_expr);
                 self.compile_expr_single(&let_expr.return_expr);
@@ -140,25 +139,36 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(jump_end);
             }
             ast::ExprSingle::For(for_expr) => {
-                // operations.push(Operation::NewSequence);
                 // // execute the sequence expression, placing sequence on stack
-                // compile_expr_single(&for_expr.var_expr, scope, operations);
-                // // we get the total length of the sequence
-                // operations.push(Operation::LenSequence);
-                // // the index in the sequence, start at 0
-                // operations.push(Operation::IntegerLiteral(0));
+                // self.compile_expr_single(&for_expr.var_expr);
+                // // now we generate a closure for the map expression
 
-                // // we know the result of the next expression is going to be placed
-                // // here on the stack
-                // let name_index = operations.len();
-                // // XXX ugh clone
-                // scope.push_name(for_expr.var_name.clone(), name_index);
+                // // place a closure on the stack for the return expression
+                // let nested_builder = self.builder.builder();
+                // self.scopes.push_scope();
 
-                // // now we take the first entry in the sequence, place it on the stack
-                // operations.push(Operation::IndexSequence);
+                // let mut compiler = InterpreterCompiler {
+                //     builder: nested_builder,
+                //     scopes: self.scopes,
+                //     static_context: self.static_context,
+                // };
 
-                // compile_expr_single(&for_expr.return_expr, scope, operations);
-                // scope.pop_name(&for_expr.var_name);
+                // // the function has a single parameter, the name of the for variable
+                // compiler.scopes.push_name(&for_expr.var_name);
+                // compiler.compile_expr_single(&for_expr.return_expr);
+                // compiler.scopes.pop_name();
+
+                // compiler.scopes.pop_scope();
+
+                // let function = compiler.builder.finish("for".to_string(), 1);
+                // // in reverse order so we can pop them off in the right order
+                // for name in function.closure_names.iter().rev() {
+                //     self.compile_var_ref(name);
+                // }
+                // let function_id = self.builder.add_function(function);
+                // self.builder
+                //     .emit(Instruction::Closure(function_id.as_u16()));
+                // self.builder.emit(Instruction::For);
             }
             _ => {
                 panic!("not supported yet");
@@ -652,4 +662,21 @@ mod tests {
         assert_eq!(as_integer(&result), 1);
         Ok(())
     }
+
+    // #[test]
+    // fn test_for_loop() -> Result<()> {
+    //     let xpath = CompiledXPath::new("for $x in 1 to 5 return $x + 1");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(
+    //         as_sequence(&result).into_owned(),
+    //         Sequence::from_vec(vec![
+    //             Item::Atomic(Atomic::Integer(2)),
+    //             Item::Atomic(Atomic::Integer(3)),
+    //             Item::Atomic(Atomic::Integer(4)),
+    //             Item::Atomic(Atomic::Integer(5)),
+    //             Item::Atomic(Atomic::Integer(6))
+    //         ])
+    //     );
+    //     Ok(())
+    // }
 }
