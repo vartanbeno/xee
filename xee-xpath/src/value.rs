@@ -40,19 +40,26 @@ pub(crate) struct Closure {
     pub(crate) values: Vec<StackValue>,
 }
 
-// TODO: could we shrink this by pointing to a value heap with a reference
-// smaller than 64 bits?
+// TODO: could we shrink the size of StackValue?
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
-    AtomicValue(AtomicValue),
+    Atomic(Atomic),
+    Sequence(Sequence),
     Closure(Closure),
     StaticFunction(StaticFunctionId),
 }
 
 impl StackValue {
-    pub(crate) fn as_atomic_value(&self) -> Option<&AtomicValue> {
+    pub(crate) fn as_atomic(&self) -> Option<&Atomic> {
         match self {
-            StackValue::AtomicValue(a) => Some(a),
+            StackValue::Atomic(a) => Some(a),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_sequence(&self) -> Option<&Sequence> {
+        match self {
+            StackValue::Sequence(s) => Some(s),
             _ => None,
         }
     }
@@ -74,7 +81,7 @@ impl StackValue {
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum AtomicValue {
+pub(crate) enum Atomic {
     String(String),
     Boolean(bool),
     // Decimal, use a decimal type
@@ -84,18 +91,18 @@ pub(crate) enum AtomicValue {
     // and many more
 }
 
-impl AtomicValue {
+impl Atomic {
     pub(crate) fn as_integer(&self) -> Option<i64> {
         match self {
-            AtomicValue::Integer(i) => Some(*i),
+            Atomic::Integer(i) => Some(*i),
             _ => None,
         }
     }
 
     pub(crate) fn as_bool(&self) -> Option<bool> {
         match self {
-            AtomicValue::Integer(i) => Some(*i != 0),
-            AtomicValue::Boolean(b) => Some(*b),
+            Atomic::Integer(i) => Some(*i != 0),
+            Atomic::Boolean(b) => Some(*b),
             _ => None,
         }
     }
@@ -103,7 +110,7 @@ impl AtomicValue {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
-    Atomic(AtomicValue),
+    Atomic(Atomic),
     Function(Closure),
     // XXX or a Node
 }

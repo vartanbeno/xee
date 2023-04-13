@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 
 use crate::ast;
 use crate::error::{Error, Result};
-use crate::value::{AtomicValue, StackValue, StaticFunctionId};
+use crate::value::{Atomic, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum ParameterType {
@@ -104,16 +104,14 @@ fn my_function(a: i64, b: i64) -> i64 {
 
 fn bound_my_function(arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0]
-        .as_atomic_value()
+        .as_atomic()
         .ok_or(Error::TypeError)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     let b = arguments[1]
-        .as_atomic_value()
+        .as_atomic()
         .ok_or(Error::TypeError)?
         .as_integer()
         .ok_or(Error::TypeError)?;
-    Ok(StackValue::AtomicValue(AtomicValue::Integer(my_function(
-        a, b,
-    ))))
+    Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }

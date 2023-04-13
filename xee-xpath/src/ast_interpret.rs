@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
-use crate::value::{AtomicValue, FunctionId, StackValue};
+use crate::value::{Atomic, FunctionId, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -231,7 +231,7 @@ impl<'a> InterpreterCompiler<'a> {
             ast::PrimaryExpr::Literal(literal) => match literal {
                 ast::Literal::Integer(i) => {
                     self.builder
-                        .emit_constant(StackValue::AtomicValue(AtomicValue::Integer(*i)));
+                        .emit_constant(StackValue::Atomic(Atomic::Integer(*i)));
                 }
                 // ast::Literal::String(s) => {
                 //     operations.push(Operation::StringLiteral(s.to_string()));
@@ -401,11 +401,11 @@ mod tests {
     // use crate::interpret::{Atomic, Item, Result, Sequence};
 
     fn as_integer(value: &StackValue) -> i64 {
-        value.as_atomic_value().unwrap().as_integer().unwrap()
+        value.as_atomic().unwrap().as_integer().unwrap()
     }
 
     fn as_bool(value: &StackValue) -> bool {
-        value.as_atomic_value().unwrap().as_bool().unwrap()
+        value.as_atomic().unwrap().as_bool().unwrap()
     }
 
     #[test]
