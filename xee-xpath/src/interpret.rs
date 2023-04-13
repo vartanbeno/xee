@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -109,7 +110,9 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_sequence().ok_or(Error::TypeError)?;
                     let b = b.as_sequence().ok_or(Error::TypeError)?;
-                    self.stack.push(StackValue::Sequence(Rc::new(a.concat(&b))));
+                    self.stack.push(StackValue::Sequence(Rc::new(RefCell::new(
+                        a.borrow().concat(&b.borrow()),
+                    ))));
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
@@ -271,7 +274,7 @@ impl<'a> Interpreter<'a> {
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
-                            .push(StackValue::Sequence(Rc::new(Sequence::new()))),
+                            .push(StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))),
                         Ordering::Equal => self.stack.push(StackValue::Atomic(Atomic::Integer(a))),
                         Ordering::Less => {
                             let sequence = Sequence::from_vec(
@@ -279,7 +282,8 @@ impl<'a> Interpreter<'a> {
                                     .map(|i| Item::Atomic(Atomic::Integer(i)))
                                     .collect::<Vec<Item>>(),
                             );
-                            self.stack.push(StackValue::Sequence(Rc::new(sequence)));
+                            self.stack
+                                .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
                         }
                     }
                 } // Instruction::For => {

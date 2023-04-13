@@ -397,7 +397,8 @@ impl CompiledXPath {
 mod tests {
     use super::*;
     use crate::value::{Item, Sequence};
-    use std::borrow::Cow;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     fn as_integer(value: &StackValue) -> i64 {
         value.as_atomic().unwrap().as_integer().unwrap()
@@ -407,7 +408,7 @@ mod tests {
         value.as_atomic().unwrap().as_bool().unwrap()
     }
 
-    fn as_sequence(value: &StackValue) -> Cow<Sequence> {
+    fn as_sequence(value: &StackValue) -> Rc<RefCell<Sequence>> {
         value.as_sequence().unwrap()
     }
 
@@ -446,7 +447,7 @@ mod tests {
             Item::Atomic(Atomic::Integer(1)),
             Item::Atomic(Atomic::Integer(2)),
         ]);
-        assert_eq!(sequence.into_owned(), expected_sequence);
+        assert_eq!(sequence, Rc::new(RefCell::new(expected_sequence)));
         Ok(())
     }
 
@@ -462,7 +463,7 @@ mod tests {
             Item::Atomic(Atomic::Integer(3)),
             Item::Atomic(Atomic::Integer(4)),
         ]);
-        assert_eq!(sequence.into_owned(), expected_sequence);
+        assert_eq!(sequence, Rc::new(RefCell::new(expected_sequence)));
         Ok(())
     }
 
@@ -660,14 +661,14 @@ mod tests {
         let xpath = CompiledXPath::new("1 to 5");
         let result = xpath.interpret()?;
         assert_eq!(
-            as_sequence(&result).into_owned(),
-            Sequence::from_vec(vec![
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
                 Item::Atomic(Atomic::Integer(1)),
                 Item::Atomic(Atomic::Integer(2)),
                 Item::Atomic(Atomic::Integer(3)),
                 Item::Atomic(Atomic::Integer(4)),
                 Item::Atomic(Atomic::Integer(5))
-            ])
+            ])))
         );
         Ok(())
     }
@@ -677,8 +678,8 @@ mod tests {
         let xpath = CompiledXPath::new("5 to 1");
         let result = xpath.interpret()?;
         assert_eq!(
-            as_sequence(&result).into_owned(),
-            Sequence::from_vec(vec![])
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![])))
         );
         Ok(())
     }

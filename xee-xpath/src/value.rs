@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 
 use crate::ast;
@@ -46,7 +47,7 @@ pub(crate) struct Closure {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
     Atomic(Atomic),
-    Sequence(Rc<Sequence>),
+    Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
     StaticFunction(StaticFunctionId),
 }
@@ -59,10 +60,10 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_sequence(&self) -> Option<Cow<Sequence>> {
+    pub(crate) fn as_sequence(&self) -> Option<Rc<RefCell<Sequence>>> {
         match self {
-            StackValue::Sequence(s) => Some(Cow::Borrowed(s)),
-            StackValue::Atomic(a) => Some(Cow::Owned(Sequence::from_atomic(a.clone()))),
+            StackValue::Sequence(s) => Some(s.clone()),
+            StackValue::Atomic(a) => Some(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
             _ => None,
         }
     }
@@ -159,8 +160,8 @@ impl Sequence {
         self.items.push(item.clone());
     }
 
-    pub(crate) fn extend(&mut self, other: Rc<Sequence>) {
-        for item in &other.items {
+    pub(crate) fn extend(&mut self, other: Rc<RefCell<Sequence>>) {
+        for item in &other.borrow().items {
             self.push(item);
         }
     }
