@@ -890,6 +890,11 @@ mod tests {
     }
 
     #[test]
+    fn test_for_loop() {
+        assert_debug_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
+    }
+
+    #[test]
     fn test_if_expr() {
         assert_debug_snapshot!(parse_expr_single("if (1) then 2 else 3"));
     }
@@ -952,10 +957,5 @@ mod tests {
     #[test]
     fn test_range() {
         assert_debug_snapshot!(parse_expr_single("1 to 2"));
-    }
-
-    #[test]
-    fn test_for_loop() {
-        assert_debug_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
     }
 }
