@@ -23,6 +23,7 @@ pub(crate) enum Instruction {
     Return,
     Dup,
     LetDone,
+    Range,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
@@ -47,6 +48,7 @@ enum EncodedInstruction {
     Return,
     Dup,
     LetDone,
+    Range,
 }
 
 // decode a single instruction from the slice
@@ -94,6 +96,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
         EncodedInstruction::LetDone => (Instruction::LetDone, 1),
+        EncodedInstruction::Range => (Instruction::Range, 1),
     }
 }
 
@@ -151,6 +154,7 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
         Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
+        Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
     }
 }
 

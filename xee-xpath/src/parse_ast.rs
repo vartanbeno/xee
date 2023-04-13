@@ -227,6 +227,20 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 expr_single(left_pair)
             }
         }
+        Rule::RangeExpr => {
+            let mut pairs = pair.into_inner();
+            let left_pair = pairs.next().unwrap();
+            let right_pair = pairs.next();
+            if let Some(right_pair) = right_pair {
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator: ast::Operator::Range,
+                    left: pair_to_path_expr(left_pair),
+                    right: pair_to_path_expr(right_pair),
+                })
+            } else {
+                expr_single(left_pair)
+            }
+        }
         Rule::StringConcatExpr => {
             let mut pairs = pair.into_inner();
             let left_pair = pairs.next().unwrap();
@@ -291,7 +305,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 else_: Box::new(else_),
             })
         }
-        Rule::RangeExpr | Rule::UnionExpr | Rule::IntersectExceptExpr => {
+        Rule::UnionExpr | Rule::IntersectExceptExpr => {
             let pair = pair.into_inner().next().unwrap();
             expr_single(pair)
             // ast::ExprSingle::Path(pair_to_path_expr(pair))
@@ -933,5 +947,10 @@ mod tests {
     #[test]
     fn test_complex_comma() {
         assert_debug_snapshot!(parse_xpath("(1, 2), (3, 4)"));
+    }
+
+    #[test]
+    fn test_range() {
+        assert_debug_snapshot!(parse_expr_single("1 to 2"));
     }
 }

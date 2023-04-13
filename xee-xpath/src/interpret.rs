@@ -1,8 +1,10 @@
+use std::cmp::Ordering;
+
 use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, Closure, FunctionId, StackValue, StaticFunctionId};
+use crate::value::{Atomic, Closure, FunctionId, Item, Sequence, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -266,6 +268,26 @@ impl<'a> Interpreter<'a> {
                     // pop the variable assignment
                     let _ = self.stack.pop();
                     self.stack.push(return_value);
+                }
+                Instruction::Range => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(Error::TypeError)?;
+                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    match a.cmp(&b) {
+                        Ordering::Greater => self.stack.push(StackValue::Sequence(Sequence::new())),
+                        Ordering::Equal => self.stack.push(StackValue::Atomic(Atomic::Integer(a))),
+                        Ordering::Less => {
+                            let sequence = Sequence::from_vec(
+                                (a..=b)
+                                    .map(|i| Item::Atomic(Atomic::Integer(i)))
+                                    .collect::<Vec<Item>>(),
+                            );
+                            self.stack.push(StackValue::Sequence(sequence));
+                        }
+                    }
                 }
             }
         }

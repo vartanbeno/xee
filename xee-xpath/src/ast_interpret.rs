@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, FunctionId, Item, Sequence, StackValue};
+use crate::value::{Atomic, FunctionId, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -115,47 +115,7 @@ impl<'a> InterpreterCompiler<'a> {
                     //     operations.push(Operation::Concat);
                     // }
                     ast::Operator::Range => {
-                        // // left and right of range are on the stack
-                        // operations.push(Operation::Peek(2));
-                        // operations.push(Operation::Peek(1));
-                        // operations.push(Operation::ValueEq);
-
-                        // let jump_if_equal_index = operations.len();
-                        // operations.push(Operation::JumpIfFalse(0));
-
-                        // operations.push(Operation::Peek(2));
-                        // operations.push(Operation::Peek(1));
-                        // operations.push(Operation::ValueGt);
-
-                        // let jump_if_greater_index = operations.len();
-                        // operations.push(Operation::JumpIfFalse(0));
-
-                        // // left and right are equal: we can just return left
-                        // operations.push(Operation::Pop);
-                        // let equal_jump_to_end = operations.len();
-                        // operations.push(Operation::Jump(0));
-
-                        // // if left is greater than right, push empty sequence on stack
-                        // operations.push(Operation::SequenceNew);
-                        // let greater_jump_to_end = operations.len();
-                        // operations.push(Operation::Jump(0));
-
-                        // // left is less than right: we need to create a sequence
-                        // let sequence_index = operations.len();
-                        // operations.push(Operation::SequenceNew);
-                        // // start index
-                        // operations.push(Operation::Peek(3));
-                        // operations.push(Operation::Dup);
-                        // operations.push(Operation::SequencePush(sequence_index));
-                        // // if start is at end, we're done
-
-                        // let end = operations.len();
-                        // otherwise, we need to create a new sequence
-                        // operations.push(Operation::NewSequence);
-
-                        // start with left of range
-
-                        // add to range
+                        self.builder.emit(Instruction::Range);
                     }
                     _ => {
                         panic!("operator supported yet {:?}", binary_expr.operator);
@@ -398,7 +358,8 @@ impl CompiledXPath {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use crate::interpret::{Atomic, Item, Result, Sequence};
+    use crate::value::{Item, Sequence};
+    use std::borrow::Cow;
 
     fn as_integer(value: &StackValue) -> i64 {
         value.as_atomic().unwrap().as_integer().unwrap()
@@ -406,6 +367,10 @@ mod tests {
 
     fn as_bool(value: &StackValue) -> bool {
         value.as_atomic().unwrap().as_bool().unwrap()
+    }
+
+    fn as_sequence(value: &StackValue) -> Cow<Sequence> {
+        value.as_sequence().unwrap()
     }
 
     #[test]
@@ -649,6 +614,42 @@ mod tests {
         let xpath = CompiledXPath::new("function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_range() -> Result<()> {
+        let xpath = CompiledXPath::new("1 to 5");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result).into_owned(),
+            Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(1)),
+                Item::Atomic(Atomic::Integer(2)),
+                Item::Atomic(Atomic::Integer(3)),
+                Item::Atomic(Atomic::Integer(4)),
+                Item::Atomic(Atomic::Integer(5))
+            ])
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_range_greater() -> Result<()> {
+        let xpath = CompiledXPath::new("5 to 1");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result).into_owned(),
+            Sequence::from_vec(vec![])
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_range_equal() -> Result<()> {
+        let xpath = CompiledXPath::new("1 to 1");
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 1);
         Ok(())
     }
 }
