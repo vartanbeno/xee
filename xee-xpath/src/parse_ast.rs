@@ -302,6 +302,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
         }
         Rule::ParenthesizedExpr => {
             let pair = pair.into_inner().next().unwrap();
+            // pass this along to Rule::Expr
             expr_single(pair)
         }
         Rule::ExprSingle => {
