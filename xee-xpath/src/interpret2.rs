@@ -99,6 +99,13 @@ impl<'a> Interpreter<'a> {
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
+                Instruction::Comma => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_sequence().ok_or(Error::TypeError)?;
+                    let b = b.as_sequence().ok_or(Error::TypeError)?;
+                    self.stack.push(StackValue::Sequence(a.concat(&b)));
+                }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
                 }

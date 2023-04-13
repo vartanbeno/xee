@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::interpret2::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, FunctionId, StackValue};
+use crate::value::{Atomic, FunctionId, Item, Sequence, StackValue};
 
 struct Scope {
     names: Vec<ast::Name>,
@@ -86,7 +86,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         for expr in iter {
             self.compile_expr_single(expr);
-            // operations.push(Operation::Comma);
+            self.builder.emit(Instruction::Comma);
         }
     }
 
@@ -433,19 +433,19 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_comma() -> Result<()> {
-    //     let xpath = CompiledXPath::new("1, 2");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(
-    //         result.as_sequence()?,
-    //         Sequence(vec![
-    //             Item::AtomicValue(Atomic::Integer(1)),
-    //             Item::AtomicValue(Atomic::Integer(2))
-    //         ])
-    //     );
-    //     Ok(())
-    // }
+    #[test]
+    fn test_comma() -> Result<()> {
+        let xpath = CompiledXPath::new("1, 2");
+        let result = xpath.interpret()?;
+
+        let sequence = result.as_sequence().unwrap();
+        let expected_sequence = Sequence::from_vec(vec![
+            Item::Atomic(Atomic::Integer(1)),
+            Item::Atomic(Atomic::Integer(2)),
+        ]);
+        assert_eq!(sequence.into_owned(), expected_sequence);
+        Ok(())
+    }
 
     #[test]
     fn test_let() -> Result<()> {

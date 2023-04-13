@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::ast;
 use crate::instruction::{decode_instructions, Instruction};
 
@@ -57,9 +59,10 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_sequence(&self) -> Option<&Sequence> {
+    pub(crate) fn as_sequence(&self) -> Option<Cow<Sequence>> {
         match self {
-            StackValue::Sequence(s) => Some(s),
+            StackValue::Sequence(s) => Some(Cow::Borrowed(s)),
+            StackValue::Atomic(a) => Some(Cow::Owned(Sequence::from_atomic(a.clone()))),
             _ => None,
         }
     }
@@ -125,6 +128,16 @@ impl Sequence {
         Self { items: Vec::new() }
     }
 
+    pub(crate) fn from_vec(items: Vec<Item>) -> Self {
+        Self { items }
+    }
+
+    pub(crate) fn from_atomic(atomic: Atomic) -> Self {
+        Self {
+            items: vec![Item::Atomic(atomic)],
+        }
+    }
+
     pub(crate) fn singleton(&self) -> Option<&Item> {
         if self.items.len() == 1 {
             Some(&self.items[0])
@@ -139,5 +152,11 @@ impl Sequence {
 
     pub(crate) fn extend(&mut self, other: Sequence) {
         self.items.extend(other.items);
+    }
+
+    pub(crate) fn concat(&self, other: &Sequence) -> Sequence {
+        let mut items = self.items.clone();
+        items.extend(other.items.clone());
+        Sequence { items }
     }
 }
