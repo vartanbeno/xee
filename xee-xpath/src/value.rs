@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::rc::Rc;
 
 use crate::ast;
 use crate::instruction::{decode_instructions, Instruction};
@@ -42,12 +43,11 @@ pub(crate) struct Closure {
     pub(crate) values: Vec<StackValue>,
 }
 
-// TODO: could we shrink the size of StackValue?
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
     Atomic(Atomic),
-    Sequence(Sequence),
-    Closure(Closure),
+    Sequence(Rc<Sequence>),
+    Closure(Rc<Closure>),
     StaticFunction(StaticFunctionId),
 }
 
@@ -114,7 +114,7 @@ impl Atomic {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
     Atomic(Atomic),
-    Function(Closure),
+    Function(Rc<Closure>),
     // XXX or a Node
 }
 
@@ -155,12 +155,14 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn push(&mut self, item: Item) {
-        self.items.push(item);
+    pub(crate) fn push(&mut self, item: &Item) {
+        self.items.push(item.clone());
     }
 
-    pub(crate) fn extend(&mut self, other: Sequence) {
-        self.items.extend(other.items);
+    pub(crate) fn extend(&mut self, other: Rc<Sequence>) {
+        for item in &other.items {
+            self.push(item);
+        }
     }
 
     pub(crate) fn concat(&self, other: &Sequence) -> Sequence {

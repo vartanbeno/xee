@@ -117,7 +117,11 @@ impl<'a> FunctionBuilder<'a> {
         self.emit_jump_forward()
     }
 
-    fn emit_compare_backward(&mut self, comparison: Comparison, jump_ref: BackwardJumpRef) {
+    pub(crate) fn emit_compare_backward(
+        &mut self,
+        comparison: Comparison,
+        jump_ref: BackwardJumpRef,
+    ) {
         self.emit_compare(comparison);
         self.emit_jump_backward(jump_ref);
     }

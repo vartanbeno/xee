@@ -139,36 +139,64 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(jump_end);
             }
             ast::ExprSingle::For(for_expr) => {
+                // // place the resulting sequence on the stack
+                // self.builder.emit(Instruction::SequenceNew);
+                // let new_sequence_name = ast::Name {
+                //     name: "xee-new_sequence".to_string(),
+                //     namespace: None,
+                // };
+                // self.scopes.push_name(&new_sequence_name);
                 // // execute the sequence expression, placing sequence on stack
                 // self.compile_expr_single(&for_expr.var_expr);
-                // // now we generate a closure for the map expression
-
-                // // place a closure on the stack for the return expression
-                // let nested_builder = self.builder.builder();
-                // self.scopes.push_scope();
-
-                // let mut compiler = InterpreterCompiler {
-                //     builder: nested_builder,
-                //     scopes: self.scopes,
-                //     static_context: self.static_context,
+                // let sequence_name = ast::Name {
+                //     name: "xee-sequence".to_string(),
+                //     namespace: None,
                 // };
+                // self.scopes.push_name(&sequence_name);
+                // // and sequence length
+                // self.compile_var_ref(&sequence_name);
+                // self.builder.emit(Instruction::SequenceLength);
+                // let sequence_length = ast::Name {
+                //     name: "xee-sequence-length".to_string(),
+                //     namespace: None,
+                // };
+                // self.scopes.push_name(&sequence_length);
 
-                // // the function has a single parameter, the name of the for variable
-                // compiler.scopes.push_name(&for_expr.var_name);
-                // compiler.compile_expr_single(&for_expr.return_expr);
-                // compiler.scopes.pop_name();
-
-                // compiler.scopes.pop_scope();
-
-                // let function = compiler.builder.finish("for".to_string(), 1);
-                // // in reverse order so we can pop them off in the right order
-                // for name in function.closure_names.iter().rev() {
-                //     self.compile_var_ref(name);
-                // }
-                // let function_id = self.builder.add_function(function);
+                // // now place index on stack
                 // self.builder
-                //     .emit(Instruction::Closure(function_id.as_u16()));
-                // self.builder.emit(Instruction::For);
+                //     .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+
+                // let loop_start = self.builder.loop_start();
+
+                // // now get item at the index
+                // self.builder.emit(Instruction::Dup);
+                // self.compile_var_ref(&sequence_name);
+                // self.builder.emit(Instruction::SequenceGet);
+                // // ensure it's named the loop item
+                // self.scopes.push_name(&for_expr.var_name);
+                // // execute expression over it
+                // self.compile_expr_single(&for_expr.return_expr);
+                // self.scopes.pop_name();
+                // // push result to new sequence
+                // self.compile_var_ref(&new_sequence_name);
+                // self.builder.emit(Instruction::SequencePush);
+                // // update the index with 1
+                // self.builder
+                //     .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+                // self.builder.emit(Instruction::Add);
+
+                // // and compare with sequence length
+                // self.compile_var_ref(&sequence_length);
+                // self.builder
+                //     .emit_compare_backward(Comparison::Ge, loop_start);
+                // // pop index
+                // self.builder.emit(Instruction::Pop);
+
+                // // pop new sequence name
+                // self.scopes.pop_name();
+                // // pop sequence length and old sequence
+                // self.builder.emit(Instruction::Pop);
+                // self.builder.emit(Instruction::Pop);
             }
             _ => {
                 panic!("not supported yet");

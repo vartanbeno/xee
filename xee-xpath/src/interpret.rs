@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 use crate::builder::Program;
 use crate::error::{Error, Result};
@@ -84,10 +85,10 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..closure_function.closure_names.len() {
                         values.push(self.stack.pop().unwrap());
                     }
-                    self.stack.push(StackValue::Closure(Closure {
+                    self.stack.push(StackValue::Closure(Rc::new(Closure {
                         function_id: FunctionId(function_id as usize),
                         values,
-                    }));
+                    })));
                 }
                 Instruction::StaticFunction(static_function_id) => {
                     self.stack.push(StackValue::StaticFunction(StaticFunctionId(
@@ -108,7 +109,7 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_sequence().ok_or(Error::TypeError)?;
                     let b = b.as_sequence().ok_or(Error::TypeError)?;
-                    self.stack.push(StackValue::Sequence(a.concat(&b)));
+                    self.stack.push(StackValue::Sequence(Rc::new(a.concat(&b))));
                 }
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
@@ -207,6 +208,9 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.last().unwrap().clone();
                     self.stack.push(a);
                 }
+                Instruction::Pop => {
+                    self.stack.pop();
+                }
                 Instruction::Call(arity) => {
                     // XXX check that arity of function matches arity of call
 
@@ -265,7 +269,9 @@ impl<'a> Interpreter<'a> {
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     match a.cmp(&b) {
-                        Ordering::Greater => self.stack.push(StackValue::Sequence(Sequence::new())),
+                        Ordering::Greater => self
+                            .stack
+                            .push(StackValue::Sequence(Rc::new(Sequence::new()))),
                         Ordering::Equal => self.stack.push(StackValue::Atomic(Atomic::Integer(a))),
                         Ordering::Less => {
                             let sequence = Sequence::from_vec(
@@ -273,7 +279,7 @@ impl<'a> Interpreter<'a> {
                                     .map(|i| Item::Atomic(Atomic::Integer(i)))
                                     .collect::<Vec<Item>>(),
                             );
-                            self.stack.push(StackValue::Sequence(sequence));
+                            self.stack.push(StackValue::Sequence(Rc::new(sequence)));
                         }
                     }
                 } // Instruction::For => {
