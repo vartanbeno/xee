@@ -931,4 +931,9 @@ mod tests {
     fn test_static_function_call_placeholder() {
         assert_debug_snapshot!(parse_expr_single("my_function(?, 1)"));
     }
+
+    #[test]
+    fn test_simple_comma() {
+        assert_debug_snapshot!(parse_xpath("1, 2"));
+    }
 }

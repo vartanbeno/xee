@@ -1,0 +1,34 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_xpath(\"1, 2\")"
+---
+XPath {
+    exprs: [
+        Path(
+            PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Literal(
+                            Integer(
+                                1,
+                            ),
+                        ),
+                    ),
+                ],
+            },
+        ),
+        Path(
+            PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Literal(
+                            Integer(
+                                2,
+                            ),
+                        ),
+                    ),
+                ],
+            },
+        ),
+    ],
+}
