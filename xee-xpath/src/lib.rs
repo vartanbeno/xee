@@ -12,7 +12,7 @@ mod ast_interpret;
 mod builder;
 mod error;
 mod instruction;
-mod interpret2;
+mod interpret;
 mod parse;
 mod parse_ast;
 mod static_context;

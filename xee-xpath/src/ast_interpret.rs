@@ -2,7 +2,7 @@ use crate::ast;
 use crate::builder::{Comparison, FunctionBuilder, Program};
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret2::Interpreter;
+use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Sequence, StackValue};
