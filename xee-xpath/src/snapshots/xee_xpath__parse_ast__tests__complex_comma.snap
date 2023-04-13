@@ -1,0 +1,108 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_xpath(\"(1, 2), (3, 4)\")"
+---
+XPath {
+    exprs: [
+        Path(
+            PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Expr(
+                            [
+                                Path(
+                                    PathExpr {
+                                        steps: [
+                                            PrimaryExpr(
+                                                Expr(
+                                                    [
+                                                        Path(
+                                                            PathExpr {
+                                                                steps: [
+                                                                    PrimaryExpr(
+                                                                        Literal(
+                                                                            Integer(
+                                                                                1,
+                                                                            ),
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                        Path(
+                                                            PathExpr {
+                                                                steps: [
+                                                                    PrimaryExpr(
+                                                                        Literal(
+                                                                            Integer(
+                                                                                2,
+                                                                            ),
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ],
+                        ),
+                    ),
+                ],
+            },
+        ),
+        Path(
+            PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Expr(
+                            [
+                                Path(
+                                    PathExpr {
+                                        steps: [
+                                            PrimaryExpr(
+                                                Expr(
+                                                    [
+                                                        Path(
+                                                            PathExpr {
+                                                                steps: [
+                                                                    PrimaryExpr(
+                                                                        Literal(
+                                                                            Integer(
+                                                                                3,
+                                                                            ),
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                        Path(
+                                                            PathExpr {
+                                                                steps: [
+                                                                    PrimaryExpr(
+                                                                        Literal(
+                                                                            Integer(
+                                                                                4,
+                                                                            ),
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ],
+                        ),
+                    ),
+                ],
+            },
+        ),
+    ],
+}

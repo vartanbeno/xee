@@ -309,8 +309,14 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
             expr_single(pair)
         }
         Rule::Expr => {
-            let pair = pair.into_inner().next().unwrap();
-            expr_single(pair)
+            let exprs = exprs(pair);
+            if exprs.len() == 1 {
+                exprs[0].clone()
+            } else {
+                ast::ExprSingle::Path(ast::PathExpr {
+                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(exprs))],
+                })
+            }
         }
         _ => {
             panic!("unhandled ExprSingle {:?}", pair.as_rule())
@@ -357,19 +363,9 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
                 ast::StepExpr::PrimaryExpr(primary)
             } else {
                 postfixes_or_placeholdereds(primary, postfixes)
-                // let postfixes = postfixes
-                //     .into_iter()
-                //     .map(|postfix| match postfix {
-                //         PostfixOrPlaceholdered::Postfix(postfix) => postfix,
-                //         PostfixOrPlaceholdered::Placeholdered(..) => {
-                //             panic!("placeholdered postfix in step expr")
-                //         }
-                //     })
-                //     .collect::<Vec<_>>();
-                // ast::StepExpr::PostfixExpr { primary, postfixes }
             }
-            // XXX handle axis step possibility
         }
+        // XXX handle axis step possibility
         _ => {
             panic!("unhandled StepExpr: {:?}", pair.as_rule())
         }
@@ -381,11 +377,7 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::Literal => ast::PrimaryExpr::Literal(literal_to_literal(pair)),
-        Rule::ParenthesizedExpr => {
-            let pair = pair.into_inner().next().unwrap();
-            // XXX what if parentheses are empty? or multiple expr?
-            ast::PrimaryExpr::Expr(vec![expr_single(pair)])
-        }
+        Rule::ParenthesizedExpr => ast::PrimaryExpr::Expr(exprs(pair)),
         Rule::VarRef => {
             let pair = pair.into_inner().next().unwrap();
             ast::PrimaryExpr::VarRef(var_name_to_name(pair))
@@ -935,5 +927,10 @@ mod tests {
     #[test]
     fn test_simple_comma() {
         assert_debug_snapshot!(parse_xpath("1, 2"));
+    }
+
+    #[test]
+    fn test_complex_comma() {
+        assert_debug_snapshot!(parse_xpath("(1, 2), (3, 4)"));
     }
 }
