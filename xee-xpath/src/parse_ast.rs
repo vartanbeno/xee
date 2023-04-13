@@ -524,6 +524,7 @@ fn argument_list_to_args(pair: Pair<Rule>) -> ArgumentsOrPlaceholdered {
         if let Some(expr_single) = expr_single {
             args.push(expr_single);
         } else {
+            // XXX what if someone uses this as a parameter name?
             let param_name = format!("placeholder{}", placeholder_index);
             let name = ast::Name {
                 name: param_name,
@@ -921,8 +922,8 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("my_function#2"));
     }
 
-    // #[test]
-    // fn test_dynamic_function_call_placeholder() {
-    //     assert_debug_snapshot!(parse_expr_single("$foo(1 + 1, ?)"));
-    // }
+    #[test]
+    fn test_dynamic_function_call_placeholder() {
+        assert_debug_snapshot!(parse_expr_single("$foo(1, ?)"));
+    }
 }
