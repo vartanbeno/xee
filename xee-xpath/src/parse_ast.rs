@@ -356,16 +356,17 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
             if postfixes.is_empty() {
                 ast::StepExpr::PrimaryExpr(primary)
             } else {
-                let postfixes = postfixes
-                    .into_iter()
-                    .map(|postfix| match postfix {
-                        PostfixOrPlaceholdered::Postfix(postfix) => postfix,
-                        PostfixOrPlaceholdered::Placeholdered(..) => {
-                            panic!("placeholdered postfix in step expr")
-                        }
-                    })
-                    .collect::<Vec<_>>();
-                ast::StepExpr::PostfixExpr { primary, postfixes }
+                postfixes_or_placeholdereds(primary, postfixes)
+                // let postfixes = postfixes
+                //     .into_iter()
+                //     .map(|postfix| match postfix {
+                //         PostfixOrPlaceholdered::Postfix(postfix) => postfix,
+                //         PostfixOrPlaceholdered::Placeholdered(..) => {
+                //             panic!("placeholdered postfix in step expr")
+                //         }
+                //     })
+                //     .collect::<Vec<_>>();
+                // ast::StepExpr::PostfixExpr { primary, postfixes }
             }
             // XXX handle axis step possibility
         }
@@ -423,13 +424,12 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
                         params,
                         return_type: None,
                         body: vec![ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![ast::StepExpr::PostfixExpr {
-                                primary: ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                            steps: vec![ast::StepExpr::PrimaryExpr(
+                                ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
                                     name: eq_name_to_name(name),
                                     arguments,
                                 }),
-                                postfixes: vec![],
-                            }],
+                            )],
                         })],
                     })
                 }
@@ -460,6 +460,45 @@ fn postfix_expr_to_postfix(pair: Pair<Rule>) -> PostfixOrPlaceholdered {
         _ => {
             panic!("unhandled postfix: {:?}", pair.as_rule())
         }
+    }
+}
+
+fn postfixes_or_placeholdereds(
+    primary: ast::PrimaryExpr,
+    postfixes: Vec<PostfixOrPlaceholdered>,
+) -> ast::StepExpr {
+    let mut normal_postfixes = Vec::new();
+    let mut primary = primary;
+    for postfix in postfixes {
+        match postfix {
+            PostfixOrPlaceholdered::Postfix(postfix) => {
+                normal_postfixes.push(postfix);
+            }
+            PostfixOrPlaceholdered::Placeholdered(arguments, params) => {
+                // we want to add a postfix to the primary with placeholdered params
+                normal_postfixes.push(ast::Postfix::ArgumentList(arguments));
+                primary = ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+                    params,
+                    return_type: None,
+                    body: vec![ast::ExprSingle::Path(ast::PathExpr {
+                        steps: vec![ast::StepExpr::PostfixExpr {
+                            primary,
+                            postfixes: normal_postfixes.clone(),
+                        }],
+                    })],
+                });
+                // collect more postfixes now
+                normal_postfixes.clear();
+            }
+        }
+    }
+    if !normal_postfixes.is_empty() {
+        ast::StepExpr::PostfixExpr {
+            primary,
+            postfixes: normal_postfixes,
+        }
+    } else {
+        ast::StepExpr::PrimaryExpr(primary)
     }
 }
 

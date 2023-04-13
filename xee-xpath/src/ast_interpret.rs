@@ -610,4 +610,20 @@ mod tests {
         assert_eq!(result.as_integer()?, 7);
         Ok(())
     }
+
+    #[test]
+    fn test_function_with_args_placeholdered() -> Result<()> {
+        let xpath = CompiledXPath::new("function($x, $y) { $x - $y } ( ?, 3 ) (5)");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn test_function_with_args_placeholdered2() -> Result<()> {
+        let xpath = CompiledXPath::new("function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)");
+        let result = xpath.interpret()?;
+        assert_eq!(result.as_integer()?, 2);
+        Ok(())
+    }
 }
