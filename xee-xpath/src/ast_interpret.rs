@@ -167,6 +167,8 @@ impl<'a> InterpreterCompiler<'a> {
                 }
             },
             ast::ExprSingle::Quantified(quantified_expr) => {
+                // we need a loop that exits early if any expression is false
+
                 // self.compile_quantified(quantified_expr);
             }
         }
@@ -928,4 +930,20 @@ mod tests {
         );
         Ok(())
     }
+
+    // #[test]
+    // fn test_some_quantifier_expr_true() -> Result<()> {
+    //     let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x = 2");
+    //     let result = xpath.interpret()?;
+    //     assert!(as_bool(&result));
+    //     Ok(())
+    // }
+
+    // #[test]
+    // fn test_some_quantifier_expr_false() -> Result<()> {
+    //     let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x = 5");
+    //     let result = xpath.interpret()?;
+    //     assert!(!as_bool(&result));
+    //     Ok(())
+    // }
 }
