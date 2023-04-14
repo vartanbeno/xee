@@ -481,7 +481,8 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
 fn postfix_expr_to_postfix(pair: Pair<Rule>) -> PostfixOrPlaceholdered {
     match pair.as_rule() {
         Rule::Predicate => {
-            panic!("predicate not handled yet");
+            let pair = pair.into_inner().next().unwrap();
+            PostfixOrPlaceholdered::Postfix(ast::Postfix::Predicate(exprs(pair)))
         }
         Rule::ArgumentList => match argument_list_to_args(pair) {
             ArgumentsOrPlaceholdered::Arguments(arguments) => {
@@ -1004,5 +1005,10 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single(
             "every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0"
         ));
+    }
+
+    #[test]
+    fn test_predicate() {
+        assert_debug_snapshot!(parse_expr_single("(1, 2)[2]"));
     }
 }
