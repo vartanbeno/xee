@@ -158,32 +158,14 @@ impl<'a> InterpreterCompiler<'a> {
                     },
                 );
             }
-            ast::ExprSingle::Apply(apply_expr) => {
-                match &apply_expr.operator {
-                    ast::ApplyOperator::SimpleMap(path_exprs) => {
-                        // XXX pretend a single path expr for now
-                        let path_expr = &path_exprs[0];
-                        self.compile_map_expr(
-                            |s| {
-                                s.compile_path_expr(&apply_expr.path_expr);
-                            },
-                            |s| {
-                                // ensure it's named the loop item
-                                s.scopes.push_name(s.context_item_name);
-                                s.compile_path_expr(path_expr);
-                                s.scopes.pop_name();
-                            },
-                            |s| {
-                                // get rid of context item
-                                s.builder.emit(Instruction::Pop);
-                            },
-                        );
-                    }
-                    _ => {
-                        panic!("apply operator not supported yet {:?}", apply_expr.operator);
-                    }
+            ast::ExprSingle::Apply(apply_expr) => match &apply_expr.operator {
+                ast::ApplyOperator::SimpleMap(path_exprs) => {
+                    self.compile_simple_map(&apply_expr.path_expr, path_exprs);
                 }
-            }
+                _ => {
+                    panic!("apply operator not supported yet {:?}", apply_expr.operator);
+                }
+            },
             _ => {
                 panic!("not supported yet");
             }
@@ -433,6 +415,50 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
         self.scopes.pop_name();
         self.scopes.pop_name();
+    }
+
+    fn compile_simple_map(&mut self, main_path_expr: &ast::PathExpr, path_exprs: &[ast::PathExpr]) {
+        let path_expr = &path_exprs[0];
+        let rest_path_expr = &path_exprs[1..];
+        self.compile_map_expr(
+            |s| {
+                s.compile_path_expr(main_path_expr);
+            },
+            |s| {
+                // ensure it's named the loop item
+                s.scopes.push_name(s.context_item_name);
+                s.compile_path_expr(path_expr);
+                s.scopes.pop_name();
+            },
+            |s| {
+                // get rid of context item
+                s.builder.emit(Instruction::Pop);
+            },
+        );
+        for path_expr in rest_path_expr {
+            let map_result = ast::Name {
+                name: "xee_map_result".to_string(),
+                namespace: None,
+            };
+            self.scopes.push_name(&map_result);
+            self.compile_map_expr(
+                |s| s.compile_var_ref(&map_result),
+                |s| {
+                    // ensure it's named the loop item
+                    s.scopes.push_name(s.context_item_name);
+                    s.compile_path_expr(path_expr);
+                    s.scopes.pop_name();
+                },
+                |s| {
+                    // get rid of context item
+                    s.builder.emit(Instruction::Pop);
+                },
+            );
+            // the top of the stack contains the result of the map, but also the variable
+            // under it, get rid of the variable
+            self.builder.emit(Instruction::LetDone);
+            self.scopes.pop_name();
+        }
     }
 }
 
@@ -840,6 +866,34 @@ mod tests {
             Rc::new(RefCell::new(Sequence::from_vec(vec![
                 Item::Atomic(Atomic::Integer(2)),
                 Item::Atomic(Atomic::Integer(3)),
+            ])))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_simple_multiple_steps() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2) ! (. + 1) ! (. + 2)");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(4)),
+                Item::Atomic(Atomic::Integer(5)),
+            ])))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_simple_multiple_steps2() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(7)),
+                Item::Atomic(Atomic::Integer(8)),
             ])))
         );
         Ok(())
