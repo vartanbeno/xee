@@ -733,4 +733,20 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    fn test_nested_for_loop() -> Result<()> {
+        let xpath = CompiledXPath::new("for $i in (10, 20), $j in (1, 2) return $i + $j");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(11)),
+                Item::Atomic(Atomic::Integer(12)),
+                Item::Atomic(Atomic::Integer(21)),
+                Item::Atomic(Atomic::Integer(22)),
+            ])))
+        );
+        Ok(())
+    }
 }
