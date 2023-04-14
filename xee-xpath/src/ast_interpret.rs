@@ -7,6 +7,7 @@ use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, StackValue};
 
+#[derive(Debug)]
 struct Scope {
     names: Vec<ast::Name>,
 }
@@ -30,6 +31,7 @@ impl Scope {
     }
 }
 
+#[derive(Debug)]
 struct Scopes {
     scopes: Vec<Scope>,
 }
@@ -119,7 +121,7 @@ impl<'a> InterpreterCompiler<'a> {
                         self.builder.emit(Instruction::Range);
                     }
                     _ => {
-                        panic!("operator supported yet {:?}", binary_expr.operator);
+                        panic!("operator not supported yet {:?}", binary_expr.operator);
                     }
                 }
             }
@@ -132,7 +134,7 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::ExprSingle::If(if_expr) => {
                 self.compile_expr(&if_expr.condition);
-                let jump_else = self.builder.emit_test_forward();
+                let jump_else = self.builder.emit_test_true_forward();
                 self.compile_expr_single(&if_expr.then);
                 let jump_end = self.builder.emit_jump_forward();
                 self.builder.patch_jump(jump_else);
@@ -167,9 +169,23 @@ impl<'a> InterpreterCompiler<'a> {
                 }
             },
             ast::ExprSingle::Quantified(quantified_expr) => {
-                // we need a loop that exits early if any expression is false
-
-                // self.compile_quantified(quantified_expr);
+                self.compile_quantified_expr(
+                    &quantified_expr.quantifier,
+                    |s| {
+                        s.compile_expr_single(&quantified_expr.var_expr);
+                    },
+                    |s| {
+                        // ensure it's named the loop item
+                        s.scopes.push_name(&quantified_expr.var_name);
+                        s.compile_expr_single(&quantified_expr.satisfies_expr);
+                        // named loop item
+                        s.scopes.pop_name();
+                    },
+                    |s| {
+                        // get rid of named loop item
+                        s.builder.emit(Instruction::Pop);
+                    },
+                );
             }
         }
     }
@@ -414,6 +430,107 @@ impl<'a> InterpreterCompiler<'a> {
 
         // pop new sequence name & sequence name & sequence length name & index
         self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
+
+    fn compile_quantified_expr<S, M, C>(
+        &mut self,
+        quantifier: &ast::Quantifier,
+        mut compile_sequence_expr: S,
+        mut compile_satisfies_expr: M,
+        mut compile_satisfies_cleanup: C,
+    ) where
+        S: FnMut(&mut Self),
+        M: FnMut(&mut Self),
+        C: FnMut(&mut Self),
+    {
+        // execute the sequence expression, placing sequence on stack
+        let sequence = ast::Name {
+            name: "xee_sequence".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&sequence);
+        compile_sequence_expr(self);
+
+        // and sequence length
+        self.compile_var_ref(&sequence);
+        let sequence_length = ast::Name {
+            name: "xee_sequence_length".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&sequence_length);
+        self.builder.emit(Instruction::SequenceLen);
+
+        // place index on stack
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+        let index = ast::Name {
+            name: "xee_index".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&index);
+        let loop_start = self.builder.loop_start();
+
+        // get item at the index
+        self.compile_var_ref(&index);
+        self.compile_var_ref(&sequence);
+        self.builder.emit(Instruction::SequenceGet);
+
+        // execute the satisfies expression, placing result in on stack
+        compile_satisfies_expr(self);
+
+        let jump_out_end = match quantifier {
+            ast::Quantifier::Some => self.builder.emit_test_false_forward(),
+            ast::Quantifier::Every => self.builder.emit_test_true_forward(),
+        };
+        // we didn't jump out, clean up quantifier variable
+        compile_satisfies_cleanup(self);
+
+        // update the index with 1
+        self.compile_var_ref(&index);
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+        self.builder.emit(Instruction::Add);
+        self.compile_var_set(&index);
+        // compare with sequence length
+        self.compile_var_ref(&index);
+        self.compile_var_ref(&sequence_length);
+        // unless we reached the end, we jump back to the start
+        self.builder
+            .emit_compare_backward(Comparison::Ge, loop_start);
+        // if we reached the end, without jumping out
+        // pop old sequence, length and index
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+
+        let reached_end_value = match quantifier {
+            ast::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(false)),
+            ast::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(true)),
+        };
+        self.builder.emit_constant(reached_end_value);
+        let end = self.builder.emit_jump_forward();
+
+        // we jumped out
+        self.builder.patch_jump(jump_out_end);
+        // clean up quantifier variable
+        compile_satisfies_cleanup(self);
+        // pop old sequence, length and index
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+
+        let jumped_out_value = match quantifier {
+            ast::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(true)),
+            ast::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(false)),
+        };
+        // if we jumped out, we set satisfies to true
+        self.builder.emit_constant(jumped_out_value);
+
+        self.builder.patch_jump(end);
+        // pop sequence name & sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
         self.scopes.pop_name();
@@ -931,19 +1048,67 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_some_quantifier_expr_true() -> Result<()> {
-    //     let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x = 2");
-    //     let result = xpath.interpret()?;
-    //     assert!(as_bool(&result));
-    //     Ok(())
-    // }
+    #[test]
+    fn test_some_quantifier_expr_true() -> Result<()> {
+        let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x eq 2");
+        let result = xpath.interpret()?;
+        assert!(as_bool(&result));
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_some_quantifier_expr_false() -> Result<()> {
-    //     let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x = 5");
-    //     let result = xpath.interpret()?;
-    //     assert!(!as_bool(&result));
-    //     Ok(())
-    // }
+    #[test]
+    fn test_some_quantifier_expr_false() -> Result<()> {
+        let xpath = CompiledXPath::new("some $x in (1, 2, 3) satisfies $x eq 5");
+        let result = xpath.interpret()?;
+        assert!(!as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_nested_some_quantifier_expr_true() -> Result<()> {
+        let xpath = CompiledXPath::new("some $x in (1, 2, 3), $y in (2, 3) satisfies $x gt $y");
+        let result = xpath.interpret()?;
+        assert!(as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_nested_some_quantifier_expr_false() -> Result<()> {
+        let xpath = CompiledXPath::new("some $x in (1, 2, 3), $y in (5, 6) satisfies $x gt $y");
+        let result = xpath.interpret()?;
+        assert!(!as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_every_quantifier_expr_true() -> Result<()> {
+        let xpath = CompiledXPath::new("every $x in (1, 2, 3) satisfies $x gt 0");
+        let result = xpath.interpret()?;
+        assert!(as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_every_quantifier_expr_false() -> Result<()> {
+        let xpath = CompiledXPath::new("every $x in (1, 2, 3) satisfies $x gt 2");
+        let result = xpath.interpret()?;
+        assert!(!as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_every_quantifier_expr_nested_true() -> Result<()> {
+        let xpath = CompiledXPath::new("every $x in (2, 3, 4), $y in (0, 1) satisfies $x gt $y");
+        let result = xpath.interpret()?;
+        assert!(as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_every_quantifier_expr_nested_false() -> Result<()> {
+        let xpath = CompiledXPath::new("every $x in (2, 3, 4), $y in (1, 2) satisfies $x gt $y");
+        let result = xpath.interpret()?;
+        assert!(!as_bool(&result));
+        Ok(())
+    }
 }

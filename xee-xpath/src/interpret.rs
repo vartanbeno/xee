@@ -198,7 +198,7 @@ impl<'a> Interpreter<'a> {
                         ip += 3;
                     }
                 }
-                Instruction::Test => {
+                Instruction::TestTrue => {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_bool().ok_or(Error::TypeError)?;
@@ -208,8 +208,16 @@ impl<'a> Interpreter<'a> {
                         ip += 3;
                     }
                 }
-                // XXX do we need a TestFalse? in that case we make the previous
-                // instruction TestTrue
+                Instruction::TestFalse => {
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(Error::TypeError)?;
+                    // skip the next instruction, which by construction
+                    // has to be a jump instruction, so we know its size
+                    if !a {
+                        ip += 3;
+                    }
+                }
                 Instruction::Dup => {
                     let a = self.stack.last().unwrap().clone();
                     self.stack.push(a);

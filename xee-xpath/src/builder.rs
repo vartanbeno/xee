@@ -126,8 +126,13 @@ impl<'a> FunctionBuilder<'a> {
         self.emit_jump_backward(jump_ref);
     }
 
-    pub(crate) fn emit_test_forward(&mut self) -> ForwardJumpRef {
-        self.emit(Instruction::Test);
+    pub(crate) fn emit_test_true_forward(&mut self) -> ForwardJumpRef {
+        self.emit(Instruction::TestTrue);
+        self.emit_jump_forward()
+    }
+
+    pub(crate) fn emit_test_false_forward(&mut self) -> ForwardJumpRef {
+        self.emit(Instruction::TestFalse);
         self.emit_jump_forward()
     }
 
