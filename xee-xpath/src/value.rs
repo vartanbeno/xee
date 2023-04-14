@@ -1,6 +1,6 @@
-use std::borrow::Cow;
-use std::cell::{RefCell, RefMut};
+use std::cell::RefCell;
 use std::rc::Rc;
+use xot::Node;
 
 use crate::ast;
 use crate::instruction::{decode_instructions, Instruction};
@@ -50,6 +50,7 @@ pub(crate) enum StackValue {
     Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
     StaticFunction(StaticFunctionId),
+    Node(Node),
 }
 
 impl StackValue {
@@ -87,7 +88,7 @@ impl StackValue {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Atomic {
     // should string be Rc?
-    String(String),
+    // String(String),
     Boolean(bool),
     // Decimal, use a decimal type
     Integer(i64), // is really a decimal, but special case it for now
@@ -116,8 +117,9 @@ impl Atomic {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
     Atomic(Atomic),
+    // XXX what about static function references?
     Function(Rc<Closure>),
-    // XXX or a Node
+    Node(Node),
 }
 
 #[derive(Debug, Clone, PartialEq)]

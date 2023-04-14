@@ -261,7 +261,12 @@ pub(crate) enum StepExpr {
 pub(crate) struct AxisStep {
     pub(crate) axis: Axis,
     pub(crate) node_test: NodeTest,
-    pub(crate) predicates: Vec<ExprSingle>,
+    pub(crate) predicates: Vec<Predicate>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Predicate {
+    pub(crate) exprs: Vec<ExprSingle>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -289,12 +294,7 @@ pub(crate) enum NodeTest {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum NameTest {
-    EQName(EQName),
-    Wildcard(Wildcard),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Wildcard {
+    Name(Name),
     Star,
     LocalName(String),
     Prefix(String),
@@ -360,23 +360,23 @@ pub(crate) enum OccurrenceIndicator {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum KindTest {
-    DocumentTest(Option<DocumentTest>),
-    ElementTest(Option<ElementTest>),
-    AttributeTest(Option<AttributeTest>),
-    SchemaElementTest(SchemaElementTest),
-    SchemaAttributeTest(SchemaAttributeTest),
-    PITest(Option<PITest>),
-    CommentTest,
-    TextTest,
-    NamespaceNodeTest,
-    AnyKindTest,
+    Document(Option<DocumentTest>),
+    Element(Option<ElementTest>),
+    Attribute(Option<AttributeTest>),
+    SchemaElement(SchemaElementTest),
+    SchemaAttribute(SchemaAttributeTest),
+    PI(Option<PITest>),
+    Comment,
+    Text,
+    NamespaceNode,
+    AnyKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum DocumentTest {
-    ElementTest(ElementTest),
-    SchemaElementTest(SchemaElementTest),
-    AnyKindTest,
+    Element(ElementTest),
+    SchemaElement(SchemaElementTest),
+    AnyKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

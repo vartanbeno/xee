@@ -325,6 +325,9 @@ impl<'a> Interpreter<'a> {
                         Item::Function(closure) => {
                             self.stack.push(StackValue::Closure(closure));
                         }
+                        Item::Node(node) => {
+                            self.stack.push(StackValue::Node(node));
+                        }
                     }
                 }
                 Instruction::SequencePush => {
