@@ -35,6 +35,12 @@ mod tests {
     }
 
     #[test]
+    fn test_not_xpath_incomplete() {
+        let unsuccessful_parse = XPathParser::parse(Rule::Xpath, "foo(");
+        assert!(unsuccessful_parse.is_err());
+    }
+
+    #[test]
     fn test_xpath_simple_name() {
         let successful_parse = XPathParser::parse(Rule::Xpath, "foo");
         assert!(successful_parse.is_ok());

@@ -2,7 +2,7 @@ WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 COMMENT    = _{ Comment }
 
 // XPath    ::= Expr
-Xpath = { Expr }
+Xpath = { SOI ~ Expr ~ EOI }
 
 // ParamList
 // ::= Param ("," Param)*
