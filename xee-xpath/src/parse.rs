@@ -50,14 +50,5 @@ mod tests {
     fn test_xpath_absolute_path() {
         let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar");
         assert!(successful_parse.is_ok());
-        // println!("{:#?}", successful_parse.unwrap().count());
-        //println!("{:#?}", successful_parse.unwrap());
     }
-
-    // #[test]
-    // fn test_xpath_flatten() {
-    //     let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar").unwrap();
-
-    //     println!("{:#?}", flattened);
-    // }
 }

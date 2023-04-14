@@ -442,6 +442,7 @@ fn primary_expr_to_primary(pair: Pair<Rule>) -> ast::PrimaryExpr {
                 }
             }
         }
+        Rule::ContextItemExpr => ast::PrimaryExpr::ContextItem,
         _ => {
             panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
         }
@@ -957,5 +958,10 @@ mod tests {
     #[test]
     fn test_range() {
         assert_debug_snapshot!(parse_expr_single("1 to 2"));
+    }
+
+    #[test]
+    fn test_simple_map() {
+        assert_debug_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
     }
 }
