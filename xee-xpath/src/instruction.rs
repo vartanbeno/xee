@@ -9,6 +9,7 @@ pub(crate) enum Instruction {
     Closure(u16),
     StaticFunction(u16),
     Var(u16),
+    Set(u16),
     ClosureVar(u16),
     Comma,
     Eq,
@@ -25,6 +26,12 @@ pub(crate) enum Instruction {
     Pop,
     LetDone,
     Range,
+    SequenceNew,
+    SequenceLen,
+    SequenceGet,
+    SequencePush,
+    PrintTop,
+    PrintStack,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
@@ -35,6 +42,7 @@ enum EncodedInstruction {
     Closure,
     StaticFunction,
     Var,
+    Set,
     ClosureVar,
     Comma,
     Eq,
@@ -51,6 +59,12 @@ enum EncodedInstruction {
     Pop,
     LetDone,
     Range,
+    SequenceNew,
+    SequenceLen,
+    SequenceGet,
+    SequencePush,
+    PrintTop,
+    PrintStack,
 }
 
 // decode a single instruction from the slice
@@ -74,6 +88,10 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Var => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Var(variable), 3)
+        }
+        EncodedInstruction::Set => {
+            let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Set(variable), 3)
         }
         EncodedInstruction::ClosureVar => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -100,6 +118,12 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Pop => (Instruction::Pop, 1),
         EncodedInstruction::LetDone => (Instruction::LetDone, 1),
         EncodedInstruction::Range => (Instruction::Range, 1),
+        EncodedInstruction::SequenceNew => (Instruction::SequenceNew, 1),
+        EncodedInstruction::SequenceLen => (Instruction::SequenceLen, 1),
+        EncodedInstruction::SequenceGet => (Instruction::SequenceGet, 1),
+        EncodedInstruction::SequencePush => (Instruction::SequencePush, 1),
+        EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
+        EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
 }
 
@@ -134,6 +158,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(EncodedInstruction::Var.to_u8().unwrap());
             bytes.extend_from_slice(&variable.to_le_bytes());
         }
+        Instruction::Set(variable) => {
+            bytes.push(EncodedInstruction::Set.to_u8().unwrap());
+            bytes.extend_from_slice(&variable.to_le_bytes());
+        }
         Instruction::ClosureVar(variable) => {
             bytes.push(EncodedInstruction::ClosureVar.to_u8().unwrap());
             bytes.extend_from_slice(&variable.to_le_bytes());
@@ -159,6 +187,12 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Pop => bytes.push(EncodedInstruction::Pop.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
         Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
+        Instruction::SequenceNew => bytes.push(EncodedInstruction::SequenceNew.to_u8().unwrap()),
+        Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
+        Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
+        Instruction::SequencePush => bytes.push(EncodedInstruction::SequencePush.to_u8().unwrap()),
+        Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
+        Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }
 }
 

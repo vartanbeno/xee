@@ -139,64 +139,78 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(jump_end);
             }
             ast::ExprSingle::For(for_expr) => {
-                // // place the resulting sequence on the stack
-                // self.builder.emit(Instruction::SequenceNew);
-                // let new_sequence_name = ast::Name {
-                //     name: "xee-new_sequence".to_string(),
-                //     namespace: None,
-                // };
-                // self.scopes.push_name(&new_sequence_name);
-                // // execute the sequence expression, placing sequence on stack
-                // self.compile_expr_single(&for_expr.var_expr);
-                // let sequence_name = ast::Name {
-                //     name: "xee-sequence".to_string(),
-                //     namespace: None,
-                // };
-                // self.scopes.push_name(&sequence_name);
-                // // and sequence length
-                // self.compile_var_ref(&sequence_name);
-                // self.builder.emit(Instruction::SequenceLength);
-                // let sequence_length = ast::Name {
-                //     name: "xee-sequence-length".to_string(),
-                //     namespace: None,
-                // };
-                // self.scopes.push_name(&sequence_length);
+                // place the resulting sequence on the stack
+                let new_sequence = ast::Name {
+                    name: "xee_new_sequence".to_string(),
+                    namespace: None,
+                };
+                self.scopes.push_name(&new_sequence);
+                self.builder.emit(Instruction::SequenceNew);
 
-                // // now place index on stack
-                // self.builder
-                //     .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+                // execute the sequence expression, placing sequence on stack
+                let sequence = ast::Name {
+                    name: "xee_sequence".to_string(),
+                    namespace: None,
+                };
+                self.scopes.push_name(&sequence);
+                self.compile_expr_single(&for_expr.var_expr);
 
-                // let loop_start = self.builder.loop_start();
+                // and sequence length
+                self.compile_var_ref(&sequence);
+                let sequence_length = ast::Name {
+                    name: "xee_sequence_length".to_string(),
+                    namespace: None,
+                };
+                self.scopes.push_name(&sequence_length);
+                self.builder.emit(Instruction::SequenceLen);
 
-                // // now get item at the index
-                // self.builder.emit(Instruction::Dup);
-                // self.compile_var_ref(&sequence_name);
-                // self.builder.emit(Instruction::SequenceGet);
-                // // ensure it's named the loop item
-                // self.scopes.push_name(&for_expr.var_name);
-                // // execute expression over it
-                // self.compile_expr_single(&for_expr.return_expr);
-                // self.scopes.pop_name();
-                // // push result to new sequence
-                // self.compile_var_ref(&new_sequence_name);
-                // self.builder.emit(Instruction::SequencePush);
-                // // update the index with 1
-                // self.builder
-                //     .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-                // self.builder.emit(Instruction::Add);
+                // place index on stack
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+                let index = ast::Name {
+                    name: "xee_index".to_string(),
+                    namespace: None,
+                };
+                self.scopes.push_name(&index);
+                let loop_start = self.builder.loop_start();
 
-                // // and compare with sequence length
-                // self.compile_var_ref(&sequence_length);
-                // self.builder
-                //     .emit_compare_backward(Comparison::Ge, loop_start);
-                // // pop index
-                // self.builder.emit(Instruction::Pop);
+                // get item at the index
+                self.compile_var_ref(&index);
+                self.compile_var_ref(&sequence);
+                self.builder.emit(Instruction::SequenceGet);
+                // ensure it's named the loop item
+                self.scopes.push_name(&for_expr.var_name);
+                // execute expression over it
+                self.compile_expr_single(&for_expr.return_expr);
+                // named loop item
+                self.scopes.pop_name();
+                // push result to new sequence
+                self.compile_var_ref(&new_sequence);
+                self.builder.emit(Instruction::SequencePush);
+                // get rid of named loop item
+                self.builder.emit(Instruction::Pop);
+                // update the index with 1
+                self.compile_var_ref(&index);
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+                self.builder.emit(Instruction::Add);
+                self.compile_var_set(&index);
+                // compare with sequence length
+                self.compile_var_ref(&index);
+                self.compile_var_ref(&sequence_length);
+                // unless we reached the end, we jump back to the start
+                self.builder
+                    .emit_compare_backward(Comparison::Ge, loop_start);
+                // pop old sequence, length and index; new sequence is on top
+                self.builder.emit(Instruction::Pop);
+                self.builder.emit(Instruction::Pop);
+                self.builder.emit(Instruction::Pop);
 
-                // // pop new sequence name
-                // self.scopes.pop_name();
-                // // pop sequence length and old sequence
-                // self.builder.emit(Instruction::Pop);
-                // self.builder.emit(Instruction::Pop);
+                // pop new sequence name & sequence name & sequence length name & index
+                self.scopes.pop_name();
+                self.scopes.pop_name();
+                self.scopes.pop_name();
+                self.scopes.pop_name();
             }
             _ => {
                 panic!("not supported yet");
@@ -346,6 +360,17 @@ impl<'a> InterpreterCompiler<'a> {
                 // XXX this should become an actual compile error
                 panic!("unknown variable {:?}", name);
             }
+        }
+    }
+
+    fn compile_var_set(&mut self, name: &ast::Name) {
+        if let Some(index) = self.scopes.get(name) {
+            if index > u16::MAX as usize {
+                panic!("too many variables");
+            }
+            self.builder.emit(Instruction::Set(index as u16));
+        } else {
+            panic!("can only set locals: {:?}", name);
         }
     }
 }
@@ -692,20 +717,20 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_for_loop() -> Result<()> {
-    //     let xpath = CompiledXPath::new("for $x in 1 to 5 return $x + 1");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(
-    //         as_sequence(&result).into_owned(),
-    //         Sequence::from_vec(vec![
-    //             Item::Atomic(Atomic::Integer(2)),
-    //             Item::Atomic(Atomic::Integer(3)),
-    //             Item::Atomic(Atomic::Integer(4)),
-    //             Item::Atomic(Atomic::Integer(5)),
-    //             Item::Atomic(Atomic::Integer(6))
-    //         ])
-    //     );
-    //     Ok(())
-    // }
+    #[test]
+    fn test_for_loop() -> Result<()> {
+        let xpath = CompiledXPath::new("for $x in 1 to 5 return $x + 2");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(3)),
+                Item::Atomic(Atomic::Integer(4)),
+                Item::Atomic(Atomic::Integer(5)),
+                Item::Atomic(Atomic::Integer(6)),
+                Item::Atomic(Atomic::Integer(7))
+            ])))
+        );
+        Ok(())
+    }
 }

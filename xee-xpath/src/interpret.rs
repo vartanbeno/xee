@@ -99,6 +99,9 @@ impl<'a> Interpreter<'a> {
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
                 }
+                Instruction::Set(index) => {
+                    self.stack[base + index as usize] = self.stack.pop().unwrap();
+                }
                 Instruction::ClosureVar(index) => {
                     // the closure is always just below the base
                     let closure = self.stack[base - 1].as_closure().ok_or(Error::TypeError)?;
@@ -286,40 +289,51 @@ impl<'a> Interpreter<'a> {
                                 .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
                         }
                     }
-                } // Instruction::For => {
-                  // let closure = self.stack.pop().unwrap();
-                  // let sequence = self.stack.pop().unwrap();
+                }
+                Instruction::SequenceNew => {
+                    let sequence = Sequence::new();
+                    self.stack
+                        .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
+                }
+                Instruction::SequenceLen => {
+                    let sequence = self.stack.pop().unwrap();
+                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    let len = sequence.borrow().items.len();
+                    self.stack
+                        .push(StackValue::Atomic(Atomic::Integer(len as i64)));
+                }
+                Instruction::SequenceGet => {
+                    let sequence = self.stack.pop().unwrap();
+                    let index = self.stack.pop().unwrap();
 
-                  // let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
-                  // let closure = closure.as_closure().ok_or(Error::TypeError)?;
+                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    let index = index.as_atomic().ok_or(Error::TypeError)?;
+                    let index = index.as_integer().ok_or(Error::TypeError)?;
+                    let item = sequence.borrow().items[index as usize].clone();
+                    match item {
+                        Item::Atomic(atomic) => {
+                            self.stack.push(StackValue::Atomic(atomic));
+                        }
+                        Item::Function(closure) => {
+                            self.stack.push(StackValue::Closure(closure));
+                        }
+                    }
+                    // dbg!("sequence get {}", &self.stack);
+                }
+                Instruction::SequencePush => {
+                    let sequence = self.stack.pop().unwrap();
+                    let stack_value = self.stack.pop().unwrap();
 
-                  // let mut new_sequence = Sequence::new();
-
-                  // for item in sequence.into_owned().items {
-                  //     dbg!(&item);
-                  //     // place argument on stack
-                  //     match item {
-                  //         Item::Atomic(atomic) => {
-                  //             self.stack.push(StackValue::Atomic(atomic));
-                  //         }
-                  //         Item::Function(closure) => {
-                  //             self.stack.push(StackValue::Closure(closure));
-                  //         }
-                  //     }
-                  //     self.call_closure(
-                  //         closure.function_id,
-                  //         1,
-                  //         &mut ip,
-                  //         &mut base,
-                  //         &mut function,
-                  //     )?;
-                  //     self.run()?;
-
-                  //     // return value should be added to new sequence
-                  //     new_sequence.push_stack_value(self.stack.pop().unwrap());
-                  // }
-                  // self.stack.push(StackValue::Sequence(new_sequence));
-                  // }
+                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    sequence.borrow_mut().push_stack_value(stack_value);
+                }
+                Instruction::PrintTop => {
+                    let top = self.stack.last().unwrap();
+                    println!("{:#?}", top);
+                }
+                Instruction::PrintStack => {
+                    println!("{:#?}", self.stack);
+                }
             }
         }
         Ok(())

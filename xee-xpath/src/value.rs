@@ -86,6 +86,7 @@ impl StackValue {
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Atomic {
+    // should string be Rc?
     String(String),
     Boolean(bool),
     // Decimal, use a decimal type
