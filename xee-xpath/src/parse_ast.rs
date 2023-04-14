@@ -293,6 +293,34 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
             }
             return_expr
         }
+        Rule::QuantifiedExpr => {
+            let mut pairs = pair.into_inner();
+            let quantifier = pairs.next().unwrap();
+            let quantifier = match quantifier.as_str() {
+                "some" => ast::Quantifier::Some,
+                "every" => ast::Quantifier::Every,
+                _ => {
+                    panic!("unhandled QuantifiedExpr {:?}", quantifier.as_str())
+                }
+            };
+            let quantifier_clause = pairs.next().unwrap();
+            let quantifier_clause_pairs = quantifier_clause.into_inner();
+            let inner_satisfies_expr = expr_single(pairs.next().unwrap());
+            let mut satisfies_expr = inner_satisfies_expr;
+            for quantifier_clause_pair in quantifier_clause_pairs.rev() {
+                let mut quantifier_binding = quantifier_clause_pair.into_inner();
+                let var_name = quantifier_binding.next().unwrap();
+                let var_expr = expr_single(quantifier_binding.next().unwrap());
+                let quantified_expr = ast::QuantifiedExpr {
+                    quantifier: quantifier.clone(),
+                    var_name: var_name_to_name(var_name),
+                    var_expr: Box::new(var_expr),
+                    satisfies_expr: Box::new(satisfies_expr),
+                };
+                satisfies_expr = ast::ExprSingle::Quantified(quantified_expr);
+            }
+            satisfies_expr
+        }
         Rule::IfExpr => {
             let mut pairs = pair.into_inner();
             let condition_pair = pairs.next().unwrap();
@@ -333,6 +361,7 @@ fn expr_single(pair: Pair<Rule>) -> ast::ExprSingle {
                 })
             }
         }
+
         _ => {
             panic!("unhandled ExprSingle {:?}", pair.as_rule())
         }
@@ -963,5 +992,17 @@ mod tests {
     #[test]
     fn test_simple_map() {
         assert_debug_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
+    }
+
+    #[test]
+    fn test_quantified() {
+        assert_debug_snapshot!(parse_expr_single("every $x in (1, 2) satisfies $x > 0"));
+    }
+
+    #[test]
+    fn test_quantified_nested() {
+        assert_debug_snapshot!(parse_expr_single(
+            "every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0"
+        ));
     }
 }

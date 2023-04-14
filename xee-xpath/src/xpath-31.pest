@@ -49,7 +49,11 @@ SimpleLetBinding = { "$" ~ VarName ~ ":=" ~ ExprSingle }
 
 // QuantifiedExpr
 // ::= ("some" | "every") "$" VarName "in" ExprSingle ("," "$" VarName "in" ExprSingle)* "satisfies" ExprSingle
-QuantifiedExpr = { ("some" | "every") ~ "$" ~ VarName ~ "in" ~ ExprSingle ~ ("," ~ "$" ~ VarName ~ "in" ~ ExprSingle)* ~ "satisfies" ~ ExprSingle }
+QuantifiedExpr = { QuantifierName ~ QuantifiedClause ~ "satisfies" ~ ExprSingle }
+
+QuantifierName    = { "some" | "every" }
+QuantifiedClause  = { QuantifiedBinding ~ ("," ~ QuantifiedBinding)* }
+QuantifiedBinding = { "$" ~ VarName ~ "in" ~ ExprSingle }
 
 // IfExpr   ::= "if" "(" Expr ")" "then" ExprSingle "else" ExprSingle
 IfExpr = { "if" ~ "(" ~ Expr ~ ")" ~ "then" ~ ExprSingle ~ "else" ~ ExprSingle }

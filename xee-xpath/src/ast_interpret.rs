@@ -166,8 +166,8 @@ impl<'a> InterpreterCompiler<'a> {
                     panic!("apply operator not supported yet {:?}", apply_expr.operator);
                 }
             },
-            _ => {
-                panic!("not supported yet");
+            ast::ExprSingle::Quantified(quantified_expr) => {
+                // self.compile_quantified(quantified_expr);
             }
         }
     }

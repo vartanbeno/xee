@@ -28,6 +28,14 @@ pub(crate) struct ForExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct QuantifiedExpr {
+    pub(crate) quantifier: Quantifier,
+    pub(crate) var_name: Name,
+    pub(crate) var_expr: Box<ExprSingle>,
+    pub(crate) satisfies_expr: Box<ExprSingle>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Name {
     pub(crate) name: String,
     pub(crate) namespace: Option<String>,
@@ -47,13 +55,6 @@ pub(crate) struct LetExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct QuantifiedExpr {
-    pub(crate) quantifier: Quantifier,
-    pub(crate) clauses: Vec<QuantifiedExprClause>,
-    pub(crate) satisfies: Box<ExprSingle>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct IfExpr {
     pub(crate) condition: Vec<ExprSingle>,
     pub(crate) then: Box<ExprSingle>,
@@ -64,12 +65,6 @@ pub(crate) struct IfExpr {
 pub(crate) enum Quantifier {
     Some,
     Every,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct QuantifiedExprClause {
-    pub(crate) var_name: EQName,
-    pub(crate) expr: ExprSingle,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
