@@ -139,78 +139,36 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(jump_end);
             }
             ast::ExprSingle::For(for_expr) => {
-                // place the resulting sequence on the stack
-                let new_sequence = ast::Name {
-                    name: "xee_new_sequence".to_string(),
-                    namespace: None,
-                };
-                self.scopes.push_name(&new_sequence);
-                self.builder.emit(Instruction::SequenceNew);
-
-                // execute the sequence expression, placing sequence on stack
-                let sequence = ast::Name {
-                    name: "xee_sequence".to_string(),
-                    namespace: None,
-                };
-                self.scopes.push_name(&sequence);
-                self.compile_expr_single(&for_expr.var_expr);
-
-                // and sequence length
-                self.compile_var_ref(&sequence);
-                let sequence_length = ast::Name {
-                    name: "xee_sequence_length".to_string(),
-                    namespace: None,
-                };
-                self.scopes.push_name(&sequence_length);
-                self.builder.emit(Instruction::SequenceLen);
-
-                // place index on stack
-                self.builder
-                    .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-                let index = ast::Name {
-                    name: "xee_index".to_string(),
-                    namespace: None,
-                };
-                self.scopes.push_name(&index);
-                let loop_start = self.builder.loop_start();
-
-                // get item at the index
-                self.compile_var_ref(&index);
-                self.compile_var_ref(&sequence);
-                self.builder.emit(Instruction::SequenceGet);
-                // ensure it's named the loop item
-                self.scopes.push_name(&for_expr.var_name);
-                // execute expression over it
-                self.compile_expr_single(&for_expr.return_expr);
-                // named loop item
-                self.scopes.pop_name();
-                // push result to new sequence
-                self.compile_var_ref(&new_sequence);
-                self.builder.emit(Instruction::SequencePush);
-                // get rid of named loop item
-                self.builder.emit(Instruction::Pop);
-                // update the index with 1
-                self.compile_var_ref(&index);
-                self.builder
-                    .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-                self.builder.emit(Instruction::Add);
-                self.compile_var_set(&index);
-                // compare with sequence length
-                self.compile_var_ref(&index);
-                self.compile_var_ref(&sequence_length);
-                // unless we reached the end, we jump back to the start
-                self.builder
-                    .emit_compare_backward(Comparison::Ge, loop_start);
-                // pop old sequence, length and index; new sequence is on top
-                self.builder.emit(Instruction::Pop);
-                self.builder.emit(Instruction::Pop);
-                self.builder.emit(Instruction::Pop);
-
-                // pop new sequence name & sequence name & sequence length name & index
-                self.scopes.pop_name();
-                self.scopes.pop_name();
-                self.scopes.pop_name();
-                self.scopes.pop_name();
+                self.compile_map_expr(
+                    |s| {
+                        s.compile_expr_single(&for_expr.var_expr);
+                    },
+                    |s| {
+                        // ensure it's named the loop item
+                        s.scopes.push_name(&for_expr.var_name);
+                        // execute expression over it
+                        s.compile_expr_single(&for_expr.return_expr);
+                        // named loop item
+                        s.scopes.pop_name();
+                    },
+                    |s| {
+                        // get rid of named loop item
+                        s.builder.emit(Instruction::Pop);
+                    },
+                );
+            }
+            ast::ExprSingle::Apply(apply_expr) => {
+                self.compile_path_expr(&apply_expr.path_expr);
+                match &apply_expr.operator {
+                    ast::ApplyOperator::SimpleMap(path_exprs) => {
+                        for path_expr in path_exprs {
+                            self.compile_path_expr(path_expr);
+                        }
+                    }
+                    _ => {
+                        panic!("apply operator not supported yet {:?}", apply_expr.operator);
+                    }
+                }
             }
             _ => {
                 panic!("not supported yet");
@@ -373,6 +331,91 @@ impl<'a> InterpreterCompiler<'a> {
             panic!("can only set locals: {:?}", name);
         }
     }
+
+    fn compile_map_expr<S, M, C>(
+        &mut self,
+        mut compile_sequence_expr: S,
+        mut compile_map_expr: M,
+        mut compile_map_cleanup: C,
+    ) where
+        S: FnMut(&mut Self),
+        M: FnMut(&mut Self),
+        C: FnMut(&mut Self),
+    {
+        // place the resulting sequence on the stack
+        let new_sequence = ast::Name {
+            name: "xee_new_sequence".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&new_sequence);
+        self.builder.emit(Instruction::SequenceNew);
+
+        // execute the sequence expression, placing sequence on stack
+        let sequence = ast::Name {
+            name: "xee_sequence".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&sequence);
+
+        compile_sequence_expr(self);
+
+        // and sequence length
+        self.compile_var_ref(&sequence);
+        let sequence_length = ast::Name {
+            name: "xee_sequence_length".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&sequence_length);
+        self.builder.emit(Instruction::SequenceLen);
+
+        // place index on stack
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+        let index = ast::Name {
+            name: "xee_index".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&index);
+        let loop_start = self.builder.loop_start();
+
+        // get item at the index
+        self.compile_var_ref(&index);
+        self.compile_var_ref(&sequence);
+        self.builder.emit(Instruction::SequenceGet);
+
+        // execute the map expression, placing result on stack
+        compile_map_expr(self);
+
+        // push result to new sequence
+        self.compile_var_ref(&new_sequence);
+        self.builder.emit(Instruction::SequencePush);
+
+        // we may need to clean up the stack after this
+        compile_map_cleanup(self);
+
+        // update the index with 1
+        self.compile_var_ref(&index);
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+        self.builder.emit(Instruction::Add);
+        self.compile_var_set(&index);
+        // compare with sequence length
+        self.compile_var_ref(&index);
+        self.compile_var_ref(&sequence_length);
+        // unless we reached the end, we jump back to the start
+        self.builder
+            .emit_compare_backward(Comparison::Ge, loop_start);
+        // pop old sequence, length and index; new sequence is on top
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+
+        // pop new sequence name & sequence name & sequence length name & index
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
 }
 
 pub(crate) struct CompiledXPath {
@@ -384,6 +427,7 @@ pub(crate) struct CompiledXPath {
 impl CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
+        dbg!(&ast);
         let mut program = Program::new();
         let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut program);
@@ -765,4 +809,18 @@ mod tests {
         );
         Ok(())
     }
+
+    // #[test]
+    // fn test_simple_map() -> Result<()> {
+    //     let xpath = CompiledXPath::new("(1, 2) ! (. + 1)");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(
+    //         as_sequence(&result),
+    //         Rc::new(RefCell::new(Sequence::from_vec(vec![
+    //             Item::Atomic(Atomic::Integer(2)),
+    //             Item::Atomic(Atomic::Integer(3)),
+    //         ])))
+    //     );
+    //     Ok(())
+    // }
 }
