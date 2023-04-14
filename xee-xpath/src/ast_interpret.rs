@@ -72,6 +72,7 @@ struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
     static_context: &'a StaticContext,
     builder: FunctionBuilder<'a>,
+    context_item_name: &'a ast::Name,
 }
 
 impl<'a> InterpreterCompiler<'a> {
@@ -158,12 +159,25 @@ impl<'a> InterpreterCompiler<'a> {
                 );
             }
             ast::ExprSingle::Apply(apply_expr) => {
-                self.compile_path_expr(&apply_expr.path_expr);
                 match &apply_expr.operator {
                     ast::ApplyOperator::SimpleMap(path_exprs) => {
-                        for path_expr in path_exprs {
-                            self.compile_path_expr(path_expr);
-                        }
+                        // XXX pretend a single path expr for now
+                        let path_expr = &path_exprs[0];
+                        self.compile_map_expr(
+                            |s| {
+                                s.compile_path_expr(&apply_expr.path_expr);
+                            },
+                            |s| {
+                                // ensure it's named the loop item
+                                s.scopes.push_name(s.context_item_name);
+                                s.compile_path_expr(path_expr);
+                                s.scopes.pop_name();
+                            },
+                            |s| {
+                                // get rid of context item
+                                s.builder.emit(Instruction::Pop);
+                            },
+                        );
                     }
                     _ => {
                         panic!("apply operator not supported yet {:?}", apply_expr.operator);
@@ -224,6 +238,7 @@ impl<'a> InterpreterCompiler<'a> {
                     builder: nested_builder,
                     scopes: self.scopes,
                     static_context: self.static_context,
+                    context_item_name: self.context_item_name,
                 };
                 compiler.compile_function(inline_function);
 
@@ -264,8 +279,11 @@ impl<'a> InterpreterCompiler<'a> {
                     .expect("static function not found");
                 self.builder.emit_static_function(function_id);
             }
+            ast::PrimaryExpr::ContextItem => {
+                self.compile_var_ref(self.context_item_name);
+            }
             _ => {
-                panic!("not supported yet");
+                panic!("not supported yet {:?}", primary_expr);
             }
         }
     }
@@ -427,7 +445,6 @@ pub(crate) struct CompiledXPath {
 impl CompiledXPath {
     pub(crate) fn new(xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
-        dbg!(&ast);
         let mut program = Program::new();
         let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut program);
@@ -435,6 +452,10 @@ impl CompiledXPath {
             builder,
             scopes: &mut scopes,
             static_context: &StaticContext::new(),
+            context_item_name: &ast::Name {
+                name: "xee_context_item".to_string(),
+                namespace: None,
+            },
         };
         compiler.compile_xpath(&ast);
         let main = compiler.builder.finish("main".to_string(), 0);
@@ -810,17 +831,17 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_simple_map() -> Result<()> {
-    //     let xpath = CompiledXPath::new("(1, 2) ! (. + 1)");
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(
-    //         as_sequence(&result),
-    //         Rc::new(RefCell::new(Sequence::from_vec(vec![
-    //             Item::Atomic(Atomic::Integer(2)),
-    //             Item::Atomic(Atomic::Integer(3)),
-    //         ])))
-    //     );
-    //     Ok(())
-    // }
+    #[test]
+    fn test_simple_map() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2) ! (. + 1)");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(2)),
+                Item::Atomic(Atomic::Integer(3)),
+            ])))
+        );
+        Ok(())
+    }
 }

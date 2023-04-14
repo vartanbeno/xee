@@ -318,7 +318,6 @@ impl<'a> Interpreter<'a> {
                             self.stack.push(StackValue::Closure(closure));
                         }
                     }
-                    // dbg!("sequence get {}", &self.stack);
                 }
                 Instruction::SequencePush => {
                     let sequence = self.stack.pop().unwrap();
