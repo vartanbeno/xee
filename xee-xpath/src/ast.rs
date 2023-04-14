@@ -261,7 +261,6 @@ pub(crate) enum StepExpr {
 pub(crate) struct AxisStep {
     pub(crate) axis: Axis,
     pub(crate) node_test: NodeTest,
-    // vec contains at least 1 element
     pub(crate) predicates: Vec<ExprSingle>,
 }
 

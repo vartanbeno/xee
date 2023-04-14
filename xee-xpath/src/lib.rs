@@ -15,5 +15,6 @@ mod instruction;
 mod interpret;
 mod parse;
 mod parse_ast;
+mod scope;
 mod static_context;
 mod value;
