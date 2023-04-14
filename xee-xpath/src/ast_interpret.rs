@@ -888,6 +888,20 @@ mod tests {
     }
 
     #[test]
+    fn test_simple_map_single() -> Result<()> {
+        let xpath = CompiledXPath::new("1 ! (., 0)");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(1)),
+                Item::Atomic(Atomic::Integer(0)),
+            ])))
+        );
+        Ok(())
+    }
+
+    #[test]
     fn test_simple_multiple_steps() -> Result<()> {
         let xpath = CompiledXPath::new("(1, 2) ! (. + 1) ! (. + 2)");
         let result = xpath.interpret()?;
