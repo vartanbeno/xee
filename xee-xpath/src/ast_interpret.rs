@@ -432,14 +432,15 @@ impl<'a> InterpreterCompiler<'a> {
         let is_included = self.builder.emit_jump_forward(JumpCondition::True);
         // we need to clean up the stack after this
         compile_filter_cleanup(self);
-        // iterate the loop
-        self.compile_sequence_loop_iterate(loop_start);
+        // and iterate the loop
+        let iterate = self.builder.emit_jump_forward(JumpCondition::Always);
 
         self.builder.patch_jump(is_included);
         // push item to new sequence
         self.compile_var_ref(&new_sequence);
         self.builder.emit(Instruction::SequencePush);
 
+        self.builder.patch_jump(iterate);
         // no need to clean up the stack, as filter get is pushed onto sequence
         self.compile_sequence_loop_iterate(loop_start);
 
