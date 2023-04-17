@@ -1125,4 +1125,17 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    fn test_predicate_multiple() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2, 3)[. ge 2][. ge 3]");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![Item::Atomic(
+                Atomic::Integer(3)
+            ),])))
+        );
+        Ok(())
+    }
 }
