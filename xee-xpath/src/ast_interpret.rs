@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::builder::{Comparison, FunctionBuilder, JumpCondition, Program};
+use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition, Program};
 use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
@@ -13,6 +13,9 @@ struct InterpreterCompiler<'a> {
     static_context: &'a StaticContext,
     builder: FunctionBuilder<'a>,
     context_item_name: &'a ast::Name,
+    sequence_name: &'a ast::Name,
+    sequence_length_name: &'a ast::Name,
+    sequence_index_name: &'a ast::Name,
 }
 
 impl<'a> InterpreterCompiler<'a> {
@@ -177,6 +180,9 @@ impl<'a> InterpreterCompiler<'a> {
                     scopes: self.scopes,
                     static_context: self.static_context,
                     context_item_name: self.context_item_name,
+                    sequence_name: self.sequence_name,
+                    sequence_length_name: self.sequence_length_name,
+                    sequence_index_name: self.sequence_index_name,
                 };
                 compiler.compile_function(inline_function);
 
@@ -288,6 +294,22 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
+    fn compile_sequence_loop_init(&mut self) -> BackwardJumpRef {
+        // sequence is on top of stack
+        self.scopes.push_name(self.sequence_name);
+
+        // and sequence length
+        self.compile_var_ref(self.sequence_name);
+        self.scopes.push_name(self.sequence_length_name);
+        self.builder.emit(Instruction::SequenceLen);
+
+        // place index on stack
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+        self.scopes.push_name(self.sequence_index_name);
+        self.builder.loop_start()
+    }
+
     fn compile_map_expr<S, M, C>(
         &mut self,
         mut compile_sequence_expr: S,
@@ -306,37 +328,13 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
-        // execute the sequence expression, placing sequence on stack
-        let sequence = ast::Name {
-            name: "xee_sequence".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&sequence);
-
         compile_sequence_expr(self);
 
-        // and sequence length
-        self.compile_var_ref(&sequence);
-        let sequence_length = ast::Name {
-            name: "xee_sequence_length".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&sequence_length);
-        self.builder.emit(Instruction::SequenceLen);
-
-        // place index on stack
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-        let index = ast::Name {
-            name: "xee_index".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&index);
-        let loop_start = self.builder.loop_start();
+        let loop_start = self.compile_sequence_loop_init();
 
         // get item at the index
-        self.compile_var_ref(&index);
-        self.compile_var_ref(&sequence);
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_name);
         self.builder.emit(Instruction::SequenceGet);
 
         // execute the map expression, placing result on stack
@@ -350,14 +348,14 @@ impl<'a> InterpreterCompiler<'a> {
         compile_map_cleanup(self);
 
         // update the index with 1
-        self.compile_var_ref(&index);
+        self.compile_var_ref(self.sequence_index_name);
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.builder.emit(Instruction::Add);
-        self.compile_var_set(&index);
+        self.compile_var_set(self.sequence_index_name);
         // compare with sequence length
-        self.compile_var_ref(&index);
-        self.compile_var_ref(&sequence_length);
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_length_name);
         // unless we reached the end, we jump back to the start
         self.builder.emit(Instruction::Lt);
         self.builder
@@ -539,6 +537,18 @@ impl CompiledXPath {
             static_context: &StaticContext::new(),
             context_item_name: &ast::Name {
                 name: "xee_context_item".to_string(),
+                namespace: None,
+            },
+            sequence_name: &ast::Name {
+                name: "xee_sequence".to_string(),
+                namespace: None,
+            },
+            sequence_length_name: &ast::Name {
+                name: "xee_sequence_length".to_string(),
+                namespace: None,
+            },
+            sequence_index_name: &ast::Name {
+                name: "xee_sequence_index".to_string(),
                 namespace: None,
             },
         };
