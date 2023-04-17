@@ -83,7 +83,7 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(jump_end);
             }
             ast::ExprSingle::For(for_expr) => {
-                self.compile_map_expr(
+                self.compile_map(
                     |s| {
                         s.compile_expr_single(&for_expr.var_expr);
                     },
@@ -340,7 +340,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::Pop);
     }
 
-    fn compile_map_expr<S, M, C>(
+    fn compile_map<S, M, C>(
         &mut self,
         mut compile_sequence_expr: S,
         mut compile_map_expr: M,
@@ -371,7 +371,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_var_ref(&new_sequence);
         self.builder.emit(Instruction::SequencePush);
 
-        // we may need to clean up the stack after this
+        // we need to clean up the stack after this
         compile_map_cleanup(self);
 
         self.compile_sequence_loop_iterate(loop_start);
@@ -446,7 +446,7 @@ impl<'a> InterpreterCompiler<'a> {
     fn compile_simple_map(&mut self, main_path_expr: &ast::PathExpr, path_exprs: &[ast::PathExpr]) {
         let path_expr = &path_exprs[0];
         let rest_path_expr = &path_exprs[1..];
-        self.compile_map_expr(
+        self.compile_map(
             |s| {
                 s.compile_path_expr(main_path_expr);
             },
@@ -467,7 +467,7 @@ impl<'a> InterpreterCompiler<'a> {
                 namespace: None,
             };
             self.scopes.push_name(&map_result);
-            self.compile_map_expr(
+            self.compile_map(
                 |s| s.compile_var_ref(&map_result),
                 |s| {
                     // ensure it's named the loop item
