@@ -544,6 +544,8 @@ fn name_test_to_name_test(pair: Pair<Rule>) -> ast::NameTest {
 fn kind_test_to_kind_test(pair: Pair<Rule>) -> ast::KindTest {
     match pair.as_rule() {
         Rule::AnyKindTest => ast::KindTest::Any,
+        Rule::TextTest => ast::KindTest::Text,
+        Rule::CommentTest => ast::KindTest::Comment,
         _ => {
             panic!("unhandled KindTest: {:?}", pair.as_rule());
         }
@@ -1185,6 +1187,21 @@ mod tests {
     #[test]
     fn test_node_test() {
         assert_debug_snapshot!(parse_expr_single("self::node()"));
+    }
+
+    #[test]
+    fn test_text_test() {
+        assert_debug_snapshot!(parse_expr_single("self::text()"));
+    }
+
+    #[test]
+    fn test_comment_test() {
+        assert_debug_snapshot!(parse_expr_single("self::comment()"));
+    }
+
+    #[test]
+    fn test_namespace_node_test() {
+        assert_debug_snapshot!(parse_expr_single("self::namespace-node()"));
     }
 
     // #[test]
