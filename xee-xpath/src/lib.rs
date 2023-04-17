@@ -13,6 +13,7 @@ mod builder;
 mod error;
 mod instruction;
 mod interpret;
+mod name;
 mod parse;
 mod parse_ast;
 mod scope;
