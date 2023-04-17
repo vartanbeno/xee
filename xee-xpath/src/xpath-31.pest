@@ -503,7 +503,7 @@ TypedArrayTest = { "array" ~ "(" ~ SequenceType ~ ")" }
 ParenthesizedItemType = { "(" ~ ItemType ~ ")" }
 
 // EQName   ::= QName | URIQualifiedName
-EQName = { QName | URIQualifiedName }
+EQName = { URIQualifiedName | QName }
 
 // tokens
 
@@ -536,12 +536,14 @@ NonSingleQuoteCharacter = { !"'" ~ ANY }
 // URIQualifiedName
 // ::= BracedURILiteral NCName
 // /* ws: explicit */
-URIQualifiedName = @{ BracedURILiteral ~ NCName }
+URIQualifiedName = ${ BracedURILiteral ~ NCName }
 
 // BracedURILiteral
 // ::= "Q" "{" [^{}]* "}"
 // /* ws: explicit */
-BracedURILiteral = @{ "Q" ~ "{" ~ !("}" | "{")* ~ "}" }
+BracedURILiteral = ${ "Q" ~ "{" ~ BracedURIContent ~ "}" }
+
+BracedURIContent = @{ (!("}" | "{") ~ ANY)* }
 
 // EscapeQuot
 // ::= '""'

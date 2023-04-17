@@ -804,6 +804,7 @@ impl<'a> AstParser<'a> {
         debug_assert_eq!(pair.as_rule(), Rule::URIQualifiedName);
         let mut pairs = pair.into_inner();
         let uri = pairs.next().unwrap();
+        let uri = uri.into_inner().next().unwrap();
         let local_part = pairs.next().unwrap();
         ast::Name {
             name: local_part.as_str().to_string(),
@@ -1192,6 +1193,11 @@ mod tests {
     #[test]
     fn test_static_function_call_fn_prefix() {
         assert_debug_snapshot!(parse_expr_single("fn:root()"));
+    }
+
+    #[test]
+    fn test_static_function_call_q() {
+        assert_debug_snapshot!(parse_expr_single("Q{http://example.com}something()"));
     }
 
     #[test]
