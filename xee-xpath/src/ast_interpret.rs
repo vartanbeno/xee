@@ -238,6 +238,34 @@ impl<'a> InterpreterCompiler<'a> {
                 ast::Postfix::ArgumentList(arguments) => {
                     self.compile_call(arguments);
                 }
+                ast::Postfix::Predicate(expr) => {
+                    // name the sequence to filter temporarily
+                    // so we can refer to it in the predicate
+                    let name = ast::Name {
+                        name: "filtered_sequence".to_string(),
+                        namespace: None,
+                    };
+                    self.scopes.push_name(&name);
+
+                    self.compile_filter(
+                        |s| {
+                            s.compile_var_ref(&name);
+                        },
+                        |s| {
+                            // ensure it's named the loop item
+                            s.scopes.push_name(s.context_item_name);
+                            s.compile_expr(expr);
+                            s.scopes.pop_name();
+                        },
+                        |s| {
+                            // get rid of named loop item
+                            s.builder.emit(Instruction::Pop);
+                        },
+                    );
+                    // pop the sequence we filtered, leaving the top of stack in place
+                    self.builder.emit(Instruction::LetDone);
+                    self.scopes.pop_name();
+                }
                 _ => {
                     panic!("not supported yet");
                 }
@@ -358,9 +386,61 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_var_ref(&new_sequence);
         self.builder.emit(Instruction::SequencePush);
 
-        // we need to clean up the stack after this
+        // we may need to clean up the stack after this
         compile_map_cleanup(self);
 
+        self.compile_sequence_loop_iterate(loop_start);
+
+        self.compile_sequence_loop_end();
+
+        // pop new sequence name & sequence name & sequence length name & index
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
+
+    fn compile_filter<S, M, C>(
+        &mut self,
+        mut compile_sequence_expr: S,
+        mut compile_filter_expr: M,
+        mut compile_filter_cleanup: C,
+    ) where
+        S: FnMut(&mut Self),
+        M: FnMut(&mut Self),
+        C: FnMut(&mut Self),
+    {
+        // place the resulting sequence on the stack
+        let new_sequence = ast::Name {
+            name: "xee_new_sequence".to_string(),
+            namespace: None,
+        };
+        self.scopes.push_name(&new_sequence);
+        self.builder.emit(Instruction::SequenceNew);
+
+        compile_sequence_expr(self);
+
+        let loop_start = self.compile_sequence_loop_init();
+
+        // place item to filter on stack
+        self.compile_sequence_get_item();
+
+        // execute the filter expression, placing result on stack
+        compile_filter_expr(self);
+
+        // if filter is false, we skip this item
+        let is_included = self.builder.emit_jump_forward(JumpCondition::True);
+        // we need to clean up the stack after this
+        compile_filter_cleanup(self);
+        // iterate the loop
+        self.compile_sequence_loop_iterate(loop_start);
+
+        self.builder.patch_jump(is_included);
+        // push item to new sequence
+        self.compile_var_ref(&new_sequence);
+        self.builder.emit(Instruction::SequencePush);
+
+        // no need to clean up the stack, as filter get is pushed onto sequence
         self.compile_sequence_loop_iterate(loop_start);
 
         self.compile_sequence_loop_end();
@@ -1028,6 +1108,20 @@ mod tests {
         let xpath = CompiledXPath::new("every $x in (2, 3, 4), $y in (1, 2) satisfies $x gt $y");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
+        Ok(())
+    }
+
+    #[test]
+    fn test_predicate() -> Result<()> {
+        let xpath = CompiledXPath::new("(1, 2, 3)[. ge 2]");
+        let result = xpath.interpret()?;
+        assert_eq!(
+            as_sequence(&result),
+            Rc::new(RefCell::new(Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(2)),
+                Item::Atomic(Atomic::Integer(3)),
+            ])))
+        );
         Ok(())
     }
 }

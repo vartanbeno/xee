@@ -1,6 +1,6 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
-use crate::value::{Atomic, Function, FunctionId, StackValue, StaticFunctionId};
+use crate::value::{Function, FunctionId, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
@@ -30,9 +30,11 @@ impl Program {
 }
 
 #[must_use]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct ForwardJumpRef(usize);
 
 #[must_use]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct BackwardJumpRef(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
