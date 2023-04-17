@@ -419,6 +419,7 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
                 .collect::<Vec<_>>();
             let (axis, node_test) = match step_pair.as_rule() {
                 Rule::ForwardStep => forward_step_to_axis_node_test(step_pair),
+                Rule::ReverseStep => reverse_step_to_axis_node_test(step_pair),
                 _ => {
                     panic!("unhandled AxisStep: {:?}", step_pair.as_rule())
                 }
@@ -449,7 +450,22 @@ fn forward_step_to_axis_node_test(pair: Pair<Rule>) -> (ast::Axis, ast::NodeTest
         (axis, node_test)
     } else {
         // abbrev forward step
-        todo!();
+        todo!("abbrev forward step");
+    }
+}
+
+fn reverse_step_to_axis_node_test(pair: Pair<Rule>) -> (ast::Axis, ast::NodeTest) {
+    debug_assert_eq!(pair.as_rule(), Rule::ReverseStep);
+    let mut pairs = pair.into_inner();
+    let first_pair = pairs.next().unwrap();
+    if first_pair.as_rule() == Rule::ReverseAxis {
+        let axis = reverse_axis_to_axis(first_pair);
+        let node_test_pair = pairs.next().unwrap();
+        let node_test = node_test_to_node_test(node_test_pair);
+        (axis, node_test)
+    } else {
+        // abbrev reverse step
+        todo!("abbrev reverse step");
     }
 }
 
@@ -465,6 +481,19 @@ fn forward_axis_to_axis(pair: Pair<Rule>) -> ast::Axis {
         "namespace::" => ast::Axis::Namespace,
         _ => {
             panic!("unhandled ForwardAxis: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn reverse_axis_to_axis(pair: Pair<Rule>) -> ast::Axis {
+    match pair.as_str() {
+        "parent::" => ast::Axis::Parent,
+        "ancestor::" => ast::Axis::Ancestor,
+        "preceding-sibling::" => ast::Axis::PrecedingSibling,
+        "preceding::" => ast::Axis::Preceding,
+        "ancestor-or-self::" => ast::Axis::AncestorOrSelf,
+        _ => {
+            panic!("unhandled ReverseAxis: {:?}", pair.as_rule())
         }
     }
 }
@@ -1101,5 +1130,10 @@ mod tests {
     #[test]
     fn test_axis() {
         assert_debug_snapshot!(parse_expr_single("child::foo"));
+    }
+
+    #[test]
+    fn test_reverse_axis() {
+        assert_debug_snapshot!(parse_expr_single("parent::foo"));
     }
 }
