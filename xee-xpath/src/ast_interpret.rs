@@ -333,6 +333,13 @@ impl<'a> InterpreterCompiler<'a> {
             .emit_jump_backward(loop_start, JumpCondition::True);
     }
 
+    fn compile_sequence_loop_end(&mut self) {
+        // pop old sequence, length and index
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+    }
+
     fn compile_map_expr<S, M, C>(
         &mut self,
         mut compile_sequence_expr: S,
@@ -369,10 +376,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.compile_sequence_loop_iterate(loop_start);
 
-        // pop old sequence, length and index; new sequence is on top
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
+        self.compile_sequence_loop_end();
 
         // pop new sequence name & sequence name & sequence length name & index
         self.scopes.pop_name();
@@ -410,10 +414,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_iterate(loop_start);
 
         // if we reached the end, without jumping out
-        // pop old sequence, length and index
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
+        self.compile_sequence_loop_end();
 
         let reached_end_value = match quantifier {
             ast::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(false)),
@@ -426,10 +427,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(jump_out_end);
         // clean up quantifier variable
         compile_satisfies_cleanup(self);
-        // pop old sequence, length and index
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
+        self.compile_sequence_loop_end();
 
         let jumped_out_value = match quantifier {
             ast::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(true)),
