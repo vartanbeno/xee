@@ -310,6 +310,13 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.loop_start()
     }
 
+    fn compile_sequence_get_item(&mut self) {
+        // get item at the index
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_name);
+        self.builder.emit(Instruction::SequenceGet);
+    }
+
     fn compile_map_expr<S, M, C>(
         &mut self,
         mut compile_sequence_expr: S,
@@ -332,10 +339,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         let loop_start = self.compile_sequence_loop_init();
 
-        // get item at the index
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_name);
-        self.builder.emit(Instruction::SequenceGet);
+        self.compile_sequence_get_item();
 
         // execute the map expression, placing result on stack
         compile_map_expr(self);
@@ -386,10 +390,7 @@ impl<'a> InterpreterCompiler<'a> {
         compile_sequence_expr(self);
         let loop_start = self.compile_sequence_loop_init();
 
-        // get item at the index
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_name);
-        self.builder.emit(Instruction::SequenceGet);
+        self.compile_sequence_get_item();
 
         // execute the satisfies expression, placing result in on stack
         compile_satisfies_expr(self);
