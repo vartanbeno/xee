@@ -364,7 +364,7 @@ pub(crate) enum KindTest {
     Comment,
     Text,
     NamespaceNode,
-    AnyKind,
+    Any,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

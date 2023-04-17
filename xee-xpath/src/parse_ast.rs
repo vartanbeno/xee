@@ -1168,4 +1168,14 @@ mod tests {
     fn test_reverse_axis() {
         assert_debug_snapshot!(parse_expr_single("parent::foo"));
     }
+
+    // #[test]
+    // fn test_node_test() {
+    //     assert_debug_snapshot!(parse_expr_single("self::node()"));
+    // }
+
+    // #[test]
+    // fn test_starts_single_slash() {
+    //     assert_debug_snapshot!(parse_expr_single("/foo"));
+    // }
 }
