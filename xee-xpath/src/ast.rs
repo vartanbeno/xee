@@ -261,12 +261,7 @@ pub(crate) enum StepExpr {
 pub(crate) struct AxisStep {
     pub(crate) axis: Axis,
     pub(crate) node_test: NodeTest,
-    pub(crate) predicates: Vec<Predicate>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Predicate {
-    pub(crate) exprs: Vec<ExprSingle>,
+    pub(crate) predicates: Vec<Vec<ExprSingle>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

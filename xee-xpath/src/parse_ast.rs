@@ -409,9 +409,89 @@ fn step_expr_to_step_expr(pair: Pair<Rule>) -> ast::StepExpr {
                 postfixes_or_placeholdereds(primary, postfixes)
             }
         }
+        Rule::AxisStep => {
+            let mut pairs = pair.into_inner();
+            let step_pair = pairs.next().unwrap();
+            let predicates_pair = pairs.next().unwrap();
+            let predicates = predicates_pair
+                .into_inner()
+                .map(predicate_to_expr)
+                .collect::<Vec<_>>();
+            let (axis, node_test) = match step_pair.as_rule() {
+                Rule::ForwardStep => forward_step_to_axis_node_test(step_pair),
+                _ => {
+                    panic!("unhandled AxisStep: {:?}", step_pair.as_rule())
+                }
+            };
+
+            let axis_step = ast::AxisStep {
+                axis,
+                node_test,
+                predicates,
+            };
+            ast::StepExpr::AxisStep(axis_step)
+        }
         // XXX handle axis step possibility
         _ => {
             panic!("unhandled StepExpr: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn forward_step_to_axis_node_test(pair: Pair<Rule>) -> (ast::Axis, ast::NodeTest) {
+    debug_assert_eq!(pair.as_rule(), Rule::ForwardStep);
+    let mut pairs = pair.into_inner();
+    let first_pair = pairs.next().unwrap();
+    if first_pair.as_rule() == Rule::ForwardAxis {
+        let axis = forward_axis_to_axis(first_pair);
+        let node_test_pair = pairs.next().unwrap();
+        let node_test = node_test_to_node_test(node_test_pair);
+        (axis, node_test)
+    } else {
+        // abbrev forward step
+        todo!();
+    }
+}
+
+fn forward_axis_to_axis(pair: Pair<Rule>) -> ast::Axis {
+    match pair.as_str() {
+        "child::" => ast::Axis::Child,
+        "descendant::" => ast::Axis::Descendant,
+        "attribute::" => ast::Axis::Attribute,
+        "self::" => ast::Axis::Self_,
+        "descendant-or-self::" => ast::Axis::DescendantOrSelf,
+        "following-sibling::" => ast::Axis::FollowingSibling,
+        "following::" => ast::Axis::Following,
+        "namespace::" => ast::Axis::Namespace,
+        _ => {
+            panic!("unhandled ForwardAxis: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn node_test_to_node_test(pair: Pair<Rule>) -> ast::NodeTest {
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::KindTest => {
+            todo!("not yet KindTest");
+        }
+        Rule::NameTest => {
+            ast::NodeTest::NameTest(name_test_to_name_test(pair.into_inner().next().unwrap()))
+        }
+        _ => {
+            panic!("unhandled NodeTest: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn name_test_to_name_test(pair: Pair<Rule>) -> ast::NameTest {
+    match pair.as_rule() {
+        Rule::Wildcard => {
+            todo!("no nametest wildcard yet");
+        }
+        Rule::EQName => ast::NameTest::Name(eq_name_to_name(pair)),
+        _ => {
+            panic!("unhandled NameTest: {:?}", pair.as_rule())
         }
     }
 }
@@ -595,6 +675,12 @@ fn argument_to_expr_single(pair: Pair<Rule>) -> Option<ast::ExprSingle> {
             panic!("unhandled argument: {:?}", pair.as_rule())
         }
     }
+}
+
+fn predicate_to_expr(pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
+    debug_assert_eq!(pair.as_rule(), Rule::Predicate);
+    let pair = pair.into_inner().next().unwrap();
+    exprs(pair)
 }
 
 fn var_name_to_name(pair: Pair<Rule>) -> ast::Name {
@@ -1010,5 +1096,10 @@ mod tests {
     #[test]
     fn test_predicate() {
         assert_debug_snapshot!(parse_expr_single("(1, 2)[2]"));
+    }
+
+    #[test]
+    fn test_axis() {
+        assert_debug_snapshot!(parse_expr_single("child::foo"));
     }
 }
