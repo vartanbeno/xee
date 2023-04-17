@@ -1,6 +1,6 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-expression: "parse_expr_single(\"child::fn:*\")"
+expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
 ---
 Path(
     PathExpr {
@@ -10,7 +10,7 @@ Path(
                     axis: Child,
                     node_test: NameTest(
                         Namespace(
-                            "http://www.w3.org/2005/xpath-functions",
+                            "http://example.com",
                         ),
                     ),
                     predicates: [],

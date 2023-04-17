@@ -9,7 +9,7 @@ Path(
                 AxisStep {
                     axis: Child,
                     node_test: NameTest(
-                        Prefix(
+                        LocalName(
                             "foo",
                         ),
                     ),

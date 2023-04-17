@@ -548,15 +548,22 @@ impl<'a> AstParser<'a> {
                 let pair = pair.into_inner().next().unwrap();
                 match pair.as_rule() {
                     Rule::WildcardStar => ast::NameTest::Star,
-                    Rule::WildcardLocalName => ast::NameTest::LocalName(
-                        pair.into_inner().next().unwrap().as_str().to_string(),
-                    ),
-                    Rule::WildcardPrefix => ast::NameTest::Prefix(
-                        pair.into_inner().next().unwrap().as_str().to_string(),
-                    ),
+                    // any local name with a particular prefix
+                    Rule::WildcardLocalName => {
+                        let prefix = pair.into_inner().next().unwrap().as_str();
+                        let namespace = self.namespaces.by_prefix(prefix).unwrap();
+                        ast::NameTest::Namespace(namespace.to_string())
+                    }
+                    // any prefix with a particular local name
+                    Rule::WildcardPrefix => {
+                        let local_name = pair.into_inner().next().unwrap().as_str();
+                        ast::NameTest::LocalName(local_name.to_string())
+                    }
+                    // any local name with a particular namespace URI
                     Rule::WildcardBracedURILiteral => {
-                        // XXX not yet right
-                        todo!();
+                        let braced_pair = pair.into_inner().next().unwrap();
+                        let uri_literal_pair = braced_pair.into_inner().next().unwrap();
+                        ast::NameTest::Namespace(uri_literal_pair.as_str().to_string())
                     }
                     _ => {
                         panic!("unhandled Wildcard: {:?}", pair.as_rule())
@@ -816,12 +823,12 @@ impl<'a> AstParser<'a> {
         debug_assert_eq!(pair.as_rule(), Rule::PrefixedName);
         let mut pairs = pair.into_inner();
         let prefix = pairs.next().unwrap().as_str();
-        let namespace = self.namespaces.by_prefix(prefix);
-        let namespace = namespace.map(|ns| ns.to_string());
+        // XXX unwrap should be an compile time error
+        let namespace = self.namespaces.by_prefix(prefix).unwrap();
         let local_part = pairs.next().unwrap();
         ast::Name {
             name: local_part.as_str().to_string(),
-            namespace,
+            namespace: Some(namespace.to_string()),
         }
     }
 
@@ -1279,7 +1286,12 @@ mod tests {
 
     #[test]
     fn test_axis_wildcard_local_name() {
-        assert_debug_snapshot!(parse_expr_single("child::foo:*"));
+        assert_debug_snapshot!(parse_expr_single("child::fn:*"));
+    }
+
+    #[test]
+    fn test_axis_wildcard_q_name() {
+        assert_debug_snapshot!(parse_expr_single("child::Q{http://example.com}*"));
     }
 
     #[test]

@@ -292,8 +292,7 @@ pub(crate) enum NameTest {
     Name(Name),
     Star,
     LocalName(String),
-    Prefix(String),
-    BracedURILiteral(String),
+    Namespace(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-assertion_line: 1200
 expression: "parse_expr_single(\"Q{http://example.com}something()\")"
 ---
 Path(
