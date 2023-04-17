@@ -283,61 +283,48 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_var_set(&mut self, name: &ast::Name) {
-        if let Some(index) = self.scopes.get(name) {
-            if index > u16::MAX as usize {
-                panic!("too many variables");
-            }
-            self.builder.emit(Instruction::Set(index as u16));
-        } else {
-            panic!("can only set locals: {:?}", name);
+    fn compile_simple_map(&mut self, main_path_expr: &ast::PathExpr, path_exprs: &[ast::PathExpr]) {
+        let path_expr = &path_exprs[0];
+        let rest_path_expr = &path_exprs[1..];
+        self.compile_map(
+            |s| {
+                s.compile_path_expr(main_path_expr);
+            },
+            |s| {
+                // ensure it's named the loop item
+                s.scopes.push_name(s.context_item_name);
+                s.compile_path_expr(path_expr);
+                s.scopes.pop_name();
+            },
+            |s| {
+                // get rid of context item
+                s.builder.emit(Instruction::Pop);
+            },
+        );
+        for path_expr in rest_path_expr {
+            let map_result = ast::Name {
+                name: "xee_map_result".to_string(),
+                namespace: None,
+            };
+            self.scopes.push_name(&map_result);
+            self.compile_map(
+                |s| s.compile_var_ref(&map_result),
+                |s| {
+                    // ensure it's named the loop item
+                    s.scopes.push_name(s.context_item_name);
+                    s.compile_path_expr(path_expr);
+                    s.scopes.pop_name();
+                },
+                |s| {
+                    // get rid of context item
+                    s.builder.emit(Instruction::Pop);
+                },
+            );
+            // the top of the stack contains the result of the map, but also the variable
+            // under it, get rid of the variable
+            self.builder.emit(Instruction::LetDone);
+            self.scopes.pop_name();
         }
-    }
-
-    fn compile_sequence_loop_init(&mut self) -> BackwardJumpRef {
-        // sequence is on top of stack
-        self.scopes.push_name(self.sequence_name);
-
-        // and sequence length
-        self.compile_var_ref(self.sequence_name);
-        self.scopes.push_name(self.sequence_length_name);
-        self.builder.emit(Instruction::SequenceLen);
-
-        // place index on stack
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-        self.scopes.push_name(self.sequence_index_name);
-        self.builder.loop_start()
-    }
-
-    fn compile_sequence_get_item(&mut self) {
-        // get item at the index
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_name);
-        self.builder.emit(Instruction::SequenceGet);
-    }
-
-    fn compile_sequence_loop_iterate(&mut self, loop_start: BackwardJumpRef) {
-        // update index with 1
-        self.compile_var_ref(self.sequence_index_name);
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        self.builder.emit(Instruction::Add);
-        self.compile_var_set(self.sequence_index_name);
-        // compare with sequence length
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_length_name);
-        // unless we reached the end, we jump back to the start
-        self.builder.emit(Instruction::Lt);
-        self.builder
-            .emit_jump_backward(loop_start, JumpCondition::True);
-    }
-
-    fn compile_sequence_loop_end(&mut self) {
-        // pop old sequence, length and index
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
     }
 
     fn compile_map<S, M, C>(
@@ -443,48 +430,61 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
     }
 
-    fn compile_simple_map(&mut self, main_path_expr: &ast::PathExpr, path_exprs: &[ast::PathExpr]) {
-        let path_expr = &path_exprs[0];
-        let rest_path_expr = &path_exprs[1..];
-        self.compile_map(
-            |s| {
-                s.compile_path_expr(main_path_expr);
-            },
-            |s| {
-                // ensure it's named the loop item
-                s.scopes.push_name(s.context_item_name);
-                s.compile_path_expr(path_expr);
-                s.scopes.pop_name();
-            },
-            |s| {
-                // get rid of context item
-                s.builder.emit(Instruction::Pop);
-            },
-        );
-        for path_expr in rest_path_expr {
-            let map_result = ast::Name {
-                name: "xee_map_result".to_string(),
-                namespace: None,
-            };
-            self.scopes.push_name(&map_result);
-            self.compile_map(
-                |s| s.compile_var_ref(&map_result),
-                |s| {
-                    // ensure it's named the loop item
-                    s.scopes.push_name(s.context_item_name);
-                    s.compile_path_expr(path_expr);
-                    s.scopes.pop_name();
-                },
-                |s| {
-                    // get rid of context item
-                    s.builder.emit(Instruction::Pop);
-                },
-            );
-            // the top of the stack contains the result of the map, but also the variable
-            // under it, get rid of the variable
-            self.builder.emit(Instruction::LetDone);
-            self.scopes.pop_name();
+    fn compile_var_set(&mut self, name: &ast::Name) {
+        if let Some(index) = self.scopes.get(name) {
+            if index > u16::MAX as usize {
+                panic!("too many variables");
+            }
+            self.builder.emit(Instruction::Set(index as u16));
+        } else {
+            panic!("can only set locals: {:?}", name);
         }
+    }
+
+    fn compile_sequence_loop_init(&mut self) -> BackwardJumpRef {
+        // sequence is on top of stack
+        self.scopes.push_name(self.sequence_name);
+
+        // and sequence length
+        self.compile_var_ref(self.sequence_name);
+        self.scopes.push_name(self.sequence_length_name);
+        self.builder.emit(Instruction::SequenceLen);
+
+        // place index on stack
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+        self.scopes.push_name(self.sequence_index_name);
+        self.builder.loop_start()
+    }
+
+    fn compile_sequence_get_item(&mut self) {
+        // get item at the index
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_name);
+        self.builder.emit(Instruction::SequenceGet);
+    }
+
+    fn compile_sequence_loop_iterate(&mut self, loop_start: BackwardJumpRef) {
+        // update index with 1
+        self.compile_var_ref(self.sequence_index_name);
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+        self.builder.emit(Instruction::Add);
+        self.compile_var_set(self.sequence_index_name);
+        // compare with sequence length
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_length_name);
+        // unless we reached the end, we jump back to the start
+        self.builder.emit(Instruction::Lt);
+        self.builder
+            .emit_jump_backward(loop_start, JumpCondition::True);
+    }
+
+    fn compile_sequence_loop_end(&mut self) {
+        // pop old sequence, length and index
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
     }
 }
 
