@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::builder::{Comparison, FunctionBuilder, Program};
+use crate::builder::{Comparison, FunctionBuilder, JumpCondition, Program};
 use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
@@ -72,9 +72,9 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::ExprSingle::If(if_expr) => {
                 self.compile_expr(&if_expr.condition);
-                let jump_else = self.builder.emit_test_true_forward();
+                let jump_else = self.builder.emit_jump_forward(JumpCondition::False);
                 self.compile_expr_single(&if_expr.then);
-                let jump_end = self.builder.emit_jump_forward();
+                let jump_end = self.builder.emit_jump_forward(JumpCondition::Always);
                 self.builder.patch_jump(jump_else);
                 self.compile_expr_single(&if_expr.else_);
                 self.builder.patch_jump(jump_end);
@@ -359,8 +359,9 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_var_ref(&index);
         self.compile_var_ref(&sequence_length);
         // unless we reached the end, we jump back to the start
+        self.builder.emit(Instruction::Lt);
         self.builder
-            .emit_compare_backward(Comparison::Ge, loop_start);
+            .emit_jump_backward(loop_start, JumpCondition::True);
         // pop old sequence, length and index; new sequence is on top
         self.builder.emit(Instruction::Pop);
         self.builder.emit(Instruction::Pop);
@@ -420,8 +421,8 @@ impl<'a> InterpreterCompiler<'a> {
         compile_satisfies_expr(self);
 
         let jump_out_end = match quantifier {
-            ast::Quantifier::Some => self.builder.emit_test_false_forward(),
-            ast::Quantifier::Every => self.builder.emit_test_true_forward(),
+            ast::Quantifier::Some => self.builder.emit_jump_forward(JumpCondition::True),
+            ast::Quantifier::Every => self.builder.emit_jump_forward(JumpCondition::False),
         };
         // we didn't jump out, clean up quantifier variable
         compile_satisfies_cleanup(self);
@@ -436,8 +437,9 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_var_ref(&index);
         self.compile_var_ref(&sequence_length);
         // unless we reached the end, we jump back to the start
+        self.builder.emit(Instruction::Lt);
         self.builder
-            .emit_compare_backward(Comparison::Ge, loop_start);
+            .emit_jump_backward(loop_start, JumpCondition::True);
         // if we reached the end, without jumping out
         // pop old sequence, length and index
         self.builder.emit(Instruction::Pop);
@@ -449,7 +451,7 @@ impl<'a> InterpreterCompiler<'a> {
             ast::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(true)),
         };
         self.builder.emit_constant(reached_end_value);
-        let end = self.builder.emit_jump_forward();
+        let end = self.builder.emit_jump_forward(JumpCondition::Always);
 
         // we jumped out
         self.builder.patch_jump(jump_out_end);

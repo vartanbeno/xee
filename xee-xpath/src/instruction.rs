@@ -18,9 +18,9 @@ pub(crate) enum Instruction {
     Le,
     Gt,
     Ge,
-    TestTrue,
-    TestFalse,
     Jump(i16),
+    JumpIfTrue(i16),
+    JumpIfFalse(i16),
     Call(u8),
     Return,
     Dup,
@@ -52,9 +52,9 @@ enum EncodedInstruction {
     Le,
     Gt,
     Ge,
-    TestTrue,
-    TestFalse,
     Jump,
+    JumpIfTrue,
+    JumpIfFalse,
     Call,
     Return,
     Dup,
@@ -106,11 +106,17 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Le => (Instruction::Le, 1),
         EncodedInstruction::Gt => (Instruction::Gt, 1),
         EncodedInstruction::Ge => (Instruction::Ge, 1),
-        EncodedInstruction::TestTrue => (Instruction::TestTrue, 1),
-        EncodedInstruction::TestFalse => (Instruction::TestFalse, 1),
         EncodedInstruction::Jump => {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Jump(displacement), 3)
+        }
+        EncodedInstruction::JumpIfTrue => {
+            let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::JumpIfTrue(displacement), 3)
+        }
+        EncodedInstruction::JumpIfFalse => {
+            let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::JumpIfFalse(displacement), 3)
         }
         EncodedInstruction::Call => {
             let arity = bytes[1];
@@ -176,10 +182,16 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Le => bytes.push(EncodedInstruction::Le.to_u8().unwrap()),
         Instruction::Gt => bytes.push(EncodedInstruction::Gt.to_u8().unwrap()),
         Instruction::Ge => bytes.push(EncodedInstruction::Ge.to_u8().unwrap()),
-        Instruction::TestTrue => bytes.push(EncodedInstruction::TestTrue.to_u8().unwrap()),
-        Instruction::TestFalse => bytes.push(EncodedInstruction::TestFalse.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
+            bytes.extend_from_slice(&displacement.to_le_bytes());
+        }
+        Instruction::JumpIfTrue(displacement) => {
+            bytes.push(EncodedInstruction::JumpIfTrue.to_u8().unwrap());
+            bytes.extend_from_slice(&displacement.to_le_bytes());
+        }
+        Instruction::JumpIfFalse(displacement) => {
+            bytes.push(EncodedInstruction::JumpIfFalse.to_u8().unwrap());
             bytes.extend_from_slice(&displacement.to_le_bytes());
         }
         Instruction::Call(arity) => {

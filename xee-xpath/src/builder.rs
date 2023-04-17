@@ -45,6 +45,13 @@ pub(crate) enum Comparison {
     Ge,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum JumpCondition {
+    Always,
+    True,
+    False,
+}
+
 pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     compiled: Vec<u8>,
@@ -92,7 +99,7 @@ impl<'a> FunctionBuilder<'a> {
         index
     }
 
-    fn emit_compare(&mut self, comparison: Comparison) {
+    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
         match comparison {
             Comparison::Eq => self.emit(Instruction::Eq),
             Comparison::Ne => self.emit(Instruction::Ne),
@@ -103,44 +110,15 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
-        let otherwise = self.emit_compare_forward(comparison);
-        self.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        let end = self.emit_jump_forward();
-        self.patch_jump(otherwise);
-        self.emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-        self.patch_jump(end);
-    }
-
-    pub(crate) fn emit_compare_forward(&mut self, comparison: Comparison) -> ForwardJumpRef {
-        self.emit_compare(comparison);
-        self.emit_jump_forward()
-    }
-
-    pub(crate) fn emit_compare_backward(
-        &mut self,
-        comparison: Comparison,
-        jump_ref: BackwardJumpRef,
-    ) {
-        self.emit_compare(comparison);
-        self.emit_jump_backward(jump_ref);
-    }
-
-    pub(crate) fn emit_test_true_forward(&mut self) -> ForwardJumpRef {
-        self.emit(Instruction::TestTrue);
-        self.emit_jump_forward()
-    }
-
-    pub(crate) fn emit_test_false_forward(&mut self) -> ForwardJumpRef {
-        self.emit(Instruction::TestFalse);
-        self.emit_jump_forward()
-    }
-
     pub(crate) fn loop_start(&self) -> BackwardJumpRef {
         BackwardJumpRef(self.compiled.len())
     }
 
-    pub(crate) fn emit_jump_backward(&mut self, jump_ref: BackwardJumpRef) {
+    pub(crate) fn emit_jump_backward(
+        &mut self,
+        jump_ref: BackwardJumpRef,
+        condition: JumpCondition,
+    ) {
         let current = self.compiled.len() + 3;
         let offset = current - jump_ref.0;
         if jump_ref.0 > current {
@@ -149,12 +127,21 @@ impl<'a> FunctionBuilder<'a> {
         if offset > (u16::MAX as usize) {
             panic!("jump too far");
         }
-        self.emit(Instruction::Jump(-(offset as i16)));
+
+        match condition {
+            JumpCondition::True => self.emit(Instruction::JumpIfTrue(-(offset as i16))),
+            JumpCondition::False => self.emit(Instruction::JumpIfFalse(-(offset as i16))),
+            JumpCondition::Always => self.emit(Instruction::Jump(-(offset as i16))),
+        }
     }
 
-    pub(crate) fn emit_jump_forward(&mut self) -> ForwardJumpRef {
+    pub(crate) fn emit_jump_forward(&mut self, condition: JumpCondition) -> ForwardJumpRef {
         let index = self.compiled.len();
-        self.emit(Instruction::Jump(0));
+        match condition {
+            JumpCondition::True => self.emit(Instruction::JumpIfTrue(0)),
+            JumpCondition::False => self.emit(Instruction::JumpIfFalse(0)),
+            JumpCondition::Always => self.emit(Instruction::Jump(0)),
+        }
         ForwardJumpRef(index)
     }
 

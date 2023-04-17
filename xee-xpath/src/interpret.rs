@@ -120,27 +120,33 @@ impl<'a> Interpreter<'a> {
                 Instruction::Jump(displacement) => {
                     ip = (ip as i32 + displacement as i32) as usize;
                 }
+                Instruction::JumpIfTrue(displacement) => {
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(Error::TypeError)?;
+                    if a {
+                        ip = (ip as i32 + displacement as i32) as usize;
+                    }
+                }
+                Instruction::JumpIfFalse(displacement) => {
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(Error::TypeError)?;
+                    if !a {
+                        ip = (ip as i32 + displacement as i32) as usize;
+                    }
+                }
                 Instruction::Eq => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     // XXX can functions be value compared?
-                    let result = a == b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
                 }
                 Instruction::Ne => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     // XXX can functions be value compared?
-                    let result = a != b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a != b)));
                 }
                 Instruction::Lt => {
                     let b = self.stack.pop().unwrap();
@@ -149,12 +155,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a < b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
                 }
                 Instruction::Le => {
                     let b = self.stack.pop().unwrap();
@@ -163,12 +164,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a <= b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
                 }
                 Instruction::Gt => {
                     let b = self.stack.pop().unwrap();
@@ -177,12 +173,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a > b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
                 }
                 Instruction::Ge => {
                     let b = self.stack.pop().unwrap();
@@ -191,32 +182,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a >= b;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if result {
-                        ip += 3;
-                    }
-                }
-                Instruction::TestTrue => {
-                    let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let a = a.as_bool().ok_or(Error::TypeError)?;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if a {
-                        ip += 3;
-                    }
-                }
-                Instruction::TestFalse => {
-                    let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let a = a.as_bool().ok_or(Error::TypeError)?;
-                    // skip the next instruction, which by construction
-                    // has to be a jump instruction, so we know its size
-                    if !a {
-                        ip += 3;
-                    }
+                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
                 }
                 Instruction::Dup => {
                     let a = self.stack.last().unwrap().clone();
@@ -390,7 +356,7 @@ impl<'a> Interpreter<'a> {
 mod tests {
     use super::*;
 
-    use crate::builder::{Comparison, FunctionBuilder};
+    use crate::builder::{Comparison, FunctionBuilder, JumpCondition};
     use crate::instruction::decode_instructions;
 
     #[test]
@@ -420,7 +386,7 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        let jump = builder.emit_jump_forward();
+        let jump = builder.emit_jump_forward(JumpCondition::Always);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
         builder.patch_jump(jump);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
@@ -447,9 +413,10 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)));
-        let lt_false = builder.emit_compare_forward(Comparison::Lt);
+        builder.emit(Instruction::Lt);
+        let lt_false = builder.emit_jump_forward(JumpCondition::False);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
-        let end = builder.emit_jump_forward();
+        let end = builder.emit_jump_forward(JumpCondition::Always);
         builder.patch_jump(lt_false);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
         builder.patch_jump(end);
@@ -474,9 +441,10 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)));
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        let lt_false = builder.emit_compare_forward(Comparison::Lt);
+        builder.emit(Instruction::Lt);
+        let lt_false = builder.emit_jump_forward(JumpCondition::False);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
-        let end = builder.emit_jump_forward();
+        let end = builder.emit_jump_forward(JumpCondition::Always);
         builder.patch_jump(lt_false);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
         builder.patch_jump(end);
@@ -503,10 +471,11 @@ mod tests {
         let loop_start = builder.loop_start();
         builder.emit(Instruction::Dup);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(5)));
-        let end = builder.emit_compare_forward(Comparison::Gt);
+        builder.emit(Instruction::Gt);
+        let end = builder.emit_jump_forward(JumpCondition::False);
         builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         builder.emit(Instruction::Sub);
-        builder.emit_jump_backward(loop_start);
+        builder.emit_jump_backward(loop_start, JumpCondition::Always);
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0);
 
