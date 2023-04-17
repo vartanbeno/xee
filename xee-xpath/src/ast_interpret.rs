@@ -110,7 +110,7 @@ impl<'a> InterpreterCompiler<'a> {
                 }
             },
             ast::ExprSingle::Quantified(quantified_expr) => {
-                self.compile_quantified_expr(
+                self.compile_quantified(
                     &quantified_expr.quantifier,
                     |s| {
                         s.compile_expr_single(&quantified_expr.var_expr);
@@ -385,7 +385,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
     }
 
-    fn compile_quantified_expr<S, M, C>(
+    fn compile_quantified<S, M, C>(
         &mut self,
         quantifier: &ast::Quantifier,
         mut compile_sequence_expr: S,
