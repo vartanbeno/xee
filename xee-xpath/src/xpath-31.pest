@@ -224,7 +224,15 @@ NameTest = { EQName | Wildcard }
 // | ("*:" NCName)
 // | (BracedURILiteral "*")
 // /* ws: explicit */
-Wildcard = ${ "*" | (NCName ~ ":*") | ("*:" ~ NCName) | (BracedURILiteral ~ "*") }
+Wildcard = ${ WildcardLocalName | WildcardPrefix | WildcardBracedURILiteral | WildcardStar }
+
+WildcardStar = ${ "*" }
+
+WildcardLocalName = ${ NCName ~ ":*" }
+
+WildcardPrefix = ${ "*:" ~ NCName }
+
+WildcardBracedURILiteral = ${ BracedURILiteral ~ "*" }
 
 // PostfixExpr
 // ::= PrimaryExpr (Predicate | ArgumentList | Lookup)*

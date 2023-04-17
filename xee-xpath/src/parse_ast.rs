@@ -516,7 +516,19 @@ fn node_test_to_node_test(pair: Pair<Rule>) -> ast::NodeTest {
 fn name_test_to_name_test(pair: Pair<Rule>) -> ast::NameTest {
     match pair.as_rule() {
         Rule::Wildcard => {
-            todo!("no nametest wildcard yet");
+            let pair = pair.into_inner().next().unwrap();
+            match pair.as_rule() {
+                Rule::WildcardStar => ast::NameTest::Star,
+                Rule::WildcardLocalName => ast::NameTest::LocalName(pair.as_str().to_string()),
+                Rule::WildcardPrefix => ast::NameTest::Prefix(pair.as_str().to_string()),
+                Rule::WildcardBracedURILiteral => {
+                    // XXX not yet right
+                    todo!();
+                }
+                _ => {
+                    panic!("unhandled Wildcard: {:?}", pair.as_rule())
+                }
+            }
         }
         Rule::EQName => ast::NameTest::Name(eq_name_to_name(pair)),
         _ => {
@@ -1130,6 +1142,21 @@ mod tests {
     #[test]
     fn test_axis() {
         assert_debug_snapshot!(parse_expr_single("child::foo"));
+    }
+
+    #[test]
+    fn test_axis_star() {
+        assert_debug_snapshot!(parse_expr_single("child::*"));
+    }
+
+    #[test]
+    fn test_axis_wildcard_prefix() {
+        assert_debug_snapshot!(parse_expr_single("child::*:foo"));
+    }
+
+    #[test]
+    fn test_axis_wildcard_local_name() {
+        assert_debug_snapshot!(parse_expr_single("child::foo:*"));
     }
 
     #[test]
