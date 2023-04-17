@@ -317,6 +317,22 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::SequenceGet);
     }
 
+    fn compile_sequence_loop_iterate(&mut self, loop_start: BackwardJumpRef) {
+        // update index with 1
+        self.compile_var_ref(self.sequence_index_name);
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+        self.builder.emit(Instruction::Add);
+        self.compile_var_set(self.sequence_index_name);
+        // compare with sequence length
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_length_name);
+        // unless we reached the end, we jump back to the start
+        self.builder.emit(Instruction::Lt);
+        self.builder
+            .emit_jump_backward(loop_start, JumpCondition::True);
+    }
+
     fn compile_map_expr<S, M, C>(
         &mut self,
         mut compile_sequence_expr: S,
@@ -351,19 +367,8 @@ impl<'a> InterpreterCompiler<'a> {
         // we may need to clean up the stack after this
         compile_map_cleanup(self);
 
-        // update the index with 1
-        self.compile_var_ref(self.sequence_index_name);
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        self.builder.emit(Instruction::Add);
-        self.compile_var_set(self.sequence_index_name);
-        // compare with sequence length
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_length_name);
-        // unless we reached the end, we jump back to the start
-        self.builder.emit(Instruction::Lt);
-        self.builder
-            .emit_jump_backward(loop_start, JumpCondition::True);
+        self.compile_sequence_loop_iterate(loop_start);
+
         // pop old sequence, length and index; new sequence is on top
         self.builder.emit(Instruction::Pop);
         self.builder.emit(Instruction::Pop);
@@ -402,19 +407,8 @@ impl<'a> InterpreterCompiler<'a> {
         // we didn't jump out, clean up quantifier variable
         compile_satisfies_cleanup(self);
 
-        // update the index with 1
-        self.compile_var_ref(self.sequence_index_name);
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        self.builder.emit(Instruction::Add);
-        self.compile_var_set(self.sequence_index_name);
-        // compare with sequence length
-        self.compile_var_ref(self.sequence_index_name);
-        self.compile_var_ref(self.sequence_length_name);
-        // unless we reached the end, we jump back to the start
-        self.builder.emit(Instruction::Lt);
-        self.builder
-            .emit_jump_backward(loop_start, JumpCondition::True);
+        self.compile_sequence_loop_iterate(loop_start);
+
         // if we reached the end, without jumping out
         // pop old sequence, length and index
         self.builder.emit(Instruction::Pop);
