@@ -383,36 +383,12 @@ impl<'a> InterpreterCompiler<'a> {
         M: FnMut(&mut Self),
         C: FnMut(&mut Self),
     {
-        // execute the sequence expression, placing sequence on stack
-        let sequence = ast::Name {
-            name: "xee_sequence".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&sequence);
         compile_sequence_expr(self);
-
-        // and sequence length
-        self.compile_var_ref(&sequence);
-        let sequence_length = ast::Name {
-            name: "xee_sequence_length".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&sequence_length);
-        self.builder.emit(Instruction::SequenceLen);
-
-        // place index on stack
-        self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-        let index = ast::Name {
-            name: "xee_index".to_string(),
-            namespace: None,
-        };
-        self.scopes.push_name(&index);
-        let loop_start = self.builder.loop_start();
+        let loop_start = self.compile_sequence_loop_init();
 
         // get item at the index
-        self.compile_var_ref(&index);
-        self.compile_var_ref(&sequence);
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_name);
         self.builder.emit(Instruction::SequenceGet);
 
         // execute the satisfies expression, placing result in on stack
@@ -426,14 +402,14 @@ impl<'a> InterpreterCompiler<'a> {
         compile_satisfies_cleanup(self);
 
         // update the index with 1
-        self.compile_var_ref(&index);
+        self.compile_var_ref(self.sequence_index_name);
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.builder.emit(Instruction::Add);
-        self.compile_var_set(&index);
+        self.compile_var_set(self.sequence_index_name);
         // compare with sequence length
-        self.compile_var_ref(&index);
-        self.compile_var_ref(&sequence_length);
+        self.compile_var_ref(self.sequence_index_name);
+        self.compile_var_ref(self.sequence_length_name);
         // unless we reached the end, we jump back to the start
         self.builder.emit(Instruction::Lt);
         self.builder
