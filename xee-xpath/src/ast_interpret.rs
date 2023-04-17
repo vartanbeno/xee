@@ -1138,4 +1138,13 @@ mod tests {
         );
         Ok(())
     }
+
+    // may not support this until we have some form of type analysis
+    // #[test]
+    // fn test_predicate_index() -> Result<()> {
+    //     let xpath = CompiledXPath::new("(1, 2, 3)[2]");
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(as_integer(&result), 2);
+    //     Ok(())
+    // }
 }
