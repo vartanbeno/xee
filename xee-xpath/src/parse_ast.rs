@@ -502,7 +502,7 @@ fn node_test_to_node_test(pair: Pair<Rule>) -> ast::NodeTest {
     let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::KindTest => {
-            todo!("not yet KindTest");
+            ast::NodeTest::KindTest(kind_test_to_kind_test(pair.into_inner().next().unwrap()))
         }
         Rule::NameTest => {
             ast::NodeTest::NameTest(name_test_to_name_test(pair.into_inner().next().unwrap()))
@@ -519,8 +519,12 @@ fn name_test_to_name_test(pair: Pair<Rule>) -> ast::NameTest {
             let pair = pair.into_inner().next().unwrap();
             match pair.as_rule() {
                 Rule::WildcardStar => ast::NameTest::Star,
-                Rule::WildcardLocalName => ast::NameTest::LocalName(pair.as_str().to_string()),
-                Rule::WildcardPrefix => ast::NameTest::Prefix(pair.as_str().to_string()),
+                Rule::WildcardLocalName => {
+                    ast::NameTest::LocalName(pair.into_inner().next().unwrap().as_str().to_string())
+                }
+                Rule::WildcardPrefix => {
+                    ast::NameTest::Prefix(pair.into_inner().next().unwrap().as_str().to_string())
+                }
                 Rule::WildcardBracedURILiteral => {
                     // XXX not yet right
                     todo!();
@@ -533,6 +537,15 @@ fn name_test_to_name_test(pair: Pair<Rule>) -> ast::NameTest {
         Rule::EQName => ast::NameTest::Name(eq_name_to_name(pair)),
         _ => {
             panic!("unhandled NameTest: {:?}", pair.as_rule())
+        }
+    }
+}
+
+fn kind_test_to_kind_test(pair: Pair<Rule>) -> ast::KindTest {
+    match pair.as_rule() {
+        Rule::AnyKindTest => ast::KindTest::Any,
+        _ => {
+            panic!("unhandled KindTest: {:?}", pair.as_rule());
         }
     }
 }
@@ -1169,10 +1182,10 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("parent::foo"));
     }
 
-    // #[test]
-    // fn test_node_test() {
-    //     assert_debug_snapshot!(parse_expr_single("self::node()"));
-    // }
+    #[test]
+    fn test_node_test() {
+        assert_debug_snapshot!(parse_expr_single("self::node()"));
+    }
 
     // #[test]
     // fn test_starts_single_slash() {

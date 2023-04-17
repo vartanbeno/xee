@@ -217,7 +217,7 @@ AbbrevReverseStep = { ".." }
 NodeTest = { KindTest | NameTest }
 
 // NameTest ::= EQName | Wildcard
-NameTest = { EQName | Wildcard }
+NameTest = { Wildcard | EQName }
 
 // Wildcard ::= "*"
 // | (NCName ":*")
@@ -565,9 +565,6 @@ CommentContents = { Char+ ~ (Char* ~ (":(" | ":)") ~ Char*) }
 
 // From http://www.w3.org/TR/2009/REC-xml-names-20091208/
 
-// NCName   ::= Name - (Char* ':' Char*)
-// /* An XML Name, minus the ":" */
-NCName = @{ !(Char* ~ ":" ~ Char*) ~ Name }
 // QName    ::= PrefixedName
 // | UnprefixedName
 QName = { PrefixedName | UnprefixedName }
@@ -628,3 +625,11 @@ Char = {
   | '\u{E000}'..'\u{FFFD}'
   | '\u{10000}'..'\u{10FFFF}'
 }
+
+NameCharWithoutColon = { !Colon ~ NameChar }
+
+NameStartCharWithoutColon = { !Colon ~ NameStartChar }
+
+NCName = @{ NameStartCharWithoutColon ~ (NameCharWithoutColon)* }
+
+Colon = _{ "\u{3A}" }

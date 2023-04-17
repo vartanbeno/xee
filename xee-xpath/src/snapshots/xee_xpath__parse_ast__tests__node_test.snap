@@ -1,17 +1,15 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-expression: "parse_expr_single(\"child::*:foo\")"
+expression: "parse_expr_single(\"self::node()\")"
 ---
 Path(
     PathExpr {
         steps: [
             AxisStep(
                 AxisStep {
-                    axis: Child,
-                    node_test: NameTest(
-                        Prefix(
-                            "foo",
-                        ),
+                    axis: Self_,
+                    node_test: KindTest(
+                        Any,
                     ),
                     predicates: [],
                 },

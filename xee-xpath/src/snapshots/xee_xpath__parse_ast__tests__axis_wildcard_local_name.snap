@@ -9,11 +9,8 @@ Path(
                 AxisStep {
                     axis: Child,
                     node_test: NameTest(
-                        Name(
-                            Name {
-                                name: "foo:",
-                                namespace: None,
-                            },
+                        LocalName(
+                            "foo",
                         ),
                     ),
                     predicates: [],
