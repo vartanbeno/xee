@@ -382,13 +382,13 @@ pub(crate) struct ElementTest {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ElementTypeName {
-    pub(crate) name: EQName,
+    pub(crate) name: Name,
     pub(crate) question_mark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ElementNameOrWildcard {
-    EQName(EQName),
+    Name(Name),
     Wildcard,
 }
 
@@ -400,7 +400,7 @@ pub(crate) struct AttributeTest {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum AttribNameOrWildcard {
-    Name(EQName),
+    Name(Name),
     Wildcard,
 }
 

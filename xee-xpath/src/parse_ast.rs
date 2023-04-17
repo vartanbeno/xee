@@ -546,6 +546,15 @@ fn kind_test_to_kind_test(pair: Pair<Rule>) -> ast::KindTest {
         Rule::AnyKindTest => ast::KindTest::Any,
         Rule::TextTest => ast::KindTest::Text,
         Rule::CommentTest => ast::KindTest::Comment,
+        Rule::NamespaceNodeTest => ast::KindTest::NamespaceNode,
+        Rule::ElementTest => {
+            let mut pairs = pair.into_inner();
+            if let Some(pair) = pairs.next() {
+                todo!("no arguments for element test yet")
+            } else {
+                ast::KindTest::Element(None)
+            }
+        }
         _ => {
             panic!("unhandled KindTest: {:?}", pair.as_rule());
         }
@@ -1202,6 +1211,11 @@ mod tests {
     #[test]
     fn test_namespace_node_test() {
         assert_debug_snapshot!(parse_expr_single("self::namespace-node()"));
+    }
+
+    #[test]
+    fn test_element_test() {
+        assert_debug_snapshot!(parse_expr_single("self::element()"));
     }
 
     // #[test]
