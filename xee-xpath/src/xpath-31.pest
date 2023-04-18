@@ -176,7 +176,9 @@ Slash       = { "/" }
 DoubleSlash = { "//" }
 
 // StepExpr ::= PostfixExpr | AxisStep
-StepExpr = { PostfixExpr | AxisStep }
+// added in AbbrevReverseStep earlier so that we don't get a false attractor for
+// ContextItemExpr. XXX it should really handle predicates too...
+StepExpr = { AbbrevReverseStep | PostfixExpr | AxisStep }
 
 // AxisStep ::= (ReverseStep | ForwardStep) PredicateList
 AxisStep = { (ReverseStep | ForwardStep) ~ PredicateList }
