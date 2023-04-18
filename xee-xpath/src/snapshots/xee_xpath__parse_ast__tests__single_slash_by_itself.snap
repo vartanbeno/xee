@@ -1,7 +1,6 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-assertion_line: 1430
-expression: "parse_expr_single(\"/child::foo\")"
+expression: "parse_expr_single(\"/\")"
 ---
 Path(
     PathExpr {
@@ -34,20 +33,6 @@ Path(
                         ],
                     },
                 ),
-            ),
-            AxisStep(
-                AxisStep {
-                    axis: Child,
-                    node_test: NameTest(
-                        Name(
-                            Name {
-                                name: "foo",
-                                namespace: None,
-                            },
-                        ),
-                    ),
-                    predicates: [],
-                },
             ),
         ],
     },

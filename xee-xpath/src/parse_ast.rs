@@ -1429,4 +1429,9 @@ mod tests {
     fn test_starts_single_slash() {
         assert_debug_snapshot!(parse_expr_single("/child::foo"));
     }
+
+    #[test]
+    fn test_single_slash_by_itself() {
+        assert_debug_snapshot!(parse_expr_single("/"));
+    }
 }
