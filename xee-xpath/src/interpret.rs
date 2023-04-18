@@ -356,7 +356,7 @@ impl<'a> Interpreter<'a> {
 mod tests {
     use super::*;
 
-    use crate::builder::{Comparison, FunctionBuilder, JumpCondition};
+    use crate::builder::{FunctionBuilder, JumpCondition};
     use crate::instruction::decode_instructions;
 
     #[test]
