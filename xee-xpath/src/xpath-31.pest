@@ -166,7 +166,7 @@ SimpleMapExpr = { PathExpr ~ ("!" ~ PathExpr)* }
 // | ("//" RelativePathExpr)
 // | RelativePathExpr
 // /* xgc: leading-lone-slash */
-PathExpr = { (Slash ~ RelativePathExpr?) | (DoubleSlash ~ RelativePathExpr) | RelativePathExpr }
+PathExpr = { (DoubleSlash ~ RelativePathExpr) | (Slash ~ RelativePathExpr?) | RelativePathExpr }
 
 // RelativePathExpr
 // ::= StepExpr (("/" | "//") StepExpr)*

@@ -401,21 +401,7 @@ impl<'a> AstParser<'a> {
         let first_pair = pairs.next().unwrap();
         match first_pair.as_rule() {
             Rule::Slash => {
-                let mut steps = vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::FunctionCall(
-                    ast::FunctionCall {
-                        name: ast::Name {
-                            name: "root".to_string(),
-                            namespace: Some(FN_NAMESPACE.to_string()),
-                        },
-                        arguments: vec![ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
-                                axis: ast::Axis::Self_,
-                                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                                predicates: vec![],
-                            })],
-                        })],
-                    },
-                ))];
+                let mut steps = vec![root_from_context()];
                 let next_pair = pairs.next();
                 if let Some(next_pair) = next_pair {
                     steps.extend(self.relative_path_expr_to_steps(next_pair));
@@ -423,7 +409,16 @@ impl<'a> AstParser<'a> {
                 ast::PathExpr { steps }
             }
             Rule::DoubleSlash => {
-                todo!("no double slash abbrev yet");
+                let mut steps = vec![
+                    root_from_context(),
+                    ast::StepExpr::AxisStep(ast::AxisStep {
+                        axis: ast::Axis::DescendantOrSelf,
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        predicates: vec![],
+                    }),
+                ];
+                steps.extend(self.relative_path_expr_to_steps(pairs.next().unwrap()));
+                ast::PathExpr { steps }
             }
             Rule::RelativePathExpr => ast::PathExpr {
                 steps: self.relative_path_expr_to_steps(first_pair),
@@ -1029,6 +1024,22 @@ impl<'a> AstParser<'a> {
     }
 }
 
+fn root_from_context() -> ast::StepExpr {
+    ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+        name: ast::Name {
+            name: "root".to_string(),
+            namespace: Some(FN_NAMESPACE.to_string()),
+        },
+        arguments: vec![ast::ExprSingle::Path(ast::PathExpr {
+            steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
+                axis: ast::Axis::Self_,
+                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                predicates: vec![],
+            })],
+        })],
+    }))
+}
+
 fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
 where
     F: Fn(Pair<Rule>) -> T,
@@ -1433,5 +1444,10 @@ mod tests {
     #[test]
     fn test_single_slash_by_itself() {
         assert_debug_snapshot!(parse_expr_single("/"));
+    }
+
+    #[test]
+    fn test_starts_double_slash() {
+        assert_debug_snapshot!(parse_expr_single("//child::foo"));
     }
 }
