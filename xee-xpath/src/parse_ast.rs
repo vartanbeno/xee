@@ -1387,6 +1387,13 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("foo/attribute()"));
     }
 
+    // XXX should test for attribute axis for SchemaAttributeTest too
+
+    #[test]
+    fn test_namespace_node_default_axis() {
+        assert_debug_snapshot!(parse_expr_single("foo/namespace-node()"));
+    }
+
     #[test]
     fn test_abbreviated_forward_step_attr() {
         assert_debug_snapshot!(parse_expr_single("@foo"));
