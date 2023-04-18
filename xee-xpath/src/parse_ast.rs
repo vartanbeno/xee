@@ -478,8 +478,21 @@ impl<'a> AstParser<'a> {
             let node_test = self.node_test_to_node_test(node_test_pair);
             (axis, node_test)
         } else {
-            // abbrev forward step
-            todo!("abbrev forward step");
+            let mut pairs = first_pair.into_inner();
+            let first = pairs.next().unwrap();
+            match first.as_rule() {
+                Rule::AbbrevAtSign => {
+                    let node_test = self.node_test_to_node_test(pairs.next().unwrap());
+                    (ast::Axis::Attribute, node_test)
+                }
+                Rule::NodeTest => {
+                    let node_test = self.node_test_to_node_test(first);
+                    (ast::Axis::Child, node_test)
+                }
+                _ => {
+                    panic!("unhandled AbbrevForwardStep: {:?}", first.as_rule())
+                }
+            }
         }
     }
 
@@ -1322,6 +1335,16 @@ mod tests {
     #[test]
     fn test_element_test() {
         assert_debug_snapshot!(parse_expr_single("self::element()"));
+    }
+
+    #[test]
+    fn test_abbreviated_forward_step() {
+        assert_debug_snapshot!(parse_expr_single("foo"));
+    }
+
+    #[test]
+    fn test_abbreviated_forward_step_attr() {
+        assert_debug_snapshot!(parse_expr_single("@foo"));
     }
 
     // #[test]

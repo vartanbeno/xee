@@ -195,7 +195,9 @@ ForwardAxis = { ("child" ~ "::") | ("descendant" ~ "::") | ("attribute" ~ "::") 
 
 // AbbrevForwardStep
 // ::= "@"? NodeTest
-AbbrevForwardStep = { "@"? ~ NodeTest }
+AbbrevForwardStep = { AbbrevAtSign? ~ NodeTest }
+
+AbbrevAtSign = { "@" }
 
 // ReverseStep
 // ::= (ReverseAxis NodeTest) | AbbrevReverseStep
