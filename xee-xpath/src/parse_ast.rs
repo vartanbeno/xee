@@ -410,15 +410,10 @@ impl<'a> AstParser<'a> {
 
     fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExpr> {
         debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
-        let pair = pair.into_inner().next().unwrap();
-        match pair.as_rule() {
-            Rule::StepExpr => {
-                vec![self.step_expr_to_step_expr(pair)]
-            }
-            _ => {
-                panic!("unhandled RelativePathExpr: {:?}", pair.as_rule())
-            }
-        }
+        let pairs = pair.into_inner();
+        pairs
+            .map(|pair| self.step_expr_to_step_expr(pair))
+            .collect::<Vec<_>>()
     }
 
     fn step_expr_to_step_expr(&self, pair: Pair<Rule>) -> ast::StepExpr {
@@ -487,7 +482,18 @@ impl<'a> AstParser<'a> {
                 }
                 Rule::NodeTest => {
                     let node_test = self.node_test_to_node_test(first);
-                    (ast::Axis::Child, node_test)
+                    // https://www.w3.org/TR/xpath-31/#abbrev
+                    let axis = match &node_test {
+                        ast::NodeTest::KindTest(t) => match t {
+                            ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+                                ast::Axis::Attribute
+                            }
+                            ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+                            _ => ast::Axis::Child,
+                        },
+                        _ => ast::Axis::Child,
+                    };
+                    (axis, node_test)
                 }
                 _ => {
                     panic!("unhandled AbbrevForwardStep: {:?}", first.as_rule())
@@ -1283,6 +1289,11 @@ mod tests {
     }
 
     #[test]
+    fn test_multiple_steps() {
+        assert_debug_snapshot!(parse_expr_single("child::foo/child::bar"));
+    }
+
+    #[test]
     fn test_axis_with_predicate() {
         assert_debug_snapshot!(parse_expr_single("child::foo[1]"));
     }
@@ -1341,6 +1352,11 @@ mod tests {
     fn test_abbreviated_forward_step() {
         assert_debug_snapshot!(parse_expr_single("foo"));
     }
+
+    // #[test]
+    // fn test_abbreviated_forward_step_with_attribute_test() {
+    //     assert_debug_snapshot!(parse_expr_single("foo/attribute(id)"));
+    // }
 
     #[test]
     fn test_abbreviated_forward_step_attr() {

@@ -1,0 +1,38 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"child::foo/child::bar\")"
+---
+Path(
+    PathExpr {
+        steps: [
+            AxisStep(
+                AxisStep {
+                    axis: Child,
+                    node_test: NameTest(
+                        Name(
+                            Name {
+                                name: "foo",
+                                namespace: None,
+                            },
+                        ),
+                    ),
+                    predicates: [],
+                },
+            ),
+            AxisStep(
+                AxisStep {
+                    axis: Child,
+                    node_test: NameTest(
+                        Name(
+                            Name {
+                                name: "bar",
+                                namespace: None,
+                            },
+                        ),
+                    ),
+                    predicates: [],
+                },
+            ),
+        ],
+    },
+)
