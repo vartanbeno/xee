@@ -1345,6 +1345,11 @@ mod tests {
     }
 
     #[test]
+    fn test_with_predicate() {
+        assert_debug_snapshot!(parse_expr_single("child::foo[1]"));
+    }
+
+    #[test]
     fn test_axis_with_predicate() {
         assert_debug_snapshot!(parse_expr_single("child::foo[1]"));
     }

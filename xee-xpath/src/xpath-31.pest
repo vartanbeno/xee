@@ -177,7 +177,7 @@ DoubleSlash = { "//" }
 
 // StepExpr ::= PostfixExpr | AxisStep
 // added in AbbrevReverseStep earlier so that we don't get a false attractor for
-// ContextItemExpr. XXX it should really handle predicates too...
+// ContextItemExpr.
 StepExpr = { AbbrevReverseStep | PostfixExpr | AxisStep }
 
 // AxisStep ::= (ReverseStep | ForwardStep) PredicateList
@@ -218,7 +218,8 @@ ReverseAxis = { ("parent" ~ "::") | ("ancestor" ~ "::") | ("preceding-sibling" ~
 
 // AbbrevReverseStep
 // ::= ".."
-AbbrevReverseStep = { ".." }
+// modified so it takes optional predicates, as we can't really parse this otherwise
+AbbrevReverseStep = { ".." ~ PredicateList }
 
 // NodeTest ::= KindTest | NameTest
 NodeTest = { KindTest | NameTest }
