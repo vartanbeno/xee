@@ -1,0 +1,35 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"foo/attribute()\")"
+---
+Path(
+    PathExpr {
+        steps: [
+            AxisStep(
+                AxisStep {
+                    axis: Child,
+                    node_test: NameTest(
+                        Name(
+                            Name {
+                                name: "foo",
+                                namespace: None,
+                            },
+                        ),
+                    ),
+                    predicates: [],
+                },
+            ),
+            AxisStep(
+                AxisStep {
+                    axis: Attribute,
+                    node_test: KindTest(
+                        Attribute(
+                            None,
+                        ),
+                    ),
+                    predicates: [],
+                },
+            ),
+        ],
+    },
+)

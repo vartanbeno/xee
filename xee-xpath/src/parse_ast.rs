@@ -1382,10 +1382,10 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("foo"));
     }
 
-    // #[test]
-    // fn test_abbreviated_forward_step_with_attribute_test() {
-    //     assert_debug_snapshot!(parse_expr_single("foo/attribute(id)"));
-    // }
+    #[test]
+    fn test_abbreviated_forward_step_with_attribute_test() {
+        assert_debug_snapshot!(parse_expr_single("foo/attribute()"));
+    }
 
     #[test]
     fn test_abbreviated_forward_step_attr() {
