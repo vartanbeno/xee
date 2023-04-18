@@ -432,9 +432,28 @@ impl<'a> AstParser<'a> {
     fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExpr> {
         debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
         let pairs = pair.into_inner();
-        pairs
-            .map(|pair| self.step_expr_to_step_expr(pair))
-            .collect::<Vec<_>>()
+        let mut result = Vec::new();
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::Slash => {
+                    // do nothing
+                }
+                Rule::DoubleSlash => {
+                    result.push(ast::StepExpr::AxisStep(ast::AxisStep {
+                        axis: ast::Axis::DescendantOrSelf,
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        predicates: vec![],
+                    }));
+                }
+                Rule::StepExpr => {
+                    result.push(self.step_expr_to_step_expr(pair));
+                }
+                _ => {
+                    unreachable!("unhandled {:?}", pair.as_rule());
+                }
+            }
+        }
+        result
     }
 
     fn step_expr_to_step_expr(&self, pair: Pair<Rule>) -> ast::StepExpr {
@@ -1477,5 +1496,10 @@ mod tests {
     #[test]
     fn test_starts_double_slash() {
         assert_debug_snapshot!(parse_expr_single("//child::foo"));
+    }
+
+    #[test]
+    fn test_double_slash_middle() {
+        assert_debug_snapshot!(parse_expr_single("child::foo//child::bar"));
     }
 }

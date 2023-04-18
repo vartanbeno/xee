@@ -170,7 +170,7 @@ PathExpr = { (DoubleSlash ~ RelativePathExpr) | (Slash ~ RelativePathExpr?) | Re
 
 // RelativePathExpr
 // ::= StepExpr (("/" | "//") StepExpr)*
-RelativePathExpr = { StepExpr ~ (("/" | "//") ~ StepExpr)* }
+RelativePathExpr = { StepExpr ~ ((DoubleSlash | Slash) ~ StepExpr)* }
 
 Slash       = { "/" }
 DoubleSlash = { "//" }
