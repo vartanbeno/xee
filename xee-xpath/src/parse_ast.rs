@@ -610,6 +610,15 @@ impl<'a> AstParser<'a> {
                     ast::KindTest::Element(None)
                 }
             }
+            Rule::AttributeTest => {
+                let mut pairs = pair.into_inner();
+                let first_pair = pairs.next();
+                if let Some(pair) = first_pair {
+                    todo!("no arguments for attribute test yet")
+                } else {
+                    ast::KindTest::Attribute(None)
+                }
+            }
             _ => {
                 panic!("unhandled KindTest: {:?}", pair.as_rule());
             }
@@ -1342,6 +1351,26 @@ mod tests {
     fn test_namespace_node_test() {
         assert_debug_snapshot!(parse_expr_single("self::namespace-node()"));
     }
+
+    #[test]
+    fn test_attribute_test_no_args() {
+        assert_debug_snapshot!(parse_expr_single("self::attribute()"));
+    }
+
+    // #[test]
+    // fn test_attribute_test_star_arg() {
+    //     assert_debug_snapshot!(parse_expr_single("self::attribute(*)"));
+    // }
+
+    // #[test]
+    // fn test_attribute_test_name_arg() {
+    //     assert_debug_snapshot!(parse_expr_single("self::attribute(foo)"));
+    // }
+
+    // #[test]
+    // fn test_attribute_test_name_arg_type_arg() {
+    //     assert_debug_snapshot!(parse_expr_single("self::attribute(foo, bar)"));
+    // }
 
     #[test]
     fn test_element_test() {

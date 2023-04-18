@@ -423,7 +423,7 @@ AttributeTest = { "attribute" ~ "(" ~ (AttribNameOrWildcard ~ ("," ~ TypeName)?)
 
 // AttribNameOrWildcard
 // ::= AttributeName | "*"
-AttribNameOrWildcard = { AttributeName | "*" }
+AttribNameOrWildcard = { AttributeName | WildcardStar }
 
 // SchemaAttributeTest
 // ::= "schema-attribute" "(" AttributeDeclaration ")"
@@ -439,7 +439,7 @@ ElementTest = { "element" ~ "(" ~ (ElementNameOrWildcard ~ ("," ~ TypeName ~ "?"
 
 // ElementNameOrWildcard
 // ::= ElementName | "*"
-ElementNameOrWildcard = { ElementName | "*" }
+ElementNameOrWildcard = { ElementName | WildcardStar }
 
 // SchemaElementTest
 // ::= "schema-element" "(" ElementDeclaration ")"

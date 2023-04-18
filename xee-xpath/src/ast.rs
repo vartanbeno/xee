@@ -394,7 +394,7 @@ pub(crate) enum ElementNameOrWildcard {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct AttributeTest {
     pub(crate) name_test: AttribNameOrWildcard,
-    pub(crate) type_name: Option<EQName>,
+    pub(crate) type_name: Option<Name>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
