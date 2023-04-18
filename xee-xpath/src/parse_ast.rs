@@ -478,11 +478,19 @@ impl<'a> AstParser<'a> {
                 ast::StepExpr::AxisStep(axis_step)
             }
             // XXX this doesn't handel any potential predicates
-            Rule::AbbrevReverseStep => ast::StepExpr::AxisStep(ast::AxisStep {
-                axis: ast::Axis::Parent,
-                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                predicates: vec![],
-            }),
+            Rule::AbbrevReverseStep => {
+                let mut pairs = pair.into_inner();
+                let predicates_pair = pairs.next().unwrap();
+                let predicates = predicates_pair
+                    .into_inner()
+                    .map(|pair| self.predicate_to_expr(pair))
+                    .collect::<Vec<_>>();
+                ast::StepExpr::AxisStep(ast::AxisStep {
+                    axis: ast::Axis::Parent,
+                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                    predicates,
+                })
+            }
             _ => {
                 panic!("unhandled StepExpr: {:?}", pair.as_rule())
             }
@@ -1449,6 +1457,11 @@ mod tests {
     #[test]
     fn test_abbreviated_reverse_step() {
         assert_debug_snapshot!(parse_expr_single("foo/.."));
+    }
+
+    #[test]
+    fn test_abbreviated_reverse_step_with_predicates() {
+        assert_debug_snapshot!(parse_expr_single("..[1]"));
     }
 
     #[test]

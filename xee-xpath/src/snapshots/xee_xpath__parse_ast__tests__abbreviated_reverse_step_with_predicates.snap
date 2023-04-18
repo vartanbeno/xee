@@ -1,0 +1,35 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_expr_single(\"..[1]\")"
+---
+Path(
+    PathExpr {
+        steps: [
+            AxisStep(
+                AxisStep {
+                    axis: Parent,
+                    node_test: KindTest(
+                        Any,
+                    ),
+                    predicates: [
+                        [
+                            Path(
+                                PathExpr {
+                                    steps: [
+                                        PrimaryExpr(
+                                            Literal(
+                                                Integer(
+                                                    1,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ],
+                    ],
+                },
+            ),
+        ],
+    },
+)
