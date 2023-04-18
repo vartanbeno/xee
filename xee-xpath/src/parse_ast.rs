@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 use pest::Parser;
 
 use crate::ast;
-use crate::name::Namespaces;
+use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parse::Rule;
 
 pub struct Error {}
@@ -397,13 +397,39 @@ impl<'a> AstParser<'a> {
 
     fn path_expr_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
-        let pair = pair.into_inner().next().unwrap();
-        match pair.as_rule() {
+        let mut pairs = pair.into_inner();
+        let first_pair = pairs.next().unwrap();
+        match first_pair.as_rule() {
+            Rule::Slash => {
+                let mut steps = vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::FunctionCall(
+                    ast::FunctionCall {
+                        name: ast::Name {
+                            name: "root".to_string(),
+                            namespace: Some(FN_NAMESPACE.to_string()),
+                        },
+                        arguments: vec![ast::ExprSingle::Path(ast::PathExpr {
+                            steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
+                                axis: ast::Axis::Self_,
+                                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                                predicates: vec![],
+                            })],
+                        })],
+                    },
+                ))];
+                let next_pair = pairs.next();
+                if let Some(next_pair) = next_pair {
+                    steps.extend(self.relative_path_expr_to_steps(next_pair));
+                }
+                ast::PathExpr { steps }
+            }
+            Rule::DoubleSlash => {
+                todo!("no double slash abbrev yet");
+            }
             Rule::RelativePathExpr => ast::PathExpr {
-                steps: self.relative_path_expr_to_steps(pair),
+                steps: self.relative_path_expr_to_steps(first_pair),
             },
             _ => {
-                panic!("unhandled PathExpr: {:?}", pair.as_rule())
+                panic!("unhandled PathExpr {:?}", first_pair.as_rule())
             }
         }
     }
@@ -1399,8 +1425,8 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("@foo"));
     }
 
-    // #[test]
-    // fn test_starts_single_slash() {
-    //     assert_debug_snapshot!(parse_expr_single("/child::foo"));
-    // }
+    #[test]
+    fn test_starts_single_slash() {
+        assert_debug_snapshot!(parse_expr_single("/child::foo"));
+    }
 }
