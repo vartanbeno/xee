@@ -77,6 +77,14 @@ pub(crate) enum StackValue {
 }
 
 impl StackValue {
+    pub(crate) fn from_item(item: Item) -> Self {
+        match item {
+            Item::Atomic(a) => StackValue::Atomic(a),
+            Item::Node(n) => StackValue::Node(n),
+            Item::Function(f) => StackValue::Closure(f),
+        }
+    }
+
     pub(crate) fn as_atomic(&self) -> Option<&Atomic> {
         match self {
             StackValue::Atomic(a) => Some(a),
@@ -102,6 +110,13 @@ impl StackValue {
     pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
         match self {
             StackValue::StaticFunction(f) => Some(*f),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_node(&self) -> Option<Node> {
+        match self {
+            StackValue::Node(n) => Some(*n),
             _ => None,
         }
     }

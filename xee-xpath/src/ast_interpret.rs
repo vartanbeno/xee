@@ -8,7 +8,7 @@ use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::scope::Scopes;
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, FunctionId, StackValue};
+use crate::value::{Atomic, FunctionId, Item, StackValue};
 
 struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
@@ -22,7 +22,10 @@ struct InterpreterCompiler<'a> {
 
 impl<'a> InterpreterCompiler<'a> {
     fn compile_xpath(&mut self, xpath: &ast::XPath) {
+        // the context item is always in scope, so we declare it
+        self.scopes.push_name(self.context_item_name);
         self.compile_expr(&xpath.exprs);
+        self.scopes.pop_name();
     }
 
     fn compile_expr(&mut self, exprs: &[ast::ExprSingle]) {
@@ -134,8 +137,55 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_path_expr(&mut self, path_expr: &ast::PathExpr) {
-        let first_step = &path_expr.steps[0];
-        self.compile_step_expr(first_step);
+        if path_expr.steps.len() == 1 {
+            self.compile_step_expr(&path_expr.steps[0]);
+        } else {
+            self.compile_step_map(&path_expr.steps[0], &path_expr.steps[1..]);
+        }
+    }
+
+    fn compile_step_map(&mut self, main_step_expr: &ast::StepExpr, step_exprs: &[ast::StepExpr]) {
+        let step_expr = &step_exprs[0];
+        let rest_step_expr = &step_exprs[1..];
+        self.compile_map(
+            |s| {
+                s.compile_step_expr(main_step_expr);
+            },
+            |s| {
+                // ensure it's named the loop item
+                s.scopes.push_name(s.context_item_name);
+                s.compile_step_expr(step_expr);
+                s.scopes.pop_name();
+            },
+            |s| {
+                // get rid of context item
+                s.builder.emit(Instruction::Pop);
+            },
+        );
+        for step_expr in rest_step_expr {
+            let map_result = ast::Name {
+                name: "xee_map_result".to_string(),
+                namespace: None,
+            };
+            self.scopes.push_name(&map_result);
+            self.compile_map(
+                |s| s.compile_var_ref(&map_result),
+                |s| {
+                    // ensure it's named the loop item
+                    s.scopes.push_name(s.context_item_name);
+                    s.compile_step_expr(step_expr);
+                    s.scopes.pop_name();
+                },
+                |s| {
+                    // get rid of context item
+                    s.builder.emit(Instruction::Pop);
+                },
+            );
+            // the top of the stack contains the result of the map, but also the variable
+            // under it, get rid of the variable
+            self.builder.emit(Instruction::LetDone);
+            self.scopes.pop_name();
+        }
     }
 
     fn compile_step_expr(&mut self, step_expr: &ast::StepExpr) {
@@ -147,8 +197,8 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_primary_expr(primary);
                 self.compile_postfixes(postfixes);
             }
-            _ => {
-                panic!("not supported yet");
+            ast::StepExpr::AxisStep(axis_step) => {
+                self.compile_axis_step(axis_step);
             }
         }
     }
@@ -273,6 +323,14 @@ impl<'a> InterpreterCompiler<'a> {
                 }
             }
         }
+    }
+
+    fn compile_axis_step(&mut self, axis_step: &ast::AxisStep) {
+        // an axis step is always performed against the context item
+        self.compile_var_ref(self.context_item_name);
+        self.builder
+            .emit_step(axis_step.axis.clone(), axis_step.node_test.clone());
+        // XXX ignore predicates for now
     }
 
     fn compile_call(&mut self, arguments: &[ast::ExprSingle]) {
@@ -616,10 +674,18 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret(&self) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, &self.static_context);
+        // a fake context value
+        self.interpret_with_context(Item::Atomic(Atomic::Integer(0)))
+    }
+
+    pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
+        let mut interpreter = Interpreter::new(&self.program, &self.static_context, context_item);
         interpreter.start(self.main);
         interpreter.run()?;
-        // the stack has to be 1 value, as we return the result of the expression
+        // the stack has to be 1 values and return the result of the expression
+        // why 1 value if the context item is on the top of the stack? This is because
+        // the outer main function will pop the context item; this code is there to
+        // remove the function id from the stack but the main function has no function id
         assert_eq!(
             interpreter.stack().len(),
             1,
@@ -633,9 +699,10 @@ impl<'a> CompiledXPath<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::value::{Item, Sequence};
     use std::cell::RefCell;
     use std::rc::Rc;
+
+    use crate::value::{Item, Node, Sequence};
 
     fn as_integer(value: &StackValue) -> i64 {
         value.as_atomic().unwrap().as_integer().unwrap()
@@ -647,6 +714,15 @@ mod tests {
 
     fn as_sequence(value: &StackValue) -> Rc<RefCell<Sequence>> {
         value.as_sequence().unwrap()
+    }
+
+    fn xot_nodes_to_sequence(node: &[xot::Node]) -> Sequence {
+        Sequence {
+            items: node
+                .iter()
+                .map(|&node| Item::Node(Node::Node(node)))
+                .collect(),
+        }
     }
 
     #[test]
@@ -1218,4 +1294,21 @@ mod tests {
     //     assert_eq!(as_integer(&result), 2);
     //     Ok(())
     // }
+
+    #[test]
+    fn test_child_axis_step() -> Result<()> {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<doc><a/><b/></doc>"#).unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+
+        let xpath = CompiledXPath::new(&xot, "doc/*");
+        let result = xpath.interpret_with_context(Item::Node(Node::Node(doc)))?;
+
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
+        Ok(())
+    }
 }

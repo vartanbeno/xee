@@ -6,6 +6,7 @@ use crate::builder::Program;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
 use crate::static_context::StaticContext;
+use crate::step::resolve_step;
 use crate::value::{
     Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId,
 };
@@ -26,11 +27,15 @@ pub(crate) struct Interpreter<'a> {
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program, static_context: &'a StaticContext) -> Self {
+    pub(crate) fn new(
+        program: &'a Program,
+        static_context: &'a StaticContext,
+        context_item: Item,
+    ) -> Self {
         Interpreter {
             program,
             static_context,
-            stack: Vec::new(),
+            stack: vec![StackValue::from_item(context_item)],
             frames: Vec::new(),
         }
     }
@@ -216,6 +221,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.truncate(base);
 
                     // pop off the function id we just called
+                    // for the outer main function this is the context item
                     if !self.stack.is_empty() {
                         self.stack.pop();
                     }
@@ -305,6 +311,11 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::Step(step_id) => {
                     let step = &function.steps[step_id as usize];
+                    let node = self.stack.pop().unwrap();
+                    let node = node.as_node().ok_or(Error::TypeError)?;
+                    let new_sequence = resolve_step(step, node, self.static_context.xot);
+                    self.stack
+                        .push(StackValue::Sequence(Rc::new(RefCell::new(new_sequence))));
                 }
                 Instruction::PrintTop => {
                     let top = self.stack.last().unwrap();
@@ -377,7 +388,8 @@ mod tests {
         let main_id = program.add_function(function);
         let xot = Xot::new();
         let static_context = StaticContext::new(&xot);
-        let mut interpreter = Interpreter::new(&program, &static_context);
+        let mut interpreter =
+            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -431,7 +443,8 @@ mod tests {
         let main_id = program.add_function(function);
         let xot = Xot::new();
         let static_context = StaticContext::new(&xot);
-        let mut interpreter = Interpreter::new(&program, &static_context);
+        let mut interpreter =
+            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -460,7 +473,8 @@ mod tests {
         let main_id = program.add_function(function);
         let xot = Xot::new();
         let static_context = StaticContext::new(&xot);
-        let mut interpreter = Interpreter::new(&program, &static_context);
+        let mut interpreter =
+            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -490,7 +504,8 @@ mod tests {
         let main_id = program.add_function(function);
         let xot = Xot::new();
         let static_context = StaticContext::new(&xot);
-        let mut interpreter = Interpreter::new(&program, &static_context);
+        let mut interpreter =
+            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(

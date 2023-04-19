@@ -3,23 +3,11 @@ use xot::{ValueType, Xot};
 use crate::ast;
 use crate::value::{Item, Node, Sequence, Step};
 
-fn take_step(step: &Step, sequence: &Sequence, xot: &Xot) -> Sequence {
+pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> Sequence {
     let mut new_sequence = Sequence::new();
-    for item in &sequence.items {
-        match item {
-            Item::Node(node) => {
-                for node in node_take_axis(&step.axis, xot, *node) {
-                    if node_test(&step.node_test, &step.axis, xot, node) {
-                        new_sequence.push(&Item::Node(node));
-                    }
-                }
-            }
-            Item::Atomic(_) => {
-                todo!("atomic items not supported yet");
-            }
-            Item::Function(_) => {
-                todo!("function items not supported yet");
-            }
+    for axis_node in node_take_axis(&step.axis, xot, node) {
+        if node_test(&step.node_test, &step.axis, xot, axis_node) {
+            new_sequence.push(&Item::Node(axis_node));
         }
     }
     new_sequence
@@ -242,7 +230,7 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Star),
         };
-        let sequence = take_step(&step, &Sequence::from_node(Node::Node(doc_el)), &xot);
+        let sequence = resolve_step(&step, Node::Node(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a, b]));
         Ok(())
     }
@@ -261,7 +249,7 @@ mod tests {
                 namespace: None,
             })),
         };
-        let sequence = take_step(&step, &Sequence::from_node(Node::Node(doc_el)), &xot);
+        let sequence = resolve_step(&step, Node::Node(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a]));
         Ok(())
     }
