@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use xot::Node;
 
 use crate::ast;
 use crate::instruction::{decode_instructions, Instruction};
@@ -23,12 +22,36 @@ impl StaticFunctionId {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Step {
+    pub(crate) axis: ast::Axis,
+    pub(crate) node_test: ast::NodeTest,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub(crate) enum Node {
+    Node(xot::Node),
+    Attribute(xot::Node, xot::NameId),
+    Namespace(xot::Node, xot::PrefixId),
+}
+
+impl Node {
+    pub(crate) fn xot_node(&self) -> xot::Node {
+        match self {
+            Node::Node(node) => *node,
+            Node::Attribute(node, _) => *node,
+            Node::Namespace(node, _) => *node,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<StackValue>,
     pub(crate) closure_names: Vec<ast::Name>,
+    pub(crate) steps: Vec<Step>,
     pub(crate) chunk: Vec<u8>,
 }
 
@@ -139,6 +162,12 @@ impl Sequence {
     pub(crate) fn from_atomic(atomic: Atomic) -> Self {
         Self {
             items: vec![Item::Atomic(atomic)],
+        }
+    }
+
+    pub(crate) fn from_node(node: Node) -> Self {
+        Self {
+            items: vec![Item::Node(node)],
         }
     }
 

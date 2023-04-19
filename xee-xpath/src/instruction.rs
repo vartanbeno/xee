@@ -31,6 +31,7 @@ pub(crate) enum Instruction {
     SequenceLen,
     SequenceGet,
     SequencePush,
+    Step(u16),
     PrintTop,
     PrintStack,
 }
@@ -65,6 +66,7 @@ enum EncodedInstruction {
     SequenceLen,
     SequenceGet,
     SequencePush,
+    Step,
     PrintTop,
     PrintStack,
 }
@@ -131,6 +133,10 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::SequenceLen => (Instruction::SequenceLen, 1),
         EncodedInstruction::SequenceGet => (Instruction::SequenceGet, 1),
         EncodedInstruction::SequencePush => (Instruction::SequencePush, 1),
+        EncodedInstruction::Step => {
+            let axis = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Step(axis), 3)
+        }
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -207,6 +213,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
         Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
         Instruction::SequencePush => bytes.push(EncodedInstruction::SequencePush.to_u8().unwrap()),
+        Instruction::Step(step_id) => {
+            bytes.push(EncodedInstruction::Step.to_u8().unwrap());
+            bytes.extend_from_slice(&step_id.to_le_bytes());
+        }
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }

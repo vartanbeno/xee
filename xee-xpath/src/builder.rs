@@ -1,6 +1,6 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
-use crate::value::{Function, FunctionId, StackValue, StaticFunctionId};
+use crate::value::{Function, FunctionId, StackValue, StaticFunctionId, Step};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
@@ -59,6 +59,7 @@ pub(crate) struct FunctionBuilder<'a> {
     compiled: Vec<u8>,
     constants: Vec<StackValue>,
     closure_names: Vec<ast::Name>,
+    steps: Vec<Step>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -68,6 +69,7 @@ impl<'a> FunctionBuilder<'a> {
             compiled: Vec::new(),
             constants: Vec::new(),
             closure_names: Vec::new(),
+            steps: Vec::new(),
         }
     }
 
@@ -82,6 +84,15 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many constants");
         }
         self.emit(Instruction::Const(constant_id as u16));
+    }
+
+    pub(crate) fn emit_step(&mut self, axis: ast::Axis, node_test: ast::NodeTest) {
+        let step_id = self.steps.len();
+        self.steps.push(Step { axis, node_test });
+        if step_id > (u16::MAX as usize) {
+            panic!("too many steps");
+        }
+        self.emit(Instruction::Step(step_id as u16));
     }
 
     pub(crate) fn emit_static_function(&mut self, static_function_id: StaticFunctionId) {
@@ -169,6 +180,7 @@ impl<'a> FunctionBuilder<'a> {
             chunk: self.compiled,
             closure_names: self.closure_names,
             constants: self.constants,
+            steps: self.steps,
         }
     }
 

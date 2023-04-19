@@ -303,6 +303,9 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
+                Instruction::Step(step_id) => {
+                    let step = &function.steps[step_id as usize];
+                }
                 Instruction::PrintTop => {
                     let top = self.stack.last().unwrap();
                     println!("{:#?}", top);
