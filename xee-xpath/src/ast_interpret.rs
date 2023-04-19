@@ -1315,4 +1315,20 @@ mod tests {
         assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
         Ok(())
     }
+
+    #[test]
+    fn test_descendant_axis_step() -> Result<()> {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<doc><a/><b/></doc>"#).unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+
+        let xpath = CompiledXPath::new(&xot, "descendant::a");
+        let result = xpath.interpret_with_xot_node(doc)?;
+
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[a]));
+        Ok(())
+    }
 }
