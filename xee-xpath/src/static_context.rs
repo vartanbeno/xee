@@ -1,5 +1,6 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
+use xot::Xot;
 
 use crate::ast;
 use crate::error::{Error, Result};
@@ -85,16 +86,25 @@ impl StaticFunctions {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct StaticContext {
+pub(crate) struct StaticContext<'a> {
     pub(crate) functions: StaticFunctions,
+    pub(crate) xot: &'a Xot,
 }
 
-impl StaticContext {
-    pub(crate) fn new() -> Self {
+impl<'a> StaticContext<'a> {
+    pub(crate) fn new(xot: &'a Xot) -> Self {
         Self {
             functions: StaticFunctions::new(),
+            xot,
         }
+    }
+}
+
+impl<'a> Debug for StaticContext<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StaticContext")
+            .field("functions", &self.functions)
+            .finish()
     }
 }
 

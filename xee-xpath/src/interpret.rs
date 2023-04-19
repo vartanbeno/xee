@@ -20,7 +20,7 @@ struct Frame {
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
-    static_context: &'a StaticContext,
+    static_context: &'a StaticContext<'a>,
     stack: Vec<StackValue>,
     frames: Vec<Frame>,
 }
@@ -359,6 +359,8 @@ impl<'a> Interpreter<'a> {
 mod tests {
     use super::*;
 
+    use xot::Xot;
+
     use crate::builder::{FunctionBuilder, JumpCondition};
     use crate::instruction::decode_instructions;
 
@@ -373,7 +375,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let static_context = StaticContext::new();
+        let xot = Xot::new();
+        let static_context = StaticContext::new(&xot);
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
@@ -426,7 +429,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let static_context = StaticContext::new();
+        let xot = Xot::new();
+        let static_context = StaticContext::new(&xot);
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
@@ -454,7 +458,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let static_context = StaticContext::new();
+        let xot = Xot::new();
+        let static_context = StaticContext::new(&xot);
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
@@ -483,7 +488,8 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
-        let static_context = StaticContext::new();
+        let xot = Xot::new();
+        let static_context = StaticContext::new(&xot);
         let mut interpreter = Interpreter::new(&program, &static_context);
         interpreter.start(main_id);
         interpreter.run()?;
