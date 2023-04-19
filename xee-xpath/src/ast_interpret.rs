@@ -8,7 +8,7 @@ use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::scope::Scopes;
 use crate::static_context::StaticContext;
-use crate::value::{Atomic, FunctionId, Item, StackValue};
+use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
 struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
@@ -694,6 +694,10 @@ impl<'a> CompiledXPath<'a> {
         );
         Ok(interpreter.stack().last().unwrap().clone())
     }
+
+    pub(crate) fn interpret_with_xot_node(&self, node: xot::Node) -> Result<StackValue> {
+        self.interpret_with_context(Item::Node(Node::Node(node)))
+    }
 }
 
 #[cfg(test)]
@@ -1304,7 +1308,7 @@ mod tests {
         let b = xot.next_sibling(a).unwrap();
 
         let xpath = CompiledXPath::new(&xot, "doc/*");
-        let result = xpath.interpret_with_context(Item::Node(Node::Node(doc)))?;
+        let result = xpath.interpret_with_xot_node(doc)?;
 
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();
