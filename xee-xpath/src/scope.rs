@@ -61,4 +61,12 @@ impl Scopes {
         scopes.next();
         scopes.any(|s| s.known_name(name))
     }
+
+    pub(crate) fn count(&self) -> usize {
+        let mut count = 0;
+        for scope in &self.scopes {
+            count += scope.names.len();
+        }
+        count
+    }
 }

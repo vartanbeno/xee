@@ -295,6 +295,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
                     let index = index.as_atomic().ok_or(Error::TypeError)?;
                     let index = index.as_integer().ok_or(Error::TypeError)?;
+                    dbg!(&self.stack, &sequence, index);
                     let item = sequence.borrow().items[index as usize].clone();
                     match item {
                         Item::Atomic(atomic) => {
