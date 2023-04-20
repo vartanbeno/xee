@@ -7,12 +7,12 @@ use crate::value::Node;
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct DocumentOrder(usize, usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Annotation {
     document_order: DocumentOrder,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Annotations {
     // each document has a different id, so track this
     document_id: usize,

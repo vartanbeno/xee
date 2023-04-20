@@ -1,18 +1,16 @@
-use xot::Xot;
-
 use crate::ast;
 use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition, Program};
+use crate::context::Context;
 use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
 use crate::scope::Scopes;
-use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
 struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
-    static_context: &'a StaticContext<'a>,
+    context: &'a Context<'a>,
     builder: FunctionBuilder<'a>,
     context_item_name: &'a ast::Name,
     sequence_name: &'a ast::Name,
@@ -230,7 +228,7 @@ impl<'a> InterpreterCompiler<'a> {
                 let mut compiler = InterpreterCompiler {
                     builder: nested_builder,
                     scopes: self.scopes,
-                    static_context: self.static_context,
+                    context: self.context,
                     context_item_name: self.context_item_name,
                     sequence_name: self.sequence_name,
                     sequence_length_name: self.sequence_length_name,
@@ -260,6 +258,7 @@ impl<'a> InterpreterCompiler<'a> {
                     panic!("too many arguments");
                 }
                 let function_id = self
+                    .context
                     .static_context
                     .functions
                     .get_by_name(&function_call.name, arity as u8)
@@ -269,6 +268,7 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::PrimaryExpr::NamedFunctionRef(named_function_ref) => {
                 let function_id = self
+                    .context
                     .static_context
                     .functions
                     .get_by_name(&named_function_ref.name, named_function_ref.arity)
@@ -631,21 +631,20 @@ impl<'a> InterpreterCompiler<'a> {
 
 pub(crate) struct CompiledXPath<'a> {
     program: Program,
-    static_context: StaticContext<'a>,
+    context: &'a Context<'a>,
     main: FunctionId,
 }
 
 impl<'a> CompiledXPath<'a> {
-    pub(crate) fn new(xot: &'a Xot, xpath: &str) -> Self {
+    pub(crate) fn new(context: &'a Context, xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
         let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut program);
-        let static_context = StaticContext::new(xot);
         let mut compiler = InterpreterCompiler {
             builder,
             scopes: &mut scopes,
-            static_context: &static_context,
+            context,
             context_item_name: &ast::Name {
                 name: "xee_context_item".to_string(),
                 namespace: None,
@@ -668,7 +667,7 @@ impl<'a> CompiledXPath<'a> {
         let main = program.add_function(main);
         Self {
             program,
-            static_context,
+            context,
             main,
         }
     }
@@ -679,7 +678,7 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, &self.static_context, context_item);
+        let mut interpreter = Interpreter::new(&self.program, self.context, context_item);
         interpreter.start(self.main);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
@@ -703,10 +702,15 @@ impl<'a> CompiledXPath<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use std::cell::RefCell;
     use std::rc::Rc;
+    use xot::Xot;
 
-    use crate::value::{Item, Node, Sequence};
+    use crate::{
+        document::{Documents, Uri},
+        value::{Item, Node, Sequence},
+    };
 
     fn as_integer(value: &StackValue) -> i64 {
         value.as_atomic().unwrap().as_integer().unwrap()
@@ -732,7 +736,8 @@ mod tests {
     #[test]
     fn test_compile_expr_single() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 + 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 + 2");
 
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 3);
@@ -750,7 +755,8 @@ mod tests {
     #[test]
     fn test_nested() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 + (8 - 2)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 + (8 - 2)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 7);
         Ok(())
@@ -759,7 +765,8 @@ mod tests {
     #[test]
     fn test_comma() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1, 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1, 2");
         let result = xpath.interpret()?;
 
         let sequence = result.as_sequence().unwrap();
@@ -774,7 +781,8 @@ mod tests {
     #[test]
     fn test_comma_sequences() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2), (3, 4)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2), (3, 4)");
         let result = xpath.interpret()?;
 
         let sequence = result.as_sequence().unwrap();
@@ -791,7 +799,8 @@ mod tests {
     #[test]
     fn test_let() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "let $x := 1 return $x + 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "let $x := 1 return $x + 2");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 3);
         Ok(())
@@ -800,7 +809,8 @@ mod tests {
     #[test]
     fn test_let_nested() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "let $x := 1, $y := $x + 3 return $y + 5");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "let $x := 1, $y := $x + 3 return $y + 5");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 9);
         Ok(())
@@ -809,7 +819,8 @@ mod tests {
     #[test]
     fn test_if() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "if (1) then 2 else 3");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "if (1) then 2 else 3");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 2);
         Ok(())
@@ -818,7 +829,8 @@ mod tests {
     #[test]
     fn test_if_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "if (0) then 2 else 3");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "if (0) then 2 else 3");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 3);
         Ok(())
@@ -827,7 +839,8 @@ mod tests {
     #[test]
     fn test_value_eq_true() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 eq 1");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 eq 1");
         let result = xpath.interpret()?;
         assert!(as_bool(&result));
         Ok(())
@@ -836,7 +849,8 @@ mod tests {
     #[test]
     fn test_value_eq_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 eq 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 eq 2");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
         Ok(())
@@ -845,7 +859,8 @@ mod tests {
     #[test]
     fn test_value_ne_true() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 ne 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 ne 2");
         let result = xpath.interpret()?;
         assert!(as_bool(&result));
         Ok(())
@@ -854,7 +869,8 @@ mod tests {
     #[test]
     fn test_value_ne_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 ne 1");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 ne 1");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
         Ok(())
@@ -863,7 +879,8 @@ mod tests {
     #[test]
     fn test_value_lt_true() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 lt 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 lt 2");
         let result = xpath.interpret()?;
         assert!(as_bool(&result));
         Ok(())
@@ -872,7 +889,8 @@ mod tests {
     #[test]
     fn test_value_lt_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "2 lt 1");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "2 lt 1");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
         Ok(())
@@ -881,7 +899,8 @@ mod tests {
     #[test]
     fn test_function_without_args() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "function() { 5 } ()");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "function() { 5 } ()");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 5);
         Ok(())
@@ -890,7 +909,8 @@ mod tests {
     #[test]
     fn test_function_with_args() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "function($x) { $x + 5 } ( 3 )");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "function($x) { $x + 5 } ( 3 )");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 8);
         Ok(())
@@ -899,7 +919,8 @@ mod tests {
     #[test]
     fn test_function_with_args2() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "function($x, $y) { $x + $y } ( 3, 5 )");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "function($x, $y) { $x + $y } ( 3, 5 )");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 8);
         Ok(())
@@ -908,8 +929,11 @@ mod tests {
     #[test]
     fn test_function_nested() -> Result<()> {
         let xot = Xot::new();
-        let xpath =
-            CompiledXPath::new(&xot, "function($x) { function($y) { $y + 2 }($x + 1) } (5)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(
+            &context,
+            "function($x) { function($y) { $y + 2 }($x + 1) } (5)",
+        );
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 8);
         Ok(())
@@ -918,8 +942,9 @@ mod tests {
     #[test]
     fn test_function_closure() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "function() { let $x := 3 return function() { $x + 2 } }()()",
         );
         let result = xpath.interpret()?;
@@ -930,8 +955,9 @@ mod tests {
     #[test]
     fn test_function_closure_multiple_variables() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "function() { let $x := 3, $y := 1 return function() { $x - $y } }()()",
         );
         let result = xpath.interpret()?;
@@ -942,8 +968,9 @@ mod tests {
     #[test]
     fn test_function_closure_and_arguments() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "function() { let $x := 3 return function($y) { $x - $y } }()(1)",
         );
         let result = xpath.interpret()?;
@@ -954,8 +981,9 @@ mod tests {
     #[test]
     fn test_function_closure_nested() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath =
-            CompiledXPath::new(&xot, "function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()");
+            CompiledXPath::new(&context, "function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 7);
         Ok(())
@@ -964,7 +992,8 @@ mod tests {
     #[test]
     fn test_static_function_call() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "my_function(5, 2)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "my_function(5, 2)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 7);
         Ok(())
@@ -973,7 +1002,8 @@ mod tests {
     #[test]
     fn test_named_function_ref_call() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "my_function#2(5, 2)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "my_function#2(5, 2)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 7);
         Ok(())
@@ -982,7 +1012,8 @@ mod tests {
     #[test]
     fn test_static_call_with_placeholders() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "my_function(?, 2)(5)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "my_function(?, 2)(5)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 7);
         Ok(())
@@ -991,7 +1022,8 @@ mod tests {
     #[test]
     fn test_function_with_args_placeholdered() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "function($x, $y) { $x - $y } ( ?, 3 ) (5)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "function($x, $y) { $x - $y } ( ?, 3 ) (5)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 2);
         Ok(())
@@ -1000,7 +1032,8 @@ mod tests {
     #[test]
     fn test_function_with_args_placeholdered2() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 2);
         Ok(())
@@ -1009,7 +1042,8 @@ mod tests {
     #[test]
     fn test_range() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 to 5");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 to 5");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1027,7 +1061,8 @@ mod tests {
     #[test]
     fn test_range_greater() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "5 to 1");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "5 to 1");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1039,7 +1074,8 @@ mod tests {
     #[test]
     fn test_range_equal() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 to 1");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 to 1");
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 1);
         Ok(())
@@ -1048,7 +1084,8 @@ mod tests {
     #[test]
     fn test_for_loop() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "for $x in 1 to 5 return $x + 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "for $x in 1 to 5 return $x + 2");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1066,7 +1103,8 @@ mod tests {
     #[test]
     fn test_nested_for_loop() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "for $i in (10, 20), $j in (1, 2) return $i + $j");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "for $i in (10, 20), $j in (1, 2) return $i + $j");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1083,8 +1121,9 @@ mod tests {
     #[test]
     fn test_nested_for_loop_variable_scope() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "for $i in (10, 20), $j in ($i + 1, $i + 2) return $i + $j",
         );
         let result = xpath.interpret()?;
@@ -1103,7 +1142,8 @@ mod tests {
     #[test]
     fn test_simple_map() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2) ! (. + 1)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2) ! (. + 1)");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1118,7 +1158,8 @@ mod tests {
     #[test]
     fn test_simple_map_sequence() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2) ! (., 0)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2) ! (., 0)");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1135,7 +1176,8 @@ mod tests {
     #[test]
     fn test_simple_map_single() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "1 ! (., 0)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "1 ! (., 0)");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1150,7 +1192,8 @@ mod tests {
     #[test]
     fn test_simple_multiple_steps() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2) ! (. + 1) ! (. + 2)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2) ! (. + 1) ! (. + 2)");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1165,7 +1208,8 @@ mod tests {
     #[test]
     fn test_simple_multiple_steps2() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1180,7 +1224,8 @@ mod tests {
     #[test]
     fn test_some_quantifier_expr_true() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "some $x in (1, 2, 3) satisfies $x eq 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "some $x in (1, 2, 3) satisfies $x eq 2");
         let result = xpath.interpret()?;
         assert!(as_bool(&result));
         Ok(())
@@ -1189,7 +1234,8 @@ mod tests {
     #[test]
     fn test_some_quantifier_expr_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "some $x in (1, 2, 3) satisfies $x eq 5");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "some $x in (1, 2, 3) satisfies $x eq 5");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
         Ok(())
@@ -1198,8 +1244,9 @@ mod tests {
     #[test]
     fn test_nested_some_quantifier_expr_true() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "some $x in (1, 2, 3), $y in (2, 3) satisfies $x gt $y",
         );
         let result = xpath.interpret()?;
@@ -1210,8 +1257,9 @@ mod tests {
     #[test]
     fn test_nested_some_quantifier_expr_false() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "some $x in (1, 2, 3), $y in (5, 6) satisfies $x gt $y",
         );
         let result = xpath.interpret()?;
@@ -1222,7 +1270,8 @@ mod tests {
     #[test]
     fn test_every_quantifier_expr_true() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "every $x in (1, 2, 3) satisfies $x gt 0");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "every $x in (1, 2, 3) satisfies $x gt 0");
         let result = xpath.interpret()?;
         assert!(as_bool(&result));
         Ok(())
@@ -1231,7 +1280,8 @@ mod tests {
     #[test]
     fn test_every_quantifier_expr_false() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "every $x in (1, 2, 3) satisfies $x gt 2");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "every $x in (1, 2, 3) satisfies $x gt 2");
         let result = xpath.interpret()?;
         assert!(!as_bool(&result));
         Ok(())
@@ -1240,8 +1290,9 @@ mod tests {
     #[test]
     fn test_every_quantifier_expr_nested_true() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "every $x in (2, 3, 4), $y in (0, 1) satisfies $x gt $y",
         );
         let result = xpath.interpret()?;
@@ -1252,8 +1303,9 @@ mod tests {
     #[test]
     fn test_every_quantifier_expr_nested_false() -> Result<()> {
         let xot = Xot::new();
+        let context = Context::new(&xot);
         let xpath = CompiledXPath::new(
-            &xot,
+            &context,
             "every $x in (2, 3, 4), $y in (1, 2) satisfies $x gt $y",
         );
         let result = xpath.interpret()?;
@@ -1264,7 +1316,8 @@ mod tests {
     #[test]
     fn test_predicate() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2, 3)[. ge 2]");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2, 3)[. ge 2]");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1279,7 +1332,8 @@ mod tests {
     #[test]
     fn test_predicate_multiple() -> Result<()> {
         let xot = Xot::new();
-        let xpath = CompiledXPath::new(&xot, "(1, 2, 3)[. ge 2][. ge 3]");
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, "(1, 2, 3)[. ge 2][. ge 3]");
         let result = xpath.interpret()?;
         assert_eq!(
             as_sequence(&result),
@@ -1302,13 +1356,19 @@ mod tests {
     #[test]
     fn test_child_axis_step() -> Result<()> {
         let mut xot = Xot::new();
-        let doc = xot.parse(r#"<doc><a/><b/></doc>"#).unwrap();
-        let doc_el = xot.document_element(doc).unwrap();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents
+            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
+            .unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let doc_el = xot.document_element(document.root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         let b = xot.next_sibling(a).unwrap();
 
-        let xpath = CompiledXPath::new(&xot, "doc/*");
-        let result = xpath.interpret_with_xot_node(doc)?;
+        let xpath = CompiledXPath::new(&context, "doc/*");
+        let result = xpath.interpret_with_xot_node(document.root)?;
 
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();
@@ -1319,12 +1379,18 @@ mod tests {
     #[test]
     fn test_descendant_axis_step() -> Result<()> {
         let mut xot = Xot::new();
-        let doc = xot.parse(r#"<doc><a/><b/></doc>"#).unwrap();
-        let doc_el = xot.document_element(doc).unwrap();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents
+            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
+            .unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let doc_el = xot.document_element(document.root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
 
-        let xpath = CompiledXPath::new(&xot, "descendant::a");
-        let result = xpath.interpret_with_xot_node(doc)?;
+        let xpath = CompiledXPath::new(&context, "descendant::a");
+        let result = xpath.interpret_with_xot_node(document.root)?;
 
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();

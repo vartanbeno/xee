@@ -11,6 +11,8 @@ mod annotation;
 mod ast;
 mod ast_interpret;
 mod builder;
+mod context;
+mod document;
 mod error;
 mod instruction;
 mod interpret;

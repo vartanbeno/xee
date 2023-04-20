@@ -3,9 +3,10 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::builder::Program;
+use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instruction, Instruction};
-use crate::static_context::StaticContext;
+
 use crate::step::resolve_step;
 use crate::value::{
     Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId,
@@ -21,20 +22,16 @@ struct Frame {
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
-    static_context: &'a StaticContext<'a>,
+    context: &'a Context<'a>,
     stack: Vec<StackValue>,
     frames: Vec<Frame>,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(
-        program: &'a Program,
-        static_context: &'a StaticContext,
-        context_item: Item,
-    ) -> Self {
+    pub(crate) fn new(program: &'a Program, context: &'a Context, context_item: Item) -> Self {
         Interpreter {
             program,
-            static_context,
+            context,
             stack: vec![StackValue::from_item(context_item)],
             frames: Vec::new(),
         }
@@ -322,7 +319,7 @@ impl<'a> Interpreter<'a> {
                     let step = &function.steps[step_id as usize];
                     let node = self.stack.pop().unwrap();
                     let node = node.as_node().ok_or(Error::TypeError)?;
-                    let new_sequence = resolve_step(step, node, self.static_context.xot);
+                    let new_sequence = resolve_step(step, node, &self.context.xot);
                     self.stack
                         .push(StackValue::Sequence(Rc::new(RefCell::new(new_sequence))));
                 }
@@ -340,6 +337,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_static(&mut self, static_function_id: StaticFunctionId, arity: u8) -> Result<()> {
         let static_function = &self
+            .context
             .static_context
             .functions
             .get_by_index(static_function_id);
@@ -396,9 +394,10 @@ mod tests {
 
         let main_id = program.add_function(function);
         let xot = Xot::new();
-        let static_context = StaticContext::new(&xot);
+        let context = Context::new(&xot);
+
         let mut interpreter =
-            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -450,10 +449,12 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
+
         let xot = Xot::new();
-        let static_context = StaticContext::new(&xot);
+        let context = Context::new(&xot);
+
         let mut interpreter =
-            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -480,10 +481,11 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
+
         let xot = Xot::new();
-        let static_context = StaticContext::new(&xot);
+        let context = Context::new(&xot);
         let mut interpreter =
-            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -511,10 +513,11 @@ mod tests {
         let function = builder.finish("main".to_string(), 0);
 
         let main_id = program.add_function(function);
+
         let xot = Xot::new();
-        let static_context = StaticContext::new(&xot);
+        let context = Context::new(&xot);
         let mut interpreter =
-            Interpreter::new(&program, &static_context, Item::Atomic(Atomic::Integer(0)));
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
