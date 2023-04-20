@@ -1,8 +1,10 @@
+use ahash::{HashSet, HashSetExt};
 use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
 
 use crate::ast;
+use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -231,5 +233,27 @@ impl Sequence {
         let mut items = self.items.clone();
         items.extend(other.items.clone());
         Sequence { items }
+    }
+
+    pub(crate) fn union(&self, other: &Sequence) -> Result<Sequence> {
+        let mut s = HashSet::new();
+        for item in &self.items {
+            let node = match item {
+                Item::Node(node) => node,
+                Item::Atomic(..) => return Err(Error::TypeError),
+                Item::Function(..) => return Err(Error::TypeError),
+            };
+            s.insert(node);
+        }
+        for item in &other.items {
+            let node = match item {
+                Item::Node(node) => node,
+                Item::Atomic(..) => return Err(Error::TypeError),
+                Item::Function(..) => return Err(Error::TypeError),
+            };
+            s.insert(node);
+        }
+        let items = s.into_iter().map(|n| Item::Node(*n)).collect::<Vec<_>>();
+        Ok(Sequence { items })
     }
 }

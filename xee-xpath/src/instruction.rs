@@ -18,6 +18,7 @@ pub(crate) enum Instruction {
     Le,
     Gt,
     Ge,
+    Union,
     Jump(i16),
     JumpIfTrue(i16),
     JumpIfFalse(i16),
@@ -53,6 +54,7 @@ enum EncodedInstruction {
     Le,
     Gt,
     Ge,
+    Union,
     Jump,
     JumpIfTrue,
     JumpIfFalse,
@@ -108,6 +110,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Le => (Instruction::Le, 1),
         EncodedInstruction::Gt => (Instruction::Gt, 1),
         EncodedInstruction::Ge => (Instruction::Ge, 1),
+        EncodedInstruction::Union => (Instruction::Union, 1),
         EncodedInstruction::Jump => {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Jump(displacement), 3)
@@ -188,6 +191,7 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Le => bytes.push(EncodedInstruction::Le.to_u8().unwrap()),
         Instruction::Gt => bytes.push(EncodedInstruction::Gt.to_u8().unwrap()),
         Instruction::Ge => bytes.push(EncodedInstruction::Ge.to_u8().unwrap()),
+        Instruction::Union => bytes.push(EncodedInstruction::Union.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
             bytes.extend_from_slice(&displacement.to_le_bytes());

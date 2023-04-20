@@ -189,6 +189,15 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
                 }
+                Instruction::Union => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_sequence().ok_or(Error::TypeError)?;
+                    let b = b.as_sequence().ok_or(Error::TypeError)?;
+                    let combined = a.borrow().union(&b.borrow())?;
+                    self.stack
+                        .push(StackValue::Sequence(Rc::new(RefCell::new(combined))));
+                }
                 Instruction::Dup => {
                     let a = self.stack.last().unwrap().clone();
                     self.stack.push(a);
