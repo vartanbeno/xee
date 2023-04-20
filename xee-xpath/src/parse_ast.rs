@@ -1,6 +1,6 @@
 use crate::parse::XPathParser;
 use ordered_float::OrderedFloat;
-use pest::iterators::Pair;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 
 use crate::ast;
@@ -145,143 +145,46 @@ impl<'a> AstParser<'a> {
 
                 // ast::ExprSingle::Path(pair_to_path_expr(pair))
             }
-            Rule::AdditiveExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let op = pairs.next();
-                if let Some(op) = op {
-                    let operator = match op.as_rule() {
-                        Rule::Plus => ast::Operator::Add,
-                        Rule::Minus => ast::Operator::Sub,
-                        _ => {
-                            panic!("unhandled AdditiveExpr {:?}", op.as_rule())
-                        }
-                    };
-                    let right_pair = pairs.next().unwrap();
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
+            Rule::AdditiveExpr => self.binary_op(pair, |r| match r {
+                Rule::Plus => ast::Operator::Add,
+                Rule::Minus => ast::Operator::Sub,
+                _ => {
+                    unreachable!("unknown AdditiveExpr {:?}", r)
                 }
-            }
-            Rule::MultiplicativeExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let op = pairs.next();
-                if let Some(op) = op {
-                    let operator = match op.as_rule() {
-                        Rule::Mult => ast::Operator::Mul,
-                        Rule::Div => ast::Operator::Div,
-                        Rule::IDiv => ast::Operator::IDiv,
-                        Rule::Mod => ast::Operator::Mod,
-                        _ => {
-                            panic!("unhandled MultiplicativeExpr {:?}", op.as_rule())
-                        }
-                    };
-                    let right_pair = pairs.next().unwrap();
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
+            }),
+            Rule::MultiplicativeExpr => self.binary_op(pair, |r| match r {
+                Rule::Mult => ast::Operator::Mul,
+                Rule::Div => ast::Operator::Div,
+                Rule::IDiv => ast::Operator::IDiv,
+                Rule::Mod => ast::Operator::Mod,
+                _ => {
+                    unreachable!("unknown MultiplicativeExpr {:?}", r)
                 }
-            }
-            Rule::OrExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let right_pair = pairs.next();
-                if let Some(right_pair) = right_pair {
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator: ast::Operator::Or,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
+            }),
+            Rule::OrExpr => self.binary(pair, ast::Operator::Or),
+            Rule::AndExpr => self.binary(pair, ast::Operator::And),
+            Rule::ComparisonExpr => self.binary_op(pair, |r| match r {
+                Rule::ValueEq => ast::Operator::ValueEq,
+                Rule::ValueNe => ast::Operator::ValueNe,
+                Rule::ValueLt => ast::Operator::ValueLt,
+                Rule::ValueLe => ast::Operator::ValueLe,
+                Rule::ValueGt => ast::Operator::ValueGt,
+                Rule::ValueGe => ast::Operator::ValueGe,
+                Rule::GenEq => ast::Operator::GenEq,
+                Rule::GenNe => ast::Operator::GenNe,
+                Rule::GenLt => ast::Operator::GenLt,
+                Rule::GenLe => ast::Operator::GenLe,
+                Rule::GenGt => ast::Operator::GenGt,
+                Rule::GenGe => ast::Operator::GenGe,
+                Rule::Is => ast::Operator::Is,
+                Rule::Precedes => ast::Operator::Precedes,
+                Rule::Follows => ast::Operator::Follows,
+                _ => {
+                    unreachable!("unknown ComparisonExpr {:?}", r)
                 }
-            }
-            Rule::AndExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let right_pair = pairs.next();
-                if let Some(right_pair) = right_pair {
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator: ast::Operator::And,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
-                }
-            }
-            Rule::ComparisonExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let op = pairs.next();
-                if let Some(op) = op {
-                    let operator = match op.as_rule() {
-                        Rule::ValueEq => ast::Operator::ValueEq,
-                        Rule::ValueNe => ast::Operator::ValueNe,
-                        Rule::ValueLt => ast::Operator::ValueLt,
-                        Rule::ValueLe => ast::Operator::ValueLe,
-                        Rule::ValueGt => ast::Operator::ValueGt,
-                        Rule::ValueGe => ast::Operator::ValueGe,
-                        Rule::GenEq => ast::Operator::GenEq,
-                        Rule::GenNe => ast::Operator::GenNe,
-                        Rule::GenLt => ast::Operator::GenLt,
-                        Rule::GenLe => ast::Operator::GenLe,
-                        Rule::GenGt => ast::Operator::GenGt,
-                        Rule::GenGe => ast::Operator::GenGe,
-                        Rule::Is => ast::Operator::Is,
-                        Rule::Precedes => ast::Operator::Precedes,
-                        Rule::Follows => ast::Operator::Follows,
-                        _ => {
-                            panic!("unhandled ComparisonExpr {:?}", op.as_rule())
-                        }
-                    };
-                    let right_pair = pairs.next().unwrap();
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
-                }
-            }
-            Rule::RangeExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let right_pair = pairs.next();
-                if let Some(right_pair) = right_pair {
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator: ast::Operator::Range,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
-                }
-            }
-            Rule::StringConcatExpr => {
-                let mut pairs = pair.into_inner();
-                let left_pair = pairs.next().unwrap();
-                let right_pair = pairs.next();
-                if let Some(right_pair) = right_pair {
-                    ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator: ast::Operator::Concat,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    })
-                } else {
-                    self.expr_single(left_pair)
-                }
-            }
+            }),
+            Rule::RangeExpr => self.binary(pair, ast::Operator::Range),
+            Rule::StringConcatExpr => self.binary(pair, ast::Operator::Concat),
             Rule::LetExpr => {
                 let mut pairs = pair.into_inner();
                 let let_clause = pairs.next().unwrap();
@@ -360,6 +263,7 @@ impl<'a> AstParser<'a> {
                     else_: Box::new(else_),
                 })
             }
+            // Rule::UnionExpr => {}
             Rule::UnionExpr | Rule::IntersectExceptExpr => {
                 let pair = pair.into_inner().next().unwrap();
                 self.expr_single(pair)
@@ -393,6 +297,42 @@ impl<'a> AstParser<'a> {
                 panic!("unhandled ExprSingle {:?}", pair.as_rule())
             }
         }
+    }
+
+    fn binary_get_operator<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingle
+    where
+        F: Fn(&mut Pairs<Rule>) -> Option<ast::Operator>,
+    {
+        let mut pairs = pair.into_inner();
+        let left_pair = pairs.next().unwrap();
+        let operator = get_operator(&mut pairs);
+        'done: {
+            if let Some(operator) = operator {
+                let right_pair = pairs.next();
+                if let Some(right_pair) = right_pair {
+                    break 'done ast::ExprSingle::Binary(ast::BinaryExpr {
+                        operator,
+                        left: self.pair_to_path_expr(left_pair),
+                        right: self.pair_to_path_expr(right_pair),
+                    });
+                }
+            }
+            self.expr_single(left_pair)
+        }
+    }
+
+    fn binary_op<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingle
+    where
+        F: Fn(Rule) -> ast::Operator,
+    {
+        self.binary_get_operator(pair, |pairs| {
+            let op = pairs.next();
+            op.map(|op| get_operator(op.as_rule()))
+        })
+    }
+
+    fn binary(&self, pair: Pair<Rule>, operator: ast::Operator) -> ast::ExprSingle {
+        self.binary_get_operator(pair, |_| Some(operator))
     }
 
     fn path_expr_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {

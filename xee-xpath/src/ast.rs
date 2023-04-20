@@ -95,7 +95,7 @@ pub(crate) struct BinaryExpr {
     pub(crate) right: PathExpr,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Operator {
     // logical
     Or,
