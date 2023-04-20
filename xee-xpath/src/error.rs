@@ -2,8 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("integer overflow")]
-    IntegerOverflow,
+    #[error("Numeric operation overflow/underflow")]
+    FOAR0002,
     #[error("type error")]
     TypeError,
 }

@@ -69,7 +69,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a.checked_add(b).ok_or(Error::IntegerOverflow)?;
+                    let result = a.checked_add(b).ok_or(Error::FOAR0002)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 Instruction::Sub => {
@@ -79,7 +79,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic().ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a.checked_sub(b).ok_or(Error::IntegerOverflow)?;
+                    let result = a.checked_sub(b).ok_or(Error::FOAR0002)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 Instruction::Const(index) => {
