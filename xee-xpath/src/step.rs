@@ -27,14 +27,27 @@ fn node_take_axis<'a>(
             Box::new(descendants.map(Node::Node))
         }
         ast::Axis::Parent => {
-            let node = xot.parent(node.xot_node());
-            Box::new(node.into_iter().map(Node::Node))
+            let parent_node = match node {
+                Node::Node(node) => xot.parent(node),
+                Node::Attribute(node, _) => Some(node),
+                Node::Namespace(..) => None,
+            };
+            Box::new(parent_node.into_iter().map(Node::Node))
         }
         ast::Axis::Ancestor => {
-            let mut ancestors = xot.ancestors(node.xot_node());
-            // consume the self ancestor
-            ancestors.next();
-            Box::new(ancestors.map(Node::Node))
+            let parent_node = match node {
+                Node::Node(node) => xot.parent(node),
+                Node::Attribute(node, _) => Some(node),
+                Node::Namespace(..) => None,
+            };
+            if let Some(parent_node) = parent_node {
+                let mut ancestors = xot.ancestors(parent_node);
+                // consume the self ancestor
+                ancestors.next();
+                Box::new(ancestors.map(Node::Node))
+            } else {
+                Box::new(std::iter::empty())
+            }
         }
         ast::Axis::FollowingSibling => {
             let mut siblings = xot.following_siblings(node.xot_node());
