@@ -264,11 +264,13 @@ impl<'a> AstParser<'a> {
                 })
             }
             Rule::UnionExpr => self.binary(pair, ast::Operator::Union),
-            Rule::IntersectExceptExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                self.expr_single(pair)
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
-            }
+            Rule::IntersectExceptExpr => self.binary_op(pair, |r| match r {
+                Rule::Intersect => ast::Operator::Intersect,
+                Rule::Except => ast::Operator::Except,
+                _ => {
+                    unreachable!("unknown IntersectExceptExpr {:?}", r)
+                }
+            }),
             Rule::ValueExpr => {
                 let pair = pair.into_inner().next().unwrap();
                 self.expr_single(pair)
@@ -1446,5 +1448,15 @@ mod tests {
     #[test]
     fn test_union() {
         assert_debug_snapshot!(parse_expr_single("child::foo | child::bar"));
+    }
+
+    #[test]
+    fn test_intersect() {
+        assert_debug_snapshot!(parse_expr_single("child::foo intersect child::bar"));
+    }
+
+    #[test]
+    fn test_except() {
+        assert_debug_snapshot!(parse_expr_single("child::foo except child::bar"));
     }
 }

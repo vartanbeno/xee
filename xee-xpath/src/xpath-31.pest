@@ -97,7 +97,10 @@ UnionExpr = { IntersectExceptExpr ~ (("union" | "|") ~ IntersectExceptExpr)* }
 
 // IntersectExceptExpr
 // ::= InstanceofExpr ( ("intersect" | "except") InstanceofExpr )*
-IntersectExceptExpr = { InstanceofExpr ~ (("intersect" | "except") ~ InstanceofExpr)* }
+IntersectExceptExpr = { InstanceofExpr ~ ((Intersect | Except) ~ InstanceofExpr)* }
+
+Intersect = { "intersect" }
+Except    = { "except" }
 
 // InstanceofExpr
 // ::= TreatExpr ( "instance" "of" SequenceType )?
