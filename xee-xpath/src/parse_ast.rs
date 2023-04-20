@@ -307,20 +307,17 @@ impl<'a> AstParser<'a> {
     {
         let mut pairs = pair.into_inner();
         let left_pair = pairs.next().unwrap();
-        let operator = get_operator(&mut pairs);
-        'done: {
-            if let Some(operator) = operator {
-                let right_pair = pairs.next();
-                if let Some(right_pair) = right_pair {
-                    break 'done ast::ExprSingle::Binary(ast::BinaryExpr {
-                        operator,
-                        left: self.pair_to_path_expr(left_pair),
-                        right: self.pair_to_path_expr(right_pair),
-                    });
-                }
-            }
-            self.expr_single(left_pair)
+        let mut binary = self.expr_single(left_pair);
+
+        while let Some(operator) = get_operator(&mut pairs) {
+            let right_pair = pairs.next().expect("operator but no right pair");
+            binary = ast::ExprSingle::Binary(ast::BinaryExpr {
+                operator,
+                left: expr_single_to_path_expr(binary),
+                right: self.pair_to_path_expr(right_pair),
+            })
         }
+        binary
     }
 
     fn binary_op<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingle
@@ -334,7 +331,13 @@ impl<'a> AstParser<'a> {
     }
 
     fn binary(&self, pair: Pair<Rule>, operator: ast::Operator) -> ast::ExprSingle {
-        self.binary_get_operator(pair, |_| Some(operator))
+        self.binary_get_operator(pair, |pairs| {
+            if pairs.peek().is_some() {
+                Some(operator)
+            } else {
+                None
+            }
+        })
     }
 
     fn path_expr_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
@@ -998,6 +1001,17 @@ impl<'a> AstParser<'a> {
     }
 }
 
+fn expr_single_to_path_expr(expr: ast::ExprSingle) -> ast::PathExpr {
+    match expr {
+        ast::ExprSingle::Path(path) => path,
+        _ => ast::PathExpr {
+            steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![
+                expr,
+            ]))],
+        },
+    }
+}
+
 fn root_from_context() -> ast::StepExpr {
     ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
         name: ast::Name {
@@ -1144,6 +1158,11 @@ mod tests {
     #[test]
     fn test_additive_expr() {
         assert_debug_snapshot!(parse_expr_single("1 + 2"));
+    }
+
+    #[test]
+    fn test_additive_expr_repeat() {
+        assert_debug_snapshot!(parse_expr_single("1 + 2 + 3"));
     }
 
     #[test]
