@@ -696,7 +696,7 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_xot_node(&self, node: xot::Node) -> Result<StackValue> {
-        self.interpret_with_context(Item::Node(Node::Node(node)))
+        self.interpret_with_context(Item::Node(Node::Xot(node)))
     }
 }
 
@@ -724,7 +724,7 @@ mod tests {
         Sequence {
             items: node
                 .iter()
-                .map(|&node| Item::Node(Node::Node(node)))
+                .map(|&node| Item::Node(Node::Xot(node)))
                 .collect(),
         }
     }

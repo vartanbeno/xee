@@ -19,68 +19,61 @@ fn node_take_axis<'a>(
     node: Node,
 ) -> Box<dyn Iterator<Item = Node> + 'a> {
     match axis {
-        ast::Axis::Child => Box::new(xot.children(node.xot_node()).map(Node::Node)),
-        ast::Axis::Descendant => {
-            let mut descendants = xot.descendants(node.xot_node());
-            // consume the self descendant
+        ast::Axis::Child => node.xot_iterator(|n| xot.children(n)),
+        ast::Axis::Descendant => node.xot_iterator(|n| {
+            let mut descendants = xot.descendants(n);
+            // since this includes self we get rid of it here
             descendants.next();
-            Box::new(descendants.map(Node::Node))
-        }
+            descendants
+        }),
         ast::Axis::Parent => {
-            let parent_node = match node {
-                Node::Node(node) => xot.parent(node),
-                Node::Attribute(node, _) => Some(node),
-                Node::Namespace(..) => None,
-            };
-            Box::new(parent_node.into_iter().map(Node::Node))
+            let parent_node = node.parent(xot);
+            Box::new(parent_node.into_iter())
         }
         ast::Axis::Ancestor => {
-            let parent_node = match node {
-                Node::Node(node) => xot.parent(node),
-                Node::Attribute(node, _) => Some(node),
-                Node::Namespace(..) => None,
-            };
-            if let Some(parent_node) = parent_node {
-                let mut ancestors = xot.ancestors(parent_node);
-                // consume the self ancestor
-                ancestors.next();
-                Box::new(ancestors.map(Node::Node))
-            } else {
-                Box::new(std::iter::empty())
-            }
+            let parent_node = node.parent(xot);
+            // the ancestors of the parents include self, which is
+            // what we want as the parent is already taken
+            // We can't get a Node::Attribute or Node::Namespace
+            // because we just took the parent
+            parent_node.map_or(Box::new(std::iter::empty()), |node| {
+                node.xot_iterator(|n| xot.ancestors(n))
+            })
         }
-        ast::Axis::FollowingSibling => {
-            let mut siblings = xot.following_siblings(node.xot_node());
+        ast::Axis::FollowingSibling => node.xot_iterator(|n| {
+            let mut siblings = xot.following_siblings(n);
             // consume the self sibling
             siblings.next();
-            Box::new(siblings.map(Node::Node))
-        }
-        ast::Axis::PrecedingSibling => {
-            let mut siblings = xot.preceding_siblings(node.xot_node());
+            siblings
+        }),
+        ast::Axis::PrecedingSibling => node.xot_iterator(|n| {
+            let mut siblings = xot.preceding_siblings(n);
             // consume the self sibling
             siblings.next();
-            Box::new(siblings.map(Node::Node))
-        }
+            siblings
+        }),
         ast::Axis::Following => {
             todo!("following not supported yet")
         }
         ast::Axis::Preceding => {
             todo!("preceding not supported yet");
         }
-        ast::Axis::Attribute => {
-            let xot_node = node.xot_node();
-            let element = xot.element(xot_node);
-            if let Some(element) = element {
-                Box::new(
-                    element
-                        .attributes()
-                        .keys()
-                        .map(move |name| Node::Attribute(xot_node, *name)),
-                )
-            } else {
-                Box::new(std::iter::empty())
+        ast::Axis::Attribute => match node {
+            Node::Xot(node) => {
+                let element = xot.element(node);
+                if let Some(element) = element {
+                    Box::new(
+                        element
+                            .attributes()
+                            .keys()
+                            .map(move |name| Node::Attribute(node, *name)),
+                    )
+                } else {
+                    Box::new(std::iter::empty())
+                }
             }
-        }
+            Node::Attribute(..) | Node::Namespace(..) => Box::new(std::iter::empty()),
+        },
         ast::Axis::Namespace => {
             // namespaces aren't Node in Xot either
             todo!("namespaces not supported yet");
@@ -89,8 +82,8 @@ fn node_take_axis<'a>(
             let vec = vec![node];
             Box::new(vec.into_iter())
         }
-        ast::Axis::DescendantOrSelf => Box::new(xot.descendants(node.xot_node()).map(Node::Node)),
-        ast::Axis::AncestorOrSelf => Box::new(xot.ancestors(node.xot_node()).map(Node::Node)),
+        ast::Axis::DescendantOrSelf => node.xot_iterator(|n| xot.descendants(n)),
+        ast::Axis::AncestorOrSelf => node.xot_iterator(|n| xot.ancestors(n)),
     }
 }
 
@@ -110,7 +103,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                     // false
                     if let Some(name_id) = name_id {
                         match node {
-                            Node::Node(node) => {
+                            Node::Xot(node) => {
                                 if let Some(element) = xot.element(node) {
                                     element.name() == name_id
                                 } else {
@@ -126,7 +119,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                 }
                 ast::NameTest::Star => true,
                 ast::NameTest::LocalName(local_name) => match node {
-                    Node::Node(node) => {
+                    Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
                             let (_, name_str) = xot.name_ns_str(name_id);
@@ -142,7 +135,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                     Node::Namespace(..) => false,
                 },
                 ast::NameTest::Namespace(uri) => match node {
-                    Node::Node(node) => {
+                    Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
                             let (namespace_str, _) = xot.name_ns_str(name_id);
@@ -195,7 +188,7 @@ enum NodeKind {
 
 fn node_kind(xot: &Xot, node: Node) -> NodeKind {
     match node {
-        Node::Node(node) => {
+        Node::Xot(node) => {
             let node = xot.value_type(node);
             match node {
                 ValueType::Element => NodeKind::Element,
@@ -226,7 +219,7 @@ mod tests {
         Sequence {
             items: node
                 .iter()
-                .map(|&node| Item::Node(Node::Node(node)))
+                .map(|&node| Item::Node(Node::Xot(node)))
                 .collect(),
         }
     }
@@ -243,7 +236,7 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Star),
         };
-        let sequence = resolve_step(&step, Node::Node(doc_el), &xot);
+        let sequence = resolve_step(&step, Node::Xot(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a, b]));
         Ok(())
     }
@@ -262,7 +255,7 @@ mod tests {
                 namespace: None,
             })),
         };
-        let sequence = resolve_step(&step, Node::Node(doc_el), &xot);
+        let sequence = resolve_step(&step, Node::Xot(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a]));
         Ok(())
     }

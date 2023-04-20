@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use xot::Xot;
 
 use crate::ast;
 use crate::instruction::{decode_instructions, Instruction};
@@ -30,17 +31,30 @@ pub(crate) struct Step {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) enum Node {
-    Node(xot::Node),
+    Xot(xot::Node),
     Attribute(xot::Node, xot::NameId),
     Namespace(xot::Node, xot::PrefixId),
 }
 
 impl Node {
-    pub(crate) fn xot_node(&self) -> xot::Node {
+    pub(crate) fn parent(&self, xot: &Xot) -> Option<Node> {
         match self {
-            Node::Node(node) => *node,
-            Node::Attribute(node, _) => *node,
-            Node::Namespace(node, _) => *node,
+            Node::Xot(node) => xot.parent(*node).map(Self::Xot),
+            Node::Attribute(node, _) => Some(Self::Xot(*node)),
+            Node::Namespace(..) => None,
+        }
+    }
+
+    // if node is a Node::Xot, then we can apply a Xot iterator to it and then wrap them
+    // with Node::Xot and box the results. Otherwise we always get an empty iterator.
+    pub(crate) fn xot_iterator<'a, F, G>(&self, f: F) -> Box<dyn Iterator<Item = Node> + 'a>
+    where
+        G: Iterator<Item = xot::Node> + 'a,
+        F: Fn(xot::Node) -> G,
+    {
+        match self {
+            Node::Xot(node) => Box::new(f(*node).map(Node::Xot)),
+            Node::Attribute(..) | Node::Namespace(..) => Box::new(std::iter::empty()),
         }
     }
 }
