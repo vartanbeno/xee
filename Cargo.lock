@@ -1168,6 +1168,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "insta",
+ "next-gen",
  "num",
  "num-derive",
  "num-traits",
