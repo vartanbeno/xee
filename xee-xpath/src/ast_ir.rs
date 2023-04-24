@@ -120,7 +120,9 @@ impl Converter {
                     (atom, bindings)
                 })
         } else {
-            todo!()
+            let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::EmptySequence));
+            let (atom, binding) = self.new_binding(expr);
+            (atom, vec![binding])
         }
     }
 
@@ -210,5 +212,10 @@ mod tests {
     #[test]
     fn test_comma2() {
         assert_debug_snapshot!(convert_xpath("1, 2, 3"));
+    }
+
+    #[test]
+    fn test_empty_sequence() {
+        assert_debug_snapshot!(convert_xpath("()"));
     }
 }

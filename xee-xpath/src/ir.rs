@@ -24,6 +24,7 @@ pub(crate) enum Atom {
 pub(crate) enum Const {
     Integer(i64),
     String(String),
+    EmptySequence,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
