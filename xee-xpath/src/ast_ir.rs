@@ -101,24 +101,24 @@ impl Converter {
         if !exprs.is_empty() {
             let first_expr = &exprs[0];
             let rest_exprs = &exprs[1..];
-            if rest_exprs.is_empty() {
-                self.expr_single(first_expr)
-            } else {
-                let (left_atom, left_bindings) = self.expr_single(first_expr);
-                let (right_atom, right_bindings) = self.exprs(rest_exprs);
-                let expr = ir::Expr::Binary(ir::Binary {
-                    left: left_atom,
-                    binary_op: ir::BinaryOp::Comma,
-                    right: right_atom,
-                });
-                let (atom, binding) = self.new_binding(expr);
-                let bindings = left_bindings
-                    .into_iter()
-                    .chain(right_bindings.into_iter())
-                    .chain(iter::once(binding))
-                    .collect();
-                (atom, bindings)
-            }
+            rest_exprs
+                .iter()
+                .fold(self.expr_single(first_expr), |acc, expr| {
+                    let (left_atom, left_bindings) = acc;
+                    let (right_atom, right_bindings) = self.expr_single(expr);
+                    let expr = ir::Expr::Binary(ir::Binary {
+                        left: left_atom,
+                        binary_op: ir::BinaryOp::Comma,
+                        right: right_atom,
+                    });
+                    let (atom, binding) = self.new_binding(expr);
+                    let bindings = left_bindings
+                        .into_iter()
+                        .chain(right_bindings.into_iter())
+                        .chain(iter::once(binding))
+                        .collect();
+                    (atom, bindings)
+                })
         } else {
             todo!()
         }
@@ -205,5 +205,10 @@ mod tests {
     #[test]
     fn test_comma() {
         assert_debug_snapshot!(convert_xpath("1, 2"));
+    }
+
+    #[test]
+    fn test_comma2() {
+        assert_debug_snapshot!(convert_xpath("1, 2, 3"));
     }
 }
