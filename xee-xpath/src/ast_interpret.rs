@@ -1426,6 +1426,21 @@ mod tests {
     }
 
     // #[test]
+    // fn test_add_right_with_let() -> Result<()> {
+    //     let xot = Xot::new();
+    //     let context = Context::new(&xot);
+
+    //     // this demonstrates the simplest program where a let expression fails
+    //     // instead of returning the value of the let expression, it returns the
+    //     // 0 that's at the bottom of the stack, as it's off by one
+    //     let xpath = CompiledXPath::new(&context, "1 + (let x = 2 return x)");
+
+    //     let result = xpath.interpret()?;
+    //     assert_eq!(as_integer(&result), 3);
+    //     Ok(())
+    // }
+
+    // #[test]
     // fn test_comma_simple_map() -> Result<()> {
     //     let xot = Xot::new();
     //     let context = Context::new(&xot);
