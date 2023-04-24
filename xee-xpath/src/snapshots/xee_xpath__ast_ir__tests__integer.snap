@@ -1,0 +1,11 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"1\")"
+---
+Atom(
+    Const(
+        Integer(
+            1,
+        ),
+    ),
+)

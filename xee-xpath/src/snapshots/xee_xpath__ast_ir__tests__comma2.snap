@@ -5,7 +5,7 @@ expression: "convert_xpath(\"1, 2, 3\")"
 Let(
     Let {
         name: Name(
-            "v0",
+            "v2",
         ),
         var_expr: Binary(
             Binary {
@@ -26,7 +26,7 @@ Let(
             Binary {
                 left: Variable(
                     Name(
-                        "v0",
+                        "v2",
                     ),
                 ),
                 binary_op: Comma,

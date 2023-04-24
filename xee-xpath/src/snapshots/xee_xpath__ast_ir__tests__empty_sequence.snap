@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/src/ast_ir.rs
-assertion_line: 219
 expression: "convert_xpath(\"()\")"
 ---
 Atom(
