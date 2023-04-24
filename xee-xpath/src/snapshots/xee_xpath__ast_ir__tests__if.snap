@@ -1,0 +1,65 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"if (1 gt 2) then 1 + 2 else 3 + 4\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v0",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                binary_op: Gt,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: If(
+            If {
+                condition: Variable(
+                    Name(
+                        "v0",
+                    ),
+                ),
+                then: Binary(
+                    Binary {
+                        left: Const(
+                            Integer(
+                                1,
+                            ),
+                        ),
+                        binary_op: Add,
+                        right: Const(
+                            Integer(
+                                2,
+                            ),
+                        ),
+                    },
+                ),
+                else_: Binary(
+                    Binary {
+                        left: Const(
+                            Integer(
+                                3,
+                            ),
+                        ),
+                        binary_op: Add,
+                        right: Const(
+                            Integer(
+                                4,
+                            ),
+                        ),
+                    },
+                ),
+            },
+        ),
+    },
+)

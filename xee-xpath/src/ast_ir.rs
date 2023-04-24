@@ -50,7 +50,8 @@ impl Converter {
     fn expr_single(&mut self, ast: &ast::ExprSingle) -> (ir::Atom, Vec<Binding>) {
         match ast {
             ast::ExprSingle::Binary(ast) => self.binary_expr(ast),
-            _ => todo!(),
+            ast::ExprSingle::If(ast) => self.if_expr(ast),
+            _ => todo!("expr_single: {:?}", ast),
         }
     }
 
@@ -113,7 +114,8 @@ impl Converter {
     fn binary_op(&mut self, operator: ast::Operator) -> ir::BinaryOp {
         match operator {
             ast::Operator::Add => ir::BinaryOp::Add,
-            _ => todo!(),
+            ast::Operator::ValueGt => ir::BinaryOp::Gt,
+            _ => todo!("binary_op: {:?}", operator),
         }
     }
 
@@ -155,5 +157,10 @@ mod tests {
     #[test]
     fn test_add2() {
         assert_debug_snapshot!(convert_expr_single("1 + 2 + 3"));
+    }
+
+    #[test]
+    fn test_if() {
+        assert_debug_snapshot!(convert_expr_single("if (1 gt 2) then 1 + 2 else 3 + 4"));
     }
 }
