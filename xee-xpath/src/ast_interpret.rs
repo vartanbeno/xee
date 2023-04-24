@@ -31,11 +31,14 @@ impl<'a> InterpreterCompiler<'a> {
         let first_expr = iter.next();
         if let Some(first_expr) = first_expr {
             self.compile_expr_single(first_expr);
-
+            self.scopes.push_dummy();
             for expr in iter {
                 self.compile_expr_single(expr);
+                self.scopes.pop_dummy();
                 self.builder.emit(Instruction::Comma);
+                self.scopes.push_dummy();
             }
+            self.scopes.pop_dummy();
         } else {
             self.builder.emit(Instruction::SequenceNew);
         }
@@ -48,7 +51,9 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ast::ExprSingle::Binary(binary_expr) => {
                 self.compile_path_expr(&binary_expr.left);
+                self.scopes.push_dummy();
                 self.compile_path_expr(&binary_expr.right);
+                self.scopes.pop_dummy();
                 match binary_expr.operator {
                     ast::Operator::Add => {
                         self.builder.emit(Instruction::Add);
@@ -341,9 +346,16 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_call(&mut self, arguments: &[ast::ExprSingle]) {
+        // the function reference itself on the stack
+        self.scopes.push_dummy();
         for argument in arguments {
             self.compile_expr_single(argument);
+            self.scopes.push_dummy();
         }
+        for _ in 0..arguments.len() {
+            self.scopes.pop_dummy();
+        }
+        self.scopes.pop_dummy();
         self.builder.emit(Instruction::Call(arguments.len() as u8));
     }
 
@@ -1425,92 +1437,165 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_add_right_with_let() -> Result<()> {
-    //     let xot = Xot::new();
-    //     let context = Context::new(&xot);
+    #[test]
+    fn test_add_right_with_let() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
 
-    //     // this demonstrates the simplest program where a let expression fails
-    //     // instead of returning the value of the let expression, it returns the
-    //     // 0 that's at the bottom of the stack, as it's off by one
-    //     let xpath = CompiledXPath::new(&context, "1 + (let x = 2 return x)");
+        // this demonstrates the simplest program where a let expression fails
+        // instead of returning the value of the let expression, it returns the
+        // 0 that's at the bottom of the stack, as it's off by one
+        let xpath = CompiledXPath::new(&context, "1 + (let $x := 2 return $x)");
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 3);
+        Ok(())
+    }
 
-    //     let result = xpath.interpret()?;
-    //     assert_eq!(as_integer(&result), 3);
-    //     Ok(())
-    // }
+    #[test]
+    fn test_if_with_let() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(
+            &context,
+            "if (1) then (let $x := 2 return $x) else (let $x := 3 return $x)",
+        );
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 2);
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_comma_simple_map() -> Result<()> {
-    //     let xot = Xot::new();
-    //     let context = Context::new(&xot);
+    #[test]
+    fn test_if_with_let2() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(
+            &context,
+            "if (0) then (let $x := 2 return $x) else (let $x := 3 return $x)",
+        );
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 3);
+        Ok(())
+    }
 
-    //     let xpath = CompiledXPath::new(&context, "(1, 2), (3, 4) ! .");
-    //     dbg!(xpath.program.functions[0].decoded());
+    #[test]
+    fn test_comma_simple_map() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
 
-    //     let result = xpath.interpret()?;
+        let xpath = CompiledXPath::new(&context, "(1, 2), (3, 4) ! (. + 1)");
 
-    //     let sequence = as_sequence(&result);
-    //     let sequence = sequence.borrow();
-    //     assert_eq!(
-    //         *sequence,
-    //         Sequence::from_vec(vec![
-    //             Item::Atomic(Atomic::Integer(1)),
-    //             Item::Atomic(Atomic::Integer(2)),
-    //             Item::Atomic(Atomic::Integer(3)),
-    //             Item::Atomic(Atomic::Integer(4))
-    //         ])
-    //     );
-    //     Ok(())
-    // }
+        let result = xpath.interpret()?;
 
-    // #[test]
-    // fn test_comma_nodes() -> Result<()> {
-    //     let mut xot = Xot::new();
-    //     let uri = Uri("http://example.com".to_string());
-    //     let mut documents = Documents::new();
-    //     documents
-    //         .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
-    //         .unwrap();
-    //     let context = Context::with_documents(&xot, &documents);
-    //     let document = documents.get(&uri).unwrap();
-    //     let doc_el = xot.document_element(document.root).unwrap();
-    //     let a = xot.first_child(doc_el).unwrap();
-    //     let b = xot.next_sibling(a).unwrap();
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(
+            *sequence,
+            Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(1)),
+                Item::Atomic(Atomic::Integer(2)),
+                Item::Atomic(Atomic::Integer(4)),
+                Item::Atomic(Atomic::Integer(5))
+            ])
+        );
+        Ok(())
+    }
 
-    //     let xpath = CompiledXPath::new(&context, "doc/b , doc/a");
-    //     // dbg!(xpath.program.functions[0].decoded());
+    #[test]
+    fn test_comma_simple_map2() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
 
-    //     let result = xpath.interpret_with_xot_node(document.root)?;
+        let xpath = CompiledXPath::new(&context, "(1, 2), (3, 4), (5, 6) ! (. + 1)");
+        dbg!(&xpath.program.functions[0].decoded());
 
-    //     let sequence = as_sequence(&result);
-    //     let sequence = sequence.borrow();
-    //     assert_eq!(*sequence, xot_nodes_to_sequence(&[b, a]));
-    //     Ok(())
-    // }
+        let result = xpath.interpret()?;
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(
+            *sequence,
+            Sequence::from_vec(vec![
+                Item::Atomic(Atomic::Integer(1)),
+                Item::Atomic(Atomic::Integer(2)),
+                Item::Atomic(Atomic::Integer(3)),
+                Item::Atomic(Atomic::Integer(4)),
+                Item::Atomic(Atomic::Integer(6)),
+                Item::Atomic(Atomic::Integer(7))
+            ])
+        );
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_union() -> Result<()> {
-    //     let mut xot = Xot::new();
-    //     let uri = Uri("http://example.com".to_string());
-    //     let mut documents = Documents::new();
-    //     documents
-    //         .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
-    //         .unwrap();
-    //     let context = Context::with_documents(&xot, &documents);
-    //     let document = documents.get(&uri).unwrap();
-    //     let doc_el = xot.document_element(document.root).unwrap();
-    //     let a = xot.first_child(doc_el).unwrap();
-    //     let b = xot.next_sibling(a).unwrap();
+    #[test]
+    fn test_comma_nodes() -> Result<()> {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents
+            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
+            .unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let doc_el = xot.document_element(document.root).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let b = xot.next_sibling(a).unwrap();
 
-    //     let xpath = CompiledXPath::new(&context, "doc/b | doc/a");
-    //     // dbg!(xpath.program.functions[0].decoded());
+        let xpath = CompiledXPath::new(&context, "doc/b , doc/a");
 
-    //     let result = xpath.interpret_with_xot_node(document.root)?;
+        let result = xpath.interpret_with_xot_node(document.root)?;
 
-    //     let sequence = as_sequence(&result);
-    //     let sequence = sequence.borrow();
-    //     assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
-    //     Ok(())
-    // }
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[b, a]));
+        Ok(())
+    }
+
+    #[test]
+    fn test_call_with_let() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(
+            &context,
+            "function($x, $y) { $x + $y }(let $a := 1 return $a, let $b := 2 return $b)",
+        );
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 3);
+        Ok(())
+    }
+
+    #[test]
+    fn test_call_with_let2() -> Result<()> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(
+            &context,
+            "let $a := 1 return function($x, $y) { $x + $y }($a, let $b := 2 return $b)",
+        );
+        let result = xpath.interpret()?;
+        assert_eq!(as_integer(&result), 3);
+        Ok(())
+    }
+
+    #[test]
+    fn test_union() -> Result<()> {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents
+            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
+            .unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let doc_el = xot.document_element(document.root).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+
+        let xpath = CompiledXPath::new(&context, "doc/a | doc/b");
+
+        let result = xpath.interpret_with_xot_node(document.root)?;
+
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
+        Ok(())
+    }
 }

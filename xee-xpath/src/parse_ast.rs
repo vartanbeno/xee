@@ -294,7 +294,6 @@ impl<'a> AstParser<'a> {
                     })
                 }
             }
-
             _ => {
                 panic!("unhandled ExprSingle {:?}", pair.as_rule())
             }
@@ -1037,14 +1036,24 @@ where
     f(pair)
 }
 
+fn parse_rule_start_end<T, F>(rule: Rule, input: &str, f: F) -> T
+where
+    F: Fn(Pair<Rule>) -> T,
+{
+    let mut pairs = XPathParser::parse(rule, input).unwrap();
+    let mut pairs = pairs.next().unwrap().into_inner();
+    let pair = pairs.next().unwrap();
+    f(pair)
+}
+
 pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
     let ast_parser = AstParser::new();
-    parse_rule(Rule::ExprSingle, input, |p| ast_parser.expr_single(p))
+    parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p))
 }
 
 pub(crate) fn parse_xpath(input: &str) -> ast::XPath {
     let ast_parser = AstParser::new();
-    parse_rule(Rule::Expr, input, |p| ast_parser.xpath(p))
+    parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p))
 }
 
 #[cfg(test)]

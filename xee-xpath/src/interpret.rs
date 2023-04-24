@@ -191,7 +191,9 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_sequence().ok_or(Error::TypeError)?;
                     let b = b.as_sequence().ok_or(Error::TypeError)?;
-                    let combined = a.borrow().union(&b.borrow())?;
+                    let combined = a
+                        .borrow()
+                        .union(&b.borrow(), &self.context.documents.annotations)?;
                     self.stack
                         .push(StackValue::Sequence(Rc::new(RefCell::new(combined))));
                 }
@@ -295,7 +297,6 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
                     let index = index.as_atomic().ok_or(Error::TypeError)?;
                     let index = index.as_integer().ok_or(Error::TypeError)?;
-                    dbg!(&self.stack, &sequence, index);
                     let item = sequence.borrow().items[index as usize].clone();
                     match item {
                         Item::Atomic(atomic) => {

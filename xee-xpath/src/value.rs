@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
 
+use crate::annotation::Annotations;
 use crate::ast;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
@@ -235,11 +236,11 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn union(&self, other: &Sequence) -> Result<Sequence> {
+    pub(crate) fn union(&self, other: &Sequence, annotations: &Annotations) -> Result<Sequence> {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
-                Item::Node(node) => node,
+                Item::Node(node) => *node,
                 Item::Atomic(..) => return Err(Error::TypeError),
                 Item::Function(..) => return Err(Error::TypeError),
             };
@@ -247,13 +248,18 @@ impl Sequence {
         }
         for item in &other.items {
             let node = match item {
-                Item::Node(node) => node,
+                Item::Node(node) => *node,
                 Item::Atomic(..) => return Err(Error::TypeError),
                 Item::Function(..) => return Err(Error::TypeError),
             };
             s.insert(node);
         }
-        let items = s.into_iter().map(|n| Item::Node(*n)).collect::<Vec<_>>();
+
+        // sort nodes by document order
+        let mut nodes = s.into_iter().collect::<Vec<_>>();
+        nodes.sort_by_key(|n| annotations.document_order(*n));
+
+        let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
         Ok(Sequence { items })
     }
 }

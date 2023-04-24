@@ -4,6 +4,8 @@ COMMENT    = _{ Comment }
 // XPath    ::= Expr
 Xpath = { SOI ~ Expr ~ EOI }
 
+OuterExprSingle = { SOI ~ ExprSingle ~ EOI }
+
 // ParamList
 // ::= Param ("," Param)*
 ParamList = { Param ~ ("," ~ Param)* }

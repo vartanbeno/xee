@@ -27,12 +27,17 @@ impl Scope {
 #[derive(Debug)]
 pub(crate) struct Scopes {
     scopes: Vec<Scope>,
+    dummy: ast::Name,
 }
 
 impl Scopes {
     pub(crate) fn new() -> Self {
         Self {
             scopes: vec![Scope::new()],
+            dummy: ast::Name {
+                name: "dummy".to_string(),
+                namespace: None,
+            },
         }
     }
 
@@ -48,8 +53,16 @@ impl Scopes {
         self.scopes.last_mut().unwrap().names.push(name.clone());
     }
 
+    pub(crate) fn push_dummy(&mut self) {
+        self.push_name(&self.dummy.clone());
+    }
+
     pub(crate) fn pop_name(&mut self) {
         self.scopes.last_mut().unwrap().names.pop();
+    }
+
+    pub(crate) fn pop_dummy(&mut self) {
+        self.pop_name();
     }
 
     pub(crate) fn get(&self, name: &ast::Name) -> Option<usize> {
