@@ -1,0 +1,19 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_xpath(\"1, 2\")"
+---
+Binary(
+    Binary {
+        left: Const(
+            Integer(
+                1,
+            ),
+        ),
+        binary_op: Comma,
+        right: Const(
+            Integer(
+                2,
+            ),
+        ),
+    },
+)

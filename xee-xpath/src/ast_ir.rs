@@ -42,15 +42,25 @@ impl Converter {
         })
     }
 
-    fn convert(&mut self, ast: &ast::ExprSingle) -> ir::Expr {
+    fn convert_expr_single(&mut self, ast: &ast::ExprSingle) -> ir::Expr {
         let (_, bindings) = self.expr_single(ast);
         self.bind(&bindings)
+    }
+
+    fn convert_xpath(&mut self, ast: &ast::XPath) -> ir::Expr {
+        let (_, bindings) = self.xpath(ast);
+        self.bind(&bindings)
+    }
+
+    fn xpath(&mut self, ast: &ast::XPath) -> (ir::Atom, Vec<Binding>) {
+        self.exprs(&ast.exprs)
     }
 
     fn expr_single(&mut self, ast: &ast::ExprSingle) -> (ir::Atom, Vec<Binding>) {
         match ast {
             ast::ExprSingle::Binary(ast) => self.binary_expr(ast),
             ast::ExprSingle::If(ast) => self.if_expr(ast),
+            ast::ExprSingle::Path(ast) => self.path_expr(ast),
             _ => todo!("expr_single: {:?}", ast),
         }
     }
@@ -71,7 +81,7 @@ impl Converter {
         match ast {
             ast::PrimaryExpr::Literal(ast) => self.literal(ast),
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast),
-            ast::PrimaryExpr::Expr(exprs) => self.primary_exprs(exprs),
+            ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -87,9 +97,31 @@ impl Converter {
         todo!();
     }
 
-    fn primary_exprs(&mut self, exprs: &[ast::ExprSingle]) -> (ir::Atom, Vec<Binding>) {
-        // XXX just take the first, which is wrong
-        self.expr_single(&exprs[0])
+    fn exprs(&mut self, exprs: &[ast::ExprSingle]) -> (ir::Atom, Vec<Binding>) {
+        if !exprs.is_empty() {
+            let first_expr = &exprs[0];
+            let rest_exprs = &exprs[1..];
+            if rest_exprs.is_empty() {
+                self.expr_single(first_expr)
+            } else {
+                let (left_atom, left_bindings) = self.expr_single(first_expr);
+                let (right_atom, right_bindings) = self.exprs(rest_exprs);
+                let expr = ir::Expr::Binary(ir::Binary {
+                    left: left_atom,
+                    binary_op: ir::BinaryOp::Comma,
+                    right: right_atom,
+                });
+                let (atom, binding) = self.new_binding(expr);
+                let bindings = left_bindings
+                    .into_iter()
+                    .chain(right_bindings.into_iter())
+                    .chain(iter::once(binding))
+                    .collect();
+                (atom, bindings)
+            }
+        } else {
+            todo!()
+        }
     }
 
     fn binary_expr(&mut self, ast: &ast::BinaryExpr) -> (ir::Atom, Vec<Binding>) {
@@ -141,7 +173,13 @@ impl Converter {
 fn convert_expr_single(s: &str) -> ir::Expr {
     let ast = crate::parse_ast::parse_expr_single(s);
     let mut converter = Converter::new();
-    converter.convert(&ast)
+    converter.convert_expr_single(&ast)
+}
+
+fn convert_xpath(s: &str) -> ir::Expr {
+    let ast = crate::parse_ast::parse_xpath(s);
+    let mut converter = Converter::new();
+    converter.convert_xpath(&ast)
 }
 
 #[cfg(test)]
@@ -162,5 +200,10 @@ mod tests {
     #[test]
     fn test_if() {
         assert_debug_snapshot!(convert_expr_single("if (1 gt 2) then 1 + 2 else 3 + 4"));
+    }
+
+    #[test]
+    fn test_comma() {
+        assert_debug_snapshot!(convert_xpath("1, 2"));
     }
 }
