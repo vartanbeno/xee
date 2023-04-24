@@ -1,0 +1,42 @@
+---
+source: xee-xpath/src/ast_ir.rs
+assertion_line: 157
+expression: "convert_expr_single(\"1 + 2 + 3\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v0",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                binary_op: Add,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: Binary(
+            Binary {
+                left: Variable(
+                    Name(
+                        "v0",
+                    ),
+                ),
+                binary_op: Add,
+                right: Const(
+                    Integer(
+                        3,
+                    ),
+                ),
+            },
+        ),
+    },
+)
