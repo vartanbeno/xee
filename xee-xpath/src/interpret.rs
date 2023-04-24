@@ -321,7 +321,7 @@ impl<'a> Interpreter<'a> {
                     let step = &function.steps[step_id as usize];
                     let node = self.stack.pop().unwrap();
                     let node = node.as_node().ok_or(Error::TypeError)?;
-                    let new_sequence = resolve_step(step, node, &self.context.xot);
+                    let new_sequence = resolve_step(step, node, self.context.xot);
                     self.stack
                         .push(StackValue::Sequence(Rc::new(RefCell::new(new_sequence))));
                 }
