@@ -1590,7 +1590,7 @@ mod tests {
         let b = xot.next_sibling(a).unwrap();
         let c = xot.next_sibling(b).unwrap();
 
-        let xpath = CompiledXPath::new(&context, "doc/c | doc/a | doc/b");
+        let xpath = CompiledXPath::new(&context, "doc/c | doc/a | doc/b | doc/a");
 
         let result = xpath.interpret_with_xot_node(document.root)?;
 
