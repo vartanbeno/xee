@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/src/ast_ir.rs
-assertion_line: 597
 expression: "convert_expr_single(\"(1, 2) / (. + 1)\")"
 ---
 Let(

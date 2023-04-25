@@ -596,4 +596,9 @@ mod tests {
     fn test_path_expr() {
         assert_debug_snapshot!(convert_expr_single("(1, 2) / (. + 1)"));
     }
+
+    #[test]
+    fn test_nested_path_expr() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2) / (. + 1) / (. + 2)"));
+    }
 }
