@@ -412,4 +412,11 @@ mod tests {
             "function() { let $x := 3 return function() { $x + 2 } }()()"
         ));
     }
+
+    #[test]
+    fn test_function_closure_with_multiple_variables() {
+        assert_debug_snapshot!(&run(
+            "function() { let $x := 3, $y := 1 return function() { $x - $y } }()()"
+        ));
+    }
 }
