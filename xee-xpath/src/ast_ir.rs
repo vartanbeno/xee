@@ -1,5 +1,4 @@
 use ahash::{HashMap, HashMapExt};
-use std::iter;
 
 use crate::ast;
 use crate::ir;
@@ -73,13 +72,13 @@ impl Bindings {
         atoms
     }
 
-    fn once(&self, binding: Binding) -> Self {
+    fn bind(&self, binding: Binding) -> Self {
         let mut bindings = self.clone();
         bindings.bindings.push(binding);
         bindings
     }
 
-    fn chain(&self, bindings: Bindings) -> Self {
+    fn concat(&self, bindings: Bindings) -> Self {
         let mut result = self.clone();
         result.bindings.extend(bindings.bindings);
         result
@@ -132,19 +131,6 @@ impl Converter {
         let name = self.new_name();
         Binding { name, expr }
     }
-
-    // fn bind(&mut self, bindings: &Bindings) -> ir::Expr {
-    //     let last_binding = &bindings.last().unwrap();
-    //     let bindings = &bindings[..bindings.len() - 1];
-    //     let expr = last_binding.expr.clone();
-    //     bindings.iter().rev().fold(expr, |expr, binding| {
-    //         ir::Expr::Let(ir::Let {
-    //             name: binding.name.clone(),
-    //             var_expr: Box::new(binding.expr.clone()),
-    //             return_expr: Box::new(expr),
-    //         })
-    //     })
-    // }
 
     fn convert_expr_single(&mut self, ast: &ast::ExprSingle) -> ir::Expr {
         let bindings = self.expr_single(ast);
@@ -211,7 +197,7 @@ impl Converter {
                         return_expr: Box::new(return_bindings.expr()),
                     });
                     let binding = self.new_binding(expr);
-                    bindings.once(binding)
+                    bindings.bind(binding)
                 }
                 ast::Postfix::ArgumentList(exprs) => {
                     let atom = bindings.atom();
@@ -219,7 +205,7 @@ impl Converter {
                     let args = arg_bindings.atoms();
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
                     let binding = self.new_binding(expr);
-                    bindings.chain(arg_bindings).once(binding)
+                    bindings.concat(arg_bindings).bind(binding)
                 }
                 _ => todo!(),
             }
@@ -260,7 +246,7 @@ impl Converter {
                         right: right_bindings.atom(),
                     });
                     let binding = self.new_binding(expr);
-                    left_bindings.chain(right_bindings).once(binding)
+                    left_bindings.concat(right_bindings).bind(binding)
                 })
         } else {
             let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::EmptySequence));
@@ -280,7 +266,7 @@ impl Converter {
         });
         let binding = self.new_binding(expr);
 
-        left_bindings.chain(right_bindings).once(binding)
+        left_bindings.concat(right_bindings).bind(binding)
     }
 
     fn binary_op(&mut self, operator: ast::Operator) -> ir::BinaryOp {
@@ -307,7 +293,7 @@ impl Converter {
                         return_expr: Box::new(return_bindings.expr()),
                     });
                     let binding = self.new_binding(expr);
-                    path_bindings.once(binding)
+                    path_bindings.bind(binding)
                 })
             }
             _ => {
@@ -327,7 +313,7 @@ impl Converter {
             else_: Box::new(else_bindings.expr()),
         });
         let binding = self.new_binding(expr);
-        condition_bindings.once(binding)
+        condition_bindings.bind(binding)
     }
 
     fn let_expr(&mut self, ast: &ast::LetExpr) -> Bindings {
@@ -354,7 +340,7 @@ impl Converter {
         });
 
         let binding = self.new_binding(expr);
-        var_bindings.once(binding)
+        var_bindings.bind(binding)
     }
 
     fn quantified_expr(&mut self, ast: &ast::QuantifiedExpr) -> Bindings {
@@ -370,7 +356,7 @@ impl Converter {
         });
 
         let binding = self.new_binding(expr);
-        var_bindings.once(binding)
+        var_bindings.bind(binding)
     }
 
     fn quantifier(&mut self, quantifier: &ast::Quantifier) -> ir::Quantifier {
