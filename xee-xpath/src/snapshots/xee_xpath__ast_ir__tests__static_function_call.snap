@@ -1,0 +1,27 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"my_function(5, 2)\")"
+---
+FunctionCall(
+    FunctionCall {
+        atom: Const(
+            StaticFunction(
+                StaticFunctionId(
+                    0,
+                ),
+            ),
+        ),
+        args: [
+            Const(
+                Integer(
+                    5,
+                ),
+            ),
+            Const(
+                Integer(
+                    2,
+                ),
+            ),
+        ],
+    },
+)

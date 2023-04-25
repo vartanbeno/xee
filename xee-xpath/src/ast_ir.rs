@@ -2,12 +2,7 @@ use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
 use crate::ir;
-
-struct Converter {
-    counter: usize,
-    variables: HashMap<ast::Name, ir::Name>,
-    context_name: ast::Name,
-}
+use crate::static_context::StaticContext;
 
 #[derive(Debug, Clone)]
 struct Binding {
@@ -85,8 +80,16 @@ impl Bindings {
     }
 }
 
-impl Converter {
-    fn new() -> Self {
+#[derive(Debug)]
+struct Converter<'a> {
+    counter: usize,
+    variables: HashMap<ast::Name, ir::Name>,
+    context_name: ast::Name,
+    static_context: &'a StaticContext,
+}
+
+impl<'a> Converter<'a> {
+    fn new(static_context: &'a StaticContext) -> Self {
         Self {
             counter: 0,
             variables: HashMap::new(),
@@ -94,6 +97,7 @@ impl Converter {
                 name: "xee-context".to_string(),
                 namespace: None,
             },
+            static_context,
         }
     }
 
@@ -178,6 +182,7 @@ impl Converter {
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             ast::PrimaryExpr::ContextItem => self.context_item(),
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast),
+            ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -201,7 +206,7 @@ impl Converter {
                 }
                 ast::Postfix::ArgumentList(exprs) => {
                     let atom = bindings.atom();
-                    let mut arg_bindings = self.exprs(exprs);
+                    let mut arg_bindings = self.args(exprs);
                     let args = arg_bindings.atoms();
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
                     let binding = self.new_binding(expr);
@@ -384,17 +389,49 @@ impl Converter {
     fn param(&mut self, param: &ast::Param) -> ir::Param {
         ir::Param(self.new_var_name(&param.name))
     }
+
+    fn function_call(&mut self, ast: &ast::FunctionCall) -> Bindings {
+        let arity = ast.arguments.len();
+        if arity > u8::MAX as usize {
+            panic!("too many arguments");
+        }
+        let static_function_id = self
+            .static_context
+            .functions
+            .get_by_name(&ast.name, arity as u8)
+            .unwrap();
+        let constant = ir::Const::StaticFunction(static_function_id);
+        let atom = ir::Atom::Const(constant);
+        let mut arg_bindings = self.args(&ast.arguments);
+        let args = arg_bindings.atoms();
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
+        let binding = self.new_binding(expr);
+        arg_bindings.bind(binding)
+    }
+
+    fn args(&mut self, args: &[ast::ExprSingle]) -> Bindings {
+        let first = &args[0];
+        let rest = &args[1..];
+        let bindings = self.expr_single(first);
+        rest.iter().fold(bindings, |bindings, arg| {
+            let bindings = bindings;
+            let arg_bindings = self.expr_single(arg);
+            bindings.concat(arg_bindings)
+        })
+    }
 }
 
 fn convert_expr_single(s: &str) -> ir::Expr {
     let ast = crate::parse_ast::parse_expr_single(s);
-    let mut converter = Converter::new();
+    let static_context = StaticContext::new();
+    let mut converter = Converter::new(&static_context);
     converter.convert_expr_single(&ast)
 }
 
 fn convert_xpath(s: &str) -> ir::Expr {
     let ast = crate::parse_ast::parse_xpath(s);
-    let mut converter = Converter::new();
+    let static_context = StaticContext::new();
+    let mut converter = Converter::new(&static_context);
     converter.convert_xpath(&ast)
 }
 
@@ -501,5 +538,10 @@ mod tests {
     #[test]
     fn test_function_call2() {
         assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }(3 + 5)"));
+    }
+
+    #[test]
+    fn test_static_function_call() {
+        assert_debug_snapshot!(convert_expr_single("my_function(5, 2)"));
     }
 }

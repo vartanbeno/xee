@@ -1,5 +1,7 @@
 // an Intermediate Representation in ANF - administrative normal form
 
+use crate::value::StaticFunctionId;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Expr {
     Atom(Atom),
@@ -27,6 +29,7 @@ pub(crate) enum Const {
     Integer(i64),
     String(String),
     EmptySequence,
+    StaticFunction(StaticFunctionId),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

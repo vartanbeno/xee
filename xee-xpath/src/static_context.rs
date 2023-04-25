@@ -1,6 +1,5 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
-use xot::Xot;
 
 use crate::ast;
 use crate::error::{Error, Result};
