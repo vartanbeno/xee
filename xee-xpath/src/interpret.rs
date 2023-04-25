@@ -25,15 +25,28 @@ pub(crate) struct Interpreter<'a> {
     context: &'a Context<'a>,
     stack: Vec<StackValue>,
     frames: Vec<Frame>,
+    mode: Mode,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Mode {
+    Ast,
+    Ir,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program, context: &'a Context, context_item: Item) -> Self {
+    pub(crate) fn new(
+        program: &'a Program,
+        context: &'a Context,
+        context_item: Item,
+        mode: Mode,
+    ) -> Self {
         Interpreter {
             program,
             context,
             stack: vec![StackValue::from_item(context_item)],
             frames: Vec::new(),
+            mode,
         }
     }
 
@@ -85,7 +98,11 @@ impl<'a> Interpreter<'a> {
                 Instruction::Closure(function_id) => {
                     let mut values = Vec::new();
                     let closure_function = &self.program.functions[function_id as usize];
-                    for _ in 0..closure_function.closure_names.len() {
+                    let closure_names_len = match self.mode {
+                        Mode::Ast => closure_function.closure_names.len(),
+                        Mode::Ir => closure_function.ir_closure_names.len(),
+                    };
+                    for _ in 0..closure_names_len {
                         values.push(self.stack.pop().unwrap());
                     }
                     self.stack.push(StackValue::Closure(Rc::new(Closure {
@@ -398,8 +415,12 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
+        let mut interpreter = Interpreter::new(
+            &program,
+            &context,
+            Item::Atomic(Atomic::Integer(0)),
+            Mode::Ir,
+        );
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -455,8 +476,12 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
+        let mut interpreter = Interpreter::new(
+            &program,
+            &context,
+            Item::Atomic(Atomic::Integer(0)),
+            Mode::Ir,
+        );
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -486,8 +511,12 @@ mod tests {
 
         let xot = Xot::new();
         let context = Context::new(&xot);
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
+        let mut interpreter = Interpreter::new(
+            &program,
+            &context,
+            Item::Atomic(Atomic::Integer(0)),
+            Mode::Ir,
+        );
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -518,8 +547,12 @@ mod tests {
 
         let xot = Xot::new();
         let context = Context::new(&xot);
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
+        let mut interpreter = Interpreter::new(
+            &program,
+            &context,
+            Item::Atomic(Atomic::Integer(0)),
+            Mode::Ir,
+        );
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(

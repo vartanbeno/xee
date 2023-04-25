@@ -3,7 +3,7 @@ use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition
 use crate::context::Context;
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret::Interpreter;
+use crate::interpret::{Interpreter, Mode};
 use crate::parse_ast::parse_xpath;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
@@ -701,7 +701,8 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, self.context, context_item);
+        let mut interpreter =
+            Interpreter::new(&self.program, self.context, context_item, Mode::Ast);
         interpreter.start(self.main);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression

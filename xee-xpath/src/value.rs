@@ -7,6 +7,7 @@ use crate::annotation::Annotations;
 use crate::ast;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
+use crate::ir;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
@@ -68,6 +69,7 @@ pub(crate) struct Function {
     pub(crate) arity: usize,
     pub(crate) constants: Vec<StackValue>,
     pub(crate) closure_names: Vec<ast::Name>,
+    pub(crate) ir_closure_names: Vec<ir::Name>,
     pub(crate) steps: Vec<Step>,
     pub(crate) chunk: Vec<u8>,
 }

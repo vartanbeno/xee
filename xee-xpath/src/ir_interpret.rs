@@ -7,7 +7,7 @@ use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition
 use crate::context::Context;
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret::Interpreter;
+use crate::interpret::{Interpreter, Mode};
 use crate::ir;
 use crate::parse_ast::parse_xpath;
 use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue};
@@ -62,25 +62,28 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.emit_constant(stack_value);
             }
             ir::Atom::Variable(name) => {
-                if let Some(index) = self.scopes.get(name) {
-                    if index > u16::MAX as usize {
-                        panic!("too many variables");
-                    }
-                    self.builder.emit(Instruction::Var(index as u16));
-                } else {
-                    // if value is in any outer scopes
-                    todo!();
-                    // if self.scopes.is_closed_over_name(name) {
-                    //     let index = self.builder.add_closure_name(name);
-                    //     if index > u16::MAX as usize {
-                    //         panic!("too many closure variables");
-                    //     }
-                    //     self.builder.emit(Instruction::ClosureVar(index as u16));
-                    // } else {
-                    //     // XXX this should become an actual compile error
-                    //     panic!("unknown variable {:?}", name);
-                    // }
+                self.compile_variable(name);
+            }
+        }
+    }
+
+    fn compile_variable(&mut self, name: &ir::Name) {
+        if let Some(index) = self.scopes.get(name) {
+            if index > u16::MAX as usize {
+                panic!("too many variables");
+            }
+            self.builder.emit(Instruction::Var(index as u16));
+        } else {
+            // if value is in any outer scopes
+            if self.scopes.is_closed_over_name(name) {
+                let index = self.builder.add_ir_closure_name(name);
+                if index > u16::MAX as usize {
+                    panic!("too many closure variables");
                 }
+                self.builder.emit(Instruction::ClosureVar(index as u16));
+            } else {
+                // XXX this should become an actual compile error
+                panic!("unknown variable {:?}", name);
             }
         }
     }
@@ -169,16 +172,15 @@ impl<'a> InterpreterCompiler<'a> {
         // now place all captured names on stack, to ensure we have the
         // closure
         // in reverse order so we can pop them off in the right order
-        // for name in function.closure_names.iter().rev() {
-        //     self.compile_var_ref(name);
-        // }
+        for name in function.ir_closure_names.iter().rev() {
+            self.compile_variable(name);
+        }
         let function_id = self.builder.add_function(function);
         self.builder
             .emit(Instruction::Closure(function_id.as_u16()));
     }
 
     fn compile_function_call(&mut self, function_call: &ir::FunctionCall) {
-        self.builder.emit(Instruction::PrintStack);
         self.compile_atom(&function_call.atom);
         for arg in &function_call.args {
             self.compile_atom(arg);
@@ -201,7 +203,6 @@ impl<'a> CompiledXPath<'a> {
         let expr = converter.convert_xpath(&ast);
         // we get an inline function, unwrap it for now
         let (arg_name, expr) = unwrap_inline_function(expr);
-
         let mut program = Program::new();
         let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
         let builder = FunctionBuilder::new(&mut program);
@@ -228,7 +229,7 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, self.context, context_item);
+        let mut interpreter = Interpreter::new(&self.program, self.context, context_item, Mode::Ir);
         interpreter.start(self.main);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
@@ -298,6 +299,15 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
         let xpath = CompiledXPath::new(&context, s);
+        xpath.interpret().unwrap()
+    }
+
+    fn run_debug(s: &str) -> StackValue {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, s);
+        println!("{:#?}", xpath.program.get_function(0).ir_closure_names);
+        dbg!(&xpath.program.get_function(1).decoded());
         xpath.interpret().unwrap()
     }
 
@@ -394,5 +404,12 @@ mod tests {
     #[test]
     fn test_function_nested() {
         assert_debug_snapshot!(&run("function($x) { function($y) { $y + 2 }($x + 1) } (5)"));
+    }
+
+    #[test]
+    fn test_function_closure() {
+        assert_debug_snapshot!(&run(
+            "function() { let $x := 3 return function() { $x + 2 } }()()"
+        ));
     }
 }

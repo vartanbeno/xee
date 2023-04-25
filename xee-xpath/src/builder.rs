@@ -1,5 +1,6 @@
 use crate::ast;
 use crate::instruction::{encode_instruction, Instruction};
+use crate::ir;
 use crate::value::{Function, FunctionId, StackValue, StaticFunctionId, Step};
 
 #[derive(Debug, Clone)]
@@ -59,6 +60,7 @@ pub(crate) struct FunctionBuilder<'a> {
     compiled: Vec<u8>,
     constants: Vec<StackValue>,
     closure_names: Vec<ast::Name>,
+    ir_closure_names: Vec<ir::Name>,
     steps: Vec<Step>,
 }
 
@@ -69,6 +71,7 @@ impl<'a> FunctionBuilder<'a> {
             compiled: Vec::new(),
             constants: Vec::new(),
             closure_names: Vec::new(),
+            ir_closure_names: Vec::new(),
             steps: Vec::new(),
         }
     }
@@ -106,6 +109,19 @@ impl<'a> FunctionBuilder<'a> {
         }
         let index = self.closure_names.len();
         self.closure_names.push(name.clone());
+        if index > (u16::MAX as usize) {
+            panic!("too many closure names");
+        }
+        index
+    }
+
+    pub(crate) fn add_ir_closure_name(&mut self, name: &ir::Name) -> usize {
+        let found = self.ir_closure_names.iter().position(|n| n == name);
+        if let Some(index) = found {
+            return index;
+        }
+        let index = self.ir_closure_names.len();
+        self.ir_closure_names.push(name.clone());
         if index > (u16::MAX as usize) {
             panic!("too many closure names");
         }
@@ -179,6 +195,7 @@ impl<'a> FunctionBuilder<'a> {
             arity,
             chunk: self.compiled,
             closure_names: self.closure_names,
+            ir_closure_names: self.ir_closure_names,
             constants: self.constants,
             steps: self.steps,
         }

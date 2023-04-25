@@ -1,0 +1,9 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "&run_debug(\"function() { let $x := 3 return function() { $x + 2 } }()()\")"
+---
+Atomic(
+    Integer(
+        5,
+    ),
+)
