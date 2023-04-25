@@ -95,6 +95,7 @@ impl Converter {
             ast::ExprSingle::If(ast) => self.if_expr(ast),
             ast::ExprSingle::Let(ast) => self.let_expr(ast),
             ast::ExprSingle::Path(ast) => self.path_expr(ast),
+            ast::ExprSingle::For(ast) => self.for_expr(ast),
             _ => todo!("expr_single: {:?}", ast),
         }
     }
@@ -213,6 +214,24 @@ impl Converter {
         });
         vec![self.new_binding(expr)]
     }
+
+    fn for_expr(&mut self, ast: &ast::ForExpr) -> Vec<Binding> {
+        let name = self.new_var_name(&ast.var_name);
+        let mut var_bindings = self.expr_single(&ast.var_expr);
+        let var_atom = atom(&mut var_bindings);
+        let return_bindings = self.expr_single(&ast.return_expr);
+        let expr = ir::Expr::Map(ir::Map {
+            var_name: name,
+            var_atom,
+            return_expr: Box::new(self.bind(&return_bindings)),
+        });
+
+        let binding = self.new_binding(expr);
+        var_bindings
+            .into_iter()
+            .chain(iter::once(binding))
+            .collect()
+    }
 }
 
 fn convert_expr_single(s: &str) -> ir::Expr {
@@ -275,5 +294,14 @@ mod tests {
     #[test]
     fn test_let_expr_variable() {
         assert_debug_snapshot!(convert_expr_single("let $x := 1 return $x"));
+    }
+
+    #[test]
+    fn test_for_expr() {
+        assert_debug_snapshot!(convert_expr_single("for $x in 1 return 2"));
+    }
+    #[test]
+    fn test_for_expr2() {
+        assert_debug_snapshot!(convert_expr_single("for $x in (1, 2) return $x + 1"));
     }
 }

@@ -1,0 +1,23 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"for $x in 1 return 2\")"
+---
+Map(
+    Map {
+        var_name: Name(
+            "v0",
+        ),
+        var_atom: Const(
+            Integer(
+                1,
+            ),
+        ),
+        return_expr: Atom(
+            Const(
+                Integer(
+                    2,
+                ),
+            ),
+        ),
+    },
+)

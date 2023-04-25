@@ -78,20 +78,20 @@ pub(crate) struct FunctionCall {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Map {
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Atom,
+    pub(crate) var_atom: Atom,
     pub(crate) return_expr: Box<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Filter {
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Atom,
+    pub(crate) var_atom: Atom,
     pub(crate) return_expr: Box<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Quantified {
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Atom,
+    pub(crate) var_atom: Atom,
     pub(crate) return_expr: Box<Expr>,
 }
