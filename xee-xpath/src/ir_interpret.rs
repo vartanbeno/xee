@@ -319,139 +319,139 @@ mod tests {
 
     #[test]
     fn test_nested() {
-        assert_debug_snapshot!(&run("1 + (8 - 2)"));
+        assert_debug_snapshot!(run("1 + (8 - 2)"));
     }
 
     #[test]
     fn test_comma() {
-        assert_debug_snapshot!(&run("1, 2"));
+        assert_debug_snapshot!(run("1, 2"));
     }
 
     #[test]
     fn test_empty_sequence() {
-        assert_debug_snapshot!(&run("()"));
+        assert_debug_snapshot!(run("()"));
     }
 
     #[test]
     fn test_comma_squences() {
-        assert_debug_snapshot!(&run("(1, 2), (3, 4)"));
+        assert_debug_snapshot!(run("(1, 2), (3, 4)"));
     }
 
     #[test]
     fn test_let() {
-        assert_debug_snapshot!(&run("let $x := 1 return $x + 2"));
+        assert_debug_snapshot!(run("let $x := 1 return $x + 2"));
     }
 
     #[test]
     fn test_let_nested() {
-        assert_debug_snapshot!(&run("let $x := 1, $y := $x + 3 return $y + 5"));
+        assert_debug_snapshot!(run("let $x := 1, $y := $x + 3 return $y + 5"));
     }
 
     #[test]
     fn test_if() {
-        assert_debug_snapshot!(&run("if (1) then 2 else 3"));
+        assert_debug_snapshot!(run("if (1) then 2 else 3"));
     }
 
     #[test]
     fn test_if_false() {
-        assert_debug_snapshot!(&run("if (0) then 2 else 3"));
+        assert_debug_snapshot!(run("if (0) then 2 else 3"));
     }
 
     #[test]
     fn test_value_eq_true() {
-        assert_debug_snapshot!(&run("1 eq 1"));
+        assert_debug_snapshot!(run("1 eq 1"));
     }
 
     #[test]
     fn test_value_eq_false() {
-        assert_debug_snapshot!(&run("1 eq 2"));
+        assert_debug_snapshot!(run("1 eq 2"));
     }
 
     #[test]
     fn test_value_ne_true() {
-        assert_debug_snapshot!(&run("1 ne 2"));
+        assert_debug_snapshot!(run("1 ne 2"));
     }
 
     #[test]
     fn test_value_ne_false() {
-        assert_debug_snapshot!(&run("1 ne 1"));
+        assert_debug_snapshot!(run("1 ne 1"));
     }
 
     #[test]
     fn test_value_lt_true() {
-        assert_debug_snapshot!(&run("1 lt 2"));
+        assert_debug_snapshot!(run("1 lt 2"));
     }
 
     #[test]
     fn test_value_lt_false() {
-        assert_debug_snapshot!(&run("2 lt 1"));
+        assert_debug_snapshot!(run("2 lt 1"));
     }
 
     #[test]
     fn test_inline_function_without_args() {
-        assert_debug_snapshot!(&run("function() { 5 } ()"));
+        assert_debug_snapshot!(run("function() { 5 } ()"));
     }
 
     #[test]
     fn test_inline_function_with_single_arg() {
-        assert_debug_snapshot!(&run("function($x) { $x + 5 } (3)"));
+        assert_debug_snapshot!(run("function($x) { $x + 5 } (3)"));
     }
 
     #[test]
     fn test_inline_function_with_multiple_args() {
-        assert_debug_snapshot!(&run("function($x, $y) { $x + $y } (3, 5)"));
+        assert_debug_snapshot!(run("function($x, $y) { $x + $y } (3, 5)"));
     }
 
     #[test]
     fn test_function_nested() {
-        assert_debug_snapshot!(&run("function($x) { function($y) { $y + 2 }($x + 1) } (5)"));
+        assert_debug_snapshot!(run("function($x) { function($y) { $y + 2 }($x + 1) } (5)"));
     }
 
     #[test]
     fn test_function_closure() {
-        assert_debug_snapshot!(&run(
+        assert_debug_snapshot!(run(
             "function() { let $x := 3 return function() { $x + 2 } }()()"
         ));
     }
 
     #[test]
     fn test_function_closure_with_multiple_variables() {
-        assert_debug_snapshot!(&run(
+        assert_debug_snapshot!(run(
             "function() { let $x := 3, $y := 1 return function() { $x - $y } }()()"
         ));
     }
 
     #[test]
     fn test_function_closure_with_multiple_variables_arguments() {
-        assert_debug_snapshot!(&run(
+        assert_debug_snapshot!(run(
             "function() { let $x := 3 return function($y) { $x - $y } }()(1)"
         ));
     }
 
     #[test]
     fn test_function_closure_nested() {
-        assert_debug_snapshot!(&run(
+        assert_debug_snapshot!(run(
             "function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()"
         ));
     }
 
     #[test]
     fn test_static_function_call() {
-        assert_debug_snapshot!(&run("my_function(5, 2)"));
+        assert_debug_snapshot!(run("my_function(5, 2)"));
     }
 
     #[test]
     fn test_named_function_ref_call() {
-        assert_debug_snapshot!(&run("my_function#2(5, 2)"));
+        assert_debug_snapshot!(run("my_function#2(5, 2)"));
     }
 
     #[test]
     fn test_static_call_with_placeholders() {
-        assert_debug_snapshot!(&run("my_function(?, 2)(5)"));
+        assert_debug_snapshot!(run("my_function(?, 2)(5)"));
     }
 
     #[test]
     fn test_inline_function_with_args_placeholdered() {
-        assert_debug_snapshot!(&run("function($x, $y) { $x - $y } ( ?, 3 ) (5)"));
+        assert_debug_snapshot!(run("function($x, $y) { $x - $y } ( ?, 3 ) (5)"));
     }
 }
