@@ -7,6 +7,7 @@ use crate::ir;
 struct Converter {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
+    context_name: ast::Name,
 }
 
 #[derive(Debug)]
@@ -32,6 +33,10 @@ impl Converter {
         Self {
             counter: 0,
             variables: HashMap::new(),
+            context_name: ast::Name {
+                name: "xee-context".to_string(),
+                namespace: None,
+            },
         }
     }
 
@@ -39,6 +44,10 @@ impl Converter {
         let name = format!("v{}", self.counter);
         self.counter += 1;
         ir::Name(name)
+    }
+
+    fn new_context_name(&mut self) -> ir::Name {
+        self.new_var_name(&self.context_name.clone())
     }
 
     fn new_var_name(&mut self, name: &ast::Name) -> ir::Name {
@@ -55,6 +64,10 @@ impl Converter {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(ir::Atom::Variable(ir_name.clone())),
         }]
+    }
+
+    fn context_item(&mut self) -> Vec<Binding> {
+        self.var_ref(&self.context_name.clone())
     }
 
     fn new_binding(&mut self, expr: ir::Expr) -> Binding {
@@ -96,6 +109,7 @@ impl Converter {
             ast::ExprSingle::Let(ast) => self.let_expr(ast),
             ast::ExprSingle::Path(ast) => self.path_expr(ast),
             ast::ExprSingle::For(ast) => self.for_expr(ast),
+            ast::ExprSingle::Apply(ast) => self.apply_expr(ast),
             _ => todo!("expr_single: {:?}", ast),
         }
     }
@@ -117,6 +131,7 @@ impl Converter {
             ast::PrimaryExpr::Literal(ast) => self.literal(ast),
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
+            ast::PrimaryExpr::ContextItem => self.context_item(),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -183,6 +198,33 @@ impl Converter {
             ast::Operator::Add => ir::BinaryOp::Add,
             ast::Operator::ValueGt => ir::BinaryOp::Gt,
             _ => todo!("binary_op: {:?}", operator),
+        }
+    }
+
+    fn apply_expr(&mut self, ast: &ast::ApplyExpr) -> Vec<Binding> {
+        match &ast.operator {
+            ast::ApplyOperator::SimpleMap(path_exprs) => {
+                let path_bindings = self.path_expr(&ast.path_expr);
+                path_exprs.iter().fold(path_bindings, |acc, path_expr| {
+                    let mut path_bindings = acc;
+                    let path_atom = atom(&mut path_bindings);
+                    let return_bindings = self.path_expr(path_expr);
+                    let context_name = self.new_context_name();
+                    let expr = ir::Expr::Map(ir::Map {
+                        var_name: context_name,
+                        var_atom: path_atom,
+                        return_expr: Box::new(self.bind(&return_bindings)),
+                    });
+                    let binding = self.new_binding(expr);
+                    path_bindings
+                        .into_iter()
+                        .chain(iter::once(binding))
+                        .collect()
+                })
+            }
+            _ => {
+                todo!("ApplyOperator: {:?}", ast.operator)
+            }
         }
     }
 
@@ -300,8 +342,14 @@ mod tests {
     fn test_for_expr() {
         assert_debug_snapshot!(convert_expr_single("for $x in 1 return 2"));
     }
+
     #[test]
     fn test_for_expr2() {
         assert_debug_snapshot!(convert_expr_single("for $x in (1, 2) return $x + 1"));
+    }
+
+    #[test]
+    fn test_simple_map() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2) ! 1"));
     }
 }

@@ -1,0 +1,45 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"(1, 2) ! 1\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v2",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                binary_op: Comma,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: Map(
+            Map {
+                var_name: Name(
+                    "v4",
+                ),
+                var_atom: Variable(
+                    Name(
+                        "v2",
+                    ),
+                ),
+                return_expr: Atom(
+                    Const(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                ),
+            },
+        ),
+    },
+)
