@@ -55,18 +55,23 @@ pub(crate) struct If {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Binary {
     pub(crate) left: Atom,
-    pub(crate) binary_op: BinaryOp,
+    pub(crate) op: BinaryOp,
     pub(crate) right: Atom,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum BinaryOp {
     Add,
+    Sub,
     Eq,
     Ne,
-    Comma,
-    Gt,
     Lt,
+    Le,
+    Gt,
+    Ge,
+    Comma,
+    Union,
+    Range,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

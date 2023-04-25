@@ -18,6 +18,7 @@ mod error;
 mod instruction;
 mod interpret;
 mod ir;
+mod ir_interpret;
 mod name;
 mod parse;
 mod parse_ast;

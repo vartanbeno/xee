@@ -14,7 +14,7 @@ Let(
                         1,
                     ),
                 ),
-                binary_op: Comma,
+                op: Comma,
                 right: Const(
                     Integer(
                         2,
@@ -39,7 +39,7 @@ Let(
                                 "v3",
                             ),
                         ),
-                        binary_op: Gt,
+                        op: Gt,
                         right: Const(
                             Integer(
                                 2,

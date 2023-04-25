@@ -9,7 +9,7 @@ Binary(
                 1,
             ),
         ),
-        binary_op: Add,
+        op: Add,
         right: Const(
             Integer(
                 2,

@@ -14,7 +14,7 @@ Let(
                         1,
                     ),
                 ),
-                binary_op: Add,
+                op: Add,
                 right: Const(
                     Integer(
                         2,
@@ -34,7 +34,7 @@ Let(
                                 3,
                             ),
                         ),
-                        binary_op: Add,
+                        op: Add,
                         right: Const(
                             Integer(
                                 4,

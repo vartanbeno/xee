@@ -18,7 +18,7 @@ FunctionDefinition(
                         "v0",
                     ),
                 ),
-                binary_op: Add,
+                op: Add,
                 right: Const(
                     Integer(
                         1,

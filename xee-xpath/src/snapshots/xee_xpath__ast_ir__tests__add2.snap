@@ -14,7 +14,7 @@ Let(
                         1,
                     ),
                 ),
-                binary_op: Add,
+                op: Add,
                 right: Const(
                     Integer(
                         2,
@@ -29,7 +29,7 @@ Let(
                         "v2",
                     ),
                 ),
-                binary_op: Add,
+                op: Add,
                 right: Const(
                     Integer(
                         3,

@@ -5,8 +5,9 @@ use crate::error::Result;
 use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
 use crate::parse_ast::parse_xpath;
-use crate::scope::Scopes;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
+
+type Scopes = crate::scope::Scopes<ast::Name>;
 
 struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
@@ -658,7 +659,10 @@ impl<'a> CompiledXPath<'a> {
     pub(crate) fn new(context: &'a Context, xpath: &str) -> Self {
         let ast = parse_xpath(xpath);
         let mut program = Program::new();
-        let mut scopes = Scopes::new();
+        let mut scopes = Scopes::new(ast::Name {
+            name: "dummy".to_string(),
+            namespace: None,
+        });
         let builder = FunctionBuilder::new(&mut program);
         let mut compiler = InterpreterCompiler {
             builder,

@@ -1,16 +1,14 @@
-use crate::ast;
-
 #[derive(Debug)]
-pub(crate) struct Scope {
-    names: Vec<ast::Name>,
+pub(crate) struct Scope<N: Eq + Clone> {
+    names: Vec<N>,
 }
 
-impl Scope {
+impl<N: Eq + Clone> Scope<N> {
     fn new() -> Self {
         Self { names: Vec::new() }
     }
 
-    fn get(&self, name: &ast::Name) -> Option<usize> {
+    fn get(&self, name: &N) -> Option<usize> {
         for (i, n) in self.names.iter().enumerate().rev() {
             if n == name {
                 return Some(i);
@@ -19,25 +17,26 @@ impl Scope {
         None
     }
 
-    fn known_name(&self, name: &ast::Name) -> bool {
+    fn known_name(&self, name: &N) -> bool {
         self.names.iter().any(|n| n == name)
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct Scopes {
-    scopes: Vec<Scope>,
-    dummy: ast::Name,
+pub(crate) struct Scopes<N: Eq + Clone> {
+    scopes: Vec<Scope<N>>,
+    dummy: N,
 }
 
-impl Scopes {
-    pub(crate) fn new() -> Self {
+impl<N: Eq + Clone> Scopes<N> {
+    pub(crate) fn new(dummy: N) -> Self {
         Self {
             scopes: vec![Scope::new()],
-            dummy: ast::Name {
-                name: "dummy".to_string(),
-                namespace: None,
-            },
+            dummy,
+            // dummy: ast::Name {
+            //     name: "dummy".to_string(),
+            //     namespace: None,
+            // },
         }
     }
 
@@ -49,7 +48,7 @@ impl Scopes {
         self.scopes.pop();
     }
 
-    pub(crate) fn push_name(&mut self, name: &ast::Name) {
+    pub(crate) fn push_name(&mut self, name: &N) {
         self.scopes.last_mut().unwrap().names.push(name.clone());
     }
 
@@ -65,11 +64,11 @@ impl Scopes {
         self.pop_name();
     }
 
-    pub(crate) fn get(&self, name: &ast::Name) -> Option<usize> {
+    pub(crate) fn get(&self, name: &N) -> Option<usize> {
         self.scopes.last().unwrap().get(name)
     }
 
-    pub(crate) fn is_closed_over_name(&self, name: &ast::Name) -> bool {
+    pub(crate) fn is_closed_over_name(&self, name: &N) -> bool {
         let mut scopes = self.scopes.iter();
         scopes.next();
         scopes.any(|s| s.known_name(name))

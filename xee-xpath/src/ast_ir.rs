@@ -84,7 +84,7 @@ impl Bindings {
 }
 
 #[derive(Debug)]
-struct Converter<'a> {
+pub(crate) struct Converter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
     context_name: ast::Name,
@@ -92,7 +92,7 @@ struct Converter<'a> {
 }
 
 impl<'a> Converter<'a> {
-    fn new(static_context: &'a StaticContext) -> Self {
+    pub(crate) fn new(static_context: &'a StaticContext) -> Self {
         Self {
             counter: 0,
             variables: HashMap::new(),
@@ -144,7 +144,7 @@ impl<'a> Converter<'a> {
         bindings.expr()
     }
 
-    fn convert_xpath(&mut self, ast: &ast::XPath) -> ir::Expr {
+    pub(crate) fn convert_xpath(&mut self, ast: &ast::XPath) -> ir::Expr {
         let bindings = self.xpath(ast);
         bindings.expr()
     }
@@ -292,7 +292,7 @@ impl<'a> Converter<'a> {
                     let mut right_bindings = self.expr_single(expr);
                     let expr = ir::Expr::Binary(ir::Binary {
                         left: left_bindings.atom(),
-                        binary_op: ir::BinaryOp::Comma,
+                        op: ir::BinaryOp::Comma,
                         right: right_bindings.atom(),
                     });
                     let binding = self.new_binding(expr);
@@ -311,7 +311,7 @@ impl<'a> Converter<'a> {
         let op = self.binary_op(ast.operator);
         let expr = ir::Expr::Binary(ir::Binary {
             left: left_bindings.atom(),
-            binary_op: op,
+            op,
             right: right_bindings.atom(),
         });
         let binding = self.new_binding(expr);
@@ -322,8 +322,15 @@ impl<'a> Converter<'a> {
     fn binary_op(&mut self, operator: ast::Operator) -> ir::BinaryOp {
         match operator {
             ast::Operator::Add => ir::BinaryOp::Add,
-            ast::Operator::ValueGt => ir::BinaryOp::Gt,
+            ast::Operator::Sub => ir::BinaryOp::Sub,
+            ast::Operator::ValueEq => ir::BinaryOp::Eq,
+            ast::Operator::ValueNe => ir::BinaryOp::Ne,
             ast::Operator::ValueLt => ir::BinaryOp::Lt,
+            ast::Operator::ValueLe => ir::BinaryOp::Le,
+            ast::Operator::ValueGt => ir::BinaryOp::Gt,
+            ast::Operator::ValueGe => ir::BinaryOp::Ge,
+            ast::Operator::Union => ir::BinaryOp::Union,
+            ast::Operator::Range => ir::BinaryOp::Range,
             _ => todo!("binary_op: {:?}", operator),
         }
     }
