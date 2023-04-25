@@ -49,16 +49,18 @@ impl Converter {
         })
     }
 
+    fn var_ref(&mut self, name: &ast::Name) -> Vec<Binding> {
+        let ir_name = self.variables.get(name).unwrap();
+        vec![Binding {
+            name: ir_name.clone(),
+            expr: ir::Expr::Atom(ir::Atom::Variable(ir_name.clone())),
+        }]
+    }
+
     fn new_binding(&mut self, expr: ir::Expr) -> Binding {
         let name = self.new_name();
         Binding { name, expr }
     }
-    //     }
-    //     let name = self.new_name();
-    //     let atom = ir::Atom::Variable(name.clone());
-    //     let binding = Binding { name, expr };
-    //     (atom, binding)
-    // }
 
     fn bind(&mut self, bindings: &[Binding]) -> ir::Expr {
         let last_binding = &bindings.last().unwrap();
@@ -127,10 +129,6 @@ impl Converter {
             }
             _ => todo!(),
         }
-    }
-
-    fn var_ref(&mut self, ast: &ast::Name) -> Vec<Binding> {
-        todo!();
     }
 
     fn exprs(&mut self, exprs: &[ast::ExprSingle]) -> Vec<Binding> {
@@ -272,5 +270,10 @@ mod tests {
     #[test]
     fn test_let_expr() {
         assert_debug_snapshot!(convert_expr_single("let $x := 1 return 2"));
+    }
+
+    #[test]
+    fn test_let_expr_variable() {
+        assert_debug_snapshot!(convert_expr_single("let $x := 1 return $x"));
     }
 }
