@@ -1,0 +1,9 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"1 + (let $x := 2 return $x + 10)\")"
+---
+Atomic(
+    Integer(
+        13,
+    ),
+)

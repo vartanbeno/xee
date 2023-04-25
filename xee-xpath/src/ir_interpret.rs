@@ -90,8 +90,8 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_let(&mut self, let_: &ir::Let) {
-        self.scopes.push_name(&let_.name);
         self.compile_expr(&let_.var_expr);
+        self.scopes.push_name(&let_.name);
         self.compile_expr(&let_.return_expr);
         self.builder.emit(Instruction::LetDone);
         self.scopes.pop_name();
@@ -307,8 +307,7 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
         let xpath = CompiledXPath::new(&context, s);
-        println!("{:#?}", xpath.program.get_function(0).ir_closure_names);
-        dbg!(&xpath.program.get_function(1).decoded());
+        dbg!(&xpath.program.get_function(0).decoded());
         xpath.interpret().unwrap()
     }
 
@@ -345,6 +344,11 @@ mod tests {
     #[test]
     fn test_let_nested() {
         assert_debug_snapshot!(run("let $x := 1, $y := $x + 3 return $y + 5"));
+    }
+
+    #[test]
+    fn test_let_on_right_side() {
+        assert_debug_snapshot!(run("1 + (let $x := 2 return $x + 10)"));
     }
 
     #[test]

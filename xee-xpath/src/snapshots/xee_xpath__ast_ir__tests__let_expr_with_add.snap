@@ -1,0 +1,33 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"let $x := (1 + 2) return $x\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v0",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                op: Add,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: Atom(
+            Variable(
+                Name(
+                    "v0",
+                ),
+            ),
+        ),
+    },
+)

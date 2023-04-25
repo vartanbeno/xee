@@ -554,6 +554,11 @@ mod tests {
     }
 
     #[test]
+    fn test_let_expr_with_add() {
+        assert_debug_snapshot!(convert_expr_single("let $x := (1 + 2) return $x"));
+    }
+
+    #[test]
     fn test_for_expr() {
         assert_debug_snapshot!(convert_expr_single("for $x in 1 return 2"));
     }
