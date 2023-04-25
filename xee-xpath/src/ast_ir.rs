@@ -269,8 +269,8 @@ mod tests {
         assert_debug_snapshot!(convert_xpath("()"));
     }
 
-    // #[test]
-    // fn test_let_expr() {
-    //     assert_debug_snapshot!(convert_expr_single("let $x := 1 return 2"));
-    // }
+    #[test]
+    fn test_let_expr() {
+        assert_debug_snapshot!(convert_expr_single("let $x := 1 return 2"));
+    }
 }
