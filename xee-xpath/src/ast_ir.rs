@@ -104,13 +104,13 @@ impl Converter {
 
     fn expr_single(&mut self, ast: &ast::ExprSingle) -> Vec<Binding> {
         match ast {
-            ast::ExprSingle::Binary(ast) => self.binary_expr(ast),
-            ast::ExprSingle::If(ast) => self.if_expr(ast),
-            ast::ExprSingle::Let(ast) => self.let_expr(ast),
             ast::ExprSingle::Path(ast) => self.path_expr(ast),
-            ast::ExprSingle::For(ast) => self.for_expr(ast),
             ast::ExprSingle::Apply(ast) => self.apply_expr(ast),
-            _ => todo!("expr_single: {:?}", ast),
+            ast::ExprSingle::Let(ast) => self.let_expr(ast),
+            ast::ExprSingle::If(ast) => self.if_expr(ast),
+            ast::ExprSingle::Binary(ast) => self.binary_expr(ast),
+            ast::ExprSingle::For(ast) => self.for_expr(ast),
+            ast::ExprSingle::Quantified(ast) => self.quantified_expr(ast),
         }
     }
 
@@ -274,6 +274,32 @@ impl Converter {
             .chain(iter::once(binding))
             .collect()
     }
+
+    fn quantified_expr(&mut self, ast: &ast::QuantifiedExpr) -> Vec<Binding> {
+        let name = self.new_var_name(&ast.var_name);
+        let mut var_bindings = self.expr_single(&ast.var_expr);
+        let var_atom = atom(&mut var_bindings);
+        let satisfies_bindings = self.expr_single(&ast.satisfies_expr);
+        let expr = ir::Expr::Quantified(ir::Quantified {
+            quantifier: self.quantifier(&ast.quantifier),
+            var_name: name,
+            var_atom,
+            satisifies_expr: Box::new(self.bind(&satisfies_bindings)),
+        });
+
+        let binding = self.new_binding(expr);
+        var_bindings
+            .into_iter()
+            .chain(iter::once(binding))
+            .collect()
+    }
+
+    fn quantifier(&mut self, quantifier: &ast::Quantifier) -> ir::Quantifier {
+        match quantifier {
+            ast::Quantifier::Some => ir::Quantifier::Some,
+            ast::Quantifier::Every => ir::Quantifier::Every,
+        }
+    }
 }
 
 fn convert_expr_single(s: &str) -> ir::Expr {
@@ -361,5 +387,10 @@ mod tests {
     #[test]
     fn test_nested_simple_map_with_context() {
         assert_debug_snapshot!(convert_expr_single("(1, 2) ! (. + 1) ! (. + 2)"));
+    }
+
+    #[test]
+    fn test_quantified() {
+        assert_debug_snapshot!(convert_expr_single("some $x in (1, 2) satisfies $x gt 1"));
     }
 }

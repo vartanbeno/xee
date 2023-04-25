@@ -1,0 +1,54 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"some $x in (1, 2) satisfies $x gt 1\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v3",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                binary_op: Comma,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: Quantified(
+            Quantified {
+                quantifier: Some,
+                var_name: Name(
+                    "v0",
+                ),
+                var_atom: Variable(
+                    Name(
+                        "v3",
+                    ),
+                ),
+                satisifies_expr: Binary(
+                    Binary {
+                        left: Variable(
+                            Name(
+                                "v0",
+                            ),
+                        ),
+                        binary_op: Gt,
+                        right: Const(
+                            Integer(
+                                1,
+                            ),
+                        ),
+                    },
+                ),
+            },
+        ),
+    },
+)

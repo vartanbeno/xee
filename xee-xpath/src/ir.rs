@@ -93,7 +93,14 @@ pub(crate) struct Filter {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Quantified {
+    pub(crate) quantifier: Quantifier,
     pub(crate) var_name: Name,
     pub(crate) var_atom: Atom,
-    pub(crate) return_expr: Box<Expr>,
+    pub(crate) satisifies_expr: Box<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum Quantifier {
+    Some,
+    Every,
 }

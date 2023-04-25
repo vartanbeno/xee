@@ -13,11 +13,11 @@ pub(crate) enum ExprSingle {
     // something applied to a path expression
     Apply(ApplyExpr),
     // combine two path expressions
+    Let(LetExpr),
+    If(IfExpr),
     Binary(BinaryExpr),
     For(ForExpr),
-    Let(LetExpr),
     Quantified(QuantifiedExpr),
-    If(IfExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
