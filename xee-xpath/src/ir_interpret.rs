@@ -340,4 +340,9 @@ mod tests {
     fn test_if() {
         assert_debug_snapshot!(&run("if (1) then 2 else 3"));
     }
+
+    #[test]
+    fn test_if_false() {
+        assert_debug_snapshot!(&run("if (0) then 2 else 3"));
+    }
 }
