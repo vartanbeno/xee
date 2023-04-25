@@ -345,4 +345,34 @@ mod tests {
     fn test_if_false() {
         assert_debug_snapshot!(&run("if (0) then 2 else 3"));
     }
+
+    #[test]
+    fn test_value_eq_true() {
+        assert_debug_snapshot!(&run("1 eq 1"));
+    }
+
+    #[test]
+    fn test_value_eq_false() {
+        assert_debug_snapshot!(&run("1 eq 2"));
+    }
+
+    #[test]
+    fn test_value_ne_true() {
+        assert_debug_snapshot!(&run("1 ne 2"));
+    }
+
+    #[test]
+    fn test_value_ne_false() {
+        assert_debug_snapshot!(&run("1 ne 1"));
+    }
+
+    #[test]
+    fn test_value_lt_true() {
+        assert_debug_snapshot!(&run("1 lt 2"));
+    }
+
+    #[test]
+    fn test_value_lt_false() {
+        assert_debug_snapshot!(&run("2 lt 1"));
+    }
 }
