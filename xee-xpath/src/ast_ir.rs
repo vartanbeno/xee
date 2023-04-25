@@ -185,6 +185,7 @@ impl<'a> Converter<'a> {
             ast::PrimaryExpr::ContextItem => self.context_item(),
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast),
             ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast),
+            ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -411,6 +412,19 @@ impl<'a> Converter<'a> {
         arg_bindings.bind(binding)
     }
 
+    fn named_function_ref(&mut self, ast: &ast::NamedFunctionRef) -> Bindings {
+        let static_function_id = self
+            .static_context
+            .functions
+            .get_by_name(&ast.name, ast.arity)
+            .unwrap();
+        let constant = ir::Const::StaticFunction(static_function_id);
+        let atom = ir::Atom::Const(constant);
+        let expr = ir::Expr::Atom(atom);
+        let binding = self.new_binding(expr);
+        Bindings::from_vec(vec![binding])
+    }
+
     fn args(&mut self, args: &[ast::ExprSingle]) -> Bindings {
         let first = &args[0];
         let rest = &args[1..];
@@ -555,5 +569,10 @@ mod tests {
     #[test]
     fn test_static_function_call3() {
         assert_debug_snapshot!(convert_expr_single("my_function(1 + 2 + 3, 4 + 5)"));
+    }
+
+    #[test]
+    fn test_named_function_ref() {
+        assert_debug_snapshot!(convert_expr_single("my_function#2"));
     }
 }

@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"my_function#2\")"
+---
+Atom(
+    Const(
+        StaticFunction(
+            StaticFunctionId(
+                0,
+            ),
+        ),
+    ),
+)
