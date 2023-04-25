@@ -208,8 +208,8 @@ impl Converter {
                 path_exprs.iter().fold(path_bindings, |acc, path_expr| {
                     let mut path_bindings = acc;
                     let path_atom = atom(&mut path_bindings);
-                    let return_bindings = self.path_expr(path_expr);
                     let context_name = self.new_context_name();
+                    let return_bindings = self.path_expr(path_expr);
                     let expr = ir::Expr::Map(ir::Map {
                         var_name: context_name,
                         var_atom: path_atom,
@@ -351,5 +351,10 @@ mod tests {
     #[test]
     fn test_simple_map() {
         assert_debug_snapshot!(convert_expr_single("(1, 2) ! 1"));
+    }
+
+    #[test]
+    fn test_simple_map_with_context() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2) ! (. + 1)"));
     }
 }
