@@ -10,7 +10,7 @@ use crate::instruction::Instruction;
 use crate::interpret::{Interpreter, Mode};
 use crate::ir;
 use crate::parse_ast::parse_xpath;
-use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue};
+use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue, StaticFunctionId};
 
 type Scopes = crate::scope::Scopes<ir::Name>;
 
@@ -55,6 +55,7 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::EmptySequence => {
                         StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
                     }
+                    ir::Const::StaticFunction(id) => StackValue::StaticFunction(*id),
                     _ => {
                         todo!()
                     }
@@ -432,5 +433,10 @@ mod tests {
         assert_debug_snapshot!(&run(
             "function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()"
         ));
+    }
+
+    #[test]
+    fn test_static_function_call() {
+        assert_debug_snapshot!(&run("my_function(5, 2)"));
     }
 }
