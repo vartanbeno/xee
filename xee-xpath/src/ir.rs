@@ -1,6 +1,6 @@
 // an Intermediate Representation in ANF - administrative normal form
 
-use crate::value::StaticFunctionId;
+use crate::value::{StaticFunctionId, Step};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Expr {
@@ -30,6 +30,9 @@ pub(crate) enum Const {
     String(String),
     EmptySequence,
     StaticFunction(StaticFunctionId),
+    // step is treated as a special function which takes the context node as
+    // its argument
+    Step(Step),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

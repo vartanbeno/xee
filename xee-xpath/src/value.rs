@@ -26,7 +26,7 @@ impl StaticFunctionId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Step {
     pub(crate) axis: ast::Axis,
     pub(crate) node_test: ast::NodeTest,

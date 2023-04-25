@@ -3,6 +3,7 @@ use ahash::{HashMap, HashMapExt};
 use crate::ast;
 use crate::ir;
 use crate::static_context::StaticContext;
+use crate::value::Step;
 
 #[derive(Debug, Clone)]
 struct Binding {
@@ -149,7 +150,16 @@ impl<'a> Converter<'a> {
     }
 
     fn xpath(&mut self, ast: &ast::XPath) -> Bindings {
-        self.exprs(&ast.exprs)
+        let context_name = self.new_context_name();
+        let exprs_bindings = self.exprs(&ast.exprs);
+        // XXX reusing context_name isn't going to work, as each
+        // context needs to have its unique name
+        let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
+            params: vec![ir::Param(context_name)],
+            body: Box::new(exprs_bindings.expr()),
+        });
+        let binding = self.new_binding(outer_function_expr);
+        Bindings::from_vec(vec![binding])
     }
 
     fn expr_single(&mut self, ast: &ast::ExprSingle) -> Bindings {
@@ -189,7 +199,7 @@ impl<'a> Converter<'a> {
         match ast {
             ast::StepExpr::PrimaryExpr(ast) => self.primary_expr(ast),
             ast::StepExpr::PostfixExpr { primary, postfixes } => self.postfixes(primary, postfixes),
-            _ => todo!(),
+            ast::StepExpr::AxisStep(ast) => self.axis_step(ast),
         }
     }
 
@@ -236,12 +246,28 @@ impl<'a> Converter<'a> {
         })
     }
 
-    fn postfix(&mut self, postfix: &ast::Postfix) -> Bindings {
-        match postfix {
-            ast::Postfix::Predicate(exprs) => self.exprs(exprs),
-            // ast::Postfix::Step(ast) => self.step_expr(ast),
-            _ => todo!(),
-        }
+    fn axis_step(&mut self, ast: &ast::AxisStep) -> Bindings {
+        // get the current context
+        let mut current_context_bindings = self.context_item();
+
+        // create a step atom
+        let step = Step {
+            axis: ast.axis.clone(),
+            node_test: ast.node_test.clone(),
+        };
+        let atom = ir::Atom::Const(ir::Const::Step(step));
+
+        // given the current context item, apply the step
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+            atom,
+            args: vec![current_context_bindings.atom()],
+        });
+
+        // create a new binding for the step
+        let binding = self.new_binding(expr);
+
+        // XXX todo predicates
+        Bindings::from_vec(vec![binding])
     }
 
     fn literal(&mut self, ast: &ast::Literal) -> Bindings {
@@ -600,5 +626,10 @@ mod tests {
     #[test]
     fn test_nested_path_expr() {
         assert_debug_snapshot!(convert_expr_single("(1, 2) / (. + 1) / (. + 2)"));
+    }
+
+    #[test]
+    fn test_single_axis_step() {
+        assert_debug_snapshot!(convert_xpath("child::a"));
     }
 }
