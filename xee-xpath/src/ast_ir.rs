@@ -475,6 +475,9 @@ impl<'a> Converter<'a> {
     }
 
     fn args(&mut self, args: &[ast::ExprSingle]) -> Bindings {
+        if args.is_empty() {
+            return Bindings::from_vec(vec![]);
+        }
         let first = &args[0];
         let rest = &args[1..];
         let bindings = self.expr_single(first);

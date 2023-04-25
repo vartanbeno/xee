@@ -375,4 +375,24 @@ mod tests {
     fn test_value_lt_false() {
         assert_debug_snapshot!(&run("2 lt 1"));
     }
+
+    #[test]
+    fn test_inline_function_without_args() {
+        assert_debug_snapshot!(&run("function() { 5 } ()"));
+    }
+
+    #[test]
+    fn test_inline_function_with_single_arg() {
+        assert_debug_snapshot!(&run("function($x) { $x + 5 } (3)"));
+    }
+
+    #[test]
+    fn test_inline_function_with_multiple_args() {
+        assert_debug_snapshot!(&run("function($x, $y) { $x + $y } (3, 5)"));
+    }
+
+    #[test]
+    fn test_function_nested() {
+        assert_debug_snapshot!(&run("function($x) { function($y) { $y + 2 }($x + 1) } (5)"));
+    }
 }
