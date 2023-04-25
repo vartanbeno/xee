@@ -464,4 +464,14 @@ mod tests {
     fn test_range() {
         assert_debug_snapshot!(run("1 to 5"));
     }
+
+    #[test]
+    fn test_range_greater() {
+        assert_debug_snapshot!(run("5 to 1"));
+    }
+
+    #[test]
+    fn test_range_equal() {
+        assert_debug_snapshot!(run("1 to 1"));
+    }
 }
