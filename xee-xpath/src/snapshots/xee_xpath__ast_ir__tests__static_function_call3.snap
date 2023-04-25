@@ -1,0 +1,93 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"my_function(1 + 2 + 3, 4 + 5)\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v2",
+        ),
+        var_expr: Binary(
+            Binary {
+                left: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+                binary_op: Add,
+                right: Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+            },
+        ),
+        return_expr: Let(
+            Let {
+                name: Name(
+                    "v4",
+                ),
+                var_expr: Binary(
+                    Binary {
+                        left: Variable(
+                            Name(
+                                "v2",
+                            ),
+                        ),
+                        binary_op: Add,
+                        right: Const(
+                            Integer(
+                                3,
+                            ),
+                        ),
+                    },
+                ),
+                return_expr: Let(
+                    Let {
+                        name: Name(
+                            "v7",
+                        ),
+                        var_expr: Binary(
+                            Binary {
+                                left: Const(
+                                    Integer(
+                                        4,
+                                    ),
+                                ),
+                                binary_op: Add,
+                                right: Const(
+                                    Integer(
+                                        5,
+                                    ),
+                                ),
+                            },
+                        ),
+                        return_expr: FunctionCall(
+                            FunctionCall {
+                                atom: Const(
+                                    StaticFunction(
+                                        StaticFunctionId(
+                                            0,
+                                        ),
+                                    ),
+                                ),
+                                args: [
+                                    Variable(
+                                        Name(
+                                            "v4",
+                                        ),
+                                    ),
+                                    Variable(
+                                        Name(
+                                            "v7",
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+            },
+        ),
+    },
+)

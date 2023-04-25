@@ -51,10 +51,12 @@ impl Bindings {
 
     // for function arguments turn all bindings into atoms; remove those
     // that are atoms already
-    fn atoms(&mut self) -> Vec<ir::Atom> {
+    fn args(&mut self, arity: usize) -> Vec<ir::Atom> {
         let mut atoms = vec![];
+        let prev_bindings = &self.bindings[..self.bindings.len() - arity];
+        let arg_bindings = &self.bindings[self.bindings.len() - arity..];
         let mut new_bindings = vec![];
-        for binding in &self.bindings {
+        for binding in arg_bindings {
             match &binding.expr {
                 ir::Expr::Atom(atom) => atoms.push(atom.clone()),
                 _ => {
@@ -63,7 +65,7 @@ impl Bindings {
                 }
             }
         }
-        self.bindings = new_bindings;
+        self.bindings = [prev_bindings, &new_bindings].concat();
         atoms
     }
 
@@ -207,7 +209,7 @@ impl<'a> Converter<'a> {
                 ast::Postfix::ArgumentList(exprs) => {
                     let atom = bindings.atom();
                     let mut arg_bindings = self.args(exprs);
-                    let args = arg_bindings.atoms();
+                    let args = arg_bindings.args(exprs.len());
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
                     let binding = self.new_binding(expr);
                     bindings.concat(arg_bindings).bind(binding)
@@ -403,7 +405,7 @@ impl<'a> Converter<'a> {
         let constant = ir::Const::StaticFunction(static_function_id);
         let atom = ir::Atom::Const(constant);
         let mut arg_bindings = self.args(&ast.arguments);
-        let args = arg_bindings.atoms();
+        let args = arg_bindings.args(ast.arguments.len());
         let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
         let binding = self.new_binding(expr);
         arg_bindings.bind(binding)
@@ -548,5 +550,10 @@ mod tests {
     #[test]
     fn test_static_function_call2() {
         assert_debug_snapshot!(convert_expr_single("my_function(1 + 2, 3 + 4)"));
+    }
+
+    #[test]
+    fn test_static_function_call3() {
+        assert_debug_snapshot!(convert_expr_single("my_function(1 + 2 + 3, 4 + 5)"));
     }
 }
