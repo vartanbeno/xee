@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::ast;
 use crate::ast_ir::Converter;
 use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition, Program};
@@ -7,7 +10,7 @@ use crate::instruction::Instruction;
 use crate::interpret::Interpreter;
 use crate::ir;
 use crate::parse_ast::parse_xpath;
-use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
+use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue};
 
 type Scopes = crate::scope::Scopes<ir::Name>;
 
@@ -46,6 +49,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
                     ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
+                    ir::Const::EmptySequence => {
+                        StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
+                    }
                     _ => {
                         todo!()
                     }
@@ -295,5 +301,30 @@ mod tests {
     #[test]
     fn test_nested() {
         assert_debug_snapshot!(&run("1 + (8 - 2)").unwrap());
+    }
+
+    #[test]
+    fn test_comma() {
+        assert_debug_snapshot!(&run("1, 2").unwrap());
+    }
+
+    #[test]
+    fn test_empty_sequence() {
+        assert_debug_snapshot!(&run("()").unwrap());
+    }
+
+    #[test]
+    fn test_comma_squences() {
+        assert_debug_snapshot!(&run("(1, 2), (3, 4)").unwrap());
+    }
+
+    #[test]
+    fn test_let() {
+        assert_debug_snapshot!(&run("let $x := 1 return $x + 2").unwrap());
+    }
+
+    #[test]
+    fn test_let_nested() {
+        assert_debug_snapshot!(&run("let $x := 1, $y := $x + 3 return $y + 5").unwrap());
     }
 }
