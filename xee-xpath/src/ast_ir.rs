@@ -165,8 +165,24 @@ impl<'a> Converter<'a> {
     }
 
     fn path_expr(&mut self, ast: &ast::PathExpr) -> Bindings {
-        let step = &ast.steps[0];
-        self.step_expr(step)
+        let first_step = &ast.steps[0];
+        let rest_steps = &ast.steps[1..];
+        let first_step_bindings = self.step_expr(first_step);
+        rest_steps
+            .iter()
+            .fold(first_step_bindings, |acc, step_expr| {
+                let mut step_bindings = acc;
+                let step_atom = step_bindings.atom();
+                let context_name = self.new_context_name();
+                let return_bindings = self.step_expr(step_expr);
+                let expr = ir::Expr::Map(ir::Map {
+                    var_name: context_name,
+                    var_atom: step_atom,
+                    return_expr: Box::new(return_bindings.expr()),
+                });
+                let binding = self.new_binding(expr);
+                step_bindings.bind(binding)
+            })
     }
 
     fn step_expr(&mut self, ast: &ast::StepExpr) -> Bindings {
@@ -574,5 +590,10 @@ mod tests {
     #[test]
     fn test_named_function_ref() {
         assert_debug_snapshot!(convert_expr_single("my_function#2"));
+    }
+
+    #[test]
+    fn test_path_expr() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2) / (. + 1)"));
     }
 }
