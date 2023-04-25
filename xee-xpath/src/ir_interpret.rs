@@ -294,55 +294,50 @@ mod tests {
         }
     }
 
-    fn run(s: &str) -> Result<StackValue> {
+    fn run(s: &str) -> StackValue {
         let xot = Xot::new();
         let context = Context::new(&xot);
         let xpath = CompiledXPath::new(&context, s);
-        xpath.interpret()
+        xpath.interpret().unwrap()
     }
 
     #[test]
-    fn test_compile_add() -> Result<()> {
-        let xot = Xot::new();
-        let context = Context::new(&xot);
-        let xpath = CompiledXPath::new(&context, "1 + 2");
-        let result = xpath.interpret()?;
-        assert_eq!(as_integer(&result), 3);
-        Ok(())
+    fn test_compile_add() {
+        assert_debug_snapshot!(run("1 + 2"));
     }
 
     #[test]
     fn test_nested() {
-        assert_debug_snapshot!(&run("1 + (8 - 2)").unwrap());
+        assert_debug_snapshot!(&run("1 + (8 - 2)"));
     }
 
     #[test]
     fn test_comma() {
-        assert_debug_snapshot!(&run("1, 2").unwrap());
+        assert_debug_snapshot!(&run("1, 2"));
     }
 
     #[test]
     fn test_empty_sequence() {
-        assert_debug_snapshot!(&run("()").unwrap());
+        assert_debug_snapshot!(&run("()"));
     }
 
     #[test]
     fn test_comma_squences() {
-        assert_debug_snapshot!(&run("(1, 2), (3, 4)").unwrap());
+        assert_debug_snapshot!(&run("(1, 2), (3, 4)"));
     }
 
     #[test]
     fn test_let() {
-        assert_debug_snapshot!(&run("let $x := 1 return $x + 2").unwrap());
+        assert_debug_snapshot!(&run("let $x := 1 return $x + 2"));
     }
 
     #[test]
     fn test_let_nested() {
-        assert_debug_snapshot!(&run("let $x := 1, $y := $x + 3 return $y + 5").unwrap());
+        assert_debug_snapshot!(&run("let $x := 1, $y := $x + 3 return $y + 5"));
     }
 
     #[test]
     fn test_if() {
-        assert_debug_snapshot!(&run("if (1) then 2 else 3").unwrap());
+        assert_debug_snapshot!(&run("if (1) then 2 else 3"));
     }
 }
