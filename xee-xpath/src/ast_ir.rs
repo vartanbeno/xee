@@ -42,6 +42,19 @@ impl Bindings {
         atom
     }
 
+    fn expr(&self) -> ir::Expr {
+        let last_binding = self.bindings.last().unwrap();
+        let bindings = &self.bindings[..self.bindings.len() - 1];
+        let expr = last_binding.expr.clone();
+        bindings.iter().rev().fold(expr, |expr, binding| {
+            ir::Expr::Let(ir::Let {
+                name: binding.name.clone(),
+                var_expr: Box::new(binding.expr.clone()),
+                return_expr: Box::new(expr),
+            })
+        })
+    }
+
     // for function arguments turn all bindings into atoms; remove those
     // that are atoms already
     fn atoms(&mut self) -> Vec<ir::Atom> {
@@ -70,19 +83,6 @@ impl Bindings {
         let mut result = self.clone();
         result.bindings.extend(bindings.bindings);
         result
-    }
-
-    fn bind(&self) -> ir::Expr {
-        let last_binding = self.bindings.last().unwrap();
-        let bindings = &self.bindings[..self.bindings.len() - 1];
-        let expr = last_binding.expr.clone();
-        bindings.iter().rev().fold(expr, |expr, binding| {
-            ir::Expr::Let(ir::Let {
-                name: binding.name.clone(),
-                var_expr: Box::new(binding.expr.clone()),
-                return_expr: Box::new(expr),
-            })
-        })
     }
 }
 
@@ -148,12 +148,12 @@ impl Converter {
 
     fn convert_expr_single(&mut self, ast: &ast::ExprSingle) -> ir::Expr {
         let bindings = self.expr_single(ast);
-        bindings.bind()
+        bindings.expr()
     }
 
     fn convert_xpath(&mut self, ast: &ast::XPath) -> ir::Expr {
         let bindings = self.xpath(ast);
-        bindings.bind()
+        bindings.expr()
     }
 
     fn xpath(&mut self, ast: &ast::XPath) -> Bindings {
@@ -208,7 +208,7 @@ impl Converter {
                     let expr = ir::Expr::Filter(ir::Filter {
                         var_name: context_name,
                         var_atom: atom,
-                        return_expr: Box::new(return_bindings.bind()),
+                        return_expr: Box::new(return_bindings.expr()),
                     });
                     let binding = self.new_binding(expr);
                     bindings.once(binding)
@@ -304,7 +304,7 @@ impl Converter {
                     let expr = ir::Expr::Map(ir::Map {
                         var_name: context_name,
                         var_atom: path_atom,
-                        return_expr: Box::new(return_bindings.bind()),
+                        return_expr: Box::new(return_bindings.expr()),
                     });
                     let binding = self.new_binding(expr);
                     path_bindings.once(binding)
@@ -323,8 +323,8 @@ impl Converter {
         let else_bindings = self.expr_single(&ast.else_);
         let expr = ir::Expr::If(ir::If {
             condition: condition_bindings.atom(),
-            then: Box::new(then_bindings.bind()),
-            else_: Box::new(else_bindings.bind()),
+            then: Box::new(then_bindings.expr()),
+            else_: Box::new(else_bindings.expr()),
         });
         let binding = self.new_binding(expr);
         condition_bindings.once(binding)
@@ -336,8 +336,8 @@ impl Converter {
         let return_bindings = self.expr_single(&ast.return_expr);
         let expr = ir::Expr::Let(ir::Let {
             name,
-            var_expr: Box::new(var_bindings.bind()),
-            return_expr: Box::new(return_bindings.bind()),
+            var_expr: Box::new(var_bindings.expr()),
+            return_expr: Box::new(return_bindings.expr()),
         });
         Bindings::from_vec(vec![self.new_binding(expr)])
     }
@@ -350,7 +350,7 @@ impl Converter {
         let expr = ir::Expr::Map(ir::Map {
             var_name: name,
             var_atom,
-            return_expr: Box::new(return_bindings.bind()),
+            return_expr: Box::new(return_bindings.expr()),
         });
 
         let binding = self.new_binding(expr);
@@ -366,7 +366,7 @@ impl Converter {
             quantifier: self.quantifier(&ast.quantifier),
             var_name: name,
             var_atom,
-            satisifies_expr: Box::new(satisfies_bindings.bind()),
+            satisifies_expr: Box::new(satisfies_bindings.expr()),
         });
 
         let binding = self.new_binding(expr);
@@ -389,7 +389,7 @@ impl Converter {
         let body_bindings = self.exprs(&inline_function.body);
         let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
-            body: Box::new(body_bindings.bind()),
+            body: Box::new(body_bindings.expr()),
         });
         let binding = self.new_binding(expr);
         Bindings::from_vec(vec![binding])
