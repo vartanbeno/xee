@@ -426,4 +426,11 @@ mod tests {
             "function() { let $x := 3 return function($y) { $x - $y } }()(1)"
         ));
     }
+
+    #[test]
+    fn test_function_closure_nested() {
+        assert_debug_snapshot!(&run(
+            "function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()"
+        ));
+    }
 }
