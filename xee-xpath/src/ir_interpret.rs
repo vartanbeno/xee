@@ -459,4 +459,9 @@ mod tests {
     fn test_inline_function_with_args_placeholdered2() {
         assert_debug_snapshot!(run("function($x, $y) { $x - $y } ( ?, 3 ) (?) (5)"));
     }
+
+    #[test]
+    fn test_range() {
+        assert_debug_snapshot!(run("1 to 5"));
+    }
 }
