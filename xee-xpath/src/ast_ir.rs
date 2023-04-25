@@ -493,13 +493,13 @@ mod tests {
         assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }"));
     }
 
-    // #[test]
-    // fn test_function_call() {
-    //     assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }(3)"));
-    // }
+    #[test]
+    fn test_function_call() {
+        assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }(3)"));
+    }
 
-    // #[test]
-    // fn test_function_call2() {
-    //     assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }(3 + 5)"));
-    // }
+    #[test]
+    fn test_function_call2() {
+        assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }(3 + 5)"));
+    }
 }

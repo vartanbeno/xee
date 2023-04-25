@@ -1,0 +1,53 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"function($x) { $x + 1 }(3)\")"
+---
+Let(
+    Let {
+        name: Name(
+            "v3",
+        ),
+        var_expr: FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
+                            "v0",
+                        ),
+                    ),
+                ],
+                body: Binary(
+                    Binary {
+                        left: Variable(
+                            Name(
+                                "v0",
+                            ),
+                        ),
+                        binary_op: Add,
+                        right: Const(
+                            Integer(
+                                1,
+                            ),
+                        ),
+                    },
+                ),
+            },
+        ),
+        return_expr: FunctionCall(
+            FunctionCall {
+                atom: Variable(
+                    Name(
+                        "v3",
+                    ),
+                ),
+                args: [
+                    Const(
+                        Integer(
+                            3,
+                        ),
+                    ),
+                ],
+            },
+        ),
+    },
+)
