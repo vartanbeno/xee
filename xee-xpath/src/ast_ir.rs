@@ -122,6 +122,7 @@ impl Converter {
     fn step_expr(&mut self, ast: &ast::StepExpr) -> Vec<Binding> {
         match ast {
             ast::StepExpr::PrimaryExpr(ast) => self.primary_expr(ast),
+            ast::StepExpr::PostfixExpr { primary, postfixes } => self.postfixes(primary, postfixes),
             _ => todo!(),
         }
     }
@@ -133,6 +134,35 @@ impl Converter {
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             ast::PrimaryExpr::ContextItem => self.context_item(),
             _ => todo!("primary_expr: {:?}", ast),
+        }
+    }
+
+    fn postfixes(
+        &mut self,
+        primary: &ast::PrimaryExpr,
+        postfixes: &[ast::Postfix],
+    ) -> Vec<Binding> {
+        let primary_bindings = self.primary_expr(primary);
+        postfixes.iter().fold(primary_bindings, |acc, postfix| {
+            let mut bindings = acc;
+            let atom = atom(&mut bindings);
+            let context_name = self.new_context_name();
+            let return_bindings = self.postfix(postfix);
+            let expr = ir::Expr::Filter(ir::Filter {
+                var_name: context_name,
+                var_atom: atom,
+                return_expr: Box::new(self.bind(&return_bindings)),
+            });
+            let binding = self.new_binding(expr);
+            bindings.into_iter().chain(iter::once(binding)).collect()
+        })
+    }
+
+    fn postfix(&mut self, postfix: &ast::Postfix) -> Vec<Binding> {
+        match postfix {
+            ast::Postfix::Predicate(exprs) => self.exprs(exprs),
+            // ast::Postfix::Step(ast) => self.step_expr(ast),
+            _ => todo!(),
         }
     }
 
@@ -392,5 +422,10 @@ mod tests {
     #[test]
     fn test_quantified() {
         assert_debug_snapshot!(convert_expr_single("some $x in (1, 2) satisfies $x gt 1"));
+    }
+
+    #[test]
+    fn test_postfix_filter() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2)[. gt 2]"));
     }
 }
