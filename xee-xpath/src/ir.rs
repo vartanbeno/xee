@@ -74,7 +74,6 @@ pub(crate) struct Param(pub(crate) Name);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionCall {
-    pub(crate) name: Name,
     pub(crate) args: Vec<Atom>,
 }
 

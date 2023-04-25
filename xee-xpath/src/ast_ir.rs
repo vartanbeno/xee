@@ -133,6 +133,7 @@ impl Converter {
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             ast::PrimaryExpr::ContextItem => self.context_item(),
+            ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -331,6 +332,25 @@ impl Converter {
             ast::Quantifier::Every => ir::Quantifier::Every,
         }
     }
+
+    fn inline_function(&mut self, inline_function: &ast::InlineFunction) -> Vec<Binding> {
+        let params = inline_function
+            .params
+            .iter()
+            .map(|param| self.param(param))
+            .collect();
+        let body_bindings = self.exprs(&inline_function.body);
+        let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
+            params,
+            body: Box::new(self.bind(&body_bindings)),
+        });
+        let binding = self.new_binding(expr);
+        vec![binding]
+    }
+
+    fn param(&mut self, param: &ast::Param) -> ir::Param {
+        ir::Param(self.new_var_name(&param.name))
+    }
 }
 
 fn convert_expr_single(s: &str) -> ir::Expr {
@@ -433,5 +453,10 @@ mod tests {
     #[test]
     fn test_postfix_filter_nested() {
         assert_debug_snapshot!(convert_expr_single("(1, 2)[. gt 2][. lt 3]"));
+    }
+
+    #[test]
+    fn test_function_definition() {
+        assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }"));
     }
 }

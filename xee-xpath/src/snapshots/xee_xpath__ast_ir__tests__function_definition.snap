@@ -1,0 +1,30 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"function($x) { $x + 1 }\")"
+---
+FunctionDefinition(
+    FunctionDefinition {
+        params: [
+            Param(
+                Name(
+                    "v0",
+                ),
+            ),
+        ],
+        body: Binary(
+            Binary {
+                left: Variable(
+                    Name(
+                        "v0",
+                    ),
+                ),
+                binary_op: Add,
+                right: Const(
+                    Integer(
+                        1,
+                    ),
+                ),
+            },
+        ),
+    },
+)
