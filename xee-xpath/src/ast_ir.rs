@@ -544,4 +544,9 @@ mod tests {
     fn test_static_function_call() {
         assert_debug_snapshot!(convert_expr_single("my_function(5, 2)"));
     }
+
+    #[test]
+    fn test_static_function_call2() {
+        assert_debug_snapshot!(convert_expr_single("my_function(1 + 2, 3 + 4)"));
+    }
 }
