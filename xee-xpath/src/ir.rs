@@ -60,6 +60,7 @@ pub(crate) enum BinaryOp {
     Ne,
     Comma,
     Gt,
+    Lt,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

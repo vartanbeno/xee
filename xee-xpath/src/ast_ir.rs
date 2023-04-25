@@ -227,6 +227,7 @@ impl Converter {
         match operator {
             ast::Operator::Add => ir::BinaryOp::Add,
             ast::Operator::ValueGt => ir::BinaryOp::Gt,
+            ast::Operator::ValueLt => ir::BinaryOp::Lt,
             _ => todo!("binary_op: {:?}", operator),
         }
     }
@@ -427,5 +428,10 @@ mod tests {
     #[test]
     fn test_postfix_filter() {
         assert_debug_snapshot!(convert_expr_single("(1, 2)[. gt 2]"));
+    }
+
+    #[test]
+    fn test_postfix_filter_nested() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2)[. gt 2][. lt 3]"));
     }
 }
