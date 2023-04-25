@@ -244,6 +244,7 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
 mod tests {
     use super::*;
 
+    use insta::assert_debug_snapshot;
     use std::cell::RefCell;
     use std::rc::Rc;
     use xot::Xot;
@@ -274,6 +275,13 @@ mod tests {
         }
     }
 
+    fn run(s: &str) -> Result<StackValue> {
+        let xot = Xot::new();
+        let context = Context::new(&xot);
+        let xpath = CompiledXPath::new(&context, s);
+        xpath.interpret()
+    }
+
     #[test]
     fn test_compile_add() -> Result<()> {
         let xot = Xot::new();
@@ -282,5 +290,10 @@ mod tests {
         let result = xpath.interpret()?;
         assert_eq!(as_integer(&result), 3);
         Ok(())
+    }
+
+    #[test]
+    fn test_nested() {
+        assert_debug_snapshot!(&run("1 + (8 - 2)").unwrap());
     }
 }
