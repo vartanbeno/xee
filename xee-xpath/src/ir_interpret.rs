@@ -449,4 +449,9 @@ mod tests {
     fn test_static_call_with_placeholders() {
         assert_debug_snapshot!(&run("my_function(?, 2)(5)"));
     }
+
+    #[test]
+    fn test_inline_function_with_args_placeholdered() {
+        assert_debug_snapshot!(&run("function($x, $y) { $x - $y } ( ?, 3 ) (5)"));
+    }
 }
