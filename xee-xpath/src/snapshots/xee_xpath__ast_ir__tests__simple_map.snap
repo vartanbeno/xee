@@ -25,7 +25,7 @@ Let(
         return_expr: Map(
             Map {
                 var_name: Name(
-                    "v4",
+                    "v3",
                 ),
                 var_atom: Variable(
                     Name(

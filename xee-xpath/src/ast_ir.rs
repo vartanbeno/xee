@@ -357,4 +357,9 @@ mod tests {
     fn test_simple_map_with_context() {
         assert_debug_snapshot!(convert_expr_single("(1, 2) ! (. + 1)"));
     }
+
+    #[test]
+    fn test_nested_simple_map_with_context() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2) ! (. + 1) ! (. + 2)"));
+    }
 }
