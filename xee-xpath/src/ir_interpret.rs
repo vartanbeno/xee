@@ -444,4 +444,9 @@ mod tests {
     fn test_named_function_ref_call() {
         assert_debug_snapshot!(&run("my_function#2(5, 2)"));
     }
+
+    #[test]
+    fn test_static_call_with_placeholders() {
+        assert_debug_snapshot!(&run("my_function(?, 2)(5)"));
+    }
 }
