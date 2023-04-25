@@ -38,6 +38,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call);
             }
+            ir::Expr::If(if_) => {
+                self.compile_if(if_);
+            }
             _ => {
                 todo!()
             }
@@ -88,6 +91,16 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_expr(&let_.return_expr);
         self.builder.emit(Instruction::LetDone);
         self.scopes.pop_name();
+    }
+
+    fn compile_if(&mut self, if_: &ir::If) {
+        self.compile_atom(&if_.condition);
+        let jump_else = self.builder.emit_jump_forward(JumpCondition::False);
+        self.compile_expr(&if_.then);
+        let jump_end = self.builder.emit_jump_forward(JumpCondition::Always);
+        self.builder.patch_jump(jump_else);
+        self.compile_expr(&if_.else_);
+        self.builder.patch_jump(jump_end);
     }
 
     fn compile_binary(&mut self, binary: &ir::Binary) {
@@ -326,5 +339,10 @@ mod tests {
     #[test]
     fn test_let_nested() {
         assert_debug_snapshot!(&run("let $x := 1, $y := $x + 3 return $y + 5").unwrap());
+    }
+
+    #[test]
+    fn test_if() {
+        assert_debug_snapshot!(&run("if (1) then 2 else 3").unwrap());
     }
 }
