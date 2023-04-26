@@ -84,6 +84,10 @@ pub(crate) struct Closure {
     pub(crate) values: Vec<StackValue>,
 }
 
+// Speculation: A rc stack value would be a lot smaller, though at the
+// cost of indirection. So I'm not sure it would be faster; we'd get
+// faster stack operations but slower heap access and less cache locality.
+
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
     Atomic(Atomic),
