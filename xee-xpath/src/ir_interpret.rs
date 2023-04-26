@@ -688,4 +688,9 @@ mod tests {
     fn test_some_quantifier_expr_false() {
         assert_debug_snapshot!(run("some $x in (1, 2, 3) satisfies $x eq 5"));
     }
+
+    #[test]
+    fn test_nested_some_quantifier_expr_true() {
+        assert_debug_snapshot!(run("some $x in (1, 2, 3), $y in (2, 3) satisfies $x gt $y"));
+    }
 }
