@@ -607,4 +607,9 @@ mod tests {
     fn test_simple_map() {
         assert_debug_snapshot!(run("(1, 2) ! (. + 1)"));
     }
+
+    #[test]
+    fn test_simple_map_sequence() {
+        assert_debug_snapshot!(run("(1, 2) ! (., 0)"));
+    }
 }
