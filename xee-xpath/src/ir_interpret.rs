@@ -668,6 +668,11 @@ mod tests {
     }
 
     #[test]
+    fn test_simple_map_last() {
+        assert_debug_snapshot!(run("(4, 5, 6) ! (fn:last())"));
+    }
+
+    #[test]
     fn test_some_quantifier_expr_true() {
         assert_debug_snapshot!(run("some $x in (1, 2, 3) satisfies $x eq 2"));
     }
