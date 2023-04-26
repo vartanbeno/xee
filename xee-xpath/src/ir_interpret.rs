@@ -2,14 +2,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::ast_ir::Converter;
-use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition, Program};
+use crate::builder::{BackwardJumpRef, FunctionBuilder, JumpCondition, Program};
 use crate::context::Context;
 use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret::{Interpreter, Mode};
+use crate::interpret::Interpreter;
 use crate::ir;
 use crate::parse_ast::parse_xpath;
-use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue, StaticFunctionId};
+use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue};
 
 type Scopes = crate::scope::Scopes<ir::Name>;
 
@@ -82,7 +82,7 @@ impl<'a> InterpreterCompiler<'a> {
         } else {
             // if value is in any outer scopes
             if self.scopes.is_closed_over_name(name) {
-                let index = self.builder.add_ir_closure_name(name);
+                let index = self.builder.add_closure_name(name);
                 if index > u16::MAX as usize {
                     panic!("too many closure variables");
                 }
@@ -191,7 +191,7 @@ impl<'a> InterpreterCompiler<'a> {
         // now place all captured names on stack, to ensure we have the
         // closure
         // in reverse order so we can pop them off in the right order
-        for name in function.ir_closure_names.iter().rev() {
+        for name in function.closure_names.iter().rev() {
             self.compile_variable(name);
         }
         let function_id = self.builder.add_function(function);
@@ -412,7 +412,7 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, self.context, context_item, Mode::Ir);
+        let mut interpreter = Interpreter::new(&self.program, self.context, context_item);
         interpreter.start(self.main);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression

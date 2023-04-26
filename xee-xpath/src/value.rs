@@ -68,9 +68,7 @@ pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<StackValue>,
-    pub(crate) closure_names: Vec<ast::Name>,
-    pub(crate) ir_closure_names: Vec<ir::Name>,
-    pub(crate) steps: Vec<Step>,
+    pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
 }
 

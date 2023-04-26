@@ -7,7 +7,6 @@ pub(crate) enum Instruction {
     Sub,
     Const(u16),
     Closure(u16),
-    StaticFunction(u16),
     Var(u16),
     Set(u16),
     ClosureVar(u16),
@@ -24,7 +23,6 @@ pub(crate) enum Instruction {
     JumpIfFalse(i16),
     Call(u8),
     Return,
-    Dup,
     Pop,
     LetDone,
     Range,
@@ -32,7 +30,6 @@ pub(crate) enum Instruction {
     SequenceLen,
     SequenceGet,
     SequencePush,
-    Step(u16),
     PrintTop,
     PrintStack,
 }
@@ -43,7 +40,6 @@ enum EncodedInstruction {
     Sub,
     Const,
     Closure,
-    StaticFunction,
     Var,
     Set,
     ClosureVar,
@@ -60,7 +56,6 @@ enum EncodedInstruction {
     JumpIfFalse,
     Call,
     Return,
-    Dup,
     Pop,
     LetDone,
     Range,
@@ -68,7 +63,6 @@ enum EncodedInstruction {
     SequenceLen,
     SequenceGet,
     SequencePush,
-    Step,
     PrintTop,
     PrintStack,
 }
@@ -86,10 +80,6 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Closure => {
             let function = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Closure(function), 3)
-        }
-        EncodedInstruction::StaticFunction => {
-            let function = u16::from_le_bytes([bytes[1], bytes[2]]);
-            (Instruction::StaticFunction(function), 3)
         }
         EncodedInstruction::Var => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -128,7 +118,6 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             (Instruction::Call(arity), 2)
         }
         EncodedInstruction::Return => (Instruction::Return, 1),
-        EncodedInstruction::Dup => (Instruction::Dup, 1),
         EncodedInstruction::Pop => (Instruction::Pop, 1),
         EncodedInstruction::LetDone => (Instruction::LetDone, 1),
         EncodedInstruction::Range => (Instruction::Range, 1),
@@ -136,10 +125,6 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::SequenceLen => (Instruction::SequenceLen, 1),
         EncodedInstruction::SequenceGet => (Instruction::SequenceGet, 1),
         EncodedInstruction::SequencePush => (Instruction::SequencePush, 1),
-        EncodedInstruction::Step => {
-            let axis = u16::from_le_bytes([bytes[1], bytes[2]]);
-            (Instruction::Step(axis), 3)
-        }
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -166,10 +151,6 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         }
         Instruction::Closure(function_id) => {
             bytes.push(EncodedInstruction::Closure.to_u8().unwrap());
-            bytes.extend_from_slice(&function_id.to_le_bytes());
-        }
-        Instruction::StaticFunction(function_id) => {
-            bytes.push(EncodedInstruction::StaticFunction.to_u8().unwrap());
             bytes.extend_from_slice(&function_id.to_le_bytes());
         }
         Instruction::Var(variable) => {
@@ -209,7 +190,6 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(arity);
         }
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
-        Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::Pop => bytes.push(EncodedInstruction::Pop.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
         Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
@@ -217,10 +197,6 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
         Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
         Instruction::SequencePush => bytes.push(EncodedInstruction::SequencePush.to_u8().unwrap()),
-        Instruction::Step(step_id) => {
-            bytes.push(EncodedInstruction::Step.to_u8().unwrap());
-            bytes.extend_from_slice(&step_id.to_le_bytes());
-        }
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }

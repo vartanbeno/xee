@@ -25,28 +25,15 @@ pub(crate) struct Interpreter<'a> {
     context: &'a Context<'a>,
     stack: Vec<StackValue>,
     frames: Vec<Frame>,
-    mode: Mode,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Mode {
-    Ast,
-    Ir,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(
-        program: &'a Program,
-        context: &'a Context,
-        context_item: Item,
-        mode: Mode,
-    ) -> Self {
+    pub(crate) fn new(program: &'a Program, context: &'a Context, context_item: Item) -> Self {
         Interpreter {
             program,
             context,
             stack: vec![StackValue::from_item(context_item)],
             frames: Vec::new(),
-            mode,
         }
     }
 
@@ -98,22 +85,13 @@ impl<'a> Interpreter<'a> {
                 Instruction::Closure(function_id) => {
                     let mut values = Vec::new();
                     let closure_function = &self.program.functions[function_id as usize];
-                    let closure_names_len = match self.mode {
-                        Mode::Ast => closure_function.closure_names.len(),
-                        Mode::Ir => closure_function.ir_closure_names.len(),
-                    };
-                    for _ in 0..closure_names_len {
+                    for _ in 0..closure_function.closure_names.len() {
                         values.push(self.stack.pop().unwrap());
                     }
                     self.stack.push(StackValue::Closure(Rc::new(Closure {
                         function_id: FunctionId(function_id as usize),
                         values,
                     })));
-                }
-                Instruction::StaticFunction(static_function_id) => {
-                    self.stack.push(StackValue::StaticFunction(StaticFunctionId(
-                        static_function_id as usize,
-                    )));
                 }
                 Instruction::Var(index) => {
                     self.stack.push(self.stack[base + index as usize].clone());
@@ -213,10 +191,6 @@ impl<'a> Interpreter<'a> {
                         .union(&b.borrow(), &self.context.documents.annotations)?;
                     self.stack
                         .push(StackValue::Sequence(Rc::new(RefCell::new(combined))));
-                }
-                Instruction::Dup => {
-                    let a = self.stack.last().unwrap().clone();
-                    self.stack.push(a);
                 }
                 Instruction::Pop => {
                     self.stack.pop();
@@ -337,14 +311,6 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
-                Instruction::Step(step_id) => {
-                    let step = &function.steps[step_id as usize];
-                    let node = self.stack.pop().unwrap();
-                    let node = node.as_node().ok_or(Error::TypeError)?;
-                    let new_sequence = resolve_step(step, node, self.context.xot);
-                    self.stack
-                        .push(StackValue::Sequence(Rc::new(RefCell::new(new_sequence))));
-                }
                 Instruction::PrintTop => {
                     let top = self.stack.last().unwrap();
                     println!("{:#?}", top);
@@ -434,12 +400,8 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter = Interpreter::new(
-            &program,
-            &context,
-            Item::Atomic(Atomic::Integer(0)),
-            Mode::Ir,
-        );
+        let mut interpreter =
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -495,12 +457,8 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter = Interpreter::new(
-            &program,
-            &context,
-            Item::Atomic(Atomic::Integer(0)),
-            Mode::Ir,
-        );
+        let mut interpreter =
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
@@ -530,53 +488,13 @@ mod tests {
 
         let xot = Xot::new();
         let context = Context::new(&xot);
-        let mut interpreter = Interpreter::new(
-            &program,
-            &context,
-            Item::Atomic(Atomic::Integer(0)),
-            Mode::Ir,
-        );
+        let mut interpreter =
+            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
         interpreter.start(main_id);
         interpreter.run()?;
         assert_eq!(
             interpreter.stack,
             vec![StackValue::Atomic(Atomic::Integer(4))]
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_loop() -> Result<()> {
-        let mut program = Program::new();
-
-        let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(10)));
-        let loop_start = builder.loop_start();
-        builder.emit(Instruction::Dup);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(5)));
-        builder.emit(Instruction::Gt);
-        let end = builder.emit_jump_forward(JumpCondition::False);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        builder.emit(Instruction::Sub);
-        builder.emit_jump_backward(loop_start, JumpCondition::Always);
-        builder.patch_jump(end);
-        let function = builder.finish("main".to_string(), 0);
-
-        let main_id = program.add_function(function);
-
-        let xot = Xot::new();
-        let context = Context::new(&xot);
-        let mut interpreter = Interpreter::new(
-            &program,
-            &context,
-            Item::Atomic(Atomic::Integer(0)),
-            Mode::Ir,
-        );
-        interpreter.start(main_id);
-        interpreter.run()?;
-        assert_eq!(
-            interpreter.stack,
-            vec![StackValue::Atomic(Atomic::Integer(5))]
         );
         Ok(())
     }

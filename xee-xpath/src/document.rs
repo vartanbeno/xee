@@ -1,5 +1,5 @@
 use ahash::{HashMap, HashMapExt};
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use xot::Xot;
 
 use crate::annotation::Annotations;
