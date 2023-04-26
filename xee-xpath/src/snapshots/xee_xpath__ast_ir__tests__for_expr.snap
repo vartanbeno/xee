@@ -8,8 +8,12 @@ Map(
             item: Name(
                 "v0",
             ),
-            position: None,
-            last: None,
+            position: Name(
+                "v2",
+            ),
+            last: Name(
+                "v3",
+            ),
         },
         var_atom: Const(
             Integer(

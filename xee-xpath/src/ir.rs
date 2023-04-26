@@ -41,8 +41,8 @@ pub(crate) struct Name(pub(crate) String);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ContextNames {
     pub(crate) item: Name,
-    pub(crate) position: Option<Name>,
-    pub(crate) last: Option<Name>,
+    pub(crate) position: Name,
+    pub(crate) last: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

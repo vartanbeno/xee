@@ -118,8 +118,8 @@ impl<'a> Converter<'a> {
     fn push_context(&mut self) -> ir::ContextNames {
         let names = ir::ContextNames {
             item: self.new_name(),
-            position: Some(self.new_name()),
-            last: Some(self.new_name()),
+            position: self.new_name(),
+            last: self.new_name(),
         };
         self.context_scope.push(Context::Names(names.clone()));
         names
@@ -136,8 +136,8 @@ impl<'a> Converter<'a> {
     fn explicit_context_names(&mut self, name: ir::Name) -> ir::ContextNames {
         ir::ContextNames {
             item: name,
-            position: None,
-            last: None,
+            position: self.new_name(),
+            last: self.new_name(),
         }
     }
 
@@ -198,8 +198,8 @@ impl<'a> Converter<'a> {
         let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params: vec![
                 ir::Param(context_names.item),
-                ir::Param(context_names.position.unwrap()),
-                ir::Param(context_names.last.unwrap()),
+                ir::Param(context_names.position),
+                ir::Param(context_names.last),
             ],
             body: Box::new(exprs_bindings.expr()),
         });

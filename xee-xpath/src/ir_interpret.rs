@@ -13,8 +13,6 @@ pub(crate) struct InterpreterCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
     pub(crate) context: &'a Context<'a>,
     pub(crate) builder: FunctionBuilder<'a>,
-    pub(crate) sequence_length_name: &'a ir::Name,
-    pub(crate) sequence_index_name: &'a ir::Name,
 }
 
 impl<'a> InterpreterCompiler<'a> {
@@ -167,8 +165,6 @@ impl<'a> InterpreterCompiler<'a> {
             builder: nested_builder,
             scopes: self.scopes,
             context: self.context,
-            sequence_length_name: self.sequence_length_name,
-            sequence_index_name: self.sequence_index_name,
         };
 
         for param in &function_definition.params {
@@ -210,9 +206,9 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
-        let loop_start = self.compile_sequence_loop_init(&map.var_atom);
+        let loop_start = self.compile_sequence_loop_init(&map.var_atom, &map.context_names);
 
-        self.compile_sequence_get_item(&map.var_atom);
+        self.compile_sequence_get_item(&map.var_atom, &map.context_names);
         // name it
         self.scopes.push_name(&map.context_names.item);
         // execute the map expression, placing result on stack
@@ -226,7 +222,7 @@ impl<'a> InterpreterCompiler<'a> {
         // clean up the var_name item
         self.builder.emit(Instruction::Pop);
 
-        self.compile_sequence_loop_iterate(loop_start);
+        self.compile_sequence_loop_iterate(loop_start, &map.context_names);
 
         self.compile_sequence_loop_end();
 
@@ -242,10 +238,10 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
-        let loop_start = self.compile_sequence_loop_init(&filter.var_atom);
+        let loop_start = self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names);
 
         // place item to filter on stack
-        self.compile_sequence_get_item(&filter.var_atom);
+        self.compile_sequence_get_item(&filter.var_atom, &filter.context_names);
         // name it
         self.scopes.push_name(&filter.context_names.item);
         // execute the filter expression, placing result on stack
@@ -266,7 +262,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.builder.patch_jump(iterate);
         // no need to clean up the stack, as filter get is pushed onto sequence
-        self.compile_sequence_loop_iterate(loop_start);
+        self.compile_sequence_loop_iterate(loop_start, &filter.context_names);
 
         self.compile_sequence_loop_end();
 
@@ -277,9 +273,10 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_quantified(&mut self, quantified: &ir::Quantified) {
-        let loop_start = self.compile_sequence_loop_init(&quantified.var_atom);
+        let loop_start =
+            self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names);
 
-        self.compile_sequence_get_item(&quantified.var_atom);
+        self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names);
         // name it
         self.scopes.push_name(&quantified.context_names.item);
         // execute the satisfies expression, placing result in on stack
@@ -293,7 +290,7 @@ impl<'a> InterpreterCompiler<'a> {
         // we didn't jump out, clean up quantifier variable
         self.builder.emit(Instruction::Pop);
 
-        self.compile_sequence_loop_iterate(loop_start);
+        self.compile_sequence_loop_iterate(loop_start, &quantified.context_names);
 
         // if we reached the end, without jumping out
         self.compile_sequence_loop_end();
@@ -324,36 +321,44 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
     }
 
-    fn compile_sequence_loop_init(&mut self, atom: &ir::Atom) -> BackwardJumpRef {
+    fn compile_sequence_loop_init(
+        &mut self,
+        atom: &ir::Atom,
+        context_names: &ir::ContextNames,
+    ) -> BackwardJumpRef {
         //  sequence length
         self.compile_atom(atom);
-        self.scopes.push_name(self.sequence_length_name);
+        self.scopes.push_name(&context_names.last);
         self.builder.emit(Instruction::SequenceLen);
 
         // place index on stack
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
-        self.scopes.push_name(self.sequence_index_name);
+        self.scopes.push_name(&context_names.position);
         self.builder.loop_start()
     }
 
-    fn compile_sequence_get_item(&mut self, atom: &ir::Atom) {
+    fn compile_sequence_get_item(&mut self, atom: &ir::Atom, context_names: &ir::ContextNames) {
         // get item at the index
-        self.compile_variable(self.sequence_index_name);
+        self.compile_variable(&context_names.position);
         self.compile_atom(atom);
         self.builder.emit(Instruction::SequenceGet);
     }
 
-    fn compile_sequence_loop_iterate(&mut self, loop_start: BackwardJumpRef) {
+    fn compile_sequence_loop_iterate(
+        &mut self,
+        loop_start: BackwardJumpRef,
+        context_names: &ir::ContextNames,
+    ) {
         // update index with 1
-        self.compile_variable(self.sequence_index_name);
+        self.compile_variable(&context_names.position);
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.builder.emit(Instruction::Add);
-        self.compile_variable_set(self.sequence_index_name);
+        self.compile_variable_set(&context_names.position);
         // compare with sequence length
-        self.compile_variable(self.sequence_index_name);
-        self.compile_variable(self.sequence_length_name);
+        self.compile_variable(&context_names.position);
+        self.compile_variable(&context_names.last);
         // unless we reached the end, we jump back to the start
         self.builder.emit(Instruction::Lt);
         self.builder

@@ -58,15 +58,11 @@ FunctionDefinition(
                             item: Name(
                                 "v4",
                             ),
-                            position: Some(
-                                Name(
-                                    "v5",
-                                ),
+                            position: Name(
+                                "v5",
                             ),
-                            last: Some(
-                                Name(
-                                    "v6",
-                                ),
+                            last: Name(
+                                "v6",
                             ),
                         },
                         var_atom: Variable(

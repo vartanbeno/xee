@@ -33,15 +33,11 @@ Let(
                             item: Name(
                                 "v3",
                             ),
-                            position: Some(
-                                Name(
-                                    "v4",
-                                ),
+                            position: Name(
+                                "v4",
                             ),
-                            last: Some(
-                                Name(
-                                    "v5",
-                                ),
+                            last: Name(
+                                "v5",
                             ),
                         },
                         var_atom: Variable(
@@ -72,15 +68,11 @@ Let(
                             item: Name(
                                 "v9",
                             ),
-                            position: Some(
-                                Name(
-                                    "v10",
-                                ),
+                            position: Name(
+                                "v10",
                             ),
-                            last: Some(
-                                Name(
-                                    "v11",
-                                ),
+                            last: Name(
+                                "v11",
                             ),
                         },
                         var_atom: Variable(

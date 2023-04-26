@@ -28,8 +28,6 @@ impl<'a> CompiledXPath<'a> {
             builder,
             scopes: &mut scopes,
             context,
-            sequence_length_name: &ir::Name("xee_sequence_length".to_string()),
-            sequence_index_name: &ir::Name("xee_sequence_index".to_string()),
         };
         compiler.scopes.push_name(&arg_name);
         compiler.compile_expr(&expr);
