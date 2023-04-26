@@ -1,15 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::ast_ir::Converter;
-use crate::builder::{BackwardJumpRef, FunctionBuilder, JumpCondition, Program};
+use crate::builder::{BackwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::context::Context;
-use crate::error::Result;
 use crate::instruction::Instruction;
-use crate::interpret::Interpreter;
 use crate::ir;
-use crate::parse_ast::parse_xpath;
-use crate::value::{Atomic, FunctionId, Item, Node, Sequence, StackValue};
+use crate::value::{Atomic, Sequence, StackValue};
 
 pub(crate) type Scopes = crate::scope::Scopes<ir::Name>;
 
@@ -380,8 +376,8 @@ mod tests {
     use std::rc::Rc;
     use xot::Xot;
 
+    use crate::error::Result;
     use crate::xpath::CompiledXPath;
-
     use crate::{
         document::{Document, Documents, Uri},
         value::{Item, Node, Sequence},
