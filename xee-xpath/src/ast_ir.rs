@@ -268,8 +268,22 @@ impl<'a> Converter<'a> {
         // create a new binding for the step
         let binding = self.new_binding(expr);
 
-        // XXX todo predicates
-        Bindings::from_vec(vec![binding])
+        let bindings = Bindings::from_vec(vec![binding]);
+
+        // now apply predicates
+        ast.predicates.iter().fold(bindings, |acc, predicate| {
+            let mut bindings = acc;
+            let atom = bindings.atom();
+            let context_name = self.new_context_name();
+            let return_bindings = self.exprs(predicate);
+            let expr = ir::Expr::Filter(ir::Filter {
+                var_name: context_name,
+                var_atom: atom,
+                return_expr: Box::new(return_bindings.expr()),
+            });
+            let binding = self.new_binding(expr);
+            bindings.bind(binding)
+        })
     }
 
     fn literal(&mut self, ast: &ast::Literal) -> Bindings {
@@ -648,5 +662,15 @@ mod tests {
     #[test]
     fn test_single_axis_step() {
         assert_debug_snapshot!(convert_xpath("child::a"));
+    }
+
+    #[test]
+    fn test_multiple_axis_steps() {
+        assert_debug_snapshot!(convert_xpath("child::a/child::b"));
+    }
+
+    #[test]
+    fn test_axis_step_with_predicates() {
+        assert_debug_snapshot!(convert_xpath("child::a[. gt 1]"));
     }
 }

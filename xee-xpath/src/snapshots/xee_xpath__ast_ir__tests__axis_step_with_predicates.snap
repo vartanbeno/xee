@@ -1,0 +1,75 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_xpath(\"child::a[. gt 1]\")"
+---
+FunctionDefinition(
+    FunctionDefinition {
+        params: [
+            Param(
+                Name(
+                    "v0",
+                ),
+            ),
+        ],
+        body: Let(
+            Let {
+                name: Name(
+                    "v1",
+                ),
+                var_expr: FunctionCall(
+                    FunctionCall {
+                        atom: Const(
+                            Step(
+                                Step {
+                                    axis: Child,
+                                    node_test: NameTest(
+                                        Name(
+                                            Name {
+                                                name: "a",
+                                                namespace: None,
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                        args: [
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+                return_expr: Filter(
+                    Filter {
+                        var_name: Name(
+                            "v0",
+                        ),
+                        var_atom: Variable(
+                            Name(
+                                "v1",
+                            ),
+                        ),
+                        return_expr: Binary(
+                            Binary {
+                                left: Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                op: Gt,
+                                right: Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                            },
+                        ),
+                    },
+                ),
+            },
+        ),
+    },
+)
