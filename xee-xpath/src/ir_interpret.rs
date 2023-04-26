@@ -590,4 +590,9 @@ mod tests {
     fn test_for_loop() {
         assert_debug_snapshot!(run("for $x in 1 to 5 return $x + 2"));
     }
+
+    #[test]
+    fn test_nested_for_loop() {
+        assert_debug_snapshot!(run("for $i in (10, 20, 30), $j in (1, 2) return $i + $j"));
+    }
 }
