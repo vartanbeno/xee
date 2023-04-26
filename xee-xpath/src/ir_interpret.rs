@@ -765,4 +765,9 @@ mod tests {
     fn test_predicate() {
         assert_debug_snapshot!(run("(1, 2, 3)[. ge 2]"));
     }
+
+    #[test]
+    fn test_predicate_multiple() {
+        assert_debug_snapshot!(run("(1, 2, 3)[. ge 2][. ge 3]"));
+    }
 }
