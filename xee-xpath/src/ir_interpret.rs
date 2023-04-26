@@ -424,6 +424,38 @@ mod tests {
         xpath.interpret().unwrap()
     }
 
+    fn run_xml(xml: &str, xpath: &str) -> StackValue {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents.add(&mut xot, &uri, xml).unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+
+        let xpath = CompiledXPath::new(&context, xpath);
+        xpath.interpret_with_xot_node(document.root).unwrap()
+    }
+
+    fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
+    where
+        S: Fn(&Xot, &Document) -> Vec<xot::Node>,
+    {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents.add(&mut xot, &uri, xml).unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let nodes = get_nodes(&xot, document);
+
+        let xpath = CompiledXPath::new(&context, xpath);
+        let result = xpath.interpret_with_xot_node(document.root)?;
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));
+        Ok(())
+    }
+
     #[test]
     fn test_compile_add() {
         assert_debug_snapshot!(run("1 + 2"));
@@ -737,26 +769,6 @@ mod tests {
     //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
     // }
 
-    fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
-    where
-        S: Fn(&Xot, &Document) -> Vec<xot::Node>,
-    {
-        let mut xot = Xot::new();
-        let uri = Uri("http://example.com".to_string());
-        let mut documents = Documents::new();
-        documents.add(&mut xot, &uri, xml).unwrap();
-        let context = Context::with_documents(&xot, &documents);
-        let document = documents.get(&uri).unwrap();
-        let nodes = get_nodes(&xot, document);
-
-        let xpath = CompiledXPath::new(&context, xpath);
-        let result = xpath.interpret_with_xot_node(document.root)?;
-        let sequence = as_sequence(&result);
-        let sequence = sequence.borrow();
-        assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));
-        Ok(())
-    }
-
     // xml to parse
     // a struct with node references
     // expr, expected result based on struct
@@ -793,6 +805,14 @@ mod tests {
                 vec![doc_el, a, b, c]
             },
         )
+    }
+
+    #[test]
+    fn test_descendant_axis_position() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "descendant::* / fn:position()"
+        ));
     }
 
     #[test]
