@@ -453,7 +453,7 @@ mod tests {
     use xot::Xot;
 
     use crate::{
-        document::{Documents, Uri},
+        document::{Document, Documents, Uri},
         value::{Item, Node, Sequence},
     };
 
@@ -796,33 +796,101 @@ mod tests {
     //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
     // }
 
-    #[test]
-    fn test_child_axis_step() -> Result<()> {
+    fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
+    where
+        S: Fn(&Xot, &Document) -> Vec<xot::Node>,
+    {
         let mut xot = Xot::new();
         let uri = Uri("http://example.com".to_string());
         let mut documents = Documents::new();
-        documents
-            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
-            .unwrap();
+        documents.add(&mut xot, &uri, xml).unwrap();
         let context = Context::with_documents(&xot, &documents);
         let document = documents.get(&uri).unwrap();
-        let doc_el = xot.document_element(document.root).unwrap();
-        let a = xot.first_child(doc_el).unwrap();
-        let b = xot.next_sibling(a).unwrap();
+        let nodes = get_nodes(&xot, document);
 
-        let xpath = CompiledXPath::new(&context, "doc/*");
-        let result = xpath.interpret_with_xot_node(document.root)?;
-
-        let sequence = as_sequence(&result);
-        let sequence = sequence.borrow();
-        assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
-
-        let xpath = CompiledXPath::new(&context, "doc/a");
-
+        let xpath = CompiledXPath::new(&context, xpath);
         let result = xpath.interpret_with_xot_node(document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();
-        assert_eq!(*sequence, xot_nodes_to_sequence(&[a]));
+        assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));
         Ok(())
+    }
+
+    // xml to parse
+    // a struct with node references
+    // expr, expected result based on struct
+
+    #[test]
+    fn test_child_axis_step1() -> Result<()> {
+        assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
+            let doc_el = xot.document_element(document.root).unwrap();
+            let a = xot.first_child(doc_el).unwrap();
+            let b = xot.next_sibling(a).unwrap();
+            vec![a, b]
+        })
+    }
+
+    #[test]
+    fn test_child_axis_step2() -> Result<()> {
+        assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/a", |xot, document| {
+            let doc_el = xot.document_element(document.root).unwrap();
+            let a = xot.first_child(doc_el).unwrap();
+            vec![a]
+        })
+    }
+
+    #[test]
+    fn test_descendant_axis_step() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "descendant::*",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let b = xot.next_sibling(a).unwrap();
+                let c = xot.first_child(b).unwrap();
+                vec![doc_el, a, b, c]
+            },
+        )
+    }
+
+    #[test]
+    fn test_descendant_axis_step2() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a><c/></a><b/></doc>"#,
+            "descendant::*",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let b = xot.next_sibling(a).unwrap();
+                let c = xot.first_child(a).unwrap();
+                vec![doc_el, a, c, b]
+            },
+        )
+    }
+
+    #[test]
+    fn test_comma_nodes() -> Result<()> {
+        assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/b, doc/a", |xot, document| {
+            let doc_el = xot.document_element(document.root).unwrap();
+            let a = xot.first_child(doc_el).unwrap();
+            let b = xot.next_sibling(a).unwrap();
+            vec![b, a]
+        })
+    }
+
+    #[test]
+    fn test_union() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a/><b/><c/></doc>"#,
+            "doc/c | doc/a | doc/b | doc/a",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let b = xot.next_sibling(a).unwrap();
+                let c = xot.next_sibling(b).unwrap();
+                vec![a, b, c]
+            },
+        )
     }
 }
