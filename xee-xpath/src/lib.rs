@@ -25,3 +25,4 @@ mod scope;
 mod static_context;
 mod step;
 mod value;
+mod xpath;
