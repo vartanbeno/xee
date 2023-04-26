@@ -612,4 +612,19 @@ mod tests {
     fn test_simple_map_sequence() {
         assert_debug_snapshot!(run("(1, 2) ! (., 0)"));
     }
+
+    #[test]
+    fn test_simple_map_single() {
+        assert_debug_snapshot!(run("1 ! (. , 0)"));
+    }
+
+    #[test]
+    fn test_simple_map_multiple_steps() {
+        assert_debug_snapshot!(run("(1, 2) ! (. + 1) ! (. + 2)"));
+    }
+
+    #[test]
+    fn test_simple_map_multiple_steps2() {
+        assert_debug_snapshot!(run("(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)"));
+    }
 }
