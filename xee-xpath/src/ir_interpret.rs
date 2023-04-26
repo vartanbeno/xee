@@ -666,6 +666,20 @@ mod tests {
     }
 
     #[test]
+    fn test_inline_function_call_with_let() {
+        assert_debug_snapshot!(run(
+            "function($x, $y) { $x + $y }(let $a := 1 return $a, let $b := 2 return $b)"
+        ));
+    }
+
+    #[test]
+    fn test_inline_function_call_with_let2() {
+        assert_debug_snapshot!(run(
+            "let $a := 1 return function($x, $y) { $x + $y }($a, let $b := 2 return $b)"
+        ));
+    }
+
+    #[test]
     fn test_range() {
         assert_debug_snapshot!(run("1 to 5"));
     }
