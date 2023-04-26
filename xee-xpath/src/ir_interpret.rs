@@ -770,4 +770,14 @@ mod tests {
     fn test_predicate_multiple() {
         assert_debug_snapshot!(run("(1, 2, 3)[. ge 2][. ge 3]"));
     }
+
+    #[test]
+    fn test_comma_simple_map() {
+        assert_debug_snapshot!(run("(1, 2), (3, 4) ! (. + 1)"));
+    }
+    // not supported yet; do we need some form of type analysis?
+    // #[test]
+    // fn test_predicate_index() {
+    //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
+    // }
 }
