@@ -1,0 +1,9 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"every $x in (1, 2, 3) satisfies $x lt 5\")"
+---
+Atomic(
+    Boolean(
+        true,
+    ),
+)
