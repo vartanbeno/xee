@@ -4,6 +4,7 @@ use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
 use crate::ir;
+use crate::name::FN_NAMESPACE;
 use crate::static_context::StaticContext;
 use crate::value::Step;
 
@@ -97,6 +98,8 @@ pub(crate) struct Converter<'a> {
     variables: HashMap<ast::Name, ir::Name>,
     context_scope: Vec<Context>,
     static_context: &'a StaticContext,
+    fn_position: ast::Name,
+    fn_last: ast::Name,
 }
 
 impl<'a> Converter<'a> {
@@ -106,6 +109,14 @@ impl<'a> Converter<'a> {
             variables: HashMap::new(),
             context_scope: Vec::new(),
             static_context,
+            fn_position: ast::Name {
+                name: "position".to_string(),
+                namespace: Some(FN_NAMESPACE.to_string()),
+            },
+            fn_last: ast::Name {
+                name: "last".to_string(),
+                namespace: Some(FN_NAMESPACE.to_string()),
+            },
         }
     }
 
@@ -157,23 +168,38 @@ impl<'a> Converter<'a> {
         }])
     }
 
-    fn context_item(&mut self) -> Bindings {
+    fn context_name<F>(&mut self, get_name: F) -> Bindings
+    where
+        F: Fn(&ir::ContextNames) -> ir::Name,
+    {
         if let Some(context_scope) = self.context_scope.last() {
             match context_scope {
                 Context::Names(names) => {
-                    let ir_name = names.item.clone();
+                    let ir_name = get_name(names);
                     Bindings::from_vec(vec![Binding {
                         name: ir_name.clone(),
                         expr: ir::Expr::Atom(ir::Atom::Variable(ir_name)),
                     }])
                 }
                 Context::Absent => {
-                    panic!("no context item");
+                    panic!("no context");
                 }
             }
         } else {
-            panic!("no context item");
+            panic!("no context");
         }
+    }
+
+    fn context_item(&mut self) -> Bindings {
+        self.context_name(|names| names.item.clone())
+    }
+
+    fn fn_position(&mut self) -> Bindings {
+        self.context_name(|names| names.position.clone())
+    }
+
+    fn fn_last(&mut self) -> Bindings {
+        self.context_name(|names| names.last.clone())
     }
 
     fn new_binding(&mut self, expr: ir::Expr) -> Binding {
@@ -513,6 +539,15 @@ impl<'a> Converter<'a> {
         if arity > u8::MAX as usize {
             panic!("too many arguments");
         }
+        // hardcoded fn:position and fn:last
+        if ast.name == self.fn_position {
+            assert!(arity == 0);
+            return self.fn_position();
+        } else if ast.name == self.fn_last {
+            assert!(arity == 0);
+            return self.fn_last();
+        }
+
         let static_function_id = self
             .static_context
             .functions
