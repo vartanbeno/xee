@@ -25,13 +25,25 @@ Let(
         return_expr: Let(
             Let {
                 name: Name(
-                    "v6",
+                    "v8",
                 ),
                 var_expr: Map(
                     Map {
-                        var_name: Name(
-                            "v3",
-                        ),
+                        context_names: ContextNames {
+                            item: Name(
+                                "v3",
+                            ),
+                            position: Some(
+                                Name(
+                                    "v4",
+                                ),
+                            ),
+                            last: Some(
+                                Name(
+                                    "v5",
+                                ),
+                            ),
+                        },
                         var_atom: Variable(
                             Name(
                                 "v2",
@@ -56,19 +68,31 @@ Let(
                 ),
                 return_expr: Map(
                     Map {
-                        var_name: Name(
-                            "v3",
-                        ),
+                        context_names: ContextNames {
+                            item: Name(
+                                "v9",
+                            ),
+                            position: Some(
+                                Name(
+                                    "v10",
+                                ),
+                            ),
+                            last: Some(
+                                Name(
+                                    "v11",
+                                ),
+                            ),
+                        },
                         var_atom: Variable(
                             Name(
-                                "v6",
+                                "v8",
                             ),
                         ),
                         return_expr: Binary(
                             Binary {
                                 left: Variable(
                                     Name(
-                                        "v3",
+                                        "v9",
                                     ),
                                 ),
                                 op: Add,

@@ -39,6 +39,13 @@ pub(crate) enum Const {
 pub(crate) struct Name(pub(crate) String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct ContextNames {
+    pub(crate) item: Name,
+    pub(crate) position: Option<Name>,
+    pub(crate) last: Option<Name>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Let {
     pub(crate) name: Name,
     pub(crate) var_expr: Box<Expr>,
@@ -91,14 +98,14 @@ pub(crate) struct FunctionCall {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Map {
-    pub(crate) var_name: Name,
+    pub(crate) context_names: ContextNames,
     pub(crate) var_atom: Atom,
     pub(crate) return_expr: Box<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Filter {
-    pub(crate) var_name: Name,
+    pub(crate) context_names: ContextNames,
     pub(crate) var_atom: Atom,
     pub(crate) return_expr: Box<Expr>,
 }
@@ -106,7 +113,7 @@ pub(crate) struct Filter {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Quantified {
     pub(crate) quantifier: Quantifier,
-    pub(crate) var_name: Name,
+    pub(crate) context_names: ContextNames,
     pub(crate) var_atom: Atom,
     pub(crate) satisifies_expr: Box<Expr>,
 }

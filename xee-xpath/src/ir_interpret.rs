@@ -214,7 +214,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.compile_sequence_get_item(&map.var_atom);
         // name it
-        self.scopes.push_name(&map.var_name);
+        self.scopes.push_name(&map.context_names.item);
         // execute the map expression, placing result on stack
         self.compile_expr(&map.return_expr);
         self.scopes.pop_name();
@@ -247,7 +247,7 @@ impl<'a> InterpreterCompiler<'a> {
         // place item to filter on stack
         self.compile_sequence_get_item(&filter.var_atom);
         // name it
-        self.scopes.push_name(&filter.var_name);
+        self.scopes.push_name(&filter.context_names.item);
         // execute the filter expression, placing result on stack
         self.compile_expr(&filter.return_expr);
         self.scopes.pop_name();
@@ -281,7 +281,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.compile_sequence_get_item(&quantified.var_atom);
         // name it
-        self.scopes.push_name(&quantified.var_name);
+        self.scopes.push_name(&quantified.context_names.item);
         // execute the satisfies expression, placing result in on stack
         self.compile_expr(&quantified.satisifies_expr);
         self.scopes.pop_name();

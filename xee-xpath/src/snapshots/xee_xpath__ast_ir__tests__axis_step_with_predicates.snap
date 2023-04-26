@@ -10,11 +10,21 @@ FunctionDefinition(
                     "v0",
                 ),
             ),
+            Param(
+                Name(
+                    "v1",
+                ),
+            ),
+            Param(
+                Name(
+                    "v2",
+                ),
+            ),
         ],
         body: Let(
             Let {
                 name: Name(
-                    "v1",
+                    "v3",
                 ),
                 var_expr: FunctionCall(
                     FunctionCall {
@@ -44,19 +54,31 @@ FunctionDefinition(
                 ),
                 return_expr: Filter(
                     Filter {
-                        var_name: Name(
-                            "v0",
-                        ),
+                        context_names: ContextNames {
+                            item: Name(
+                                "v4",
+                            ),
+                            position: Some(
+                                Name(
+                                    "v5",
+                                ),
+                            ),
+                            last: Some(
+                                Name(
+                                    "v6",
+                                ),
+                            ),
+                        },
                         var_atom: Variable(
                             Name(
-                                "v1",
+                                "v3",
                             ),
                         ),
                         return_expr: Binary(
                             Binary {
                                 left: Variable(
                                     Name(
-                                        "v0",
+                                        "v4",
                                     ),
                                 ),
                                 op: Gt,

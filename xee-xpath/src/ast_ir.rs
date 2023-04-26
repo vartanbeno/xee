@@ -86,10 +86,16 @@ impl Bindings {
 }
 
 #[derive(Debug)]
+enum Context {
+    Names(ir::ContextNames),
+    Absent,
+}
+
+#[derive(Debug)]
 pub(crate) struct Converter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
-    context_name: ast::Name,
+    context_scope: Vec<Context>,
     static_context: &'a StaticContext,
 }
 
@@ -98,10 +104,7 @@ impl<'a> Converter<'a> {
         Self {
             counter: 0,
             variables: HashMap::new(),
-            context_name: ast::Name {
-                name: "xee-context".to_string(),
-                namespace: None,
-            },
+            context_scope: Vec::new(),
             static_context,
         }
     }
@@ -112,8 +115,30 @@ impl<'a> Converter<'a> {
         ir::Name(name)
     }
 
-    fn new_context_name(&mut self) -> ir::Name {
-        self.new_var_name(&self.context_name.clone())
+    fn push_context(&mut self) -> ir::ContextNames {
+        let names = ir::ContextNames {
+            item: self.new_name(),
+            position: Some(self.new_name()),
+            last: Some(self.new_name()),
+        };
+        self.context_scope.push(Context::Names(names.clone()));
+        names
+    }
+
+    fn push_absent_context(&mut self) {
+        self.context_scope.push(Context::Absent);
+    }
+
+    fn pop_context(&mut self) {
+        self.context_scope.pop();
+    }
+
+    fn explicit_context_names(&mut self, name: ir::Name) -> ir::ContextNames {
+        ir::ContextNames {
+            item: name,
+            position: None,
+            last: None,
+        }
     }
 
     fn new_var_name(&mut self, name: &ast::Name) -> ir::Name {
@@ -133,7 +158,22 @@ impl<'a> Converter<'a> {
     }
 
     fn context_item(&mut self) -> Bindings {
-        self.var_ref(&self.context_name.clone())
+        if let Some(context_scope) = self.context_scope.last() {
+            match context_scope {
+                Context::Names(names) => {
+                    let ir_name = names.item.clone();
+                    return Bindings::from_vec(vec![Binding {
+                        name: ir_name.clone(),
+                        expr: ir::Expr::Atom(ir::Atom::Variable(ir_name)),
+                    }]);
+                }
+                Context::Absent => {
+                    panic!("no context item");
+                }
+            }
+        } else {
+            panic!("no context item");
+        }
     }
 
     fn new_binding(&mut self, expr: ir::Expr) -> Binding {
@@ -152,12 +192,15 @@ impl<'a> Converter<'a> {
     }
 
     fn xpath(&mut self, ast: &ast::XPath) -> Bindings {
-        let context_name = self.new_context_name();
+        let context_names = self.push_context();
         let exprs_bindings = self.exprs(&ast.exprs);
-        // XXX reusing context_name isn't going to work, as each
-        // context needs to have its unique name
+        self.pop_context();
         let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
-            params: vec![ir::Param(context_name)],
+            params: vec![
+                ir::Param(context_names.item),
+                ir::Param(context_names.position.unwrap()),
+                ir::Param(context_names.last.unwrap()),
+            ],
             body: Box::new(exprs_bindings.expr()),
         });
         let binding = self.new_binding(outer_function_expr);
@@ -185,10 +228,11 @@ impl<'a> Converter<'a> {
             .fold(first_step_bindings, |acc, step_expr| {
                 let mut step_bindings = acc;
                 let step_atom = step_bindings.atom();
-                let context_name = self.new_context_name();
+                let context_names = self.push_context();
                 let return_bindings = self.step_expr(step_expr);
+                self.pop_context();
                 let expr = ir::Expr::Map(ir::Map {
-                    var_name: context_name,
+                    context_names,
                     var_atom: step_atom,
                     return_expr: Box::new(return_bindings.expr()),
                 });
@@ -225,10 +269,11 @@ impl<'a> Converter<'a> {
             match postfix {
                 ast::Postfix::Predicate(exprs) => {
                     let atom = bindings.atom();
-                    let context_name = self.new_context_name();
+                    let context_names = self.push_context();
                     let return_bindings = self.exprs(exprs);
+                    self.pop_context();
                     let expr = ir::Expr::Filter(ir::Filter {
-                        var_name: context_name,
+                        context_names,
                         var_atom: atom,
                         return_expr: Box::new(return_bindings.expr()),
                     });
@@ -274,10 +319,11 @@ impl<'a> Converter<'a> {
         ast.predicates.iter().fold(bindings, |acc, predicate| {
             let mut bindings = acc;
             let atom = bindings.atom();
-            let context_name = self.new_context_name();
+            let context_names = self.push_context();
             let return_bindings = self.exprs(predicate);
+            self.pop_context();
             let expr = ir::Expr::Filter(ir::Filter {
-                var_name: context_name,
+                context_names,
                 var_atom: atom,
                 return_expr: Box::new(return_bindings.expr()),
             });
@@ -358,10 +404,11 @@ impl<'a> Converter<'a> {
                 path_exprs.iter().fold(path_bindings, |acc, path_expr| {
                     let mut path_bindings = acc;
                     let path_atom = path_bindings.atom();
-                    let context_name = self.new_context_name();
+                    let context_names = self.push_context();
                     let return_bindings = self.path_expr(path_expr);
+                    self.pop_context();
                     let expr = ir::Expr::Map(ir::Map {
-                        var_name: context_name,
+                        context_names,
                         var_atom: path_atom,
                         return_expr: Box::new(return_bindings.expr()),
                     });
@@ -405,9 +452,10 @@ impl<'a> Converter<'a> {
         let name = self.new_var_name(&ast.var_name);
         let mut var_bindings = self.expr_single(&ast.var_expr);
         let var_atom = var_bindings.atom();
+        let context_names = self.explicit_context_names(name);
         let return_bindings = self.expr_single(&ast.return_expr);
         let expr = ir::Expr::Map(ir::Map {
-            var_name: name,
+            context_names,
             var_atom,
             return_expr: Box::new(return_bindings.expr()),
         });
@@ -420,10 +468,12 @@ impl<'a> Converter<'a> {
         let name = self.new_var_name(&ast.var_name);
         let mut var_bindings = self.expr_single(&ast.var_expr);
         let var_atom = var_bindings.atom();
+
+        let context_names = self.explicit_context_names(name);
         let satisfies_bindings = self.expr_single(&ast.satisfies_expr);
         let expr = ir::Expr::Quantified(ir::Quantified {
             quantifier: self.quantifier(&ast.quantifier),
-            var_name: name,
+            context_names,
             var_atom,
             satisifies_expr: Box::new(satisfies_bindings.expr()),
         });

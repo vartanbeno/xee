@@ -24,9 +24,13 @@ Let(
         ),
         return_expr: Map(
             Map {
-                var_name: Name(
-                    "v0",
-                ),
+                context_names: ContextNames {
+                    item: Name(
+                        "v0",
+                    ),
+                    position: None,
+                    last: None,
+                },
                 var_atom: Variable(
                     Name(
                         "v3",

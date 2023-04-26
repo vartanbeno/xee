@@ -10,11 +10,21 @@ FunctionDefinition(
                     "v0",
                 ),
             ),
+            Param(
+                Name(
+                    "v1",
+                ),
+            ),
+            Param(
+                Name(
+                    "v2",
+                ),
+            ),
         ],
         body: Let(
             Let {
                 name: Name(
-                    "v3",
+                    "v5",
                 ),
                 var_expr: Binary(
                     Binary {
@@ -35,7 +45,7 @@ FunctionDefinition(
                     Binary {
                         left: Variable(
                             Name(
-                                "v3",
+                                "v5",
                             ),
                         ),
                         op: Comma,

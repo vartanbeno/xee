@@ -10,6 +10,16 @@ FunctionDefinition(
                     "v0",
                 ),
             ),
+            Param(
+                Name(
+                    "v1",
+                ),
+            ),
+            Param(
+                Name(
+                    "v2",
+                ),
+            ),
         ],
         body: Binary(
             Binary {
