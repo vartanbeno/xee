@@ -45,6 +45,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Map(map) => {
                 self.compile_map(map);
             }
+            ir::Expr::Quantified(quantified) => {
+                self.compile_quantified(quantified);
+            }
             _ => {
                 todo!()
             }
@@ -235,6 +238,54 @@ impl<'a> InterpreterCompiler<'a> {
 
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
+
+    fn compile_quantified(&mut self, quantified: &ir::Quantified) {
+        let loop_start = self.compile_sequence_loop_init(&quantified.var_atom);
+
+        self.compile_sequence_get_item(&quantified.var_atom);
+        // name it
+        self.scopes.push_name(&quantified.var_name);
+        // execute the satisfies expression, placing result in on stack
+        self.compile_expr(&quantified.satisifies_expr);
+        self.scopes.pop_name();
+
+        let jump_out_end = match quantified.quantifier {
+            ir::Quantifier::Some => self.builder.emit_jump_forward(JumpCondition::True),
+            ir::Quantifier::Every => self.builder.emit_jump_forward(JumpCondition::False),
+        };
+        // we didn't jump out, clean up quantifier variable
+        self.builder.emit(Instruction::Pop);
+
+        self.compile_sequence_loop_iterate(loop_start);
+
+        // if we reached the end, without jumping out
+        self.compile_sequence_loop_end();
+
+        let reached_end_value = match quantified.quantifier {
+            ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(false)),
+            ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(true)),
+        };
+        self.builder.emit_constant(reached_end_value);
+        let end = self.builder.emit_jump_forward(JumpCondition::Always);
+
+        // we jumped out
+        self.builder.patch_jump(jump_out_end);
+        // clean up quantifier variable
+        self.builder.emit(Instruction::Pop);
+        self.compile_sequence_loop_end();
+
+        let jumped_out_value = match quantified.quantifier {
+            ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(true)),
+            ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(false)),
+        };
+        // if we jumped out, we set satisfies to true
+        self.builder.emit_constant(jumped_out_value);
+
+        self.builder.patch_jump(end);
+        // pop sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
     }
@@ -626,5 +677,10 @@ mod tests {
     #[test]
     fn test_simple_map_multiple_steps2() {
         assert_debug_snapshot!(run("(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)"));
+    }
+
+    #[test]
+    fn test_some_quantifier_expr_true() {
+        assert_debug_snapshot!(run("some $x in (1, 2, 3) satisfies $x eq 2"));
     }
 }
