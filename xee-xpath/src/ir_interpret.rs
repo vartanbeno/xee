@@ -793,6 +793,20 @@ mod tests {
     }
 
     #[test]
+    fn test_step_with_predicate() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a/><b/></doc>"#,
+            "doc/*[fn:position() eq 2]",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let b = xot.next_sibling(a).unwrap();
+                vec![b]
+            },
+        )
+    }
+
+    #[test]
     fn test_descendant_axis_step() -> Result<()> {
         assert_nodes(
             r#"<doc><a/><b><c/></b></doc>"#,

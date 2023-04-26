@@ -228,7 +228,8 @@ impl Sequence {
             StackValue::Atomic(a) => self.items.push(Item::Atomic(a)),
             StackValue::Closure(c) => self.items.push(Item::Function(c)),
             StackValue::Sequence(s) => self.extend(s),
-            _ => panic!("unexpected stack value"),
+            StackValue::Node(n) => self.items.push(Item::Node(n)),
+            _ => panic!("unexpected stack value: {:?}", value),
         }
     }
 
