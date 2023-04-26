@@ -1,0 +1,37 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"for $x in 1 to 5 return $x + 2\")"
+---
+Sequence(
+    RefCell {
+        value: Sequence {
+            items: [
+                Atomic(
+                    Integer(
+                        3,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        4,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        5,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        6,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        7,
+                    ),
+                ),
+            ],
+        },
+    },
+)

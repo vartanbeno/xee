@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::ast;
 use crate::ast_ir::Converter;
 use crate::builder::{BackwardJumpRef, Comparison, FunctionBuilder, JumpCondition, Program};
 use crate::context::Context;
@@ -18,6 +17,8 @@ struct InterpreterCompiler<'a> {
     scopes: &'a mut Scopes,
     context: &'a Context<'a>,
     builder: FunctionBuilder<'a>,
+    sequence_length_name: &'a ir::Name,
+    sequence_index_name: &'a ir::Name,
 }
 
 impl<'a> InterpreterCompiler<'a> {
@@ -40,6 +41,9 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ir::Expr::If(if_) => {
                 self.compile_if(if_);
+            }
+            ir::Expr::Map(map) => {
+                self.compile_map(map);
             }
             _ => {
                 todo!()
@@ -86,6 +90,17 @@ impl<'a> InterpreterCompiler<'a> {
                 // XXX this should become an actual compile error
                 panic!("unknown variable {:?}", name);
             }
+        }
+    }
+
+    fn compile_variable_set(&mut self, name: &ir::Name) {
+        if let Some(index) = self.scopes.get(name) {
+            if index > u16::MAX as usize {
+                panic!("too many variables");
+            }
+            self.builder.emit(Instruction::Set(index as u16));
+        } else {
+            panic!("can only set locals: {:?}", name);
         }
     }
 
@@ -155,6 +170,8 @@ impl<'a> InterpreterCompiler<'a> {
             builder: nested_builder,
             scopes: self.scopes,
             context: self.context,
+            sequence_length_name: self.sequence_length_name,
+            sequence_index_name: self.sequence_index_name,
         };
 
         for param in &function_definition.params {
@@ -189,6 +206,80 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder
             .emit(Instruction::Call(function_call.args.len() as u8));
     }
+
+    fn compile_map(&mut self, map: &ir::Map) {
+        // place the resulting sequence on the stack
+        let new_sequence = ir::Name("xee_new_sequence".to_string());
+        self.scopes.push_name(&new_sequence);
+        self.builder.emit(Instruction::SequenceNew);
+
+        let loop_start = self.compile_sequence_loop_init(&map.var_atom);
+
+        self.compile_sequence_get_item(&map.var_atom);
+        // name it
+        self.scopes.push_name(&map.var_name);
+        // execute the map expression, placing result on stack
+        self.compile_expr(&map.return_expr);
+        self.scopes.pop_name();
+
+        // push result to new sequence
+        self.compile_variable(&new_sequence);
+        self.builder.emit(Instruction::SequencePush);
+
+        // clean up the var_name item
+        self.builder.emit(Instruction::Pop);
+
+        self.compile_sequence_loop_iterate(loop_start);
+
+        self.compile_sequence_loop_end();
+
+        // pop new sequence name & sequence length name & index
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
+
+    fn compile_sequence_loop_init(&mut self, atom: &ir::Atom) -> BackwardJumpRef {
+        //  sequence length
+        self.compile_atom(atom);
+        self.scopes.push_name(self.sequence_length_name);
+        self.builder.emit(Instruction::SequenceLen);
+
+        // place index on stack
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+        self.scopes.push_name(self.sequence_index_name);
+        self.builder.loop_start()
+    }
+
+    fn compile_sequence_get_item(&mut self, atom: &ir::Atom) {
+        // get item at the index
+        self.compile_variable(self.sequence_index_name);
+        self.compile_atom(atom);
+        self.builder.emit(Instruction::SequenceGet);
+    }
+
+    fn compile_sequence_loop_iterate(&mut self, loop_start: BackwardJumpRef) {
+        // update index with 1
+        self.compile_variable(self.sequence_index_name);
+        self.builder
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+        self.builder.emit(Instruction::Add);
+        self.compile_variable_set(self.sequence_index_name);
+        // compare with sequence length
+        self.compile_variable(self.sequence_index_name);
+        self.compile_variable(self.sequence_length_name);
+        // unless we reached the end, we jump back to the start
+        self.builder.emit(Instruction::Lt);
+        self.builder
+            .emit_jump_backward(loop_start, JumpCondition::True);
+    }
+
+    fn compile_sequence_loop_end(&mut self) {
+        // pop length and index
+        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop);
+    }
 }
 
 pub(crate) struct CompiledXPath<'a> {
@@ -211,6 +302,8 @@ impl<'a> CompiledXPath<'a> {
             builder,
             scopes: &mut scopes,
             context,
+            sequence_length_name: &ir::Name("xee_sequence_length".to_string()),
+            sequence_index_name: &ir::Name("xee_sequence_index".to_string()),
         };
         compiler.scopes.push_name(&arg_name);
         compiler.compile_expr(&expr);
@@ -491,5 +584,10 @@ mod tests {
     #[test]
     fn test_range_equal() {
         assert_debug_snapshot!(run("1 to 1"));
+    }
+
+    #[test]
+    fn test_for_loop() {
+        assert_debug_snapshot!(run("for $x in 1 to 5 return $x + 2"));
     }
 }
