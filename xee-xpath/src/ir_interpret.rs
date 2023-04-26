@@ -703,4 +703,11 @@ mod tests {
     fn test_every_quantifier_expr_false() {
         assert_debug_snapshot!(run("every $x in (1, 2, 3) satisfies $x gt 2"));
     }
+
+    #[test]
+    fn test_every_quantifier_nested_true() {
+        assert_debug_snapshot!(run(
+            "every $x in (2, 3, 4), $y in (0, 1) satisfies $x gt $y"
+        ));
+    }
 }
