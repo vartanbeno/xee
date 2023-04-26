@@ -362,6 +362,20 @@ mod tests {
     }
 
     #[test]
+    fn test_if_with_let_true() {
+        assert_debug_snapshot!(run(
+            "if (1) then (let $x := 2 return $x) else (let $x := 3 return $x)"
+        ));
+    }
+
+    #[test]
+    fn test_if_with_let_false() {
+        assert_debug_snapshot!(run(
+            "if (0) then (let $x := 2 return $x) else (let $x := 3 return $x)"
+        ));
+    }
+
+    #[test]
     fn test_value_eq_true() {
         assert_debug_snapshot!(run("1 eq 1"));
     }
