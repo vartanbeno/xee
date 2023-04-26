@@ -162,10 +162,10 @@ impl<'a> Converter<'a> {
             match context_scope {
                 Context::Names(names) => {
                     let ir_name = names.item.clone();
-                    return Bindings::from_vec(vec![Binding {
+                    Bindings::from_vec(vec![Binding {
                         name: ir_name.clone(),
                         expr: ir::Expr::Atom(ir::Atom::Variable(ir_name)),
-                    }]);
+                    }])
                 }
                 Context::Absent => {
                     panic!("no context item");
