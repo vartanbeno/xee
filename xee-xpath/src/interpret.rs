@@ -291,7 +291,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
                     let index = index.as_atomic().ok_or(Error::TypeError)?;
                     let index = index.as_integer().ok_or(Error::TypeError)?;
-                    let item = sequence.borrow().items[index as usize].clone();
+                    let item = sequence.borrow().items[index as usize - 1].clone();
                     match item {
                         Item::Atomic(atomic) => {
                             self.stack.push(StackValue::Atomic(atomic));

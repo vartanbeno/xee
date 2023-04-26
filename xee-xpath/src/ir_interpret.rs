@@ -333,7 +333,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         // place index on stack
         self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(0)));
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.scopes.push_name(&context_names.position);
         self.builder.loop_start()
     }
@@ -360,7 +360,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_variable(&context_names.position);
         self.compile_variable(&context_names.last);
         // unless we reached the end, we jump back to the start
-        self.builder.emit(Instruction::Lt);
+        self.builder.emit(Instruction::Le);
         self.builder
             .emit_jump_backward(loop_start, JumpCondition::True);
     }
