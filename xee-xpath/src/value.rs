@@ -92,6 +92,7 @@ pub(crate) enum StackValue {
     Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
     StaticFunction(StaticFunctionId),
+    Step(Rc<Step>),
     Node(Node),
 }
 
@@ -129,6 +130,13 @@ impl StackValue {
     pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
         match self {
             StackValue::StaticFunction(f) => Some(*f),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_step(&self) -> Option<Rc<Step>> {
+        match self {
+            StackValue::Step(s) => Some(Rc::clone(s)),
             _ => None,
         }
     }

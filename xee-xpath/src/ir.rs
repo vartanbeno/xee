@@ -1,4 +1,5 @@
 // an Intermediate Representation in ANF - administrative normal form
+use std::rc::Rc;
 
 use crate::value::{StaticFunctionId, Step};
 
@@ -27,12 +28,11 @@ pub(crate) enum Atom {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Const {
     Integer(i64),
-    String(String),
     EmptySequence,
     StaticFunction(StaticFunctionId),
     // step is treated as a special function which takes the context node as
     // its argument
-    Step(Step),
+    Step(Rc<Step>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

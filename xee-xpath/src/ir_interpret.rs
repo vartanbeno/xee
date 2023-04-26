@@ -51,9 +51,6 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Quantified(quantified) => {
                 self.compile_quantified(quantified);
             }
-            _ => {
-                todo!()
-            }
         }
     }
 
@@ -66,9 +63,7 @@ impl<'a> InterpreterCompiler<'a> {
                         StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
                     }
                     ir::Const::StaticFunction(id) => StackValue::StaticFunction(*id),
-                    _ => {
-                        todo!()
-                    }
+                    ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value);
             }
@@ -794,9 +789,40 @@ mod tests {
     fn test_comma_simple_map2() {
         assert_debug_snapshot!(run("(1, 2), (3, 4), (5, 6) ! (. + 1)"));
     }
+
     // not supported yet; do we need some form of type analysis?
     // #[test]
     // fn test_predicate_index() {
     //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
     // }
+
+    #[test]
+    fn test_child_axis_step() -> Result<()> {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents
+            .add(&mut xot, &uri, r#"<doc><a/><b/></doc>"#)
+            .unwrap();
+        let context = Context::with_documents(&xot, &documents);
+        let document = documents.get(&uri).unwrap();
+        let doc_el = xot.document_element(document.root).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+
+        let xpath = CompiledXPath::new(&context, "doc/*");
+        let result = xpath.interpret_with_xot_node(document.root)?;
+
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[a, b]));
+
+        let xpath = CompiledXPath::new(&context, "doc/a");
+
+        let result = xpath.interpret_with_xot_node(document.root)?;
+        let sequence = as_sequence(&result);
+        let sequence = sequence.borrow();
+        assert_eq!(*sequence, xot_nodes_to_sequence(&[a]));
+        Ok(())
+    }
 }

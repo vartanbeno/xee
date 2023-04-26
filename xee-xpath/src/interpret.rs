@@ -9,7 +9,7 @@ use crate::instruction::{decode_instruction, Instruction};
 
 use crate::step::resolve_step;
 use crate::value::{
-    Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId,
+    Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId, Step,
 };
 
 #[derive(Debug, Clone)]
@@ -228,8 +228,7 @@ impl<'a> Interpreter<'a> {
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
                     if let Some(static_function_id) = callable.as_static_function() {
                         self.call_static(static_function_id, arity)?;
-                    } else {
-                        let closure = callable.as_closure().ok_or(Error::TypeError)?;
+                    } else if let Some(closure) = callable.as_closure() {
                         self.call_closure(
                             closure.function_id,
                             arity,
@@ -237,6 +236,10 @@ impl<'a> Interpreter<'a> {
                             &mut base,
                             &mut function,
                         )?;
+                    } else if let Some(step) = callable.as_step() {
+                        self.call_step(step)?;
+                    } else {
+                        return Err(Error::TypeError);
                     }
                 }
                 Instruction::Return => {
@@ -388,6 +391,22 @@ impl<'a> Interpreter<'a> {
             ip: *ip,
             base: *base,
         });
+        Ok(())
+    }
+
+    fn call_step(&mut self, step: Rc<Step>) -> Result<()> {
+        // take one argument from the stack
+        let node = self
+            .stack
+            .pop()
+            .unwrap()
+            .as_node()
+            .ok_or(Error::TypeError)?;
+        // pop off the callable too
+        self.stack.pop();
+        let sequence = resolve_step(step.as_ref(), node, self.context.xot);
+        self.stack
+            .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
         Ok(())
     }
 }

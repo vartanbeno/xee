@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
@@ -251,10 +253,10 @@ impl<'a> Converter<'a> {
         let mut current_context_bindings = self.context_item();
 
         // create a step atom
-        let step = Step {
+        let step = Rc::new(Step {
             axis: ast.axis.clone(),
             node_test: ast.node_test.clone(),
-        };
+        });
         let atom = ir::Atom::Const(ir::Const::Step(step));
 
         // given the current context item, apply the step
