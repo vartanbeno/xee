@@ -602,4 +602,9 @@ mod tests {
             "for $i in (10, 20), $j in ($i + 1, $i + 2) return $i + $j"
         ));
     }
+
+    #[test]
+    fn test_simple_map() {
+        assert_debug_snapshot!(run("(1, 2) ! (. + 1)"));
+    }
 }
