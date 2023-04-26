@@ -45,6 +45,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Map(map) => {
                 self.compile_map(map);
             }
+            ir::Expr::Filter(filter) => {
+                self.compile_filter(filter);
+            }
             ir::Expr::Quantified(quantified) => {
                 self.compile_quantified(quantified);
             }
@@ -232,6 +235,46 @@ impl<'a> InterpreterCompiler<'a> {
         // clean up the var_name item
         self.builder.emit(Instruction::Pop);
 
+        self.compile_sequence_loop_iterate(loop_start);
+
+        self.compile_sequence_loop_end();
+
+        // pop new sequence name & sequence length name & index
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+        self.scopes.pop_name();
+    }
+
+    fn compile_filter(&mut self, filter: &ir::Filter) {
+        // place the resulting sequence on the stack
+        let new_sequence = ir::Name("xee_new_sequence".to_string());
+        self.scopes.push_name(&new_sequence);
+        self.builder.emit(Instruction::SequenceNew);
+
+        let loop_start = self.compile_sequence_loop_init(&filter.var_atom);
+
+        // place item to filter on stack
+        self.compile_sequence_get_item(&filter.var_atom);
+        // name it
+        self.scopes.push_name(&filter.var_name);
+        // execute the filter expression, placing result on stack
+        self.compile_expr(&filter.return_expr);
+        self.scopes.pop_name();
+
+        // if filter is false, we skip this item
+        let is_included = self.builder.emit_jump_forward(JumpCondition::True);
+        // we need to clean up the stack after this
+        self.builder.emit(Instruction::Pop);
+        // and iterate the loop
+        let iterate = self.builder.emit_jump_forward(JumpCondition::Always);
+
+        self.builder.patch_jump(is_included);
+        // push item to new sequence
+        self.compile_variable(&new_sequence);
+        self.builder.emit(Instruction::SequencePush);
+
+        self.builder.patch_jump(iterate);
+        // no need to clean up the stack, as filter get is pushed onto sequence
         self.compile_sequence_loop_iterate(loop_start);
 
         self.compile_sequence_loop_end();
@@ -716,5 +759,10 @@ mod tests {
         assert_debug_snapshot!(run(
             "every $x in (2, 3, 4), $y in (1, 2) satisfies $x gt $y"
         ));
+    }
+
+    #[test]
+    fn test_predicate() {
+        assert_debug_snapshot!(run("(1, 2, 3)[. ge 2]"));
     }
 }
