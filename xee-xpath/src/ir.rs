@@ -16,7 +16,7 @@ pub(crate) enum Expr {
     Quantified(Quantified),
 }
 
-// not to be confused by an XPath atom; this is a variable or a constant
+// not to be confused with an XPath atom; this is a variable or a constant
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Atom {
     Const(Const),
