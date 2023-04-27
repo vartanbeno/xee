@@ -371,6 +371,7 @@ impl<'a> Converter<'a> {
 
     fn exprs(&mut self, exprs: &[ast::ExprSingle]) -> Bindings {
         if !exprs.is_empty() {
+            // XXX could this be reduce?
             let first_expr = &exprs[0];
             let rest_exprs = &exprs[1..];
             rest_exprs

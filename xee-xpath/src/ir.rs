@@ -11,8 +11,6 @@ pub(crate) enum Expr {
     Binary(Binary),
     FunctionDefinition(FunctionDefinition),
     FunctionCall(FunctionCall),
-    // XXX a context map and filter are likely required,
-    // which place a full Context item on the stack
     Map(Map),
     Filter(Filter),
     Quantified(Quantified),
