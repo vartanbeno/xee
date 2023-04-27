@@ -26,6 +26,7 @@ pub(crate) enum Atom {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Const {
     Integer(i64),
+    // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
     StaticFunction(StaticFunctionId),
     // step is treated as a special function which takes the context node as
