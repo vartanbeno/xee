@@ -50,8 +50,7 @@ pub(crate) struct StaticFunctions {
 impl StaticFunctions {
     pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
-        let mut by_index = Vec::new();
-        by_index.push(StaticFunction {
+        let by_index = vec![StaticFunction {
             parameters: vec![
                 Parameter {
                     name: "a".to_string(),
@@ -64,7 +63,7 @@ impl StaticFunctions {
             ],
             return_type: ParameterType::Integer,
             func: bound_my_function,
-        });
+        }];
         by_name.insert(
             (
                 ast::Name::new("my_function".to_string(), None),
