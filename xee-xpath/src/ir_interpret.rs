@@ -57,6 +57,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
                     ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
+                    ir::Const::String(s) => StackValue::Atomic(Atomic::String(Rc::new(s.clone()))),
                     ir::Const::EmptySequence => {
                         StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
                     }
@@ -940,5 +941,10 @@ mod tests {
     #[test]
     fn test_position_closure() {
         assert_debug_snapshot!(run("(3, 4) ! (let $p := fn:position#0 return $p())"));
+    }
+
+    #[test]
+    fn test_simple_string() {
+        assert_debug_snapshot!(run("'hello'"));
     }
 }

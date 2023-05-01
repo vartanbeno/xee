@@ -374,6 +374,11 @@ impl<'a> Converter<'a> {
                 let binding = self.new_binding(expr);
                 Bindings::from_vec(vec![binding])
             }
+            ast::Literal::String(s) => {
+                let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::String(s.clone())));
+                let binding = self.new_binding(expr);
+                Bindings::from_vec(vec![binding])
+            }
             _ => todo!(),
         }
     }

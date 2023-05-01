@@ -204,6 +204,7 @@ pub(crate) enum Atomic {
     Float(f32),
     Double(f64),
     // and many more
+    String(Rc<String>),
 }
 
 impl Atomic {
