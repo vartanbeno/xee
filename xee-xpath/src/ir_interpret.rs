@@ -760,6 +760,11 @@ mod tests {
     }
 
     #[test]
+    fn test_every_quantifier_empty_sequence() {
+        assert_debug_snapshot!(run("every $x in () satisfies $x eq 5"));
+    }
+
+    #[test]
     fn test_predicate() {
         assert_debug_snapshot!(run("(1, 2, 3)[. ge 2]"));
     }
