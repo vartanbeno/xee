@@ -1,0 +1,9 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"'hello' eq 'world'\")"
+---
+Atomic(
+    Boolean(
+        false,
+    ),
+)

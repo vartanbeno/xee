@@ -955,4 +955,14 @@ mod tests {
     fn test_simple_string_concat() {
         assert_debug_snapshot!(run("'hello' || 'world'"));
     }
+
+    #[test]
+    fn test_string_compare_eq_true() {
+        assert_debug_snapshot!(run("'hello' eq 'hello'"));
+    }
+
+    #[test]
+    fn test_string_compare_eq_false() {
+        assert_debug_snapshot!(run("'hello' eq 'world'"));
+    }
 }
