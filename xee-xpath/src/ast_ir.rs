@@ -450,8 +450,7 @@ impl<'a> Converter<'a> {
     }
 
     fn if_expr(&mut self, ast: &ast::IfExpr) -> Bindings {
-        // XXX taking the first expr out of the vec is wrong
-        let mut condition_bindings = self.expr_single(&ast.condition[0]);
+        let mut condition_bindings = self.exprs(&ast.condition);
         let then_bindings = self.expr_single(&ast.then);
         let else_bindings = self.expr_single(&ast.else_);
         let expr = ir::Expr::If(ir::If {
