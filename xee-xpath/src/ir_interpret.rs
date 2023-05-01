@@ -899,4 +899,14 @@ mod tests {
             },
         )
     }
+
+    #[test]
+    fn test_default_position() {
+        assert_debug_snapshot!(run("fn:position()"));
+    }
+
+    #[test]
+    fn test_default_last() {
+        assert_debug_snapshot!(run("fn:last()"));
+    }
 }

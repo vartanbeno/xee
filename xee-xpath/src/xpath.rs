@@ -19,8 +19,8 @@ impl<'a> CompiledXPath<'a> {
         let ast = parse_xpath(xpath);
         let mut converter = Converter::new(&context.static_context);
         let expr = converter.convert_xpath(&ast);
-        // we get an inline function, unwrap it for now
-        let (arg_name, expr) = unwrap_inline_function(expr);
+        // this expression contains a function definition, we're getting it
+        // in the end
         let mut program = Program::new();
         let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
         let builder = FunctionBuilder::new(&mut program);
@@ -29,15 +29,14 @@ impl<'a> CompiledXPath<'a> {
             scopes: &mut scopes,
             context,
         };
-        compiler.scopes.push_name(&arg_name);
         compiler.compile_expr(&expr);
 
-        let main = compiler.builder.finish("main".to_string(), 0);
-        let main = program.add_function(main);
+        // the inline function should be the last finished function
+        let inline_id = FunctionId(program.functions.len() - 1);
         Self {
             program,
             context,
-            main,
+            main: inline_id,
         }
     }
 
@@ -47,8 +46,8 @@ impl<'a> CompiledXPath<'a> {
     }
 
     pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, self.context, context_item);
-        interpreter.start(self.main);
+        let mut interpreter = Interpreter::new(&self.program, self.context);
+        interpreter.start(self.main, context_item);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because

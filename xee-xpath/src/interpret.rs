@@ -28,11 +28,11 @@ pub(crate) struct Interpreter<'a> {
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program, context: &'a Context, context_item: Item) -> Self {
+    pub(crate) fn new(program: &'a Program, context: &'a Context) -> Self {
         Interpreter {
             program,
             context,
-            stack: vec![StackValue::from_item(context_item)],
+            stack: vec![],
             frames: Vec::new(),
         }
     }
@@ -41,12 +41,17 @@ impl<'a> Interpreter<'a> {
         &self.stack
     }
 
-    pub(crate) fn start(&mut self, function_id: FunctionId) {
+    pub(crate) fn start(&mut self, function_id: FunctionId, context_item: Item) {
         self.frames.push(Frame {
             function: function_id,
             ip: 0,
             base: 0,
         });
+        // the context item
+        self.stack.push(StackValue::from_item(context_item));
+        // position & size
+        self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
+        self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
     }
 
     pub(crate) fn run(&mut self) -> Result<()> {
@@ -401,9 +406,8 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
-        interpreter.start(main_id);
+        let mut interpreter = Interpreter::new(&program, &context);
+        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run()?;
         assert_eq!(
             interpreter.stack,
@@ -458,9 +462,8 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
 
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
-        interpreter.start(main_id);
+        let mut interpreter = Interpreter::new(&program, &context);
+        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run()?;
         assert_eq!(
             interpreter.stack,
@@ -489,9 +492,8 @@ mod tests {
 
         let xot = Xot::new();
         let context = Context::new(&xot);
-        let mut interpreter =
-            Interpreter::new(&program, &context, Item::Atomic(Atomic::Integer(0)));
-        interpreter.start(main_id);
+        let mut interpreter = Interpreter::new(&program, &context);
+        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run()?;
         assert_eq!(
             interpreter.stack,
