@@ -12,6 +12,7 @@ pub(crate) enum Expr {
     If(If),
     Binary(Binary),
     FunctionDefinition(FunctionDefinition),
+    StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
     FunctionCall(FunctionCall),
     Map(Map),
     Filter(Filter),
@@ -30,7 +31,6 @@ pub(crate) enum Const {
     Integer(i64),
     // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
-    StaticFunction(StaticFunctionId),
     // step is treated as a special function which takes the context node as
     // its argument
     Step(Rc<Step>),

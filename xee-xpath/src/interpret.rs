@@ -9,7 +9,8 @@ use crate::instruction::{decode_instruction, Instruction};
 
 use crate::step::resolve_step;
 use crate::value::{
-    Atomic, Closure, Function, FunctionId, Item, Sequence, StackValue, StaticFunctionId, Step,
+    Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StackValue,
+    StaticFunctionId, Step,
 };
 
 #[derive(Debug, Clone)]
@@ -94,8 +95,16 @@ impl<'a> Interpreter<'a> {
                         values.push(self.stack.pop().unwrap());
                     }
                     self.stack.push(StackValue::Closure(Rc::new(Closure {
-                        function_id: FunctionId(function_id as usize),
+                        function_id: ClosureFunctionId::Dynamic(FunctionId(function_id as usize)),
                         values,
+                    })));
+                }
+                Instruction::StaticClosure(static_function_id) => {
+                    self.stack.push(StackValue::Closure(Rc::new(Closure {
+                        function_id: ClosureFunctionId::Static(StaticFunctionId(
+                            static_function_id as usize,
+                        )),
+                        values: vec![],
                     })));
                 }
                 Instruction::Var(index) => {
@@ -205,16 +214,22 @@ impl<'a> Interpreter<'a> {
 
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
-                    if let Some(static_function_id) = callable.as_static_function() {
-                        self.call_static(static_function_id, arity)?;
-                    } else if let Some(closure) = callable.as_closure() {
-                        self.call_closure(
-                            closure.function_id,
-                            arity,
-                            &mut ip,
-                            &mut base,
-                            &mut function,
-                        )?;
+
+                    if let Some(closure) = callable.as_closure() {
+                        match closure.function_id {
+                            ClosureFunctionId::Dynamic(function_id) => {
+                                self.call_closure(
+                                    function_id,
+                                    arity,
+                                    &mut ip,
+                                    &mut base,
+                                    &mut function,
+                                )?;
+                            }
+                            ClosureFunctionId::Static(static_function_id) => {
+                                self.call_static(static_function_id, arity)?;
+                            }
+                        }
                     } else if let Some(step) = callable.as_step() {
                         self.call_step(step)?;
                     } else {

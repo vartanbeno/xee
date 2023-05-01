@@ -5,64 +5,75 @@ expression: "convert_expr_single(\"my_function(1 + 2, 3 + 4)\")"
 Let(
     Let {
         name: Name(
-            "v2",
+            "v0",
         ),
-        var_expr: Binary(
-            Binary {
-                left: Const(
-                    Integer(
-                        1,
-                    ),
-                ),
-                op: Add,
-                right: Const(
-                    Integer(
-                        2,
-                    ),
-                ),
-            },
+        var_expr: StaticFunctionReference(
+            StaticFunctionId(
+                0,
+            ),
+            None,
         ),
         return_expr: Let(
             Let {
                 name: Name(
-                    "v5",
+                    "v3",
                 ),
                 var_expr: Binary(
                     Binary {
                         left: Const(
                             Integer(
-                                3,
+                                1,
                             ),
                         ),
                         op: Add,
                         right: Const(
                             Integer(
-                                4,
+                                2,
                             ),
                         ),
                     },
                 ),
-                return_expr: FunctionCall(
-                    FunctionCall {
-                        atom: Const(
-                            StaticFunction(
-                                StaticFunctionId(
-                                    0,
-                                ),
-                            ),
+                return_expr: Let(
+                    Let {
+                        name: Name(
+                            "v6",
                         ),
-                        args: [
-                            Variable(
-                                Name(
-                                    "v2",
+                        var_expr: Binary(
+                            Binary {
+                                left: Const(
+                                    Integer(
+                                        3,
+                                    ),
                                 ),
-                            ),
-                            Variable(
-                                Name(
-                                    "v5",
+                                op: Add,
+                                right: Const(
+                                    Integer(
+                                        4,
+                                    ),
                                 ),
-                            ),
-                        ],
+                            },
+                        ),
+                        return_expr: FunctionCall(
+                            FunctionCall {
+                                atom: Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                args: [
+                                    Variable(
+                                        Name(
+                                            "v3",
+                                        ),
+                                    ),
+                                    Variable(
+                                        Name(
+                                            "v6",
+                                        ),
+                                    ),
+                                ],
+                            },
+                        ),
                     },
                 ),
             },

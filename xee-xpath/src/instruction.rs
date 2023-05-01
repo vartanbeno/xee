@@ -7,6 +7,7 @@ pub(crate) enum Instruction {
     Sub,
     Const(u16),
     Closure(u16),
+    StaticClosure(u16),
     Var(u16),
     Set(u16),
     ClosureVar(u16),
@@ -40,6 +41,7 @@ enum EncodedInstruction {
     Sub,
     Const,
     Closure,
+    StaticClosure,
     Var,
     Set,
     ClosureVar,
@@ -80,6 +82,10 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Closure => {
             let function = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Closure(function), 3)
+        }
+        EncodedInstruction::StaticClosure => {
+            let function = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::StaticClosure(function), 3)
         }
         EncodedInstruction::Var => {
             let variable = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -151,6 +157,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         }
         Instruction::Closure(function_id) => {
             bytes.push(EncodedInstruction::Closure.to_u8().unwrap());
+            bytes.extend_from_slice(&function_id.to_le_bytes());
+        }
+        Instruction::StaticClosure(function_id) => {
+            bytes.push(EncodedInstruction::StaticClosure.to_u8().unwrap());
             bytes.extend_from_slice(&function_id.to_le_bytes());
         }
         Instruction::Var(variable) => {

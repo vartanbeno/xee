@@ -6,6 +6,7 @@ use crate::ast;
 use crate::ir;
 use crate::name::FN_NAMESPACE;
 use crate::static_context::StaticContext;
+use crate::value::StaticFunctionId;
 use crate::value::Step;
 
 #[derive(Debug, Clone)]
@@ -166,6 +167,14 @@ impl<'a> Converter<'a> {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(ir::Atom::Variable(ir_name.clone())),
         }])
+    }
+
+    fn current_context_names(&self) -> Option<ir::ContextNames> {
+        match self.context_scope.last() {
+            Some(Context::Names(names)) => Some(names.clone()),
+            Some(Context::Absent) => None,
+            None => None,
+        }
     }
 
     fn context_name<F>(&mut self, get_name: F) -> Bindings
@@ -553,13 +562,15 @@ impl<'a> Converter<'a> {
             .functions
             .get_by_name(&ast.name, arity as u8)
             .unwrap();
-        let constant = ir::Const::StaticFunction(static_function_id);
-        let atom = ir::Atom::Const(constant);
+        let mut static_function_ref_bindings = self.static_function_ref(static_function_id);
+        let atom = static_function_ref_bindings.atom();
         let mut arg_bindings = self.args(&ast.arguments);
         let args = arg_bindings.args(ast.arguments.len());
         let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
         let binding = self.new_binding(expr);
-        arg_bindings.bind(binding)
+        static_function_ref_bindings
+            .concat(arg_bindings)
+            .bind(binding)
     }
 
     fn named_function_ref(&mut self, ast: &ast::NamedFunctionRef) -> Bindings {
@@ -568,9 +579,12 @@ impl<'a> Converter<'a> {
             .functions
             .get_by_name(&ast.name, ast.arity)
             .unwrap();
-        let constant = ir::Const::StaticFunction(static_function_id);
-        let atom = ir::Atom::Const(constant);
-        let expr = ir::Expr::Atom(atom);
+        self.static_function_ref(static_function_id)
+    }
+
+    fn static_function_ref(&mut self, static_function_id: StaticFunctionId) -> Bindings {
+        let expr =
+            ir::Expr::StaticFunctionReference(static_function_id, self.current_context_names());
         let binding = self.new_binding(expr);
         Bindings::from_vec(vec![binding])
     }
@@ -732,6 +746,11 @@ mod tests {
     #[test]
     fn test_named_function_ref() {
         assert_debug_snapshot!(convert_expr_single("my_function#2"));
+    }
+
+    #[test]
+    fn test_named_function_ref2() {
+        assert_debug_snapshot!(convert_xpath("my_function#2"));
     }
 
     #[test]

@@ -5,7 +5,7 @@ use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondi
 use crate::context::Context;
 use crate::instruction::Instruction;
 use crate::ir;
-use crate::value::{Atomic, Sequence, StackValue};
+use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};
 
 pub(crate) type Scopes = crate::scope::Scopes<ir::Name>;
 
@@ -29,6 +29,9 @@ impl<'a> InterpreterCompiler<'a> {
             }
             ir::Expr::FunctionDefinition(function_definition) => {
                 self.compile_function_definition(function_definition);
+            }
+            ir::Expr::StaticFunctionReference(static_function_id, context_names) => {
+                self.compile_static_function_reference(*static_function_id, context_names);
             }
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call);
@@ -56,7 +59,6 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::EmptySequence => {
                         StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
                     }
-                    ir::Const::StaticFunction(id) => StackValue::StaticFunction(*id),
                     ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value);
@@ -189,6 +191,17 @@ impl<'a> InterpreterCompiler<'a> {
         let function_id = self.builder.add_function(function);
         self.builder
             .emit(Instruction::Closure(function_id.as_u16()));
+    }
+
+    fn compile_static_function_reference(
+        &mut self,
+        static_function_id: StaticFunctionId,
+        context_names: &Option<ir::ContextNames>,
+    ) {
+        // XXX we should get the appropriate closure variables on the stack here
+        // this depends on the static function definition
+        self.builder
+            .emit(Instruction::StaticClosure(static_function_id.as_u16()))
     }
 
     fn compile_function_call(&mut self, function_call: &ir::FunctionCall) {

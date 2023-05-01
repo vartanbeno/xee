@@ -1,0 +1,43 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_xpath(\"my_function#2\")"
+---
+FunctionDefinition(
+    FunctionDefinition {
+        params: [
+            Param(
+                Name(
+                    "v0",
+                ),
+            ),
+            Param(
+                Name(
+                    "v1",
+                ),
+            ),
+            Param(
+                Name(
+                    "v2",
+                ),
+            ),
+        ],
+        body: StaticFunctionReference(
+            StaticFunctionId(
+                0,
+            ),
+            Some(
+                ContextNames {
+                    item: Name(
+                        "v0",
+                    ),
+                    position: Name(
+                        "v1",
+                    ),
+                    last: Name(
+                        "v2",
+                    ),
+                },
+            ),
+        ),
+    },
+)

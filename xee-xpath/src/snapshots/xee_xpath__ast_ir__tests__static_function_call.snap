@@ -2,26 +2,37 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(5, 2)\")"
 ---
-FunctionCall(
-    FunctionCall {
-        atom: Const(
-            StaticFunction(
-                StaticFunctionId(
-                    0,
-                ),
-            ),
+Let(
+    Let {
+        name: Name(
+            "v0",
         ),
-        args: [
-            Const(
-                Integer(
-                    5,
-                ),
+        var_expr: StaticFunctionReference(
+            StaticFunctionId(
+                0,
             ),
-            Const(
-                Integer(
-                    2,
+            None,
+        ),
+        return_expr: FunctionCall(
+            FunctionCall {
+                atom: Variable(
+                    Name(
+                        "v0",
+                    ),
                 ),
-            ),
-        ],
+                args: [
+                    Const(
+                        Integer(
+                            5,
+                        ),
+                    ),
+                    Const(
+                        Integer(
+                            2,
+                        ),
+                    ),
+                ],
+            },
+        ),
     },
 )

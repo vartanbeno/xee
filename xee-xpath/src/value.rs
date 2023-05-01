@@ -115,8 +115,14 @@ impl Function {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ClosureFunctionId {
+    Static(StaticFunctionId),
+    Dynamic(FunctionId),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Closure {
-    pub(crate) function_id: FunctionId,
+    pub(crate) function_id: ClosureFunctionId,
     pub(crate) values: Vec<StackValue>,
 }
 
@@ -129,7 +135,7 @@ pub(crate) enum StackValue {
     Atomic(Atomic),
     Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
-    StaticFunction(StaticFunctionId),
+    // StaticFunction(StaticFunctionId),
     Step(Rc<Step>),
     Node(Node),
 }
@@ -165,12 +171,12 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
-        match self {
-            StackValue::StaticFunction(f) => Some(*f),
-            _ => None,
-        }
-    }
+    // pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
+    //     match self {
+    //         StackValue::StaticFunction(f) => Some(*f),
+    //         _ => None,
+    //     }
+    // }
 
     pub(crate) fn as_step(&self) -> Option<Rc<Step>> {
         match self {

@@ -19,6 +19,7 @@ pub(crate) struct Parameter {
 
 pub(crate) struct StaticFunction {
     name: ast::Name,
+    focus_dependent: bool,
     parameters: Vec<Parameter>,
     return_type: ParameterType,
     func: fn(arguments: &[StackValue]) -> Result<StackValue>,
@@ -53,6 +54,7 @@ impl StaticFunctions {
         let mut by_name = HashMap::new();
         let by_index = vec![StaticFunction {
             name: ast::Name::new("my_function".to_string(), None),
+            focus_dependent: false,
             parameters: vec![
                 Parameter {
                     name: "a".to_string(),
