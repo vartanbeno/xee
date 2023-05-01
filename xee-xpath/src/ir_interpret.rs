@@ -1005,4 +1005,12 @@ mod tests {
             "fn:root(doc/a) / doc / b / fn:local-name()"
         ));
     }
+
+    #[test]
+    fn test_fn_root_implicit() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "/doc/a / fn:local-name()"
+        ));
+    }
 }

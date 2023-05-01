@@ -89,9 +89,12 @@ fn node_take_axis<'a>(
 
 fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node) -> bool {
     match node_test {
-        ast::NodeTest::KindTest(kind_test) => {
-            todo!("kind test not implemented yet")
-        }
+        ast::NodeTest::KindTest(kind_test) => match kind_test {
+            ast::KindTest::Any => true,
+            _ => {
+                todo!("kind test not implemented yet");
+            }
+        },
         ast::NodeTest::NameTest(name_test) => {
             if node_kind(xot, node) != principal_node_kind(axis) {
                 return false;
