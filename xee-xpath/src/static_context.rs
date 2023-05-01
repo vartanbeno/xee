@@ -116,6 +116,13 @@ impl StaticFunctions {
                 context_rule: Some(ContextRule::ItemFirst),
                 func: local_name,
             },
+            StaticFunction {
+                name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![],
+                return_type: ParameterType::String,
+                context_rule: Some(ContextRule::ItemFirst),
+                func: namespace_uri,
+            },
         ];
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
@@ -179,5 +186,12 @@ fn local_name(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_node().ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.local_name(xot),
+    ))))
+}
+
+fn namespace_uri(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        a.namespace_uri(xot),
     ))))
 }
