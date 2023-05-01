@@ -100,11 +100,25 @@ impl<'a> Interpreter<'a> {
                     })));
                 }
                 Instruction::StaticClosure(static_function_id) => {
+                    let static_function = &self
+                        .context
+                        .static_context
+                        .functions
+                        .get_by_index(StaticFunctionId(static_function_id as usize));
+                    // get any context value from the stack if needed
+                    let values = match static_function.context_rule {
+                        Some(_) => {
+                            vec![self.stack.pop().unwrap()]
+                        }
+                        None => {
+                            vec![]
+                        }
+                    };
                     self.stack.push(StackValue::Closure(Rc::new(Closure {
                         function_id: ClosureFunctionId::Static(StaticFunctionId(
                             static_function_id as usize,
                         )),
-                        values: vec![],
+                        values,
                     })));
                 }
                 Instruction::Var(index) => {
@@ -227,7 +241,9 @@ impl<'a> Interpreter<'a> {
                                 )?;
                             }
                             ClosureFunctionId::Static(static_function_id) => {
-                                self.call_static(static_function_id, arity)?;
+                                // XXX wish I didn't need to clone
+                                let closure_values = &closure.values.clone();
+                                self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
                     } else if let Some(step) = callable.as_step() {
@@ -344,14 +360,19 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_static(&mut self, static_function_id: StaticFunctionId, arity: u8) -> Result<()> {
+    fn call_static(
+        &mut self,
+        static_function_id: StaticFunctionId,
+        arity: u8,
+        closure_values: &[StackValue],
+    ) -> Result<()> {
         let static_function = &self
             .context
             .static_context
             .functions
             .get_by_index(static_function_id);
         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(arguments)?;
+        let result = static_function.invoke(arguments, closure_values)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result);

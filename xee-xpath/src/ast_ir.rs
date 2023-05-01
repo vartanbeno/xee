@@ -549,6 +549,8 @@ impl<'a> Converter<'a> {
             panic!("too many arguments");
         }
         // hardcoded fn:position and fn:last
+        // These should work without hardcoding them, but this is faster
+        // (until some advanced compiler optimization is implemented)
         if ast.name == self.fn_position {
             assert!(arity == 0);
             return self.fn_position();

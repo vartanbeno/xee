@@ -5,6 +5,7 @@ use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondi
 use crate::context::Context;
 use crate::instruction::Instruction;
 use crate::ir;
+use crate::static_context::ContextRule;
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};
 
 pub(crate) type Scopes = crate::scope::Scopes<ir::Name>;
@@ -31,7 +32,7 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_function_definition(function_definition);
             }
             ir::Expr::StaticFunctionReference(static_function_id, context_names) => {
-                self.compile_static_function_reference(*static_function_id, context_names);
+                self.compile_static_function_reference(*static_function_id, context_names.as_ref());
             }
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call);
@@ -196,10 +197,23 @@ impl<'a> InterpreterCompiler<'a> {
     fn compile_static_function_reference(
         &mut self,
         static_function_id: StaticFunctionId,
-        context_names: &Option<ir::ContextNames>,
+        context_names: Option<&ir::ContextNames>,
     ) {
-        // XXX we should get the appropriate closure variables on the stack here
-        // this depends on the static function definition
+        // XXX optional context names; what if context is absent?
+        let context_names = context_names.unwrap();
+
+        let static_function = self
+            .context
+            .static_context
+            .functions
+            .get_by_index(static_function_id);
+        match static_function.context_rule {
+            Some(ContextRule::ItemFirst) => self.compile_variable(&context_names.item),
+            Some(ContextRule::ItemSecond) => self.compile_variable(&context_names.item),
+            Some(ContextRule::PositionFirst) => self.compile_variable(&context_names.position),
+            Some(ContextRule::SizeFirst) => self.compile_variable(&context_names.last),
+            None => {}
+        }
         self.builder
             .emit(Instruction::StaticClosure(static_function_id.as_u16()))
     }
@@ -921,5 +935,10 @@ mod tests {
     #[test]
     fn test_default_last() {
         assert_debug_snapshot!(run("fn:last()"));
+    }
+
+    #[test]
+    fn test_position_closure() {
+        assert_debug_snapshot!(run("(3, 4) ! (let $p := fn:position#0 return $p())"));
     }
 }

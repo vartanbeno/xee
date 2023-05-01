@@ -3,6 +3,7 @@ use std::fmt::{Debug, Formatter};
 
 use crate::ast;
 use crate::error::{Error, Result};
+use crate::name::FN_NAMESPACE;
 use crate::value::{Atomic, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -17,29 +18,58 @@ pub(crate) struct Parameter {
     type_: ParameterType,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub(crate) enum ContextRule {
+    ItemFirst,
+    ItemSecond,
+    PositionFirst,
+    SizeFirst,
+}
+
 pub(crate) struct StaticFunction {
     name: ast::Name,
-    focus_dependent: bool,
     parameters: Vec<Parameter>,
     return_type: ParameterType,
+    pub(crate) context_rule: Option<ContextRule>,
     func: fn(arguments: &[StackValue]) -> Result<StackValue>,
 }
 
 impl Debug for StaticFunction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("StaticFunction")
+            .field("name", &self.name)
             .field("parameters", &self.parameters)
+            .field("context_rule", &self.context_rule)
             .field("return_type", &self.return_type)
             .finish()
     }
 }
 
 impl StaticFunction {
-    pub(crate) fn invoke(&self, arguments: &[StackValue]) -> Result<StackValue> {
+    pub(crate) fn invoke(
+        &self,
+        arguments: &[StackValue],
+        closure_values: &[StackValue],
+    ) -> Result<StackValue> {
         if arguments.len() != self.parameters.len() {
             return Err(Error::TypeError);
         }
-        (self.func)(arguments)
+        if let Some(context_rule) = &self.context_rule {
+            match context_rule {
+                ContextRule::ItemFirst | ContextRule::PositionFirst | ContextRule::SizeFirst => {
+                    let mut new_arguments = vec![closure_values[0].clone()];
+                    new_arguments.extend_from_slice(arguments);
+                    (self.func)(&new_arguments)
+                }
+                ContextRule::ItemSecond => {
+                    let mut new_arguments = arguments.to_vec();
+                    new_arguments.push(closure_values[0].clone());
+                    (self.func)(&new_arguments)
+                }
+            }
+        } else {
+            (self.func)(arguments)
+        }
     }
 }
 
@@ -52,22 +82,31 @@ pub(crate) struct StaticFunctions {
 impl StaticFunctions {
     pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
-        let by_index = vec![StaticFunction {
-            name: ast::Name::new("my_function".to_string(), None),
-            focus_dependent: false,
-            parameters: vec![
-                Parameter {
-                    name: "a".to_string(),
-                    type_: ParameterType::Integer,
-                },
-                Parameter {
-                    name: "b".to_string(),
-                    type_: ParameterType::Integer,
-                },
-            ],
-            return_type: ParameterType::Integer,
-            func: bound_my_function,
-        }];
+        let by_index = vec![
+            StaticFunction {
+                name: ast::Name::new("my_function".to_string(), None),
+                parameters: vec![
+                    Parameter {
+                        name: "a".to_string(),
+                        type_: ParameterType::Integer,
+                    },
+                    Parameter {
+                        name: "b".to_string(),
+                        type_: ParameterType::Integer,
+                    },
+                ],
+                return_type: ParameterType::Integer,
+                context_rule: None,
+                func: bound_my_function,
+            },
+            StaticFunction {
+                name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![],
+                return_type: ParameterType::Integer,
+                context_rule: Some(ContextRule::PositionFirst),
+                func: bound_position,
+            },
+        ];
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
                 (
@@ -119,4 +158,9 @@ fn bound_my_function(arguments: &[StackValue]) -> Result<StackValue> {
         .as_integer()
         .ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
+}
+
+fn bound_position(arguments: &[StackValue]) -> Result<StackValue> {
+    // position should be the context value
+    Ok(arguments[0].clone())
 }
