@@ -222,6 +222,13 @@ impl Atomic {
             _ => None,
         }
     }
+
+    pub(crate) fn as_string(&self) -> Option<String> {
+        match self {
+            Atomic::String(s) => Some(s.to_string()),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

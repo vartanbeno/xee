@@ -5,6 +5,7 @@ pub(crate) enum Instruction {
     // binary operators
     Add,
     Sub,
+    Concat,
     Const(u16),
     Closure(u16),
     StaticClosure(u16),
@@ -39,6 +40,7 @@ pub(crate) enum Instruction {
 enum EncodedInstruction {
     Add,
     Sub,
+    Concat,
     Const,
     Closure,
     StaticClosure,
@@ -75,6 +77,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
     match encoded_instruction {
         EncodedInstruction::Add => (Instruction::Add, 1),
         EncodedInstruction::Sub => (Instruction::Sub, 1),
+        EncodedInstruction::Concat => (Instruction::Concat, 1),
         EncodedInstruction::Const => {
             let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Const(constant), 3)
@@ -151,6 +154,7 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
     match instruction {
         Instruction::Add => bytes.push(EncodedInstruction::Add.to_u8().unwrap()),
         Instruction::Sub => bytes.push(EncodedInstruction::Sub.to_u8().unwrap()),
+        Instruction::Concat => bytes.push(EncodedInstruction::Concat.to_u8().unwrap()),
         Instruction::Const(constant) => {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
             bytes.extend_from_slice(&constant.to_le_bytes());

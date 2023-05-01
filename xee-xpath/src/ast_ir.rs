@@ -434,6 +434,7 @@ impl<'a> Converter<'a> {
             ast::Operator::ValueGe => ir::BinaryOp::Ge,
             ast::Operator::Union => ir::BinaryOp::Union,
             ast::Operator::Range => ir::BinaryOp::Range,
+            ast::Operator::Concat => ir::BinaryOp::Concat,
             _ => todo!("binary_op: {:?}", operator),
         }
     }

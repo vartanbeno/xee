@@ -81,6 +81,7 @@ pub(crate) enum BinaryOp {
     Comma,
     Union,
     Range,
+    Concat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

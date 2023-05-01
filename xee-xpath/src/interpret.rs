@@ -85,6 +85,17 @@ impl<'a> Interpreter<'a> {
                     let result = a.checked_sub(b).ok_or(Error::FOAR0002)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
+                Instruction::Concat => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_string().ok_or(Error::TypeError)?;
+                    let b = b.as_string().ok_or(Error::TypeError)?;
+                    let result = a + &b;
+                    self.stack
+                        .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
+                }
                 Instruction::Const(index) => {
                     self.stack.push(function.constants[index as usize].clone());
                 }

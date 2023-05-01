@@ -158,6 +158,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOp::Range => {
                 self.builder.emit(Instruction::Range);
             }
+            ir::BinaryOp::Concat => {
+                self.builder.emit(Instruction::Concat);
+            }
         }
     }
 
@@ -946,5 +949,10 @@ mod tests {
     #[test]
     fn test_simple_string() {
         assert_debug_snapshot!(run("'hello'"));
+    }
+
+    #[test]
+    fn test_simple_string_concat() {
+        assert_debug_snapshot!(run("'hello' || 'world'"));
     }
 }
