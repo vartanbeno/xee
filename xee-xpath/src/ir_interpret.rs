@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::builder::{BackwardJumpRef, FunctionBuilder, JumpCondition};
+use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::context::Context;
 use crate::instruction::Instruction;
 use crate::ir;
@@ -206,7 +206,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
-        let loop_start = self.compile_sequence_loop_init(&map.var_atom, &map.context_names);
+        let (loop_start, loop_end) =
+            self.compile_sequence_loop_init(&map.var_atom, &map.context_names);
 
         self.compile_sequence_get_item(&map.var_atom, &map.context_names);
         // name it
@@ -224,6 +225,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.compile_sequence_loop_iterate(loop_start, &map.context_names);
 
+        self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end();
 
         // pop new sequence name & sequence length name & index
@@ -238,7 +240,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
-        let loop_start = self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names);
+        let (loop_start, loop_end) =
+            self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names);
 
         // place item to filter on stack
         self.compile_sequence_get_item(&filter.var_atom, &filter.context_names);
@@ -264,6 +267,7 @@ impl<'a> InterpreterCompiler<'a> {
         // no need to clean up the stack, as filter get is pushed onto sequence
         self.compile_sequence_loop_iterate(loop_start, &filter.context_names);
 
+        self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end();
 
         // pop new sequence name & sequence length name & index
@@ -273,7 +277,7 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_quantified(&mut self, quantified: &ir::Quantified) {
-        let loop_start =
+        let (loop_start, loop_end) =
             self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names);
 
         self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names);
@@ -291,6 +295,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::Pop);
 
         self.compile_sequence_loop_iterate(loop_start, &quantified.context_names);
+
+        self.builder.patch_jump(loop_end);
 
         // if we reached the end, without jumping out
         self.compile_sequence_loop_end();
@@ -325,7 +331,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         atom: &ir::Atom,
         context_names: &ir::ContextNames,
-    ) -> BackwardJumpRef {
+    ) -> (BackwardJumpRef, ForwardJumpRef) {
         //  sequence length
         self.compile_atom(atom);
         self.scopes.push_name(&context_names.last);
@@ -335,7 +341,17 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.scopes.push_name(&context_names.position);
-        self.builder.loop_start()
+
+        let loop_start_ref = self.builder.loop_start();
+
+        // compare with sequence length, if index is gt length, we're done with the loop
+        self.compile_variable(&context_names.position);
+        self.compile_variable(&context_names.last);
+        self.builder.emit(Instruction::Gt);
+        // check whether index is gt length, if so, we're done with the loop
+        let loop_end_ref = self.builder.emit_jump_forward(JumpCondition::True);
+
+        (loop_start_ref, loop_end_ref)
     }
 
     fn compile_sequence_get_item(&mut self, atom: &ir::Atom, context_names: &ir::ContextNames) {
@@ -356,13 +372,8 @@ impl<'a> InterpreterCompiler<'a> {
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.builder.emit(Instruction::Add);
         self.compile_variable_set(&context_names.position);
-        // compare with sequence length
-        self.compile_variable(&context_names.position);
-        self.compile_variable(&context_names.last);
-        // unless we reached the end, we jump back to the start
-        self.builder.emit(Instruction::Le);
         self.builder
-            .emit_jump_backward(loop_start, JumpCondition::True);
+            .emit_jump_backward(loop_start, JumpCondition::Always);
     }
 
     fn compile_sequence_loop_end(&mut self) {
@@ -761,6 +772,11 @@ mod tests {
     #[test]
     fn test_comma_simple_map2() {
         assert_debug_snapshot!(run("(1, 2), (3, 4), (5, 6) ! (. + 1)"));
+    }
+
+    #[test]
+    fn test_simple_map_empty_sequence() {
+        assert_debug_snapshot!(run("() ! (. + 1)"));
     }
 
     // not supported yet; do we need some form of type analysis?
