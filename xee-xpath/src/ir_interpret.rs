@@ -989,4 +989,20 @@ mod tests {
             "fn:count(descendant::*)"
         ));
     }
+
+    #[test]
+    fn test_fn_root() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "doc/a / fn:root() / doc / fn:local-name()"
+        ));
+    }
+
+    #[test]
+    fn test_fn_root_explicit() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "fn:root(doc/a) / doc / b / fn:local-name()"
+        ));
+    }
 }

@@ -6,7 +6,7 @@ use xot::Xot;
 use crate::ast;
 use crate::error::{Error, Result};
 use crate::name::FN_NAMESPACE;
-use crate::value::{Atomic, StackValue, StaticFunctionId};
+use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum ParameterType {
@@ -136,6 +136,25 @@ impl StaticFunctions {
                 context_rule: None,
                 func: count,
             },
+            StaticFunction {
+                name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![],
+                return_type: ParameterType::Sequence,
+                context_rule: Some(ContextRule::ItemFirst),
+                func: root,
+            },
+            StaticFunction {
+                name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![{
+                    Parameter {
+                        name: "node".to_string(),
+                        type_: ParameterType::Sequence,
+                    }
+                }],
+                return_type: ParameterType::Sequence,
+                context_rule: None,
+                func: root,
+            },
         ];
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
@@ -213,4 +232,18 @@ fn count(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_sequence().ok_or(Error::TypeError)?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
+}
+
+fn root(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    dbg!(&arguments[0]);
+    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+    let xot_node = match a {
+        Node::Xot(node) => node,
+        Node::Attribute(node, _) => node,
+        Node::Namespace(node, _) => node,
+    };
+    // XXX there should be a xot.root() to obtain this in one step
+    let top = xot.top_element(xot_node);
+    let root = xot.parent(top).unwrap();
+    Ok(StackValue::Node(Node::Xot(root)))
 }

@@ -569,7 +569,7 @@ impl<'a> Converter<'a> {
             .static_context
             .functions
             .get_by_name(&ast.name, arity as u8)
-            .unwrap();
+            .unwrap_or_else(|| panic!("Unknown function name {:?} with arity {}", ast.name, arity));
         let mut static_function_ref_bindings = self.static_function_ref(static_function_id);
         let atom = static_function_ref_bindings.atom();
         let mut arg_bindings = self.args(&ast.arguments);

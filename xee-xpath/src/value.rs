@@ -160,6 +160,7 @@ impl StackValue {
         match self {
             StackValue::Sequence(s) => Some(s.clone()),
             StackValue::Atomic(a) => Some(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
+            StackValue::Node(a) => Some(Rc::new(RefCell::new(Sequence::from_node(*a)))),
             _ => None,
         }
     }
@@ -188,6 +189,7 @@ impl StackValue {
     pub(crate) fn as_node(&self) -> Option<Node> {
         match self {
             StackValue::Node(n) => Some(*n),
+            StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.as_node()),
             _ => None,
         }
     }
@@ -237,6 +239,21 @@ pub(crate) enum Item {
     // XXX what about static function references?
     Function(Rc<Closure>),
     Node(Node),
+}
+
+impl Item {
+    pub(crate) fn as_atomic(&self) -> Option<&Atomic> {
+        match self {
+            Item::Atomic(a) => Some(a),
+            _ => None,
+        }
+    }
+    pub(crate) fn as_node(&self) -> Option<Node> {
+        match self {
+            Item::Node(n) => Some(*n),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
