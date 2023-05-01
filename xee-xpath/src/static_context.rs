@@ -18,6 +18,7 @@ pub(crate) struct Parameter {
 }
 
 pub(crate) struct StaticFunction {
+    name: ast::Name,
     parameters: Vec<Parameter>,
     return_type: ParameterType,
     func: fn(arguments: &[StackValue]) -> Result<StackValue>,
@@ -51,6 +52,7 @@ impl StaticFunctions {
     pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
         let by_index = vec![StaticFunction {
+            name: ast::Name::new("my_function".to_string(), None),
             parameters: vec![
                 Parameter {
                     name: "a".to_string(),
@@ -64,13 +66,15 @@ impl StaticFunctions {
             return_type: ParameterType::Integer,
             func: bound_my_function,
         }];
-        by_name.insert(
-            (
-                ast::Name::new("my_function".to_string(), None),
-                by_index[0].parameters.len() as u8,
-            ),
-            StaticFunctionId(0),
-        );
+        for (i, static_function) in by_index.iter().enumerate() {
+            by_name.insert(
+                (
+                    static_function.name.clone(),
+                    static_function.parameters.len() as u8,
+                ),
+                StaticFunctionId(i),
+            );
+        }
         Self { by_name, by_index }
     }
 
