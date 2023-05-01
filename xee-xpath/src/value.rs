@@ -61,6 +61,42 @@ impl Node {
             Node::Attribute(..) | Node::Namespace(..) => Box::new(std::iter::empty()),
         }
     }
+
+    pub(crate) fn node_name(&self, xot: &Xot) -> Option<xot::NameId> {
+        match self {
+            Node::Xot(node) => match xot.value(*node) {
+                xot::Value::Element(element) => Some(element.name()),
+                xot::Value::Text(..) => None,
+                // XXX this is incorrect; should return a named based on the
+                // target property. this requires a modification in Xot to make
+                // this accessible.
+                xot::Value::ProcessingInstruction(..) => None,
+                xot::Value::Comment(..) => None,
+                xot::Value::Root => None,
+            },
+            Node::Attribute(_, name_id) => Some(*name_id),
+            // XXX could return something if there is a prefix
+            Node::Namespace(_, _) => None,
+        }
+    }
+
+    pub(crate) fn local_name(&self, xot: &Xot) -> String {
+        if let Some(name) = self.node_name(xot) {
+            let (local_name, _uri) = xot.name_ns_str(name);
+            local_name.to_string()
+        } else {
+            String::new()
+        }
+    }
+
+    pub(crate) fn namespace_uri(&self, xot: &Xot) -> String {
+        if let Some(name) = self.node_name(xot) {
+            let (_local_name, uri) = xot.name_ns_str(name);
+            uri.to_string()
+        } else {
+            String::new()
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
