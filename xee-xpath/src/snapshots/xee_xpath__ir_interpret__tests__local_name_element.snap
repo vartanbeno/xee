@@ -1,0 +1,32 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"descendant::* / fn:local-name()\")"
+---
+Sequence(
+    RefCell {
+        value: Sequence {
+            items: [
+                Atomic(
+                    String(
+                        "doc",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "a",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "b",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "c",
+                    ),
+                ),
+            ],
+        },
+    },
+)

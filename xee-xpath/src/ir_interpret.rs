@@ -965,4 +965,12 @@ mod tests {
     fn test_string_compare_eq_false() {
         assert_debug_snapshot!(run("'hello' eq 'world'"));
     }
+
+    #[test]
+    fn test_local_name_element() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "descendant::* / fn:local-name()"
+        ));
+    }
 }

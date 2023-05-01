@@ -1,5 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
+use std::rc::Rc;
+use xot::Xot;
 
 use crate::ast;
 use crate::error::{Error, Result};
@@ -31,7 +33,7 @@ pub(crate) struct StaticFunction {
     parameters: Vec<Parameter>,
     return_type: ParameterType,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(arguments: &[StackValue]) -> Result<StackValue>,
+    func: fn(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue>,
 }
 
 impl Debug for StaticFunction {
@@ -48,6 +50,7 @@ impl Debug for StaticFunction {
 impl StaticFunction {
     pub(crate) fn invoke(
         &self,
+        xot: &Xot,
         arguments: &[StackValue],
         closure_values: &[StackValue],
     ) -> Result<StackValue> {
@@ -59,16 +62,16 @@ impl StaticFunction {
                 ContextRule::ItemFirst | ContextRule::PositionFirst | ContextRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
                     new_arguments.extend_from_slice(arguments);
-                    (self.func)(&new_arguments)
+                    (self.func)(xot, &new_arguments)
                 }
                 ContextRule::ItemSecond => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
-                    (self.func)(&new_arguments)
+                    (self.func)(xot, &new_arguments)
                 }
             }
         } else {
-            (self.func)(arguments)
+            (self.func)(xot, arguments)
         }
     }
 }
@@ -105,6 +108,13 @@ impl StaticFunctions {
                 return_type: ParameterType::Integer,
                 context_rule: Some(ContextRule::PositionFirst),
                 func: bound_position,
+            },
+            StaticFunction {
+                name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![],
+                return_type: ParameterType::String,
+                context_rule: Some(ContextRule::ItemFirst),
+                func: local_name,
             },
         ];
         for (i, static_function) in by_index.iter().enumerate() {
@@ -146,7 +156,7 @@ fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }
 
-fn bound_my_function(arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_my_function(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0]
         .as_atomic()
         .ok_or(Error::TypeError)?
@@ -160,7 +170,14 @@ fn bound_my_function(arguments: &[StackValue]) -> Result<StackValue> {
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 
-fn bound_position(arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_position(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     // position should be the context value
     Ok(arguments[0].clone())
+}
+
+fn local_name(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        a.local_name(xot),
+    ))))
 }

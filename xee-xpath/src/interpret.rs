@@ -383,7 +383,7 @@ impl<'a> Interpreter<'a> {
             .functions
             .get_by_index(static_function_id);
         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(arguments, closure_values)?;
+        let result = static_function.invoke(self.context.xot, arguments, closure_values)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result);
