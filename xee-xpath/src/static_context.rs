@@ -12,6 +12,7 @@ use crate::value::{Atomic, StackValue, StaticFunctionId};
 pub(crate) enum ParameterType {
     Integer,
     String,
+    Sequence,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -123,6 +124,18 @@ impl StaticFunctions {
                 context_rule: Some(ContextRule::ItemFirst),
                 func: namespace_uri,
             },
+            StaticFunction {
+                name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![{
+                    Parameter {
+                        name: "nodes".to_string(),
+                        type_: ParameterType::Sequence,
+                    }
+                }],
+                return_type: ParameterType::Integer,
+                context_rule: None,
+                func: count,
+            },
         ];
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
@@ -194,4 +207,10 @@ fn namespace_uri(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(xot),
     ))))
+}
+
+fn count(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    let a = arguments[0].as_sequence().ok_or(Error::TypeError)?;
+    let a = a.borrow();
+    Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }

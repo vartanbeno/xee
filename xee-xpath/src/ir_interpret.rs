@@ -981,4 +981,12 @@ mod tests {
             "descendant::* / fn:namespace-uri()"
         ));
     }
+
+    #[test]
+    fn test_count() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "fn:count(descendant::*)"
+        ));
+    }
 }
