@@ -1013,4 +1013,12 @@ mod tests {
             "/doc/a / fn:local-name()"
         ));
     }
+
+    #[test]
+    fn test_fn_double_slash_root_implicit() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "//a / fn:local-name()"
+        ));
+    }
 }
