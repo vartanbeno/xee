@@ -21,8 +21,11 @@ mod ir_interpret;
 mod name;
 mod parse;
 mod parse_ast;
+mod run;
 mod scope;
 mod static_context;
 mod step;
 mod value;
 mod xpath;
+
+pub use crate::run::evaluate;

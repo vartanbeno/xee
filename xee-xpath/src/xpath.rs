@@ -8,7 +8,7 @@ use crate::ir_interpret::{InterpreterCompiler, Scopes};
 use crate::parse_ast::parse_xpath;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
-pub(crate) struct CompiledXPath<'a> {
+pub struct CompiledXPath<'a> {
     pub(crate) program: Program,
     context: &'a Context<'a>,
     main: FunctionId,
@@ -40,12 +40,12 @@ impl<'a> CompiledXPath<'a> {
         }
     }
 
-    pub(crate) fn interpret(&self) -> Result<StackValue> {
+    pub(crate) fn run_without_context(&self) -> Result<StackValue> {
         // a fake context value
-        self.interpret_with_context(Item::Atomic(Atomic::Integer(0)))
+        self.run(Item::Atomic(Atomic::Integer(0)))
     }
 
-    pub(crate) fn interpret_with_context(&self, context_item: Item) -> Result<StackValue> {
+    pub(crate) fn run(&self, context_item: Item) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, self.context);
         interpreter.start(self.main, context_item);
         interpreter.run()?;
@@ -62,8 +62,8 @@ impl<'a> CompiledXPath<'a> {
         Ok(interpreter.stack().last().unwrap().clone())
     }
 
-    pub(crate) fn interpret_with_xot_node(&self, node: xot::Node) -> Result<StackValue> {
-        self.interpret_with_context(Item::Node(Node::Xot(node)))
+    pub(crate) fn run_xot_node(&self, node: xot::Node) -> Result<StackValue> {
+        self.run(Item::Node(Node::Xot(node)))
     }
 }
 

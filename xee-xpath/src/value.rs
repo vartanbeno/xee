@@ -28,13 +28,13 @@ impl StaticFunctionId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Step {
+pub struct Step {
     pub(crate) axis: ast::Axis,
     pub(crate) node_test: ast::NodeTest,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) enum Node {
+pub enum Node {
     Xot(xot::Node),
     Attribute(xot::Node, xot::NameId),
     Namespace(xot::Node, xot::PrefixId),
@@ -121,7 +121,7 @@ pub(crate) enum ClosureFunctionId {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Closure {
+pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
     pub(crate) values: Vec<StackValue>,
 }
@@ -131,7 +131,7 @@ pub(crate) struct Closure {
 // faster stack operations but slower heap access and less cache locality.
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum StackValue {
+pub enum StackValue {
     Atomic(Atomic),
     Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
@@ -197,7 +197,7 @@ impl StackValue {
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Atomic {
+pub enum Atomic {
     // should string be Rc?
     // String(String),
     Boolean(bool),
@@ -257,7 +257,7 @@ impl Item {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Sequence {
+pub struct Sequence {
     pub(crate) items: Vec<Item>,
 }
 

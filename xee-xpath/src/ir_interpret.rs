@@ -455,7 +455,7 @@ mod tests {
         let xot = Xot::new();
         let context = Context::new(&xot);
         let xpath = CompiledXPath::new(&context, s);
-        xpath.interpret().unwrap()
+        xpath.run_without_context().unwrap()
     }
 
     fn run_debug(s: &str) -> StackValue {
@@ -463,7 +463,7 @@ mod tests {
         let context = Context::new(&xot);
         let xpath = CompiledXPath::new(&context, s);
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.interpret().unwrap()
+        xpath.run_without_context().unwrap()
     }
 
     fn run_xml(xml: &str, xpath: &str) -> StackValue {
@@ -475,7 +475,7 @@ mod tests {
         let document = documents.get(&uri).unwrap();
 
         let xpath = CompiledXPath::new(&context, xpath);
-        xpath.interpret_with_xot_node(document.root).unwrap()
+        xpath.run_xot_node(document.root).unwrap()
     }
 
     fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
@@ -491,7 +491,7 @@ mod tests {
         let nodes = get_nodes(&xot, document);
 
         let xpath = CompiledXPath::new(&context, xpath);
-        let result = xpath.interpret_with_xot_node(document.root)?;
+        let result = xpath.run_xot_node(document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();
         assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));

@@ -1,0 +1,19 @@
+[package]
+name = "xee-qt"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath", "testing"]
+license = "Apache-2.0"
+description = "Conformance testing for xee-xpath"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-qt"
+homepage = "https://github.com/Paligo/xee"
+
+[dependencies]
+ahash = "0.8.3"
+thiserror = "1.0.40"
+xot = { workspace = true }
+
+[dev-dependencies]
