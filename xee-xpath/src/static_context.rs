@@ -237,7 +237,6 @@ fn count(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
 }
 
 fn root(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
-    dbg!(&arguments[0]);
     let a = arguments[0].as_node().ok_or(Error::TypeError)?;
     let xot_node = match a {
         Node::Xot(node) => node,
