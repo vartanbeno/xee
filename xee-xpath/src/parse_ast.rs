@@ -464,19 +464,20 @@ impl<'a> AstParser<'a> {
         let first_pair = pairs.next().unwrap();
         if first_pair.as_rule() == Rule::ForwardAxis {
             let axis = self.forward_axis_to_axis(first_pair);
+            let is_attribute = matches!(axis, ast::Axis::Attribute);
             let node_test_pair = pairs.next().unwrap();
-            let node_test = self.node_test_to_node_test(node_test_pair);
+            let node_test = self.node_test_to_node_test(node_test_pair, is_attribute);
             (axis, node_test)
         } else {
             let mut pairs = first_pair.into_inner();
             let first = pairs.next().unwrap();
             match first.as_rule() {
                 Rule::AbbrevAtSign => {
-                    let node_test = self.node_test_to_node_test(pairs.next().unwrap());
+                    let node_test = self.node_test_to_node_test(pairs.next().unwrap(), true);
                     (ast::Axis::Attribute, node_test)
                 }
                 Rule::NodeTest => {
-                    let node_test = self.node_test_to_node_test(first);
+                    let node_test = self.node_test_to_node_test(first, false);
                     // https://www.w3.org/TR/xpath-31/#abbrev
                     let axis = match &node_test {
                         ast::NodeTest::KindTest(t) => match t {
@@ -504,7 +505,7 @@ impl<'a> AstParser<'a> {
         if first_pair.as_rule() == Rule::ReverseAxis {
             let axis = self.reverse_axis_to_axis(first_pair);
             let node_test_pair = pairs.next().unwrap();
-            let node_test = self.node_test_to_node_test(node_test_pair);
+            let node_test = self.node_test_to_node_test(node_test_pair, false);
             (axis, node_test)
         } else {
             // abbrev reverse step
@@ -541,14 +542,14 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn node_test_to_node_test(&self, pair: Pair<Rule>) -> ast::NodeTest {
+    fn node_test_to_node_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NodeTest {
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::KindTest => ast::NodeTest::KindTest(
                 self.kind_test_to_kind_test(pair.into_inner().next().unwrap()),
             ),
             Rule::NameTest => ast::NodeTest::NameTest(
-                self.name_test_to_name_test(pair.into_inner().next().unwrap()),
+                self.name_test_to_name_test(pair.into_inner().next().unwrap(), is_attribute),
             ),
             _ => {
                 panic!("unhandled NodeTest: {:?}", pair.as_rule())
@@ -556,7 +557,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn name_test_to_name_test(&self, pair: Pair<Rule>) -> ast::NameTest {
+    fn name_test_to_name_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NameTest {
         match pair.as_rule() {
             Rule::Wildcard => {
                 let pair = pair.into_inner().next().unwrap();
@@ -584,9 +585,16 @@ impl<'a> AstParser<'a> {
                     }
                 }
             }
-            Rule::EQName => ast::NameTest::Name(
-                self.eq_name_to_name(pair, self.namespaces.default_element_namespace),
-            ),
+            Rule::EQName => {
+                if is_attribute {
+                    // attributes are not in any namespace by default
+                    ast::NameTest::Name(self.eq_name_to_name(pair, None))
+                } else {
+                    ast::NameTest::Name(
+                        self.eq_name_to_name(pair, self.namespaces.default_element_namespace),
+                    )
+                }
+            }
             _ => {
                 panic!("unhandled NameTest: {:?}", pair.as_rule())
             }
@@ -611,6 +619,7 @@ impl<'a> AstParser<'a> {
                 let mut pairs = pair.into_inner();
                 let first_pair = pairs.next();
                 if let Some(pair) = first_pair {
+                    // XXX this should not use a default element namespace
                     todo!("no arguments for attribute test yet")
                 } else {
                     ast::KindTest::Attribute(None)

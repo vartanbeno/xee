@@ -10,3 +10,13 @@ fn test_test_cases() {
     let sv = evaluate(ROOT_FIXTURE, "/test-set/test-case", Some(NS));
     assert_eq!(sv.as_sequence().unwrap().borrow().len(), 38);
 }
+
+// #[test]
+// fn test_specific_attribute() {
+//     let sv = evaluate(
+//         ROOT_FIXTURE,
+//         "/test-set/test-case[@name eq 'fn-root-1']",
+//         Some(NS),
+//     );
+//     assert_eq!(sv.as_sequence().unwrap().borrow().len(), 1);
+// }

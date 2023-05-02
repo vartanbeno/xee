@@ -1053,4 +1053,37 @@ mod tests {
             "http://example.com"
         ));
     }
+
+    #[test]
+    fn test_attribute_namespace_no_default() {
+        // here we set the default element namespace for xpath expressions
+        assert_debug_snapshot!(run_xml_default_ns(
+            r#"<doc xmlns="http://example.com" a="hello"/>"#,
+            "doc / @a / local-name()",
+            "http://example.com"
+        ));
+    }
+
+    // #[test]
+    // fn test_attribute_predicate() -> Result<()> {
+    //     assert_nodes(
+    //         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
+    //         "//*[@foo = 'FOO']",
+    //         |xot, document| {
+    //             let doc_el = xot.document_element(document.root).unwrap();
+    //             let a = xot.first_child(doc_el).unwrap();
+    //             let b = xot.next_sibling(a).unwrap();
+    //             vec![b]
+    //         },
+    //     )
+    // }
+
+    // #[test]
+    // fn test_attribute_predicate() {
+    //     assert_debug_snapshot!(run_xml_default_ns(
+    //         r#"<doc xmlns="http://example.com" a="hello"/>"#,
+    //         "doc[@a eq 'hello'] / local-name()",
+    //         "http://example.com"
+    //     ));
+    // }
 }
