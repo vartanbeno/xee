@@ -1,10 +1,12 @@
-// // ensure we have just enough xpath to help us read the test suite more easily
-// use xee_xpath::evaluate;
-// use xot::Xot;
+// ensure we have just enough xpath to help us read the test suite more easily
+use xee_xpath::evaluate;
 
-// const root_fixture: &str = include_str!("fixtures/root.xml");
+const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
+
+const ROOT_FIXTURE: &str = include_str!("fixtures/root.xml");
 
 // #[test]
 // fn test_test_cases() {
-//     evaluate(root_fixture, "/test-suite/test-case").unwrap();
+//     let sv = evaluate(ROOT_FIXTURE, "/test-suite/test-case", Some(NS));
+//     assert_eq!(sv.as_sequence().unwrap().borrow().len(), 1);
 // }

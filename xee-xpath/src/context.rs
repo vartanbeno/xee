@@ -7,7 +7,7 @@ use crate::static_context::StaticContext;
 
 pub(crate) struct Context<'a> {
     pub(crate) xot: &'a Xot,
-    pub(crate) static_context: StaticContext,
+    pub(crate) static_context: StaticContext<'a>,
     pub(crate) documents: Cow<'a, Documents>,
 }
 
@@ -21,19 +21,23 @@ impl<'a> Debug for Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    pub(crate) fn new(xot: &'a Xot) -> Self {
+    pub(crate) fn new(xot: &'a Xot, static_context: StaticContext<'a>) -> Self {
         let documents = Documents::new();
         Self {
             xot,
-            static_context: StaticContext::new(),
+            static_context,
             documents: Cow::Owned(documents),
         }
     }
 
-    pub(crate) fn with_documents(xot: &'a Xot, documents: &'a Documents) -> Self {
+    pub(crate) fn with_documents(
+        xot: &'a Xot,
+        static_context: StaticContext<'a>,
+        documents: &'a Documents,
+    ) -> Self {
         Self {
             xot,
-            static_context: StaticContext::new(),
+            static_context,
             documents: Cow::Borrowed(documents),
         }
     }

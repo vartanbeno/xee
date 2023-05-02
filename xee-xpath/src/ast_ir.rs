@@ -4,6 +4,7 @@ use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
 use crate::ir;
+use crate::name::Namespaces;
 use crate::name::FN_NAMESPACE;
 use crate::static_context::StaticContext;
 use crate::value::StaticFunctionId;
@@ -98,7 +99,7 @@ pub(crate) struct Converter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
     context_scope: Vec<Context>,
-    static_context: &'a StaticContext,
+    static_context: &'a StaticContext<'a>,
     fn_position: ast::Name,
     fn_last: ast::Name,
 }
@@ -614,14 +615,16 @@ impl<'a> Converter<'a> {
 
 fn convert_expr_single(s: &str) -> ir::Expr {
     let ast = crate::parse_ast::parse_expr_single(s);
-    let static_context = StaticContext::new();
+    let namespaces = Namespaces::new(None, None);
+    let static_context = StaticContext::new(&namespaces);
     let mut converter = Converter::new(&static_context);
     converter.convert_expr_single(&ast)
 }
 
 fn convert_xpath(s: &str) -> ir::Expr {
-    let ast = crate::parse_ast::parse_xpath(s);
-    let static_context = StaticContext::new();
+    let namespaces = Namespaces::new(None, None);
+    let ast = crate::parse_ast::parse_xpath(s, &namespaces);
+    let static_context = StaticContext::new(&namespaces);
     let mut converter = Converter::new(&static_context);
     converter.convert_xpath(&ast)
 }

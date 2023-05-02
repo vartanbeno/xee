@@ -156,7 +156,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_sequence(&self) -> Option<Rc<RefCell<Sequence>>> {
+    pub fn as_sequence(&self) -> Option<Rc<RefCell<Sequence>>> {
         match self {
             StackValue::Sequence(s) => Some(s.clone()),
             StackValue::Atomic(a) => Some(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
@@ -264,6 +264,10 @@ pub struct Sequence {
 impl Sequence {
     pub(crate) fn new() -> Self {
         Self { items: Vec::new() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
     }
 
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {

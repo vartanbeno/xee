@@ -438,6 +438,8 @@ mod tests {
 
     use crate::builder::{FunctionBuilder, JumpCondition};
     use crate::instruction::decode_instructions;
+    use crate::name::Namespaces;
+    use crate::static_context::StaticContext;
 
     #[test]
     fn test_interpreter() -> Result<()> {
@@ -451,7 +453,9 @@ mod tests {
 
         let main_id = program.add_function(function);
         let xot = Xot::new();
-        let context = Context::new(&xot);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::new(&xot, static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -507,7 +511,9 @@ mod tests {
         let main_id = program.add_function(function);
 
         let xot = Xot::new();
-        let context = Context::new(&xot);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::new(&xot, static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -538,7 +544,9 @@ mod tests {
         let main_id = program.add_function(function);
 
         let xot = Xot::new();
-        let context = Context::new(&xot);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::new(&xot, static_context);
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run()?;

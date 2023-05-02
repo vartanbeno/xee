@@ -5,7 +5,7 @@ use xot::Xot;
 
 use crate::ast;
 use crate::error::{Error, Result};
-use crate::name::FN_NAMESPACE;
+use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -179,13 +179,15 @@ impl StaticFunctions {
 }
 
 #[derive(Debug)]
-pub(crate) struct StaticContext {
+pub(crate) struct StaticContext<'a> {
+    pub(crate) namespaces: &'a Namespaces<'a>,
     pub(crate) functions: StaticFunctions,
 }
 
-impl StaticContext {
-    pub(crate) fn new() -> Self {
+impl<'a> StaticContext<'a> {
+    pub(crate) fn new(namespaces: &'a Namespaces<'a>) -> Self {
         Self {
+            namespaces,
             functions: StaticFunctions::new(),
         }
     }

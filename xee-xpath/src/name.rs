@@ -12,17 +12,27 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
     ("output", "http://www.w3.org/2010/xslt-xquery-serialization"),
 ];
 
+#[derive(Debug)]
 pub(crate) struct Namespaces<'a> {
     namespaces: HashMap<&'a str, &'a str>,
+    pub(crate) default_element_namespace: Option<&'a str>,
+    pub(crate) default_function_namespace: Option<&'a str>,
 }
 
 impl<'a> Namespaces<'a> {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(
+        default_element_namespace: Option<&'a str>,
+        default_function_namespace: Option<&'a str>,
+    ) -> Self {
         let mut namespaces = HashMap::new();
         for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
             namespaces.insert(prefix, uri);
         }
-        Self { namespaces }
+        Self {
+            namespaces,
+            default_element_namespace,
+            default_function_namespace,
+        }
     }
 
     pub(crate) fn by_prefix(&self, prefix: &str) -> Option<&str> {

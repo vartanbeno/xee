@@ -424,6 +424,9 @@ mod tests {
     use xot::Xot;
 
     use crate::error::Result;
+    use crate::name::Namespaces;
+    use crate::run::evaluate;
+    use crate::static_context::StaticContext;
     use crate::xpath::CompiledXPath;
     use crate::{
         document::{Document, Documents, Uri},
@@ -453,29 +456,29 @@ mod tests {
 
     fn run(s: &str) -> StackValue {
         let xot = Xot::new();
-        let context = Context::new(&xot);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::new(&xot, static_context);
         let xpath = CompiledXPath::new(&context, s);
         xpath.run_without_context().unwrap()
     }
 
     fn run_debug(s: &str) -> StackValue {
         let xot = Xot::new();
-        let context = Context::new(&xot);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::new(&xot, static_context);
         let xpath = CompiledXPath::new(&context, s);
         dbg!(&xpath.program.get_function(0).decoded());
         xpath.run_without_context().unwrap()
     }
 
     fn run_xml(xml: &str, xpath: &str) -> StackValue {
-        let mut xot = Xot::new();
-        let uri = Uri("http://example.com".to_string());
-        let mut documents = Documents::new();
-        documents.add(&mut xot, &uri, xml).unwrap();
-        let context = Context::with_documents(&xot, &documents);
-        let document = documents.get(&uri).unwrap();
+        evaluate(xml, xpath, None)
+    }
 
-        let xpath = CompiledXPath::new(&context, xpath);
-        xpath.run_xot_node(document.root).unwrap()
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> StackValue {
+        evaluate(xml, xpath, Some(ns))
     }
 
     fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
@@ -486,7 +489,9 @@ mod tests {
         let uri = Uri("http://example.com".to_string());
         let mut documents = Documents::new();
         documents.add(&mut xot, &uri, xml).unwrap();
-        let context = Context::with_documents(&xot, &documents);
+        let namespaces = Namespaces::new(None, None);
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::with_documents(&xot, static_context, &documents);
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 
@@ -1019,6 +1024,33 @@ mod tests {
         assert_debug_snapshot!(run_xml(
             r#"<doc><a/><b><c/></b></doc>"#,
             "//a / fn:local-name()"
+        ));
+    }
+
+    #[test]
+    fn test_fn_namespace_default() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/><b><c/></b></doc>"#,
+            "descendant::* / local-name()"
+        ));
+    }
+
+    #[test]
+    fn test_element_namespace_wrong() {
+        // we expect no match, as doc is in a namespace and the default is None
+        assert_debug_snapshot!(run_xml(
+            r#"<doc xmlns="http://example.com"><a/></doc>"#,
+            "doc / local-name()",
+        ));
+    }
+
+    #[test]
+    fn test_element_namespace_default() {
+        // here we set the default element namespace for xpath expressions
+        assert_debug_snapshot!(run_xml_default_ns(
+            r#"<doc xmlns="http://example.com"><a/></doc>"#,
+            "doc / local-name()",
+            "http://example.com"
         ));
     }
 }

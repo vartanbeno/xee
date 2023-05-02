@@ -10,7 +10,7 @@ use crate::parse::Rule;
 pub struct Error {}
 
 struct AstParser<'a> {
-    namespaces: Namespaces<'a>,
+    namespaces: &'a Namespaces<'a>,
 }
 
 enum PostfixOrPlaceholdered {
@@ -25,10 +25,8 @@ enum ArgumentsOrPlaceholdered {
 }
 
 impl<'a> AstParser<'a> {
-    fn new() -> Self {
-        AstParser {
-            namespaces: Namespaces::new(),
-        }
+    fn new(namespaces: &'a Namespaces<'a>) -> Self {
+        AstParser { namespaces }
     }
 
     fn struct_wrap<T, W>(&self, pair: Pair<Rule>, outer_rule: Rule, inner_rule: Rule, wrap: W) -> T
@@ -586,7 +584,9 @@ impl<'a> AstParser<'a> {
                     }
                 }
             }
-            Rule::EQName => ast::NameTest::Name(self.eq_name_to_name(pair)),
+            Rule::EQName => ast::NameTest::Name(
+                self.eq_name_to_name(pair, self.namespaces.default_element_namespace),
+            ),
             _ => {
                 panic!("unhandled NameTest: {:?}", pair.as_rule())
             }
@@ -655,7 +655,8 @@ impl<'a> AstParser<'a> {
                 match self.argument_list_to_args(arguments) {
                     ArgumentsOrPlaceholdered::Arguments(arguments) => {
                         ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                            name: self.eq_name_to_name(name),
+                            name: self
+                                .eq_name_to_name(name, self.namespaces.default_function_namespace),
                             arguments,
                         })
                     }
@@ -668,7 +669,10 @@ impl<'a> AstParser<'a> {
                             body: vec![ast::ExprSingle::Path(ast::PathExpr {
                                 steps: vec![ast::StepExpr::PrimaryExpr(
                                     ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                                        name: self.eq_name_to_name(name),
+                                        name: self.eq_name_to_name(
+                                            name,
+                                            self.namespaces.default_function_namespace,
+                                        ),
                                         arguments,
                                     }),
                                 )],
@@ -808,11 +812,11 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn eq_name_to_name(&self, pair: Pair<Rule>) -> ast::Name {
+    fn eq_name_to_name(&self, pair: Pair<Rule>, default_namespace: Option<&'a str>) -> ast::Name {
         debug_assert_eq!(pair.as_rule(), Rule::EQName);
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
-            Rule::QName => self.q_name_to_name(pair),
+            Rule::QName => self.q_name_to_name(pair, default_namespace),
             Rule::URIQualifiedName => self.uri_qualified_name_to_name(pair),
             _ => {
                 panic!("unhandled EQName: {:?}", pair.as_rule());
@@ -820,12 +824,12 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn q_name_to_name(&self, pair: Pair<Rule>) -> ast::Name {
+    fn q_name_to_name(&self, pair: Pair<Rule>, default_namespace: Option<&'a str>) -> ast::Name {
         debug_assert_eq!(pair.as_rule(), Rule::QName);
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::PrefixedName => self.prefixed_name_to_name(pair),
-            Rule::UnprefixedName => self.unprefixed_name_to_name(pair),
+            Rule::UnprefixedName => self.unprefixed_name_to_name(pair, default_namespace),
             _ => {
                 panic!("unhandled QName: {:?}", pair.as_rule())
             }
@@ -857,12 +861,16 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn unprefixed_name_to_name(&self, pair: Pair<Rule>) -> ast::Name {
+    fn unprefixed_name_to_name(
+        &self,
+        pair: Pair<Rule>,
+        default_namespace: Option<&'a str>,
+    ) -> ast::Name {
         debug_assert_eq!(pair.as_rule(), Rule::UnprefixedName);
         let pair = pair.into_inner().next().unwrap();
         ast::Name {
             name: pair.as_str().to_string(),
-            namespace: None,
+            namespace: default_namespace.map(|s| s.to_string()),
         }
     }
 
@@ -872,7 +880,7 @@ impl<'a> AstParser<'a> {
         let name = pairs.next().unwrap();
         let arity = pairs.next().unwrap();
         ast::NamedFunctionRef {
-            name: self.eq_name_to_name(name),
+            name: self.eq_name_to_name(name, self.namespaces.default_function_namespace),
             arity: arity.as_str().parse().unwrap(),
         }
     }
@@ -923,7 +931,7 @@ impl<'a> AstParser<'a> {
     fn param_to_param(&self, pair: Pair<Rule>) -> ast::Param {
         debug_assert_eq!(pair.as_rule(), Rule::Param);
         let mut pairs = pair.into_inner();
-        let name = self.eq_name_to_name(pairs.next().unwrap());
+        let name = self.eq_name_to_name(pairs.next().unwrap(), None);
         let type_ = if let Some(pair) = pairs.next() {
             panic!("unhandled type annotation");
         } else {
@@ -1047,13 +1055,19 @@ where
 }
 
 pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
-    let ast_parser = AstParser::new();
+    let namespaces = Namespaces::new(None, None);
+    let ast_parser = AstParser::new(&namespaces);
     parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p))
 }
 
-pub(crate) fn parse_xpath(input: &str) -> ast::XPath {
-    let ast_parser = AstParser::new();
+pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> ast::XPath {
+    let ast_parser = AstParser::new(namespaces);
     parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p))
+}
+
+fn parse_xpath_no_default_ns(input: &str) -> ast::XPath {
+    let namespaces = Namespaces::new(None, None);
+    parse_xpath(input, &namespaces)
 }
 
 #[cfg(test)]
@@ -1062,33 +1076,38 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     fn parse_literal(input: &str) -> ast::Literal {
-        let ast_parser = AstParser::new();
+        let namespaces = Namespaces::new(None, None);
+        let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::Literal, input, |p| ast_parser.literal_to_literal(p))
     }
 
     fn parse_primary_expr(input: &str) -> ast::PrimaryExpr {
-        let ast_parser = AstParser::new();
+        let namespaces = Namespaces::new(None, None);
+        let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::PrimaryExpr, input, |p| {
             ast_parser.primary_expr_to_primary(p)
         })
     }
 
     fn parse_step_expr(input: &str) -> ast::StepExpr {
-        let ast_parser = AstParser::new();
+        let namespaces = Namespaces::new(None, None);
+        let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::StepExpr, input, |p| {
             ast_parser.step_expr_to_step_expr(p)
         })
     }
 
     fn parse_relative_path_expr(input: &str) -> Vec<ast::StepExpr> {
-        let ast_parser = AstParser::new();
+        let namespaces = Namespaces::new(None, None);
+        let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::RelativePathExpr, input, |p| {
             ast_parser.relative_path_expr_to_steps(p)
         })
     }
 
     fn parse_path_expr(input: &str) -> ast::PathExpr {
-        let ast_parser = AstParser::new();
+        let namespaces = Namespaces::new(None, None);
+        let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::PathExpr, input, |p| {
             ast_parser.path_expr_to_path_expr(p)
         })
@@ -1201,12 +1220,12 @@ mod tests {
 
     #[test]
     fn test_xpath_single_expr() {
-        assert_debug_snapshot!(parse_xpath("1 + 2"));
+        assert_debug_snapshot!(parse_xpath_no_default_ns("1 + 2"));
     }
 
     #[test]
     fn test_xpath_multi_expr() {
-        assert_debug_snapshot!(parse_xpath("1 + 2, 3 + 4"));
+        assert_debug_snapshot!(parse_xpath_no_default_ns("1 + 2, 3 + 4"));
     }
 
     #[test]
@@ -1296,12 +1315,12 @@ mod tests {
 
     #[test]
     fn test_simple_comma() {
-        assert_debug_snapshot!(parse_xpath("1, 2"));
+        assert_debug_snapshot!(parse_xpath_no_default_ns("1, 2"));
     }
 
     #[test]
     fn test_complex_comma() {
-        assert_debug_snapshot!(parse_xpath("(1, 2), (3, 4)"));
+        assert_debug_snapshot!(parse_xpath_no_default_ns("(1, 2), (3, 4)"));
     }
 
     #[test]
