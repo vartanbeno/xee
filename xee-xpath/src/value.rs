@@ -97,6 +97,34 @@ impl Node {
             String::new()
         }
     }
+
+    pub(crate) fn string(&self, xot: &Xot) -> String {
+        match self {
+            Node::Xot(node) => match xot.value(*node) {
+                xot::Value::Element(_) => descendants_to_string(xot, *node),
+                xot::Value::Text(text) => text.get().to_string(),
+                xot::Value::ProcessingInstruction(pi) => pi.data().unwrap_or("").to_string(),
+                xot::Value::Comment(comment) => comment.get().to_string(),
+                xot::Value::Root => descendants_to_string(xot, *node),
+            },
+            Node::Attribute(node, name) => {
+                let element = xot.element(*node).unwrap();
+                element.get_attribute(*name).unwrap().to_string()
+            }
+            Node::Namespace(..) => {
+                todo!("not yet: return the value of the uri property")
+            }
+        }
+    }
+}
+
+fn descendants_to_string(xot: &Xot, node: xot::Node) -> String {
+    let texts = xot.descendants(node).filter_map(|n| xot.text_str(n));
+    let mut r = String::new();
+    for text in texts {
+        r.push_str(text);
+    }
+    r
 }
 
 #[derive(Debug, Clone)]

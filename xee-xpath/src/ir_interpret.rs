@@ -213,7 +213,7 @@ impl<'a> InterpreterCompiler<'a> {
             .get_by_index(static_function_id);
         match static_function.context_rule {
             Some(ContextRule::ItemFirst) => self.compile_variable(&context_names.item),
-            Some(ContextRule::ItemSecond) => self.compile_variable(&context_names.item),
+            Some(ContextRule::ItemLast) => self.compile_variable(&context_names.item),
             Some(ContextRule::PositionFirst) => self.compile_variable(&context_names.position),
             Some(ContextRule::SizeFirst) => self.compile_variable(&context_names.last),
             None => {}
@@ -1062,6 +1062,21 @@ mod tests {
             "doc / @a / local-name()",
             "http://example.com"
         ));
+    }
+
+    #[test]
+    fn test_string_document_node() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a>A</a><b>B</b></doc>"#, "string(doc)"));
+    }
+
+    #[test]
+    fn test_string_element_node() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a>A</a><b>B</b></doc>"#, "string(doc/a)"));
+    }
+
+    #[test]
+    fn test_string_integer() {
+        assert_debug_snapshot!(run("fn:string(1)"));
     }
 
     // #[test]

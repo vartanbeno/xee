@@ -1,0 +1,9 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"fn:string(1)\")"
+---
+Atomic(
+    String(
+        "1",
+    ),
+)

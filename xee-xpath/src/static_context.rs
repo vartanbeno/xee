@@ -24,7 +24,7 @@ pub(crate) struct Parameter {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum ContextRule {
     ItemFirst,
-    ItemSecond,
+    ItemLast,
     PositionFirst,
     SizeFirst,
 }
@@ -65,7 +65,7 @@ impl StaticFunction {
                     new_arguments.extend_from_slice(arguments);
                     (self.func)(xot, &new_arguments)
                 }
-                ContextRule::ItemSecond => {
+                ContextRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
                     (self.func)(xot, &new_arguments)
@@ -154,6 +154,25 @@ impl StaticFunctions {
                 return_type: ParameterType::Sequence,
                 context_rule: None,
                 func: root,
+            },
+            StaticFunction {
+                name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![{
+                    Parameter {
+                        name: "arg".to_string(),
+                        type_: ParameterType::Sequence,
+                    }
+                }],
+                return_type: ParameterType::String,
+                context_rule: None,
+                func: string,
+            },
+            StaticFunction {
+                name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+                parameters: vec![],
+                return_type: ParameterType::String,
+                context_rule: Some(ContextRule::ItemFirst),
+                func: string,
             },
         ];
         for (i, static_function) in by_index.iter().enumerate() {
@@ -247,4 +266,36 @@ fn root(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let top = xot.top_element(xot_node);
     let root = xot.parent(top).unwrap();
     Ok(StackValue::Node(Node::Xot(root)))
+}
+
+fn string(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
+        xot,
+        &arguments[0],
+    )?))))
+}
+
+fn string_helper(xot: &Xot, value: &StackValue) -> Result<String> {
+    let value = match value {
+        StackValue::Atomic(atomic) => match atomic {
+            Atomic::String(string) => string.to_string(),
+            Atomic::Integer(integer) => integer.to_string(),
+            Atomic::Float(float) => float.to_string(),
+            Atomic::Boolean(boolean) => boolean.to_string(),
+            Atomic::Double(double) => double.to_string(),
+        },
+        StackValue::Sequence(sequence) => {
+            let sequence = sequence.borrow();
+            let len = sequence.len();
+            match len {
+                0 => "".to_string(),
+                1 => string_helper(xot, &StackValue::from_item(sequence.items[0].clone()))?,
+                _ => Err(Error::TypeError)?,
+            }
+        }
+        StackValue::Node(node) => node.string(xot),
+        StackValue::Closure(_) => Err(Error::TypeError)?,
+        StackValue::Step(_) => Err(Error::TypeError)?,
+    };
+    Ok(value)
 }
