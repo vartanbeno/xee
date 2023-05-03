@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"(1) eq (1)\")"
 ---
-Atomic(
-    Boolean(
-        true,
+Ok(
+    Atomic(
+        Boolean(
+            true,
+        ),
     ),
 )

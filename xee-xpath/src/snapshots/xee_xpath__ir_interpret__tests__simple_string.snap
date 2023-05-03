@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"'hello'\")"
 ---
-Atomic(
-    String(
-        "hello",
+Ok(
+    Atomic(
+        String(
+            "hello",
+        ),
     ),
 )

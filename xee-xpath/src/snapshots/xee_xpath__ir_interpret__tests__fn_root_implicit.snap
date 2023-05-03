@@ -2,16 +2,18 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"/doc/a / fn:local-name()\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [
-                Atomic(
-                    String(
-                        "a",
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        String(
+                            "a",
+                        ),
                     ),
-                ),
-            ],
+                ],
+            },
         },
-    },
+    ),
 )

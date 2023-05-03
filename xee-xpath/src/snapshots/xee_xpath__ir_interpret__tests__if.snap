@@ -1,9 +1,11 @@
 ---
 source: xee-xpath/src/ir_interpret.rs
-expression: "&run(\"if (1) then 2 else 3\").unwrap()"
+expression: "run(\"if (1) then 2 else 3\")"
 ---
-Atomic(
-    Integer(
-        2,
+Ok(
+    Atomic(
+        Integer(
+            2,
+        ),
     ),
 )

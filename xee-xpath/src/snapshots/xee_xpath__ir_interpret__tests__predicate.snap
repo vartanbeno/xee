@@ -2,21 +2,23 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"(1, 2, 3)[. ge 2]\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [
-                Atomic(
-                    Integer(
-                        2,
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        Integer(
+                            2,
+                        ),
                     ),
-                ),
-                Atomic(
-                    Integer(
-                        3,
+                    Atomic(
+                        Integer(
+                            3,
+                        ),
                     ),
-                ),
-            ],
+                ],
+            },
         },
-    },
+    ),
 )

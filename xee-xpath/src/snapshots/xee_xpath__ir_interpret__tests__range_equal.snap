@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"1 to 1\")"
 ---
-Atomic(
-    Integer(
-        1,
+Ok(
+    Atomic(
+        Integer(
+            1,
+        ),
     ),
 )

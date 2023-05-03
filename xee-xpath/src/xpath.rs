@@ -15,7 +15,7 @@ pub struct CompiledXPath<'a> {
 }
 
 impl<'a> CompiledXPath<'a> {
-    pub(crate) fn new(context: &'a Context, xpath: &str) -> Self {
+    pub(crate) fn new(context: &'a Context, xpath: &str) -> Result<Self> {
         let ast = parse_xpath(xpath, context.static_context.namespaces);
         let mut ir_converter = IrConverter::new(&context.static_context);
         let expr = ir_converter.convert_xpath(&ast);
@@ -33,11 +33,11 @@ impl<'a> CompiledXPath<'a> {
 
         // the inline function should be the last finished function
         let inline_id = FunctionId(program.functions.len() - 1);
-        Self {
+        Ok(Self {
             program,
             context,
             main: inline_id,
-        }
+        })
     }
 
     pub(crate) fn run_without_context(&self) -> Result<StackValue> {
@@ -75,4 +75,35 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
         }
         _ => panic!("expected inline function"),
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use xot::Xot;
+
+    use crate::{
+        document::{Documents, Uri},
+        name::{Namespaces, FN_NAMESPACE},
+        static_context::StaticContext,
+    };
+
+    use super::*;
+
+    // #[test]
+    // fn test_parse_error() {
+    //     let mut xot = Xot::new();
+    //     let uri = Uri("http://example.com".to_string());
+    //     let mut documents = Documents::new();
+    //     documents.add(&mut xot, &uri, "<doc/>").unwrap();
+    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+    //     let static_context = StaticContext::new(&namespaces);
+    //     let context = Context::with_documents(&xot, static_context, &documents);
+
+    //     let xpath = "1 + 2 +";
+    //     let err = CompiledXPath::new(&context, xpath);
+    //     // assert_eq!(
+    //     //     err.to_string(),
+    //     //     "Parse error: expected a primary expression but found end of input"
+    //     // );
+    // }
 }

@@ -2,31 +2,33 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc xmlns=\"http://example.com/\" xmlns:e=\"http://example.com/e\"><a/><b><e:c/></b></doc>\"#,\n    \"descendant::* / fn:namespace-uri()\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [
-                Atomic(
-                    String(
-                        "http://example.com/",
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        String(
+                            "http://example.com/",
+                        ),
                     ),
-                ),
-                Atomic(
-                    String(
-                        "http://example.com/",
+                    Atomic(
+                        String(
+                            "http://example.com/",
+                        ),
                     ),
-                ),
-                Atomic(
-                    String(
-                        "http://example.com/",
+                    Atomic(
+                        String(
+                            "http://example.com/",
+                        ),
                     ),
-                ),
-                Atomic(
-                    String(
-                        "http://example.com/e",
+                    Atomic(
+                        String(
+                            "http://example.com/e",
+                        ),
                     ),
-                ),
-            ],
+                ],
+            },
         },
-    },
+    ),
 )

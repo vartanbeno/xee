@@ -1,9 +1,11 @@
 ---
 source: xee-xpath/src/ir_interpret.rs
-expression: "&run(\"function($x) { $x + 5 } (3)\")"
+expression: "run(\"function($x) { $x + 5 } (3)\")"
 ---
-Atomic(
-    Integer(
-        8,
+Ok(
+    Atomic(
+        Integer(
+            8,
+        ),
     ),
 )

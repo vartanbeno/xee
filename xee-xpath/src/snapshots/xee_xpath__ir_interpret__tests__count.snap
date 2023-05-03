@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"fn:count(descendant::*)\")"
 ---
-Atomic(
-    Integer(
-        4,
+Ok(
+    Atomic(
+        Integer(
+            4,
+        ),
     ),
 )

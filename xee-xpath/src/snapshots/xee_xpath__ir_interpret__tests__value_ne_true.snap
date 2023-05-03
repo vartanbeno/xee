@@ -1,9 +1,11 @@
 ---
 source: xee-xpath/src/ir_interpret.rs
-expression: "&run(\"1 ne 2\")"
+expression: "run(\"1 ne 2\")"
 ---
-Atomic(
-    Boolean(
-        true,
+Ok(
+    Atomic(
+        Boolean(
+            true,
+        ),
     ),
 )

@@ -446,30 +446,30 @@ mod tests {
         }
     }
 
-    fn run(s: &str) -> StackValue {
+    fn run(s: &str) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = Context::new(&xot, static_context);
-        let xpath = CompiledXPath::new(&context, s);
-        xpath.run_without_context().unwrap()
+        let xpath = CompiledXPath::new(&context, s)?;
+        Ok(xpath.run_without_context().unwrap())
     }
 
-    fn run_debug(s: &str) -> StackValue {
+    fn run_debug(s: &str) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = Context::new(&xot, static_context);
-        let xpath = CompiledXPath::new(&context, s);
+        let xpath = CompiledXPath::new(&context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.run_without_context().unwrap()
+        Ok(xpath.run_without_context().unwrap())
     }
 
-    fn run_xml(xml: &str, xpath: &str) -> StackValue {
+    fn run_xml(xml: &str, xpath: &str) -> Result<StackValue> {
         evaluate(xml, xpath, None)
     }
 
-    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> StackValue {
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<StackValue> {
         evaluate(xml, xpath, Some(ns))
     }
 
@@ -487,7 +487,7 @@ mod tests {
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 
-        let xpath = CompiledXPath::new(&context, xpath);
+        let xpath = CompiledXPath::new(&context, xpath)?;
         let result = xpath.run_xot_node(document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();

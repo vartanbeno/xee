@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"every $x in () satisfies $x eq 5\")"
 ---
-Atomic(
-    Boolean(
-        true,
+Ok(
+    Atomic(
+        Boolean(
+            true,
+        ),
     ),
 )

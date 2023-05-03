@@ -2,10 +2,12 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc xmlns=\"http://example.com\"><a/></doc>\"#, \"doc / local-name()\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [],
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [],
+            },
         },
-    },
+    ),
 )

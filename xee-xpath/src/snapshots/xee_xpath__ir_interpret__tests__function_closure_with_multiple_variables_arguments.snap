@@ -1,9 +1,11 @@
 ---
 source: xee-xpath/src/ir_interpret.rs
-expression: "&run(\"function() { let $x := 3 return function($y) { $x - $y } }()(1)\")"
+expression: "run(\"function() { let $x := 3 return function($y) { $x - $y } }()(1)\")"
 ---
-Atomic(
-    Integer(
-        2,
+Ok(
+    Atomic(
+        Integer(
+            2,
+        ),
     ),
 )

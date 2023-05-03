@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"fn:last()\")"
 ---
-Atomic(
-    Integer(
-        1,
+Ok(
+    Atomic(
+        Integer(
+            1,
+        ),
     ),
 )

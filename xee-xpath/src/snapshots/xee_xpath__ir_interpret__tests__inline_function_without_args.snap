@@ -1,9 +1,11 @@
 ---
 source: xee-xpath/src/ir_interpret.rs
-expression: "&run(\"function() { 5 } ()\")"
+expression: "run(\"function() { 5 } ()\")"
 ---
-Atomic(
-    Integer(
-        5,
+Ok(
+    Atomic(
+        Integer(
+            5,
+        ),
     ),
 )

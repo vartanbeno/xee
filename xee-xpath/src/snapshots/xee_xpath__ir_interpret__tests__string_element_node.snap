@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a>A</a><b>B</b></doc>\"#, \"string(doc/a)\")"
 ---
-Atomic(
-    String(
-        "A",
+Ok(
+    Atomic(
+        String(
+            "A",
+        ),
     ),
 )

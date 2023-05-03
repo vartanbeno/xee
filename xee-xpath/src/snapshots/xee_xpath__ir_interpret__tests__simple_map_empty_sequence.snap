@@ -2,10 +2,12 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"() ! (. + 1)\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [],
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [],
+            },
         },
-    },
+    ),
 )

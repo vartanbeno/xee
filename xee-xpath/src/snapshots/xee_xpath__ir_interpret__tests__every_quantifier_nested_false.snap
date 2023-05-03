@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"every $x in (2, 3, 4), $y in (1, 2) satisfies $x gt $y\")"
 ---
-Atomic(
-    Boolean(
-        false,
+Ok(
+    Atomic(
+        Boolean(
+            false,
+        ),
     ),
 )

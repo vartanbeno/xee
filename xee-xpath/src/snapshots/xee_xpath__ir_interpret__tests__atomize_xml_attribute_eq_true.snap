@@ -2,8 +2,10 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a f=\"FOO\"/><b f=\"FOO\"/></doc>\"#, \"doc/a/@f eq doc/b/@f\")"
 ---
-Atomic(
-    Boolean(
-        true,
+Ok(
+    Atomic(
+        Boolean(
+            true,
+        ),
     ),
 )

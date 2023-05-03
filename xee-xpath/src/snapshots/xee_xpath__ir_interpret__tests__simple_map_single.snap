@@ -2,21 +2,23 @@
 source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"1 ! (. , 0)\")"
 ---
-Sequence(
-    RefCell {
-        value: Sequence {
-            items: [
-                Atomic(
-                    Integer(
-                        1,
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        Integer(
+                            1,
+                        ),
                     ),
-                ),
-                Atomic(
-                    Integer(
-                        0,
+                    Atomic(
+                        Integer(
+                            0,
+                        ),
                     ),
-                ),
-            ],
+                ],
+            },
         },
-    },
+    ),
 )
