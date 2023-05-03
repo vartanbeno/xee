@@ -228,7 +228,7 @@ impl<'a> AstParser<'a> {
                     "some" => ast::Quantifier::Some,
                     "every" => ast::Quantifier::Every,
                     _ => {
-                        panic!("unhandled QuantifiedExpr {:?}", quantifier.as_str())
+                        unreachable!("unhandled QuantifiedExpr {:?}", quantifier.as_str())
                     }
                 };
                 let quantifier_clause = pairs.next().unwrap();
@@ -438,7 +438,6 @@ impl<'a> AstParser<'a> {
                 };
                 ast::StepExpr::AxisStep(axis_step)
             }
-            // XXX this doesn't handel any potential predicates
             Rule::AbbrevReverseStep => {
                 let mut pairs = pair.into_inner();
                 let predicates_pair = pairs.next().unwrap();
@@ -492,7 +491,7 @@ impl<'a> AstParser<'a> {
                     (axis, node_test)
                 }
                 _ => {
-                    panic!("unhandled AbbrevForwardStep: {:?}", first.as_rule())
+                    unreachable!("unhandled AbbrevForwardStep: {:?}", first.as_rule())
                 }
             }
         }
