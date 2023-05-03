@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+// based on https://www.w3.org/TR/xpath-functions-31/#error-summary
+
 #[derive(Debug, Error)]
 pub enum Error {
     /// Wrong number of arguments.
