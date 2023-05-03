@@ -177,7 +177,15 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    if a == Atomic::Empty {
+                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                        continue;
+                    }
                     let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
+                    if b == Atomic::Empty {
+                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                        continue;
+                    }
                     // XXX can functions be value compared?
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
                 }
@@ -185,7 +193,15 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    if a == Atomic::Empty {
+                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                        continue;
+                    }
                     let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
+                    if b == Atomic::Empty {
+                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                        continue;
+                    }
                     // XXX can functions be value compared?
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a != b)));
                 }

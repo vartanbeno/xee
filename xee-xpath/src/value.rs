@@ -180,7 +180,7 @@ impl StackValue {
     pub(crate) fn as_atomic(&self, xot: &Xot) -> Option<Atomic> {
         match self {
             StackValue::Atomic(a) => Some(a.clone()),
-            StackValue::Sequence(s) => s.borrow().as_atomic(xot),
+            StackValue::Sequence(s) => Some(s.borrow().as_atomic(xot)),
             _ => None,
         }
     }
@@ -236,6 +236,8 @@ pub enum Atomic {
     Double(f64),
     // and many more
     String(Rc<String>),
+    // a special marker to note empty sequences after atomization
+    Empty,
 }
 
 impl Atomic {
@@ -361,15 +363,15 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atomic(&self, xot: &Xot) -> Option<Atomic> {
+    pub(crate) fn as_atomic(&self, xot: &Xot) -> Atomic {
         let mut atomized = self.atomize(xot);
         let len = atomized.items.len();
         match len {
-            0 => None,
+            0 => Atomic::Empty,
             1 => {
                 let item = atomized.items.remove(0);
                 match item {
-                    Item::Atomic(a) => Some(a),
+                    Item::Atomic(a) => a,
                     _ => unreachable!("atomize returned a non-atomic item"),
                 }
             }

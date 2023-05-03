@@ -331,6 +331,7 @@ fn string_helper(xot: &Xot, value: &StackValue) -> Result<String> {
             Atomic::Float(float) => float.to_string(),
             Atomic::Boolean(boolean) => boolean.to_string(),
             Atomic::Double(double) => double.to_string(),
+            Atomic::Empty => "".to_string(),
         },
         StackValue::Sequence(sequence) => {
             let sequence = sequence.borrow();

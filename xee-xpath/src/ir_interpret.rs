@@ -1102,26 +1102,27 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn test_attribute_predicate() -> Result<()> {
-    //     assert_nodes(
-    //         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
-    //         "//*[@foo eq 'FOO']",
-    //         |xot, document| {
-    //             let doc_el = xot.document_element(document.root).unwrap();
-    //             let a = xot.first_child(doc_el).unwrap();
-    //             let b = xot.next_sibling(a).unwrap();
-    //             vec![b]
-    //         },
-    //     )
-    // }
+    #[test]
+    fn test_atomize_xml_attribute_present() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a f="FOO"/></doc>"#, "doc/a/@f eq 'FOO'",));
+    }
 
-    // #[test]
-    // fn test_attribute_predicate() {
-    //     assert_debug_snapshot!(run_xml_default_ns(
-    //         r#"<doc xmlns="http://example.com" a="hello"/>"#,
-    //         "doc[@a eq 'hello'] / local-name()",
-    //         "http://example.com"
-    //     ));
-    // }
+    #[test]
+    fn test_atomize_xml_attribute_missing() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a/></doc>"#, "doc/a/@f eq 'FOO'",));
+    }
+
+    #[test]
+    fn test_attribute_predicate() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
+            "//*[@foo eq 'FOO']",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let b = xot.next_sibling(a).unwrap();
+                vec![b]
+            },
+        )
+    }
 }
