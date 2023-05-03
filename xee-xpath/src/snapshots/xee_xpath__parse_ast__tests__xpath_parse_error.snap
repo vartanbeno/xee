@@ -1,0 +1,20 @@
+---
+source: xee-xpath/src/parse_ast.rs
+expression: "parse_xpath_no_default_ns(\"1 + 2 +\")"
+---
+Err(
+    XPST0003 {
+        src: NamedSource {
+            name: "input",
+            source: "<redacted>",
+        ,
+        span: SourceSpan {
+            offset: SourceOffset(
+                7,
+            ),
+            length: SourceOffset(
+                0,
+            ),
+        },
+    },
+)

@@ -1528,4 +1528,9 @@ mod tests {
     fn test_except() {
         assert_debug_snapshot!(parse_expr_single("child::foo except child::bar"));
     }
+
+    #[test]
+    fn test_xpath_parse_error() {
+        assert_debug_snapshot!(parse_xpath_no_default_ns("1 + 2 +"));
+    }
 }
