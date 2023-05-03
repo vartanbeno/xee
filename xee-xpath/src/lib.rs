@@ -23,6 +23,7 @@ mod parse;
 mod parse_ast;
 mod run;
 mod scope;
+mod span;
 mod static_context;
 mod step;
 mod value;

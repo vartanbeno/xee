@@ -1,8 +1,6 @@
 use ordered_float::OrderedFloat;
-use std::ops::Range;
 
-pub(crate) type Spanned<T> = (T, Span);
-pub(crate) type Span = Range<usize>;
+use crate::span::Spanned;
 
 pub(crate) type ExprSingleS = Spanned<ExprSingle>;
 pub(crate) type PrimaryExprS = Spanned<PrimaryExpr>;

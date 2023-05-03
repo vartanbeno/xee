@@ -9,6 +9,7 @@ use crate::ast;
 use crate::error::Error;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parse::Rule;
+use crate::span::{not_spanned, Spanned};
 
 struct AstParser<'a> {
     namespaces: &'a Namespaces<'a>,
@@ -1135,12 +1136,8 @@ fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     parse_xpath(input, &namespaces)
 }
 
-fn spanned<T>(value: T, span: &pest::Span) -> ast::Spanned<T> {
+pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
     (value, (span.start()..span.end()))
-}
-
-fn not_spanned<T>(value: T) -> ast::Spanned<T> {
-    (value, (0..0))
 }
 
 #[cfg(test)]
