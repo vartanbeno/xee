@@ -25,7 +25,7 @@ pub enum Error {
     XPST0003 {
         #[source_code]
         src: NamedSource,
-        #[label("This bit here")]
+        #[label("Could not parse beyond this")]
         span: SourceSpan,
     },
     /// Type error.

@@ -1079,7 +1079,7 @@ pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::X
             let src = NamedSource::new("input", input.to_string());
             let location = e.location;
             let span: SourceSpan = match location {
-                InputLocation::Pos(pos) => pos.into(),
+                InputLocation::Pos(pos) => (pos - 1, 0).into(),
                 InputLocation::Span((start, end)) => (start, end).into(),
             };
             Err(Error::XPST0003 { src, span })
