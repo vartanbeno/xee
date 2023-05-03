@@ -1086,6 +1086,22 @@ mod tests {
         assert_debug_snapshot!(run_xml(r#"<doc><a>A</a><b>B</b></doc>"#, "doc/a eq doc/b",));
     }
 
+    #[test]
+    fn test_atomize_xml_attribute_eq_true() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a f="FOO"/><b f="FOO"/></doc>"#,
+            "doc/a/@f eq doc/b/@f",
+        ));
+    }
+
+    #[test]
+    fn test_atomize_xml_attribute_eq_false() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a f="FOO"/><b f="BAR"/></doc>"#,
+            "doc/a/@f eq doc/b/@f",
+        ));
+    }
+
     // #[test]
     // fn test_attribute_predicate() -> Result<()> {
     //     assert_nodes(
