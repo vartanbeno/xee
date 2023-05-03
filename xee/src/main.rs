@@ -11,7 +11,7 @@ use xee_xpath::evaluate;
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -22,21 +22,19 @@ enum Commands {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    if let Some(command) = cli.command {
-        match command {
-            Commands::Xpath { xml, xpath } => {
-                let xml_file = File::open(xml)
-                    .into_diagnostic()
-                    .wrap_err("Cannot open XML file")?;
-                let mut buf_reader = BufReader::new(xml_file);
-                let mut xml = String::new();
-                buf_reader
-                    .read_to_string(&mut xml)
-                    .into_diagnostic()
-                    .wrap_err("Cannot read XML file")?;
-                let result = evaluate(&xml, &xpath, None)?;
-                dbg!(result);
-            }
+    match cli.command {
+        Commands::Xpath { xml, xpath } => {
+            let xml_file = File::open(xml)
+                .into_diagnostic()
+                .wrap_err("Cannot open XML file")?;
+            let mut buf_reader = BufReader::new(xml_file);
+            let mut xml = String::new();
+            buf_reader
+                .read_to_string(&mut xml)
+                .into_diagnostic()
+                .wrap_err("Cannot read XML file")?;
+            let result = evaluate(&xml, &xpath, None)?;
+            dbg!(result);
         }
     }
     Ok(())
