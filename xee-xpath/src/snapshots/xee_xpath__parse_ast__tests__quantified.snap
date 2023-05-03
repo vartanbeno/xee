@@ -15,56 +15,68 @@ expression: "parse_expr_single(\"every $x in (1, 2) satisfies $x > 0\")"
                     PathExpr {
                         steps: [
                             PrimaryExpr(
-                                Expr(
-                                    [
-                                        (
-                                            Path(
-                                                PathExpr {
-                                                    steps: [
-                                                        PrimaryExpr(
-                                                            Expr(
-                                                                [
-                                                                    (
-                                                                        Path(
-                                                                            PathExpr {
-                                                                                steps: [
-                                                                                    PrimaryExpr(
-                                                                                        Literal(
-                                                                                            Integer(
-                                                                                                1,
+                                (
+                                    Expr(
+                                        [
+                                            (
+                                                Path(
+                                                    PathExpr {
+                                                        steps: [
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Expr(
+                                                                        [
+                                                                            (
+                                                                                Path(
+                                                                                    PathExpr {
+                                                                                        steps: [
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    Literal(
+                                                                                                        Integer(
+                                                                                                            1,
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    13..14,
+                                                                                                ),
                                                                                             ),
-                                                                                        ),
-                                                                                    ),
-                                                                                ],
-                                                                            },
-                                                                        ),
-                                                                        13..14,
-                                                                    ),
-                                                                    (
-                                                                        Path(
-                                                                            PathExpr {
-                                                                                steps: [
-                                                                                    PrimaryExpr(
-                                                                                        Literal(
-                                                                                            Integer(
-                                                                                                2,
+                                                                                        ],
+                                                                                    },
+                                                                                ),
+                                                                                13..14,
+                                                                            ),
+                                                                            (
+                                                                                Path(
+                                                                                    PathExpr {
+                                                                                        steps: [
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    Literal(
+                                                                                                        Integer(
+                                                                                                            2,
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    16..17,
+                                                                                                ),
                                                                                             ),
-                                                                                        ),
-                                                                                    ),
-                                                                                ],
-                                                                            },
-                                                                        ),
-                                                                        16..17,
+                                                                                        ],
+                                                                                    },
+                                                                                ),
+                                                                                16..17,
+                                                                            ),
+                                                                        ],
                                                                     ),
-                                                                ],
+                                                                    13..17,
+                                                                ),
                                                             ),
-                                                        ),
-                                                    ],
-                                                },
+                                                        ],
+                                                    },
+                                                ),
+                                                13..17,
                                             ),
-                                            13..17,
-                                        ),
-                                    ],
+                                        ],
+                                    ),
+                                    12..18,
                                 ),
                             ),
                         ],
@@ -79,11 +91,14 @@ expression: "parse_expr_single(\"every $x in (1, 2) satisfies $x > 0\")"
                         left: PathExpr {
                             steps: [
                                 PrimaryExpr(
-                                    VarRef(
-                                        Name {
-                                            name: "x",
-                                            namespace: None,
-                                        },
+                                    (
+                                        VarRef(
+                                            Name {
+                                                name: "x",
+                                                namespace: None,
+                                            },
+                                        ),
+                                        29..31,
                                     ),
                                 ),
                             ],
@@ -91,10 +106,13 @@ expression: "parse_expr_single(\"every $x in (1, 2) satisfies $x > 0\")"
                         right: PathExpr {
                             steps: [
                                 PrimaryExpr(
-                                    Literal(
-                                        Integer(
-                                            0,
+                                    (
+                                        Literal(
+                                            Integer(
+                                                0,
+                                            ),
                                         ),
+                                        34..35,
                                     ),
                                 ),
                             ],

@@ -19,10 +19,13 @@ expression: "parse_expr_single(\"..[1]\")"
                                         PathExpr {
                                             steps: [
                                                 PrimaryExpr(
-                                                    Literal(
-                                                        Integer(
-                                                            1,
+                                                    (
+                                                        Literal(
+                                                            Integer(
+                                                                1,
+                                                            ),
                                                         ),
+                                                        3..4,
                                                     ),
                                                 ),
                                             ],

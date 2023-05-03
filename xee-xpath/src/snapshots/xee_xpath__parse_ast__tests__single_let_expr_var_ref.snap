@@ -14,10 +14,13 @@ expression: "parse_expr_single(\"let $x := 1 return $x\")"
                     PathExpr {
                         steps: [
                             PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        1,
+                                (
+                                    Literal(
+                                        Integer(
+                                            1,
+                                        ),
                                     ),
+                                    10..11,
                                 ),
                             ),
                         ],
@@ -30,11 +33,14 @@ expression: "parse_expr_single(\"let $x := 1 return $x\")"
                     PathExpr {
                         steps: [
                             PrimaryExpr(
-                                VarRef(
-                                    Name {
-                                        name: "x",
-                                        namespace: None,
-                                    },
+                                (
+                                    VarRef(
+                                        Name {
+                                            name: "x",
+                                            namespace: None,
+                                        },
+                                    ),
+                                    19..21,
                                 ),
                             ),
                         ],

@@ -14,10 +14,13 @@ expression: "parse_expr_single(\"for $x in 1 return 5\")"
                     PathExpr {
                         steps: [
                             PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        1,
+                                (
+                                    Literal(
+                                        Integer(
+                                            1,
+                                        ),
                                     ),
+                                    10..11,
                                 ),
                             ),
                         ],
@@ -30,10 +33,13 @@ expression: "parse_expr_single(\"for $x in 1 return 5\")"
                     PathExpr {
                         steps: [
                             PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        5,
+                                (
+                                    Literal(
+                                        Integer(
+                                            5,
+                                        ),
                                     ),
+                                    19..20,
                                 ),
                             ),
                         ],

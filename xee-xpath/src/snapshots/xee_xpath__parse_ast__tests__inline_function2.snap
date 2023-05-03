@@ -7,60 +7,69 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
         PathExpr {
             steps: [
                 PrimaryExpr(
-                    InlineFunction(
-                        InlineFunction {
-                            params: [
-                                Param {
-                                    name: Name {
-                                        name: "x",
-                                        namespace: None,
-                                    },
-                                    type_: None,
-                                },
-                                Param {
-                                    name: Name {
-                                        name: "y",
-                                        namespace: None,
-                                    },
-                                    type_: None,
-                                },
-                            ],
-                            return_type: None,
-                            body: [
-                                (
-                                    Binary(
-                                        BinaryExpr {
-                                            operator: Add,
-                                            left: PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
-                                                        VarRef(
-                                                            Name {
-                                                                name: "x",
-                                                                namespace: None,
-                                                            },
-                                                        ),
-                                                    ),
-                                                ],
-                                            },
-                                            right: PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
-                                                        VarRef(
-                                                            Name {
-                                                                name: "y",
-                                                                namespace: None,
-                                                            },
-                                                        ),
-                                                    ),
-                                                ],
-                                            },
+                    (
+                        InlineFunction(
+                            InlineFunction {
+                                params: [
+                                    Param {
+                                        name: Name {
+                                            name: "x",
+                                            namespace: None,
                                         },
+                                        type_: None,
+                                    },
+                                    Param {
+                                        name: Name {
+                                            name: "y",
+                                            namespace: None,
+                                        },
+                                        type_: None,
+                                    },
+                                ],
+                                return_type: None,
+                                body: [
+                                    (
+                                        Binary(
+                                            BinaryExpr {
+                                                operator: Add,
+                                                left: PathExpr {
+                                                    steps: [
+                                                        PrimaryExpr(
+                                                            (
+                                                                VarRef(
+                                                                    Name {
+                                                                        name: "x",
+                                                                        namespace: None,
+                                                                    },
+                                                                ),
+                                                                19..21,
+                                                            ),
+                                                        ),
+                                                    ],
+                                                },
+                                                right: PathExpr {
+                                                    steps: [
+                                                        PrimaryExpr(
+                                                            (
+                                                                VarRef(
+                                                                    Name {
+                                                                        name: "y",
+                                                                        namespace: None,
+                                                                    },
+                                                                ),
+                                                                24..26,
+                                                            ),
+                                                        ),
+                                                    ],
+                                                },
+                                            },
+                                        ),
+                                        19..27,
                                     ),
-                                    19..27,
-                                ),
-                            ],
-                        },
+                                ],
+                            },
+                        ),
+                        0..28,
                     ),
                 ),
             ],

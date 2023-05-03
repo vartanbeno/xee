@@ -7,11 +7,14 @@ expression: "parse_expr_single(\"$foo()\")"
         PathExpr {
             steps: [
                 PostfixExpr {
-                    primary: VarRef(
-                        Name {
-                            name: "foo",
-                            namespace: None,
-                        },
+                    primary: (
+                        VarRef(
+                            Name {
+                                name: "foo",
+                                namespace: None,
+                            },
+                        ),
+                        0..4,
                     ),
                     postfixes: [
                         ArgumentList(

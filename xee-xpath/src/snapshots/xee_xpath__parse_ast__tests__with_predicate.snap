@@ -24,10 +24,13 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                         PathExpr {
                                             steps: [
                                                 PrimaryExpr(
-                                                    Literal(
-                                                        Integer(
-                                                            1,
+                                                    (
+                                                        Literal(
+                                                            Integer(
+                                                                1,
+                                                            ),
                                                         ),
+                                                        11..12,
                                                     ),
                                                 ),
                                             ],

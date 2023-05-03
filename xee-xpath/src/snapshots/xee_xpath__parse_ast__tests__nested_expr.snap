@@ -9,10 +9,13 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
             left: PathExpr {
                 steps: [
                     PrimaryExpr(
-                        Literal(
-                            Integer(
-                                1,
+                        (
+                            Literal(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            0..1,
                         ),
                     ),
                 ],
@@ -20,39 +23,48 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
             right: PathExpr {
                 steps: [
                     PrimaryExpr(
-                        Expr(
-                            [
-                                (
-                                    Binary(
-                                        BinaryExpr {
-                                            operator: Mul,
-                                            left: PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
-                                                        Literal(
-                                                            Integer(
-                                                                2,
+                        (
+                            Expr(
+                                [
+                                    (
+                                        Binary(
+                                            BinaryExpr {
+                                                operator: Mul,
+                                                left: PathExpr {
+                                                    steps: [
+                                                        PrimaryExpr(
+                                                            (
+                                                                Literal(
+                                                                    Integer(
+                                                                        2,
+                                                                    ),
+                                                                ),
+                                                                5..6,
                                                             ),
                                                         ),
-                                                    ),
-                                                ],
-                                            },
-                                            right: PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
-                                                        Literal(
-                                                            Integer(
-                                                                3,
+                                                    ],
+                                                },
+                                                right: PathExpr {
+                                                    steps: [
+                                                        PrimaryExpr(
+                                                            (
+                                                                Literal(
+                                                                    Integer(
+                                                                        3,
+                                                                    ),
+                                                                ),
+                                                                9..10,
                                                             ),
                                                         ),
-                                                    ),
-                                                ],
+                                                    ],
+                                                },
                                             },
-                                        },
+                                        ),
+                                        5..10,
                                     ),
-                                    5..10,
-                                ),
-                            ],
+                                ],
+                            ),
+                            4..11,
                         ),
                     ),
                 ],

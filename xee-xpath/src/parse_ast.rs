@@ -44,14 +44,15 @@ impl<'a> AstParser<'a> {
     }
 
     fn pair_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
-        let (expr_single, span) = self.expr_single(pair);
-        match expr_single {
+        let expr_single = self.expr_single(pair);
+        let span = expr_single.1.clone();
+        match expr_single.0 {
             ast::ExprSingle::Path(path_expr) => path_expr,
             _ => ast::PathExpr {
-                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![(
-                    expr_single,
+                steps: vec![ast::StepExpr::PrimaryExpr((
+                    ast::PrimaryExpr::Expr(vec![expr_single]),
                     span,
-                )]))],
+                ))],
             },
         }
     }
@@ -302,16 +303,19 @@ impl<'a> AstParser<'a> {
                 self.expr_single(pair)
             }
             Rule::Expr => {
-                let span = pair.as_span();
+                let span = &pair.as_span();
                 let exprs = self.exprs(pair);
                 if exprs.len() == 1 {
                     exprs[0].clone()
                 } else {
                     spanned(
                         ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(exprs))],
+                            steps: vec![ast::StepExpr::PrimaryExpr(spanned(
+                                ast::PrimaryExpr::Expr(exprs),
+                                span,
+                            ))],
                         }),
-                        &span,
+                        span,
                     )
                 }
             }
@@ -658,70 +662,76 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn primary_expr_to_primary(&self, pair: Pair<Rule>) -> ast::PrimaryExpr {
+    fn primary_expr_to_primary(&self, pair: Pair<Rule>) -> ast::PrimaryExprS {
         debug_assert_eq!(pair.as_rule(), Rule::PrimaryExpr);
         let pair = pair.into_inner().next().unwrap();
-        match pair.as_rule() {
-            Rule::Literal => ast::PrimaryExpr::Literal(self.literal_to_literal(pair)),
-            Rule::ParenthesizedExpr => ast::PrimaryExpr::Expr(self.exprs(pair)),
-            Rule::VarRef => {
-                let pair = pair.into_inner().next().unwrap();
-                ast::PrimaryExpr::VarRef(self.var_name_to_name(pair))
-            }
-            Rule::FunctionItemExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                match pair.as_rule() {
-                    Rule::InlineFunctionExpr => ast::PrimaryExpr::InlineFunction(
-                        self.inline_function_expr_to_inline_function(pair),
-                    ),
-                    Rule::NamedFunctionRef => ast::PrimaryExpr::NamedFunctionRef(
-                        self.named_function_ref_to_named_function_ref(pair),
-                    ),
-                    _ => {
-                        panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
+        let span = &pair.as_span();
+        spanned(
+            match pair.as_rule() {
+                Rule::Literal => ast::PrimaryExpr::Literal(self.literal_to_literal(pair)),
+                Rule::ParenthesizedExpr => ast::PrimaryExpr::Expr(self.exprs(pair)),
+                Rule::VarRef => {
+                    let pair = pair.into_inner().next().unwrap();
+                    ast::PrimaryExpr::VarRef(self.var_name_to_name(pair))
+                }
+                Rule::FunctionItemExpr => {
+                    let pair = pair.into_inner().next().unwrap();
+                    match pair.as_rule() {
+                        Rule::InlineFunctionExpr => ast::PrimaryExpr::InlineFunction(
+                            self.inline_function_expr_to_inline_function(pair),
+                        ),
+                        Rule::NamedFunctionRef => ast::PrimaryExpr::NamedFunctionRef(
+                            self.named_function_ref_to_named_function_ref(pair),
+                        ),
+                        _ => {
+                            panic!("unhandled FunctionItemExpr: {:?}", pair.as_rule())
+                        }
                     }
                 }
-            }
-            Rule::FunctionCall => {
-                let mut pairs = pair.into_inner();
-                let name = pairs.next().unwrap();
-                // unwrap NonReservedFunctionName
-                let name = name.into_inner().next().unwrap();
-                let arguments = pairs.next().unwrap();
-                match self.argument_list_to_args(arguments) {
-                    ArgumentsOrPlaceholdered::Arguments(arguments) => {
-                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                            name: self
-                                .eq_name_to_name(name, self.namespaces.default_function_namespace),
-                            arguments,
-                        })
-                    }
-                    ArgumentsOrPlaceholdered::Placeholdered(arguments, params) => {
-                        // construct an inline function that calls the underlying function,
-                        // with the reduced placeholdered params
-                        ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
-                            params,
-                            return_type: None,
-                            body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                                steps: vec![ast::StepExpr::PrimaryExpr(
-                                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                                        name: self.eq_name_to_name(
-                                            name,
-                                            self.namespaces.default_function_namespace,
-                                        ),
-                                        arguments,
-                                    }),
-                                )],
-                            }))],
-                        })
+                Rule::FunctionCall => {
+                    let mut pairs = pair.into_inner();
+                    let name = pairs.next().unwrap();
+                    // unwrap NonReservedFunctionName
+                    let name = name.into_inner().next().unwrap();
+                    let arguments = pairs.next().unwrap();
+                    match self.argument_list_to_args(arguments) {
+                        ArgumentsOrPlaceholdered::Arguments(arguments) => {
+                            ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                                name: self.eq_name_to_name(
+                                    name,
+                                    self.namespaces.default_function_namespace,
+                                ),
+                                arguments,
+                            })
+                        }
+                        ArgumentsOrPlaceholdered::Placeholdered(arguments, params) => {
+                            // construct an inline function that calls the underlying function,
+                            // with the reduced placeholdered params
+                            ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+                                params,
+                                return_type: None,
+                                body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
+                                    steps: vec![ast::StepExpr::PrimaryExpr(not_spanned(
+                                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+                                            name: self.eq_name_to_name(
+                                                name,
+                                                self.namespaces.default_function_namespace,
+                                            ),
+                                            arguments,
+                                        }),
+                                    ))],
+                                }))],
+                            })
+                        }
                     }
                 }
-            }
-            Rule::ContextItemExpr => ast::PrimaryExpr::ContextItem,
-            _ => {
-                panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
-            }
-        }
+                Rule::ContextItemExpr => ast::PrimaryExpr::ContextItem,
+                _ => {
+                    panic!("unhandled PrimaryExpr: {:?}", pair.as_rule())
+                }
+            },
+            span,
+        )
     }
 
     fn postfix_expr_to_postfix(&self, pair: Pair<Rule>) -> PostfixOrPlaceholdered {
@@ -749,7 +759,7 @@ impl<'a> AstParser<'a> {
 
     fn postfixes_or_placeholdereds(
         &self,
-        primary: ast::PrimaryExpr,
+        primary: ast::PrimaryExprS,
         postfixes: Vec<PostfixOrPlaceholdered>,
     ) -> ast::StepExpr {
         let mut normal_postfixes = Vec::new();
@@ -762,7 +772,7 @@ impl<'a> AstParser<'a> {
                 PostfixOrPlaceholdered::Placeholdered(arguments, params) => {
                     // we want to add a postfix to the primary with placeholdered params
                     normal_postfixes.push(ast::Postfix::ArgumentList(arguments));
-                    primary = ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+                    primary = not_spanned(ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                         params,
                         return_type: None,
                         body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
@@ -771,7 +781,7 @@ impl<'a> AstParser<'a> {
                                 postfixes: normal_postfixes.clone(),
                             }],
                         }))],
-                    });
+                    }));
                     // collect more postfixes now
                     normal_postfixes.clear();
                 }
@@ -809,7 +819,9 @@ impl<'a> AstParser<'a> {
                     type_: None,
                 });
                 args.push(not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::VarRef(name))],
+                    steps: vec![ast::StepExpr::PrimaryExpr(not_spanned(
+                        ast::PrimaryExpr::VarRef(name),
+                    ))],
                 })));
                 placeholder_index += 1;
             }
@@ -1045,30 +1057,34 @@ impl<'a> AstParser<'a> {
 }
 
 fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
+    let span = expr.1.clone();
     match expr.0 {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
-            steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![
-                expr,
-            ]))],
+            steps: vec![ast::StepExpr::PrimaryExpr((
+                ast::PrimaryExpr::Expr(vec![expr]),
+                span,
+            ))],
         },
     }
 }
 
 fn root_from_context() -> ast::StepExpr {
-    ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-        name: ast::Name {
-            name: "root".to_string(),
-            namespace: Some(FN_NAMESPACE.to_string()),
+    ast::StepExpr::PrimaryExpr(not_spanned(ast::PrimaryExpr::FunctionCall(
+        ast::FunctionCall {
+            name: ast::Name {
+                name: "root".to_string(),
+                namespace: Some(FN_NAMESPACE.to_string()),
+            },
+            arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
+                steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
+                    axis: ast::Axis::Self_,
+                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                    predicates: vec![],
+                })],
+            }))],
         },
-        arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-            steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
-                axis: ast::Axis::Self_,
-                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                predicates: vec![],
-            })],
-        }))],
-    }))
+    )))
 }
 
 fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
@@ -1138,7 +1154,7 @@ mod tests {
         parse_rule(Rule::Literal, input, |p| ast_parser.literal_to_literal(p))
     }
 
-    fn parse_primary_expr(input: &str) -> ast::PrimaryExpr {
+    fn parse_primary_expr(input: &str) -> ast::PrimaryExprS {
         let namespaces = Namespaces::new(None, None);
         let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::PrimaryExpr, input, |p| {

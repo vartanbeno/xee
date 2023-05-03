@@ -4,10 +4,13 @@ expression: "parse_relative_path_expr(\"1\")"
 ---
 [
     PrimaryExpr(
-        Literal(
-            Integer(
-                1,
+        (
+            Literal(
+                Integer(
+                    1,
+                ),
             ),
+            0..1,
         ),
     ),
 ]

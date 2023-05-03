@@ -5,6 +5,7 @@ pub(crate) type Spanned<T> = (T, Span);
 pub(crate) type Span = Range<usize>;
 
 pub(crate) type ExprSingleS = Spanned<ExprSingle>;
+pub(crate) type PrimaryExprS = Spanned<PrimaryExpr>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
@@ -255,9 +256,9 @@ pub(crate) struct PathExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum StepExpr {
-    PrimaryExpr(PrimaryExpr),
+    PrimaryExpr(PrimaryExprS),
     PostfixExpr {
-        primary: PrimaryExpr,
+        primary: PrimaryExprS,
         postfixes: Vec<Postfix>,
     },
     AxisStep(AxisStep),

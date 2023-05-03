@@ -5,10 +5,13 @@ expression: "parse_path_expr(\"1\")"
 PathExpr {
     steps: [
         PrimaryExpr(
-            Literal(
-                Integer(
-                    1,
+            (
+                Literal(
+                    Integer(
+                        1,
+                    ),
                 ),
+                0..1,
             ),
         ),
     ],

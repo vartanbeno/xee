@@ -9,10 +9,13 @@ expression: "parse_expr_single(\"'a' || 'b'\")"
             left: PathExpr {
                 steps: [
                     PrimaryExpr(
-                        Literal(
-                            String(
-                                "a",
+                        (
+                            Literal(
+                                String(
+                                    "a",
+                                ),
                             ),
+                            0..3,
                         ),
                     ),
                 ],
@@ -20,10 +23,13 @@ expression: "parse_expr_single(\"'a' || 'b'\")"
             right: PathExpr {
                 steps: [
                     PrimaryExpr(
-                        Literal(
-                            String(
-                                "b",
+                        (
+                            Literal(
+                                String(
+                                    "b",
+                                ),
                             ),
+                            7..10,
                         ),
                     ),
                 ],

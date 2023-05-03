@@ -12,10 +12,13 @@ Ok(
                         left: PathExpr {
                             steps: [
                                 PrimaryExpr(
-                                    Literal(
-                                        Integer(
-                                            1,
+                                    (
+                                        Literal(
+                                            Integer(
+                                                1,
+                                            ),
                                         ),
+                                        0..1,
                                     ),
                                 ),
                             ],
@@ -23,10 +26,13 @@ Ok(
                         right: PathExpr {
                             steps: [
                                 PrimaryExpr(
-                                    Literal(
-                                        Integer(
-                                            2,
+                                    (
+                                        Literal(
+                                            Integer(
+                                                2,
+                                            ),
                                         ),
+                                        4..5,
                                     ),
                                 ),
                             ],

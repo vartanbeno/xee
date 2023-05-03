@@ -286,8 +286,8 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn primary_expr(&mut self, ast: &ast::PrimaryExpr) -> Bindings {
-        match ast {
+    fn primary_expr(&mut self, ast: &ast::PrimaryExprS) -> Bindings {
+        match &ast.0 {
             ast::PrimaryExpr::Literal(ast) => self.literal(ast),
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
@@ -299,7 +299,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn postfixes(&mut self, primary: &ast::PrimaryExpr, postfixes: &[ast::Postfix]) -> Bindings {
+    fn postfixes(&mut self, primary: &ast::PrimaryExprS, postfixes: &[ast::Postfix]) -> Bindings {
         let primary_bindings = self.primary_expr(primary);
         postfixes.iter().fold(primary_bindings, |acc, postfix| {
             let mut bindings = acc;

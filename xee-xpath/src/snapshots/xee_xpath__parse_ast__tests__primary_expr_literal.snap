@@ -2,8 +2,11 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_primary_expr(\"1\")"
 ---
-Literal(
-    Integer(
-        1,
+(
+    Literal(
+        Integer(
+            1,
+        ),
     ),
+    0..1,
 )

@@ -7,14 +7,17 @@ expression: "parse_expr_single(\"my_function()\")"
         PathExpr {
             steps: [
                 PrimaryExpr(
-                    FunctionCall(
-                        FunctionCall {
-                            name: Name {
-                                name: "my_function",
-                                namespace: None,
+                    (
+                        FunctionCall(
+                            FunctionCall {
+                                name: Name {
+                                    name: "my_function",
+                                    namespace: None,
+                                },
+                                arguments: [],
                             },
-                            arguments: [],
-                        },
+                        ),
+                        0..13,
                     ),
                 ),
             ],
