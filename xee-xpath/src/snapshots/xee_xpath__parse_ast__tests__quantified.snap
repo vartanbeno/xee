@@ -2,90 +2,108 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"every $x in (1, 2) satisfies $x > 0\")"
 ---
-Quantified(
-    QuantifiedExpr {
-        quantifier: Every,
-        var_name: Name {
-            name: "x",
-            namespace: None,
-        },
-        var_expr: Path(
-            PathExpr {
-                steps: [
-                    PrimaryExpr(
-                        Expr(
-                            [
-                                Path(
-                                    PathExpr {
-                                        steps: [
-                                            PrimaryExpr(
-                                                Expr(
-                                                    [
-                                                        Path(
-                                                            PathExpr {
-                                                                steps: [
-                                                                    PrimaryExpr(
-                                                                        Literal(
-                                                                            Integer(
-                                                                                1,
-                                                                            ),
+(
+    Quantified(
+        QuantifiedExpr {
+            quantifier: Every,
+            var_name: Name {
+                name: "x",
+                namespace: None,
+            },
+            var_expr: (
+                Path(
+                    PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Expr(
+                                    [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
+                                                        PrimaryExpr(
+                                                            Expr(
+                                                                [
+                                                                    (
+                                                                        Path(
+                                                                            PathExpr {
+                                                                                steps: [
+                                                                                    PrimaryExpr(
+                                                                                        Literal(
+                                                                                            Integer(
+                                                                                                1,
+                                                                                            ),
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                            },
                                                                         ),
+                                                                        13..14,
+                                                                    ),
+                                                                    (
+                                                                        Path(
+                                                                            PathExpr {
+                                                                                steps: [
+                                                                                    PrimaryExpr(
+                                                                                        Literal(
+                                                                                            Integer(
+                                                                                                2,
+                                                                                            ),
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                        16..17,
                                                                     ),
                                                                 ],
-                                                            },
-                                                        ),
-                                                        Path(
-                                                            PathExpr {
-                                                                steps: [
-                                                                    PrimaryExpr(
-                                                                        Literal(
-                                                                            Integer(
-                                                                                2,
-                                                                            ),
-                                                                        ),
-                                                                    ),
-                                                                ],
-                                                            },
+                                                            ),
                                                         ),
                                                     ],
-                                                ),
+                                                },
                                             ),
-                                        ],
-                                    },
+                                            13..17,
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+                12..19,
+            ),
+            satisfies_expr: (
+                Binary(
+                    BinaryExpr {
+                        operator: GenGt,
+                        left: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    VarRef(
+                                        Name {
+                                            name: "x",
+                                            namespace: None,
+                                        },
+                                    ),
                                 ),
                             ],
-                        ),
-                    ),
-                ],
-            },
-        ),
-        satisfies_expr: Binary(
-            BinaryExpr {
-                operator: GenGt,
-                left: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            VarRef(
-                                Name {
-                                    name: "x",
-                                    namespace: None,
-                                },
-                            ),
-                        ),
-                    ],
-                },
-                right: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    0,
+                        },
+                        right: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            0,
+                                        ),
+                                    ),
                                 ),
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
-    },
+                            ],
+                        },
+                    },
+                ),
+                29..35,
+            ),
+        },
+    ),
+    0..35,
 )

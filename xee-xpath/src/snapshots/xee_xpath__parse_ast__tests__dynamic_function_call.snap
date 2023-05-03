@@ -2,22 +2,25 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"$foo()\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            PostfixExpr {
-                primary: VarRef(
-                    Name {
-                        name: "foo",
-                        namespace: None,
-                    },
-                ),
-                postfixes: [
-                    ArgumentList(
-                        [],
+(
+    Path(
+        PathExpr {
+            steps: [
+                PostfixExpr {
+                    primary: VarRef(
+                        Name {
+                            name: "foo",
+                            namespace: None,
+                        },
                     ),
-                ],
-            },
-        ],
-    },
+                    postfixes: [
+                        ArgumentList(
+                            [],
+                        ),
+                    ],
+                },
+            ],
+        },
+    ),
+    0..6,
 )

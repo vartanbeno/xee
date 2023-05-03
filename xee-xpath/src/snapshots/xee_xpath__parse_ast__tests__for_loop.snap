@@ -2,52 +2,61 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
 ---
-For(
-    ForExpr {
-        var_name: Name {
-            name: "x",
-            namespace: None,
+(
+    For(
+        ForExpr {
+            var_name: Name {
+                name: "x",
+                namespace: None,
+            },
+            var_expr: (
+                Binary(
+                    BinaryExpr {
+                        operator: Range,
+                        left: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            1,
+                                        ),
+                                    ),
+                                ),
+                            ],
+                        },
+                        right: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            2,
+                                        ),
+                                    ),
+                                ),
+                            ],
+                        },
+                    },
+                ),
+                10..17,
+            ),
+            return_expr: (
+                Path(
+                    PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                VarRef(
+                                    Name {
+                                        name: "x",
+                                        namespace: None,
+                                    },
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+                24..26,
+            ),
         },
-        var_expr: Binary(
-            BinaryExpr {
-                operator: Range,
-                left: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    1,
-                                ),
-                            ),
-                        ),
-                    ],
-                },
-                right: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    2,
-                                ),
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
-        return_expr: Path(
-            PathExpr {
-                steps: [
-                    PrimaryExpr(
-                        VarRef(
-                            Name {
-                                name: "x",
-                                namespace: None,
-                            },
-                        ),
-                    ),
-                ],
-            },
-        ),
-    },
+    ),
+    0..26,
 )

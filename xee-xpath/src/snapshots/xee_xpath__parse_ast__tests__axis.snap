@@ -2,23 +2,26 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::foo\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            AxisStep(
-                AxisStep {
-                    axis: Child,
-                    node_test: NameTest(
-                        Name(
-                            Name {
-                                name: "foo",
-                                namespace: None,
-                            },
+(
+    Path(
+        PathExpr {
+            steps: [
+                AxisStep(
+                    AxisStep {
+                        axis: Child,
+                        node_test: NameTest(
+                            Name(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
+                            ),
                         ),
-                    ),
-                    predicates: [],
-                },
-            ),
-        ],
-    },
+                        predicates: [],
+                    },
+                ),
+            ],
+        },
+    ),
+    0..10,
 )

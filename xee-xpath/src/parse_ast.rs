@@ -16,13 +16,13 @@ struct AstParser<'a> {
 
 enum PostfixOrPlaceholdered {
     Postfix(ast::Postfix),
-    Placeholdered(Vec<ast::ExprSingle>, Vec<ast::Param>),
+    Placeholdered(Vec<ast::ExprSingleS>, Vec<ast::Param>),
 }
 
 #[derive(Debug)]
 enum ArgumentsOrPlaceholdered {
-    Arguments(Vec<ast::ExprSingle>),
-    Placeholdered(Vec<ast::ExprSingle>, Vec<ast::Param>),
+    Arguments(Vec<ast::ExprSingleS>),
+    Placeholdered(Vec<ast::ExprSingleS>, Vec<ast::Param>),
 }
 
 impl<'a> AstParser<'a> {
@@ -44,13 +44,14 @@ impl<'a> AstParser<'a> {
     }
 
     fn pair_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
-        let expr_single = self.expr_single(pair);
+        let (expr_single, span) = self.expr_single(pair);
         match expr_single {
             ast::ExprSingle::Path(path_expr) => path_expr,
             _ => ast::PathExpr {
-                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![
+                steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![(
                     expr_single,
-                ]))],
+                    span,
+                )]))],
             },
         }
     }
@@ -63,14 +64,18 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn exprs(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
+    fn exprs(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
         let pairs = pair.into_inner();
         pairs.map(|pair| self.expr_single(pair)).collect::<Vec<_>>()
     }
 
-    fn expr_single(&self, pair: Pair<Rule>) -> ast::ExprSingle {
+    fn expr_single(&self, pair: Pair<Rule>) -> ast::ExprSingleS {
+        let span = &pair.as_span();
         match pair.as_rule() {
-            Rule::PathExpr => ast::ExprSingle::Path(self.path_expr_to_path_expr(pair)),
+            Rule::PathExpr => spanned(
+                ast::ExprSingle::Path(self.path_expr_to_path_expr(pair)),
+                span,
+            ),
             Rule::SimpleMapExpr => {
                 let mut pairs = pair.into_inner();
                 let path_expr_pair = pairs.next().unwrap();
@@ -79,10 +84,13 @@ impl<'a> AstParser<'a> {
                     .collect::<Vec<_>>();
                 if !simple_map_path_exprs.is_empty() {
                     let path_expr = self.pair_to_path_expr(path_expr_pair);
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        path_expr,
-                        operator: ast::ApplyOperator::SimpleMap(simple_map_path_exprs),
-                    })
+                    spanned(
+                        ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::SimpleMap(simple_map_path_exprs),
+                        }),
+                        span,
+                    )
                 } else {
                     self.expr_single(path_expr_pair)
                 }
@@ -102,10 +110,13 @@ impl<'a> AstParser<'a> {
                                 return self.expr_single(pair);
                             }
                             let path_expr = self.pair_to_path_expr(pair);
-                            return ast::ExprSingle::Apply(ast::ApplyExpr {
-                                path_expr,
-                                operator: ast::ApplyOperator::Unary(plus_minus),
-                            });
+                            return spanned(
+                                ast::ExprSingle::Apply(ast::ApplyExpr {
+                                    path_expr,
+                                    operator: ast::ApplyOperator::Unary(plus_minus),
+                                }),
+                                span,
+                            );
                         }
                         _ => {
                             panic!("unhandled unary {:?}", pair.as_rule())
@@ -185,6 +196,7 @@ impl<'a> AstParser<'a> {
             Rule::RangeExpr => self.binary(pair, ast::Operator::Range),
             Rule::StringConcatExpr => self.binary(pair, ast::Operator::Concat),
             Rule::LetExpr => {
+                let span = &pair.as_span();
                 let mut pairs = pair.into_inner();
                 let let_clause = pairs.next().unwrap();
                 let let_clause_pairs = let_clause.into_inner();
@@ -199,11 +211,12 @@ impl<'a> AstParser<'a> {
                         var_expr: Box::new(var_expr),
                         return_expr: Box::new(return_expr),
                     };
-                    return_expr = ast::ExprSingle::Let(let_expr);
+                    return_expr = spanned(ast::ExprSingle::Let(let_expr), span);
                 }
                 return_expr
             }
             Rule::ForExpr => {
+                let span = &pair.as_span();
                 let mut pairs = pair.into_inner();
                 let for_clause = pairs.next().unwrap();
                 let for_clause_pairs = for_clause.into_inner();
@@ -218,11 +231,12 @@ impl<'a> AstParser<'a> {
                         var_expr: Box::new(var_expr),
                         return_expr: Box::new(return_expr),
                     };
-                    return_expr = ast::ExprSingle::For(for_expr);
+                    return_expr = spanned(ast::ExprSingle::For(for_expr), span);
                 }
                 return_expr
             }
             Rule::QuantifiedExpr => {
+                let span = &pair.as_span();
                 let mut pairs = pair.into_inner();
                 let quantifier = pairs.next().unwrap();
                 let quantifier = match quantifier.as_str() {
@@ -246,21 +260,25 @@ impl<'a> AstParser<'a> {
                         var_expr: Box::new(var_expr),
                         satisfies_expr: Box::new(satisfies_expr),
                     };
-                    satisfies_expr = ast::ExprSingle::Quantified(quantified_expr);
+                    satisfies_expr = spanned(ast::ExprSingle::Quantified(quantified_expr), span);
                 }
                 satisfies_expr
             }
             Rule::IfExpr => {
+                let span = &pair.as_span();
                 let mut pairs = pair.into_inner();
                 let condition_pair = pairs.next().unwrap();
                 let condition = self.exprs(condition_pair);
                 let then = self.expr_single(pairs.next().unwrap());
                 let else_ = self.expr_single(pairs.next().unwrap());
-                ast::ExprSingle::If(ast::IfExpr {
-                    condition,
-                    then: Box::new(then),
-                    else_: Box::new(else_),
-                })
+                spanned(
+                    ast::ExprSingle::If(ast::IfExpr {
+                        condition,
+                        then: Box::new(then),
+                        else_: Box::new(else_),
+                    }),
+                    span,
+                )
             }
             Rule::UnionExpr => self.binary(pair, ast::Operator::Union),
             Rule::IntersectExceptExpr => self.binary_op(pair, |r| match r {
@@ -284,13 +302,17 @@ impl<'a> AstParser<'a> {
                 self.expr_single(pair)
             }
             Rule::Expr => {
+                let span = pair.as_span();
                 let exprs = self.exprs(pair);
                 if exprs.len() == 1 {
                     exprs[0].clone()
                 } else {
-                    ast::ExprSingle::Path(ast::PathExpr {
-                        steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(exprs))],
-                    })
+                    spanned(
+                        ast::ExprSingle::Path(ast::PathExpr {
+                            steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(exprs))],
+                        }),
+                        &span,
+                    )
                 }
             }
             _ => {
@@ -299,26 +321,31 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn binary_get_operator<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingle
+    fn binary_get_operator<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingleS
     where
         F: Fn(&mut Pairs<Rule>) -> Option<ast::Operator>,
     {
         let mut pairs = pair.into_inner();
         let left_pair = pairs.next().unwrap();
+        let span_start = left_pair.as_span().start();
         let mut binary = self.expr_single(left_pair);
 
         while let Some(operator) = get_operator(&mut pairs) {
             let right_pair = pairs.next().expect("operator but no right pair");
-            binary = ast::ExprSingle::Binary(ast::BinaryExpr {
-                operator,
-                left: expr_single_to_path_expr(binary),
-                right: self.pair_to_path_expr(right_pair),
-            })
+            let span_end = right_pair.as_span().end();
+            binary = (
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator,
+                    left: expr_single_to_path_expr(binary),
+                    right: self.pair_to_path_expr(right_pair),
+                }),
+                (span_start..span_end),
+            )
         }
         binary
     }
 
-    fn binary_op<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingle
+    fn binary_op<F>(&self, pair: Pair<Rule>, get_operator: F) -> ast::ExprSingleS
     where
         F: Fn(Rule) -> ast::Operator,
     {
@@ -328,7 +355,7 @@ impl<'a> AstParser<'a> {
         })
     }
 
-    fn binary(&self, pair: Pair<Rule>, operator: ast::Operator) -> ast::ExprSingle {
+    fn binary(&self, pair: Pair<Rule>, operator: ast::Operator) -> ast::ExprSingleS {
         self.binary_get_operator(pair, |pairs| {
             if pairs.peek().is_some() {
                 Some(operator)
@@ -675,7 +702,7 @@ impl<'a> AstParser<'a> {
                         ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                             params,
                             return_type: None,
-                            body: vec![ast::ExprSingle::Path(ast::PathExpr {
+                            body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                                 steps: vec![ast::StepExpr::PrimaryExpr(
                                     ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
                                         name: self.eq_name_to_name(
@@ -685,7 +712,7 @@ impl<'a> AstParser<'a> {
                                         arguments,
                                     }),
                                 )],
-                            })],
+                            }))],
                         })
                     }
                 }
@@ -738,12 +765,12 @@ impl<'a> AstParser<'a> {
                     primary = ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                         params,
                         return_type: None,
-                        body: vec![ast::ExprSingle::Path(ast::PathExpr {
+                        body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                             steps: vec![ast::StepExpr::PostfixExpr {
                                 primary,
                                 postfixes: normal_postfixes.clone(),
                             }],
-                        })],
+                        }))],
                     });
                     // collect more postfixes now
                     normal_postfixes.clear();
@@ -781,9 +808,9 @@ impl<'a> AstParser<'a> {
                     name: name.clone(),
                     type_: None,
                 });
-                args.push(ast::ExprSingle::Path(ast::PathExpr {
+                args.push(not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                     steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::VarRef(name))],
-                }));
+                })));
                 placeholder_index += 1;
             }
         }
@@ -794,7 +821,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn argument_to_expr_single(&self, pair: Pair<Rule>) -> Option<ast::ExprSingle> {
+    fn argument_to_expr_single(&self, pair: Pair<Rule>) -> Option<ast::ExprSingleS> {
         debug_assert_eq!(pair.as_rule(), Rule::Argument);
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
@@ -806,7 +833,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn predicate_to_expr(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
+    fn predicate_to_expr(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
         debug_assert_eq!(pair.as_rule(), Rule::Predicate);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)
@@ -949,7 +976,7 @@ impl<'a> AstParser<'a> {
         ast::Param { name, type_ }
     }
 
-    fn function_body_to_body(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingle> {
+    fn function_body_to_body(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
         debug_assert_eq!(pair.as_rule(), Rule::FunctionBody);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)
@@ -1017,8 +1044,8 @@ impl<'a> AstParser<'a> {
     }
 }
 
-fn expr_single_to_path_expr(expr: ast::ExprSingle) -> ast::PathExpr {
-    match expr {
+fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
+    match expr.0 {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
             steps: vec![ast::StepExpr::PrimaryExpr(ast::PrimaryExpr::Expr(vec![
@@ -1034,13 +1061,13 @@ fn root_from_context() -> ast::StepExpr {
             name: "root".to_string(),
             namespace: Some(FN_NAMESPACE.to_string()),
         },
-        arguments: vec![ast::ExprSingle::Path(ast::PathExpr {
+        arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
             steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
                 axis: ast::Axis::Self_,
                 node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
                 predicates: vec![],
             })],
-        })],
+        }))],
     }))
 }
 
@@ -1063,7 +1090,7 @@ where
     Ok(f(pair))
 }
 
-pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
+pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingleS {
     let namespaces = Namespaces::new(None, None);
     let ast_parser = AstParser::new(&namespaces);
     parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p)).unwrap()
@@ -1090,6 +1117,14 @@ pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::X
 fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     let namespaces = Namespaces::new(None, None);
     parse_xpath(input, &namespaces)
+}
+
+fn spanned<T>(value: T, span: &pest::Span) -> ast::Spanned<T> {
+    (value, (span.start()..span.end()))
+}
+
+fn not_spanned<T>(value: T) -> ast::Spanned<T> {
+    (value, (0..0))
 }
 
 #[cfg(test)]

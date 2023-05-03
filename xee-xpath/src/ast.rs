@@ -1,9 +1,15 @@
 use ordered_float::OrderedFloat;
+use std::ops::Range;
+
+pub(crate) type Spanned<T> = (T, Span);
+pub(crate) type Span = Range<usize>;
+
+pub(crate) type ExprSingleS = Spanned<ExprSingle>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
     // at least one entry
-    pub(crate) exprs: Vec<ExprSingle>,
+    pub(crate) exprs: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -23,16 +29,16 @@ pub(crate) enum ExprSingle {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ForExpr {
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingle>,
-    pub(crate) return_expr: Box<ExprSingle>,
+    pub(crate) var_expr: Box<ExprSingleS>,
+    pub(crate) return_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct QuantifiedExpr {
     pub(crate) quantifier: Quantifier,
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingle>,
-    pub(crate) satisfies_expr: Box<ExprSingle>,
+    pub(crate) var_expr: Box<ExprSingleS>,
+    pub(crate) satisfies_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -50,15 +56,15 @@ impl Name {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct LetExpr {
     pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingle>,
-    pub(crate) return_expr: Box<ExprSingle>,
+    pub(crate) var_expr: Box<ExprSingleS>,
+    pub(crate) return_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct IfExpr {
-    pub(crate) condition: Vec<ExprSingle>,
-    pub(crate) then: Box<ExprSingle>,
-    pub(crate) else_: Box<ExprSingle>,
+    pub(crate) condition: Vec<ExprSingleS>,
+    pub(crate) then: Box<ExprSingleS>,
+    pub(crate) else_: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -71,7 +77,7 @@ pub(crate) enum Quantifier {
 pub(crate) enum PrimaryExpr {
     Literal(Literal),
     VarRef(Name),
-    Expr(Vec<ExprSingle>),
+    Expr(Vec<ExprSingleS>),
     ContextItem,
     FunctionCall(FunctionCall),
     NamedFunctionRef(NamedFunctionRef),
@@ -85,7 +91,7 @@ pub(crate) enum PrimaryExpr {
 pub(crate) enum UnaryLookup {
     Name(String),
     IntegerLiteral(i64),
-    Expr(Vec<ExprSingle>),
+    Expr(Vec<ExprSingleS>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -145,7 +151,7 @@ pub(crate) struct ApplyExpr {
 pub(crate) enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
-    Arrow(Vec<(ArrowFunctionSpecifier, Vec<ExprSingle>)>),
+    Arrow(Vec<(ArrowFunctionSpecifier, Vec<ExprSingleS>)>),
     Cast(SingleType),
     Castable(SingleType),
     Treat(SequenceType),
@@ -168,7 +174,7 @@ pub(crate) struct SingleType {
 pub(crate) enum ArrowFunctionSpecifier {
     Name(EQName),
     VarRef(EQName),
-    Expr(Vec<ExprSingle>),
+    Expr(Vec<ExprSingleS>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -178,13 +184,13 @@ pub(crate) struct MapConstructor {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct MapConstructorEntry {
-    pub(crate) key: ExprSingle,
-    pub(crate) value: ExprSingle,
+    pub(crate) key: ExprSingleS,
+    pub(crate) value: ExprSingleS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ArrayConstructor {
-    pub(crate) members: Vec<ExprSingle>,
+    pub(crate) members: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -204,7 +210,7 @@ pub(crate) enum Literal {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionCall {
     pub(crate) name: Name,
-    pub(crate) arguments: Vec<ExprSingle>,
+    pub(crate) arguments: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -217,7 +223,7 @@ pub(crate) struct NamedFunctionRef {
 pub(crate) struct InlineFunction {
     pub(crate) params: Vec<Param>,
     pub(crate) return_type: Option<SequenceType>,
-    pub(crate) body: Vec<ExprSingle>,
+    pub(crate) body: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -229,8 +235,8 @@ pub(crate) struct Param {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Postfix {
     // vec contains at least 1 element
-    Predicate(Vec<ExprSingle>),
-    ArgumentList(Vec<ExprSingle>),
+    Predicate(Vec<ExprSingleS>),
+    ArgumentList(Vec<ExprSingleS>),
     Lookup(Lookup),
 }
 
@@ -238,7 +244,7 @@ pub(crate) enum Postfix {
 pub(crate) enum Lookup {
     Name(String),
     IntegerLiteral(i64),
-    Expr(Vec<ExprSingle>),
+    Expr(Vec<ExprSingleS>),
     Star,
 }
 
@@ -261,7 +267,7 @@ pub(crate) enum StepExpr {
 pub(crate) struct AxisStep {
     pub(crate) axis: Axis,
     pub(crate) node_test: NodeTest,
-    pub(crate) predicates: Vec<Vec<ExprSingle>>,
+    pub(crate) predicates: Vec<Vec<ExprSingleS>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

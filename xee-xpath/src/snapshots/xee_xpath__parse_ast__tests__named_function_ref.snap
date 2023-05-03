@@ -2,20 +2,23 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"my_function#2\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            PrimaryExpr(
-                NamedFunctionRef(
-                    NamedFunctionRef {
-                        name: Name {
-                            name: "my_function",
-                            namespace: None,
+(
+    Path(
+        PathExpr {
+            steps: [
+                PrimaryExpr(
+                    NamedFunctionRef(
+                        NamedFunctionRef {
+                            name: Name {
+                                name: "my_function",
+                                namespace: None,
+                            },
+                            arity: 2,
                         },
-                        arity: 2,
-                    },
+                    ),
                 ),
-            ),
-        ],
-    },
+            ],
+        },
+    ),
+    0..13,
 )

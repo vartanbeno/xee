@@ -2,37 +2,46 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"let $x := 1 return 5\")"
 ---
-Let(
-    LetExpr {
-        var_name: Name {
-            name: "x",
-            namespace: None,
+(
+    Let(
+        LetExpr {
+            var_name: Name {
+                name: "x",
+                namespace: None,
+            },
+            var_expr: (
+                Path(
+                    PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+                10..12,
+            ),
+            return_expr: (
+                Path(
+                    PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        5,
+                                    ),
+                                ),
+                            ),
+                        ],
+                    },
+                ),
+                19..20,
+            ),
         },
-        var_expr: Path(
-            PathExpr {
-                steps: [
-                    PrimaryExpr(
-                        Literal(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                    ),
-                ],
-            },
-        ),
-        return_expr: Path(
-            PathExpr {
-                steps: [
-                    PrimaryExpr(
-                        Literal(
-                            Integer(
-                                5,
-                            ),
-                        ),
-                    ),
-                ],
-            },
-        ),
-    },
+    ),
+    0..20,
 )

@@ -2,58 +2,73 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
 ---
-Let(
-    LetExpr {
-        var_name: Name {
-            name: "x",
-            namespace: None,
-        },
-        var_expr: Path(
-            PathExpr {
-                steps: [
-                    PrimaryExpr(
-                        Literal(
-                            Integer(
-                                1,
+(
+    Let(
+        LetExpr {
+            var_name: Name {
+                name: "x",
+                namespace: None,
+            },
+            var_expr: (
+                Path(
+                    PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
                             ),
+                        ],
+                    },
+                ),
+                10..11,
+            ),
+            return_expr: (
+                Let(
+                    LetExpr {
+                        var_name: Name {
+                            name: "y",
+                            namespace: None,
+                        },
+                        var_expr: (
+                            Path(
+                                PathExpr {
+                                    steps: [
+                                        PrimaryExpr(
+                                            Literal(
+                                                Integer(
+                                                    2,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                },
+                            ),
+                            19..21,
                         ),
-                    ),
-                ],
-            },
-        ),
-        return_expr: Let(
-            LetExpr {
-                var_name: Name {
-                    name: "y",
-                    namespace: None,
-                },
-                var_expr: Path(
-                    PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        2,
-                                    ),
-                                ),
+                        return_expr: (
+                            Path(
+                                PathExpr {
+                                    steps: [
+                                        PrimaryExpr(
+                                            Literal(
+                                                Integer(
+                                                    5,
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                },
                             ),
-                        ],
+                            28..29,
+                        ),
                     },
                 ),
-                return_expr: Path(
-                    PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        5,
-                                    ),
-                                ),
-                            ),
-                        ],
-                    },
-                ),
-            },
-        ),
-    },
+                0..29,
+            ),
+        },
+    ),
+    0..29,
 )

@@ -2,18 +2,21 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"self::comment()\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            AxisStep(
-                AxisStep {
-                    axis: Self_,
-                    node_test: KindTest(
-                        Comment,
-                    ),
-                    predicates: [],
-                },
-            ),
-        ],
-    },
+(
+    Path(
+        PathExpr {
+            steps: [
+                AxisStep(
+                    AxisStep {
+                        axis: Self_,
+                        node_test: KindTest(
+                            Comment,
+                        ),
+                        predicates: [],
+                    },
+                ),
+            ],
+        },
+    ),
+    0..15,
 )

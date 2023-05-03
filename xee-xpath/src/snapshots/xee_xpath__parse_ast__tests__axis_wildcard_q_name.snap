@@ -2,20 +2,23 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            AxisStep(
-                AxisStep {
-                    axis: Child,
-                    node_test: NameTest(
-                        Namespace(
-                            "http://example.com",
+(
+    Path(
+        PathExpr {
+            steps: [
+                AxisStep(
+                    AxisStep {
+                        axis: Child,
+                        node_test: NameTest(
+                            Namespace(
+                                "http://example.com",
+                            ),
                         ),
-                    ),
-                    predicates: [],
-                },
-            ),
-        ],
-    },
+                        predicates: [],
+                    },
+                ),
+            ],
+        },
+    ),
+    0..29,
 )

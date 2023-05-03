@@ -5,32 +5,35 @@ expression: "parse_xpath_no_default_ns(\"1 + 2\")"
 Ok(
     XPath {
         exprs: [
-            Binary(
-                BinaryExpr {
-                    operator: Add,
-                    left: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        1,
+            (
+                Binary(
+                    BinaryExpr {
+                        operator: Add,
+                        left: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            1,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
-                    },
-                    right: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        2,
+                            ],
+                        },
+                        right: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            2,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
+                            ],
+                        },
                     },
-                },
+                ),
+                0..5,
             ),
         ],
     },

@@ -2,63 +2,69 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            PrimaryExpr(
-                InlineFunction(
-                    InlineFunction {
-                        params: [
-                            Param {
-                                name: Name {
-                                    name: "x",
-                                    namespace: None,
-                                },
-                                type_: None,
-                            },
-                            Param {
-                                name: Name {
-                                    name: "y",
-                                    namespace: None,
-                                },
-                                type_: None,
-                            },
-                        ],
-                        return_type: None,
-                        body: [
-                            Binary(
-                                BinaryExpr {
-                                    operator: Add,
-                                    left: PathExpr {
-                                        steps: [
-                                            PrimaryExpr(
-                                                VarRef(
-                                                    Name {
-                                                        name: "x",
-                                                        namespace: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ],
+(
+    Path(
+        PathExpr {
+            steps: [
+                PrimaryExpr(
+                    InlineFunction(
+                        InlineFunction {
+                            params: [
+                                Param {
+                                    name: Name {
+                                        name: "x",
+                                        namespace: None,
                                     },
-                                    right: PathExpr {
-                                        steps: [
-                                            PrimaryExpr(
-                                                VarRef(
-                                                    Name {
-                                                        name: "y",
-                                                        namespace: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ],
-                                    },
+                                    type_: None,
                                 },
-                            ),
-                        ],
-                    },
+                                Param {
+                                    name: Name {
+                                        name: "y",
+                                        namespace: None,
+                                    },
+                                    type_: None,
+                                },
+                            ],
+                            return_type: None,
+                            body: [
+                                (
+                                    Binary(
+                                        BinaryExpr {
+                                            operator: Add,
+                                            left: PathExpr {
+                                                steps: [
+                                                    PrimaryExpr(
+                                                        VarRef(
+                                                            Name {
+                                                                name: "x",
+                                                                namespace: None,
+                                                            },
+                                                        ),
+                                                    ),
+                                                ],
+                                            },
+                                            right: PathExpr {
+                                                steps: [
+                                                    PrimaryExpr(
+                                                        VarRef(
+                                                            Name {
+                                                                name: "y",
+                                                                namespace: None,
+                                                            },
+                                                        ),
+                                                    ),
+                                                ],
+                                            },
+                                        },
+                                    ),
+                                    19..27,
+                                ),
+                            ],
+                        },
+                    ),
                 ),
-            ),
-        ],
-    },
+            ],
+        },
+    ),
+    0..28,
 )

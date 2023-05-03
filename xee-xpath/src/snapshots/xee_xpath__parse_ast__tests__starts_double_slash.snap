@@ -2,61 +2,67 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"//child::foo\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            PrimaryExpr(
-                FunctionCall(
-                    FunctionCall {
-                        name: Name {
-                            name: "root",
-                            namespace: Some(
-                                "http://www.w3.org/2005/xpath-functions",
-                            ),
-                        },
-                        arguments: [
-                            Path(
-                                PathExpr {
-                                    steps: [
-                                        AxisStep(
-                                            AxisStep {
-                                                axis: Self_,
-                                                node_test: KindTest(
-                                                    Any,
+(
+    Path(
+        PathExpr {
+            steps: [
+                PrimaryExpr(
+                    FunctionCall(
+                        FunctionCall {
+                            name: Name {
+                                name: "root",
+                                namespace: Some(
+                                    "http://www.w3.org/2005/xpath-functions",
+                                ),
+                            },
+                            arguments: [
+                                (
+                                    Path(
+                                        PathExpr {
+                                            steps: [
+                                                AxisStep(
+                                                    AxisStep {
+                                                        axis: Self_,
+                                                        node_test: KindTest(
+                                                            Any,
+                                                        ),
+                                                        predicates: [],
+                                                    },
                                                 ),
-                                                predicates: [],
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ),
-                        ],
+                                            ],
+                                        },
+                                    ),
+                                    0..0,
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+                AxisStep(
+                    AxisStep {
+                        axis: DescendantOrSelf,
+                        node_test: KindTest(
+                            Any,
+                        ),
+                        predicates: [],
                     },
                 ),
-            ),
-            AxisStep(
-                AxisStep {
-                    axis: DescendantOrSelf,
-                    node_test: KindTest(
-                        Any,
-                    ),
-                    predicates: [],
-                },
-            ),
-            AxisStep(
-                AxisStep {
-                    axis: Child,
-                    node_test: NameTest(
-                        Name(
-                            Name {
-                                name: "foo",
-                                namespace: None,
-                            },
+                AxisStep(
+                    AxisStep {
+                        axis: Child,
+                        node_test: NameTest(
+                            Name(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
+                            ),
                         ),
-                    ),
-                    predicates: [],
-                },
-            ),
-        ],
-    },
+                        predicates: [],
+                    },
+                ),
+            ],
+        },
+    ),
+    0..12,
 )

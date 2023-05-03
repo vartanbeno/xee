@@ -2,47 +2,56 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"my_function(1, 2)\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            PrimaryExpr(
-                FunctionCall(
-                    FunctionCall {
-                        name: Name {
-                            name: "my_function",
-                            namespace: None,
+(
+    Path(
+        PathExpr {
+            steps: [
+                PrimaryExpr(
+                    FunctionCall(
+                        FunctionCall {
+                            name: Name {
+                                name: "my_function",
+                                namespace: None,
+                            },
+                            arguments: [
+                                (
+                                    Path(
+                                        PathExpr {
+                                            steps: [
+                                                PrimaryExpr(
+                                                    Literal(
+                                                        Integer(
+                                                            1,
+                                                        ),
+                                                    ),
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    12..13,
+                                ),
+                                (
+                                    Path(
+                                        PathExpr {
+                                            steps: [
+                                                PrimaryExpr(
+                                                    Literal(
+                                                        Integer(
+                                                            2,
+                                                        ),
+                                                    ),
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    15..16,
+                                ),
+                            ],
                         },
-                        arguments: [
-                            Path(
-                                PathExpr {
-                                    steps: [
-                                        PrimaryExpr(
-                                            Literal(
-                                                Integer(
-                                                    1,
-                                                ),
-                                            ),
-                                        ),
-                                    ],
-                                },
-                            ),
-                            Path(
-                                PathExpr {
-                                    steps: [
-                                        PrimaryExpr(
-                                            Literal(
-                                                Integer(
-                                                    2,
-                                                ),
-                                            ),
-                                        ),
-                                    ],
-                                },
-                            ),
-                        ],
-                    },
+                    ),
                 ),
-            ),
-        ],
-    },
+            ],
+        },
+    ),
+    0..17,
 )

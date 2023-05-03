@@ -2,30 +2,33 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"'a' || 'b'\")"
 ---
-Binary(
-    BinaryExpr {
-        operator: Concat,
-        left: PathExpr {
-            steps: [
-                PrimaryExpr(
-                    Literal(
-                        String(
-                            "a",
+(
+    Binary(
+        BinaryExpr {
+            operator: Concat,
+            left: PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Literal(
+                            String(
+                                "a",
+                            ),
                         ),
                     ),
-                ),
-            ],
-        },
-        right: PathExpr {
-            steps: [
-                PrimaryExpr(
-                    Literal(
-                        String(
-                            "b",
+                ],
+            },
+            right: PathExpr {
+                steps: [
+                    PrimaryExpr(
+                        Literal(
+                            String(
+                                "b",
+                            ),
                         ),
                     ),
-                ),
-            ],
+                ],
+            },
         },
-    },
+    ),
+    0..10,
 )

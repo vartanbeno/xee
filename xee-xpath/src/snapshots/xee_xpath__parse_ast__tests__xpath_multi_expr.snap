@@ -5,59 +5,65 @@ expression: "parse_xpath_no_default_ns(\"1 + 2, 3 + 4\")"
 Ok(
     XPath {
         exprs: [
-            Binary(
-                BinaryExpr {
-                    operator: Add,
-                    left: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        1,
+            (
+                Binary(
+                    BinaryExpr {
+                        operator: Add,
+                        left: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            1,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
-                    },
-                    right: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        2,
+                            ],
+                        },
+                        right: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            2,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
+                            ],
+                        },
                     },
-                },
+                ),
+                0..5,
             ),
-            Binary(
-                BinaryExpr {
-                    operator: Add,
-                    left: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        3,
+            (
+                Binary(
+                    BinaryExpr {
+                        operator: Add,
+                        left: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            3,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
-                    },
-                    right: PathExpr {
-                        steps: [
-                            PrimaryExpr(
-                                Literal(
-                                    Integer(
-                                        4,
+                            ],
+                        },
+                        right: PathExpr {
+                            steps: [
+                                PrimaryExpr(
+                                    Literal(
+                                        Integer(
+                                            4,
+                                        ),
                                     ),
                                 ),
-                            ),
-                        ],
+                            ],
+                        },
                     },
-                },
+                ),
+                7..12,
             ),
         ],
     },

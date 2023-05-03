@@ -218,7 +218,7 @@ impl<'a> IrConverter<'a> {
         Binding { name, expr }
     }
 
-    fn convert_expr_single(&mut self, ast: &ast::ExprSingle) -> ir::Expr {
+    fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> ir::Expr {
         let bindings = self.expr_single(ast);
         bindings.expr()
     }
@@ -244,8 +244,8 @@ impl<'a> IrConverter<'a> {
         Bindings::from_vec(vec![binding])
     }
 
-    fn expr_single(&mut self, ast: &ast::ExprSingle) -> Bindings {
-        match ast {
+    fn expr_single(&mut self, ast: &ast::ExprSingleS) -> Bindings {
+        match &ast.0 {
             ast::ExprSingle::Path(ast) => self.path_expr(ast),
             ast::ExprSingle::Apply(ast) => self.apply_expr(ast),
             ast::ExprSingle::Let(ast) => self.let_expr(ast),
@@ -385,7 +385,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn exprs(&mut self, exprs: &[ast::ExprSingle]) -> Bindings {
+    fn exprs(&mut self, exprs: &[ast::ExprSingleS]) -> Bindings {
         if !exprs.is_empty() {
             // XXX could this be reduce?
             let first_expr = &exprs[0];
@@ -599,7 +599,7 @@ impl<'a> IrConverter<'a> {
         Bindings::from_vec(vec![binding])
     }
 
-    fn args(&mut self, args: &[ast::ExprSingle]) -> Bindings {
+    fn args(&mut self, args: &[ast::ExprSingleS]) -> Bindings {
         if args.is_empty() {
             return Bindings::from_vec(vec![]);
         }

@@ -2,18 +2,21 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"self::node()\")"
 ---
-Path(
-    PathExpr {
-        steps: [
-            AxisStep(
-                AxisStep {
-                    axis: Self_,
-                    node_test: KindTest(
-                        Any,
-                    ),
-                    predicates: [],
-                },
-            ),
-        ],
-    },
+(
+    Path(
+        PathExpr {
+            steps: [
+                AxisStep(
+                    AxisStep {
+                        axis: Self_,
+                        node_test: KindTest(
+                            Any,
+                        ),
+                        predicates: [],
+                    },
+                ),
+            ],
+        },
+    ),
+    0..12,
 )
