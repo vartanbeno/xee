@@ -1,4 +1,4 @@
-use crate::ast_ir::Converter;
+use crate::ast_ir::IrConverter;
 use crate::builder::{FunctionBuilder, Program};
 use crate::context::Context;
 use crate::error::Result;
@@ -17,8 +17,8 @@ pub struct CompiledXPath<'a> {
 impl<'a> CompiledXPath<'a> {
     pub(crate) fn new(context: &'a Context, xpath: &str) -> Self {
         let ast = parse_xpath(xpath, context.static_context.namespaces);
-        let mut converter = Converter::new(&context.static_context);
-        let expr = converter.convert_xpath(&ast);
+        let mut ir_converter = IrConverter::new(&context.static_context);
+        let expr = ir_converter.convert_xpath(&ast);
         // this expression contains a function definition, we're getting it
         // in the end
         let mut program = Program::new();

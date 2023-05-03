@@ -95,7 +95,7 @@ enum Context {
 }
 
 #[derive(Debug)]
-pub(crate) struct Converter<'a> {
+pub(crate) struct IrConverter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
     context_scope: Vec<Context>,
@@ -104,7 +104,7 @@ pub(crate) struct Converter<'a> {
     fn_last: ast::Name,
 }
 
-impl<'a> Converter<'a> {
+impl<'a> IrConverter<'a> {
     pub(crate) fn new(static_context: &'a StaticContext) -> Self {
         Self {
             counter: 0,
@@ -617,7 +617,7 @@ fn convert_expr_single(s: &str) -> ir::Expr {
     let ast = crate::parse_ast::parse_expr_single(s);
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
-    let mut converter = Converter::new(&static_context);
+    let mut converter = IrConverter::new(&static_context);
     converter.convert_expr_single(&ast)
 }
 
@@ -625,7 +625,7 @@ fn convert_xpath(s: &str) -> ir::Expr {
     let namespaces = Namespaces::new(None, None);
     let ast = crate::parse_ast::parse_xpath(s, &namespaces);
     let static_context = StaticContext::new(&namespaces);
-    let mut converter = Converter::new(&static_context);
+    let mut converter = IrConverter::new(&static_context);
     converter.convert_xpath(&ast)
 }
 
