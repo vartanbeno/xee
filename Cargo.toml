@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "xee",
   "xee-xpath",
   "xee-qt",
 ]
@@ -10,6 +11,7 @@ resolver = "2"
 
 [workspace.dependencies]
 xot = "0.13.2"
+miette = "5.8.0"
 
 [profile.test.package.xot]
 opt-level = 3

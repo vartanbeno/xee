@@ -28,4 +28,5 @@ mod step;
 mod value;
 mod xpath;
 
+pub use crate::error::Error;
 pub use crate::run::evaluate;

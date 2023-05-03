@@ -1,0 +1,19 @@
+[package]
+name = "xee"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "Xee CLI for XPath and XSLT"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee"
+homepage = "https://github.com/Paligo/xee"
+
+[dependencies]
+xot = { workspace = true }
+miette = { workspace = true, features = ["fancy"]}
+xee-xpath = { path = "../xee-xpath"}
+clap = { version = "4.2.7", features = ["derive"] }
+[dev-dependencies]
