@@ -58,6 +58,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn run(&mut self) -> Result<()> {
         let frame = self.frames.last().unwrap();
 
+        let xot = self.context.xot;
         let mut function = &self.program.functions[frame.function.0];
         let mut base = frame.base;
         let mut ip = frame.ip;
@@ -68,8 +69,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_add(b).ok_or(Error::FOAR0002)?;
@@ -78,8 +79,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Sub => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_sub(b).ok_or(Error::FOAR0002)?;
@@ -88,8 +89,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Concat => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_string().ok_or(Error::TypeError)?;
                     let b = b.as_string().ok_or(Error::TypeError)?;
                     let result = a + &b;
@@ -158,7 +159,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::JumpIfTrue(displacement) => {
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_bool().ok_or(Error::TypeError)?;
                     if a {
                         ip = (ip as i32 + displacement as i32) as usize;
@@ -166,7 +167,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::JumpIfFalse(displacement) => {
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_bool().ok_or(Error::TypeError)?;
                     if !a {
                         ip = (ip as i32 + displacement as i32) as usize;
@@ -175,20 +176,24 @@ impl<'a> Interpreter<'a> {
                 Instruction::Eq => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     // XXX can functions be value compared?
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
                 }
                 Instruction::Ne => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     // XXX can functions be value compared?
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a != b)));
                 }
                 Instruction::Lt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
@@ -196,8 +201,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Le => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
@@ -205,8 +210,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Gt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
@@ -214,8 +219,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Ge => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
@@ -299,8 +304,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic().ok_or(Error::TypeError)?;
-                    let b = b.as_atomic().ok_or(Error::TypeError)?;
+                    let a = a.as_atomic(xot).ok_or(Error::TypeError)?;
+                    let b = b.as_atomic(xot).ok_or(Error::TypeError)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     match a.cmp(&b) {
@@ -336,7 +341,7 @@ impl<'a> Interpreter<'a> {
                     let index = self.stack.pop().unwrap();
 
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
-                    let index = index.as_atomic().ok_or(Error::TypeError)?;
+                    let index = index.as_atomic(xot).ok_or(Error::TypeError)?;
                     let index = index.as_integer().ok_or(Error::TypeError)?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();

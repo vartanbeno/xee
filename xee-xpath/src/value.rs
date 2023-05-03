@@ -177,9 +177,10 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_atomic(&self) -> Option<&Atomic> {
+    pub(crate) fn as_atomic(&self, xot: &Xot) -> Option<Atomic> {
         match self {
-            StackValue::Atomic(a) => Some(a),
+            StackValue::Atomic(a) => Some(a.clone()),
+            StackValue::Sequence(s) => s.borrow().as_atomic(xot),
             _ => None,
         }
     }
@@ -339,6 +340,40 @@ impl Sequence {
     pub(crate) fn extend(&mut self, other: Rc<RefCell<Sequence>>) {
         for item in &other.borrow().items {
             self.push(item);
+        }
+    }
+
+    pub(crate) fn atomize(&self, xot: &Xot) -> Sequence {
+        let mut items = Vec::new();
+        for item in &self.items {
+            match item {
+                Item::Atomic(a) => items.push(Item::Atomic(a.clone())),
+                Item::Node(n) => {
+                    // this should get the typed-value, which is a sequence,
+                    // but for now we get the string value
+                    let a = n.string(xot);
+                    items.push(Item::Atomic(Atomic::String(Rc::new(a))));
+                }
+                // XXX need code to handle array case
+                Item::Function(..) => panic!("cannot atomize a function"),
+            }
+        }
+        Sequence { items }
+    }
+
+    pub(crate) fn as_atomic(&self, xot: &Xot) -> Option<Atomic> {
+        let mut atomized = self.atomize(xot);
+        let len = atomized.items.len();
+        match len {
+            0 => None,
+            1 => {
+                let item = atomized.items.remove(0);
+                match item {
+                    Item::Atomic(a) => Some(a),
+                    _ => unreachable!("atomize returned a non-atomic item"),
+                }
+            }
+            _ => panic!("atomize returned more than one item"),
         }
     }
 

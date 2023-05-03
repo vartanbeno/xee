@@ -433,14 +433,6 @@ mod tests {
         value::{Item, Node, Sequence},
     };
 
-    fn as_integer(value: &StackValue) -> i64 {
-        value.as_atomic().unwrap().as_integer().unwrap()
-    }
-
-    fn as_bool(value: &StackValue) -> bool {
-        value.as_atomic().unwrap().as_bool().unwrap()
-    }
-
     fn as_sequence(value: &StackValue) -> Rc<RefCell<Sequence>> {
         value.as_sequence().unwrap()
     }
@@ -1079,11 +1071,26 @@ mod tests {
         assert_debug_snapshot!(run("fn:string(1)"));
     }
 
+    #[test]
+    fn test_atomize() {
+        assert_debug_snapshot!(run("(1) eq (1)"));
+    }
+
+    #[test]
+    fn test_atomize_xml_eq_true() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a>A</a><b>A</b></doc>"#, "doc/a eq doc/b",));
+    }
+
+    #[test]
+    fn test_atomize_xml_eq_false() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a>A</a><b>B</b></doc>"#, "doc/a eq doc/b",));
+    }
+
     // #[test]
     // fn test_attribute_predicate() -> Result<()> {
     //     assert_nodes(
     //         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
-    //         "//*[@foo = 'FOO']",
+    //         "//*[@foo eq 'FOO']",
     //         |xot, document| {
     //             let doc_el = xot.document_element(document.root).unwrap();
     //             let a = xot.first_child(doc_el).unwrap();

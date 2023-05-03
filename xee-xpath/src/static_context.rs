@@ -259,14 +259,14 @@ fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }
 
-fn bound_my_function(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_my_function(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0]
-        .as_atomic()
+        .as_atomic(xot)
         .ok_or(Error::TypeError)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     let b = arguments[1]
-        .as_atomic()
+        .as_atomic(xot)
         .ok_or(Error::TypeError)?
         .as_integer()
         .ok_or(Error::TypeError)?;
