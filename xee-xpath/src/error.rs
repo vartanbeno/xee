@@ -1,9 +1,169 @@
 use thiserror::Error;
 
-// based on https://www.w3.org/TR/xpath-functions-31/#error-summary
-
 #[derive(Debug, Error)]
 pub enum Error {
+    // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
+    /// Component absent in static context.
+    ///  
+    /// It is a static error if analysis of an expression relies on some
+    /// component of the static context that is absent.
+    #[error("Component absent in static context")]
+    XPST0001,
+    /// Component absent in dynamic context.
+    ///
+    /// It is a dynamic error if evaluation of an expression relies on some
+    /// part of the dynamic context that is absent.
+    #[error("Component absent in dynamic context")]
+    XPDY0002,
+    /// Parse error.
+    ///
+    /// It is a static error if an expression is not a valid instance of the
+    /// grammar defined in A.1 EBNF.
+    #[error("Parse error")]
+    XPST0003,
+    /// Type error.
+    ///
+    /// It is a type error if, during the static analysis phase, an expression
+    /// is found to have a static type that is not appropriate for the context
+    /// in which the expression occurs, or during the dynamic evaluation phase,
+    /// the dynamic type of a value does not match a required type as specified
+    /// by the matching rules in 2.5.5 SequenceType Matching.
+    #[error("Type error")]
+    XPTY0004,
+    /// Empty Sequence type error.
+    ///
+    /// During the analysis phase, it is a static error if the static type
+    /// assigned to an expression other than the expression `()` or `data(())`
+    /// is `empty-sequence()`.
+    #[error("Empty sequence type error")]
+    XPST0005,
+    /// Name not defined in static context.
+    ///
+    /// It is a static error if an expression refers to an element name,
+    /// attribute name, schema type name, namespace prefix, or variable name
+    /// that is not defined in the static context, except for an ElementName in
+    /// an ElementTest or an AttributeName in an AttributeTest.
+    #[error("Name not defined in static context")]
+    XPST0008,
+    /// Namespace axis not supported.
+    ///
+    /// An implementation that does not support the namespace axis must raise a
+    /// static error if it encounters a reference to the namespace axis and
+    /// XPath 1.0 compatibility mode is false.
+    #[error("Namespace axis not supported")]
+    XPST0010,
+    /// Type error: incorrect number of arguments.
+    ///
+    /// It is a static error if the expanded QName and number of arguments in a
+    /// static function call do not match the name and arity of a function
+    /// signature in the static context.
+    #[error("Type error: incorrect number of arguments")]
+    XPST0017,
+    /// Type error: inconsistent sequence.
+    ///
+    /// It is a type error if the result of a path operator contains both nodes
+    /// and non-nodes.
+    #[error("Type error: inconsistent sequence")]
+    XPTY0018,
+    /// Type error: path operator must be applied to node sequence
+    ///
+    /// It is a type error if E1 in a path expression E1/E2 does not evaluate to a
+    /// sequence of nodes.
+    #[error("Type error: path operator must be applied to node sequence")]
+    XPTY0019,
+    /// Type error: context item is not a node in an axis step.
+    ///
+    /// It is a type error if, in an axis step, the context item is not a node.
+    #[error("Type error: context item is not a node in an axis step.")]
+    XPTY0020,
+    /// Multiple parameters with same name.
+    ///
+    /// It is a static error for an inline function expression to have more
+    /// than one parameter with the same name.
+    #[error("Multiple parameters with same name")]
+    XQST0039,
+    /// Invalid Braced URI Literal.
+    ///
+    /// An implementation MAY raise a static error if the value of a
+    /// BracedURILiteral is of nonzero length and is neither an absolute URI
+    /// nor a relative URI.
+    #[error("Invalid Braced URI Literal")]
+    XQST0046,
+    /// Treat type does not match sequence type.
+    ///
+    /// It is a dynamic error if the dynamic type of the operand of a treat
+    /// expression does not match the sequence type specified by the treat
+    /// expression. This error might also be raised by a path expression
+    /// beginning with "/" or "//" if the context node is not in a tree that is
+    /// rooted at a document node. This is because a leading "/" or "//" in a
+    /// path expression is an abbreviation for an initial step that includes
+    /// the clause `treat as document-node()`.
+    #[error("Treat type does not match sequence type")]
+    XPDY0050,
+    /// Undefined type reference
+    ///
+    /// It is a static error if the expanded QName for an AtomicOrUnionType in
+    /// a SequenceType is not defined in the in-scope schema types as a
+    /// generalized atomic type.
+    #[error("Undefined type reference")]
+    XPST0051,
+    /// Invalid type named in cast or castable expression.
+    ///
+    /// The type named in a cast or castable expression must be the name of a
+    /// type defined in the in-scope schema types, and the type must be simple.
+    #[error("Invalid type named in cast or castable expression")]
+    XQST0052,
+    /// Illegal prefix
+    ///
+    /// A static error is raised if any of the following conditions is
+    /// statically detected in any expression:
+    ///
+    /// - The prefix xml is bound to some namespace URI other than
+    ///   `http://www.w3.org/XML/1998/namespace`.
+    /// - A prefix other than xml is bound to the namespace URI
+    ///   `http://www.w3.org/XML/1998/namespace`.
+    /// - The prefix xmlns is bound to any namespace URI.
+    /// - A prefix other than xmlns is bound to the namespace URI
+    ///   `http://www.w3.org/2000/xmlns/`.
+    #[error("Illegal prefix")]
+    XQST0070,
+    /// Invalid target type of cast or castable expression.
+    ///
+    /// It is a static error if the target type of a cast or castable
+    /// expression is xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType.
+    #[error("Invalid target type of cast or castable expression")]
+    XPST0080,
+    /// Unknown namespace prefix.
+    ///
+    /// It is a static error if a QName used in an expression contains a
+    /// namespace prefix that cannot be expanded into a namespace URI by using
+    /// the statically known namespaces.
+    #[error("Unknown namespace prefix")]
+    XPST0081,
+    /// Type error: namespace-sensitive type expected.
+    ///
+    /// When applying the function conversion rules, if an item is of type
+    /// xs:untypedAtomic and the expected type is namespace-sensitive, a type
+    /// error is raised.
+    #[error("Type error: namespace-sensitive type expected")]
+    XPTY0117,
+    /// Implementation-dependent limit exceeded.
+    ///
+    /// An implementation-dependent limit has been exceeded.
+    #[error("Implementation-dependent limit exceeded")]
+    XPDY0130,
+    /// Namespace axis not supported.
+    ///
+    /// The namespace axis is not supported.
+    #[error("Namespace axis not supported")]
+    XQST0134,
+    /// Duplicate key values in a map.
+    ///
+    /// No two keys in a map may have the same key value.
+    #[error("Duplicate key values in a map")]
+    XQDY0137,
+
+    // XPath errors and functions: https://www.w3.org/TR/xpath-functions-31/#error-summary
     /// Wrong number of arguments.
     ///
     /// Raised when fn:apply is called and the arity
