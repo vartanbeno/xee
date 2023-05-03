@@ -9,6 +9,150 @@ use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub(crate) enum FunctionType {
+    // generate a function with one less arity that takes the
+    // item as the first argument
+    ItemFirst,
+    // generate a function with one less arity that takes the item
+    // as the last argument
+    ItemLast,
+    // this function takes position as the implicit only argument
+    Position,
+    // this function takes size as the implicit only argument
+    Size,
+}
+
+pub(crate) struct StaticFunctionDescription {
+    name: ast::Name,
+    arity: usize,
+    function_type: Option<FunctionType>,
+    func: fn(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue>,
+}
+
+impl StaticFunctionDescription {
+    fn functions(&self) -> Vec<StaticFunction> {
+        if let Some(function_type) = &self.function_type {
+            match function_type {
+                FunctionType::ItemFirst => {
+                    vec![
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity - 1,
+                            context_rule: Some(ContextRule::ItemFirst),
+                            func: self.func,
+                        },
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity,
+                            context_rule: None,
+                            func: self.func,
+                        },
+                    ]
+                }
+                FunctionType::ItemLast => {
+                    vec![
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity - 1,
+                            context_rule: Some(ContextRule::ItemLast),
+                            func: self.func,
+                        },
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity,
+                            context_rule: None,
+                            func: self.func,
+                        },
+                    ]
+                }
+                FunctionType::Position => {
+                    vec![StaticFunction {
+                        name: self.name.clone(),
+                        arity: self.arity,
+                        context_rule: Some(ContextRule::PositionFirst),
+                        func: self.func,
+                    }]
+                }
+                FunctionType::Size => {
+                    vec![StaticFunction {
+                        name: self.name.clone(),
+                        arity: self.arity,
+                        context_rule: Some(ContextRule::SizeFirst),
+                        func: self.func,
+                    }]
+                }
+            }
+        } else {
+            vec![StaticFunction {
+                name: self.name.clone(),
+                arity: self.arity,
+                context_rule: None,
+                func: self.func,
+            }]
+        }
+    }
+}
+
+fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
+    vec![
+        StaticFunctionDescription {
+            name: ast::Name::new("my_function".to_string(), None),
+            arity: 2,
+            function_type: None,
+            func: bound_my_function,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: Some(FunctionType::Position),
+            func: bound_position,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: Some(FunctionType::Size),
+            func: bound_last,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: local_name,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: namespace_uri,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: count,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: root,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: string,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: string,
+        },
+    ]
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum ContextRule {
     ItemFirst,
     ItemLast,
@@ -71,62 +215,12 @@ pub(crate) struct StaticFunctions {
 impl StaticFunctions {
     pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
-        let by_index = vec![
-            StaticFunction {
-                name: ast::Name::new("my_function".to_string(), None),
-                arity: 2,
-                context_rule: None,
-                func: bound_my_function,
-            },
-            StaticFunction {
-                name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 0,
-                context_rule: Some(ContextRule::PositionFirst),
-                func: bound_position,
-            },
-            StaticFunction {
-                name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 0,
-                context_rule: Some(ContextRule::ItemFirst),
-                func: local_name,
-            },
-            StaticFunction {
-                name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 0,
-                context_rule: Some(ContextRule::ItemFirst),
-                func: namespace_uri,
-            },
-            StaticFunction {
-                name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 1,
-                context_rule: None,
-                func: count,
-            },
-            StaticFunction {
-                name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 0,
-                context_rule: Some(ContextRule::ItemFirst),
-                func: root,
-            },
-            StaticFunction {
-                name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 1,
-                context_rule: None,
-                func: root,
-            },
-            StaticFunction {
-                name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 1,
-                context_rule: None,
-                func: string,
-            },
-            StaticFunction {
-                name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
-                arity: 0,
-                context_rule: Some(ContextRule::ItemFirst),
-                func: string,
-            },
-        ];
+        let descriptions = static_function_descriptions();
+        let mut by_index = Vec::new();
+        for description in descriptions {
+            by_index.extend(description.functions());
+        }
+
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
                 (static_function.name.clone(), static_function.arity as u8),
@@ -181,6 +275,11 @@ fn bound_my_function(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue>
 
 fn bound_position(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     // position should be the context value
+    Ok(arguments[0].clone())
+}
+
+fn bound_last(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+    // size should be the context value
     Ok(arguments[0].clone())
 }
 
