@@ -16,7 +16,7 @@ pub struct CompiledXPath<'a> {
 
 impl<'a> CompiledXPath<'a> {
     pub(crate) fn new(context: &'a Context, xpath: &str) -> Self {
-        let ast = parse_xpath(xpath, &context.static_context.namespaces);
+        let ast = parse_xpath(xpath, context.static_context.namespaces);
         let mut converter = Converter::new(&context.static_context);
         let expr = converter.convert_xpath(&ast);
         // this expression contains a function definition, we're getting it
