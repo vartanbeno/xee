@@ -1,13 +1,14 @@
 use crate::parse::XPathParser;
+use miette::{NamedSource, SourceSpan};
 use ordered_float::OrderedFloat;
+use pest::error::InputLocation;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 
 use crate::ast;
+use crate::error::Error;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parse::Rule;
-
-pub struct Error {}
 
 struct AstParser<'a> {
     namespaces: &'a Namespaces<'a>,
@@ -1052,28 +1053,41 @@ where
     f(pair)
 }
 
-fn parse_rule_start_end<T, F>(rule: Rule, input: &str, f: F) -> T
+fn parse_rule_start_end<T, F>(rule: Rule, input: &str, f: F) -> Result<T, pest::error::Error<Rule>>
 where
     F: Fn(Pair<Rule>) -> T,
 {
-    let mut pairs = XPathParser::parse(rule, input).unwrap();
+    let mut pairs = XPathParser::parse(rule, input)?;
     let mut pairs = pairs.next().unwrap().into_inner();
     let pair = pairs.next().unwrap();
-    f(pair)
+    Ok(f(pair))
 }
 
 pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingle {
     let namespaces = Namespaces::new(None, None);
     let ast_parser = AstParser::new(&namespaces);
-    parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p))
+    parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p)).unwrap()
 }
 
-pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> ast::XPath {
+pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::XPath, Error> {
     let ast_parser = AstParser::new(namespaces);
-    parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p))
+    let result = parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p));
+
+    match result {
+        Ok(xpath) => Ok(xpath),
+        Err(e) => {
+            let src = NamedSource::new("input", input.to_string());
+            let location = e.location;
+            let span: SourceSpan = match location {
+                InputLocation::Pos(pos) => pos.into(),
+                InputLocation::Span((start, end)) => (start, end).into(),
+            };
+            Err(Error::XPST0003 { src, span })
+        }
+    }
 }
 
-fn parse_xpath_no_default_ns(input: &str) -> ast::XPath {
+fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     let namespaces = Namespaces::new(None, None);
     parse_xpath(input, &namespaces)
 }

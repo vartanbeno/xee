@@ -2,50 +2,52 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"child::a\")"
 ---
-FunctionDefinition(
-    FunctionDefinition {
-        params: [
-            Param(
-                Name(
-                    "v0",
-                ),
-            ),
-            Param(
-                Name(
-                    "v1",
-                ),
-            ),
-            Param(
-                Name(
-                    "v2",
-                ),
-            ),
-        ],
-        body: FunctionCall(
-            FunctionCall {
-                atom: Const(
-                    Step(
-                        Step {
-                            axis: Child,
-                            node_test: NameTest(
-                                Name(
-                                    Name {
-                                        name: "a",
-                                        namespace: None,
-                                    },
-                                ),
-                            ),
-                        },
+Ok(
+    FunctionDefinition(
+        FunctionDefinition {
+            params: [
+                Param(
+                    Name(
+                        "v0",
                     ),
                 ),
-                args: [
-                    Variable(
-                        Name(
-                            "v0",
+                Param(
+                    Name(
+                        "v1",
+                    ),
+                ),
+                Param(
+                    Name(
+                        "v2",
+                    ),
+                ),
+            ],
+            body: FunctionCall(
+                FunctionCall {
+                    atom: Const(
+                        Step(
+                            Step {
+                                axis: Child,
+                                node_test: NameTest(
+                                    Name(
+                                        Name {
+                                            name: "a",
+                                            namespace: None,
+                                        },
+                                    ),
+                                ),
+                            },
                         ),
                     ),
-                ],
-            },
-        ),
-    },
+                    args: [
+                        Variable(
+                            Name(
+                                "v0",
+                            ),
+                        ),
+                    ],
+                },
+            ),
+        },
+    ),
 )

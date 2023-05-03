@@ -3,6 +3,7 @@ use std::rc::Rc;
 use ahash::{HashMap, HashMapExt};
 
 use crate::ast;
+use crate::error::Result;
 use crate::ir;
 use crate::name::Namespaces;
 use crate::name::FN_NAMESPACE;
@@ -621,12 +622,12 @@ fn convert_expr_single(s: &str) -> ir::Expr {
     converter.convert_expr_single(&ast)
 }
 
-fn convert_xpath(s: &str) -> ir::Expr {
+fn convert_xpath(s: &str) -> Result<ir::Expr> {
     let namespaces = Namespaces::new(None, None);
-    let ast = crate::parse_ast::parse_xpath(s, &namespaces);
+    let ast = crate::parse_ast::parse_xpath(s, &namespaces)?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(&static_context);
-    converter.convert_xpath(&ast)
+    Ok(converter.convert_xpath(&ast))
 }
 
 #[cfg(test)]

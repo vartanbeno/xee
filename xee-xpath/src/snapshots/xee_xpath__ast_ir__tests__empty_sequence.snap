@@ -2,29 +2,31 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"()\")"
 ---
-FunctionDefinition(
-    FunctionDefinition {
-        params: [
-            Param(
-                Name(
-                    "v0",
+Ok(
+    FunctionDefinition(
+        FunctionDefinition {
+            params: [
+                Param(
+                    Name(
+                        "v0",
+                    ),
+                ),
+                Param(
+                    Name(
+                        "v1",
+                    ),
+                ),
+                Param(
+                    Name(
+                        "v2",
+                    ),
+                ),
+            ],
+            body: Atom(
+                Const(
+                    EmptySequence,
                 ),
             ),
-            Param(
-                Name(
-                    "v1",
-                ),
-            ),
-            Param(
-                Name(
-                    "v2",
-                ),
-            ),
-        ],
-        body: Atom(
-            Const(
-                EmptySequence,
-            ),
-        ),
-    },
+        },
+    ),
 )

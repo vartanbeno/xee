@@ -1,62 +1,64 @@
 ---
 source: xee-xpath/src/parse_ast.rs
-expression: "parse_xpath(\"1 + 2, 3 + 4\")"
+expression: "parse_xpath_no_default_ns(\"1 + 2, 3 + 4\")"
 ---
-XPath {
-    exprs: [
-        Binary(
-            BinaryExpr {
-                operator: Add,
-                left: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    1,
+Ok(
+    XPath {
+        exprs: [
+            Binary(
+                BinaryExpr {
+                    operator: Add,
+                    left: PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
                             ),
-                        ),
-                    ],
-                },
-                right: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    2,
+                        ],
+                    },
+                    right: PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        2,
+                                    ),
                                 ),
                             ),
-                        ),
-                    ],
+                        ],
+                    },
                 },
-            },
-        ),
-        Binary(
-            BinaryExpr {
-                operator: Add,
-                left: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    3,
+            ),
+            Binary(
+                BinaryExpr {
+                    operator: Add,
+                    left: PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        3,
+                                    ),
                                 ),
                             ),
-                        ),
-                    ],
-                },
-                right: PathExpr {
-                    steps: [
-                        PrimaryExpr(
-                            Literal(
-                                Integer(
-                                    4,
+                        ],
+                    },
+                    right: PathExpr {
+                        steps: [
+                            PrimaryExpr(
+                                Literal(
+                                    Integer(
+                                        4,
+                                    ),
                                 ),
                             ),
-                        ),
-                    ],
+                        ],
+                    },
                 },
-            },
-        ),
-    ],
-}
+            ),
+        ],
+    },
+)

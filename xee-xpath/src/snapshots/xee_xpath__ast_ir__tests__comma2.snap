@@ -2,61 +2,63 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"1, 2, 3\")"
 ---
-FunctionDefinition(
-    FunctionDefinition {
-        params: [
-            Param(
-                Name(
-                    "v0",
+Ok(
+    FunctionDefinition(
+        FunctionDefinition {
+            params: [
+                Param(
+                    Name(
+                        "v0",
+                    ),
                 ),
+                Param(
+                    Name(
+                        "v1",
+                    ),
+                ),
+                Param(
+                    Name(
+                        "v2",
+                    ),
+                ),
+            ],
+            body: Let(
+                Let {
+                    name: Name(
+                        "v5",
+                    ),
+                    var_expr: Binary(
+                        Binary {
+                            left: Const(
+                                Integer(
+                                    1,
+                                ),
+                            ),
+                            op: Comma,
+                            right: Const(
+                                Integer(
+                                    2,
+                                ),
+                            ),
+                        },
+                    ),
+                    return_expr: Binary(
+                        Binary {
+                            left: Variable(
+                                Name(
+                                    "v5",
+                                ),
+                            ),
+                            op: Comma,
+                            right: Const(
+                                Integer(
+                                    3,
+                                ),
+                            ),
+                        },
+                    ),
+                },
             ),
-            Param(
-                Name(
-                    "v1",
-                ),
-            ),
-            Param(
-                Name(
-                    "v2",
-                ),
-            ),
-        ],
-        body: Let(
-            Let {
-                name: Name(
-                    "v5",
-                ),
-                var_expr: Binary(
-                    Binary {
-                        left: Const(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                        op: Comma,
-                        right: Const(
-                            Integer(
-                                2,
-                            ),
-                        ),
-                    },
-                ),
-                return_expr: Binary(
-                    Binary {
-                        left: Variable(
-                            Name(
-                                "v5",
-                            ),
-                        ),
-                        op: Comma,
-                        right: Const(
-                            Integer(
-                                3,
-                            ),
-                        ),
-                    },
-                ),
-            },
-        ),
-    },
+        },
+    ),
 )

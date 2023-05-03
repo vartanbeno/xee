@@ -16,7 +16,7 @@ pub struct CompiledXPath<'a> {
 
 impl<'a> CompiledXPath<'a> {
     pub(crate) fn new(context: &'a Context, xpath: &str) -> Result<Self> {
-        let ast = parse_xpath(xpath, context.static_context.namespaces);
+        let ast = parse_xpath(xpath, context.static_context.namespaces)?;
         let mut ir_converter = IrConverter::new(&context.static_context);
         let expr = ir_converter.convert_xpath(&ast);
         // this expression contains a function definition, we're getting it
@@ -89,21 +89,21 @@ mod tests {
 
     use super::*;
 
-    // #[test]
-    // fn test_parse_error() {
-    //     let mut xot = Xot::new();
-    //     let uri = Uri("http://example.com".to_string());
-    //     let mut documents = Documents::new();
-    //     documents.add(&mut xot, &uri, "<doc/>").unwrap();
-    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    //     let static_context = StaticContext::new(&namespaces);
-    //     let context = Context::with_documents(&xot, static_context, &documents);
+    #[test]
+    fn test_parse_error() {
+        let mut xot = Xot::new();
+        let uri = Uri("http://example.com".to_string());
+        let mut documents = Documents::new();
+        documents.add(&mut xot, &uri, "<doc/>").unwrap();
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let static_context = StaticContext::new(&namespaces);
+        let context = Context::with_documents(&xot, static_context, &documents);
 
-    //     let xpath = "1 + 2 +";
-    //     let err = CompiledXPath::new(&context, xpath);
-    //     // assert_eq!(
-    //     //     err.to_string(),
-    //     //     "Parse error: expected a primary expression but found end of input"
-    //     // );
-    // }
+        let xpath = "1 + 2 +";
+        let err = CompiledXPath::new(&context, xpath);
+        // assert_eq!(
+        //     err.to_string(),
+        //     "Parse error: expected a primary expression but found end of input"
+        // );
+    }
 }

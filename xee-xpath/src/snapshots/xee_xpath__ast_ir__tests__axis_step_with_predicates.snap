@@ -2,92 +2,94 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"child::a[. gt 1]\")"
 ---
-FunctionDefinition(
-    FunctionDefinition {
-        params: [
-            Param(
-                Name(
-                    "v0",
+Ok(
+    FunctionDefinition(
+        FunctionDefinition {
+            params: [
+                Param(
+                    Name(
+                        "v0",
+                    ),
                 ),
-            ),
-            Param(
-                Name(
-                    "v1",
+                Param(
+                    Name(
+                        "v1",
+                    ),
                 ),
-            ),
-            Param(
-                Name(
-                    "v2",
+                Param(
+                    Name(
+                        "v2",
+                    ),
                 ),
-            ),
-        ],
-        body: Let(
-            Let {
-                name: Name(
-                    "v3",
-                ),
-                var_expr: FunctionCall(
-                    FunctionCall {
-                        atom: Const(
-                            Step(
-                                Step {
-                                    axis: Child,
-                                    node_test: NameTest(
+            ],
+            body: Let(
+                Let {
+                    name: Name(
+                        "v3",
+                    ),
+                    var_expr: FunctionCall(
+                        FunctionCall {
+                            atom: Const(
+                                Step(
+                                    Step {
+                                        axis: Child,
+                                        node_test: NameTest(
+                                            Name(
+                                                Name {
+                                                    name: "a",
+                                                    namespace: None,
+                                                },
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                            args: [
+                                Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                            ],
+                        },
+                    ),
+                    return_expr: Filter(
+                        Filter {
+                            context_names: ContextNames {
+                                item: Name(
+                                    "v4",
+                                ),
+                                position: Name(
+                                    "v5",
+                                ),
+                                last: Name(
+                                    "v6",
+                                ),
+                            },
+                            var_atom: Variable(
+                                Name(
+                                    "v3",
+                                ),
+                            ),
+                            return_expr: Binary(
+                                Binary {
+                                    left: Variable(
                                         Name(
-                                            Name {
-                                                name: "a",
-                                                namespace: None,
-                                            },
+                                            "v4",
+                                        ),
+                                    ),
+                                    op: Gt,
+                                    right: Const(
+                                        Integer(
+                                            1,
                                         ),
                                     ),
                                 },
                             ),
-                        ),
-                        args: [
-                            Variable(
-                                Name(
-                                    "v0",
-                                ),
-                            ),
-                        ],
-                    },
-                ),
-                return_expr: Filter(
-                    Filter {
-                        context_names: ContextNames {
-                            item: Name(
-                                "v4",
-                            ),
-                            position: Name(
-                                "v5",
-                            ),
-                            last: Name(
-                                "v6",
-                            ),
                         },
-                        var_atom: Variable(
-                            Name(
-                                "v3",
-                            ),
-                        ),
-                        return_expr: Binary(
-                            Binary {
-                                left: Variable(
-                                    Name(
-                                        "v4",
-                                    ),
-                                ),
-                                op: Gt,
-                                right: Const(
-                                    Integer(
-                                        1,
-                                    ),
-                                ),
-                            },
-                        ),
-                    },
-                ),
-            },
-        ),
-    },
+                    ),
+                },
+            ),
+        },
+    ),
 )

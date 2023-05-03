@@ -1,6 +1,7 @@
+use miette::{Diagnostic, NamedSource, SourceSpan};
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum Error {
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.
@@ -20,7 +21,13 @@ pub enum Error {
     /// It is a static error if an expression is not a valid instance of the
     /// grammar defined in A.1 EBNF.
     #[error("Parse error")]
-    XPST0003,
+    #[diagnostic(code(XPST0003), help("Invalid XPath expression"))]
+    XPST0003 {
+        #[source_code]
+        src: NamedSource,
+        #[label("This bit here")]
+        span: SourceSpan,
+    },
     /// Type error.
     ///
     /// It is a type error if, during the static analysis phase, an expression

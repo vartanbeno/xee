@@ -421,6 +421,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
+name = "miette"
+version = "5.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92a992891d5579caa9efd8e601f82e30a1caa79a27a5db075dde30ecb9eab357"
+dependencies = [
+ "miette-derive",
+ "once_cell",
+ "thiserror",
+ "unicode-width",
+]
+
+[[package]]
+name = "miette-derive"
+version = "5.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c65c625186a9bcce6699394bee511e1b1aec689aa7e3be1bf4e996e75834153"
+dependencies = [
+ "proc-macro2 1.0.54",
+ "quote 1.0.26",
+ "syn 2.0.11",
+]
+
+[[package]]
 name = "next-gen"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -992,6 +1015,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5464a87b239f13a63a501f2701565754bae92d243d4bb7eb12f6d57d2269bf4"
 
 [[package]]
+name = "unicode-width"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
+
+[[package]]
 name = "unicode-xid"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1177,6 +1206,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "insta",
+ "miette",
  "next-gen",
  "num",
  "num-derive",
