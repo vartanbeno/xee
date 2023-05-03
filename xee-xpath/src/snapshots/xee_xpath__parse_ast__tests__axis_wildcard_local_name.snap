@@ -9,10 +9,13 @@ expression: "parse_expr_single(\"child::fn:*\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: NameTest(
-                            Namespace(
-                                "http://www.w3.org/2005/xpath-functions",
+                        node_test: (
+                            NameTest(
+                                Namespace(
+                                    "http://www.w3.org/2005/xpath-functions",
+                                ),
                             ),
+                            0..11,
                         ),
                         predicates: [],
                     },

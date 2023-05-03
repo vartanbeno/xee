@@ -224,7 +224,9 @@ ReverseAxis = { ("parent" ~ "::") | ("ancestor" ~ "::") | ("preceding-sibling" ~
 // AbbrevReverseStep
 // ::= ".."
 // modified so it takes optional predicates, as we can't really parse this otherwise
-AbbrevReverseStep = { ".." ~ PredicateList }
+AbbrevReverseStep = { DoubleDot ~ PredicateList }
+
+DoubleDot = { ".." }
 
 // NodeTest ::= KindTest | NameTest
 NodeTest = { KindTest | NameTest }

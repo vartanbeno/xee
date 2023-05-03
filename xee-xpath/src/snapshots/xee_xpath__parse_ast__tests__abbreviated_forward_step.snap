@@ -9,13 +9,16 @@ expression: "parse_expr_single(\"foo\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                        node_test: (
+                            NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
+                            0..3,
                         ),
                         predicates: [],
                     },

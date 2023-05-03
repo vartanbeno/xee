@@ -372,6 +372,7 @@ impl<'a> AstParser<'a> {
 
     fn path_expr_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
+        let span = pair.as_span();
         let mut pairs = pair.into_inner();
         let first_pair = pairs.next().unwrap();
         match first_pair.as_rule() {
@@ -388,7 +389,7 @@ impl<'a> AstParser<'a> {
                     root_from_context(),
                     ast::StepExpr::AxisStep(ast::AxisStep {
                         axis: ast::Axis::DescendantOrSelf,
-                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        node_test: spanned(ast::NodeTest::KindTest(ast::KindTest::Any), &span),
                         predicates: vec![],
                     }),
                 ];
@@ -406,6 +407,7 @@ impl<'a> AstParser<'a> {
 
     fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExpr> {
         debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
+        let span = pair.as_span();
         let pairs = pair.into_inner();
         let mut result = Vec::new();
         for pair in pairs {
@@ -416,7 +418,7 @@ impl<'a> AstParser<'a> {
                 Rule::DoubleSlash => {
                     result.push(ast::StepExpr::AxisStep(ast::AxisStep {
                         axis: ast::Axis::DescendantOrSelf,
-                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        node_test: spanned(ast::NodeTest::KindTest(ast::KindTest::Any), &span),
                         predicates: vec![],
                     }));
                 }
@@ -451,6 +453,7 @@ impl<'a> AstParser<'a> {
             Rule::AxisStep => {
                 let mut pairs = pair.into_inner();
                 let step_pair = pairs.next().unwrap();
+                let step_span = step_pair.as_span();
                 let predicates_pair = pairs.next().unwrap();
                 let predicates = predicates_pair
                     .into_inner()
@@ -466,13 +469,15 @@ impl<'a> AstParser<'a> {
 
                 let axis_step = ast::AxisStep {
                     axis,
-                    node_test,
+                    node_test: spanned(node_test, &step_span),
                     predicates,
                 };
                 ast::StepExpr::AxisStep(axis_step)
             }
             Rule::AbbrevReverseStep => {
                 let mut pairs = pair.into_inner();
+                let double_dot_pair = pairs.next().unwrap();
+                let double_dot_span = double_dot_pair.as_span();
                 let predicates_pair = pairs.next().unwrap();
                 let predicates = predicates_pair
                     .into_inner()
@@ -480,7 +485,10 @@ impl<'a> AstParser<'a> {
                     .collect::<Vec<_>>();
                 ast::StepExpr::AxisStep(ast::AxisStep {
                     axis: ast::Axis::Parent,
-                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                    node_test: spanned(
+                        ast::NodeTest::KindTest(ast::KindTest::Any),
+                        &double_dot_span,
+                    ),
                     predicates,
                 })
             }
@@ -1080,7 +1088,7 @@ fn root_from_context() -> ast::StepExpr {
             arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                 steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
                     axis: ast::Axis::Self_,
-                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                    node_test: not_spanned(ast::NodeTest::KindTest(ast::KindTest::Any)),
                     predicates: vec![],
                 })],
             }))],

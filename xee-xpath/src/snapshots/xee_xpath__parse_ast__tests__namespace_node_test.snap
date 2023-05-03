@@ -9,8 +9,11 @@ expression: "parse_expr_single(\"self::namespace-node()\")"
                 AxisStep(
                     AxisStep {
                         axis: Self_,
-                        node_test: KindTest(
-                            NamespaceNode,
+                        node_test: (
+                            KindTest(
+                                NamespaceNode,
+                            ),
+                            0..22,
                         ),
                         predicates: [],
                     },

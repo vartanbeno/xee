@@ -24,8 +24,11 @@ expression: "parse_expr_single(\"/\")"
                                                     AxisStep(
                                                         AxisStep {
                                                             axis: Self_,
-                                                            node_test: KindTest(
-                                                                Any,
+                                                            node_test: (
+                                                                KindTest(
+                                                                    Any,
+                                                                ),
+                                                                0..0,
                                                             ),
                                                             predicates: [],
                                                         },

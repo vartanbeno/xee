@@ -9,13 +9,16 @@ expression: "parse_expr_single(\"foo/namespace-node()\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                        node_test: (
+                            NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
+                            0..3,
                         ),
                         predicates: [],
                     },
@@ -23,8 +26,11 @@ expression: "parse_expr_single(\"foo/namespace-node()\")"
                 AxisStep(
                     AxisStep {
                         axis: Namespace,
-                        node_test: KindTest(
-                            NamespaceNode,
+                        node_test: (
+                            KindTest(
+                                NamespaceNode,
+                            ),
+                            4..20,
                         ),
                         predicates: [],
                     },

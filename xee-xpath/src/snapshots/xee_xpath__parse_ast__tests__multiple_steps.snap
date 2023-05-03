@@ -9,13 +9,16 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                        node_test: (
+                            NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
+                            0..10,
                         ),
                         predicates: [],
                     },
@@ -23,13 +26,16 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "bar",
-                                    namespace: None,
-                                },
+                        node_test: (
+                            NameTest(
+                                Name(
+                                    Name {
+                                        name: "bar",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
+                            11..21,
                         ),
                         predicates: [],
                     },
