@@ -10,7 +10,7 @@ operation around variables and function calls.
 
 [loxcraft](https://github.com/ajeetdsouza/loxcraft) is a Rust implementation of
 Lox, the language introduced by Crafting Interpreters. I studied its source
-code with interests and picked up a few tricks.
+code with interest and picked up a few tricks.
 
 The intermediate representation design is inspired by various lecture notes:
 
