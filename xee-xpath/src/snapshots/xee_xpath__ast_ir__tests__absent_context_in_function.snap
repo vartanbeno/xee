@@ -1,0 +1,20 @@
+---
+source: xee-xpath/src/ast_ir.rs
+expression: "convert_expr_single(\"function() { . }\")"
+---
+Err(
+    XPDY0002 {
+        src: NamedSource {
+            name: "input",
+            source: "<redacted>",
+        ,
+        span: SourceSpan {
+            offset: SourceOffset(
+                13,
+            ),
+            length: SourceOffset(
+                14,
+            ),
+        },
+    },
+)

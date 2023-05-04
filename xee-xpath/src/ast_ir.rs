@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt};
+use miette::NamedSource;
 
 use crate::ast;
 use crate::error::{Error, Result};
@@ -98,7 +99,7 @@ impl Bindings {
 }
 
 #[derive(Debug)]
-enum Context {
+enum ContextItem {
     Names(ir::ContextNames),
     Absent,
 }
@@ -107,18 +108,20 @@ enum Context {
 pub(crate) struct IrConverter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
-    context_scope: Vec<Context>,
+    context_scope: Vec<ContextItem>,
+    src: &'a str,
     static_context: &'a StaticContext<'a>,
     fn_position: ast::Name,
     fn_last: ast::Name,
 }
 
 impl<'a> IrConverter<'a> {
-    pub(crate) fn new(static_context: &'a StaticContext) -> Self {
+    pub(crate) fn new(src: &'a str, static_context: &'a StaticContext) -> Self {
         Self {
             counter: 0,
             variables: HashMap::new(),
             context_scope: Vec::new(),
+            src,
             static_context,
             fn_position: ast::Name {
                 name: "position".to_string(),
@@ -143,12 +146,12 @@ impl<'a> IrConverter<'a> {
             position: self.new_name(),
             last: self.new_name(),
         };
-        self.context_scope.push(Context::Names(names.clone()));
+        self.context_scope.push(ContextItem::Names(names.clone()));
         names
     }
 
     fn push_absent_context(&mut self) {
-        self.context_scope.push(Context::Absent);
+        self.context_scope.push(ContextItem::Absent);
     }
 
     fn pop_context(&mut self) {
@@ -182,46 +185,50 @@ impl<'a> IrConverter<'a> {
 
     fn current_context_names(&self) -> Option<ir::ContextNames> {
         match self.context_scope.last() {
-            Some(Context::Names(names)) => Some(names.clone()),
-            Some(Context::Absent) => None,
+            Some(ContextItem::Names(names)) => Some(names.clone()),
+            Some(ContextItem::Absent) => None,
             None => None,
         }
     }
 
-    fn context_name<F>(&mut self, get_name: F) -> Bindings
+    fn context_name<F>(&mut self, get_name: F, span: &Span) -> Result<Bindings>
     where
         F: Fn(&ir::ContextNames) -> ir::Name,
     {
         let empty_span = 0..0;
         if let Some(context_scope) = self.context_scope.last() {
             match context_scope {
-                Context::Names(names) => {
+                ContextItem::Names(names) => {
                     let ir_name = get_name(names);
-                    Bindings::from_vec(vec![Binding {
+                    Ok(Bindings::from_vec(vec![Binding {
                         name: ir_name.clone(),
                         expr: ir::Expr::Atom((ir::Atom::Variable(ir_name), empty_span.clone())),
                         span: empty_span,
-                    }])
+                    }]))
                 }
-                Context::Absent => {
-                    panic!("no context");
-                }
+                ContextItem::Absent => Err(Error::XPDY0002 {
+                    src: NamedSource::new("input", self.src.to_string()),
+                    span: span_to_source_span(span),
+                }),
             }
         } else {
-            panic!("no context");
+            Err(Error::XPDY0002 {
+                src: NamedSource::new("input", self.src.to_string()),
+                span: span_to_source_span(span),
+            })
         }
     }
 
-    fn context_item(&mut self) -> Bindings {
-        self.context_name(|names| names.item.clone())
+    fn context_item(&mut self, span: &Span) -> Result<Bindings> {
+        self.context_name(|names| names.item.clone(), span)
     }
 
-    fn fn_position(&mut self) -> Bindings {
-        self.context_name(|names| names.position.clone())
+    fn fn_position(&mut self, span: &Span) -> Result<Bindings> {
+        self.context_name(|names| names.position.clone(), span)
     }
 
-    fn fn_last(&mut self) -> Bindings {
-        self.context_name(|names| names.last.clone())
+    fn fn_last(&mut self, span: &Span) -> Result<Bindings> {
+        self.context_name(|names| names.last.clone(), span)
     }
 
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
@@ -308,7 +315,7 @@ impl<'a> IrConverter<'a> {
             ast::PrimaryExpr::Literal(ast) => Ok(self.literal(ast, span)),
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast, span),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
-            ast::PrimaryExpr::ContextItem => Ok(self.context_item()),
+            ast::PrimaryExpr::ContextItem => self.context_item(span),
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast, span),
             ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast, span),
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
@@ -355,7 +362,7 @@ impl<'a> IrConverter<'a> {
 
     fn axis_step(&mut self, ast: &ast::AxisStep, span: &Span) -> Result<Bindings> {
         // get the current context
-        let mut current_context_bindings = self.context_item();
+        let mut current_context_bindings = self.context_item(span)?;
 
         // create a step atom
         let step = Rc::new(Step {
@@ -592,10 +599,10 @@ impl<'a> IrConverter<'a> {
         // (until some advanced compiler optimization is implemented)
         if ast.name == self.fn_position {
             assert!(arity == 0);
-            return Ok(self.fn_position());
+            return self.fn_position(span);
         } else if ast.name == self.fn_last {
             assert!(arity == 0);
-            return Ok(self.fn_last());
+            return self.fn_last(span);
         }
 
         let static_function_id = self
@@ -656,7 +663,7 @@ fn convert_expr_single(s: &str) -> Result<ir::Expr> {
     let ast = crate::parse_ast::parse_expr_single(s);
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
-    let mut converter = IrConverter::new(&static_context);
+    let mut converter = IrConverter::new(s, &static_context);
     converter.convert_expr_single(&ast)
 }
 
@@ -664,8 +671,12 @@ fn convert_xpath(s: &str) -> Result<ir::Expr> {
     let namespaces = Namespaces::new(None, None);
     let ast = crate::parse_ast::parse_xpath(s, &namespaces)?;
     let static_context = StaticContext::new(&namespaces);
-    let mut converter = IrConverter::new(&static_context);
+    let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)
+}
+
+fn span_to_source_span(span: &Span) -> miette::SourceSpan {
+    (span.start, span.end).into()
 }
 
 #[cfg(test)]
@@ -826,5 +837,10 @@ mod tests {
     #[test]
     fn test_axis_step_with_predicates() {
         assert_debug_snapshot!(convert_xpath("child::a[. gt 1]"));
+    }
+
+    #[test]
+    fn test_absent_context_in_function() {
+        assert_debug_snapshot!(convert_expr_single("function() { . }"));
     }
 }

@@ -15,7 +15,12 @@ pub enum Error {
     /// It is a dynamic error if evaluation of an expression relies on some
     /// part of the dynamic context that is absent.
     #[error("Component absent in dynamic context")]
-    XPDY0002,
+    XPDY0002 {
+        #[source_code]
+        src: NamedSource,
+        #[label("Context absent")]
+        span: SourceSpan,
+    },
     /// Parse error.
     ///
     /// It is a static error if an expression is not a valid instance of the
