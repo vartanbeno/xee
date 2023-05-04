@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use miette::NamedSource;
+use miette::{NamedSource, SourceSpan};
 use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
@@ -136,6 +136,7 @@ pub(crate) struct Function {
     pub(crate) constants: Vec<StackValue>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
+    pub(crate) spans: Vec<SourceSpan>,
 }
 
 impl Function {
@@ -382,7 +383,7 @@ impl Sequence {
             _ => Err(Error::XPTY0004 {
                 src: NamedSource::new("input", context.src.to_string()),
                 // XXX fake empty span, replaced later
-                span: (0, 0).into(),
+                span: (777, 0).into(),
             }),
         }
     }

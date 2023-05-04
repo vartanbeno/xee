@@ -1,7 +1,6 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
-use xot::Xot;
 
 use crate::ast;
 use crate::context::Context;
@@ -277,7 +276,7 @@ fn bound_position(_context: &Context, arguments: &[StackValue]) -> Result<StackV
     Ok(arguments[0].clone())
 }
 
-fn bound_last(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_last(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     // size should be the context value
     Ok(arguments[0].clone())
 }
@@ -296,7 +295,7 @@ fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackVal
     ))))
 }
 
-fn count(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_sequence().ok_or(Error::TypeError)?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))

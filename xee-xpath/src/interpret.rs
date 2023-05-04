@@ -69,8 +69,12 @@ impl<'a> Interpreter<'a> {
                 Instruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a
+                        .as_atomic(context)
+                        .map_err(|e| annotate_span(e, function, ip - instruction_size))?;
+                    let b = b
+                        .as_atomic(context)
+                        .map_err(|e| annotate_span(e, function, ip - instruction_size))?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_add(b).ok_or(Error::FOAR0002)?;
@@ -448,6 +452,16 @@ impl<'a> Interpreter<'a> {
         self.stack
             .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
         Ok(())
+    }
+}
+
+fn annotate_span(error: Error, function: &Function, ip: usize) -> Error {
+    match error {
+        Error::XPTY0004 { src, span: _span } => {
+            let span = function.spans[ip];
+            Error::XPTY0004 { src, span }
+        }
+        _ => error,
     }
 }
 

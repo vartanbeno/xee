@@ -490,7 +490,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = Context::new(&xot, s, static_context);
         let xpath = CompiledXPath::new(&context, s)?;
-        Ok(xpath.run_without_context().unwrap())
+        xpath.run_without_context()
     }
 
     fn run_debug(s: &str) -> Result<StackValue> {
@@ -500,7 +500,7 @@ mod tests {
         let context = Context::new(&xot, s, static_context);
         let xpath = CompiledXPath::new(&context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        Ok(xpath.run_without_context().unwrap())
+        xpath.run_without_context()
     }
 
     fn run_xml(xml: &str, xpath: &str) -> Result<StackValue> {
@@ -1162,5 +1162,10 @@ mod tests {
                 vec![b]
             },
         )
+    }
+
+    #[test]
+    fn test_atomize_too_many_values() {
+        assert_debug_snapshot!(run("0 + 12 + ((2, 3, 4) + 1)"));
     }
 }

@@ -175,6 +175,7 @@ impl<'a> FunctionBuilder<'a> {
             name,
             arity,
             chunk: self.compiled,
+            spans: self.spans,
             closure_names: self.closure_names,
             constants: self.constants,
         }
