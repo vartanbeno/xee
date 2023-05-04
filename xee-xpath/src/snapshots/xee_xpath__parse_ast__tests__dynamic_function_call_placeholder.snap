@@ -21,82 +21,85 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: [
-                                        (
-                                            Path(
-                                                PathExpr {
-                                                    steps: [
-                                                        (
-                                                            PostfixExpr {
-                                                                primary: (
-                                                                    VarRef(
-                                                                        Name {
-                                                                            name: "foo",
-                                                                            namespace: None,
-                                                                        },
+                                    body: (
+                                        [
+                                            (
+                                                Path(
+                                                    PathExpr {
+                                                        steps: [
+                                                            (
+                                                                PostfixExpr {
+                                                                    primary: (
+                                                                        VarRef(
+                                                                            Name {
+                                                                                name: "foo",
+                                                                                namespace: None,
+                                                                            },
+                                                                        ),
+                                                                        0..4,
                                                                     ),
-                                                                    0..4,
-                                                                ),
-                                                                postfixes: [
-                                                                    ArgumentList(
-                                                                        [
-                                                                            (
-                                                                                Path(
-                                                                                    PathExpr {
-                                                                                        steps: [
-                                                                                            (
-                                                                                                PrimaryExpr(
-                                                                                                    (
-                                                                                                        Literal(
-                                                                                                            Integer(
-                                                                                                                1,
+                                                                    postfixes: [
+                                                                        ArgumentList(
+                                                                            [
+                                                                                (
+                                                                                    Path(
+                                                                                        PathExpr {
+                                                                                            steps: [
+                                                                                                (
+                                                                                                    PrimaryExpr(
+                                                                                                        (
+                                                                                                            Literal(
+                                                                                                                Integer(
+                                                                                                                    1,
+                                                                                                                ),
                                                                                                             ),
+                                                                                                            5..6,
                                                                                                         ),
-                                                                                                        5..6,
                                                                                                     ),
+                                                                                                    5..6,
                                                                                                 ),
-                                                                                                5..6,
-                                                                                            ),
-                                                                                        ],
-                                                                                    },
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    5..6,
                                                                                 ),
-                                                                                5..6,
-                                                                            ),
-                                                                            (
-                                                                                Path(
-                                                                                    PathExpr {
-                                                                                        steps: [
-                                                                                            (
-                                                                                                PrimaryExpr(
-                                                                                                    (
-                                                                                                        VarRef(
-                                                                                                            Name {
-                                                                                                                name: "placeholder0",
-                                                                                                                namespace: None,
-                                                                                                            },
+                                                                                (
+                                                                                    Path(
+                                                                                        PathExpr {
+                                                                                            steps: [
+                                                                                                (
+                                                                                                    PrimaryExpr(
+                                                                                                        (
+                                                                                                            VarRef(
+                                                                                                                Name {
+                                                                                                                    name: "placeholder0",
+                                                                                                                    namespace: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            0..0,
                                                                                                         ),
-                                                                                                        0..0,
                                                                                                     ),
+                                                                                                    0..0,
                                                                                                 ),
-                                                                                                0..0,
-                                                                                            ),
-                                                                                        ],
-                                                                                    },
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    0..0,
                                                                                 ),
-                                                                                0..0,
-                                                                            ),
-                                                                        ],
-                                                                    ),
-                                                                ],
-                                                            },
-                                                            0..0,
-                                                        ),
-                                                    ],
-                                                },
+                                                                            ],
+                                                                        ),
+                                                                    ],
+                                                                },
+                                                                0..0,
+                                                            ),
+                                                        ],
+                                                    },
+                                                ),
+                                                0..0,
                                             ),
-                                            0..0,
-                                        ),
-                                    ],
+                                        ],
+                                        0..0,
+                                    ),
                                 },
                             ),
                             0..0,

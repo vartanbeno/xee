@@ -10,102 +10,111 @@ expression: "parse_expr_single(\"(1, 2)[2]\")"
                     PostfixExpr {
                         primary: (
                             Expr(
-                                [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    (
-                                                        PrimaryExpr(
-                                                            (
-                                                                Expr(
-                                                                    [
+                                (
+                                    [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
+                                                        (
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Expr(
                                                                         (
-                                                                            Path(
-                                                                                PathExpr {
-                                                                                    steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
+                                                                            [
+                                                                                (
+                                                                                    Path(
+                                                                                        PathExpr {
+                                                                                            steps: [
                                                                                                 (
-                                                                                                    Literal(
-                                                                                                        Integer(
-                                                                                                            1,
+                                                                                                    PrimaryExpr(
+                                                                                                        (
+                                                                                                            Literal(
+                                                                                                                Integer(
+                                                                                                                    1,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            1..2,
                                                                                                         ),
                                                                                                     ),
                                                                                                     1..2,
                                                                                                 ),
-                                                                                            ),
-                                                                                            1..2,
-                                                                                        ),
-                                                                                    ],
-                                                                                },
-                                                                            ),
-                                                                            1..2,
-                                                                        ),
-                                                                        (
-                                                                            Path(
-                                                                                PathExpr {
-                                                                                    steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    1..2,
+                                                                                ),
+                                                                                (
+                                                                                    Path(
+                                                                                        PathExpr {
+                                                                                            steps: [
                                                                                                 (
-                                                                                                    Literal(
-                                                                                                        Integer(
-                                                                                                            2,
+                                                                                                    PrimaryExpr(
+                                                                                                        (
+                                                                                                            Literal(
+                                                                                                                Integer(
+                                                                                                                    2,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            4..5,
                                                                                                         ),
                                                                                                     ),
                                                                                                     4..5,
                                                                                                 ),
-                                                                                            ),
-                                                                                            4..5,
-                                                                                        ),
-                                                                                    ],
-                                                                                },
-                                                                            ),
-                                                                            4..5,
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    4..5,
+                                                                                ),
+                                                                            ],
+                                                                            1..5,
                                                                         ),
-                                                                    ],
+                                                                    ),
+                                                                    1..5,
                                                                 ),
-                                                                1..5,
                                                             ),
+                                                            1..5,
                                                         ),
-                                                        1..5,
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            1..5,
                                         ),
-                                        1..5,
-                                    ),
-                                ],
+                                    ],
+                                    0..6,
+                                ),
                             ),
                             0..6,
                         ),
                         postfixes: [
                             Predicate(
-                                [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    (
-                                                        PrimaryExpr(
-                                                            (
-                                                                Literal(
-                                                                    Integer(
-                                                                        2,
+                                (
+                                    [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
+                                                        (
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Literal(
+                                                                        Integer(
+                                                                            2,
+                                                                        ),
                                                                     ),
+                                                                    7..8,
                                                                 ),
-                                                                7..8,
                                                             ),
+                                                            7..8,
                                                         ),
-                                                        7..8,
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            7..8,
                                         ),
-                                        7..8,
-                                    ),
-                                ],
+                                    ],
+                                    7..8,
+                                ),
                             ),
                         ],
                     },

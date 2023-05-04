@@ -19,30 +19,33 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                 ),
                             ),
                             predicates: [
-                                [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    (
-                                                        PrimaryExpr(
-                                                            (
-                                                                Literal(
-                                                                    Integer(
-                                                                        1,
+                                (
+                                    [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
+                                                        (
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Literal(
+                                                                        Integer(
+                                                                            1,
+                                                                        ),
                                                                     ),
+                                                                    11..12,
                                                                 ),
-                                                                11..12,
                                                             ),
+                                                            11..12,
                                                         ),
-                                                        11..12,
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            11..12,
                                         ),
-                                        11..12,
-                                    ),
-                                ],
+                                    ],
+                                    11..12,
+                                ),
                             ],
                         },
                     ),

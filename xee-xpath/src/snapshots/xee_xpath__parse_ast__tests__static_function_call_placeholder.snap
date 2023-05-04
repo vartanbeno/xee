@@ -21,80 +21,83 @@ expression: "parse_expr_single(\"my_function(?, 1)\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: [
-                                        (
-                                            Path(
-                                                PathExpr {
-                                                    steps: [
-                                                        (
-                                                            PrimaryExpr(
-                                                                (
-                                                                    FunctionCall(
-                                                                        FunctionCall {
-                                                                            name: Name {
-                                                                                name: "my_function",
-                                                                                namespace: None,
-                                                                            },
-                                                                            arguments: [
-                                                                                (
-                                                                                    Path(
-                                                                                        PathExpr {
-                                                                                            steps: [
-                                                                                                (
-                                                                                                    PrimaryExpr(
-                                                                                                        (
-                                                                                                            VarRef(
-                                                                                                                Name {
-                                                                                                                    name: "placeholder0",
-                                                                                                                    namespace: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            0..0,
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    0..0,
-                                                                                                ),
-                                                                                            ],
-                                                                                        },
-                                                                                    ),
-                                                                                    0..0,
-                                                                                ),
-                                                                                (
-                                                                                    Path(
-                                                                                        PathExpr {
-                                                                                            steps: [
-                                                                                                (
-                                                                                                    PrimaryExpr(
-                                                                                                        (
-                                                                                                            Literal(
-                                                                                                                Integer(
-                                                                                                                    1,
+                                    body: (
+                                        [
+                                            (
+                                                Path(
+                                                    PathExpr {
+                                                        steps: [
+                                                            (
+                                                                PrimaryExpr(
+                                                                    (
+                                                                        FunctionCall(
+                                                                            FunctionCall {
+                                                                                name: Name {
+                                                                                    name: "my_function",
+                                                                                    namespace: None,
+                                                                                },
+                                                                                arguments: [
+                                                                                    (
+                                                                                        Path(
+                                                                                            PathExpr {
+                                                                                                steps: [
+                                                                                                    (
+                                                                                                        PrimaryExpr(
+                                                                                                            (
+                                                                                                                VarRef(
+                                                                                                                    Name {
+                                                                                                                        name: "placeholder0",
+                                                                                                                        namespace: None,
+                                                                                                                    },
                                                                                                                 ),
+                                                                                                                0..0,
                                                                                                             ),
-                                                                                                            15..16,
                                                                                                         ),
+                                                                                                        0..0,
                                                                                                     ),
-                                                                                                    15..16,
-                                                                                                ),
-                                                                                            ],
-                                                                                        },
+                                                                                                ],
+                                                                                            },
+                                                                                        ),
+                                                                                        0..0,
                                                                                     ),
-                                                                                    15..16,
-                                                                                ),
-                                                                            ],
-                                                                        },
+                                                                                    (
+                                                                                        Path(
+                                                                                            PathExpr {
+                                                                                                steps: [
+                                                                                                    (
+                                                                                                        PrimaryExpr(
+                                                                                                            (
+                                                                                                                Literal(
+                                                                                                                    Integer(
+                                                                                                                        1,
+                                                                                                                    ),
+                                                                                                                ),
+                                                                                                                15..16,
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                        15..16,
+                                                                                                    ),
+                                                                                                ],
+                                                                                            },
+                                                                                        ),
+                                                                                        15..16,
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                        0..0,
                                                                     ),
-                                                                    0..0,
                                                                 ),
+                                                                0..0,
                                                             ),
-                                                            0..0,
-                                                        ),
-                                                    ],
-                                                },
+                                                        ],
+                                                    },
+                                                ),
+                                                0..0,
                                             ),
-                                            0..0,
-                                        ),
-                                    ],
+                                        ],
+                                        0..0,
+                                    ),
                                 },
                             ),
                             0..17,

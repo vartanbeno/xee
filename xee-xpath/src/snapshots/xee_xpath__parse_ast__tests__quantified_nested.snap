@@ -18,73 +18,79 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                 PrimaryExpr(
                                     (
                                         Expr(
-                                            [
-                                                (
-                                                    Path(
-                                                        PathExpr {
-                                                            steps: [
-                                                                (
-                                                                    PrimaryExpr(
-                                                                        (
-                                                                            Expr(
-                                                                                [
+                                            (
+                                                [
+                                                    (
+                                                        Path(
+                                                            PathExpr {
+                                                                steps: [
+                                                                    (
+                                                                        PrimaryExpr(
+                                                                            (
+                                                                                Expr(
                                                                                     (
-                                                                                        Path(
-                                                                                            PathExpr {
-                                                                                                steps: [
-                                                                                                    (
-                                                                                                        PrimaryExpr(
+                                                                                        [
+                                                                                            (
+                                                                                                Path(
+                                                                                                    PathExpr {
+                                                                                                        steps: [
                                                                                                             (
-                                                                                                                Literal(
-                                                                                                                    Integer(
-                                                                                                                        1,
+                                                                                                                PrimaryExpr(
+                                                                                                                    (
+                                                                                                                        Literal(
+                                                                                                                            Integer(
+                                                                                                                                1,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                        13..14,
                                                                                                                     ),
                                                                                                                 ),
                                                                                                                 13..14,
                                                                                                             ),
-                                                                                                        ),
-                                                                                                        13..14,
-                                                                                                    ),
-                                                                                                ],
-                                                                                            },
-                                                                                        ),
-                                                                                        13..14,
-                                                                                    ),
-                                                                                    (
-                                                                                        Path(
-                                                                                            PathExpr {
-                                                                                                steps: [
-                                                                                                    (
-                                                                                                        PrimaryExpr(
+                                                                                                        ],
+                                                                                                    },
+                                                                                                ),
+                                                                                                13..14,
+                                                                                            ),
+                                                                                            (
+                                                                                                Path(
+                                                                                                    PathExpr {
+                                                                                                        steps: [
                                                                                                             (
-                                                                                                                Literal(
-                                                                                                                    Integer(
-                                                                                                                        2,
+                                                                                                                PrimaryExpr(
+                                                                                                                    (
+                                                                                                                        Literal(
+                                                                                                                            Integer(
+                                                                                                                                2,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                        16..17,
                                                                                                                     ),
                                                                                                                 ),
                                                                                                                 16..17,
                                                                                                             ),
-                                                                                                        ),
-                                                                                                        16..17,
-                                                                                                    ),
-                                                                                                ],
-                                                                                            },
-                                                                                        ),
-                                                                                        16..17,
+                                                                                                        ],
+                                                                                                    },
+                                                                                                ),
+                                                                                                16..17,
+                                                                                            ),
+                                                                                        ],
+                                                                                        13..17,
                                                                                     ),
-                                                                                ],
+                                                                                ),
+                                                                                13..17,
                                                                             ),
-                                                                            13..17,
                                                                         ),
+                                                                        13..17,
                                                                     ),
-                                                                    13..17,
-                                                                ),
-                                                            ],
-                                                        },
+                                                                ],
+                                                            },
+                                                        ),
+                                                        13..17,
                                                     ),
-                                                    13..17,
-                                                ),
-                                            ],
+                                                ],
+                                                12..18,
+                                            ),
                                         ),
                                         12..18,
                                     ),
@@ -112,73 +118,79 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                             PrimaryExpr(
                                                 (
                                                     Expr(
-                                                        [
-                                                            (
-                                                                Path(
-                                                                    PathExpr {
-                                                                        steps: [
-                                                                            (
-                                                                                PrimaryExpr(
-                                                                                    (
-                                                                                        Expr(
-                                                                                            [
+                                                        (
+                                                            [
+                                                                (
+                                                                    Path(
+                                                                        PathExpr {
+                                                                            steps: [
+                                                                                (
+                                                                                    PrimaryExpr(
+                                                                                        (
+                                                                                            Expr(
                                                                                                 (
-                                                                                                    Path(
-                                                                                                        PathExpr {
-                                                                                                            steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
+                                                                                                    [
+                                                                                                        (
+                                                                                                            Path(
+                                                                                                                PathExpr {
+                                                                                                                    steps: [
                                                                                                                         (
-                                                                                                                            Literal(
-                                                                                                                                Integer(
-                                                                                                                                    3,
+                                                                                                                            PrimaryExpr(
+                                                                                                                                (
+                                                                                                                                    Literal(
+                                                                                                                                        Integer(
+                                                                                                                                            3,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                    27..28,
                                                                                                                                 ),
                                                                                                                             ),
                                                                                                                             27..28,
                                                                                                                         ),
-                                                                                                                    ),
-                                                                                                                    27..28,
-                                                                                                                ),
-                                                                                                            ],
-                                                                                                        },
-                                                                                                    ),
-                                                                                                    27..28,
-                                                                                                ),
-                                                                                                (
-                                                                                                    Path(
-                                                                                                        PathExpr {
-                                                                                                            steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
+                                                                                                                    ],
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            27..28,
+                                                                                                        ),
+                                                                                                        (
+                                                                                                            Path(
+                                                                                                                PathExpr {
+                                                                                                                    steps: [
                                                                                                                         (
-                                                                                                                            Literal(
-                                                                                                                                Integer(
-                                                                                                                                    4,
+                                                                                                                            PrimaryExpr(
+                                                                                                                                (
+                                                                                                                                    Literal(
+                                                                                                                                        Integer(
+                                                                                                                                            4,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                    30..31,
                                                                                                                                 ),
                                                                                                                             ),
                                                                                                                             30..31,
                                                                                                                         ),
-                                                                                                                    ),
-                                                                                                                    30..31,
-                                                                                                                ),
-                                                                                                            ],
-                                                                                                        },
-                                                                                                    ),
-                                                                                                    30..31,
+                                                                                                                    ],
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            30..31,
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                    27..31,
                                                                                                 ),
-                                                                                            ],
+                                                                                            ),
+                                                                                            27..31,
                                                                                         ),
-                                                                                        27..31,
                                                                                     ),
+                                                                                    27..31,
                                                                                 ),
-                                                                                27..31,
-                                                                            ),
-                                                                        ],
-                                                                    },
+                                                                            ],
+                                                                        },
+                                                                    ),
+                                                                    27..31,
                                                                 ),
-                                                                27..31,
-                                                            ),
-                                                        ],
+                                                            ],
+                                                            26..32,
+                                                        ),
                                                     ),
                                                     26..32,
                                                 ),
@@ -200,51 +212,54 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                 PrimaryExpr(
                                                     (
                                                         Expr(
-                                                            [
-                                                                (
-                                                                    Binary(
-                                                                        BinaryExpr {
-                                                                            operator: GenGt,
-                                                                            left: PathExpr {
-                                                                                steps: [
-                                                                                    (
-                                                                                        PrimaryExpr(
-                                                                                            (
-                                                                                                VarRef(
-                                                                                                    Name {
-                                                                                                        name: "x",
-                                                                                                        namespace: None,
-                                                                                                    },
-                                                                                                ),
-                                                                                                43..45,
-                                                                                            ),
-                                                                                        ),
-                                                                                        43..45,
-                                                                                    ),
-                                                                                ],
-                                                                            },
-                                                                            right: PathExpr {
-                                                                                steps: [
-                                                                                    (
-                                                                                        PrimaryExpr(
-                                                                                            (
-                                                                                                Literal(
-                                                                                                    Integer(
-                                                                                                        0,
+                                                            (
+                                                                [
+                                                                    (
+                                                                        Binary(
+                                                                            BinaryExpr {
+                                                                                operator: GenGt,
+                                                                                left: PathExpr {
+                                                                                    steps: [
+                                                                                        (
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    VarRef(
+                                                                                                        Name {
+                                                                                                            name: "x",
+                                                                                                            namespace: None,
+                                                                                                        },
                                                                                                     ),
+                                                                                                    43..45,
                                                                                                 ),
-                                                                                                48..49,
                                                                                             ),
+                                                                                            43..45,
                                                                                         ),
-                                                                                        48..49,
-                                                                                    ),
-                                                                                ],
+                                                                                    ],
+                                                                                },
+                                                                                right: PathExpr {
+                                                                                    steps: [
+                                                                                        (
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    Literal(
+                                                                                                        Integer(
+                                                                                                            0,
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    48..49,
+                                                                                                ),
+                                                                                            ),
+                                                                                            48..49,
+                                                                                        ),
+                                                                                    ],
+                                                                                },
                                                                             },
-                                                                        },
+                                                                        ),
+                                                                        43..50,
                                                                     ),
-                                                                    43..50,
-                                                                ),
-                                                            ],
+                                                                ],
+                                                                43..50,
+                                                            ),
                                                         ),
                                                         43..50,
                                                     ),
@@ -259,51 +274,54 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                 PrimaryExpr(
                                                     (
                                                         Expr(
-                                                            [
-                                                                (
-                                                                    Binary(
-                                                                        BinaryExpr {
-                                                                            operator: GenGt,
-                                                                            left: PathExpr {
-                                                                                steps: [
-                                                                                    (
-                                                                                        PrimaryExpr(
-                                                                                            (
-                                                                                                VarRef(
-                                                                                                    Name {
-                                                                                                        name: "y",
-                                                                                                        namespace: None,
-                                                                                                    },
-                                                                                                ),
-                                                                                                54..56,
-                                                                                            ),
-                                                                                        ),
-                                                                                        54..56,
-                                                                                    ),
-                                                                                ],
-                                                                            },
-                                                                            right: PathExpr {
-                                                                                steps: [
-                                                                                    (
-                                                                                        PrimaryExpr(
-                                                                                            (
-                                                                                                Literal(
-                                                                                                    Integer(
-                                                                                                        0,
+                                                            (
+                                                                [
+                                                                    (
+                                                                        Binary(
+                                                                            BinaryExpr {
+                                                                                operator: GenGt,
+                                                                                left: PathExpr {
+                                                                                    steps: [
+                                                                                        (
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    VarRef(
+                                                                                                        Name {
+                                                                                                            name: "y",
+                                                                                                            namespace: None,
+                                                                                                        },
                                                                                                     ),
+                                                                                                    54..56,
                                                                                                 ),
-                                                                                                59..60,
                                                                                             ),
+                                                                                            54..56,
                                                                                         ),
-                                                                                        59..60,
-                                                                                    ),
-                                                                                ],
+                                                                                    ],
+                                                                                },
+                                                                                right: PathExpr {
+                                                                                    steps: [
+                                                                                        (
+                                                                                            PrimaryExpr(
+                                                                                                (
+                                                                                                    Literal(
+                                                                                                        Integer(
+                                                                                                            0,
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    59..60,
+                                                                                                ),
+                                                                                            ),
+                                                                                            59..60,
+                                                                                        ),
+                                                                                    ],
+                                                                                },
                                                                             },
-                                                                        },
+                                                                        ),
+                                                                        54..60,
                                                                     ),
-                                                                    54..60,
-                                                                ),
-                                                            ],
+                                                                ],
+                                                                54..60,
+                                                            ),
                                                         ),
                                                         54..60,
                                                     ),

@@ -5,30 +5,33 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
 (
     If(
         IfExpr {
-            condition: [
-                (
-                    Path(
-                        PathExpr {
-                            steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
-                                                Integer(
-                                                    1,
+            condition: (
+                [
+                    (
+                        Path(
+                            PathExpr {
+                                steps: [
+                                    (
+                                        PrimaryExpr(
+                                            (
+                                                Literal(
+                                                    Integer(
+                                                        1,
+                                                    ),
                                                 ),
+                                                4..5,
                                             ),
-                                            4..5,
                                         ),
+                                        4..5,
                                     ),
-                                    4..5,
-                                ),
-                            ],
-                        },
+                                ],
+                            },
+                        ),
+                        4..5,
                     ),
-                    4..5,
-                ),
-            ],
+                ],
+                4..5,
+            ),
             then: (
                 Path(
                     PathExpr {

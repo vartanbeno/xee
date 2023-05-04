@@ -52,7 +52,7 @@ impl<'a> AstParser<'a> {
             _ => ast::PathExpr {
                 steps: vec![(
                     ast::StepExpr::PrimaryExpr((
-                        ast::PrimaryExpr::Expr(vec![expr_single]),
+                        ast::PrimaryExpr::Expr((vec![expr_single], span.clone())),
                         span.clone(),
                     )),
                     span,
@@ -62,16 +62,18 @@ impl<'a> AstParser<'a> {
     }
 
     fn xpath(&self, pair: Pair<Rule>) -> ast::XPath {
-        // let pairs = pair.into_inner();
-        // let exprs = pairs.map(expr_single).collect::<Vec<_>>();
         ast::XPath {
             exprs: self.exprs(pair),
         }
     }
 
-    fn exprs(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
+    fn exprs(&self, pair: Pair<Rule>) -> ast::ExprsS {
+        let span = pair.as_span();
         let pairs = pair.into_inner();
-        pairs.map(|pair| self.expr_single(pair)).collect::<Vec<_>>()
+        spanned(
+            pairs.map(|pair| self.expr_single(pair)).collect::<Vec<_>>(),
+            &span,
+        )
     }
 
     fn expr_single(&self, pair: Pair<Rule>) -> ast::ExprSingleS {
@@ -309,8 +311,8 @@ impl<'a> AstParser<'a> {
             Rule::Expr => {
                 let span = &pair.as_span();
                 let exprs = self.exprs(pair);
-                if exprs.len() == 1 {
-                    exprs[0].clone()
+                if exprs.0.len() == 1 {
+                    exprs.0[0].clone()
                 } else {
                     spanned(
                         ast::ExprSingle::Path(ast::PathExpr {
@@ -737,19 +739,21 @@ impl<'a> AstParser<'a> {
                             ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                                 params,
                                 return_type: None,
-                                body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                                    steps: vec![not_spanned(ast::StepExpr::PrimaryExpr(
-                                        not_spanned(ast::PrimaryExpr::FunctionCall(
-                                            ast::FunctionCall {
-                                                name: self.eq_name_to_name(
-                                                    name,
-                                                    self.namespaces.default_function_namespace,
-                                                ),
-                                                arguments,
-                                            },
-                                        )),
-                                    ))],
-                                }))],
+                                body: not_spanned(vec![not_spanned(ast::ExprSingle::Path(
+                                    ast::PathExpr {
+                                        steps: vec![not_spanned(ast::StepExpr::PrimaryExpr(
+                                            not_spanned(ast::PrimaryExpr::FunctionCall(
+                                                ast::FunctionCall {
+                                                    name: self.eq_name_to_name(
+                                                        name,
+                                                        self.namespaces.default_function_namespace,
+                                                    ),
+                                                    arguments,
+                                                },
+                                            )),
+                                        ))],
+                                    },
+                                ))]),
                             })
                         }
                     }
@@ -805,12 +809,14 @@ impl<'a> AstParser<'a> {
                     primary = not_spanned(ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                         params,
                         return_type: None,
-                        body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![not_spanned(ast::StepExpr::PostfixExpr {
-                                primary,
-                                postfixes: normal_postfixes.clone(),
-                            })],
-                        }))],
+                        body: not_spanned(vec![not_spanned(ast::ExprSingle::Path(
+                            ast::PathExpr {
+                                steps: vec![not_spanned(ast::StepExpr::PostfixExpr {
+                                    primary,
+                                    postfixes: normal_postfixes.clone(),
+                                })],
+                            },
+                        ))]),
                     }));
                     // collect more postfixes now
                     normal_postfixes.clear();
@@ -878,7 +884,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn predicate_to_expr(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
+    fn predicate_to_expr(&self, pair: Pair<Rule>) -> ast::ExprsS {
         debug_assert_eq!(pair.as_rule(), Rule::Predicate);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)
@@ -1021,7 +1027,7 @@ impl<'a> AstParser<'a> {
         ast::Param { name, type_ }
     }
 
-    fn function_body_to_body(&self, pair: Pair<Rule>) -> Vec<ast::ExprSingleS> {
+    fn function_body_to_body(&self, pair: Pair<Rule>) -> ast::ExprsS {
         debug_assert_eq!(pair.as_rule(), Rule::FunctionBody);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)
@@ -1095,7 +1101,10 @@ fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
             steps: vec![(
-                ast::StepExpr::PrimaryExpr((ast::PrimaryExpr::Expr(vec![expr]), span.clone())),
+                ast::StepExpr::PrimaryExpr((
+                    ast::PrimaryExpr::Expr((vec![expr], span.clone())),
+                    span.clone(),
+                )),
                 span,
             )],
         },

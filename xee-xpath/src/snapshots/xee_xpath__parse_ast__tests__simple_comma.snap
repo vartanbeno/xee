@@ -4,51 +4,54 @@ expression: "parse_xpath_no_default_ns(\"1, 2\")"
 ---
 Ok(
     XPath {
-        exprs: [
-            (
-                Path(
-                    PathExpr {
-                        steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Literal(
-                                            Integer(
-                                                1,
+        exprs: (
+            [
+                (
+                    Path(
+                        PathExpr {
+                            steps: [
+                                (
+                                    PrimaryExpr(
+                                        (
+                                            Literal(
+                                                Integer(
+                                                    1,
+                                                ),
                                             ),
+                                            0..1,
                                         ),
-                                        0..1,
                                     ),
+                                    0..1,
                                 ),
-                                0..1,
-                            ),
-                        ],
-                    },
+                            ],
+                        },
+                    ),
+                    0..1,
                 ),
-                0..1,
-            ),
-            (
-                Path(
-                    PathExpr {
-                        steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Literal(
-                                            Integer(
-                                                2,
+                (
+                    Path(
+                        PathExpr {
+                            steps: [
+                                (
+                                    PrimaryExpr(
+                                        (
+                                            Literal(
+                                                Integer(
+                                                    2,
+                                                ),
                                             ),
+                                            3..4,
                                         ),
-                                        3..4,
                                     ),
+                                    3..4,
                                 ),
-                                3..4,
-                            ),
-                        ],
-                    },
+                            ],
+                        },
+                    ),
+                    3..4,
                 ),
-                3..4,
-            ),
-        ],
+            ],
+            0..4,
+        ),
     },
 )

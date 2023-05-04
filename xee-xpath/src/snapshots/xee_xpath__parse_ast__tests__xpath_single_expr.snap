@@ -4,49 +4,52 @@ expression: "parse_xpath_no_default_ns(\"1 + 2\")"
 ---
 Ok(
     XPath {
-        exprs: [
-            (
-                Binary(
-                    BinaryExpr {
-                        operator: Add,
-                        left: PathExpr {
-                            steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
-                                                Integer(
-                                                    1,
+        exprs: (
+            [
+                (
+                    Binary(
+                        BinaryExpr {
+                            operator: Add,
+                            left: PathExpr {
+                                steps: [
+                                    (
+                                        PrimaryExpr(
+                                            (
+                                                Literal(
+                                                    Integer(
+                                                        1,
+                                                    ),
                                                 ),
+                                                0..1,
                                             ),
-                                            0..1,
                                         ),
+                                        0..1,
                                     ),
-                                    0..1,
-                                ),
-                            ],
-                        },
-                        right: PathExpr {
-                            steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
-                                                Integer(
-                                                    2,
+                                ],
+                            },
+                            right: PathExpr {
+                                steps: [
+                                    (
+                                        PrimaryExpr(
+                                            (
+                                                Literal(
+                                                    Integer(
+                                                        2,
+                                                    ),
                                                 ),
+                                                4..5,
                                             ),
-                                            4..5,
                                         ),
+                                        4..5,
                                     ),
-                                    4..5,
-                                ),
-                            ],
+                                ],
+                            },
                         },
-                    },
+                    ),
+                    0..5,
                 ),
-                0..5,
-            ),
-        ],
+            ],
+            0..5,
+        ),
     },
 )

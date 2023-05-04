@@ -21,31 +21,34 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: [
-                                        (
-                                            Path(
-                                                PathExpr {
-                                                    steps: [
-                                                        (
-                                                            PrimaryExpr(
-                                                                (
-                                                                    VarRef(
-                                                                        Name {
-                                                                            name: "x",
-                                                                            namespace: None,
-                                                                        },
+                                    body: (
+                                        [
+                                            (
+                                                Path(
+                                                    PathExpr {
+                                                        steps: [
+                                                            (
+                                                                PrimaryExpr(
+                                                                    (
+                                                                        VarRef(
+                                                                            Name {
+                                                                                name: "x",
+                                                                                namespace: None,
+                                                                            },
+                                                                        ),
+                                                                        15..17,
                                                                     ),
-                                                                    15..17,
                                                                 ),
+                                                                15..17,
                                                             ),
-                                                            15..17,
-                                                        ),
-                                                    ],
-                                                },
+                                                        ],
+                                                    },
+                                                ),
+                                                15..18,
                                             ),
-                                            15..18,
-                                        ),
-                                    ],
+                                        ],
+                                        13..19,
+                                    ),
                                 },
                             ),
                             0..19,
