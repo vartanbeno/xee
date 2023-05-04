@@ -101,10 +101,7 @@ mod tests {
         let xpath = "1 + 2 +";
         let context = Context::with_documents(&xot, xpath, static_context, &documents);
 
-        let err = CompiledXPath::new(&context, xpath);
-        // assert_eq!(
-        //     err.to_string(),
-        //     "Parse error: expected a primary expression but found end of input"
-        // );
+        let r = CompiledXPath::new(&context, xpath);
+        assert!(r.is_err())
     }
 }
