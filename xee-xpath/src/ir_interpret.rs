@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use miette::SourceSpan;
+
 use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -18,22 +20,28 @@ pub(crate) struct InterpreterCompiler<'a> {
 }
 
 impl<'a> InterpreterCompiler<'a> {
-    pub(crate) fn compile_expr(&mut self, expr: &ir::Expr) -> Result<()> {
-        match expr {
+    pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> Result<()> {
+        let span = expr.1;
+        match &expr.0 {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
-            ir::Expr::Let(let_) => self.compile_let(let_),
-            ir::Expr::Binary(binary) => self.compile_binary(binary),
+            ir::Expr::Let(let_) => self.compile_let(let_, span),
+            ir::Expr::Binary(binary) => self.compile_binary(binary, span),
             ir::Expr::FunctionDefinition(function_definition) => {
-                self.compile_function_definition(function_definition)
+                self.compile_function_definition(function_definition, span)
             }
-            ir::Expr::StaticFunctionReference(static_function_id, context_names) => {
-                self.compile_static_function_reference(*static_function_id, context_names.as_ref())
+            ir::Expr::StaticFunctionReference(static_function_id, context_names) => self
+                .compile_static_function_reference(
+                    *static_function_id,
+                    context_names.as_ref(),
+                    span,
+                ),
+            ir::Expr::FunctionCall(function_call) => {
+                self.compile_function_call(function_call, span)
             }
-            ir::Expr::FunctionCall(function_call) => self.compile_function_call(function_call),
-            ir::Expr::If(if_) => self.compile_if(if_),
-            ir::Expr::Map(map) => self.compile_map(map),
-            ir::Expr::Filter(filter) => self.compile_filter(filter),
-            ir::Expr::Quantified(quantified) => self.compile_quantified(quantified),
+            ir::Expr::If(if_) => self.compile_if(if_, span),
+            ir::Expr::Map(map) => self.compile_map(map, span),
+            ir::Expr::Filter(filter) => self.compile_filter(filter, span),
+            ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
         }
     }
 
@@ -48,19 +56,19 @@ impl<'a> InterpreterCompiler<'a> {
                     }
                     ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
-                self.builder.emit_constant(stack_value);
+                self.builder.emit_constant(stack_value, atom.1);
                 Ok(())
             }
-            ir::Atom::Variable(name) => self.compile_variable(name),
+            ir::Atom::Variable(name) => self.compile_variable(name, atom.1),
         }
     }
 
-    fn compile_variable(&mut self, name: &ir::Name) -> Result<()> {
+    fn compile_variable(&mut self, name: &ir::Name, span: SourceSpan) -> Result<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
                 return Err(Error::XPDY0130);
             }
-            self.builder.emit(Instruction::Var(index as u16));
+            self.builder.emit(Instruction::Var(index as u16), span);
             Ok(())
         } else {
             // if value is in any outer scopes
@@ -69,7 +77,8 @@ impl<'a> InterpreterCompiler<'a> {
                 if index > u16::MAX as usize {
                     return Err(Error::XPDY0130);
                 }
-                self.builder.emit(Instruction::ClosureVar(index as u16));
+                self.builder
+                    .emit(Instruction::ClosureVar(index as u16), span);
                 Ok(())
             } else {
                 unreachable!("variable not found: {:?}", name);
@@ -77,77 +86,77 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_variable_set(&mut self, name: &ir::Name) -> Result<()> {
+    fn compile_variable_set(&mut self, name: &ir::Name, span: SourceSpan) -> Result<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
                 return Err(Error::XPDY0130);
             }
-            self.builder.emit(Instruction::Set(index as u16));
+            self.builder.emit(Instruction::Set(index as u16), span);
         } else {
             panic!("can only set locals: {:?}", name);
         }
         Ok(())
     }
 
-    fn compile_let(&mut self, let_: &ir::Let) -> Result<()> {
-        self.compile_expr(&let_.var_expr.0)?;
+    fn compile_let(&mut self, let_: &ir::Let, span: SourceSpan) -> Result<()> {
+        self.compile_expr(&let_.var_expr)?;
         self.scopes.push_name(&let_.name);
-        self.compile_expr(&let_.return_expr.0)?;
-        self.builder.emit(Instruction::LetDone);
+        self.compile_expr(&let_.return_expr)?;
+        self.builder.emit(Instruction::LetDone, span);
         self.scopes.pop_name();
         Ok(())
     }
 
-    fn compile_if(&mut self, if_: &ir::If) -> Result<()> {
+    fn compile_if(&mut self, if_: &ir::If, span: SourceSpan) -> Result<()> {
         self.compile_atom(&if_.condition)?;
-        let jump_else = self.builder.emit_jump_forward(JumpCondition::False);
-        self.compile_expr(&if_.then.0)?;
-        let jump_end = self.builder.emit_jump_forward(JumpCondition::Always);
+        let jump_else = self.builder.emit_jump_forward(JumpCondition::False, span);
+        self.compile_expr(&if_.then)?;
+        let jump_end = self.builder.emit_jump_forward(JumpCondition::Always, span);
         self.builder.patch_jump(jump_else);
-        self.compile_expr(&if_.else_.0)?;
+        self.compile_expr(&if_.else_)?;
         self.builder.patch_jump(jump_end);
         Ok(())
     }
 
-    fn compile_binary(&mut self, binary: &ir::Binary) -> Result<()> {
+    fn compile_binary(&mut self, binary: &ir::Binary, span: SourceSpan) -> Result<()> {
         self.compile_atom(&binary.left)?;
         self.compile_atom(&binary.right)?;
         match &binary.op {
             ir::BinaryOp::Add => {
-                self.builder.emit(Instruction::Add);
+                self.builder.emit(Instruction::Add, span);
             }
             ir::BinaryOp::Sub => {
-                self.builder.emit(Instruction::Sub);
+                self.builder.emit(Instruction::Sub, span);
             }
             ir::BinaryOp::Eq => {
-                self.builder.emit(Instruction::Eq);
+                self.builder.emit(Instruction::Eq, span);
             }
             ir::BinaryOp::Ne => {
-                self.builder.emit(Instruction::Ne);
+                self.builder.emit(Instruction::Ne, span);
             }
             ir::BinaryOp::Lt => {
-                self.builder.emit(Instruction::Lt);
+                self.builder.emit(Instruction::Lt, span);
             }
             ir::BinaryOp::Le => {
-                self.builder.emit(Instruction::Le);
+                self.builder.emit(Instruction::Le, span);
             }
             ir::BinaryOp::Gt => {
-                self.builder.emit(Instruction::Gt);
+                self.builder.emit(Instruction::Gt, span);
             }
             ir::BinaryOp::Ge => {
-                self.builder.emit(Instruction::Ge);
+                self.builder.emit(Instruction::Ge, span);
             }
             ir::BinaryOp::Comma => {
-                self.builder.emit(Instruction::Comma);
+                self.builder.emit(Instruction::Comma, span);
             }
             ir::BinaryOp::Union => {
-                self.builder.emit(Instruction::Union);
+                self.builder.emit(Instruction::Union, span);
             }
             ir::BinaryOp::Range => {
-                self.builder.emit(Instruction::Range);
+                self.builder.emit(Instruction::Range, span);
             }
             ir::BinaryOp::Concat => {
-                self.builder.emit(Instruction::Concat);
+                self.builder.emit(Instruction::Concat, span);
             }
         }
         Ok(())
@@ -156,6 +165,7 @@ impl<'a> InterpreterCompiler<'a> {
     fn compile_function_definition(
         &mut self,
         function_definition: &ir::FunctionDefinition,
+        span: SourceSpan,
     ) -> Result<()> {
         let nested_builder = self.builder.builder();
         self.scopes.push_scope();
@@ -169,25 +179,26 @@ impl<'a> InterpreterCompiler<'a> {
         for param in &function_definition.params {
             compiler.scopes.push_name(&param.0);
         }
-        compiler.compile_expr(&function_definition.body.0)?;
+        compiler.compile_expr(&function_definition.body)?;
         for _ in &function_definition.params {
             compiler.scopes.pop_name();
         }
 
         compiler.scopes.pop_scope();
 
-        let function = compiler
-            .builder
-            .finish("inline".to_string(), function_definition.params.len());
+        let function =
+            compiler
+                .builder
+                .finish("inline".to_string(), function_definition.params.len(), span);
         // now place all captured names on stack, to ensure we have the
         // closure
         // in reverse order so we can pop them off in the right order
         for name in function.closure_names.iter().rev() {
-            self.compile_variable(name)?;
+            self.compile_variable(name, span)?;
         }
         let function_id = self.builder.add_function(function);
         self.builder
-            .emit(Instruction::Closure(function_id.as_u16()));
+            .emit(Instruction::Closure(function_id.as_u16()), span);
         Ok(())
     }
 
@@ -195,6 +206,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         static_function_id: StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
+        span: SourceSpan,
     ) -> Result<()> {
         let static_function = self
             .context
@@ -205,64 +217,73 @@ impl<'a> InterpreterCompiler<'a> {
             Some(ContextRule::ItemFirst) => {
                 // XXX optional context names; what if context is absent?
                 let context_names = context_names.unwrap();
-                self.compile_variable(&context_names.item)?
+                self.compile_variable(&context_names.item, span)?
             }
             Some(ContextRule::ItemLast) => {
                 let context_names = context_names.unwrap();
-                self.compile_variable(&context_names.item)?
+                self.compile_variable(&context_names.item, span)?
             }
-            Some(ContextRule::PositionFirst) => self.compile_variable({
-                let context_names = context_names.unwrap();
-                &context_names.position
-            })?,
+            Some(ContextRule::PositionFirst) => self.compile_variable(
+                {
+                    let context_names = context_names.unwrap();
+                    &context_names.position
+                },
+                span,
+            )?,
             Some(ContextRule::SizeFirst) => {
                 let context_names = context_names.unwrap();
-                self.compile_variable(&context_names.last)?
+                self.compile_variable(&context_names.last, span)?
             }
             None => {}
         }
-        self.builder
-            .emit(Instruction::StaticClosure(static_function_id.as_u16()));
+        self.builder.emit(
+            Instruction::StaticClosure(static_function_id.as_u16()),
+            span,
+        );
         Ok(())
     }
 
-    fn compile_function_call(&mut self, function_call: &ir::FunctionCall) -> Result<()> {
+    fn compile_function_call(
+        &mut self,
+        function_call: &ir::FunctionCall,
+        span: SourceSpan,
+    ) -> Result<()> {
         self.compile_atom(&function_call.atom)?;
         for arg in &function_call.args {
             self.compile_atom(arg)?;
         }
         self.builder
-            .emit(Instruction::Call(function_call.args.len() as u8));
+            .emit(Instruction::Call(function_call.args.len() as u8), span);
         Ok(())
     }
 
-    fn compile_map(&mut self, map: &ir::Map) -> Result<()> {
+    fn compile_map(&mut self, map: &ir::Map, span: SourceSpan) -> Result<()> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
-        self.builder.emit(Instruction::SequenceNew);
+        self.builder.emit(Instruction::SequenceNew, span);
 
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&map.var_atom, &map.context_names)?;
+            self.compile_sequence_loop_init(&map.var_atom, &map.context_names, span)?;
 
-        self.compile_sequence_get_item(&map.var_atom, &map.context_names)?;
+        self.compile_sequence_get_item(&map.var_atom, &map.context_names, span)?;
         // name it
         self.scopes.push_name(&map.context_names.item);
         // execute the map expression, placing result on stack
-        self.compile_expr(&map.return_expr.0)?;
+        self.compile_expr(&map.return_expr)?;
         self.scopes.pop_name();
 
         // push result to new sequence
-        self.compile_variable(&new_sequence)?;
-        self.builder.emit(Instruction::SequencePush);
+        self.compile_variable(&new_sequence, span)?;
+        self.builder.emit(Instruction::SequencePush, span);
 
         // clean up the var_name item
-        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop, span);
 
-        self.compile_sequence_loop_iterate(loop_start, &map.context_names)?;
+        self.compile_sequence_loop_iterate(loop_start, &map.context_names, span)?;
 
         self.builder.patch_jump(loop_end);
-        self.compile_sequence_loop_end();
+        self.compile_sequence_loop_end(span);
 
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
@@ -271,41 +292,41 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_filter(&mut self, filter: &ir::Filter) -> Result<()> {
+    fn compile_filter(&mut self, filter: &ir::Filter, span: SourceSpan) -> Result<()> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
-        self.builder.emit(Instruction::SequenceNew);
+        self.builder.emit(Instruction::SequenceNew, span);
 
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names)?;
+            self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names, span)?;
 
         // place item to filter on stack
-        self.compile_sequence_get_item(&filter.var_atom, &filter.context_names)?;
+        self.compile_sequence_get_item(&filter.var_atom, &filter.context_names, span)?;
         // name it
         self.scopes.push_name(&filter.context_names.item);
         // execute the filter expression, placing result on stack
-        self.compile_expr(&filter.return_expr.0)?;
+        self.compile_expr(&filter.return_expr)?;
         self.scopes.pop_name();
 
         // if filter is false, we skip this item
-        let is_included = self.builder.emit_jump_forward(JumpCondition::True);
+        let is_included = self.builder.emit_jump_forward(JumpCondition::True, span);
         // we need to clean up the stack after this
-        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop, span);
         // and iterate the loop
-        let iterate = self.builder.emit_jump_forward(JumpCondition::Always);
+        let iterate = self.builder.emit_jump_forward(JumpCondition::Always, span);
 
         self.builder.patch_jump(is_included);
         // push item to new sequence
-        self.compile_variable(&new_sequence)?;
-        self.builder.emit(Instruction::SequencePush);
+        self.compile_variable(&new_sequence, span)?;
+        self.builder.emit(Instruction::SequencePush, span);
 
         self.builder.patch_jump(iterate);
         // no need to clean up the stack, as filter get is pushed onto sequence
-        self.compile_sequence_loop_iterate(loop_start, &filter.context_names)?;
+        self.compile_sequence_loop_iterate(loop_start, &filter.context_names, span)?;
 
         self.builder.patch_jump(loop_end);
-        self.compile_sequence_loop_end();
+        self.compile_sequence_loop_end(span);
 
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
@@ -314,50 +335,50 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_quantified(&mut self, quantified: &ir::Quantified) -> Result<()> {
+    fn compile_quantified(&mut self, quantified: &ir::Quantified, span: SourceSpan) -> Result<()> {
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names)?;
+            self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names, span)?;
 
-        self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names)?;
+        self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names, span)?;
         // name it
         self.scopes.push_name(&quantified.context_names.item);
         // execute the satisfies expression, placing result in on stack
-        self.compile_expr(&quantified.satisifies_expr.0)?;
+        self.compile_expr(&quantified.satisifies_expr)?;
         self.scopes.pop_name();
 
         let jump_out_end = match quantified.quantifier {
-            ir::Quantifier::Some => self.builder.emit_jump_forward(JumpCondition::True),
-            ir::Quantifier::Every => self.builder.emit_jump_forward(JumpCondition::False),
+            ir::Quantifier::Some => self.builder.emit_jump_forward(JumpCondition::True, span),
+            ir::Quantifier::Every => self.builder.emit_jump_forward(JumpCondition::False, span),
         };
         // we didn't jump out, clean up quantifier variable
-        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop, span);
 
-        self.compile_sequence_loop_iterate(loop_start, &quantified.context_names)?;
+        self.compile_sequence_loop_iterate(loop_start, &quantified.context_names, span)?;
 
         self.builder.patch_jump(loop_end);
 
         // if we reached the end, without jumping out
-        self.compile_sequence_loop_end();
+        self.compile_sequence_loop_end(span);
 
         let reached_end_value = match quantified.quantifier {
             ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(false)),
             ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(true)),
         };
-        self.builder.emit_constant(reached_end_value);
-        let end = self.builder.emit_jump_forward(JumpCondition::Always);
+        self.builder.emit_constant(reached_end_value, span);
+        let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
 
         // we jumped out
         self.builder.patch_jump(jump_out_end);
         // clean up quantifier variable
-        self.builder.emit(Instruction::Pop);
-        self.compile_sequence_loop_end();
+        self.builder.emit(Instruction::Pop, span);
+        self.compile_sequence_loop_end(span);
 
         let jumped_out_value = match quantified.quantifier {
             ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(true)),
             ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(false)),
         };
         // if we jumped out, we set satisfies to true
-        self.builder.emit_constant(jumped_out_value);
+        self.builder.emit_constant(jumped_out_value, span);
 
         self.builder.patch_jump(end);
         // pop sequence length name & index
@@ -370,25 +391,26 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         atom: &ir::AtomS,
         context_names: &ir::ContextNames,
+        span: SourceSpan,
     ) -> Result<(BackwardJumpRef, ForwardJumpRef)> {
         //  sequence length
         self.compile_atom(atom)?;
         self.scopes.push_name(&context_names.last);
-        self.builder.emit(Instruction::SequenceLen);
+        self.builder.emit(Instruction::SequenceLen, span);
 
         // place index on stack
         self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)), span);
         self.scopes.push_name(&context_names.position);
 
         let loop_start_ref = self.builder.loop_start();
 
         // compare with sequence length, if index is gt length, we're done with the loop
-        self.compile_variable(&context_names.position)?;
-        self.compile_variable(&context_names.last)?;
-        self.builder.emit(Instruction::Gt);
+        self.compile_variable(&context_names.position, span)?;
+        self.compile_variable(&context_names.last, span)?;
+        self.builder.emit(Instruction::Gt, span);
         // check whether index is gt length, if so, we're done with the loop
-        let loop_end_ref = self.builder.emit_jump_forward(JumpCondition::True);
+        let loop_end_ref = self.builder.emit_jump_forward(JumpCondition::True, span);
 
         Ok((loop_start_ref, loop_end_ref))
     }
@@ -397,11 +419,12 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         atom: &ir::AtomS,
         context_names: &ir::ContextNames,
+        span: SourceSpan,
     ) -> Result<()> {
         // get item at the index
-        self.compile_variable(&context_names.position)?;
+        self.compile_variable(&context_names.position, span)?;
         self.compile_atom(atom)?;
-        self.builder.emit(Instruction::SequenceGet);
+        self.builder.emit(Instruction::SequenceGet, span);
         Ok(())
     }
 
@@ -409,22 +432,23 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         loop_start: BackwardJumpRef,
         context_names: &ir::ContextNames,
+        span: SourceSpan,
     ) -> Result<()> {
         // update index with 1
-        self.compile_variable(&context_names.position)?;
+        self.compile_variable(&context_names.position, span)?;
         self.builder
-            .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        self.builder.emit(Instruction::Add);
-        self.compile_variable_set(&context_names.position)?;
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)), span);
+        self.builder.emit(Instruction::Add, span);
+        self.compile_variable_set(&context_names.position, span)?;
         self.builder
-            .emit_jump_backward(loop_start, JumpCondition::Always);
+            .emit_jump_backward(loop_start, JumpCondition::Always, span);
         Ok(())
     }
 
-    fn compile_sequence_loop_end(&mut self) {
+    fn compile_sequence_loop_end(&mut self, span: SourceSpan) {
         // pop length and index
-        self.builder.emit(Instruction::Pop);
-        self.builder.emit(Instruction::Pop);
+        self.builder.emit(Instruction::Pop, span);
+        self.builder.emit(Instruction::Pop, span);
     }
 }
 

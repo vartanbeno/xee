@@ -467,10 +467,11 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)));
-        builder.emit(Instruction::Add);
-        let function = builder.finish("main".to_string(), 0);
+        let empty_span = (0, 0).into();
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit(Instruction::Add, empty_span);
+        let function = builder.finish("main".to_string(), 0, empty_span);
 
         let main_id = program.add_function(function);
         let xot = Xot::new();
@@ -493,11 +494,12 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        let jump = builder.emit_jump_forward(JumpCondition::Always);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
+        let empty_span = (0, 0).into();
+        let jump = builder.emit_jump_forward(JumpCondition::Always, empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
         builder.patch_jump(jump);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
-        let function = builder.finish("main".to_string(), 0);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
+        let function = builder.finish("main".to_string(), 0, empty_span);
 
         let instructions = decode_instructions(&function.chunk);
         program.add_function(function);
@@ -518,16 +520,17 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)));
-        builder.emit(Instruction::Lt);
-        let lt_false = builder.emit_jump_forward(JumpCondition::False);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
-        let end = builder.emit_jump_forward(JumpCondition::Always);
+        let empty_span = (0, 0).into();
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit(Instruction::Lt, empty_span);
+        let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
+        let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
         builder.patch_jump(end);
-        let function = builder.finish("main".to_string(), 0);
+        let function = builder.finish("main".to_string(), 0, empty_span);
 
         let main_id = program.add_function(function);
 
@@ -551,16 +554,17 @@ mod tests {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)));
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)));
-        builder.emit(Instruction::Lt);
-        let lt_false = builder.emit_jump_forward(JumpCondition::False);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)));
-        let end = builder.emit_jump_forward(JumpCondition::Always);
+        let empty_span = (0, 0).into();
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit(Instruction::Lt, empty_span);
+        let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
+        let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)));
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
         builder.patch_jump(end);
-        let function = builder.finish("main".to_string(), 0);
+        let function = builder.finish("main".to_string(), 0, empty_span);
 
         let main_id = program.add_function(function);
 

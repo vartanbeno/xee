@@ -29,7 +29,7 @@ impl<'a> CompiledXPath<'a> {
             scopes: &mut scopes,
             context,
         };
-        compiler.compile_expr(&expr.0)?;
+        compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
         let inline_id = FunctionId(program.functions.len() - 1);

@@ -1,4 +1,6 @@
-use crate::instruction::{encode_instruction, Instruction};
+use miette::SourceSpan;
+
+use crate::instruction::{encode_instruction, instruction_size, Instruction};
 use crate::ir;
 use crate::value::{Function, FunctionId, StackValue};
 
@@ -57,6 +59,7 @@ pub(crate) enum JumpCondition {
 pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     compiled: Vec<u8>,
+    spans: Vec<SourceSpan>,
     constants: Vec<StackValue>,
     closure_names: Vec<ir::Name>,
 }
@@ -66,22 +69,26 @@ impl<'a> FunctionBuilder<'a> {
         FunctionBuilder {
             program,
             compiled: Vec::new(),
+            spans: Vec::new(),
             constants: Vec::new(),
             closure_names: Vec::new(),
         }
     }
 
-    pub(crate) fn emit(&mut self, instruction: Instruction) {
+    pub(crate) fn emit(&mut self, instruction: Instruction, span: SourceSpan) {
+        for _ in 0..instruction_size(&instruction) {
+            self.spans.push(span);
+        }
         encode_instruction(instruction, &mut self.compiled);
     }
 
-    pub(crate) fn emit_constant(&mut self, constant: StackValue) {
+    pub(crate) fn emit_constant(&mut self, constant: StackValue, span: SourceSpan) {
         let constant_id = self.constants.len();
         self.constants.push(constant);
         if constant_id > (u16::MAX as usize) {
             panic!("too many constants");
         }
-        self.emit(Instruction::Const(constant_id as u16));
+        self.emit(Instruction::Const(constant_id as u16), span);
     }
 
     pub(crate) fn add_closure_name(&mut self, name: &ir::Name) -> usize {
@@ -97,14 +104,14 @@ impl<'a> FunctionBuilder<'a> {
         index
     }
 
-    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison) {
+    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison, span: SourceSpan) {
         match comparison {
-            Comparison::Eq => self.emit(Instruction::Eq),
-            Comparison::Ne => self.emit(Instruction::Ne),
-            Comparison::Lt => self.emit(Instruction::Lt),
-            Comparison::Le => self.emit(Instruction::Le),
-            Comparison::Gt => self.emit(Instruction::Gt),
-            Comparison::Ge => self.emit(Instruction::Ge),
+            Comparison::Eq => self.emit(Instruction::Eq, span),
+            Comparison::Ne => self.emit(Instruction::Ne, span),
+            Comparison::Lt => self.emit(Instruction::Lt, span),
+            Comparison::Le => self.emit(Instruction::Le, span),
+            Comparison::Gt => self.emit(Instruction::Gt, span),
+            Comparison::Ge => self.emit(Instruction::Ge, span),
         }
     }
 
@@ -116,6 +123,7 @@ impl<'a> FunctionBuilder<'a> {
         &mut self,
         jump_ref: BackwardJumpRef,
         condition: JumpCondition,
+        span: SourceSpan,
     ) {
         let current = self.compiled.len() + 3;
         let offset = current - jump_ref.0;
@@ -127,18 +135,22 @@ impl<'a> FunctionBuilder<'a> {
         }
 
         match condition {
-            JumpCondition::True => self.emit(Instruction::JumpIfTrue(-(offset as i16))),
-            JumpCondition::False => self.emit(Instruction::JumpIfFalse(-(offset as i16))),
-            JumpCondition::Always => self.emit(Instruction::Jump(-(offset as i16))),
+            JumpCondition::True => self.emit(Instruction::JumpIfTrue(-(offset as i16)), span),
+            JumpCondition::False => self.emit(Instruction::JumpIfFalse(-(offset as i16)), span),
+            JumpCondition::Always => self.emit(Instruction::Jump(-(offset as i16)), span),
         }
     }
 
-    pub(crate) fn emit_jump_forward(&mut self, condition: JumpCondition) -> ForwardJumpRef {
+    pub(crate) fn emit_jump_forward(
+        &mut self,
+        condition: JumpCondition,
+        span: SourceSpan,
+    ) -> ForwardJumpRef {
         let index = self.compiled.len();
         match condition {
-            JumpCondition::True => self.emit(Instruction::JumpIfTrue(0)),
-            JumpCondition::False => self.emit(Instruction::JumpIfFalse(0)),
-            JumpCondition::Always => self.emit(Instruction::Jump(0)),
+            JumpCondition::True => self.emit(Instruction::JumpIfTrue(0), span),
+            JumpCondition::False => self.emit(Instruction::JumpIfFalse(0), span),
+            JumpCondition::Always => self.emit(Instruction::Jump(0), span),
         }
         ForwardJumpRef(index)
     }
@@ -157,8 +169,8 @@ impl<'a> FunctionBuilder<'a> {
         self.compiled[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    pub(crate) fn finish(mut self, name: String, arity: usize) -> Function {
-        self.emit(Instruction::Return);
+    pub(crate) fn finish(mut self, name: String, arity: usize, span: SourceSpan) -> Function {
+        self.emit(Instruction::Return, span);
         Function {
             name,
             arity,
