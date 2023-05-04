@@ -3,59 +3,79 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"1, 2\")"
 ---
 Ok(
-    FunctionDefinition(
-        FunctionDefinition {
-            params: [
-                Param(
-                    Name(
-                        "v0",
-                    ),
-                ),
-                Param(
-                    Name(
-                        "v1",
-                    ),
-                ),
-                Param(
-                    Name(
-                        "v2",
-                    ),
-                ),
-            ],
-            body: Binary(
-                Binary {
-                    left: (
-                        Const(
-                            Integer(
-                                1,
-                            ),
+    (
+        FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
+                            "v0",
                         ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                0,
+                    ),
+                    Param(
+                        Name(
+                            "v1",
+                        ),
+                    ),
+                    Param(
+                        Name(
+                            "v2",
+                        ),
+                    ),
+                ],
+                body: (
+                    Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
-                            length: SourceOffset(
-                                1,
+                            op: Comma,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        3,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),
-                    op: Comma,
-                    right: (
-                        Const(
-                            Integer(
-                                2,
-                            ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            3,
                         ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                3,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                4,
             ),
         },
     ),

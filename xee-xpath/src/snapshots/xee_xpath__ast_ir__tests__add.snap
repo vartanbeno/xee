@@ -3,38 +3,48 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1 + 2\")"
 ---
 Ok(
-    Binary(
-        Binary {
-            left: (
-                Const(
-                    Integer(
-                        1,
+    (
+        Binary(
+            Binary {
+                left: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
                 ),
-                SourceSpan {
-                    offset: SourceOffset(
-                        0,
+                op: Add,
+                right: (
+                    Const(
+                        Integer(
+                            2,
+                        ),
                     ),
-                    length: SourceOffset(
-                        1,
-                    ),
-                },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
             ),
-            op: Add,
-            right: (
-                Const(
-                    Integer(
-                        2,
-                    ),
-                ),
-                SourceSpan {
-                    offset: SourceOffset(
-                        4,
-                    ),
-                    length: SourceOffset(
-                        1,
-                    ),
-                },
+            length: SourceOffset(
+                5,
             ),
         },
     ),

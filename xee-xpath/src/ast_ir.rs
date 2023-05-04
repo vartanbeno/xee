@@ -49,17 +49,20 @@ impl Bindings {
         atom
     }
 
-    fn expr(&self) -> ir::Expr {
+    fn expr(&self) -> ir::ExprS {
         let last_binding = self.bindings.last().unwrap();
         let bindings = &self.bindings[..self.bindings.len() - 1];
         let expr = last_binding.expr.clone();
-        bindings.iter().rev().fold(expr, |expr, binding| {
-            ir::Expr::Let(ir::Let {
-                name: binding.name.clone(),
-                var_expr: Box::new(binding.expr.clone()),
-                return_expr: Box::new(expr),
-            })
-        })
+        (
+            bindings.iter().rev().fold(expr, |expr, binding| {
+                ir::Expr::Let(ir::Let {
+                    name: binding.name.clone(),
+                    var_expr: Box::new((binding.expr.clone(), binding.span)),
+                    return_expr: Box::new((expr, binding.span)),
+                })
+            }),
+            last_binding.span,
+        )
     }
 
     // for function arguments turn all bindings into atoms; remove those
@@ -239,12 +242,12 @@ impl<'a> IrConverter<'a> {
         Binding { name, expr, span }
     }
 
-    fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> Result<ir::Expr> {
+    fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> Result<ir::ExprS> {
         let bindings = self.expr_single(ast)?;
         Ok(bindings.expr())
     }
 
-    pub(crate) fn convert_xpath(&mut self, ast: &ast::XPath) -> Result<ir::Expr> {
+    pub(crate) fn convert_xpath(&mut self, ast: &ast::XPath) -> Result<ir::ExprS> {
         let bindings = self.xpath(ast)?;
         Ok(bindings.expr())
     }
@@ -673,7 +676,7 @@ impl<'a> IrConverter<'a> {
     }
 }
 
-fn convert_expr_single(s: &str) -> Result<ir::Expr> {
+fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
     let ast = crate::parse_ast::parse_expr_single(s);
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
@@ -681,7 +684,7 @@ fn convert_expr_single(s: &str) -> Result<ir::Expr> {
     converter.convert_expr_single(&ast)
 }
 
-fn convert_xpath(s: &str) -> Result<ir::Expr> {
+fn convert_xpath(s: &str) -> Result<ir::ExprS> {
     let namespaces = Namespaces::new(None, None);
     let ast = crate::parse_ast::parse_xpath(s, &namespaces)?;
     let static_context = StaticContext::new(&namespaces);

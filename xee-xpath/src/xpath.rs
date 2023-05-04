@@ -29,7 +29,7 @@ impl<'a> CompiledXPath<'a> {
             scopes: &mut scopes,
             context,
         };
-        compiler.compile_expr(&expr)?;
+        compiler.compile_expr(&expr.0)?;
 
         // the inline function should be the last finished function
         let inline_id = FunctionId(program.functions.len() - 1);
@@ -71,7 +71,7 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
     match expr {
         ir::Expr::FunctionDefinition(ir::FunctionDefinition { params, body, .. }) => {
             assert_eq!(params.len(), 3);
-            (params[0].0.clone(), *body)
+            (params[0].0.clone(), body.0)
         }
         _ => panic!("expected inline function"),
     }

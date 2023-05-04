@@ -7,6 +7,7 @@ use crate::span::Spanned;
 use crate::value::{StaticFunctionId, Step};
 
 pub(crate) type AtomS = Spanned<Atom>;
+pub(crate) type ExprS = Spanned<Expr>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Expr {
@@ -53,15 +54,15 @@ pub(crate) struct ContextNames {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Let {
     pub(crate) name: Name,
-    pub(crate) var_expr: Box<Expr>,
-    pub(crate) return_expr: Box<Expr>,
+    pub(crate) var_expr: Box<ExprS>,
+    pub(crate) return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct If {
     pub(crate) condition: AtomS,
-    pub(crate) then: Box<Expr>,
-    pub(crate) else_: Box<Expr>,
+    pub(crate) then: Box<ExprS>,
+    pub(crate) else_: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -90,7 +91,7 @@ pub(crate) enum BinaryOp {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionDefinition {
     pub(crate) params: Vec<Param>,
-    pub(crate) body: Box<Expr>,
+    pub(crate) body: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -106,14 +107,14 @@ pub(crate) struct FunctionCall {
 pub(crate) struct Map {
     pub(crate) context_names: ContextNames,
     pub(crate) var_atom: AtomS,
-    pub(crate) return_expr: Box<Expr>,
+    pub(crate) return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Filter {
     pub(crate) context_names: ContextNames,
     pub(crate) var_atom: AtomS,
-    pub(crate) return_expr: Box<Expr>,
+    pub(crate) return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -121,7 +122,7 @@ pub(crate) struct Quantified {
     pub(crate) quantifier: Quantifier,
     pub(crate) context_names: ContextNames,
     pub(crate) var_atom: AtomS,
-    pub(crate) satisifies_expr: Box<Expr>,
+    pub(crate) satisifies_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

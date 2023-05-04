@@ -3,42 +3,62 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"my_function#2\")"
 ---
 Ok(
-    FunctionDefinition(
-        FunctionDefinition {
-            params: [
-                Param(
-                    Name(
-                        "v0",
-                    ),
-                ),
-                Param(
-                    Name(
-                        "v1",
-                    ),
-                ),
-                Param(
-                    Name(
-                        "v2",
-                    ),
-                ),
-            ],
-            body: StaticFunctionReference(
-                StaticFunctionId(
-                    0,
-                ),
-                Some(
-                    ContextNames {
-                        item: Name(
+    (
+        FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
                             "v0",
                         ),
-                        position: Name(
+                    ),
+                    Param(
+                        Name(
                             "v1",
                         ),
-                        last: Name(
+                    ),
+                    Param(
+                        Name(
                             "v2",
+                        ),
+                    ),
+                ],
+                body: (
+                    StaticFunctionReference(
+                        StaticFunctionId(
+                            0,
+                        ),
+                        Some(
+                            ContextNames {
+                                item: Name(
+                                    "v0",
+                                ),
+                                position: Name(
+                                    "v1",
+                                ),
+                                last: Name(
+                                    "v2",
+                                ),
+                            },
+                        ),
+                    ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            13,
                         ),
                     },
                 ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                13,
             ),
         },
     ),

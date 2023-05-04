@@ -3,119 +3,41 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(1 + 2, 3 + 4)\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v0",
-            ),
-            var_expr: StaticFunctionReference(
-                StaticFunctionId(
-                    0,
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v0",
                 ),
-                None,
-            ),
-            return_expr: Let(
-                Let {
-                    name: Name(
-                        "v3",
+                var_expr: (
+                    StaticFunctionReference(
+                        StaticFunctionId(
+                            0,
+                        ),
+                        None,
                     ),
-                    var_expr: Binary(
-                        Binary {
-                            left: (
-                                Const(
-                                    Integer(
-                                        1,
-                                    ),
-                                ),
-                                SourceSpan {
-                                    offset: SourceOffset(
-                                        12,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
-                            ),
-                            op: Add,
-                            right: (
-                                Const(
-                                    Integer(
-                                        2,
-                                    ),
-                                ),
-                                SourceSpan {
-                                    offset: SourceOffset(
-                                        16,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
-                            ),
-                        },
-                    ),
-                    return_expr: Let(
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            0,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    Let(
                         Let {
                             name: Name(
-                                "v6",
+                                "v3",
                             ),
-                            var_expr: Binary(
-                                Binary {
-                                    left: (
-                                        Const(
-                                            Integer(
-                                                3,
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                19,
-                                            ),
-                                            length: SourceOffset(
-                                                1,
-                                            ),
-                                        },
-                                    ),
-                                    op: Add,
-                                    right: (
-                                        Const(
-                                            Integer(
-                                                4,
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                23,
-                                            ),
-                                            length: SourceOffset(
-                                                1,
-                                            ),
-                                        },
-                                    ),
-                                },
-                            ),
-                            return_expr: FunctionCall(
-                                FunctionCall {
-                                    atom: (
-                                        Variable(
-                                            Name(
-                                                "v0",
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                0,
-                                            ),
-                                            length: SourceOffset(
-                                                0,
-                                            ),
-                                        },
-                                    ),
-                                    args: [
-                                        (
-                                            Variable(
-                                                Name(
-                                                    "v3",
+                            var_expr: (
+                                Binary(
+                                    Binary {
+                                        left: (
+                                            Const(
+                                                Integer(
+                                                    1,
                                                 ),
                                             ),
                                             SourceSpan {
@@ -123,15 +45,78 @@ Ok(
                                                     12,
                                                 ),
                                                 length: SourceOffset(
-                                                    5,
+                                                    1,
                                                 ),
                                             },
                                         ),
-                                        (
-                                            Variable(
-                                                Name(
-                                                    "v6",
+                                        op: Add,
+                                        right: (
+                                            Const(
+                                                Integer(
+                                                    2,
                                                 ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    16,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        12,
+                                    ),
+                                    length: SourceOffset(
+                                        5,
+                                    ),
+                                },
+                            ),
+                            return_expr: (
+                                Let(
+                                    Let {
+                                        name: Name(
+                                            "v6",
+                                        ),
+                                        var_expr: (
+                                            Binary(
+                                                Binary {
+                                                    left: (
+                                                        Const(
+                                                            Integer(
+                                                                3,
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                19,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                1,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    op: Add,
+                                                    right: (
+                                                        Const(
+                                                            Integer(
+                                                                4,
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                23,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                1,
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
                                             ),
                                             SourceSpan {
                                                 offset: SourceOffset(
@@ -142,12 +127,97 @@ Ok(
                                                 ),
                                             },
                                         ),
-                                    ],
+                                        return_expr: (
+                                            FunctionCall(
+                                                FunctionCall {
+                                                    atom: (
+                                                        Variable(
+                                                            Name(
+                                                                "v0",
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                0,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                0,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    args: [
+                                                        (
+                                                            Variable(
+                                                                Name(
+                                                                    "v3",
+                                                                ),
+                                                            ),
+                                                            SourceSpan {
+                                                                offset: SourceOffset(
+                                                                    12,
+                                                                ),
+                                                                length: SourceOffset(
+                                                                    5,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        (
+                                                            Variable(
+                                                                Name(
+                                                                    "v6",
+                                                                ),
+                                                            ),
+                                                            SourceSpan {
+                                                                offset: SourceOffset(
+                                                                    19,
+                                                                ),
+                                                                length: SourceOffset(
+                                                                    5,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    19,
+                                                ),
+                                                length: SourceOffset(
+                                                    5,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        12,
+                                    ),
+                                    length: SourceOffset(
+                                        5,
+                                    ),
                                 },
                             ),
                         },
                     ),
-                },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            0,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                25,
             ),
         },
     ),

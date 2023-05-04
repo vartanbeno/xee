@@ -3,64 +3,14 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"if (1 gt 2) then 1 + 2 else 3 + 4\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v2",
-            ),
-            var_expr: Binary(
-                Binary {
-                    left: (
-                        Const(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                4,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                    op: Gt,
-                    right: (
-                        Const(
-                            Integer(
-                                2,
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                9,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
-            ),
-            return_expr: If(
-                If {
-                    condition: (
-                        Variable(
-                            Name(
-                                "v2",
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                4,
-                            ),
-                            length: SourceOffset(
-                                6,
-                            ),
-                        },
-                    ),
-                    then: Binary(
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v2",
+                ),
+                var_expr: (
+                    Binary(
                         Binary {
                             left: (
                                 Const(
@@ -70,14 +20,14 @@ Ok(
                                 ),
                                 SourceSpan {
                                     offset: SourceOffset(
-                                        17,
+                                        4,
                                     ),
                                     length: SourceOffset(
                                         1,
                                     ),
                                 },
                             ),
-                            op: Add,
+                            op: Gt,
                             right: (
                                 Const(
                                     Integer(
@@ -86,7 +36,7 @@ Ok(
                                 ),
                                 SourceSpan {
                                     offset: SourceOffset(
-                                        21,
+                                        9,
                                     ),
                                     length: SourceOffset(
                                         1,
@@ -95,42 +45,142 @@ Ok(
                             ),
                         },
                     ),
-                    else_: Binary(
-                        Binary {
-                            left: (
-                                Const(
-                                    Integer(
-                                        3,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            6,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    If(
+                        If {
+                            condition: (
+                                Variable(
+                                    Name(
+                                        "v2",
                                     ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        4,
+                                    ),
+                                    length: SourceOffset(
+                                        6,
+                                    ),
+                                },
+                            ),
+                            then: (
+                                Binary(
+                                    Binary {
+                                        left: (
+                                            Const(
+                                                Integer(
+                                                    1,
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    17,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                        op: Add,
+                                        right: (
+                                            Const(
+                                                Integer(
+                                                    2,
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    21,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        17,
+                                    ),
+                                    length: SourceOffset(
+                                        6,
+                                    ),
+                                },
+                            ),
+                            else_: (
+                                Binary(
+                                    Binary {
+                                        left: (
+                                            Const(
+                                                Integer(
+                                                    3,
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    28,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                        op: Add,
+                                        right: (
+                                            Const(
+                                                Integer(
+                                                    4,
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    32,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                    },
                                 ),
                                 SourceSpan {
                                     offset: SourceOffset(
                                         28,
                                     ),
                                     length: SourceOffset(
-                                        1,
-                                    ),
-                                },
-                            ),
-                            op: Add,
-                            right: (
-                                Const(
-                                    Integer(
-                                        4,
-                                    ),
-                                ),
-                                SourceSpan {
-                                    offset: SourceOffset(
-                                        32,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
+                                        5,
                                     ),
                                 },
                             ),
                         },
                     ),
-                },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            6,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                33,
             ),
         },
     ),

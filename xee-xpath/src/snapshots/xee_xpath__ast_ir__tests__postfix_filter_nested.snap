@@ -3,68 +3,35 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"(1, 2)[. gt 2][. lt 3]\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v2",
-            ),
-            var_expr: Binary(
-                Binary {
-                    left: (
-                        Const(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                1,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                    op: Comma,
-                    right: (
-                        Const(
-                            Integer(
-                                2,
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                4,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
-            ),
-            return_expr: Let(
-                Let {
-                    name: Name(
-                        "v8",
-                    ),
-                    var_expr: Filter(
-                        Filter {
-                            context_names: ContextNames {
-                                item: Name(
-                                    "v3",
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v2",
+                ),
+                var_expr: (
+                    Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
-                                position: Name(
-                                    "v4",
-                                ),
-                                last: Name(
-                                    "v5",
-                                ),
-                            },
-                            var_atom: (
-                                Variable(
-                                    Name(
-                                        "v2",
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        1,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
+                            ),
+                            op: Comma,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
                                     ),
                                 ),
                                 SourceSpan {
@@ -76,61 +43,98 @@ Ok(
                                     ),
                                 },
                             ),
-                            return_expr: Binary(
-                                Binary {
-                                    left: (
-                                        Variable(
-                                            Name(
-                                                "v3",
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                0,
-                                            ),
-                                            length: SourceOffset(
-                                                0,
-                                            ),
-                                        },
-                                    ),
-                                    op: Gt,
-                                    right: (
-                                        Const(
-                                            Integer(
-                                                2,
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                12,
-                                            ),
-                                            length: SourceOffset(
-                                                1,
-                                            ),
-                                        },
-                                    ),
-                                },
-                            ),
                         },
                     ),
-                    return_expr: Filter(
-                        Filter {
-                            context_names: ContextNames {
-                                item: Name(
-                                    "v9",
-                                ),
-                                position: Name(
-                                    "v10",
-                                ),
-                                last: Name(
-                                    "v11",
-                                ),
-                            },
-                            var_atom: (
-                                Variable(
-                                    Name(
-                                        "v8",
-                                    ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    Let(
+                        Let {
+                            name: Name(
+                                "v8",
+                            ),
+                            var_expr: (
+                                Filter(
+                                    Filter {
+                                        context_names: ContextNames {
+                                            item: Name(
+                                                "v3",
+                                            ),
+                                            position: Name(
+                                                "v4",
+                                            ),
+                                            last: Name(
+                                                "v5",
+                                            ),
+                                        },
+                                        var_atom: (
+                                            Variable(
+                                                Name(
+                                                    "v2",
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    4,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        ),
+                                        return_expr: (
+                                            Binary(
+                                                Binary {
+                                                    left: (
+                                                        Variable(
+                                                            Name(
+                                                                "v3",
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                0,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                0,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    op: Gt,
+                                                    right: (
+                                                        Const(
+                                                            Integer(
+                                                                2,
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                12,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                1,
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    7,
+                                                ),
+                                                length: SourceOffset(
+                                                    6,
+                                                ),
+                                            },
+                                        ),
+                                    },
                                 ),
                                 SourceSpan {
                                     offset: SourceOffset(
@@ -141,44 +145,110 @@ Ok(
                                     ),
                                 },
                             ),
-                            return_expr: Binary(
-                                Binary {
-                                    left: (
-                                        Variable(
-                                            Name(
+                            return_expr: (
+                                Filter(
+                                    Filter {
+                                        context_names: ContextNames {
+                                            item: Name(
                                                 "v9",
                                             ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                0,
+                                            position: Name(
+                                                "v10",
                                             ),
-                                            length: SourceOffset(
-                                                0,
+                                            last: Name(
+                                                "v11",
                                             ),
                                         },
+                                        var_atom: (
+                                            Variable(
+                                                Name(
+                                                    "v8",
+                                                ),
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    7,
+                                                ),
+                                                length: SourceOffset(
+                                                    6,
+                                                ),
+                                            },
+                                        ),
+                                        return_expr: (
+                                            Binary(
+                                                Binary {
+                                                    left: (
+                                                        Variable(
+                                                            Name(
+                                                                "v9",
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                0,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                0,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    op: Lt,
+                                                    right: (
+                                                        Const(
+                                                            Integer(
+                                                                3,
+                                                            ),
+                                                        ),
+                                                        SourceSpan {
+                                                            offset: SourceOffset(
+                                                                20,
+                                                            ),
+                                                            length: SourceOffset(
+                                                                1,
+                                                            ),
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    15,
+                                                ),
+                                                length: SourceOffset(
+                                                    6,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        7,
                                     ),
-                                    op: Lt,
-                                    right: (
-                                        Const(
-                                            Integer(
-                                                3,
-                                            ),
-                                        ),
-                                        SourceSpan {
-                                            offset: SourceOffset(
-                                                20,
-                                            ),
-                                            length: SourceOffset(
-                                                1,
-                                            ),
-                                        },
+                                    length: SourceOffset(
+                                        6,
                                     ),
                                 },
                             ),
                         },
                     ),
-                },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                15,
+            ),
+            length: SourceOffset(
+                6,
             ),
         },
     ),

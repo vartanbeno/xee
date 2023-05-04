@@ -3,49 +3,69 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"function($x) { $x + 1 }\")"
 ---
 Ok(
-    FunctionDefinition(
-        FunctionDefinition {
-            params: [
-                Param(
-                    Name(
-                        "v0",
+    (
+        FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
+                            "v0",
+                        ),
                     ),
+                ],
+                body: (
+                    Binary(
+                        Binary {
+                            left: (
+                                Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        15,
+                                    ),
+                                    length: SourceOffset(
+                                        2,
+                                    ),
+                                },
+                            ),
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        20,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            15,
+                        ),
+                        length: SourceOffset(
+                            7,
+                        ),
+                    },
                 ),
-            ],
-            body: Binary(
-                Binary {
-                    left: (
-                        Variable(
-                            Name(
-                                "v0",
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                15,
-                            ),
-                            length: SourceOffset(
-                                2,
-                            ),
-                        },
-                    ),
-                    op: Add,
-                    right: (
-                        Const(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                20,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                23,
             ),
         },
     ),

@@ -3,16 +3,28 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"let $x := 1 return $x\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v0",
-            ),
-            var_expr: Atom(
-                (
-                    Const(
-                        Integer(
-                            1,
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v0",
+                ),
+                var_expr: (
+                    Atom(
+                        (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
+                            ),
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    10,
+                                ),
+                                length: SourceOffset(
+                                    1,
+                                ),
+                            },
                         ),
                     ),
                     SourceSpan {
@@ -24,12 +36,22 @@ Ok(
                         ),
                     },
                 ),
-            ),
-            return_expr: Atom(
-                (
-                    Variable(
-                        Name(
-                            "v0",
+                return_expr: (
+                    Atom(
+                        (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
+                            ),
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    19,
+                                ),
+                                length: SourceOffset(
+                                    2,
+                                ),
+                            },
                         ),
                     ),
                     SourceSpan {
@@ -41,6 +63,14 @@ Ok(
                         ),
                     },
                 ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                21,
             ),
         },
     ),

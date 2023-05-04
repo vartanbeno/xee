@@ -3,92 +3,132 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"(1, 2) ! 1\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v2",
-            ),
-            var_expr: Binary(
-                Binary {
-                    left: (
-                        Const(
-                            Integer(
-                                1,
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v2",
+                ),
+                var_expr: (
+                    Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        1,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                1,
-                            ),
-                            length: SourceOffset(
-                                1,
+                            op: Comma,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        4,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),
-                    op: Comma,
-                    right: (
-                        Const(
-                            Integer(
-                                2,
-                            ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
                         ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                4,
-                            ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
-            ),
-            return_expr: Map(
-                Map {
-                    context_names: ContextNames {
-                        item: Name(
-                            "v3",
-                        ),
-                        position: Name(
-                            "v4",
-                        ),
-                        last: Name(
-                            "v5",
+                        length: SourceOffset(
+                            1,
                         ),
                     },
-                    var_atom: (
-                        Variable(
-                            Name(
-                                "v2",
+                ),
+                return_expr: (
+                    Map(
+                        Map {
+                            context_names: ContextNames {
+                                item: Name(
+                                    "v3",
+                                ),
+                                position: Name(
+                                    "v4",
+                                ),
+                                last: Name(
+                                    "v5",
+                                ),
+                            },
+                            var_atom: (
+                                Variable(
+                                    Name(
+                                        "v2",
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        4,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                4,
-                            ),
-                            length: SourceOffset(
-                                1,
+                            return_expr: (
+                                Atom(
+                                    (
+                                        Const(
+                                            Integer(
+                                                1,
+                                            ),
+                                        ),
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                9,
+                                            ),
+                                            length: SourceOffset(
+                                                1,
+                                            ),
+                                        },
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        9,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),
-                    return_expr: Atom(
-                        (
-                            Const(
-                                Integer(
-                                    1,
-                                ),
-                            ),
-                            SourceSpan {
-                                offset: SourceOffset(
-                                    9,
-                                ),
-                                length: SourceOffset(
-                                    1,
-                                ),
-                            },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
                         ),
-                    ),
-                },
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                10,
             ),
         },
     ),

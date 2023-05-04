@@ -3,51 +3,73 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"let $x := (1 + 2) return $x\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v0",
-            ),
-            var_expr: Binary(
-                Binary {
-                    left: (
-                        Const(
-                            Integer(
-                                1,
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v0",
+                ),
+                var_expr: (
+                    Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        11,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
-                        ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                11,
-                            ),
-                            length: SourceOffset(
-                                1,
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        15,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),
-                    op: Add,
-                    right: (
-                        Const(
-                            Integer(
-                                2,
-                            ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            11,
                         ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                15,
+                        length: SourceOffset(
+                            5,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    Atom(
+                        (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
                             ),
-                            length: SourceOffset(
-                                1,
-                            ),
-                        },
-                    ),
-                },
-            ),
-            return_expr: Atom(
-                (
-                    Variable(
-                        Name(
-                            "v0",
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    25,
+                                ),
+                                length: SourceOffset(
+                                    2,
+                                ),
+                            },
                         ),
                     ),
                     SourceSpan {
@@ -59,6 +81,14 @@ Ok(
                         ),
                     },
                 ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                27,
             ),
         },
     ),

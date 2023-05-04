@@ -3,67 +3,97 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(5, 2)\")"
 ---
 Ok(
-    Let(
-        Let {
-            name: Name(
-                "v0",
-            ),
-            var_expr: StaticFunctionReference(
-                StaticFunctionId(
-                    0,
+    (
+        Let(
+            Let {
+                name: Name(
+                    "v0",
                 ),
-                None,
-            ),
-            return_expr: FunctionCall(
-                FunctionCall {
-                    atom: (
-                        Variable(
-                            Name(
-                                "v0",
-                            ),
+                var_expr: (
+                    StaticFunctionReference(
+                        StaticFunctionId(
+                            0,
                         ),
-                        SourceSpan {
-                            offset: SourceOffset(
-                                0,
+                        None,
+                    ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            0,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    FunctionCall(
+                        FunctionCall {
+                            atom: (
+                                Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        0,
+                                    ),
+                                },
                             ),
-                            length: SourceOffset(
-                                0,
-                            ),
+                            args: [
+                                (
+                                    Const(
+                                        Integer(
+                                            5,
+                                        ),
+                                    ),
+                                    SourceSpan {
+                                        offset: SourceOffset(
+                                            12,
+                                        ),
+                                        length: SourceOffset(
+                                            1,
+                                        ),
+                                    },
+                                ),
+                                (
+                                    Const(
+                                        Integer(
+                                            2,
+                                        ),
+                                    ),
+                                    SourceSpan {
+                                        offset: SourceOffset(
+                                            15,
+                                        ),
+                                        length: SourceOffset(
+                                            1,
+                                        ),
+                                    },
+                                ),
+                            ],
                         },
                     ),
-                    args: [
-                        (
-                            Const(
-                                Integer(
-                                    5,
-                                ),
-                            ),
-                            SourceSpan {
-                                offset: SourceOffset(
-                                    12,
-                                ),
-                                length: SourceOffset(
-                                    1,
-                                ),
-                            },
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
                         ),
-                        (
-                            Const(
-                                Integer(
-                                    2,
-                                ),
-                            ),
-                            SourceSpan {
-                                offset: SourceOffset(
-                                    15,
-                                ),
-                                length: SourceOffset(
-                                    1,
-                                ),
-                            },
+                        length: SourceOffset(
+                            0,
                         ),
-                    ],
-                },
+                    },
+                ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                17,
             ),
         },
     ),

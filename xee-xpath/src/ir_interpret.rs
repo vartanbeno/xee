@@ -90,9 +90,9 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_let(&mut self, let_: &ir::Let) -> Result<()> {
-        self.compile_expr(&let_.var_expr)?;
+        self.compile_expr(&let_.var_expr.0)?;
         self.scopes.push_name(&let_.name);
-        self.compile_expr(&let_.return_expr)?;
+        self.compile_expr(&let_.return_expr.0)?;
         self.builder.emit(Instruction::LetDone);
         self.scopes.pop_name();
         Ok(())
@@ -101,10 +101,10 @@ impl<'a> InterpreterCompiler<'a> {
     fn compile_if(&mut self, if_: &ir::If) -> Result<()> {
         self.compile_atom(&if_.condition)?;
         let jump_else = self.builder.emit_jump_forward(JumpCondition::False);
-        self.compile_expr(&if_.then)?;
+        self.compile_expr(&if_.then.0)?;
         let jump_end = self.builder.emit_jump_forward(JumpCondition::Always);
         self.builder.patch_jump(jump_else);
-        self.compile_expr(&if_.else_)?;
+        self.compile_expr(&if_.else_.0)?;
         self.builder.patch_jump(jump_end);
         Ok(())
     }
@@ -169,7 +169,7 @@ impl<'a> InterpreterCompiler<'a> {
         for param in &function_definition.params {
             compiler.scopes.push_name(&param.0);
         }
-        compiler.compile_expr(&function_definition.body)?;
+        compiler.compile_expr(&function_definition.body.0)?;
         for _ in &function_definition.params {
             compiler.scopes.pop_name();
         }
@@ -249,7 +249,7 @@ impl<'a> InterpreterCompiler<'a> {
         // name it
         self.scopes.push_name(&map.context_names.item);
         // execute the map expression, placing result on stack
-        self.compile_expr(&map.return_expr)?;
+        self.compile_expr(&map.return_expr.0)?;
         self.scopes.pop_name();
 
         // push result to new sequence
@@ -285,7 +285,7 @@ impl<'a> InterpreterCompiler<'a> {
         // name it
         self.scopes.push_name(&filter.context_names.item);
         // execute the filter expression, placing result on stack
-        self.compile_expr(&filter.return_expr)?;
+        self.compile_expr(&filter.return_expr.0)?;
         self.scopes.pop_name();
 
         // if filter is false, we skip this item
@@ -322,7 +322,7 @@ impl<'a> InterpreterCompiler<'a> {
         // name it
         self.scopes.push_name(&quantified.context_names.item);
         // execute the satisfies expression, placing result in on stack
-        self.compile_expr(&quantified.satisifies_expr)?;
+        self.compile_expr(&quantified.satisifies_expr.0)?;
         self.scopes.pop_name();
 
         let jump_out_end = match quantified.quantifier {

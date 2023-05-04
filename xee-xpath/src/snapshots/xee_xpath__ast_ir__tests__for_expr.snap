@@ -3,39 +3,51 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"for $x in 1 return 2\")"
 ---
 Ok(
-    Map(
-        Map {
-            context_names: ContextNames {
-                item: Name(
-                    "v0",
-                ),
-                position: Name(
-                    "v2",
-                ),
-                last: Name(
-                    "v3",
-                ),
-            },
-            var_atom: (
-                Const(
-                    Integer(
-                        1,
+    (
+        Map(
+            Map {
+                context_names: ContextNames {
+                    item: Name(
+                        "v0",
                     ),
-                ),
-                SourceSpan {
-                    offset: SourceOffset(
-                        10,
+                    position: Name(
+                        "v2",
                     ),
-                    length: SourceOffset(
-                        1,
+                    last: Name(
+                        "v3",
                     ),
                 },
-            ),
-            return_expr: Atom(
-                (
+                var_atom: (
                     Const(
                         Integer(
-                            2,
+                            1,
+                        ),
+                    ),
+                    SourceSpan {
+                        offset: SourceOffset(
+                            10,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                ),
+                return_expr: (
+                    Atom(
+                        (
+                            Const(
+                                Integer(
+                                    2,
+                                ),
+                            ),
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    19,
+                                ),
+                                length: SourceOffset(
+                                    1,
+                                ),
+                            },
                         ),
                     ),
                     SourceSpan {
@@ -47,6 +59,14 @@ Ok(
                         ),
                     },
                 ),
+            },
+        ),
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                20,
             ),
         },
     ),

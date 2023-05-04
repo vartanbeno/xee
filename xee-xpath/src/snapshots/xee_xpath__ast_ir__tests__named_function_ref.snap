@@ -3,10 +3,20 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function#2\")"
 ---
 Ok(
-    StaticFunctionReference(
-        StaticFunctionId(
-            0,
+    (
+        StaticFunctionReference(
+            StaticFunctionId(
+                0,
+            ),
+            None,
         ),
-        None,
+        SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                13,
+            ),
+        },
     ),
 )
