@@ -6,13 +6,13 @@ pub(crate) type ExprSingleS = Spanned<ExprSingle>;
 pub(crate) type PrimaryExprS = Spanned<PrimaryExpr>;
 pub(crate) type StepExprS = Spanned<StepExpr>;
 
-pub(crate) type Exprs = Vec<ExprSingleS>;
-pub(crate) type ExprsS = Spanned<Exprs>;
+pub(crate) type Expr = Vec<ExprSingleS>;
+pub(crate) type ExprS = Spanned<Expr>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
     // at least one entry
-    pub(crate) exprs: ExprsS,
+    pub(crate) exprs: ExprS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -65,7 +65,7 @@ pub(crate) struct LetExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct IfExpr {
-    pub(crate) condition: ExprsS,
+    pub(crate) condition: ExprS,
     pub(crate) then: Box<ExprSingleS>,
     pub(crate) else_: Box<ExprSingleS>,
 }
@@ -80,7 +80,7 @@ pub(crate) enum Quantifier {
 pub(crate) enum PrimaryExpr {
     Literal(Literal),
     VarRef(Name),
-    Expr(ExprsS),
+    Expr(ExprS),
     ContextItem,
     FunctionCall(FunctionCall),
     NamedFunctionRef(NamedFunctionRef),
@@ -94,7 +94,7 @@ pub(crate) enum PrimaryExpr {
 pub(crate) enum UnaryLookup {
     Name(String),
     IntegerLiteral(i64),
-    Expr(ExprsS),
+    Expr(ExprS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -177,7 +177,7 @@ pub(crate) struct SingleType {
 pub(crate) enum ArrowFunctionSpecifier {
     Name(EQName),
     VarRef(EQName),
-    Expr(ExprsS),
+    Expr(ExprS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -226,7 +226,7 @@ pub(crate) struct NamedFunctionRef {
 pub(crate) struct InlineFunction {
     pub(crate) params: Vec<Param>,
     pub(crate) return_type: Option<SequenceType>,
-    pub(crate) body: ExprsS,
+    pub(crate) body: ExprS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -238,7 +238,7 @@ pub(crate) struct Param {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Postfix {
     // vec contains at least 1 element
-    Predicate(ExprsS),
+    Predicate(ExprS),
     ArgumentList(Vec<ExprSingleS>),
     Lookup(Lookup),
 }
@@ -270,7 +270,7 @@ pub(crate) enum StepExpr {
 pub(crate) struct AxisStep {
     pub(crate) axis: Axis,
     pub(crate) node_test: NodeTest,
-    pub(crate) predicates: Vec<ExprsS>,
+    pub(crate) predicates: Vec<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

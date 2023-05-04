@@ -67,7 +67,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn exprs(&self, pair: Pair<Rule>) -> ast::ExprsS {
+    fn exprs(&self, pair: Pair<Rule>) -> ast::ExprS {
         let span = pair.as_span();
         let pairs = pair.into_inner();
         spanned(
@@ -884,7 +884,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn predicate_to_expr(&self, pair: Pair<Rule>) -> ast::ExprsS {
+    fn predicate_to_expr(&self, pair: Pair<Rule>) -> ast::ExprS {
         debug_assert_eq!(pair.as_rule(), Rule::Predicate);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)
@@ -1027,7 +1027,7 @@ impl<'a> AstParser<'a> {
         ast::Param { name, type_ }
     }
 
-    fn function_body_to_body(&self, pair: Pair<Rule>) -> ast::ExprsS {
+    fn function_body_to_body(&self, pair: Pair<Rule>) -> ast::ExprS {
         debug_assert_eq!(pair.as_rule(), Rule::FunctionBody);
         let pair = pair.into_inner().next().unwrap();
         self.exprs(pair)

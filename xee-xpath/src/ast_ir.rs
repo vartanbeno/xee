@@ -385,7 +385,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn exprs(&mut self, exprs: &ast::ExprsS) -> Bindings {
+    fn exprs(&mut self, exprs: &ast::ExprS) -> Bindings {
         let exprs = &exprs.0;
         if !exprs.is_empty() {
             // XXX could this be reduce?
