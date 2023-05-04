@@ -20,7 +20,7 @@ pub fn evaluate(
     documents.add(&mut xot, &uri, xml).unwrap();
     let namespaces = Namespaces::new(default_element_namespace, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);
-    let context = Context::with_documents(&xot, static_context, &documents);
+    let context = Context::with_documents(&xot, xpath, static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
     let xpath = CompiledXPath::new(&context, xpath)?;

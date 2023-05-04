@@ -44,14 +44,19 @@ pub enum Error {
     /// is `empty-sequence()`.
     #[error("Empty sequence type error")]
     XPST0005,
-    /// Name not defined in static context.
+    /// Name not defined.
     ///
     /// It is a static error if an expression refers to an element name,
     /// attribute name, schema type name, namespace prefix, or variable name
     /// that is not defined in the static context, except for an ElementName in
     /// an ElementTest or an AttributeName in an AttributeTest.
-    #[error("Name not defined in static context")]
-    XPST0008,
+    #[error("Name not defined")]
+    XPST0008 {
+        #[source_code]
+        src: NamedSource,
+        #[label("Name not defined")]
+        span: SourceSpan,
+    },
     /// Namespace axis not supported.
     ///
     /// An implementation that does not support the namespace axis must raise a

@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::context::Context;
+use crate::error::{Error, Result};
 use crate::instruction::Instruction;
 use crate::ir;
 use crate::static_context::ContextRule;
@@ -17,42 +18,26 @@ pub(crate) struct InterpreterCompiler<'a> {
 }
 
 impl<'a> InterpreterCompiler<'a> {
-    pub(crate) fn compile_expr(&mut self, expr: &ir::Expr) {
+    pub(crate) fn compile_expr(&mut self, expr: &ir::Expr) -> Result<()> {
         match expr {
-            ir::Expr::Atom(atom) => {
-                self.compile_atom(atom);
-            }
-            ir::Expr::Let(let_) => {
-                self.compile_let(let_);
-            }
-            ir::Expr::Binary(binary) => {
-                self.compile_binary(binary);
-            }
+            ir::Expr::Atom(atom) => self.compile_atom(atom),
+            ir::Expr::Let(let_) => self.compile_let(let_),
+            ir::Expr::Binary(binary) => self.compile_binary(binary),
             ir::Expr::FunctionDefinition(function_definition) => {
-                self.compile_function_definition(function_definition);
+                self.compile_function_definition(function_definition)
             }
             ir::Expr::StaticFunctionReference(static_function_id, context_names) => {
-                self.compile_static_function_reference(*static_function_id, context_names.as_ref());
+                self.compile_static_function_reference(*static_function_id, context_names.as_ref())
             }
-            ir::Expr::FunctionCall(function_call) => {
-                self.compile_function_call(function_call);
-            }
-            ir::Expr::If(if_) => {
-                self.compile_if(if_);
-            }
-            ir::Expr::Map(map) => {
-                self.compile_map(map);
-            }
-            ir::Expr::Filter(filter) => {
-                self.compile_filter(filter);
-            }
-            ir::Expr::Quantified(quantified) => {
-                self.compile_quantified(quantified);
-            }
+            ir::Expr::FunctionCall(function_call) => self.compile_function_call(function_call),
+            ir::Expr::If(if_) => self.compile_if(if_),
+            ir::Expr::Map(map) => self.compile_map(map),
+            ir::Expr::Filter(filter) => self.compile_filter(filter),
+            ir::Expr::Quantified(quantified) => self.compile_quantified(quantified),
         }
     }
 
-    fn compile_atom(&mut self, atom: &ir::AtomS) {
+    fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
         match &atom.0 {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
@@ -64,66 +49,69 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value);
+                Ok(())
             }
-            ir::Atom::Variable(name) => {
-                self.compile_variable(name);
-            }
+            ir::Atom::Variable(name) => self.compile_variable(name),
         }
     }
 
-    fn compile_variable(&mut self, name: &ir::Name) {
+    fn compile_variable(&mut self, name: &ir::Name) -> Result<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
-                panic!("too many variables");
+                return Err(Error::XPDY0130);
             }
             self.builder.emit(Instruction::Var(index as u16));
+            Ok(())
         } else {
             // if value is in any outer scopes
             if self.scopes.is_closed_over_name(name) {
                 let index = self.builder.add_closure_name(name);
                 if index > u16::MAX as usize {
-                    panic!("too many closure variables");
+                    return Err(Error::XPDY0130);
                 }
                 self.builder.emit(Instruction::ClosureVar(index as u16));
+                Ok(())
             } else {
-                // XXX this should become an actual compile error
-                panic!("unknown variable {:?}", name);
+                unreachable!("variable not found: {:?}", name);
             }
         }
     }
 
-    fn compile_variable_set(&mut self, name: &ir::Name) {
+    fn compile_variable_set(&mut self, name: &ir::Name) -> Result<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
-                panic!("too many variables");
+                return Err(Error::XPDY0130);
             }
             self.builder.emit(Instruction::Set(index as u16));
         } else {
             panic!("can only set locals: {:?}", name);
         }
+        Ok(())
     }
 
-    fn compile_let(&mut self, let_: &ir::Let) {
-        self.compile_expr(&let_.var_expr);
+    fn compile_let(&mut self, let_: &ir::Let) -> Result<()> {
+        self.compile_expr(&let_.var_expr)?;
         self.scopes.push_name(&let_.name);
-        self.compile_expr(&let_.return_expr);
+        self.compile_expr(&let_.return_expr)?;
         self.builder.emit(Instruction::LetDone);
         self.scopes.pop_name();
+        Ok(())
     }
 
-    fn compile_if(&mut self, if_: &ir::If) {
-        self.compile_atom(&if_.condition);
+    fn compile_if(&mut self, if_: &ir::If) -> Result<()> {
+        self.compile_atom(&if_.condition)?;
         let jump_else = self.builder.emit_jump_forward(JumpCondition::False);
-        self.compile_expr(&if_.then);
+        self.compile_expr(&if_.then)?;
         let jump_end = self.builder.emit_jump_forward(JumpCondition::Always);
         self.builder.patch_jump(jump_else);
-        self.compile_expr(&if_.else_);
+        self.compile_expr(&if_.else_)?;
         self.builder.patch_jump(jump_end);
+        Ok(())
     }
 
-    fn compile_binary(&mut self, binary: &ir::Binary) {
-        self.compile_atom(&binary.left);
-        self.compile_atom(&binary.right);
+    fn compile_binary(&mut self, binary: &ir::Binary) -> Result<()> {
+        self.compile_atom(&binary.left)?;
+        self.compile_atom(&binary.right)?;
         match &binary.op {
             ir::BinaryOp::Add => {
                 self.builder.emit(Instruction::Add);
@@ -162,9 +150,13 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.emit(Instruction::Concat);
             }
         }
+        Ok(())
     }
 
-    fn compile_function_definition(&mut self, function_definition: &ir::FunctionDefinition) {
+    fn compile_function_definition(
+        &mut self,
+        function_definition: &ir::FunctionDefinition,
+    ) -> Result<()> {
         let nested_builder = self.builder.builder();
         self.scopes.push_scope();
 
@@ -177,7 +169,7 @@ impl<'a> InterpreterCompiler<'a> {
         for param in &function_definition.params {
             compiler.scopes.push_name(&param.0);
         }
-        compiler.compile_expr(&function_definition.body);
+        compiler.compile_expr(&function_definition.body)?;
         for _ in &function_definition.params {
             compiler.scopes.pop_name();
         }
@@ -191,18 +183,19 @@ impl<'a> InterpreterCompiler<'a> {
         // closure
         // in reverse order so we can pop them off in the right order
         for name in function.closure_names.iter().rev() {
-            self.compile_variable(name);
+            self.compile_variable(name)?;
         }
         let function_id = self.builder.add_function(function);
         self.builder
             .emit(Instruction::Closure(function_id.as_u16()));
+        Ok(())
     }
 
     fn compile_static_function_reference(
         &mut self,
         static_function_id: StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
-    ) {
+    ) -> Result<()> {
         // XXX optional context names; what if context is absent?
         let context_names = context_names.unwrap();
 
@@ -212,49 +205,51 @@ impl<'a> InterpreterCompiler<'a> {
             .functions
             .get_by_index(static_function_id);
         match static_function.context_rule {
-            Some(ContextRule::ItemFirst) => self.compile_variable(&context_names.item),
-            Some(ContextRule::ItemLast) => self.compile_variable(&context_names.item),
-            Some(ContextRule::PositionFirst) => self.compile_variable(&context_names.position),
-            Some(ContextRule::SizeFirst) => self.compile_variable(&context_names.last),
+            Some(ContextRule::ItemFirst) => self.compile_variable(&context_names.item)?,
+            Some(ContextRule::ItemLast) => self.compile_variable(&context_names.item)?,
+            Some(ContextRule::PositionFirst) => self.compile_variable(&context_names.position)?,
+            Some(ContextRule::SizeFirst) => self.compile_variable(&context_names.last)?,
             None => {}
         }
         self.builder
-            .emit(Instruction::StaticClosure(static_function_id.as_u16()))
+            .emit(Instruction::StaticClosure(static_function_id.as_u16()));
+        Ok(())
     }
 
-    fn compile_function_call(&mut self, function_call: &ir::FunctionCall) {
-        self.compile_atom(&function_call.atom);
+    fn compile_function_call(&mut self, function_call: &ir::FunctionCall) -> Result<()> {
+        self.compile_atom(&function_call.atom)?;
         for arg in &function_call.args {
-            self.compile_atom(arg);
+            self.compile_atom(arg)?;
         }
         self.builder
             .emit(Instruction::Call(function_call.args.len() as u8));
+        Ok(())
     }
 
-    fn compile_map(&mut self, map: &ir::Map) {
+    fn compile_map(&mut self, map: &ir::Map) -> Result<()> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&map.var_atom, &map.context_names);
+            self.compile_sequence_loop_init(&map.var_atom, &map.context_names)?;
 
-        self.compile_sequence_get_item(&map.var_atom, &map.context_names);
+        self.compile_sequence_get_item(&map.var_atom, &map.context_names)?;
         // name it
         self.scopes.push_name(&map.context_names.item);
         // execute the map expression, placing result on stack
-        self.compile_expr(&map.return_expr);
+        self.compile_expr(&map.return_expr)?;
         self.scopes.pop_name();
 
         // push result to new sequence
-        self.compile_variable(&new_sequence);
+        self.compile_variable(&new_sequence)?;
         self.builder.emit(Instruction::SequencePush);
 
         // clean up the var_name item
         self.builder.emit(Instruction::Pop);
 
-        self.compile_sequence_loop_iterate(loop_start, &map.context_names);
+        self.compile_sequence_loop_iterate(loop_start, &map.context_names)?;
 
         self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end();
@@ -263,23 +258,24 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
         self.scopes.pop_name();
         self.scopes.pop_name();
+        Ok(())
     }
 
-    fn compile_filter(&mut self, filter: &ir::Filter) {
+    fn compile_filter(&mut self, filter: &ir::Filter) -> Result<()> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
         self.builder.emit(Instruction::SequenceNew);
 
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names);
+            self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names)?;
 
         // place item to filter on stack
-        self.compile_sequence_get_item(&filter.var_atom, &filter.context_names);
+        self.compile_sequence_get_item(&filter.var_atom, &filter.context_names)?;
         // name it
         self.scopes.push_name(&filter.context_names.item);
         // execute the filter expression, placing result on stack
-        self.compile_expr(&filter.return_expr);
+        self.compile_expr(&filter.return_expr)?;
         self.scopes.pop_name();
 
         // if filter is false, we skip this item
@@ -291,12 +287,12 @@ impl<'a> InterpreterCompiler<'a> {
 
         self.builder.patch_jump(is_included);
         // push item to new sequence
-        self.compile_variable(&new_sequence);
+        self.compile_variable(&new_sequence)?;
         self.builder.emit(Instruction::SequencePush);
 
         self.builder.patch_jump(iterate);
         // no need to clean up the stack, as filter get is pushed onto sequence
-        self.compile_sequence_loop_iterate(loop_start, &filter.context_names);
+        self.compile_sequence_loop_iterate(loop_start, &filter.context_names)?;
 
         self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end();
@@ -305,17 +301,18 @@ impl<'a> InterpreterCompiler<'a> {
         self.scopes.pop_name();
         self.scopes.pop_name();
         self.scopes.pop_name();
+        Ok(())
     }
 
-    fn compile_quantified(&mut self, quantified: &ir::Quantified) {
+    fn compile_quantified(&mut self, quantified: &ir::Quantified) -> Result<()> {
         let (loop_start, loop_end) =
-            self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names);
+            self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names)?;
 
-        self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names);
+        self.compile_sequence_get_item(&quantified.var_atom, &quantified.context_names)?;
         // name it
         self.scopes.push_name(&quantified.context_names.item);
         // execute the satisfies expression, placing result in on stack
-        self.compile_expr(&quantified.satisifies_expr);
+        self.compile_expr(&quantified.satisifies_expr)?;
         self.scopes.pop_name();
 
         let jump_out_end = match quantified.quantifier {
@@ -325,7 +322,7 @@ impl<'a> InterpreterCompiler<'a> {
         // we didn't jump out, clean up quantifier variable
         self.builder.emit(Instruction::Pop);
 
-        self.compile_sequence_loop_iterate(loop_start, &quantified.context_names);
+        self.compile_sequence_loop_iterate(loop_start, &quantified.context_names)?;
 
         self.builder.patch_jump(loop_end);
 
@@ -356,15 +353,16 @@ impl<'a> InterpreterCompiler<'a> {
         // pop sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
+        Ok(())
     }
 
     fn compile_sequence_loop_init(
         &mut self,
         atom: &ir::AtomS,
         context_names: &ir::ContextNames,
-    ) -> (BackwardJumpRef, ForwardJumpRef) {
+    ) -> Result<(BackwardJumpRef, ForwardJumpRef)> {
         //  sequence length
-        self.compile_atom(atom);
+        self.compile_atom(atom)?;
         self.scopes.push_name(&context_names.last);
         self.builder.emit(Instruction::SequenceLen);
 
@@ -376,35 +374,41 @@ impl<'a> InterpreterCompiler<'a> {
         let loop_start_ref = self.builder.loop_start();
 
         // compare with sequence length, if index is gt length, we're done with the loop
-        self.compile_variable(&context_names.position);
-        self.compile_variable(&context_names.last);
+        self.compile_variable(&context_names.position)?;
+        self.compile_variable(&context_names.last)?;
         self.builder.emit(Instruction::Gt);
         // check whether index is gt length, if so, we're done with the loop
         let loop_end_ref = self.builder.emit_jump_forward(JumpCondition::True);
 
-        (loop_start_ref, loop_end_ref)
+        Ok((loop_start_ref, loop_end_ref))
     }
 
-    fn compile_sequence_get_item(&mut self, atom: &ir::AtomS, context_names: &ir::ContextNames) {
+    fn compile_sequence_get_item(
+        &mut self,
+        atom: &ir::AtomS,
+        context_names: &ir::ContextNames,
+    ) -> Result<()> {
         // get item at the index
-        self.compile_variable(&context_names.position);
-        self.compile_atom(atom);
+        self.compile_variable(&context_names.position)?;
+        self.compile_atom(atom)?;
         self.builder.emit(Instruction::SequenceGet);
+        Ok(())
     }
 
     fn compile_sequence_loop_iterate(
         &mut self,
         loop_start: BackwardJumpRef,
         context_names: &ir::ContextNames,
-    ) {
+    ) -> Result<()> {
         // update index with 1
-        self.compile_variable(&context_names.position);
+        self.compile_variable(&context_names.position)?;
         self.builder
             .emit_constant(StackValue::Atomic(Atomic::Integer(1)));
         self.builder.emit(Instruction::Add);
-        self.compile_variable_set(&context_names.position);
+        self.compile_variable_set(&context_names.position)?;
         self.builder
             .emit_jump_backward(loop_start, JumpCondition::Always);
+        Ok(())
     }
 
     fn compile_sequence_loop_end(&mut self) {
@@ -450,7 +454,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, static_context);
+        let context = Context::new(&xot, s, static_context);
         let xpath = CompiledXPath::new(&context, s)?;
         Ok(xpath.run_without_context().unwrap())
     }
@@ -459,7 +463,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, static_context);
+        let context = Context::new(&xot, s, static_context);
         let xpath = CompiledXPath::new(&context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
         Ok(xpath.run_without_context().unwrap())
@@ -483,7 +487,7 @@ mod tests {
         documents.add(&mut xot, &uri, xml).unwrap();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::with_documents(&xot, static_context, &documents);
+        let context = Context::with_documents(&xot, xpath, static_context, &documents);
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 

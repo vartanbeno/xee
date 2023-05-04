@@ -29,7 +29,7 @@ impl<'a> CompiledXPath<'a> {
             scopes: &mut scopes,
             context,
         };
-        compiler.compile_expr(&expr);
+        compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
         let inline_id = FunctionId(program.functions.len() - 1);
@@ -97,9 +97,10 @@ mod tests {
         documents.add(&mut xot, &uri, "<doc/>").unwrap();
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::with_documents(&xot, static_context, &documents);
 
         let xpath = "1 + 2 +";
+        let context = Context::with_documents(&xot, xpath, static_context, &documents);
+
         let err = CompiledXPath::new(&context, xpath);
         // assert_eq!(
         //     err.to_string(),
