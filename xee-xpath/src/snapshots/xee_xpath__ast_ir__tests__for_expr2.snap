@@ -9,16 +9,22 @@ Let(
         ),
         var_expr: Binary(
             Binary {
-                left: Const(
-                    Integer(
-                        1,
+                left: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    11..12,
                 ),
                 op: Comma,
-                right: Const(
-                    Integer(
-                        2,
+                right: (
+                    Const(
+                        Integer(
+                            2,
+                        ),
                     ),
+                    14..15,
                 ),
             },
         ),
@@ -35,23 +41,32 @@ Let(
                         "v5",
                     ),
                 },
-                var_atom: Variable(
-                    Name(
-                        "v3",
+                var_atom: (
+                    Variable(
+                        Name(
+                            "v3",
+                        ),
                     ),
+                    14..15,
                 ),
                 return_expr: Binary(
                     Binary {
-                        left: Variable(
-                            Name(
-                                "v0",
+                        left: (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
                             ),
+                            24..26,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                1,
+                        right: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            29..30,
                         ),
                     },
                 ),

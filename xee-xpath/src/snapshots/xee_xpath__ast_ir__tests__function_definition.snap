@@ -13,16 +13,22 @@ FunctionDefinition(
         ],
         body: Binary(
             Binary {
-                left: Variable(
-                    Name(
-                        "v0",
+                left: (
+                    Variable(
+                        Name(
+                            "v0",
+                        ),
                     ),
+                    15..17,
                 ),
                 op: Add,
-                right: Const(
-                    Integer(
-                        1,
+                right: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    20..21,
                 ),
             },
         ),

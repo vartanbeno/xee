@@ -52,8 +52,8 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_atom(&mut self, atom: &ir::Atom) {
-        match atom {
+    fn compile_atom(&mut self, atom: &ir::AtomS) {
+        match &atom.0 {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
                     ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
@@ -360,7 +360,7 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_sequence_loop_init(
         &mut self,
-        atom: &ir::Atom,
+        atom: &ir::AtomS,
         context_names: &ir::ContextNames,
     ) -> (BackwardJumpRef, ForwardJumpRef) {
         //  sequence length
@@ -385,7 +385,7 @@ impl<'a> InterpreterCompiler<'a> {
         (loop_start_ref, loop_end_ref)
     }
 
-    fn compile_sequence_get_item(&mut self, atom: &ir::Atom, context_names: &ir::ContextNames) {
+    fn compile_sequence_get_item(&mut self, atom: &ir::AtomS, context_names: &ir::ContextNames) {
         // get item at the index
         self.compile_variable(&context_names.position);
         self.compile_atom(atom);

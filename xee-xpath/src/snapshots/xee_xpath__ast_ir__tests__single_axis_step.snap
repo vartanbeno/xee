@@ -24,26 +24,32 @@ Ok(
             ],
             body: FunctionCall(
                 FunctionCall {
-                    atom: Const(
-                        Step(
-                            Step {
-                                axis: Child,
-                                node_test: NameTest(
-                                    Name(
-                                        Name {
-                                            name: "a",
-                                            namespace: None,
-                                        },
+                    atom: (
+                        Const(
+                            Step(
+                                Step {
+                                    axis: Child,
+                                    node_test: NameTest(
+                                        Name(
+                                            Name {
+                                                name: "a",
+                                                namespace: None,
+                                            },
+                                        ),
                                     ),
-                                ),
-                            },
+                                },
+                            ),
                         ),
+                        0..8,
                     ),
                     args: [
-                        Variable(
-                            Name(
-                                "v0",
+                        (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
                             ),
+                            0..0,
                         ),
                     ],
                 },

@@ -7,6 +7,7 @@ use crate::error::Result;
 use crate::ir;
 use crate::name::Namespaces;
 use crate::name::FN_NAMESPACE;
+use crate::span::Span;
 use crate::static_context::StaticContext;
 use crate::value::StaticFunctionId;
 use crate::value::Step;
@@ -15,6 +16,7 @@ use crate::value::Step;
 struct Binding {
     name: ir::Name,
     expr: ir::Expr,
+    span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -31,11 +33,14 @@ impl Bindings {
         Self { bindings }
     }
 
-    fn atom(&mut self) -> ir::Atom {
+    fn atom(&mut self) -> ir::AtomS {
         let last = self.bindings.last().unwrap();
         let (want_pop, atom) = match &last.expr {
             ir::Expr::Atom(atom) => (true, atom.clone()),
-            _ => (false, ir::Atom::Variable(last.name.clone())),
+            _ => (
+                false,
+                (ir::Atom::Variable(last.name.clone()), last.span.clone()),
+            ),
         };
         if want_pop {
             self.bindings.pop();
@@ -58,7 +63,7 @@ impl Bindings {
 
     // for function arguments turn all bindings into atoms; remove those
     // that are atoms already
-    fn args(&mut self, arity: usize) -> Vec<ir::Atom> {
+    fn args(&mut self, arity: usize) -> Vec<ir::AtomS> {
         let mut atoms = vec![];
         let prev_bindings = &self.bindings[..self.bindings.len() - arity];
         let arg_bindings = &self.bindings[self.bindings.len() - arity..];
@@ -68,7 +73,10 @@ impl Bindings {
                 ir::Expr::Atom(atom) => atoms.push(atom.clone()),
                 _ => {
                     new_bindings.push(binding.clone());
-                    atoms.push(ir::Atom::Variable(binding.name.clone()));
+                    atoms.push((
+                        ir::Atom::Variable(binding.name.clone()),
+                        binding.span.clone(),
+                    ));
                 }
             }
         }
@@ -163,11 +171,12 @@ impl<'a> IrConverter<'a> {
         })
     }
 
-    fn var_ref(&mut self, name: &ast::Name) -> Bindings {
+    fn var_ref(&mut self, name: &ast::Name, span: &Span) -> Bindings {
         let ir_name = self.variables.get(name).unwrap();
         Bindings::from_vec(vec![Binding {
             name: ir_name.clone(),
-            expr: ir::Expr::Atom(ir::Atom::Variable(ir_name.clone())),
+            expr: ir::Expr::Atom((ir::Atom::Variable(ir_name.clone()), span.clone())),
+            span: span.clone(),
         }])
     }
 
@@ -183,13 +192,15 @@ impl<'a> IrConverter<'a> {
     where
         F: Fn(&ir::ContextNames) -> ir::Name,
     {
+        let empty_span = 0..0;
         if let Some(context_scope) = self.context_scope.last() {
             match context_scope {
                 Context::Names(names) => {
                     let ir_name = get_name(names);
                     Bindings::from_vec(vec![Binding {
                         name: ir_name.clone(),
-                        expr: ir::Expr::Atom(ir::Atom::Variable(ir_name)),
+                        expr: ir::Expr::Atom((ir::Atom::Variable(ir_name), empty_span.clone())),
+                        span: empty_span,
                     }])
                 }
                 Context::Absent => {
@@ -213,9 +224,9 @@ impl<'a> IrConverter<'a> {
         self.context_name(|names| names.last.clone())
     }
 
-    fn new_binding(&mut self, expr: ir::Expr) -> Binding {
+    fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
         let name = self.new_name();
-        Binding { name, expr }
+        Binding { name, expr, span }
     }
 
     fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> ir::Expr {
@@ -240,61 +251,67 @@ impl<'a> IrConverter<'a> {
             ],
             body: Box::new(exprs_bindings.expr()),
         });
-        let binding = self.new_binding(outer_function_expr);
+        let binding = self.new_binding(outer_function_expr, ast.exprs.1.clone());
         Bindings::from_vec(vec![binding])
     }
 
     fn expr_single(&mut self, ast: &ast::ExprSingleS) -> Bindings {
-        match &ast.0 {
+        let outer_ast = &ast.0;
+        let span = &ast.1;
+        match outer_ast {
             ast::ExprSingle::Path(ast) => self.path_expr(ast),
-            ast::ExprSingle::Apply(ast) => self.apply_expr(ast),
-            ast::ExprSingle::Let(ast) => self.let_expr(ast),
-            ast::ExprSingle::If(ast) => self.if_expr(ast),
-            ast::ExprSingle::Binary(ast) => self.binary_expr(ast),
-            ast::ExprSingle::For(ast) => self.for_expr(ast),
-            ast::ExprSingle::Quantified(ast) => self.quantified_expr(ast),
+            ast::ExprSingle::Apply(ast) => self.apply_expr(ast, span),
+            ast::ExprSingle::Let(ast) => self.let_expr(ast, span),
+            ast::ExprSingle::If(ast) => self.if_expr(ast, span),
+            ast::ExprSingle::Binary(ast) => self.binary_expr(ast, span),
+            ast::ExprSingle::For(ast) => self.for_expr(ast, span),
+            ast::ExprSingle::Quantified(ast) => self.quantified_expr(ast, span),
         }
     }
 
     fn path_expr(&mut self, ast: &ast::PathExpr) -> Bindings {
         let first_step = &ast.steps[0];
         let rest_steps = &ast.steps[1..];
-        let first_step_bindings = self.step_expr(&first_step.0);
+        let first_step_bindings = self.step_expr(&first_step);
         rest_steps
             .iter()
             .fold(first_step_bindings, |acc, step_expr| {
                 let mut step_bindings = acc;
                 let step_atom = step_bindings.atom();
                 let context_names = self.push_context();
-                let return_bindings = self.step_expr(&step_expr.0);
+                let return_bindings = self.step_expr(&step_expr);
                 self.pop_context();
                 let expr = ir::Expr::Map(ir::Map {
                     context_names,
                     var_atom: step_atom,
                     return_expr: Box::new(return_bindings.expr()),
                 });
-                let binding = self.new_binding(expr);
+                let binding = self.new_binding(expr, step_expr.1.clone());
                 step_bindings.bind(binding)
             })
     }
 
-    fn step_expr(&mut self, ast: &ast::StepExpr) -> Bindings {
-        match ast {
+    fn step_expr(&mut self, ast: &ast::StepExprS) -> Bindings {
+        let outer_ast = &ast.0;
+        let span = &ast.1;
+        match outer_ast {
             ast::StepExpr::PrimaryExpr(ast) => self.primary_expr(ast),
             ast::StepExpr::PostfixExpr { primary, postfixes } => self.postfixes(primary, postfixes),
-            ast::StepExpr::AxisStep(ast) => self.axis_step(ast),
+            ast::StepExpr::AxisStep(ast) => self.axis_step(ast, span),
         }
     }
 
     fn primary_expr(&mut self, ast: &ast::PrimaryExprS) -> Bindings {
-        match &ast.0 {
-            ast::PrimaryExpr::Literal(ast) => self.literal(ast),
-            ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast),
+        let outer_ast = &ast.0;
+        let span = &ast.1;
+        match outer_ast {
+            ast::PrimaryExpr::Literal(ast) => self.literal(ast, span),
+            ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast, span),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             ast::PrimaryExpr::ContextItem => self.context_item(),
-            ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast),
-            ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast),
-            ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast),
+            ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast, span),
+            ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast, span),
+            ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
             _ => todo!("primary_expr: {:?}", ast),
         }
     }
@@ -314,7 +331,8 @@ impl<'a> IrConverter<'a> {
                         var_atom: atom,
                         return_expr: Box::new(return_bindings.expr()),
                     });
-                    let binding = self.new_binding(expr);
+                    // XXX should use postfix span, not exprs span
+                    let binding = self.new_binding(expr, exprs.1.clone());
                     bindings.bind(binding)
                 }
                 ast::Postfix::ArgumentList(exprs) => {
@@ -322,7 +340,8 @@ impl<'a> IrConverter<'a> {
                     let mut arg_bindings = self.args(exprs);
                     let args = arg_bindings.args(exprs.len());
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
-                    let binding = self.new_binding(expr);
+                    // XXX should be able to get span for postfix
+                    let binding = self.new_binding(expr, 0..0);
                     bindings.concat(arg_bindings).bind(binding)
                 }
                 _ => todo!(),
@@ -330,7 +349,7 @@ impl<'a> IrConverter<'a> {
         })
     }
 
-    fn axis_step(&mut self, ast: &ast::AxisStep) -> Bindings {
+    fn axis_step(&mut self, ast: &ast::AxisStep, span: &Span) -> Bindings {
         // get the current context
         let mut current_context_bindings = self.context_item();
 
@@ -339,7 +358,8 @@ impl<'a> IrConverter<'a> {
             axis: ast.axis.clone(),
             node_test: ast.node_test.clone(),
         });
-        let atom = ir::Atom::Const(ir::Const::Step(step));
+
+        let atom = (ir::Atom::Const(ir::Const::Step(step)), span.clone());
 
         // given the current context item, apply the step
         let expr = ir::Expr::FunctionCall(ir::FunctionCall {
@@ -348,7 +368,7 @@ impl<'a> IrConverter<'a> {
         });
 
         // create a new binding for the step
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
 
         let bindings = Bindings::from_vec(vec![binding]);
 
@@ -364,21 +384,22 @@ impl<'a> IrConverter<'a> {
                 var_atom: atom,
                 return_expr: Box::new(return_bindings.expr()),
             });
-            let binding = self.new_binding(expr);
+            let binding = self.new_binding(expr, predicate.1.clone());
             bindings.bind(binding)
         })
     }
 
-    fn literal(&mut self, ast: &ast::Literal) -> Bindings {
+    fn literal(&mut self, ast: &ast::Literal, span: &Span) -> Bindings {
         match ast {
             ast::Literal::Integer(i) => {
-                let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::Integer(*i)));
-                let binding = self.new_binding(expr);
+                let expr = ir::Expr::Atom((ir::Atom::Const(ir::Const::Integer(*i)), span.clone()));
+                let binding = self.new_binding(expr, span.clone());
                 Bindings::from_vec(vec![binding])
             }
             ast::Literal::String(s) => {
-                let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::String(s.clone())));
-                let binding = self.new_binding(expr);
+                let expr =
+                    ir::Expr::Atom((ir::Atom::Const(ir::Const::String(s.clone())), span.clone()));
+                let binding = self.new_binding(expr, span.clone());
                 Bindings::from_vec(vec![binding])
             }
             _ => todo!(),
@@ -386,32 +407,31 @@ impl<'a> IrConverter<'a> {
     }
 
     fn exprs(&mut self, exprs: &ast::ExprS) -> Bindings {
-        let exprs = &exprs.0;
-        if !exprs.is_empty() {
+        if !exprs.0.is_empty() {
             // XXX could this be reduce?
-            let first_expr = &exprs[0];
-            let rest_exprs = &exprs[1..];
+            let first_expr = &exprs.0[0];
+            let rest_exprs = &exprs.0[1..];
             rest_exprs
                 .iter()
-                .fold(self.expr_single(first_expr), |acc, expr| {
+                .fold(self.expr_single(first_expr), |acc, expr_single| {
                     let mut left_bindings = acc;
-                    let mut right_bindings = self.expr_single(expr);
+                    let mut right_bindings = self.expr_single(expr_single);
                     let expr = ir::Expr::Binary(ir::Binary {
                         left: left_bindings.atom(),
                         op: ir::BinaryOp::Comma,
                         right: right_bindings.atom(),
                     });
-                    let binding = self.new_binding(expr);
+                    let binding = self.new_binding(expr, expr_single.1.clone());
                     left_bindings.concat(right_bindings).bind(binding)
                 })
         } else {
-            let expr = ir::Expr::Atom(ir::Atom::Const(ir::Const::EmptySequence));
-            let binding = self.new_binding(expr);
+            let expr = ir::Expr::Atom((ir::Atom::Const(ir::Const::EmptySequence), exprs.1.clone()));
+            let binding = self.new_binding(expr, exprs.1.clone());
             Bindings::from_vec(vec![binding])
         }
     }
 
-    fn binary_expr(&mut self, ast: &ast::BinaryExpr) -> Bindings {
+    fn binary_expr(&mut self, ast: &ast::BinaryExpr, span: &Span) -> Bindings {
         let mut left_bindings = self.path_expr(&ast.left);
         let mut right_bindings = self.path_expr(&ast.right);
         let op = self.binary_op(ast.operator);
@@ -420,7 +440,7 @@ impl<'a> IrConverter<'a> {
             op,
             right: right_bindings.atom(),
         });
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
 
         left_bindings.concat(right_bindings).bind(binding)
     }
@@ -442,7 +462,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn apply_expr(&mut self, ast: &ast::ApplyExpr) -> Bindings {
+    fn apply_expr(&mut self, ast: &ast::ApplyExpr, span: &Span) -> Bindings {
         match &ast.operator {
             ast::ApplyOperator::SimpleMap(path_exprs) => {
                 let path_bindings = self.path_expr(&ast.path_expr);
@@ -457,7 +477,7 @@ impl<'a> IrConverter<'a> {
                         var_atom: path_atom,
                         return_expr: Box::new(return_bindings.expr()),
                     });
-                    let binding = self.new_binding(expr);
+                    let binding = self.new_binding(expr, span.clone());
                     path_bindings.bind(binding)
                 })
             }
@@ -467,7 +487,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn if_expr(&mut self, ast: &ast::IfExpr) -> Bindings {
+    fn if_expr(&mut self, ast: &ast::IfExpr, span: &Span) -> Bindings {
         let mut condition_bindings = self.exprs(&ast.condition);
         let then_bindings = self.expr_single(&ast.then);
         let else_bindings = self.expr_single(&ast.else_);
@@ -476,11 +496,11 @@ impl<'a> IrConverter<'a> {
             then: Box::new(then_bindings.expr()),
             else_: Box::new(else_bindings.expr()),
         });
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         condition_bindings.bind(binding)
     }
 
-    fn let_expr(&mut self, ast: &ast::LetExpr) -> Bindings {
+    fn let_expr(&mut self, ast: &ast::LetExpr, span: &Span) -> Bindings {
         let name = self.new_var_name(&ast.var_name);
         let var_bindings = self.expr_single(&ast.var_expr);
         let return_bindings = self.expr_single(&ast.return_expr);
@@ -489,10 +509,10 @@ impl<'a> IrConverter<'a> {
             var_expr: Box::new(var_bindings.expr()),
             return_expr: Box::new(return_bindings.expr()),
         });
-        Bindings::from_vec(vec![self.new_binding(expr)])
+        Bindings::from_vec(vec![self.new_binding(expr, span.clone())])
     }
 
-    fn for_expr(&mut self, ast: &ast::ForExpr) -> Bindings {
+    fn for_expr(&mut self, ast: &ast::ForExpr, span: &Span) -> Bindings {
         let name = self.new_var_name(&ast.var_name);
         let mut var_bindings = self.expr_single(&ast.var_expr);
         let var_atom = var_bindings.atom();
@@ -504,11 +524,11 @@ impl<'a> IrConverter<'a> {
             return_expr: Box::new(return_bindings.expr()),
         });
 
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         var_bindings.bind(binding)
     }
 
-    fn quantified_expr(&mut self, ast: &ast::QuantifiedExpr) -> Bindings {
+    fn quantified_expr(&mut self, ast: &ast::QuantifiedExpr, span: &Span) -> Bindings {
         let name = self.new_var_name(&ast.var_name);
         let mut var_bindings = self.expr_single(&ast.var_expr);
         let var_atom = var_bindings.atom();
@@ -522,7 +542,7 @@ impl<'a> IrConverter<'a> {
             satisifies_expr: Box::new(satisfies_bindings.expr()),
         });
 
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         var_bindings.bind(binding)
     }
 
@@ -533,7 +553,7 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn inline_function(&mut self, inline_function: &ast::InlineFunction) -> Bindings {
+    fn inline_function(&mut self, inline_function: &ast::InlineFunction, span: &Span) -> Bindings {
         let params = inline_function
             .params
             .iter()
@@ -544,7 +564,7 @@ impl<'a> IrConverter<'a> {
             params,
             body: Box::new(body_bindings.expr()),
         });
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         Bindings::from_vec(vec![binding])
     }
 
@@ -552,7 +572,7 @@ impl<'a> IrConverter<'a> {
         ir::Param(self.new_var_name(&param.name))
     }
 
-    fn function_call(&mut self, ast: &ast::FunctionCall) -> Bindings {
+    fn function_call(&mut self, ast: &ast::FunctionCall, span: &Span) -> Bindings {
         let arity = ast.arguments.len();
         if arity > u8::MAX as usize {
             panic!("too many arguments");
@@ -573,30 +593,37 @@ impl<'a> IrConverter<'a> {
             .functions
             .get_by_name(&ast.name, arity as u8)
             .unwrap_or_else(|| panic!("Unknown function name {:?} with arity {}", ast.name, arity));
-        let mut static_function_ref_bindings = self.static_function_ref(static_function_id);
+        // XXX we don't know yet how to get the proper span here
+        let empty_span = 0..0;
+        let mut static_function_ref_bindings =
+            self.static_function_ref(static_function_id, &empty_span);
         let atom = static_function_ref_bindings.atom();
         let mut arg_bindings = self.args(&ast.arguments);
         let args = arg_bindings.args(ast.arguments.len());
         let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         static_function_ref_bindings
             .concat(arg_bindings)
             .bind(binding)
     }
 
-    fn named_function_ref(&mut self, ast: &ast::NamedFunctionRef) -> Bindings {
+    fn named_function_ref(&mut self, ast: &ast::NamedFunctionRef, span: &Span) -> Bindings {
         let static_function_id = self
             .static_context
             .functions
             .get_by_name(&ast.name, ast.arity)
             .unwrap();
-        self.static_function_ref(static_function_id)
+        self.static_function_ref(static_function_id, span)
     }
 
-    fn static_function_ref(&mut self, static_function_id: StaticFunctionId) -> Bindings {
+    fn static_function_ref(
+        &mut self,
+        static_function_id: StaticFunctionId,
+        span: &Span,
+    ) -> Bindings {
         let expr =
             ir::Expr::StaticFunctionReference(static_function_id, self.current_context_names());
-        let binding = self.new_binding(expr);
+        let binding = self.new_binding(expr, span.clone());
         Bindings::from_vec(vec![binding])
     }
 

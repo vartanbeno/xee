@@ -15,16 +15,22 @@ Map(
                 "v3",
             ),
         },
-        var_atom: Const(
-            Integer(
-                1,
-            ),
-        ),
-        return_expr: Atom(
+        var_atom: (
             Const(
                 Integer(
-                    2,
+                    1,
                 ),
+            ),
+            10..11,
+        ),
+        return_expr: Atom(
+            (
+                Const(
+                    Integer(
+                        2,
+                    ),
+                ),
+                19..20,
             ),
         ),
     },

@@ -3,11 +3,14 @@
 // (without function arguments), as XPath doesn't.
 use std::rc::Rc;
 
+use crate::span::Spanned;
 use crate::value::{StaticFunctionId, Step};
+
+pub(crate) type AtomS = Spanned<Atom>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Expr {
-    Atom(Atom),
+    Atom(AtomS),
     Let(Let),
     If(If),
     Binary(Binary),
@@ -56,16 +59,16 @@ pub(crate) struct Let {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct If {
-    pub(crate) condition: Atom,
+    pub(crate) condition: AtomS,
     pub(crate) then: Box<Expr>,
     pub(crate) else_: Box<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Binary {
-    pub(crate) left: Atom,
+    pub(crate) left: AtomS,
     pub(crate) op: BinaryOp,
-    pub(crate) right: Atom,
+    pub(crate) right: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -95,21 +98,21 @@ pub(crate) struct Param(pub(crate) Name);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FunctionCall {
-    pub(crate) atom: Atom,
-    pub(crate) args: Vec<Atom>,
+    pub(crate) atom: AtomS,
+    pub(crate) args: Vec<AtomS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Map {
     pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: Atom,
+    pub(crate) var_atom: AtomS,
     pub(crate) return_expr: Box<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Filter {
     pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: Atom,
+    pub(crate) var_atom: AtomS,
     pub(crate) return_expr: Box<Expr>,
 }
 
@@ -117,7 +120,7 @@ pub(crate) struct Filter {
 pub(crate) struct Quantified {
     pub(crate) quantifier: Quantifier,
     pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: Atom,
+    pub(crate) var_atom: AtomS,
     pub(crate) satisifies_expr: Box<Expr>,
 }
 

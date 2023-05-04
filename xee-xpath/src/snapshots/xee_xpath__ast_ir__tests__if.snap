@@ -9,53 +9,74 @@ Let(
         ),
         var_expr: Binary(
             Binary {
-                left: Const(
-                    Integer(
-                        1,
+                left: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    4..5,
                 ),
                 op: Gt,
-                right: Const(
-                    Integer(
-                        2,
+                right: (
+                    Const(
+                        Integer(
+                            2,
+                        ),
                     ),
+                    9..10,
                 ),
             },
         ),
         return_expr: If(
             If {
-                condition: Variable(
-                    Name(
-                        "v2",
+                condition: (
+                    Variable(
+                        Name(
+                            "v2",
+                        ),
                     ),
+                    4..10,
                 ),
                 then: Binary(
                     Binary {
-                        left: Const(
-                            Integer(
-                                1,
+                        left: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            17..18,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                2,
+                        right: (
+                            Const(
+                                Integer(
+                                    2,
+                                ),
                             ),
+                            21..22,
                         ),
                     },
                 ),
                 else_: Binary(
                     Binary {
-                        left: Const(
-                            Integer(
-                                3,
+                        left: (
+                            Const(
+                                Integer(
+                                    3,
+                                ),
                             ),
+                            28..29,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                4,
+                        right: (
+                            Const(
+                                Integer(
+                                    4,
+                                ),
                             ),
+                            32..33,
                         ),
                     },
                 ),

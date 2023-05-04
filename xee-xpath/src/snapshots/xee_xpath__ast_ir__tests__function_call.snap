@@ -18,16 +18,22 @@ Let(
                 ],
                 body: Binary(
                     Binary {
-                        left: Variable(
-                            Name(
-                                "v0",
+                        left: (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
                             ),
+                            15..17,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                1,
+                        right: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            20..21,
                         ),
                     },
                 ),
@@ -35,16 +41,22 @@ Let(
         ),
         return_expr: FunctionCall(
             FunctionCall {
-                atom: Variable(
-                    Name(
-                        "v3",
+                atom: (
+                    Variable(
+                        Name(
+                            "v3",
+                        ),
                     ),
+                    0..23,
                 ),
                 args: [
-                    Const(
-                        Integer(
-                            3,
+                    (
+                        Const(
+                            Integer(
+                                3,
+                            ),
                         ),
+                        24..25,
                     ),
                 ],
             },

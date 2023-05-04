@@ -8,17 +8,23 @@ Let(
             "v0",
         ),
         var_expr: Atom(
-            Const(
-                Integer(
-                    1,
+            (
+                Const(
+                    Integer(
+                        1,
+                    ),
                 ),
+                10..11,
             ),
         ),
         return_expr: Atom(
-            Const(
-                Integer(
-                    2,
+            (
+                Const(
+                    Integer(
+                        2,
+                    ),
                 ),
+                19..20,
             ),
         ),
     },

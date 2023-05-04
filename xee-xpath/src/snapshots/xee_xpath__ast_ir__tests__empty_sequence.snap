@@ -23,8 +23,11 @@ Ok(
                 ),
             ],
             body: Atom(
-                Const(
-                    EmptySequence,
+                (
+                    Const(
+                        EmptySequence,
+                    ),
+                    0..2,
                 ),
             ),
         },

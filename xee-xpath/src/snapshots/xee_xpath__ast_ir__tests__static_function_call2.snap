@@ -20,16 +20,22 @@ Let(
                 ),
                 var_expr: Binary(
                     Binary {
-                        left: Const(
-                            Integer(
-                                1,
+                        left: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            12..13,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                2,
+                        right: (
+                            Const(
+                                Integer(
+                                    2,
+                                ),
                             ),
+                            16..17,
                         ),
                     },
                 ),
@@ -40,36 +46,51 @@ Let(
                         ),
                         var_expr: Binary(
                             Binary {
-                                left: Const(
-                                    Integer(
-                                        3,
+                                left: (
+                                    Const(
+                                        Integer(
+                                            3,
+                                        ),
                                     ),
+                                    19..20,
                                 ),
                                 op: Add,
-                                right: Const(
-                                    Integer(
-                                        4,
+                                right: (
+                                    Const(
+                                        Integer(
+                                            4,
+                                        ),
                                     ),
+                                    23..24,
                                 ),
                             },
                         ),
                         return_expr: FunctionCall(
                             FunctionCall {
-                                atom: Variable(
-                                    Name(
-                                        "v0",
+                                atom: (
+                                    Variable(
+                                        Name(
+                                            "v0",
+                                        ),
                                     ),
+                                    0..0,
                                 ),
                                 args: [
-                                    Variable(
-                                        Name(
-                                            "v3",
+                                    (
+                                        Variable(
+                                            Name(
+                                                "v3",
+                                            ),
                                         ),
+                                        12..17,
                                     ),
-                                    Variable(
-                                        Name(
-                                            "v6",
+                                    (
+                                        Variable(
+                                            Name(
+                                                "v6",
+                                            ),
                                         ),
+                                        19..24,
                                     ),
                                 ],
                             },

@@ -20,16 +20,22 @@ Let(
                 ),
                 var_expr: Binary(
                     Binary {
-                        left: Const(
-                            Integer(
-                                1,
+                        left: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            12..13,
                         ),
                         op: Add,
-                        right: Const(
-                            Integer(
-                                2,
+                        right: (
+                            Const(
+                                Integer(
+                                    2,
+                                ),
                             ),
+                            16..17,
                         ),
                     },
                 ),
@@ -40,16 +46,22 @@ Let(
                         ),
                         var_expr: Binary(
                             Binary {
-                                left: Variable(
-                                    Name(
-                                        "v3",
+                                left: (
+                                    Variable(
+                                        Name(
+                                            "v3",
+                                        ),
                                     ),
+                                    12..18,
                                 ),
                                 op: Add,
-                                right: Const(
-                                    Integer(
-                                        3,
+                                right: (
+                                    Const(
+                                        Integer(
+                                            3,
+                                        ),
                                     ),
+                                    20..21,
                                 ),
                             },
                         ),
@@ -60,36 +72,51 @@ Let(
                                 ),
                                 var_expr: Binary(
                                     Binary {
-                                        left: Const(
-                                            Integer(
-                                                4,
+                                        left: (
+                                            Const(
+                                                Integer(
+                                                    4,
+                                                ),
                                             ),
+                                            23..24,
                                         ),
                                         op: Add,
-                                        right: Const(
-                                            Integer(
-                                                5,
+                                        right: (
+                                            Const(
+                                                Integer(
+                                                    5,
+                                                ),
                                             ),
+                                            27..28,
                                         ),
                                     },
                                 ),
                                 return_expr: FunctionCall(
                                     FunctionCall {
-                                        atom: Variable(
-                                            Name(
-                                                "v0",
+                                        atom: (
+                                            Variable(
+                                                Name(
+                                                    "v0",
+                                                ),
                                             ),
+                                            0..0,
                                         ),
                                         args: [
-                                            Variable(
-                                                Name(
-                                                    "v5",
+                                            (
+                                                Variable(
+                                                    Name(
+                                                        "v5",
+                                                    ),
                                                 ),
+                                                12..21,
                                             ),
-                                            Variable(
-                                                Name(
-                                                    "v8",
+                                            (
+                                                Variable(
+                                                    Name(
+                                                        "v8",
+                                                    ),
                                                 ),
+                                                23..28,
                                             ),
                                         ],
                                     },

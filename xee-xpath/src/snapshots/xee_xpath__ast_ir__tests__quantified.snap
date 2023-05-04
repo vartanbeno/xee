@@ -9,16 +9,22 @@ Let(
         ),
         var_expr: Binary(
             Binary {
-                left: Const(
-                    Integer(
-                        1,
+                left: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    12..13,
                 ),
                 op: Comma,
-                right: Const(
-                    Integer(
-                        2,
+                right: (
+                    Const(
+                        Integer(
+                            2,
+                        ),
                     ),
+                    15..16,
                 ),
             },
         ),
@@ -36,23 +42,32 @@ Let(
                         "v5",
                     ),
                 },
-                var_atom: Variable(
-                    Name(
-                        "v3",
+                var_atom: (
+                    Variable(
+                        Name(
+                            "v3",
+                        ),
                     ),
+                    15..16,
                 ),
                 satisifies_expr: Binary(
                     Binary {
-                        left: Variable(
-                            Name(
-                                "v0",
+                        left: (
+                            Variable(
+                                Name(
+                                    "v0",
+                                ),
                             ),
+                            28..30,
                         ),
                         op: Gt,
-                        right: Const(
-                            Integer(
-                                1,
+                        right: (
+                            Const(
+                                Integer(
+                                    1,
+                                ),
                             ),
+                            34..35,
                         ),
                     },
                 ),

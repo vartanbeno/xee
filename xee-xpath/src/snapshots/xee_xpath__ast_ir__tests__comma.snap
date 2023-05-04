@@ -24,16 +24,22 @@ Ok(
             ],
             body: Binary(
                 Binary {
-                    left: Const(
-                        Integer(
-                            1,
+                    left: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
                         ),
+                        0..1,
                     ),
                     op: Comma,
-                    right: Const(
-                        Integer(
-                            2,
+                    right: (
+                        Const(
+                            Integer(
+                                2,
+                            ),
                         ),
+                        3..4,
                     ),
                 },
             ),

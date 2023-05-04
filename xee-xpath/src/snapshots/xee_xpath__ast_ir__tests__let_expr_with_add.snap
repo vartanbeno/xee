@@ -9,24 +9,33 @@ Let(
         ),
         var_expr: Binary(
             Binary {
-                left: Const(
-                    Integer(
-                        1,
+                left: (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    11..12,
                 ),
                 op: Add,
-                right: Const(
-                    Integer(
-                        2,
+                right: (
+                    Const(
+                        Integer(
+                            2,
+                        ),
                     ),
+                    15..16,
                 ),
             },
         ),
         return_expr: Atom(
-            Variable(
-                Name(
-                    "v0",
+            (
+                Variable(
+                    Name(
+                        "v0",
+                    ),
                 ),
+                25..27,
             ),
         ),
     },
