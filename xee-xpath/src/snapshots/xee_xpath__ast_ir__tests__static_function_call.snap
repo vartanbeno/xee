@@ -2,46 +2,48 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(5, 2)\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v0",
-        ),
-        var_expr: StaticFunctionReference(
-            StaticFunctionId(
-                0,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v0",
             ),
-            None,
-        ),
-        return_expr: FunctionCall(
-            FunctionCall {
-                atom: (
-                    Variable(
-                        Name(
-                            "v0",
-                        ),
-                    ),
-                    0..0,
+            var_expr: StaticFunctionReference(
+                StaticFunctionId(
+                    0,
                 ),
-                args: [
-                    (
-                        Const(
-                            Integer(
-                                5,
+                None,
+            ),
+            return_expr: FunctionCall(
+                FunctionCall {
+                    atom: (
+                        Variable(
+                            Name(
+                                "v0",
                             ),
                         ),
-                        12..13,
+                        0..0,
                     ),
-                    (
-                        Const(
-                            Integer(
-                                2,
+                    args: [
+                        (
+                            Const(
+                                Integer(
+                                    5,
+                                ),
                             ),
+                            12..13,
                         ),
-                        15..16,
-                    ),
-                ],
-            },
-        ),
-    },
+                        (
+                            Const(
+                                Integer(
+                                    2,
+                                ),
+                            ),
+                            15..16,
+                        ),
+                    ],
+                },
+            ),
+        },
+    ),
 )

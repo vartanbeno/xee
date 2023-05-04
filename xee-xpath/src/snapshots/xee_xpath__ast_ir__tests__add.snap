@@ -2,24 +2,26 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1 + 2\")"
 ---
-Binary(
-    Binary {
-        left: (
-            Const(
-                Integer(
-                    1,
+Ok(
+    Binary(
+        Binary {
+            left: (
+                Const(
+                    Integer(
+                        1,
+                    ),
                 ),
+                0..1,
             ),
-            0..1,
-        ),
-        op: Add,
-        right: (
-            Const(
-                Integer(
-                    2,
+            op: Add,
+            right: (
+                Const(
+                    Integer(
+                        2,
+                    ),
                 ),
+                4..5,
             ),
-            4..5,
-        ),
-    },
+        },
+    ),
 )

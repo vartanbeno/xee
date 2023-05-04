@@ -2,52 +2,54 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1 + 2 + 3\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v2",
-        ),
-        var_expr: Binary(
-            Binary {
-                left: (
-                    Const(
-                        Integer(
-                            1,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v2",
+            ),
+            var_expr: Binary(
+                Binary {
+                    left: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
                         ),
+                        0..1,
                     ),
-                    0..1,
-                ),
-                op: Add,
-                right: (
-                    Const(
-                        Integer(
-                            2,
+                    op: Add,
+                    right: (
+                        Const(
+                            Integer(
+                                2,
+                            ),
                         ),
+                        4..5,
                     ),
-                    4..5,
-                ),
-            },
-        ),
-        return_expr: Binary(
-            Binary {
-                left: (
-                    Variable(
-                        Name(
-                            "v2",
+                },
+            ),
+            return_expr: Binary(
+                Binary {
+                    left: (
+                        Variable(
+                            Name(
+                                "v2",
+                            ),
                         ),
+                        0..6,
                     ),
-                    0..6,
-                ),
-                op: Add,
-                right: (
-                    Const(
-                        Integer(
-                            3,
+                    op: Add,
+                    right: (
+                        Const(
+                            Integer(
+                                3,
+                            ),
                         ),
+                        8..9,
                     ),
-                    8..9,
-                ),
-            },
-        ),
-    },
+                },
+            ),
+        },
+    ),
 )

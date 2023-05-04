@@ -2,76 +2,78 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"some $x in (1, 2) satisfies $x gt 1\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v3",
-        ),
-        var_expr: Binary(
-            Binary {
-                left: (
-                    Const(
-                        Integer(
-                            1,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v3",
+            ),
+            var_expr: Binary(
+                Binary {
+                    left: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
                         ),
+                        12..13,
                     ),
-                    12..13,
-                ),
-                op: Comma,
-                right: (
-                    Const(
-                        Integer(
-                            2,
+                    op: Comma,
+                    right: (
+                        Const(
+                            Integer(
+                                2,
+                            ),
                         ),
-                    ),
-                    15..16,
-                ),
-            },
-        ),
-        return_expr: Quantified(
-            Quantified {
-                quantifier: Some,
-                context_names: ContextNames {
-                    item: Name(
-                        "v0",
-                    ),
-                    position: Name(
-                        "v4",
-                    ),
-                    last: Name(
-                        "v5",
+                        15..16,
                     ),
                 },
-                var_atom: (
-                    Variable(
-                        Name(
-                            "v3",
+            ),
+            return_expr: Quantified(
+                Quantified {
+                    quantifier: Some,
+                    context_names: ContextNames {
+                        item: Name(
+                            "v0",
                         ),
-                    ),
-                    15..16,
-                ),
-                satisifies_expr: Binary(
-                    Binary {
-                        left: (
-                            Variable(
-                                Name(
-                                    "v0",
-                                ),
-                            ),
-                            28..30,
+                        position: Name(
+                            "v4",
                         ),
-                        op: Gt,
-                        right: (
-                            Const(
-                                Integer(
-                                    1,
-                                ),
-                            ),
-                            34..35,
+                        last: Name(
+                            "v5",
                         ),
                     },
-                ),
-            },
-        ),
-    },
+                    var_atom: (
+                        Variable(
+                            Name(
+                                "v3",
+                            ),
+                        ),
+                        15..16,
+                    ),
+                    satisifies_expr: Binary(
+                        Binary {
+                            left: (
+                                Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                28..30,
+                            ),
+                            op: Gt,
+                            right: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                34..35,
+                            ),
+                        },
+                    ),
+                },
+            ),
+        },
+    ),
 )

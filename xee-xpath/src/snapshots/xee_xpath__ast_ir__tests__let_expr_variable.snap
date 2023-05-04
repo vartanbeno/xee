@@ -2,30 +2,32 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"let $x := 1 return $x\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v0",
-        ),
-        var_expr: Atom(
-            (
-                Const(
-                    Integer(
-                        1,
-                    ),
-                ),
-                10..11,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v0",
             ),
-        ),
-        return_expr: Atom(
-            (
-                Variable(
-                    Name(
-                        "v0",
+            var_expr: Atom(
+                (
+                    Const(
+                        Integer(
+                            1,
+                        ),
                     ),
+                    10..11,
                 ),
-                19..21,
             ),
-        ),
-    },
+            return_expr: Atom(
+                (
+                    Variable(
+                        Name(
+                            "v0",
+                        ),
+                    ),
+                    19..21,
+                ),
+            ),
+        },
+    ),
 )

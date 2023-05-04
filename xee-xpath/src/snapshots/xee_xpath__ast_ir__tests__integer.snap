@@ -2,13 +2,15 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1\")"
 ---
-Atom(
-    (
-        Const(
-            Integer(
-                1,
+Ok(
+    Atom(
+        (
+            Const(
+                Integer(
+                    1,
+                ),
             ),
+            0..1,
         ),
-        0..1,
     ),
 )

@@ -2,102 +2,104 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(1 + 2, 3 + 4)\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v0",
-        ),
-        var_expr: StaticFunctionReference(
-            StaticFunctionId(
-                0,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v0",
             ),
-            None,
-        ),
-        return_expr: Let(
-            Let {
-                name: Name(
-                    "v3",
+            var_expr: StaticFunctionReference(
+                StaticFunctionId(
+                    0,
                 ),
-                var_expr: Binary(
-                    Binary {
-                        left: (
-                            Const(
-                                Integer(
-                                    1,
+                None,
+            ),
+            return_expr: Let(
+                Let {
+                    name: Name(
+                        "v3",
+                    ),
+                    var_expr: Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                12..13,
                             ),
-                            12..13,
-                        ),
-                        op: Add,
-                        right: (
-                            Const(
-                                Integer(
-                                    2,
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
+                                    ),
                                 ),
+                                16..17,
                             ),
-                            16..17,
-                        ),
-                    },
-                ),
-                return_expr: Let(
-                    Let {
-                        name: Name(
-                            "v6",
-                        ),
-                        var_expr: Binary(
-                            Binary {
-                                left: (
-                                    Const(
-                                        Integer(
-                                            3,
-                                        ),
-                                    ),
-                                    19..20,
-                                ),
-                                op: Add,
-                                right: (
-                                    Const(
-                                        Integer(
-                                            4,
-                                        ),
-                                    ),
-                                    23..24,
-                                ),
-                            },
-                        ),
-                        return_expr: FunctionCall(
-                            FunctionCall {
-                                atom: (
-                                    Variable(
-                                        Name(
-                                            "v0",
-                                        ),
-                                    ),
-                                    0..0,
-                                ),
-                                args: [
-                                    (
-                                        Variable(
-                                            Name(
-                                                "v3",
+                        },
+                    ),
+                    return_expr: Let(
+                        Let {
+                            name: Name(
+                                "v6",
+                            ),
+                            var_expr: Binary(
+                                Binary {
+                                    left: (
+                                        Const(
+                                            Integer(
+                                                3,
                                             ),
                                         ),
-                                        12..17,
+                                        19..20,
                                     ),
-                                    (
-                                        Variable(
-                                            Name(
-                                                "v6",
+                                    op: Add,
+                                    right: (
+                                        Const(
+                                            Integer(
+                                                4,
                                             ),
                                         ),
-                                        19..24,
+                                        23..24,
                                     ),
-                                ],
-                            },
-                        ),
-                    },
-                ),
-            },
-        ),
-    },
+                                },
+                            ),
+                            return_expr: FunctionCall(
+                                FunctionCall {
+                                    atom: (
+                                        Variable(
+                                            Name(
+                                                "v0",
+                                            ),
+                                        ),
+                                        0..0,
+                                    ),
+                                    args: [
+                                        (
+                                            Variable(
+                                                Name(
+                                                    "v3",
+                                                ),
+                                            ),
+                                            12..17,
+                                        ),
+                                        (
+                                            Variable(
+                                                Name(
+                                                    "v6",
+                                                ),
+                                            ),
+                                            19..24,
+                                        ),
+                                    ],
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+        },
+    ),
 )

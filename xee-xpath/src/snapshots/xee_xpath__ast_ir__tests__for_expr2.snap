@@ -2,75 +2,77 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"for $x in (1, 2) return $x + 1\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v3",
-        ),
-        var_expr: Binary(
-            Binary {
-                left: (
-                    Const(
-                        Integer(
-                            1,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v3",
+            ),
+            var_expr: Binary(
+                Binary {
+                    left: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
                         ),
+                        11..12,
                     ),
-                    11..12,
-                ),
-                op: Comma,
-                right: (
-                    Const(
-                        Integer(
-                            2,
+                    op: Comma,
+                    right: (
+                        Const(
+                            Integer(
+                                2,
+                            ),
                         ),
-                    ),
-                    14..15,
-                ),
-            },
-        ),
-        return_expr: Map(
-            Map {
-                context_names: ContextNames {
-                    item: Name(
-                        "v0",
-                    ),
-                    position: Name(
-                        "v4",
-                    ),
-                    last: Name(
-                        "v5",
+                        14..15,
                     ),
                 },
-                var_atom: (
-                    Variable(
-                        Name(
-                            "v3",
+            ),
+            return_expr: Map(
+                Map {
+                    context_names: ContextNames {
+                        item: Name(
+                            "v0",
                         ),
-                    ),
-                    14..15,
-                ),
-                return_expr: Binary(
-                    Binary {
-                        left: (
-                            Variable(
-                                Name(
-                                    "v0",
-                                ),
-                            ),
-                            24..26,
+                        position: Name(
+                            "v4",
                         ),
-                        op: Add,
-                        right: (
-                            Const(
-                                Integer(
-                                    1,
-                                ),
-                            ),
-                            29..30,
+                        last: Name(
+                            "v5",
                         ),
                     },
-                ),
-            },
-        ),
-    },
+                    var_atom: (
+                        Variable(
+                            Name(
+                                "v3",
+                            ),
+                        ),
+                        14..15,
+                    ),
+                    return_expr: Binary(
+                        Binary {
+                            left: (
+                                Variable(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                                24..26,
+                            ),
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                29..30,
+                            ),
+                        },
+                    ),
+                },
+            ),
+        },
+    ),
 )

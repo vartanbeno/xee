@@ -2,85 +2,87 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"if (1 gt 2) then 1 + 2 else 3 + 4\")"
 ---
-Let(
-    Let {
-        name: Name(
-            "v2",
-        ),
-        var_expr: Binary(
-            Binary {
-                left: (
-                    Const(
-                        Integer(
-                            1,
+Ok(
+    Let(
+        Let {
+            name: Name(
+                "v2",
+            ),
+            var_expr: Binary(
+                Binary {
+                    left: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
                         ),
+                        4..5,
                     ),
-                    4..5,
-                ),
-                op: Gt,
-                right: (
-                    Const(
-                        Integer(
-                            2,
+                    op: Gt,
+                    right: (
+                        Const(
+                            Integer(
+                                2,
+                            ),
                         ),
+                        9..10,
                     ),
-                    9..10,
-                ),
-            },
-        ),
-        return_expr: If(
-            If {
-                condition: (
-                    Variable(
-                        Name(
-                            "v2",
+                },
+            ),
+            return_expr: If(
+                If {
+                    condition: (
+                        Variable(
+                            Name(
+                                "v2",
+                            ),
                         ),
+                        4..10,
                     ),
-                    4..10,
-                ),
-                then: Binary(
-                    Binary {
-                        left: (
-                            Const(
-                                Integer(
-                                    1,
+                    then: Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                17..18,
                             ),
-                            17..18,
-                        ),
-                        op: Add,
-                        right: (
-                            Const(
-                                Integer(
-                                    2,
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        2,
+                                    ),
                                 ),
+                                21..22,
                             ),
-                            21..22,
-                        ),
-                    },
-                ),
-                else_: Binary(
-                    Binary {
-                        left: (
-                            Const(
-                                Integer(
-                                    3,
+                        },
+                    ),
+                    else_: Binary(
+                        Binary {
+                            left: (
+                                Const(
+                                    Integer(
+                                        3,
+                                    ),
                                 ),
+                                28..29,
                             ),
-                            28..29,
-                        ),
-                        op: Add,
-                        right: (
-                            Const(
-                                Integer(
-                                    4,
+                            op: Add,
+                            right: (
+                                Const(
+                                    Integer(
+                                        4,
+                                    ),
                                 ),
+                                32..33,
                             ),
-                            32..33,
-                        ),
-                    },
-                ),
-            },
-        ),
-    },
+                        },
+                    ),
+                },
+            ),
+        },
+    ),
 )

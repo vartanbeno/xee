@@ -2,36 +2,38 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"for $x in 1 return 2\")"
 ---
-Map(
-    Map {
-        context_names: ContextNames {
-            item: Name(
-                "v0",
-            ),
-            position: Name(
-                "v2",
-            ),
-            last: Name(
-                "v3",
-            ),
-        },
-        var_atom: (
-            Const(
-                Integer(
-                    1,
+Ok(
+    Map(
+        Map {
+            context_names: ContextNames {
+                item: Name(
+                    "v0",
                 ),
-            ),
-            10..11,
-        ),
-        return_expr: Atom(
-            (
+                position: Name(
+                    "v2",
+                ),
+                last: Name(
+                    "v3",
+                ),
+            },
+            var_atom: (
                 Const(
                     Integer(
-                        2,
+                        1,
                     ),
                 ),
-                19..20,
+                10..11,
             ),
-        ),
-    },
+            return_expr: Atom(
+                (
+                    Const(
+                        Integer(
+                            2,
+                        ),
+                    ),
+                    19..20,
+                ),
+            ),
+        },
+    ),
 )

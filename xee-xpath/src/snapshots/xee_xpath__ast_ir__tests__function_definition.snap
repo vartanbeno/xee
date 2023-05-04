@@ -2,35 +2,37 @@
 source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"function($x) { $x + 1 }\")"
 ---
-FunctionDefinition(
-    FunctionDefinition {
-        params: [
-            Param(
-                Name(
-                    "v0",
+Ok(
+    FunctionDefinition(
+        FunctionDefinition {
+            params: [
+                Param(
+                    Name(
+                        "v0",
+                    ),
                 ),
+            ],
+            body: Binary(
+                Binary {
+                    left: (
+                        Variable(
+                            Name(
+                                "v0",
+                            ),
+                        ),
+                        15..17,
+                    ),
+                    op: Add,
+                    right: (
+                        Const(
+                            Integer(
+                                1,
+                            ),
+                        ),
+                        20..21,
+                    ),
+                },
             ),
-        ],
-        body: Binary(
-            Binary {
-                left: (
-                    Variable(
-                        Name(
-                            "v0",
-                        ),
-                    ),
-                    15..17,
-                ),
-                op: Add,
-                right: (
-                    Const(
-                        Integer(
-                            1,
-                        ),
-                    ),
-                    20..21,
-                ),
-            },
-        ),
-    },
+        },
+    ),
 )
