@@ -175,7 +175,10 @@ impl<'a> IrConverter<'a> {
     }
 
     fn var_ref(&mut self, name: &ast::Name, span: &Span) -> Result<Bindings> {
-        let ir_name = self.variables.get(name).unwrap();
+        let ir_name = self.variables.get(name).ok_or_else(|| Error::XPST0008 {
+            src: NamedSource::new("input", self.src.to_string()),
+            span: span_to_source_span(span),
+        })?;
         Ok(Bindings::from_vec(vec![Binding {
             name: ir_name.clone(),
             expr: ir::Expr::Atom((ir::Atom::Variable(ir_name.clone()), span.clone())),
@@ -858,5 +861,10 @@ mod tests {
     #[test]
     fn test_wrong_amount_of_arguments() {
         assert_debug_snapshot!(convert_expr_single("fn:string(1, 2, 3)"));
+    }
+
+    #[test]
+    fn test_unknown_variable_name() {
+        assert_debug_snapshot!(convert_expr_single("$unknown"));
     }
 }

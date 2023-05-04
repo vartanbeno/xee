@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/src/ast_ir.rs
-assertion_line: 860
 expression: "convert_expr_single(\"fn:string(1, 2, 3)\")"
 ---
 Err(
