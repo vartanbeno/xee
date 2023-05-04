@@ -576,7 +576,9 @@ impl<'a> IrConverter<'a> {
             .iter()
             .map(|param| self.param(param))
             .collect();
+        self.push_absent_context();
         let body_bindings = self.exprs(&inline_function.body)?;
+        self.pop_context();
         let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
             body: Box::new(body_bindings.expr()),
@@ -676,7 +678,7 @@ fn convert_xpath(s: &str) -> Result<ir::Expr> {
 }
 
 fn span_to_source_span(span: &Span) -> miette::SourceSpan {
-    (span.start, span.end).into()
+    (span.start, span.len()).into()
 }
 
 #[cfg(test)]
@@ -841,6 +843,6 @@ mod tests {
 
     #[test]
     fn test_absent_context_in_function() {
-        assert_debug_snapshot!(convert_expr_single("function() { . }"));
+        assert_debug_snapshot!(convert_xpath("function() { . }"));
     }
 }

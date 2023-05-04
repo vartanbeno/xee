@@ -24,5 +24,5 @@ pub fn evaluate(
     let document = documents.get(&uri).unwrap();
 
     let xpath = CompiledXPath::new(&context, xpath)?;
-    Ok(xpath.run_xot_node(document.root).unwrap())
+    xpath.run_xot_node(document.root)
 }

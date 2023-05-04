@@ -1,6 +1,6 @@
 ---
 source: xee-xpath/src/ast_ir.rs
-expression: "convert_expr_single(\"function() { . }\")"
+expression: "convert_xpath(\"function() { . }\")"
 ---
 Err(
     XPDY0002 {
@@ -13,7 +13,7 @@ Err(
                 13,
             ),
             length: SourceOffset(
-                14,
+                1,
             ),
         },
     },

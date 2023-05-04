@@ -196,19 +196,29 @@ impl<'a> InterpreterCompiler<'a> {
         static_function_id: StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
     ) -> Result<()> {
-        // XXX optional context names; what if context is absent?
-        let context_names = context_names.unwrap();
-
         let static_function = self
             .context
             .static_context
             .functions
             .get_by_index(static_function_id);
         match static_function.context_rule {
-            Some(ContextRule::ItemFirst) => self.compile_variable(&context_names.item)?,
-            Some(ContextRule::ItemLast) => self.compile_variable(&context_names.item)?,
-            Some(ContextRule::PositionFirst) => self.compile_variable(&context_names.position)?,
-            Some(ContextRule::SizeFirst) => self.compile_variable(&context_names.last)?,
+            Some(ContextRule::ItemFirst) => {
+                // XXX optional context names; what if context is absent?
+                let context_names = context_names.unwrap();
+                self.compile_variable(&context_names.item)?
+            }
+            Some(ContextRule::ItemLast) => {
+                let context_names = context_names.unwrap();
+                self.compile_variable(&context_names.item)?
+            }
+            Some(ContextRule::PositionFirst) => self.compile_variable({
+                let context_names = context_names.unwrap();
+                &context_names.position
+            })?,
+            Some(ContextRule::SizeFirst) => {
+                let context_names = context_names.unwrap();
+                self.compile_variable(&context_names.last)?
+            }
             None => {}
         }
         self.builder
