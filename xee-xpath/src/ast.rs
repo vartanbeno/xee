@@ -4,6 +4,7 @@ use crate::span::Spanned;
 
 pub(crate) type ExprSingleS = Spanned<ExprSingle>;
 pub(crate) type PrimaryExprS = Spanned<PrimaryExpr>;
+pub(crate) type StepExprS = Spanned<StepExpr>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct XPath {
@@ -249,7 +250,7 @@ pub(crate) enum Lookup {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct PathExpr {
-    pub(crate) steps: Vec<StepExpr>,
+    pub(crate) steps: Vec<StepExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

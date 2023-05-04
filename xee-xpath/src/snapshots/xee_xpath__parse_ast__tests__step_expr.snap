@@ -2,13 +2,16 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_step_expr(\"1\")"
 ---
-PrimaryExpr(
-    (
-        Literal(
-            Integer(
-                1,
+(
+    PrimaryExpr(
+        (
+            Literal(
+                Integer(
+                    1,
+                ),
             ),
+            0..1,
         ),
-        0..1,
     ),
+    0..1,
 )

@@ -7,15 +7,18 @@ expression: "parse_expr_single(\"-1\")"
         ApplyExpr {
             path_expr: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                Integer(
-                                    1,
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                1..2,
                             ),
-                            1..2,
                         ),
+                        1..2,
                     ),
                 ],
             },

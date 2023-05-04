@@ -259,14 +259,14 @@ impl<'a> IrConverter<'a> {
     fn path_expr(&mut self, ast: &ast::PathExpr) -> Bindings {
         let first_step = &ast.steps[0];
         let rest_steps = &ast.steps[1..];
-        let first_step_bindings = self.step_expr(first_step);
+        let first_step_bindings = self.step_expr(&first_step.0);
         rest_steps
             .iter()
             .fold(first_step_bindings, |acc, step_expr| {
                 let mut step_bindings = acc;
                 let step_atom = step_bindings.atom();
                 let context_names = self.push_context();
-                let return_bindings = self.step_expr(step_expr);
+                let return_bindings = self.step_expr(&step_expr.0);
                 self.pop_context();
                 let expr = ir::Expr::Map(ir::Map {
                     context_names,

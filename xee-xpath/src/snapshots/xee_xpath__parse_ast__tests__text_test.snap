@@ -6,14 +6,17 @@ expression: "parse_expr_single(\"self::text()\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Self_,
-                        node_test: KindTest(
-                            Text,
-                        ),
-                        predicates: [],
-                    },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Self_,
+                            node_test: KindTest(
+                                Text,
+                            ),
+                            predicates: [],
+                        },
+                    ),
+                    0..12,
                 ),
             ],
         },

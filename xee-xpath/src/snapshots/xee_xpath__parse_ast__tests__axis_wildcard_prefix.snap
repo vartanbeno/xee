@@ -6,16 +6,19 @@ expression: "parse_expr_single(\"child::*:foo\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            LocalName(
-                                "foo",
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                LocalName(
+                                    "foo",
+                                ),
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    0..12,
                 ),
             ],
         },

@@ -6,28 +6,34 @@ expression: "parse_expr_single(\"foo/namespace-node()\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    0..3,
                 ),
-                AxisStep(
-                    AxisStep {
-                        axis: Namespace,
-                        node_test: KindTest(
-                            NamespaceNode,
-                        ),
-                        predicates: [],
-                    },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Namespace,
+                            node_test: KindTest(
+                                NamespaceNode,
+                            ),
+                            predicates: [],
+                        },
+                    ),
+                    4..20,
                 ),
             ],
         },

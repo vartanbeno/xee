@@ -8,64 +8,76 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
             operator: Add,
             left: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                Integer(
-                                    1,
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                0..1,
                             ),
-                            0..1,
                         ),
+                        0..1,
                     ),
                 ],
             },
             right: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Expr(
-                                [
-                                    (
-                                        Binary(
-                                            BinaryExpr {
-                                                operator: Mul,
-                                                left: PathExpr {
-                                                    steps: [
-                                                        PrimaryExpr(
+                    (
+                        PrimaryExpr(
+                            (
+                                Expr(
+                                    [
+                                        (
+                                            Binary(
+                                                BinaryExpr {
+                                                    operator: Mul,
+                                                    left: PathExpr {
+                                                        steps: [
                                                             (
-                                                                Literal(
-                                                                    Integer(
-                                                                        2,
+                                                                PrimaryExpr(
+                                                                    (
+                                                                        Literal(
+                                                                            Integer(
+                                                                                2,
+                                                                            ),
+                                                                        ),
+                                                                        5..6,
                                                                     ),
                                                                 ),
                                                                 5..6,
                                                             ),
-                                                        ),
-                                                    ],
-                                                },
-                                                right: PathExpr {
-                                                    steps: [
-                                                        PrimaryExpr(
+                                                        ],
+                                                    },
+                                                    right: PathExpr {
+                                                        steps: [
                                                             (
-                                                                Literal(
-                                                                    Integer(
-                                                                        3,
+                                                                PrimaryExpr(
+                                                                    (
+                                                                        Literal(
+                                                                            Integer(
+                                                                                3,
+                                                                            ),
+                                                                        ),
+                                                                        9..10,
                                                                     ),
                                                                 ),
                                                                 9..10,
                                                             ),
-                                                        ),
-                                                    ],
+                                                        ],
+                                                    },
                                                 },
-                                            },
+                                            ),
+                                            5..10,
                                         ),
-                                        5..10,
-                                    ),
-                                ],
+                                    ],
+                                ),
+                                4..11,
                             ),
-                            4..11,
                         ),
+                        4..11,
                     ),
                 ],
             },

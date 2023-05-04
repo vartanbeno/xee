@@ -6,46 +6,52 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
     Path(
         PathExpr {
             steps: [
-                PrimaryExpr(
-                    (
-                        InlineFunction(
-                            InlineFunction {
-                                params: [
-                                    Param {
-                                        name: Name {
-                                            name: "x",
-                                            namespace: None,
+                (
+                    PrimaryExpr(
+                        (
+                            InlineFunction(
+                                InlineFunction {
+                                    params: [
+                                        Param {
+                                            name: Name {
+                                                name: "x",
+                                                namespace: None,
+                                            },
+                                            type_: None,
                                         },
-                                        type_: None,
-                                    },
-                                ],
-                                return_type: None,
-                                body: [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
+                                    ],
+                                    return_type: None,
+                                    body: [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
                                                         (
-                                                            VarRef(
-                                                                Name {
-                                                                    name: "x",
-                                                                    namespace: None,
-                                                                },
+                                                            PrimaryExpr(
+                                                                (
+                                                                    VarRef(
+                                                                        Name {
+                                                                            name: "x",
+                                                                            namespace: None,
+                                                                        },
+                                                                    ),
+                                                                    15..17,
+                                                                ),
                                                             ),
                                                             15..17,
                                                         ),
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            15..18,
                                         ),
-                                        15..18,
-                                    ),
-                                ],
-                            },
+                                    ],
+                                },
+                            ),
+                            0..19,
                         ),
-                        0..19,
                     ),
+                    0..19,
                 ),
             ],
         },

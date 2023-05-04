@@ -6,41 +6,47 @@ expression: "parse_expr_single(\"child::foo[1]\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        predicates: [
-                            [
-                                (
-                                    Path(
-                                        PathExpr {
-                                            steps: [
-                                                PrimaryExpr(
+                            predicates: [
+                                [
+                                    (
+                                        Path(
+                                            PathExpr {
+                                                steps: [
                                                     (
-                                                        Literal(
-                                                            Integer(
-                                                                1,
+                                                        PrimaryExpr(
+                                                            (
+                                                                Literal(
+                                                                    Integer(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                11..12,
                                                             ),
                                                         ),
                                                         11..12,
                                                     ),
-                                                ),
-                                            ],
-                                        },
+                                                ],
+                                            },
+                                        ),
+                                        11..12,
                                     ),
-                                    11..12,
-                                ),
+                                ],
                             ],
-                        ],
-                    },
+                        },
+                    ),
+                    0..13,
                 ),
             ],
         },

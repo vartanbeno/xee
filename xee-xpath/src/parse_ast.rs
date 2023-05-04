@@ -50,10 +50,13 @@ impl<'a> AstParser<'a> {
         match expr_single.0 {
             ast::ExprSingle::Path(path_expr) => path_expr,
             _ => ast::PathExpr {
-                steps: vec![ast::StepExpr::PrimaryExpr((
-                    ast::PrimaryExpr::Expr(vec![expr_single]),
+                steps: vec![(
+                    ast::StepExpr::PrimaryExpr((
+                        ast::PrimaryExpr::Expr(vec![expr_single]),
+                        span.clone(),
+                    )),
                     span,
-                ))],
+                )],
             },
         }
     }
@@ -311,10 +314,13 @@ impl<'a> AstParser<'a> {
                 } else {
                     spanned(
                         ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![ast::StepExpr::PrimaryExpr(spanned(
-                                ast::PrimaryExpr::Expr(exprs),
+                            steps: vec![spanned(
+                                ast::StepExpr::PrimaryExpr(spanned(
+                                    ast::PrimaryExpr::Expr(exprs),
+                                    span,
+                                )),
                                 span,
-                            ))],
+                            )],
                         }),
                         span,
                     )
@@ -375,9 +381,10 @@ impl<'a> AstParser<'a> {
         let span = pair.as_span();
         let mut pairs = pair.into_inner();
         let first_pair = pairs.next().unwrap();
+        let first_pair_span = first_pair.as_span();
         match first_pair.as_rule() {
             Rule::Slash => {
-                let mut steps = vec![root_from_context()];
+                let mut steps = vec![root_from_context(&first_pair_span)];
                 let next_pair = pairs.next();
                 if let Some(next_pair) = next_pair {
                     steps.extend(self.relative_path_expr_to_steps(next_pair));
@@ -386,12 +393,15 @@ impl<'a> AstParser<'a> {
             }
             Rule::DoubleSlash => {
                 let mut steps = vec![
-                    root_from_context(),
-                    ast::StepExpr::AxisStep(ast::AxisStep {
-                        axis: ast::Axis::DescendantOrSelf,
-                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                        predicates: vec![],
-                    }),
+                    root_from_context(&first_pair_span),
+                    spanned(
+                        ast::StepExpr::AxisStep(ast::AxisStep {
+                            axis: ast::Axis::DescendantOrSelf,
+                            node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                            predicates: vec![],
+                        }),
+                        &first_pair_span,
+                    ),
                 ];
                 steps.extend(self.relative_path_expr_to_steps(pairs.next().unwrap()));
                 ast::PathExpr { steps }
@@ -405,7 +415,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExpr> {
+    fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExprS> {
         debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
         let span = pair.as_span();
         let pairs = pair.into_inner();
@@ -416,11 +426,15 @@ impl<'a> AstParser<'a> {
                     // do nothing
                 }
                 Rule::DoubleSlash => {
-                    result.push(ast::StepExpr::AxisStep(ast::AxisStep {
-                        axis: ast::Axis::DescendantOrSelf,
-                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                        predicates: vec![],
-                    }));
+                    let span = pair.as_span();
+                    result.push(spanned(
+                        ast::StepExpr::AxisStep(ast::AxisStep {
+                            axis: ast::Axis::DescendantOrSelf,
+                            node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                            predicates: vec![],
+                        }),
+                        &span,
+                    ));
                 }
                 Rule::StepExpr => {
                     result.push(self.step_expr_to_step_expr(pair));
@@ -433,24 +447,27 @@ impl<'a> AstParser<'a> {
         result
     }
 
-    fn step_expr_to_step_expr(&self, pair: Pair<Rule>) -> ast::StepExpr {
+    fn step_expr_to_step_expr(&self, pair: Pair<Rule>) -> ast::StepExprS {
         debug_assert_eq!(pair.as_rule(), Rule::StepExpr);
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::PostfixExpr => {
+                let span = pair.as_span();
                 let mut pairs = pair.into_inner();
                 let primary_pair = pairs.next().unwrap();
+                let primary_pair_span = primary_pair.as_span();
                 let primary = self.primary_expr_to_primary(primary_pair);
                 let postfixes = pairs
                     .map(|pair| self.postfix_expr_to_postfix(pair))
                     .collect::<Vec<_>>();
                 if postfixes.is_empty() {
-                    ast::StepExpr::PrimaryExpr(primary)
+                    spanned(ast::StepExpr::PrimaryExpr(primary), &primary_pair_span)
                 } else {
-                    self.postfixes_or_placeholdereds(primary, postfixes)
+                    self.postfixes_or_placeholdereds(primary, postfixes, &span)
                 }
             }
             Rule::AxisStep => {
+                let span = pair.as_span();
                 let mut pairs = pair.into_inner();
                 let step_pair = pairs.next().unwrap();
                 let step_span = step_pair.as_span();
@@ -472,9 +489,10 @@ impl<'a> AstParser<'a> {
                     node_test,
                     predicates,
                 };
-                ast::StepExpr::AxisStep(axis_step)
+                spanned(ast::StepExpr::AxisStep(axis_step), &span)
             }
             Rule::AbbrevReverseStep => {
+                let span = pair.as_span();
                 let mut pairs = pair.into_inner();
                 let double_dot_pair = pairs.next().unwrap();
                 let double_dot_span = double_dot_pair.as_span();
@@ -483,11 +501,14 @@ impl<'a> AstParser<'a> {
                     .into_inner()
                     .map(|pair| self.predicate_to_expr(pair))
                     .collect::<Vec<_>>();
-                ast::StepExpr::AxisStep(ast::AxisStep {
-                    axis: ast::Axis::Parent,
-                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                    predicates,
-                })
+                spanned(
+                    ast::StepExpr::AxisStep(ast::AxisStep {
+                        axis: ast::Axis::Parent,
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        predicates,
+                    }),
+                    &span,
+                )
             }
             _ => {
                 panic!("unhandled StepExpr: {:?}", pair.as_rule())
@@ -717,14 +738,16 @@ impl<'a> AstParser<'a> {
                                 params,
                                 return_type: None,
                                 body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                                    steps: vec![ast::StepExpr::PrimaryExpr(not_spanned(
-                                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-                                            name: self.eq_name_to_name(
-                                                name,
-                                                self.namespaces.default_function_namespace,
-                                            ),
-                                            arguments,
-                                        }),
+                                    steps: vec![not_spanned(ast::StepExpr::PrimaryExpr(
+                                        not_spanned(ast::PrimaryExpr::FunctionCall(
+                                            ast::FunctionCall {
+                                                name: self.eq_name_to_name(
+                                                    name,
+                                                    self.namespaces.default_function_namespace,
+                                                ),
+                                                arguments,
+                                            },
+                                        )),
                                     ))],
                                 }))],
                             })
@@ -767,7 +790,8 @@ impl<'a> AstParser<'a> {
         &self,
         primary: ast::PrimaryExprS,
         postfixes: Vec<PostfixOrPlaceholdered>,
-    ) -> ast::StepExpr {
+        span: &pest::Span,
+    ) -> ast::StepExprS {
         let mut normal_postfixes = Vec::new();
         let mut primary = primary;
         for postfix in postfixes {
@@ -782,10 +806,10 @@ impl<'a> AstParser<'a> {
                         params,
                         return_type: None,
                         body: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                            steps: vec![ast::StepExpr::PostfixExpr {
+                            steps: vec![not_spanned(ast::StepExpr::PostfixExpr {
                                 primary,
                                 postfixes: normal_postfixes.clone(),
-                            }],
+                            })],
                         }))],
                     }));
                     // collect more postfixes now
@@ -794,12 +818,15 @@ impl<'a> AstParser<'a> {
             }
         }
         if !normal_postfixes.is_empty() {
-            ast::StepExpr::PostfixExpr {
-                primary,
-                postfixes: normal_postfixes,
-            }
+            spanned(
+                ast::StepExpr::PostfixExpr {
+                    primary,
+                    postfixes: normal_postfixes,
+                },
+                span,
+            )
         } else {
-            ast::StepExpr::PrimaryExpr(primary)
+            spanned(ast::StepExpr::PrimaryExpr(primary), span)
         }
     }
 
@@ -825,9 +852,9 @@ impl<'a> AstParser<'a> {
                     type_: None,
                 });
                 args.push(not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                    steps: vec![ast::StepExpr::PrimaryExpr(not_spanned(
+                    steps: vec![not_spanned(ast::StepExpr::PrimaryExpr(not_spanned(
                         ast::PrimaryExpr::VarRef(name),
-                    ))],
+                    )))],
                 })));
                 placeholder_index += 1;
             }
@@ -1067,30 +1094,33 @@ fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
     match expr.0 {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
-            steps: vec![ast::StepExpr::PrimaryExpr((
-                ast::PrimaryExpr::Expr(vec![expr]),
+            steps: vec![(
+                ast::StepExpr::PrimaryExpr((ast::PrimaryExpr::Expr(vec![expr]), span.clone())),
                 span,
-            ))],
+            )],
         },
     }
 }
 
-fn root_from_context() -> ast::StepExpr {
-    ast::StepExpr::PrimaryExpr(not_spanned(ast::PrimaryExpr::FunctionCall(
-        ast::FunctionCall {
-            name: ast::Name {
-                name: "root".to_string(),
-                namespace: Some(FN_NAMESPACE.to_string()),
+fn root_from_context(span: &pest::Span) -> ast::StepExprS {
+    spanned(
+        ast::StepExpr::PrimaryExpr(not_spanned(ast::PrimaryExpr::FunctionCall(
+            ast::FunctionCall {
+                name: ast::Name {
+                    name: "root".to_string(),
+                    namespace: Some(FN_NAMESPACE.to_string()),
+                },
+                arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
+                    steps: vec![not_spanned(ast::StepExpr::AxisStep(ast::AxisStep {
+                        axis: ast::Axis::Self_,
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                        predicates: vec![],
+                    }))],
+                }))],
             },
-            arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
-                steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
-                    axis: ast::Axis::Self_,
-                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                    predicates: vec![],
-                })],
-            }))],
-        },
-    )))
+        ))),
+        span,
+    )
 }
 
 fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
@@ -1164,7 +1194,7 @@ mod tests {
         })
     }
 
-    fn parse_step_expr(input: &str) -> ast::StepExpr {
+    fn parse_step_expr(input: &str) -> ast::StepExprS {
         let namespaces = Namespaces::new(None, None);
         let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::StepExpr, input, |p| {
@@ -1172,7 +1202,7 @@ mod tests {
         })
     }
 
-    fn parse_relative_path_expr(input: &str) -> Vec<ast::StepExpr> {
+    fn parse_relative_path_expr(input: &str) -> Vec<ast::StepExprS> {
         let namespaces = Namespaces::new(None, None);
         let ast_parser = AstParser::new(&namespaces);
         parse_rule(Rule::RelativePathExpr, input, |p| {

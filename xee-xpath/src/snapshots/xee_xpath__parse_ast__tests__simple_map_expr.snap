@@ -7,15 +7,18 @@ expression: "parse_expr_single(\"1 ! 2\")"
         ApplyExpr {
             path_expr: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                Integer(
-                                    1,
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                0..1,
                             ),
-                            0..1,
                         ),
+                        0..1,
                     ),
                 ],
             },
@@ -23,15 +26,18 @@ expression: "parse_expr_single(\"1 ! 2\")"
                 [
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            2,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                2,
+                                            ),
                                         ),
+                                        4..5,
                                     ),
-                                    4..5,
                                 ),
+                                4..5,
                             ),
                         ],
                     },

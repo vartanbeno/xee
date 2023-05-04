@@ -8,29 +8,35 @@ expression: "parse_expr_single(\"'a' || 'b'\")"
             operator: Concat,
             left: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                String(
-                                    "a",
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    String(
+                                        "a",
+                                    ),
                                 ),
+                                0..3,
                             ),
-                            0..3,
                         ),
+                        0..3,
                     ),
                 ],
             },
             right: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                String(
-                                    "b",
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    String(
+                                        "b",
+                                    ),
                                 ),
+                                7..10,
                             ),
-                            7..10,
                         ),
+                        7..10,
                     ),
                 ],
             },

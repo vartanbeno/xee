@@ -6,42 +6,51 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    0..10,
                 ),
-                AxisStep(
-                    AxisStep {
-                        axis: DescendantOrSelf,
-                        node_test: KindTest(
-                            Any,
-                        ),
-                        predicates: [],
-                    },
-                ),
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "bar",
-                                    namespace: None,
-                                },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: DescendantOrSelf,
+                            node_test: KindTest(
+                                Any,
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    10..12,
+                ),
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                Name(
+                                    Name {
+                                        name: "bar",
+                                        namespace: None,
+                                    },
+                                ),
+                            ),
+                            predicates: [],
+                        },
+                    ),
+                    12..22,
                 ),
             ],
         },

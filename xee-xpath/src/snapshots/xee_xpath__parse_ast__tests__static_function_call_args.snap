@@ -6,58 +6,67 @@ expression: "parse_expr_single(\"my_function(1, 2)\")"
     Path(
         PathExpr {
             steps: [
-                PrimaryExpr(
-                    (
-                        FunctionCall(
-                            FunctionCall {
-                                name: Name {
-                                    name: "my_function",
-                                    namespace: None,
-                                },
-                                arguments: [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
+                (
+                    PrimaryExpr(
+                        (
+                            FunctionCall(
+                                FunctionCall {
+                                    name: Name {
+                                        name: "my_function",
+                                        namespace: None,
+                                    },
+                                    arguments: [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
                                                         (
-                                                            Literal(
-                                                                Integer(
-                                                                    1,
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Literal(
+                                                                        Integer(
+                                                                            1,
+                                                                        ),
+                                                                    ),
+                                                                    12..13,
                                                                 ),
                                                             ),
                                                             12..13,
                                                         ),
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            12..13,
                                         ),
-                                        12..13,
-                                    ),
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    PrimaryExpr(
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
                                                         (
-                                                            Literal(
-                                                                Integer(
-                                                                    2,
+                                                            PrimaryExpr(
+                                                                (
+                                                                    Literal(
+                                                                        Integer(
+                                                                            2,
+                                                                        ),
+                                                                    ),
+                                                                    15..16,
                                                                 ),
                                                             ),
                                                             15..16,
                                                         ),
-                                                    ),
-                                                ],
-                                            },
+                                                    ],
+                                                },
+                                            ),
+                                            15..16,
                                         ),
-                                        15..16,
-                                    ),
-                                ],
-                            },
+                                    ],
+                                },
+                            ),
+                            0..17,
                         ),
-                        0..17,
                     ),
+                    0..17,
                 ),
             ],
         },

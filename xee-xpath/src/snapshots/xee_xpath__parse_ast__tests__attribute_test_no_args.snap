@@ -6,16 +6,19 @@ expression: "parse_expr_single(\"self::attribute()\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Self_,
-                        node_test: KindTest(
-                            Attribute(
-                                None,
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Self_,
+                            node_test: KindTest(
+                                Attribute(
+                                    None,
+                                ),
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    0..17,
                 ),
             ],
         },

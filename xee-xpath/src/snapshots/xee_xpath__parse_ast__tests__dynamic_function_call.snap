@@ -6,22 +6,25 @@ expression: "parse_expr_single(\"$foo()\")"
     Path(
         PathExpr {
             steps: [
-                PostfixExpr {
-                    primary: (
-                        VarRef(
-                            Name {
-                                name: "foo",
-                                namespace: None,
-                            },
+                (
+                    PostfixExpr {
+                        primary: (
+                            VarRef(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
+                            ),
+                            0..4,
                         ),
-                        0..4,
-                    ),
-                    postfixes: [
-                        ArgumentList(
-                            [],
-                        ),
-                    ],
-                },
+                        postfixes: [
+                            ArgumentList(
+                                [],
+                            ),
+                        ],
+                    },
+                    0..6,
+                ),
             ],
         },
     ),

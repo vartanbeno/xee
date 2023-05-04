@@ -6,36 +6,42 @@ expression: "parse_expr_single(\"..[1]\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Parent,
-                        node_test: KindTest(
-                            Any,
-                        ),
-                        predicates: [
-                            [
-                                (
-                                    Path(
-                                        PathExpr {
-                                            steps: [
-                                                PrimaryExpr(
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Parent,
+                            node_test: KindTest(
+                                Any,
+                            ),
+                            predicates: [
+                                [
+                                    (
+                                        Path(
+                                            PathExpr {
+                                                steps: [
                                                     (
-                                                        Literal(
-                                                            Integer(
-                                                                1,
+                                                        PrimaryExpr(
+                                                            (
+                                                                Literal(
+                                                                    Integer(
+                                                                        1,
+                                                                    ),
+                                                                ),
+                                                                3..4,
                                                             ),
                                                         ),
                                                         3..4,
                                                     ),
-                                                ),
-                                            ],
-                                        },
+                                                ],
+                                            },
+                                        ),
+                                        3..4,
                                     ),
-                                    3..4,
-                                ),
+                                ],
                             ],
-                        ],
-                    },
+                        },
+                    ),
+                    0..5,
                 ),
             ],
         },

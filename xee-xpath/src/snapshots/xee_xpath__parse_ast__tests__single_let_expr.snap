@@ -13,15 +13,18 @@ expression: "parse_expr_single(\"let $x := 1 return 5\")"
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            1,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                1,
+                                            ),
                                         ),
+                                        10..11,
                                     ),
-                                    10..11,
                                 ),
+                                10..11,
                             ),
                         ],
                     },
@@ -32,15 +35,18 @@ expression: "parse_expr_single(\"let $x := 1 return 5\")"
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            5,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                5,
+                                            ),
                                         ),
+                                        19..20,
                                     ),
-                                    19..20,
                                 ),
+                                19..20,
                             ),
                         ],
                     },

@@ -15,29 +15,35 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                         operator: Range,
                         left: PathExpr {
                             steps: [
-                                PrimaryExpr(
-                                    (
-                                        Literal(
-                                            Integer(
-                                                1,
+                                (
+                                    PrimaryExpr(
+                                        (
+                                            Literal(
+                                                Integer(
+                                                    1,
+                                                ),
                                             ),
+                                            10..11,
                                         ),
-                                        10..11,
                                     ),
+                                    10..11,
                                 ),
                             ],
                         },
                         right: PathExpr {
                             steps: [
-                                PrimaryExpr(
-                                    (
-                                        Literal(
-                                            Integer(
-                                                2,
+                                (
+                                    PrimaryExpr(
+                                        (
+                                            Literal(
+                                                Integer(
+                                                    2,
+                                                ),
                                             ),
+                                            15..16,
                                         ),
-                                        15..16,
                                     ),
+                                    15..16,
                                 ),
                             ],
                         },
@@ -49,16 +55,19 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    VarRef(
-                                        Name {
-                                            name: "x",
-                                            namespace: None,
-                                        },
+                            (
+                                PrimaryExpr(
+                                    (
+                                        VarRef(
+                                            Name {
+                                                name: "x",
+                                                namespace: None,
+                                            },
+                                        ),
+                                        24..26,
                                     ),
-                                    24..26,
                                 ),
+                                24..26,
                             ),
                         ],
                     },

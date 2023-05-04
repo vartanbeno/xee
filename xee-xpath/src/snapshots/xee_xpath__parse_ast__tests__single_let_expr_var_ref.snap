@@ -13,15 +13,18 @@ expression: "parse_expr_single(\"let $x := 1 return $x\")"
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            1,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                1,
+                                            ),
                                         ),
+                                        10..11,
                                     ),
-                                    10..11,
                                 ),
+                                10..11,
                             ),
                         ],
                     },
@@ -32,16 +35,19 @@ expression: "parse_expr_single(\"let $x := 1 return $x\")"
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    VarRef(
-                                        Name {
-                                            name: "x",
-                                            namespace: None,
-                                        },
+                            (
+                                PrimaryExpr(
+                                    (
+                                        VarRef(
+                                            Name {
+                                                name: "x",
+                                                namespace: None,
+                                            },
+                                        ),
+                                        19..21,
                                     ),
-                                    19..21,
                                 ),
+                                19..21,
                             ),
                         ],
                     },

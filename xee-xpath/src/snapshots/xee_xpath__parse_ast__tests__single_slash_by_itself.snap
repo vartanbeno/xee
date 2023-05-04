@@ -6,40 +6,46 @@ expression: "parse_expr_single(\"/\")"
     Path(
         PathExpr {
             steps: [
-                PrimaryExpr(
-                    (
-                        FunctionCall(
-                            FunctionCall {
-                                name: Name {
-                                    name: "root",
-                                    namespace: Some(
-                                        "http://www.w3.org/2005/xpath-functions",
-                                    ),
-                                },
-                                arguments: [
-                                    (
-                                        Path(
-                                            PathExpr {
-                                                steps: [
-                                                    AxisStep(
-                                                        AxisStep {
-                                                            axis: Self_,
-                                                            node_test: KindTest(
-                                                                Any,
-                                                            ),
-                                                            predicates: [],
-                                                        },
-                                                    ),
-                                                ],
-                                            },
+                (
+                    PrimaryExpr(
+                        (
+                            FunctionCall(
+                                FunctionCall {
+                                    name: Name {
+                                        name: "root",
+                                        namespace: Some(
+                                            "http://www.w3.org/2005/xpath-functions",
                                         ),
-                                        0..0,
-                                    ),
-                                ],
-                            },
+                                    },
+                                    arguments: [
+                                        (
+                                            Path(
+                                                PathExpr {
+                                                    steps: [
+                                                        (
+                                                            AxisStep(
+                                                                AxisStep {
+                                                                    axis: Self_,
+                                                                    node_test: KindTest(
+                                                                        Any,
+                                                                    ),
+                                                                    predicates: [],
+                                                                },
+                                                            ),
+                                                            0..0,
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                            0..0,
+                                        ),
+                                    ],
+                                },
+                            ),
+                            0..0,
                         ),
-                        0..0,
                     ),
+                    0..1,
                 ),
             ],
         },

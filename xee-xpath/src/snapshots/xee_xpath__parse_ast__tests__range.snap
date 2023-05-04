@@ -8,29 +8,35 @@ expression: "parse_expr_single(\"1 to 2\")"
             operator: Range,
             left: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                Integer(
-                                    1,
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    Integer(
+                                        1,
+                                    ),
                                 ),
+                                0..1,
                             ),
-                            0..1,
                         ),
+                        0..1,
                     ),
                 ],
             },
             right: PathExpr {
                 steps: [
-                    PrimaryExpr(
-                        (
-                            Literal(
-                                Integer(
-                                    2,
+                    (
+                        PrimaryExpr(
+                            (
+                                Literal(
+                                    Integer(
+                                        2,
+                                    ),
                                 ),
+                                5..6,
                             ),
-                            5..6,
                         ),
+                        5..6,
                     ),
                 ],
             },

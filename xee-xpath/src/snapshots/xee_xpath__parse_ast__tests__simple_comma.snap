@@ -9,15 +9,18 @@ Ok(
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            1,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                1,
+                                            ),
                                         ),
+                                        0..1,
                                     ),
-                                    0..1,
                                 ),
+                                0..1,
                             ),
                         ],
                     },
@@ -28,15 +31,18 @@ Ok(
                 Path(
                     PathExpr {
                         steps: [
-                            PrimaryExpr(
-                                (
-                                    Literal(
-                                        Integer(
-                                            2,
+                            (
+                                PrimaryExpr(
+                                    (
+                                        Literal(
+                                            Integer(
+                                                2,
+                                            ),
                                         ),
+                                        3..4,
                                     ),
-                                    3..4,
                                 ),
+                                3..4,
                             ),
                         ],
                     },

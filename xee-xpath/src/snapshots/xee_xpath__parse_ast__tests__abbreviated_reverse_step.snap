@@ -6,28 +6,34 @@ expression: "parse_expr_single(\"foo/..\")"
     Path(
         PathExpr {
             steps: [
-                AxisStep(
-                    AxisStep {
-                        axis: Child,
-                        node_test: NameTest(
-                            Name(
-                                Name {
-                                    name: "foo",
-                                    namespace: None,
-                                },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Child,
+                            node_test: NameTest(
+                                Name(
+                                    Name {
+                                        name: "foo",
+                                        namespace: None,
+                                    },
+                                ),
                             ),
-                        ),
-                        predicates: [],
-                    },
+                            predicates: [],
+                        },
+                    ),
+                    0..3,
                 ),
-                AxisStep(
-                    AxisStep {
-                        axis: Parent,
-                        node_test: KindTest(
-                            Any,
-                        ),
-                        predicates: [],
-                    },
+                (
+                    AxisStep(
+                        AxisStep {
+                            axis: Parent,
+                            node_test: KindTest(
+                                Any,
+                            ),
+                            predicates: [],
+                        },
+                    ),
+                    4..6,
                 ),
             ],
         },

@@ -6,21 +6,24 @@ expression: "parse_expr_single(\"fn:root()\")"
     Path(
         PathExpr {
             steps: [
-                PrimaryExpr(
-                    (
-                        FunctionCall(
-                            FunctionCall {
-                                name: Name {
-                                    name: "root",
-                                    namespace: Some(
-                                        "http://www.w3.org/2005/xpath-functions",
-                                    ),
+                (
+                    PrimaryExpr(
+                        (
+                            FunctionCall(
+                                FunctionCall {
+                                    name: Name {
+                                        name: "root",
+                                        namespace: Some(
+                                            "http://www.w3.org/2005/xpath-functions",
+                                        ),
+                                    },
+                                    arguments: [],
                                 },
-                                arguments: [],
-                            },
+                            ),
+                            0..9,
                         ),
-                        0..9,
                     ),
+                    0..9,
                 ),
             ],
         },
