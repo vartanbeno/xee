@@ -9,11 +9,8 @@ expression: "parse_expr_single(\"self::comment()\")"
                 AxisStep(
                     AxisStep {
                         axis: Self_,
-                        node_test: (
-                            KindTest(
-                                Comment,
-                            ),
-                            0..15,
+                        node_test: KindTest(
+                            Comment,
                         ),
                         predicates: [],
                     },

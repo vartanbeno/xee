@@ -337,7 +337,7 @@ impl<'a> IrConverter<'a> {
         // create a step atom
         let step = Rc::new(Step {
             axis: ast.axis.clone(),
-            node_test: ast.node_test.clone().0,
+            node_test: ast.node_test.clone(),
         });
         let atom = ir::Atom::Const(ir::Const::Step(step));
 

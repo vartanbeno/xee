@@ -9,13 +9,10 @@ expression: "parse_expr_single(\"self::attribute()\")"
                 AxisStep(
                     AxisStep {
                         axis: Self_,
-                        node_test: (
-                            KindTest(
-                                Attribute(
-                                    None,
-                                ),
+                        node_test: KindTest(
+                            Attribute(
+                                None,
                             ),
-                            0..17,
                         ),
                         predicates: [],
                     },

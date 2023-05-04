@@ -9,16 +9,13 @@ expression: "parse_expr_single(\"@foo\")"
                 AxisStep(
                     AxisStep {
                         axis: Attribute,
-                        node_test: (
-                            NameTest(
-                                Name(
-                                    Name {
-                                        name: "foo",
-                                        namespace: None,
-                                    },
-                                ),
+                        node_test: NameTest(
+                            Name(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
                             ),
-                            0..4,
                         ),
                         predicates: [],
                     },

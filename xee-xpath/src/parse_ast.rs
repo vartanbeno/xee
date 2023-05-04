@@ -389,7 +389,7 @@ impl<'a> AstParser<'a> {
                     root_from_context(),
                     ast::StepExpr::AxisStep(ast::AxisStep {
                         axis: ast::Axis::DescendantOrSelf,
-                        node_test: spanned(ast::NodeTest::KindTest(ast::KindTest::Any), &span),
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
                         predicates: vec![],
                     }),
                 ];
@@ -418,7 +418,7 @@ impl<'a> AstParser<'a> {
                 Rule::DoubleSlash => {
                     result.push(ast::StepExpr::AxisStep(ast::AxisStep {
                         axis: ast::Axis::DescendantOrSelf,
-                        node_test: spanned(ast::NodeTest::KindTest(ast::KindTest::Any), &span),
+                        node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
                         predicates: vec![],
                     }));
                 }
@@ -469,7 +469,7 @@ impl<'a> AstParser<'a> {
 
                 let axis_step = ast::AxisStep {
                     axis,
-                    node_test: spanned(node_test, &step_span),
+                    node_test,
                     predicates,
                 };
                 ast::StepExpr::AxisStep(axis_step)
@@ -485,10 +485,7 @@ impl<'a> AstParser<'a> {
                     .collect::<Vec<_>>();
                 ast::StepExpr::AxisStep(ast::AxisStep {
                     axis: ast::Axis::Parent,
-                    node_test: spanned(
-                        ast::NodeTest::KindTest(ast::KindTest::Any),
-                        &double_dot_span,
-                    ),
+                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
                     predicates,
                 })
             }
@@ -1088,7 +1085,7 @@ fn root_from_context() -> ast::StepExpr {
             arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                 steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
                     axis: ast::Axis::Self_,
-                    node_test: not_spanned(ast::NodeTest::KindTest(ast::KindTest::Any)),
+                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
                     predicates: vec![],
                 })],
             }))],

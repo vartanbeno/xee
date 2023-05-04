@@ -9,11 +9,8 @@ expression: "parse_expr_single(\"..[1]\")"
                 AxisStep(
                     AxisStep {
                         axis: Parent,
-                        node_test: (
-                            KindTest(
-                                Any,
-                            ),
-                            0..2,
+                        node_test: KindTest(
+                            Any,
                         ),
                         predicates: [
                             [

@@ -9,11 +9,8 @@ expression: "parse_expr_single(\"child::*\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: (
-                            NameTest(
-                                Star,
-                            ),
-                            0..8,
+                        node_test: NameTest(
+                            Star,
                         ),
                         predicates: [],
                     },

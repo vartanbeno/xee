@@ -9,16 +9,13 @@ expression: "parse_expr_single(\"parent::foo\")"
                 AxisStep(
                     AxisStep {
                         axis: Parent,
-                        node_test: (
-                            NameTest(
-                                Name(
-                                    Name {
-                                        name: "foo",
-                                        namespace: None,
-                                    },
-                                ),
+                        node_test: NameTest(
+                            Name(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
                             ),
-                            0..11,
                         ),
                         predicates: [],
                     },

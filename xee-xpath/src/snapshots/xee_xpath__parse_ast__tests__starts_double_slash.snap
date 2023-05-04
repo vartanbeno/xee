@@ -24,11 +24,8 @@ expression: "parse_expr_single(\"//child::foo\")"
                                                     AxisStep(
                                                         AxisStep {
                                                             axis: Self_,
-                                                            node_test: (
-                                                                KindTest(
-                                                                    Any,
-                                                                ),
-                                                                0..0,
+                                                            node_test: KindTest(
+                                                                Any,
                                                             ),
                                                             predicates: [],
                                                         },
@@ -47,11 +44,8 @@ expression: "parse_expr_single(\"//child::foo\")"
                 AxisStep(
                     AxisStep {
                         axis: DescendantOrSelf,
-                        node_test: (
-                            KindTest(
-                                Any,
-                            ),
-                            0..12,
+                        node_test: KindTest(
+                            Any,
                         ),
                         predicates: [],
                     },
@@ -59,16 +53,13 @@ expression: "parse_expr_single(\"//child::foo\")"
                 AxisStep(
                     AxisStep {
                         axis: Child,
-                        node_test: (
-                            NameTest(
-                                Name(
-                                    Name {
-                                        name: "foo",
-                                        namespace: None,
-                                    },
-                                ),
+                        node_test: NameTest(
+                            Name(
+                                Name {
+                                    name: "foo",
+                                    namespace: None,
+                                },
                             ),
-                            2..12,
                         ),
                         predicates: [],
                     },
