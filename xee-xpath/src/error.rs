@@ -15,6 +15,7 @@ pub enum Error {
     /// It is a dynamic error if evaluation of an expression relies on some
     /// part of the dynamic context that is absent.
     #[error("Component absent in dynamic context")]
+    #[diagnostic(code(XPDY0002))]
     XPDY0002 {
         #[source_code]
         src: NamedSource,
@@ -41,6 +42,7 @@ pub enum Error {
     /// the dynamic type of a value does not match a required type as specified
     /// by the matching rules in 2.5.5 SequenceType Matching.
     #[error("Type error")]
+    #[diagnostic(code(XPTY0004))]
     XPTY0004 {
         #[source_code]
         src: NamedSource,
@@ -61,6 +63,7 @@ pub enum Error {
     /// that is not defined in the static context, except for an ElementName in
     /// an ElementTest or an AttributeName in an AttributeTest.
     #[error("Name not defined")]
+    #[diagnostic(code(XPST0008))]
     XPST0008 {
         #[source_code]
         src: NamedSource,
@@ -80,6 +83,7 @@ pub enum Error {
     /// static function call do not match the name and arity of a function
     /// signature in the static context.
     #[error("Type error: incorrect function name or number of arguments")]
+    #[diagnostic(code(XPST0017))]
     XPST0017 {
         #[help]
         advice: String,
