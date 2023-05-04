@@ -493,6 +493,7 @@ impl<'a> AstParser<'a> {
             Rule::AbbrevReverseStep => {
                 let span = pair.as_span();
                 let mut pairs = pair.into_inner();
+                let _double_dot_pair = pairs.next().unwrap();
                 let predicates_pair = pairs.next().unwrap();
                 let predicates = predicates_pair
                     .into_inner()
