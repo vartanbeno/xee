@@ -46,14 +46,14 @@ impl<'a> AstParser<'a> {
 
     fn pair_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         let expr_single = self.expr_single(pair);
-        let span = expr_single.1.clone();
+        let span = expr_single.1;
         match expr_single.0 {
             ast::ExprSingle::Path(path_expr) => path_expr,
             _ => ast::PathExpr {
                 steps: vec![(
                     ast::StepExpr::PrimaryExpr((
-                        ast::PrimaryExpr::Expr((vec![expr_single], span.clone())),
-                        span.clone(),
+                        ast::PrimaryExpr::Expr((vec![expr_single], span)),
+                        span,
                     )),
                     span,
                 )],
@@ -1092,15 +1092,12 @@ impl<'a> AstParser<'a> {
 }
 
 fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
-    let span = expr.1.clone();
+    let span = expr.1;
     match expr.0 {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
             steps: vec![(
-                ast::StepExpr::PrimaryExpr((
-                    ast::PrimaryExpr::Expr((vec![expr], span.clone())),
-                    span.clone(),
-                )),
+                ast::StepExpr::PrimaryExpr((ast::PrimaryExpr::Expr((vec![expr], span)), span)),
                 span,
             )],
         },
