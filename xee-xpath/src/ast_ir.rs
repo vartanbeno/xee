@@ -638,7 +638,11 @@ impl<'a> IrConverter<'a> {
             .static_context
             .functions
             .get_by_name(&ast.name, ast.arity)
-            .unwrap();
+            .ok_or_else(|| Error::XPST0017 {
+                advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, ast.arity),
+                src: NamedSource::new("input", self.src.to_string()),
+                span: span_to_source_span(span),
+            })?;
         Ok(self.static_function_ref(static_function_id, span))
     }
 
@@ -866,5 +870,10 @@ mod tests {
     #[test]
     fn test_unknown_variable_name() {
         assert_debug_snapshot!(convert_expr_single("$unknown"));
+    }
+
+    #[test]
+    fn test_unknown_named_function_ref() {
+        assert_debug_snapshot!(convert_expr_single("unknown_function#2"));
     }
 }
