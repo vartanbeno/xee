@@ -1,10 +1,12 @@
 use ahash::{HashSet, HashSetExt};
+use miette::NamedSource;
 use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::ast;
+use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
@@ -177,10 +179,10 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_atomic(&self, xot: &Xot) -> Result<Atomic> {
+    pub(crate) fn as_atomic(&self, context: &Context) -> Result<Atomic> {
         match self {
             StackValue::Atomic(a) => Ok(a.clone()),
-            StackValue::Sequence(s) => s.borrow().as_atomic(xot),
+            StackValue::Sequence(s) => s.borrow().as_atomic(context),
             _ => {
                 todo!("don't know how to atomize this yet")
             }
@@ -365,8 +367,8 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atomic(&self, xot: &Xot) -> Result<Atomic> {
-        let mut atomized = self.atomize(xot);
+    pub(crate) fn as_atomic(&self, context: &Context) -> Result<Atomic> {
+        let mut atomized = self.atomize(context.xot);
         let len = atomized.items.len();
         match len {
             0 => Ok(Atomic::Empty),
@@ -377,7 +379,11 @@ impl Sequence {
                     _ => unreachable!("atomize returned a non-atomic item"),
                 }
             }
-            _ => Err(Error::XPTY0004),
+            _ => Err(Error::XPTY0004 {
+                src: NamedSource::new("input", context.src.to_string()),
+                // XXX fake empty span, replaced later
+                span: (0, 0).into(),
+            }),
         }
     }
 

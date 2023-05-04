@@ -41,7 +41,12 @@ pub enum Error {
     /// the dynamic type of a value does not match a required type as specified
     /// by the matching rules in 2.5.5 SequenceType Matching.
     #[error("Type error")]
-    XPTY0004,
+    XPTY0004 {
+        #[source_code]
+        src: NamedSource,
+        #[label("Type error")]
+        span: SourceSpan,
+    },
     /// Empty Sequence type error.
     ///
     /// During the analysis phase, it is a static error if the static type

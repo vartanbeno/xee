@@ -58,7 +58,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn run(&mut self) -> Result<()> {
         let frame = self.frames.last().unwrap();
 
-        let xot = self.context.xot;
+        let context = self.context;
         let mut function = &self.program.functions[frame.function.0];
         let mut base = frame.base;
         let mut ip = frame.ip;
@@ -69,8 +69,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_add(b).ok_or(Error::FOAR0002)?;
@@ -79,8 +79,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Sub => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     let result = a.checked_sub(b).ok_or(Error::FOAR0002)?;
@@ -89,8 +89,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Concat => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_string().ok_or(Error::TypeError)?;
                     let b = b.as_string().ok_or(Error::TypeError)?;
                     let result = a + &b;
@@ -159,7 +159,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::JumpIfTrue(displacement) => {
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
                     let a = a.as_bool().ok_or(Error::TypeError)?;
                     if a {
                         ip = (ip as i32 + displacement as i32) as usize;
@@ -167,7 +167,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::JumpIfFalse(displacement) => {
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
                     let a = a.as_bool().ok_or(Error::TypeError)?;
                     if !a {
                         ip = (ip as i32 + displacement as i32) as usize;
@@ -176,12 +176,12 @@ impl<'a> Interpreter<'a> {
                 Instruction::Eq => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
                     if a == Atomic::Empty {
                         self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
                         continue;
                     }
-                    let b = b.as_atomic(xot)?;
+                    let b = b.as_atomic(context)?;
                     if b == Atomic::Empty {
                         self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
                         continue;
@@ -192,12 +192,12 @@ impl<'a> Interpreter<'a> {
                 Instruction::Ne => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
                     if a == Atomic::Empty {
                         self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
                         continue;
                     }
-                    let b = b.as_atomic(xot)?;
+                    let b = b.as_atomic(context)?;
                     if b == Atomic::Empty {
                         self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
                         continue;
@@ -208,8 +208,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Lt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
@@ -217,8 +217,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Le => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
@@ -226,8 +226,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Gt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
@@ -235,8 +235,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Ge => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
@@ -320,8 +320,8 @@ impl<'a> Interpreter<'a> {
                 Instruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(xot)?;
-                    let b = b.as_atomic(xot)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
                     let a = a.as_integer().ok_or(Error::TypeError)?;
                     let b = b.as_integer().ok_or(Error::TypeError)?;
                     match a.cmp(&b) {
@@ -357,7 +357,7 @@ impl<'a> Interpreter<'a> {
                     let index = self.stack.pop().unwrap();
 
                     let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
-                    let index = index.as_atomic(xot)?;
+                    let index = index.as_atomic(context)?;
                     let index = index.as_integer().ok_or(Error::TypeError)?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
@@ -404,7 +404,7 @@ impl<'a> Interpreter<'a> {
             .functions
             .get_by_index(static_function_id);
         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(self.context.xot, arguments, closure_values)?;
+        let result = static_function.invoke(self.context, arguments, closure_values)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result);

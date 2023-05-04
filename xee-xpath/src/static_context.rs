@@ -4,6 +4,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::ast;
+use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
@@ -26,7 +27,7 @@ pub(crate) struct StaticFunctionDescription {
     name: ast::Name,
     arity: usize,
     function_type: Option<FunctionType>,
-    func: fn(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue>,
+    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue>,
 }
 
 impl StaticFunctionDescription {
@@ -164,7 +165,7 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue>,
+    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue>,
 }
 
 impl Debug for StaticFunction {
@@ -180,7 +181,7 @@ impl Debug for StaticFunction {
 impl StaticFunction {
     pub(crate) fn invoke(
         &self,
-        xot: &Xot,
+        context: &Context,
         arguments: &[StackValue],
         closure_values: &[StackValue],
     ) -> Result<StackValue> {
@@ -192,16 +193,16 @@ impl StaticFunction {
                 ContextRule::ItemFirst | ContextRule::PositionFirst | ContextRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
                     new_arguments.extend_from_slice(arguments);
-                    (self.func)(xot, &new_arguments)
+                    (self.func)(context, &new_arguments)
                 }
                 ContextRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
-                    (self.func)(xot, &new_arguments)
+                    (self.func)(context, &new_arguments)
                 }
             }
         } else {
-            (self.func)(xot, arguments)
+            (self.func)(context, arguments)
         }
     }
 }
@@ -259,49 +260,49 @@ fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }
 
-fn bound_my_function(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_my_function(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0]
-        .as_atomic(xot)?
+        .as_atomic(context)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     let b = arguments[1]
-        .as_atomic(xot)?
+        .as_atomic(context)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 
-fn bound_position(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_position(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     // position should be the context value
     Ok(arguments[0].clone())
 }
 
-fn bound_last(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_last(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     // size should be the context value
     Ok(arguments[0].clone())
 }
 
-fn local_name(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn local_name(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_node().ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
-        a.local_name(xot),
+        a.local_name(context.xot),
     ))))
 }
 
-fn namespace_uri(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_node().ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
-        a.namespace_uri(xot),
+        a.namespace_uri(context.xot),
     ))))
 }
 
-fn count(_xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn count(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_sequence().ok_or(Error::TypeError)?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }
 
-fn root(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0].as_node().ok_or(Error::TypeError)?;
     let xot_node = match a {
         Node::Xot(node) => node,
@@ -309,19 +310,19 @@ fn root(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
         Node::Namespace(node, _) => node,
     };
     // XXX there should be a xot.root() to obtain this in one step
-    let top = xot.top_element(xot_node);
-    let root = xot.parent(top).unwrap();
+    let top = context.xot.top_element(xot_node);
+    let root = context.xot.parent(top).unwrap();
     Ok(StackValue::Node(Node::Xot(root)))
 }
 
-fn string(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
+fn string(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
-        xot,
+        context,
         &arguments[0],
     )?))))
 }
 
-fn string_helper(xot: &Xot, value: &StackValue) -> Result<String> {
+fn string_helper(context: &Context, value: &StackValue) -> Result<String> {
     let value = match value {
         StackValue::Atomic(atomic) => match atomic {
             Atomic::String(string) => string.to_string(),
@@ -336,11 +337,11 @@ fn string_helper(xot: &Xot, value: &StackValue) -> Result<String> {
             let len = sequence.len();
             match len {
                 0 => "".to_string(),
-                1 => string_helper(xot, &StackValue::from_item(sequence.items[0].clone()))?,
+                1 => string_helper(context, &StackValue::from_item(sequence.items[0].clone()))?,
                 _ => Err(Error::TypeError)?,
             }
         }
-        StackValue::Node(node) => node.string(xot),
+        StackValue::Node(node) => node.string(context.xot),
         StackValue::Closure(_) => Err(Error::TypeError)?,
         StackValue::Step(_) => Err(Error::TypeError)?,
     };
