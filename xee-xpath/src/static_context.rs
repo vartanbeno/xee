@@ -261,13 +261,11 @@ fn my_function(a: i64, b: i64) -> i64 {
 
 fn bound_my_function(xot: &Xot, arguments: &[StackValue]) -> Result<StackValue> {
     let a = arguments[0]
-        .as_atomic(xot)
-        .ok_or(Error::TypeError)?
+        .as_atomic(xot)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     let b = arguments[1]
-        .as_atomic(xot)
-        .ok_or(Error::TypeError)?
+        .as_atomic(xot)?
         .as_integer()
         .ok_or(Error::TypeError)?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))

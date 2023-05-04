@@ -177,11 +177,13 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_atomic(&self, xot: &Xot) -> Option<Atomic> {
+    pub(crate) fn as_atomic(&self, xot: &Xot) -> Result<Atomic> {
         match self {
-            StackValue::Atomic(a) => Some(a.clone()),
-            StackValue::Sequence(s) => Some(s.borrow().as_atomic(xot)),
-            _ => None,
+            StackValue::Atomic(a) => Ok(a.clone()),
+            StackValue::Sequence(s) => s.borrow().as_atomic(xot),
+            _ => {
+                todo!("don't know how to atomize this yet")
+            }
         }
     }
 
@@ -363,19 +365,19 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atomic(&self, xot: &Xot) -> Atomic {
+    pub(crate) fn as_atomic(&self, xot: &Xot) -> Result<Atomic> {
         let mut atomized = self.atomize(xot);
         let len = atomized.items.len();
         match len {
-            0 => Atomic::Empty,
+            0 => Ok(Atomic::Empty),
             1 => {
                 let item = atomized.items.remove(0);
                 match item {
-                    Item::Atomic(a) => a,
+                    Item::Atomic(a) => Ok(a),
                     _ => unreachable!("atomize returned a non-atomic item"),
                 }
             }
-            _ => panic!("atomize returned more than one item"),
+            _ => Err(Error::XPTY0004),
         }
     }
 
