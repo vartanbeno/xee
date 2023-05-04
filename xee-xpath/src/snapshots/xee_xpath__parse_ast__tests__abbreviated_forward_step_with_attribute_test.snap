@@ -21,7 +21,14 @@ expression: "parse_expr_single(\"foo/attribute()\")"
                             predicates: [],
                         },
                     ),
-                    0..3,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            3,
+                        ),
+                    },
                 ),
                 (
                     AxisStep(
@@ -35,10 +42,24 @@ expression: "parse_expr_single(\"foo/attribute()\")"
                             predicates: [],
                         },
                     ),
-                    4..15,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            4,
+                        ),
+                        length: SourceOffset(
+                            11,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..15,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            15,
+        ),
+    },
 )

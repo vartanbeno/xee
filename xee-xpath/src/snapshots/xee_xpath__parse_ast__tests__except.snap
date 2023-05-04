@@ -23,7 +23,14 @@ expression: "parse_expr_single(\"child::foo except child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        0..11,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                0,
+                            ),
+                            length: SourceOffset(
+                                11,
+                            ),
+                        },
                     ),
                 ],
             },
@@ -44,11 +51,25 @@ expression: "parse_expr_single(\"child::foo except child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        18..28,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                18,
+                            ),
+                            length: SourceOffset(
+                                10,
+                            ),
+                        },
                     ),
                 ],
             },
         },
     ),
-    0..28,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            28,
+        ),
+    },
 )

@@ -18,10 +18,24 @@ expression: "parse_expr_single(\"self::attribute()\")"
                             predicates: [],
                         },
                     ),
-                    0..17,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            17,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..17,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            17,
+        ),
+    },
 )

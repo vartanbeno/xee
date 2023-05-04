@@ -15,10 +15,24 @@ expression: "parse_expr_single(\"-1\")"
                                         1,
                                     ),
                                 ),
-                                1..2,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        1,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ),
-                        1..2,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                1,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 ],
             },
@@ -29,5 +43,12 @@ expression: "parse_expr_single(\"-1\")"
             ),
         },
     ),
-    0..2,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            2,
+        ),
+    },
 )

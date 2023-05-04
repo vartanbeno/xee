@@ -20,13 +20,34 @@ expression: "parse_expr_single(\"fn:root()\")"
                                     arguments: [],
                                 },
                             ),
-                            0..9,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    9,
+                                ),
+                            },
                         ),
                     ),
-                    0..9,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            9,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..9,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            9,
+        ),
+    },
 )

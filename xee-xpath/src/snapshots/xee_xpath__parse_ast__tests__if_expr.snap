@@ -19,18 +19,46 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                         1,
                                                     ),
                                                 ),
-                                                4..5,
+                                                SourceSpan {
+                                                    offset: SourceOffset(
+                                                        4,
+                                                    ),
+                                                    length: SourceOffset(
+                                                        1,
+                                                    ),
+                                                },
                                             ),
                                         ),
-                                        4..5,
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                4,
+                                            ),
+                                            length: SourceOffset(
+                                                1,
+                                            ),
+                                        },
                                     ),
                                 ],
                             },
                         ),
-                        4..5,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                4,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 ],
-                4..5,
+                SourceSpan {
+                    offset: SourceOffset(
+                        4,
+                    ),
+                    length: SourceOffset(
+                        1,
+                    ),
+                },
             ),
             then: (
                 Path(
@@ -44,15 +72,36 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                 2,
                                             ),
                                         ),
-                                        12..13,
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                12,
+                                            ),
+                                            length: SourceOffset(
+                                                1,
+                                            ),
+                                        },
                                     ),
                                 ),
-                                12..13,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        12,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ],
                     },
                 ),
-                12..14,
+                SourceSpan {
+                    offset: SourceOffset(
+                        12,
+                    ),
+                    length: SourceOffset(
+                        2,
+                    ),
+                },
             ),
             else_: (
                 Path(
@@ -66,17 +115,45 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                 3,
                                             ),
                                         ),
-                                        19..20,
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                19,
+                                            ),
+                                            length: SourceOffset(
+                                                1,
+                                            ),
+                                        },
                                     ),
                                 ),
-                                19..20,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        19,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ],
                     },
                 ),
-                19..20,
+                SourceSpan {
+                    offset: SourceOffset(
+                        19,
+                    ),
+                    length: SourceOffset(
+                        1,
+                    ),
+                },
             ),
         },
     ),
-    0..20,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            20,
+        ),
+    },
 )

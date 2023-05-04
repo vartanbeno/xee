@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                         1,
                                     ),
                                 ),
-                                0..1,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ),
-                        0..1,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                0,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 ],
             },
@@ -45,10 +59,24 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                                     2,
                                                                                 ),
                                                                             ),
-                                                                            5..6,
+                                                                            SourceSpan {
+                                                                                offset: SourceOffset(
+                                                                                    5,
+                                                                                ),
+                                                                                length: SourceOffset(
+                                                                                    1,
+                                                                                ),
+                                                                            },
                                                                         ),
                                                                     ),
-                                                                    5..6,
+                                                                    SourceSpan {
+                                                                        offset: SourceOffset(
+                                                                            5,
+                                                                        ),
+                                                                        length: SourceOffset(
+                                                                            1,
+                                                                        ),
+                                                                    },
                                                                 ),
                                                             ],
                                                         },
@@ -62,29 +90,78 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                                     3,
                                                                                 ),
                                                                             ),
-                                                                            9..10,
+                                                                            SourceSpan {
+                                                                                offset: SourceOffset(
+                                                                                    9,
+                                                                                ),
+                                                                                length: SourceOffset(
+                                                                                    1,
+                                                                                ),
+                                                                            },
                                                                         ),
                                                                     ),
-                                                                    9..10,
+                                                                    SourceSpan {
+                                                                        offset: SourceOffset(
+                                                                            9,
+                                                                        ),
+                                                                        length: SourceOffset(
+                                                                            1,
+                                                                        ),
+                                                                    },
                                                                 ),
                                                             ],
                                                         },
                                                     },
                                                 ),
-                                                5..10,
+                                                SourceSpan {
+                                                    offset: SourceOffset(
+                                                        5,
+                                                    ),
+                                                    length: SourceOffset(
+                                                        5,
+                                                    ),
+                                                },
                                             ),
                                         ],
-                                        4..11,
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                4,
+                                            ),
+                                            length: SourceOffset(
+                                                7,
+                                            ),
+                                        },
                                     ),
                                 ),
-                                4..11,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        4,
+                                    ),
+                                    length: SourceOffset(
+                                        7,
+                                    ),
+                                },
                             ),
                         ),
-                        4..11,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                4,
+                            ),
+                            length: SourceOffset(
+                                7,
+                            ),
+                        },
                     ),
                 ],
             },
         },
     ),
-    0..11,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            11,
+        ),
+    },
 )

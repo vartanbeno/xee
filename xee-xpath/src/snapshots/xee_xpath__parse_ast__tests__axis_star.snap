@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"child::*\")"
                             predicates: [],
                         },
                     ),
-                    0..8,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            8,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..8,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            8,
+        ),
+    },
 )

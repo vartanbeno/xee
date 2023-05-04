@@ -20,13 +20,34 @@ expression: "parse_expr_single(\"Q{http://example.com}something()\")"
                                     arguments: [],
                                 },
                             ),
-                            0..32,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    32,
+                                ),
+                            },
                         ),
                     ),
-                    0..32,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            32,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..32,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            32,
+        ),
+    },
 )

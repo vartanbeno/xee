@@ -32,20 +32,48 @@ expression: "parse_expr_single(\"/child::foo\")"
                                                                     predicates: [],
                                                                 },
                                                             ),
-                                                            0..0,
+                                                            SourceSpan {
+                                                                offset: SourceOffset(
+                                                                    0,
+                                                                ),
+                                                                length: SourceOffset(
+                                                                    0,
+                                                                ),
+                                                            },
                                                         ),
                                                     ],
                                                 },
                                             ),
-                                            0..0,
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    0,
+                                                ),
+                                                length: SourceOffset(
+                                                    0,
+                                                ),
+                                            },
                                         ),
                                     ],
                                 },
                             ),
-                            0..0,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    0,
+                                ),
+                            },
                         ),
                     ),
-                    0..1,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
                 ),
                 (
                     AxisStep(
@@ -62,10 +90,24 @@ expression: "parse_expr_single(\"/child::foo\")"
                             predicates: [],
                         },
                     ),
-                    1..11,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            1,
+                        ),
+                        length: SourceOffset(
+                            10,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..11,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            11,
+        ),
+    },
 )

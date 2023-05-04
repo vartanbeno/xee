@@ -21,10 +21,24 @@ expression: "parse_expr_single(\"parent::foo\")"
                             predicates: [],
                         },
                     ),
-                    0..11,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            11,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..11,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            11,
+        ),
+    },
 )

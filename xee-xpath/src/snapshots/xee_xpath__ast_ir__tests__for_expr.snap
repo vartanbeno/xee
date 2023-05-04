@@ -22,7 +22,14 @@ Ok(
                         1,
                     ),
                 ),
-                10..11,
+                SourceSpan {
+                    offset: SourceOffset(
+                        10,
+                    ),
+                    length: SourceOffset(
+                        1,
+                    ),
+                },
             ),
             return_expr: Atom(
                 (
@@ -31,7 +38,14 @@ Ok(
                             2,
                         ),
                     ),
-                    19..20,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            19,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
                 ),
             ),
         },

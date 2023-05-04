@@ -21,10 +21,24 @@ expression: "parse_expr_single(\"foo\")"
                             predicates: [],
                         },
                     ),
-                    0..3,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            3,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..3,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            3,
+        ),
+    },
 )

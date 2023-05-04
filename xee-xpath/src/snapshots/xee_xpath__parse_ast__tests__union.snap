@@ -23,7 +23,14 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        0..11,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                0,
+                            ),
+                            length: SourceOffset(
+                                11,
+                            ),
+                        },
                     ),
                 ],
             },
@@ -44,11 +51,25 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        13..23,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                13,
+                            ),
+                            length: SourceOffset(
+                                10,
+                            ),
+                        },
                     ),
                 ],
             },
         },
     ),
-    0..23,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            23,
+        ),
+    },
 )

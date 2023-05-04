@@ -11,7 +11,14 @@ Ok(
                         1,
                     ),
                 ),
-                0..1,
+                SourceSpan {
+                    offset: SourceOffset(
+                        0,
+                    ),
+                    length: SourceOffset(
+                        1,
+                    ),
+                },
             ),
             op: Add,
             right: (
@@ -20,7 +27,14 @@ Ok(
                         2,
                     ),
                 ),
-                4..5,
+                SourceSpan {
+                    offset: SourceOffset(
+                        4,
+                    ),
+                    length: SourceOffset(
+                        1,
+                    ),
+                },
             ),
         },
     ),

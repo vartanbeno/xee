@@ -15,7 +15,14 @@ expression: "parse_expr_single(\"$foo()\")"
                                     namespace: None,
                                 },
                             ),
-                            0..4,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    4,
+                                ),
+                            },
                         ),
                         postfixes: [
                             ArgumentList(
@@ -23,10 +30,24 @@ expression: "parse_expr_single(\"$foo()\")"
                             ),
                         ],
                     },
-                    0..6,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            6,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..6,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            6,
+        ),
+    },
 )

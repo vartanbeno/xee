@@ -45,7 +45,14 @@ Ok(
                                         },
                                     ),
                                 ),
-                                0..8,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        8,
+                                    ),
+                                },
                             ),
                             args: [
                                 (
@@ -54,7 +61,14 @@ Ok(
                                             "v0",
                                         ),
                                     ),
-                                    0..0,
+                                    SourceSpan {
+                                        offset: SourceOffset(
+                                            0,
+                                        ),
+                                        length: SourceOffset(
+                                            0,
+                                        ),
+                                    },
                                 ),
                             ],
                         },
@@ -78,7 +92,14 @@ Ok(
                                         "v3",
                                     ),
                                 ),
-                                0..8,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        8,
+                                    ),
+                                },
                             ),
                             return_expr: FunctionCall(
                                 FunctionCall {
@@ -98,7 +119,14 @@ Ok(
                                                 },
                                             ),
                                         ),
-                                        9..17,
+                                        SourceSpan {
+                                            offset: SourceOffset(
+                                                9,
+                                            ),
+                                            length: SourceOffset(
+                                                8,
+                                            ),
+                                        },
                                     ),
                                     args: [
                                         (
@@ -107,7 +135,14 @@ Ok(
                                                     "v4",
                                                 ),
                                             ),
-                                            0..0,
+                                            SourceSpan {
+                                                offset: SourceOffset(
+                                                    0,
+                                                ),
+                                                length: SourceOffset(
+                                                    0,
+                                                ),
+                                            },
                                         ),
                                     ],
                                 },

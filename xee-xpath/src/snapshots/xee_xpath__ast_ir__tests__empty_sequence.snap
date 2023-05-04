@@ -27,7 +27,14 @@ Ok(
                     Const(
                         EmptySequence,
                     ),
-                    0..2,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            2,
+                        ),
+                    },
                 ),
             ),
         },

@@ -18,10 +18,24 @@ expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
                             predicates: [],
                         },
                     ),
-                    0..29,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            29,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..29,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            29,
+        ),
+    },
 )

@@ -21,7 +21,14 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    0..10,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            10,
+                        ),
+                    },
                 ),
                 (
                     AxisStep(
@@ -33,7 +40,14 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    10..12,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            10,
+                        ),
+                        length: SourceOffset(
+                            2,
+                        ),
+                    },
                 ),
                 (
                     AxisStep(
@@ -50,10 +64,24 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    12..22,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            12,
+                        ),
+                        length: SourceOffset(
+                            10,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..22,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            22,
+        ),
+    },
 )

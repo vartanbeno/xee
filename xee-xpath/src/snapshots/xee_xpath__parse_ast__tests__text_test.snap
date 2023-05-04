@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"self::text()\")"
                             predicates: [],
                         },
                     ),
-                    0..12,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            12,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..12,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            12,
+        ),
+    },
 )

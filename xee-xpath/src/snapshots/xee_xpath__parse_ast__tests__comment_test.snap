@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"self::comment()\")"
                             predicates: [],
                         },
                     ),
-                    0..15,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            15,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..15,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            15,
+        ),
+    },
 )

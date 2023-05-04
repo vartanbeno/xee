@@ -22,7 +22,14 @@ Ok(
                                 "v0",
                             ),
                         ),
-                        0..0,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                0,
+                            ),
+                            length: SourceOffset(
+                                0,
+                            ),
+                        },
                     ),
                     args: [
                         (
@@ -31,7 +38,14 @@ Ok(
                                     5,
                                 ),
                             ),
-                            12..13,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    12,
+                                ),
+                                length: SourceOffset(
+                                    1,
+                                ),
+                            },
                         ),
                         (
                             Const(
@@ -39,7 +53,14 @@ Ok(
                                     2,
                                 ),
                             ),
-                            15..16,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    15,
+                                ),
+                                length: SourceOffset(
+                                    1,
+                                ),
+                            },
                         ),
                     ],
                 },

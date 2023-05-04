@@ -35,7 +35,14 @@ Ok(
                                         1,
                                     ),
                                 ),
-                                0..1,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                             op: Comma,
                             right: (
@@ -44,7 +51,14 @@ Ok(
                                         2,
                                     ),
                                 ),
-                                3..4,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        3,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),
@@ -56,7 +70,14 @@ Ok(
                                         "v5",
                                     ),
                                 ),
-                                3..4,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        3,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                             op: Comma,
                             right: (
@@ -65,7 +86,14 @@ Ok(
                                         3,
                                     ),
                                 ),
-                                6..7,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        6,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),

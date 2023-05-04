@@ -18,13 +18,34 @@ expression: "parse_expr_single(\"my_function#2\")"
                                     arity: 2,
                                 },
                             ),
-                            0..13,
+                            SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    13,
+                                ),
+                            },
                         ),
                     ),
-                    0..13,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            13,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..13,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            13,
+        ),
+    },
 )

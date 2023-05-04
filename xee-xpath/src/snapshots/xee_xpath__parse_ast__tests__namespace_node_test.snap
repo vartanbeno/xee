@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"self::namespace-node()\")"
                             predicates: [],
                         },
                     ),
-                    0..22,
+                    SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            22,
+                        ),
+                    },
                 ),
             ],
         },
     ),
-    0..22,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            22,
+        ),
+    },
 )

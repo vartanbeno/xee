@@ -10,8 +10,22 @@ expression: "parse_step_expr(\"1\")"
                     1,
                 ),
             ),
-            0..1,
+            SourceSpan {
+                offset: SourceOffset(
+                    0,
+                ),
+                length: SourceOffset(
+                    1,
+                ),
+            },
         ),
     ),
-    0..1,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            1,
+        ),
+    },
 )

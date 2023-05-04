@@ -16,10 +16,24 @@ expression: "parse_expr_single(\"1 and 2\")"
                                         1,
                                     ),
                                 ),
-                                0..1,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ),
-                        0..1,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                0,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 ],
             },
@@ -33,14 +47,35 @@ expression: "parse_expr_single(\"1 and 2\")"
                                         2,
                                     ),
                                 ),
-                                6..7,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        6,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         ),
-                        6..7,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                6,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 ],
             },
         },
     ),
-    0..7,
+    SourceSpan {
+        offset: SourceOffset(
+            0,
+        ),
+        length: SourceOffset(
+            7,
+        ),
+    },
 )

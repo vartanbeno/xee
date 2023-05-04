@@ -221,3 +221,40 @@ pub(crate) fn encode_instructions(instructions: Vec<Instruction>, bytes: &mut Ve
         encode_instruction(instruction, bytes);
     }
 }
+
+// size in bytes for an instruction
+pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
+    match instruction {
+        Instruction::Add
+        | Instruction::Sub
+        | Instruction::Concat
+        | Instruction::Comma
+        | Instruction::Eq
+        | Instruction::Ne
+        | Instruction::Lt
+        | Instruction::Le
+        | Instruction::Gt
+        | Instruction::Ge
+        | Instruction::Union
+        | Instruction::Return
+        | Instruction::Pop
+        | Instruction::LetDone
+        | Instruction::Range
+        | Instruction::SequenceNew
+        | Instruction::SequenceLen
+        | Instruction::SequenceGet
+        | Instruction::SequencePush
+        | Instruction::PrintTop
+        | Instruction::PrintStack => 1,
+        Instruction::Call(_) => 2,
+        Instruction::Const(_)
+        | Instruction::Closure(_)
+        | Instruction::StaticClosure(_)
+        | Instruction::Var(_)
+        | Instruction::Set(_)
+        | Instruction::ClosureVar(_)
+        | Instruction::Jump(_)
+        | Instruction::JumpIfTrue(_)
+        | Instruction::JumpIfFalse(_) => 3,
+    }
+}

@@ -16,7 +16,14 @@ Ok(
                                 1,
                             ),
                         ),
-                        1..2,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                1,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                     op: Comma,
                     right: (
@@ -25,7 +32,14 @@ Ok(
                                 2,
                             ),
                         ),
-                        4..5,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                4,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 },
             ),
@@ -48,7 +62,14 @@ Ok(
                                 "v2",
                             ),
                         ),
-                        4..5,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                4,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                     return_expr: Binary(
                         Binary {
@@ -58,7 +79,14 @@ Ok(
                                         "v3",
                                     ),
                                 ),
-                                0..0,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        0,
+                                    ),
+                                },
                             ),
                             op: Gt,
                             right: (
@@ -67,7 +95,14 @@ Ok(
                                         2,
                                     ),
                                 ),
-                                12..13,
+                                SourceSpan {
+                                    offset: SourceOffset(
+                                        12,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
                             ),
                         },
                     ),

@@ -352,7 +352,7 @@ impl<'a> AstParser<'a> {
                     left: expr_single_to_path_expr(binary),
                     right: self.pair_to_path_expr(right_pair),
                 }),
-                (span_start..span_end),
+                ((span_start, span_end - span_start).into()),
             )
         }
         binary
@@ -1178,7 +1178,7 @@ fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
 }
 
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
-    (value, (span.start()..span.end()))
+    (value, (span.start(), span.end() - span.start()).into())
 }
 
 #[cfg(test)]

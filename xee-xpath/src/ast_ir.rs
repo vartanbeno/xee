@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt};
-use miette::NamedSource;
+use miette::{NamedSource, SourceSpan};
 
 use crate::ast;
 use crate::error::{Error, Result};
@@ -177,7 +177,7 @@ impl<'a> IrConverter<'a> {
     fn var_ref(&mut self, name: &ast::Name, span: &Span) -> Result<Bindings> {
         let ir_name = self.variables.get(name).ok_or_else(|| Error::XPST0008 {
             src: NamedSource::new("input", self.src.to_string()),
-            span: span_to_source_span(span),
+            span: span.clone(),
         })?;
         Ok(Bindings::from_vec(vec![Binding {
             name: ir_name.clone(),
@@ -198,7 +198,7 @@ impl<'a> IrConverter<'a> {
     where
         F: Fn(&ir::ContextNames) -> ir::Name,
     {
-        let empty_span = 0..0;
+        let empty_span: SourceSpan = (0, 0).into();
         if let Some(context_scope) = self.context_scope.last() {
             match context_scope {
                 ContextItem::Names(names) => {
@@ -211,13 +211,13 @@ impl<'a> IrConverter<'a> {
                 }
                 ContextItem::Absent => Err(Error::XPDY0002 {
                     src: NamedSource::new("input", self.src.to_string()),
-                    span: span_to_source_span(span),
+                    span: span.clone(),
                 }),
             }
         } else {
             Err(Error::XPDY0002 {
                 src: NamedSource::new("input", self.src.to_string()),
-                span: span_to_source_span(span),
+                span: span.clone(),
             })
         }
     }
@@ -355,7 +355,8 @@ impl<'a> IrConverter<'a> {
                     let args = arg_bindings.args(exprs.len());
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
                     // XXX should be able to get span for postfix
-                    let binding = self.new_binding(expr, 0..0);
+                    let empty_span = (0, 0).into();
+                    let binding = self.new_binding(expr, empty_span);
                     Ok(bindings.concat(arg_bindings).bind(binding))
                 }
                 _ => todo!(),
@@ -617,10 +618,10 @@ impl<'a> IrConverter<'a> {
             .ok_or_else(|| Error::XPST0017 {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
                 src: NamedSource::new("input", self.src.to_string()),
-                span: span_to_source_span(span),
+                span: span.clone(),
             })?;
         // XXX we don't know yet how to get the proper span here
-        let empty_span = 0..0;
+        let empty_span = (0, 0).into();
         let mut static_function_ref_bindings =
             self.static_function_ref(static_function_id, &empty_span);
         let atom = static_function_ref_bindings.atom();
@@ -641,7 +642,7 @@ impl<'a> IrConverter<'a> {
             .ok_or_else(|| Error::XPST0017 {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, ast.arity),
                 src: NamedSource::new("input", self.src.to_string()),
-                span: span_to_source_span(span),
+                span: span.clone(),
             })?;
         Ok(self.static_function_ref(static_function_id, span))
     }
@@ -686,10 +687,6 @@ fn convert_xpath(s: &str) -> Result<ir::Expr> {
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)
-}
-
-fn span_to_source_span(span: &Span) -> miette::SourceSpan {
-    (span.start, span.len()).into()
 }
 
 #[cfg(test)]

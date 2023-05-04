@@ -20,7 +20,14 @@ Ok(
                                 "v0",
                             ),
                         ),
-                        15..17,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                15,
+                            ),
+                            length: SourceOffset(
+                                2,
+                            ),
+                        },
                     ),
                     op: Add,
                     right: (
@@ -29,7 +36,14 @@ Ok(
                                 1,
                             ),
                         ),
-                        20..21,
+                        SourceSpan {
+                            offset: SourceOffset(
+                                20,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
                     ),
                 },
             ),
