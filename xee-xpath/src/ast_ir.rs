@@ -594,7 +594,7 @@ impl<'a> IrConverter<'a> {
     fn function_call(&mut self, ast: &ast::FunctionCall, span: &Span) -> Result<Bindings> {
         let arity = ast.arguments.len();
         if arity > u8::MAX as usize {
-            panic!("too many arguments");
+            return Err(Error::XPDY0130);
         }
         // hardcoded fn:position and fn:last
         // These should work without hardcoding them, but this is faster
@@ -611,7 +611,11 @@ impl<'a> IrConverter<'a> {
             .static_context
             .functions
             .get_by_name(&ast.name, arity as u8)
-            .unwrap_or_else(|| panic!("Unknown function name {:?} with arity {}", ast.name, arity));
+            .ok_or_else(|| Error::XPST0017 {
+                advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
+                src: NamedSource::new("input", self.src.to_string()),
+                span: span_to_source_span(span),
+            })?;
         // XXX we don't know yet how to get the proper span here
         let empty_span = 0..0;
         let mut static_function_ref_bindings =
@@ -844,5 +848,15 @@ mod tests {
     #[test]
     fn test_absent_context_in_function() {
         assert_debug_snapshot!(convert_xpath("function() { . }"));
+    }
+
+    #[test]
+    fn test_unknown_static_function_name() {
+        assert_debug_snapshot!(convert_expr_single("unknown_function()"));
+    }
+
+    #[test]
+    fn test_wrong_amount_of_arguments() {
+        assert_debug_snapshot!(convert_expr_single("fn:string(1, 2, 3)"));
     }
 }

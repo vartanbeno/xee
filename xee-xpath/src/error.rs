@@ -69,13 +69,20 @@ pub enum Error {
     /// XPath 1.0 compatibility mode is false.
     #[error("Namespace axis not supported")]
     XPST0010,
-    /// Type error: incorrect number of arguments.
+    /// Type error: incorrect function name or number of arguments.
     ///
     /// It is a static error if the expanded QName and number of arguments in a
     /// static function call do not match the name and arity of a function
     /// signature in the static context.
-    #[error("Type error: incorrect number of arguments")]
-    XPST0017,
+    #[error("Type error: incorrect function name or number of arguments")]
+    XPST0017 {
+        #[help]
+        advice: String,
+        #[source_code]
+        src: NamedSource,
+        #[label("The problem")]
+        span: SourceSpan,
+    },
     /// Type error: inconsistent sequence.
     ///
     /// It is a type error if the result of a path operator contains both nodes
@@ -179,13 +186,11 @@ pub enum Error {
     /// No two keys in a map may have the same key value.
     #[error("Duplicate key values in a map")]
     XQDY0137,
-
     // XPath errors and functions: https://www.w3.org/TR/xpath-functions-31/#error-summary
     /// Wrong number of arguments.
     ///
-    /// Raised when fn:apply is called and the arity
-    /// of the supplied function is not the same as the number of members in
-    /// the supplied array.
+    /// Raised when fn:apply is called and the arity of the supplied function
+    /// is not the same as the number of members in the supplied array.
     #[error("Wrong number of arguments")]
     FOAP0001,
     /// Division by zero.
