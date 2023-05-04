@@ -380,7 +380,6 @@ impl<'a> AstParser<'a> {
 
     fn path_expr_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         debug_assert_eq!(pair.as_rule(), Rule::PathExpr);
-        let span = pair.as_span();
         let mut pairs = pair.into_inner();
         let first_pair = pairs.next().unwrap();
         let first_pair_span = first_pair.as_span();
@@ -419,7 +418,6 @@ impl<'a> AstParser<'a> {
 
     fn relative_path_expr_to_steps(&self, pair: Pair<Rule>) -> Vec<ast::StepExprS> {
         debug_assert_eq!(pair.as_rule(), Rule::RelativePathExpr);
-        let span = pair.as_span();
         let pairs = pair.into_inner();
         let mut result = Vec::new();
         for pair in pairs {
@@ -472,7 +470,6 @@ impl<'a> AstParser<'a> {
                 let span = pair.as_span();
                 let mut pairs = pair.into_inner();
                 let step_pair = pairs.next().unwrap();
-                let step_span = step_pair.as_span();
                 let predicates_pair = pairs.next().unwrap();
                 let predicates = predicates_pair
                     .into_inner()
@@ -496,8 +493,6 @@ impl<'a> AstParser<'a> {
             Rule::AbbrevReverseStep => {
                 let span = pair.as_span();
                 let mut pairs = pair.into_inner();
-                let double_dot_pair = pairs.next().unwrap();
-                let double_dot_span = double_dot_pair.as_span();
                 let predicates_pair = pairs.next().unwrap();
                 let predicates = predicates_pair
                     .into_inner()
@@ -669,7 +664,7 @@ impl<'a> AstParser<'a> {
             Rule::NamespaceNodeTest => ast::KindTest::NamespaceNode,
             Rule::ElementTest => {
                 let mut pairs = pair.into_inner();
-                if let Some(pair) = pairs.next() {
+                if let Some(_pair) = pairs.next() {
                     todo!("no arguments for element test yet")
                 } else {
                     ast::KindTest::Element(None)
@@ -678,7 +673,7 @@ impl<'a> AstParser<'a> {
             Rule::AttributeTest => {
                 let mut pairs = pair.into_inner();
                 let first_pair = pairs.next();
-                if let Some(pair) = first_pair {
+                if let Some(_pair) = first_pair {
                     // XXX this should not use a default element namespace
                     todo!("no arguments for attribute test yet")
                 } else {
@@ -1019,7 +1014,7 @@ impl<'a> AstParser<'a> {
         debug_assert_eq!(pair.as_rule(), Rule::Param);
         let mut pairs = pair.into_inner();
         let name = self.eq_name_to_name(pairs.next().unwrap(), None);
-        let type_ = if let Some(pair) = pairs.next() {
+        let type_ = if let Some(_pair) = pairs.next() {
             panic!("unhandled type annotation");
         } else {
             None
@@ -1141,6 +1136,7 @@ where
     f(pair)
 }
 
+#[allow(clippy::result_large_err)]
 fn parse_rule_start_end<T, F>(rule: Rule, input: &str, f: F) -> Result<T, pest::error::Error<Rule>>
 where
     F: Fn(Pair<Rule>) -> T,

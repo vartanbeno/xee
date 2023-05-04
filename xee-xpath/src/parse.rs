@@ -12,6 +12,7 @@ use pest::Parser;
 #[grammar = "xpath-31.pest"]
 pub(crate) struct XPathParser;
 
+#[allow(clippy::result_large_err)]
 pub(crate) fn parse(xpath: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
     XPathParser::parse(Rule::Xpath, xpath)
 }
