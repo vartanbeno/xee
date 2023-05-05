@@ -78,6 +78,8 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn run_actual(&mut self) -> Result<(), ValueError> {
         let context = self.context;
+        // we can make this an infinite loop as all functions end
+        // with the return instruction
         loop {
             let instruction = self.read_instruction();
             match instruction {
