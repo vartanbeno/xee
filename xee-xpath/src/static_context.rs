@@ -4,8 +4,8 @@ use std::rc::Rc;
 
 use crate::ast;
 use crate::context::Context;
-use crate::error::{Error, Result};
 use crate::name::{Namespaces, FN_NAMESPACE};
+use crate::value::ValueError;
 use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -26,7 +26,7 @@ pub(crate) struct StaticFunctionDescription {
     name: ast::Name,
     arity: usize,
     function_type: Option<FunctionType>,
-    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue>,
+    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
 }
 
 impl StaticFunctionDescription {
@@ -164,7 +164,7 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue>,
+    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
 }
 
 impl Debug for StaticFunction {
@@ -183,9 +183,9 @@ impl StaticFunction {
         context: &Context,
         arguments: &[StackValue],
         closure_values: &[StackValue],
-    ) -> Result<StackValue> {
+    ) -> Result<StackValue, ValueError> {
         if arguments.len() != self.arity {
-            return Err(Error::TypeError);
+            return Err(ValueError::TypeError);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {
@@ -259,50 +259,53 @@ fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }
 
-fn bound_my_function(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_my_function(
+    context: &Context,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     let a = arguments[0]
         .as_atomic(context)?
         .as_integer()
-        .ok_or(Error::TypeError)?;
+        .ok_or(ValueError::TypeError)?;
     let b = arguments[1]
         .as_atomic(context)?
         .as_integer()
-        .ok_or(Error::TypeError)?;
+        .ok_or(ValueError::TypeError)?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 
-fn bound_position(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_position(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     // position should be the context value
     Ok(arguments[0].clone())
 }
 
-fn bound_last(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn bound_last(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     // size should be the context value
     Ok(arguments[0].clone())
 }
 
-fn local_name(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
-    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+fn local_name(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.local_name(context.xot),
     ))))
 }
 
-fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
-    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(context.xot),
     ))))
 }
 
-fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
-    let a = arguments[0].as_sequence().ok_or(Error::TypeError)?;
+fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_sequence().ok_or(ValueError::TypeError)?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }
 
-fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
-    let a = arguments[0].as_node().ok_or(Error::TypeError)?;
+fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
     let xot_node = match a {
         Node::Xot(node) => node,
         Node::Attribute(node, _) => node,
@@ -314,14 +317,14 @@ fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
     Ok(StackValue::Node(Node::Xot(root)))
 }
 
-fn string(context: &Context, arguments: &[StackValue]) -> Result<StackValue> {
+fn string(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
         context,
         &arguments[0],
     )?))))
 }
 
-fn string_helper(context: &Context, value: &StackValue) -> Result<String> {
+fn string_helper(context: &Context, value: &StackValue) -> Result<String, ValueError> {
     let value = match value {
         StackValue::Atomic(atomic) => match atomic {
             Atomic::String(string) => string.to_string(),
@@ -337,12 +340,12 @@ fn string_helper(context: &Context, value: &StackValue) -> Result<String> {
             match len {
                 0 => "".to_string(),
                 1 => string_helper(context, &StackValue::from_item(sequence.items[0].clone()))?,
-                _ => Err(Error::TypeError)?,
+                _ => Err(ValueError::TypeError)?,
             }
         }
         StackValue::Node(node) => node.string(context.xot),
-        StackValue::Closure(_) => Err(Error::TypeError)?,
-        StackValue::Step(_) => Err(Error::TypeError)?,
+        StackValue::Closure(_) => Err(ValueError::TypeError)?,
+        StackValue::Step(_) => Err(ValueError::TypeError)?,
     };
     Ok(value)
 }

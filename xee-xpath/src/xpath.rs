@@ -48,7 +48,7 @@ impl<'a> CompiledXPath<'a> {
     pub(crate) fn run(&self, context_item: Item) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, self.context);
         interpreter.start(self.main, context_item);
-        interpreter.run()?;
+        interpreter.run2()?;
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because
         // the outer main function will pop the context item; this code is there to

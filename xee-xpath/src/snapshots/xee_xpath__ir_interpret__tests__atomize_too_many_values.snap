@@ -10,10 +10,10 @@ Err(
         ,
         span: SourceSpan {
             offset: SourceOffset(
-                10,
+                0,
             ),
             length: SourceOffset(
-                13,
+                0,
             ),
         },
     },

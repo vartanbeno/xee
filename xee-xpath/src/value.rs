@@ -7,9 +7,17 @@ use xot::Xot;
 use crate::annotation::Annotations;
 use crate::ast;
 use crate::context::Context;
-use crate::error::{Error, Result};
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum ValueError {
+    XPTY0004,
+    TypeError,
+    OverflowError,
+}
+
+type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
@@ -380,11 +388,7 @@ impl Sequence {
                     _ => unreachable!("atomize returned a non-atomic item"),
                 }
             }
-            _ => Err(Error::XPTY0004 {
-                src: NamedSource::new("input", context.src.to_string()),
-                // XXX fake empty span, replaced later
-                span: (777, 0).into(),
-            }),
+            _ => Err(ValueError::XPTY0004),
         }
     }
 
@@ -399,16 +403,16 @@ impl Sequence {
         for item in &self.items {
             let node = match item {
                 Item::Node(node) => *node,
-                Item::Atomic(..) => return Err(Error::TypeError),
-                Item::Function(..) => return Err(Error::TypeError),
+                Item::Atomic(..) => return Err(ValueError::TypeError),
+                Item::Function(..) => return Err(ValueError::TypeError),
             };
             s.insert(node);
         }
         for item in &other.items {
             let node = match item {
                 Item::Node(node) => *node,
-                Item::Atomic(..) => return Err(Error::TypeError),
-                Item::Function(..) => return Err(Error::TypeError),
+                Item::Atomic(..) => return Err(ValueError::TypeError),
+                Item::Function(..) => return Err(ValueError::TypeError),
             };
             s.insert(node);
         }

@@ -2,15 +2,17 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
+use miette::NamedSource;
+
 use crate::builder::Program;
 use crate::context::Context;
-use crate::error::{Error, Result};
+use crate::error::Error;
 use crate::instruction::{decode_instruction, Instruction};
 
 use crate::step::resolve_step;
 use crate::value::{
     Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StackValue,
-    StaticFunctionId, Step,
+    StaticFunctionId, Step, ValueError,
 };
 
 #[derive(Debug, Clone)]
@@ -55,7 +57,21 @@ impl<'a> Interpreter<'a> {
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
     }
 
-    pub(crate) fn run(&mut self) -> Result<()> {
+    pub(crate) fn run2(&mut self) -> Result<(), Error> {
+        self.run().map_err(|e| match e {
+            ValueError::XPTY0004 => Error::XPTY0004 {
+                src: NamedSource::new("input", self.context.src.to_string()),
+                span: (0, 0).into(),
+            },
+            ValueError::TypeError => Error::XPTY0004 {
+                src: NamedSource::new("input", self.context.src.to_string()),
+                span: (0, 0).into(),
+            },
+            ValueError::OverflowError => Error::FOAR0002,
+        })
+    }
+
+    pub(crate) fn run(&mut self) -> Result<(), ValueError> {
         let frame = self.frames.last().unwrap();
 
         let context = self.context;
@@ -69,15 +85,11 @@ impl<'a> Interpreter<'a> {
                 Instruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a
-                        .as_atomic(context)
-                        .map_err(|e| annotate_span(e, function, ip - instruction_size))?;
-                    let b = b
-                        .as_atomic(context)
-                        .map_err(|e| annotate_span(e, function, ip - instruction_size))?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a.checked_add(b).ok_or(Error::FOAR0002)?;
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let result = a.checked_add(b).ok_or(ValueError::OverflowError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 Instruction::Sub => {
@@ -85,9 +97,9 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
-                    let result = a.checked_sub(b).ok_or(Error::FOAR0002)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let result = a.checked_sub(b).ok_or(ValueError::OverflowError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 Instruction::Concat => {
@@ -95,8 +107,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_string().ok_or(Error::TypeError)?;
-                    let b = b.as_string().ok_or(Error::TypeError)?;
+                    let a = a.as_string().ok_or(ValueError::TypeError)?;
+                    let b = b.as_string().ok_or(ValueError::TypeError)?;
                     let result = a + &b;
                     self.stack
                         .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
@@ -145,15 +157,17 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::ClosureVar(index) => {
                     // the closure is always just below the base
-                    let closure = self.stack[base - 1].as_closure().ok_or(Error::TypeError)?;
+                    let closure = self.stack[base - 1]
+                        .as_closure()
+                        .ok_or(ValueError::TypeError)?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 Instruction::Comma => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence().ok_or(Error::TypeError)?;
-                    let b = b.as_sequence().ok_or(Error::TypeError)?;
+                    let a = a.as_sequence().ok_or(ValueError::TypeError)?;
+                    let b = b.as_sequence().ok_or(ValueError::TypeError)?;
                     self.stack.push(StackValue::Sequence(Rc::new(RefCell::new(
                         a.borrow().concat(&b.borrow()),
                     ))));
@@ -164,7 +178,7 @@ impl<'a> Interpreter<'a> {
                 Instruction::JumpIfTrue(displacement) => {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
-                    let a = a.as_bool().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(ValueError::TypeError)?;
                     if a {
                         ip = (ip as i32 + displacement as i32) as usize;
                     }
@@ -172,7 +186,7 @@ impl<'a> Interpreter<'a> {
                 Instruction::JumpIfFalse(displacement) => {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
-                    let a = a.as_bool().ok_or(Error::TypeError)?;
+                    let a = a.as_bool().ok_or(ValueError::TypeError)?;
                     if !a {
                         ip = (ip as i32 + displacement as i32) as usize;
                     }
@@ -214,8 +228,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
                 }
                 Instruction::Le => {
@@ -223,8 +237,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
                 }
                 Instruction::Gt => {
@@ -232,8 +246,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
                 }
                 Instruction::Ge => {
@@ -241,15 +255,15 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
                 }
                 Instruction::Union => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence().ok_or(Error::TypeError)?;
-                    let b = b.as_sequence().ok_or(Error::TypeError)?;
+                    let a = a.as_sequence().ok_or(ValueError::TypeError)?;
+                    let b = b.as_sequence().ok_or(ValueError::TypeError)?;
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.context.documents.annotations)?;
@@ -285,7 +299,7 @@ impl<'a> Interpreter<'a> {
                     } else if let Some(step) = callable.as_step() {
                         self.call_step(step)?;
                     } else {
-                        return Err(Error::TypeError);
+                        return Err(ValueError::TypeError);
                     }
                 }
                 Instruction::Return => {
@@ -326,8 +340,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(Error::TypeError)?;
-                    let b = b.as_integer().ok_or(Error::TypeError)?;
+                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
+                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -351,7 +365,7 @@ impl<'a> Interpreter<'a> {
                 }
                 Instruction::SequenceLen => {
                     let sequence = self.stack.pop().unwrap();
-                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
                     let len = sequence.borrow().items.len();
                     self.stack
                         .push(StackValue::Atomic(Atomic::Integer(len as i64)));
@@ -360,9 +374,9 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let index = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
                     let index = index.as_atomic(context)?;
-                    let index = index.as_integer().ok_or(Error::TypeError)?;
+                    let index = index.as_integer().ok_or(ValueError::TypeError)?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
                     match item {
@@ -381,7 +395,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let stack_value = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence().ok_or(Error::TypeError)?;
+                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
                 Instruction::PrintTop => {
@@ -401,7 +415,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: StaticFunctionId,
         arity: u8,
         closure_values: &[StackValue],
-    ) -> Result<()> {
+    ) -> Result<(), ValueError> {
         let static_function = &self
             .context
             .static_context
@@ -422,7 +436,7 @@ impl<'a> Interpreter<'a> {
         ip: &mut usize,
         base: &mut usize,
         function: &mut &'a Function,
-    ) -> Result<()> {
+    ) -> Result<(), ValueError> {
         // store ip of next instruction in current frame
         let frame = self.frames.last_mut().unwrap();
         frame.ip = *ip;
@@ -438,14 +452,14 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_step(&mut self, step: Rc<Step>) -> Result<()> {
+    fn call_step(&mut self, step: Rc<Step>) -> Result<(), ValueError> {
         // take one argument from the stack
         let node = self
             .stack
             .pop()
             .unwrap()
             .as_node()
-            .ok_or(Error::TypeError)?;
+            .ok_or(ValueError::TypeError)?;
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.context.xot);
@@ -453,6 +467,21 @@ impl<'a> Interpreter<'a> {
             .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
         Ok(())
     }
+
+    // fn err<V>(&self, result: Result<V, ValueError>) -> Result<V, Error> {
+    //     match result {
+    //         Ok(v) => Ok(v),
+    //         Err(error) => match error {
+    //             ValueError::XPTY0004 | ValueError::TypeError => {
+    //                 let span = self.frame.function.spans[self.frame.ip];
+    //                 Err(Error::XPTY0004 {
+    //                     src: NamedSource::new("input", self.context.src.clone()),
+    //                     span,
+    //                 })
+    //             }
+    //         },
+    //     }
+    // }
 }
 
 fn annotate_span(error: Error, function: &Function, ip: usize) -> Error {
@@ -477,7 +506,7 @@ mod tests {
     use crate::static_context::StaticContext;
 
     #[test]
-    fn test_interpreter() -> Result<()> {
+    fn test_interpreter() -> Result<(), ValueError> {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -504,7 +533,7 @@ mod tests {
     }
 
     #[test]
-    fn test_emit_jump_forward() -> Result<()> {
+    fn test_emit_jump_forward() -> Result<(), Error> {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -530,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_true() -> Result<()> {
+    fn test_condition_true() -> Result<(), ValueError> {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -564,7 +593,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_false() -> Result<()> {
+    fn test_condition_false() -> Result<(), ValueError> {
         let mut program = Program::new();
 
         let mut builder = FunctionBuilder::new(&mut program);
