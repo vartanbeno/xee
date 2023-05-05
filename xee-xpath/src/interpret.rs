@@ -88,8 +88,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     let result = a.checked_add(b).ok_or(ValueError::OverflowError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
@@ -98,8 +98,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     let result = a.checked_sub(b).ok_or(ValueError::OverflowError)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
@@ -243,8 +243,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
                 }
                 EncodedInstruction::Le => {
@@ -252,8 +252,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
                 }
                 EncodedInstruction::Gt => {
@@ -261,8 +261,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
                 }
                 EncodedInstruction::Ge => {
@@ -270,8 +270,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
                 }
                 EncodedInstruction::Union => {
@@ -346,8 +346,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer().ok_or(ValueError::TypeError)?;
-                    let b = b.as_integer().ok_or(ValueError::TypeError)?;
+                    let a = a.as_integer()?;
+                    let b = b.as_integer()?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -382,7 +382,7 @@ impl<'a> Interpreter<'a> {
 
                     let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
                     let index = index.as_atomic(context)?;
-                    let index = index.as_integer().ok_or(ValueError::TypeError)?;
+                    let index = index.as_integer()?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
                     match item {

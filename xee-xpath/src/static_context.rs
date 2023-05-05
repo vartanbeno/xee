@@ -263,14 +263,8 @@ fn bound_my_function(
     context: &Context,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a = arguments[0]
-        .as_atomic(context)?
-        .as_integer()
-        .ok_or(ValueError::TypeError)?;
-    let b = arguments[1]
-        .as_atomic(context)?
-        .as_integer()
-        .ok_or(ValueError::TypeError)?;
+    let a = arguments[0].as_atomic(context)?.as_integer()?;
+    let b = arguments[1].as_atomic(context)?.as_integer()?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 

@@ -255,10 +255,10 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn as_integer(&self) -> Option<i64> {
+    pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
-            Atomic::Integer(i) => Some(*i),
-            _ => None,
+            Atomic::Integer(i) => Ok(*i),
+            _ => Err(ValueError::TypeError),
         }
     }
 
