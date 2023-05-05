@@ -70,8 +70,6 @@ impl<'a> Interpreter<'a> {
         let mut ip = frame.ip;
         loop {
             let instruction = read_instruction(&function.chunk, &mut ip);
-            // let (instruction, instruction_size) = decode_instruction(&function.chunk[ip..]);
-            // ip += instruction_size;
             match instruction {
                 EncodedInstruction::Add => {
                     let b = self.stack.pop().unwrap();
