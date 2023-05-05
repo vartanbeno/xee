@@ -1,5 +1,5 @@
 use arrayvec::ArrayVec;
-use miette::NamedSource;
+use miette::{NamedSource, SourceSpan};
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -467,15 +467,23 @@ impl<'a> Interpreter<'a> {
         match value_error {
             ValueError::XPTY0004 => Error::XPTY0004 {
                 src: NamedSource::new("input", self.context.src.to_string()),
-                span: (0, 0).into(),
+                span: self.current_span(),
             },
             ValueError::TypeError => Error::XPTY0004 {
                 src: NamedSource::new("input", self.context.src.to_string()),
-                span: (0, 0).into(),
+                span: self.current_span(),
             },
             ValueError::OverflowError => Error::FOAR0002,
             ValueError::StackOverflow => Error::XPDY0130,
         }
+    }
+
+    fn current_span(&self) -> SourceSpan {
+        let frame = self.frame();
+        let function = &self.program.functions[frame.function.0];
+        // we substract 1 to end up in the current instruction - this
+        // because the ip is already on the next instruction
+        function.spans[frame.ip - 1]
     }
 
     fn read_instruction(&mut self) -> EncodedInstruction {
