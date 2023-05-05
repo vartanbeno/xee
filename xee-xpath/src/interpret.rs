@@ -68,7 +68,7 @@ impl<'a> Interpreter<'a> {
         let mut function = &self.program.functions[frame.function.0];
         let mut base = frame.base;
         let mut ip = frame.ip;
-        while ip < function.chunk.len() {
+        loop {
             let instruction = read_instruction(&function.chunk, &mut ip);
             // let (instruction, instruction_size) = decode_instruction(&function.chunk[ip..]);
             // ip += instruction_size;
