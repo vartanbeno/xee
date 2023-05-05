@@ -222,11 +222,11 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_node(&self) -> Option<Node> {
+    pub(crate) fn as_node(&self) -> Result<Node> {
         match self {
-            StackValue::Node(n) => Some(*n),
+            StackValue::Node(n) => Ok(*n),
             StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.as_node()),
-            _ => None,
+            _ => Err(ValueError::TypeError),
         }
     }
 }
@@ -286,10 +286,10 @@ impl Item {
             _ => Err(ValueError::TypeError),
         }
     }
-    pub(crate) fn as_node(&self) -> Option<Node> {
+    pub(crate) fn as_node(&self) -> Result<Node> {
         match self {
-            Item::Node(n) => Some(*n),
-            _ => None,
+            Item::Node(n) => Ok(*n),
+            _ => Err(ValueError::TypeError),
         }
     }
 }
@@ -324,11 +324,11 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn singleton(&self) -> Option<&Item> {
+    pub(crate) fn singleton(&self) -> Result<&Item> {
         if self.items.len() == 1 {
-            Some(&self.items[0])
+            Ok(&self.items[0])
         } else {
-            None
+            Err(ValueError::TypeError)
         }
     }
 

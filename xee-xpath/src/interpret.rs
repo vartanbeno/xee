@@ -451,8 +451,7 @@ impl<'a> Interpreter<'a> {
             .stack
             .pop()
             .unwrap()
-            .as_node()
-            .ok_or(ValueError::TypeError)?;
+            .as_node()?;
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.context.xot);

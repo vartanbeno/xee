@@ -279,14 +279,14 @@ fn bound_last(_context: &Context, arguments: &[StackValue]) -> Result<StackValue
 }
 
 fn local_name(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
+    let a = arguments[0].as_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.local_name(context.xot),
     ))))
 }
 
 fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
+    let a = arguments[0].as_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(context.xot),
     ))))
@@ -299,7 +299,7 @@ fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, Val
 }
 
 fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node().ok_or(ValueError::TypeError)?;
+    let a = arguments[0].as_node()?;
     let xot_node = match a {
         Node::Xot(node) => node,
         Node::Attribute(node, _) => node,
