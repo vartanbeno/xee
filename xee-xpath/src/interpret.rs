@@ -58,17 +58,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn run2(&mut self) -> Result<(), Error> {
-        self.run().map_err(|e| match e {
-            ValueError::XPTY0004 => Error::XPTY0004 {
-                src: NamedSource::new("input", self.context.src.to_string()),
-                span: (0, 0).into(),
-            },
-            ValueError::TypeError => Error::XPTY0004 {
-                src: NamedSource::new("input", self.context.src.to_string()),
-                span: (0, 0).into(),
-            },
-            ValueError::OverflowError => Error::FOAR0002,
-        })
+        self.run().map_err(|e| self.err(e))
     }
 
     pub(crate) fn run(&mut self) -> Result<(), ValueError> {
@@ -468,20 +458,19 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    // fn err<V>(&self, result: Result<V, ValueError>) -> Result<V, Error> {
-    //     match result {
-    //         Ok(v) => Ok(v),
-    //         Err(error) => match error {
-    //             ValueError::XPTY0004 | ValueError::TypeError => {
-    //                 let span = self.frame.function.spans[self.frame.ip];
-    //                 Err(Error::XPTY0004 {
-    //                     src: NamedSource::new("input", self.context.src.clone()),
-    //                     span,
-    //                 })
-    //             }
-    //         },
-    //     }
-    // }
+    fn err(&self, value_error: ValueError) -> Error {
+        match value_error {
+            ValueError::XPTY0004 => Error::XPTY0004 {
+                src: NamedSource::new("input", self.context.src.to_string()),
+                span: (0, 0).into(),
+            },
+            ValueError::TypeError => Error::XPTY0004 {
+                src: NamedSource::new("input", self.context.src.to_string()),
+                span: (0, 0).into(),
+            },
+            ValueError::OverflowError => Error::FOAR0002,
+        }
+    }
 }
 
 fn annotate_span(error: Error, function: &Function, ip: usize) -> Error {
