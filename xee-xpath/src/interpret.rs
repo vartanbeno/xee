@@ -1,5 +1,4 @@
 use miette::NamedSource;
-use num::FromPrimitive;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -7,7 +6,7 @@ use std::rc::Rc;
 use crate::builder::Program;
 use crate::context::Context;
 use crate::error::Error;
-use crate::instruction::EncodedInstruction;
+use crate::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
 use crate::step::resolve_step;
 use crate::value::{
@@ -70,7 +69,7 @@ impl<'a> Interpreter<'a> {
         let mut base = frame.base;
         let mut ip = frame.ip;
         while ip < function.chunk.len() {
-            let instruction = read_instruction(function, &mut ip);
+            let instruction = read_instruction(&function.chunk, &mut ip);
             // let (instruction, instruction_size) = decode_instruction(&function.chunk[ip..]);
             // ip += instruction_size;
             match instruction {
@@ -106,11 +105,11 @@ impl<'a> Interpreter<'a> {
                         .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
                 }
                 EncodedInstruction::Const => {
-                    let index = read_u16(function, &mut ip);
+                    let index = read_u16(&function.chunk, &mut ip);
                     self.stack.push(function.constants[index as usize].clone());
                 }
                 EncodedInstruction::Closure => {
-                    let function_id = read_u16(function, &mut ip);
+                    let function_id = read_u16(&function.chunk, &mut ip);
                     let mut values = Vec::new();
                     let closure_function = &self.program.functions[function_id as usize];
                     for _ in 0..closure_function.closure_names.len() {
@@ -122,7 +121,7 @@ impl<'a> Interpreter<'a> {
                     })));
                 }
                 EncodedInstruction::StaticClosure => {
-                    let static_function_id = read_u16(function, &mut ip);
+                    let static_function_id = read_u16(&function.chunk, &mut ip);
                     let static_function = &self
                         .context
                         .static_context
@@ -145,15 +144,15 @@ impl<'a> Interpreter<'a> {
                     })));
                 }
                 EncodedInstruction::Var => {
-                    let index = read_u16(function, &mut ip);
+                    let index = read_u16(&function.chunk, &mut ip);
                     self.stack.push(self.stack[base + index as usize].clone());
                 }
                 EncodedInstruction::Set => {
-                    let index = read_u16(function, &mut ip);
+                    let index = read_u16(&function.chunk, &mut ip);
                     self.stack[base + index as usize] = self.stack.pop().unwrap();
                 }
                 EncodedInstruction::ClosureVar => {
-                    let index = read_u16(function, &mut ip);
+                    let index = read_u16(&function.chunk, &mut ip);
                     // the closure is always just below the base
                     let closure = self.stack[base - 1]
                         .as_closure()
@@ -171,11 +170,11 @@ impl<'a> Interpreter<'a> {
                     ))));
                 }
                 EncodedInstruction::Jump => {
-                    let displacement = read_i16(function, &mut ip);
+                    let displacement = read_i16(&function.chunk, &mut ip);
                     ip = (ip as i32 + displacement as i32) as usize;
                 }
                 EncodedInstruction::JumpIfTrue => {
-                    let displacement = read_i16(function, &mut ip);
+                    let displacement = read_i16(&function.chunk, &mut ip);
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let a = a.as_bool().ok_or(ValueError::TypeError)?;
@@ -184,7 +183,7 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::JumpIfFalse => {
-                    let displacement = read_i16(function, &mut ip);
+                    let displacement = read_i16(&function.chunk, &mut ip);
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let a = a.as_bool().ok_or(ValueError::TypeError)?;
@@ -275,7 +274,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.pop();
                 }
                 EncodedInstruction::Call => {
-                    let arity = read_u8(function, &mut ip);
+                    let arity = read_u8(&function.chunk, &mut ip);
                     // XXX check that arity of function matches arity of call
 
                     // get callable from stack, by peeking back
@@ -483,30 +482,6 @@ impl<'a> Interpreter<'a> {
             ValueError::OverflowError => Error::FOAR0002,
         }
     }
-}
-
-fn read_instruction(function: &Function, ip: &mut usize) -> EncodedInstruction {
-    let byte = function.chunk[*ip];
-    *ip += 1;
-    EncodedInstruction::from_u8(byte).unwrap()
-}
-
-fn read_u16(function: &Function, ip: &mut usize) -> u16 {
-    let bytes = &function.chunk[*ip..*ip + 2];
-    *ip += 2;
-    u16::from_le_bytes([bytes[0], bytes[1]])
-}
-
-fn read_i16(function: &Function, ip: &mut usize) -> i16 {
-    let bytes = &function.chunk[*ip..*ip + 2];
-    *ip += 2;
-    i16::from_le_bytes([bytes[0], bytes[1]])
-}
-
-fn read_u8(function: &Function, ip: &mut usize) -> u8 {
-    let byte = function.chunk[*ip];
-    *ip += 1;
-    byte
 }
 
 #[cfg(test)]

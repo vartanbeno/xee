@@ -258,3 +258,27 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::JumpIfFalse(_) => 3,
     }
 }
+
+pub(crate) fn read_instruction(bytes: &[u8], ip: &mut usize) -> EncodedInstruction {
+    let byte = bytes[*ip];
+    *ip += 1;
+    EncodedInstruction::from_u8(byte).unwrap()
+}
+
+pub(crate) fn read_u16(bytes: &[u8], ip: &mut usize) -> u16 {
+    let bytes = &bytes[*ip..*ip + 2];
+    *ip += 2;
+    u16::from_le_bytes([bytes[0], bytes[1]])
+}
+
+pub(crate) fn read_i16(bytes: &[u8], ip: &mut usize) -> i16 {
+    let bytes = &bytes[*ip..*ip + 2];
+    *ip += 2;
+    i16::from_le_bytes([bytes[0], bytes[1]])
+}
+
+pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
+    let byte = bytes[*ip];
+    *ip += 1;
+    byte
+}
