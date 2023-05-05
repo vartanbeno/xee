@@ -3,15 +3,15 @@ source: xee-xpath/src/parse_ast.rs
 expression: "parse_relative_path_expr(\"1\")"
 ---
 [
-    (
-        PrimaryExpr(
-            (
-                Literal(
+    Spanned {
+        value: PrimaryExpr(
+            Spanned {
+                value: Literal(
                     Integer(
                         1,
                     ),
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         0,
                     ),
@@ -19,9 +19,9 @@ expression: "parse_relative_path_expr(\"1\")"
                         1,
                     ),
                 },
-            ),
+            },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -29,5 +29,5 @@ expression: "parse_relative_path_expr(\"1\")"
                 1,
             ),
         },
-    ),
+    },
 ]

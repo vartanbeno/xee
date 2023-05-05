@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"$foo(1, ?)\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            InlineFunction(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: InlineFunction(
                                 InlineFunction {
                                     params: [
                                         Param {
@@ -21,22 +21,22 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: (
-                                        [
-                                            (
-                                                Path(
+                                    body: Spanned {
+                                        value: [
+                                            Spanned {
+                                                value: Path(
                                                     PathExpr {
                                                         steps: [
-                                                            (
-                                                                PostfixExpr {
-                                                                    primary: (
-                                                                        VarRef(
+                                                            Spanned {
+                                                                value: PostfixExpr {
+                                                                    primary: Spanned {
+                                                                        value: VarRef(
                                                                             Name {
                                                                                 name: "foo",
                                                                                 namespace: None,
                                                                             },
                                                                         ),
-                                                                        SourceSpan {
+                                                                        span: SourceSpan {
                                                                             offset: SourceOffset(
                                                                                 0,
                                                                             ),
@@ -44,23 +44,23 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                 4,
                                                                             ),
                                                                         },
-                                                                    ),
+                                                                    },
                                                                     postfixes: [
                                                                         ArgumentList(
                                                                             [
-                                                                                (
-                                                                                    Path(
+                                                                                Spanned {
+                                                                                    value: Path(
                                                                                         PathExpr {
                                                                                             steps: [
-                                                                                                (
-                                                                                                    PrimaryExpr(
-                                                                                                        (
-                                                                                                            Literal(
+                                                                                                Spanned {
+                                                                                                    value: PrimaryExpr(
+                                                                                                        Spanned {
+                                                                                                            value: Literal(
                                                                                                                 Integer(
                                                                                                                     1,
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            SourceSpan {
+                                                                                                            span: SourceSpan {
                                                                                                                 offset: SourceOffset(
                                                                                                                     5,
                                                                                                                 ),
@@ -68,9 +68,9 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                                                     1,
                                                                                                                 ),
                                                                                                             },
-                                                                                                        ),
+                                                                                                        },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             5,
                                                                                                         ),
@@ -78,11 +78,11 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ],
                                                                                         },
                                                                                     ),
-                                                                                    SourceSpan {
+                                                                                    span: SourceSpan {
                                                                                         offset: SourceOffset(
                                                                                             5,
                                                                                         ),
@@ -90,21 +90,21 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                             1,
                                                                                         ),
                                                                                     },
-                                                                                ),
-                                                                                (
-                                                                                    Path(
+                                                                                },
+                                                                                Spanned {
+                                                                                    value: Path(
                                                                                         PathExpr {
                                                                                             steps: [
-                                                                                                (
-                                                                                                    PrimaryExpr(
-                                                                                                        (
-                                                                                                            VarRef(
+                                                                                                Spanned {
+                                                                                                    value: PrimaryExpr(
+                                                                                                        Spanned {
+                                                                                                            value: VarRef(
                                                                                                                 Name {
                                                                                                                     name: "placeholder0",
                                                                                                                     namespace: None,
                                                                                                                 },
                                                                                                             ),
-                                                                                                            SourceSpan {
+                                                                                                            span: SourceSpan {
                                                                                                                 offset: SourceOffset(
                                                                                                                     0,
                                                                                                                 ),
@@ -112,9 +112,9 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                                                     0,
                                                                                                                 ),
                                                                                                             },
-                                                                                                        ),
+                                                                                                        },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             0,
                                                                                                         ),
@@ -122,11 +122,11 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                                             0,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ],
                                                                                         },
                                                                                     ),
-                                                                                    SourceSpan {
+                                                                                    span: SourceSpan {
                                                                                         offset: SourceOffset(
                                                                                             0,
                                                                                         ),
@@ -134,12 +134,12 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                                             0,
                                                                                         ),
                                                                                     },
-                                                                                ),
+                                                                                },
                                                                             ],
                                                                         ),
                                                                     ],
                                                                 },
-                                                                SourceSpan {
+                                                                span: SourceSpan {
                                                                     offset: SourceOffset(
                                                                         0,
                                                                     ),
@@ -147,11 +147,11 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                                         0,
                                                                     ),
                                                                 },
-                                                            ),
+                                                            },
                                                         ],
                                                     },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         0,
                                                     ),
@@ -159,9 +159,9 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                         0,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 0,
                                             ),
@@ -169,10 +169,10 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                                 0,
                                             ),
                                         },
-                                    ),
+                                    },
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -180,9 +180,9 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                                     0,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -190,11 +190,11 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
                             10,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -202,4 +202,4 @@ expression: "parse_expr_single(\"$foo(1, ?)\")"
             10,
         ),
     },
-)
+}

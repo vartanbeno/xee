@@ -2,47 +2,47 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0\")"
 ---
-(
-    Quantified(
+Spanned {
+    value: Quantified(
         QuantifiedExpr {
             quantifier: Every,
             var_name: Name {
                 name: "x",
                 namespace: None,
             },
-            var_expr: (
-                Path(
+            var_expr: Spanned {
+                value: Path(
                     PathExpr {
                         steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Expr(
-                                            (
-                                                [
-                                                    (
-                                                        Path(
+                            Spanned {
+                                value: PrimaryExpr(
+                                    Spanned {
+                                        value: Expr(
+                                            Spanned {
+                                                value: [
+                                                    Spanned {
+                                                        value: Path(
                                                             PathExpr {
                                                                 steps: [
-                                                                    (
-                                                                        PrimaryExpr(
-                                                                            (
-                                                                                Expr(
-                                                                                    (
-                                                                                        [
-                                                                                            (
-                                                                                                Path(
+                                                                    Spanned {
+                                                                        value: PrimaryExpr(
+                                                                            Spanned {
+                                                                                value: Expr(
+                                                                                    Spanned {
+                                                                                        value: [
+                                                                                            Spanned {
+                                                                                                value: Path(
                                                                                                     PathExpr {
                                                                                                         steps: [
-                                                                                                            (
-                                                                                                                PrimaryExpr(
-                                                                                                                    (
-                                                                                                                        Literal(
+                                                                                                            Spanned {
+                                                                                                                value: PrimaryExpr(
+                                                                                                                    Spanned {
+                                                                                                                        value: Literal(
                                                                                                                             Integer(
                                                                                                                                 1,
                                                                                                                             ),
                                                                                                                         ),
-                                                                                                                        SourceSpan {
+                                                                                                                        span: SourceSpan {
                                                                                                                             offset: SourceOffset(
                                                                                                                                 13,
                                                                                                                             ),
@@ -50,9 +50,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                 1,
                                                                                                                             ),
                                                                                                                         },
-                                                                                                                    ),
+                                                                                                                    },
                                                                                                                 ),
-                                                                                                                SourceSpan {
+                                                                                                                span: SourceSpan {
                                                                                                                     offset: SourceOffset(
                                                                                                                         13,
                                                                                                                     ),
@@ -60,11 +60,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                         1,
                                                                                                                     ),
                                                                                                                 },
-                                                                                                            ),
+                                                                                                            },
                                                                                                         ],
                                                                                                     },
                                                                                                 ),
-                                                                                                SourceSpan {
+                                                                                                span: SourceSpan {
                                                                                                     offset: SourceOffset(
                                                                                                         13,
                                                                                                     ),
@@ -72,20 +72,20 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                         1,
                                                                                                     ),
                                                                                                 },
-                                                                                            ),
-                                                                                            (
-                                                                                                Path(
+                                                                                            },
+                                                                                            Spanned {
+                                                                                                value: Path(
                                                                                                     PathExpr {
                                                                                                         steps: [
-                                                                                                            (
-                                                                                                                PrimaryExpr(
-                                                                                                                    (
-                                                                                                                        Literal(
+                                                                                                            Spanned {
+                                                                                                                value: PrimaryExpr(
+                                                                                                                    Spanned {
+                                                                                                                        value: Literal(
                                                                                                                             Integer(
                                                                                                                                 2,
                                                                                                                             ),
                                                                                                                         ),
-                                                                                                                        SourceSpan {
+                                                                                                                        span: SourceSpan {
                                                                                                                             offset: SourceOffset(
                                                                                                                                 16,
                                                                                                                             ),
@@ -93,9 +93,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                 1,
                                                                                                                             ),
                                                                                                                         },
-                                                                                                                    ),
+                                                                                                                    },
                                                                                                                 ),
-                                                                                                                SourceSpan {
+                                                                                                                span: SourceSpan {
                                                                                                                     offset: SourceOffset(
                                                                                                                         16,
                                                                                                                     ),
@@ -103,11 +103,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                         1,
                                                                                                                     ),
                                                                                                                 },
-                                                                                                            ),
+                                                                                                            },
                                                                                                         ],
                                                                                                     },
                                                                                                 ),
-                                                                                                SourceSpan {
+                                                                                                span: SourceSpan {
                                                                                                     offset: SourceOffset(
                                                                                                         16,
                                                                                                     ),
@@ -115,9 +115,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                         1,
                                                                                                     ),
                                                                                                 },
-                                                                                            ),
+                                                                                            },
                                                                                         ],
-                                                                                        SourceSpan {
+                                                                                        span: SourceSpan {
                                                                                             offset: SourceOffset(
                                                                                                 13,
                                                                                             ),
@@ -125,9 +125,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                 4,
                                                                                             ),
                                                                                         },
-                                                                                    ),
+                                                                                    },
                                                                                 ),
-                                                                                SourceSpan {
+                                                                                span: SourceSpan {
                                                                                     offset: SourceOffset(
                                                                                         13,
                                                                                     ),
@@ -135,9 +135,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                         4,
                                                                                     ),
                                                                                 },
-                                                                            ),
+                                                                            },
                                                                         ),
-                                                                        SourceSpan {
+                                                                        span: SourceSpan {
                                                                             offset: SourceOffset(
                                                                                 13,
                                                                             ),
@@ -145,11 +145,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                 4,
                                                                             ),
                                                                         },
-                                                                    ),
+                                                                    },
                                                                 ],
                                                             },
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 13,
                                                             ),
@@ -157,9 +157,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                 4,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                 ],
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         12,
                                                     ),
@@ -167,9 +167,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                         6,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 12,
                                             ),
@@ -177,9 +177,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                 6,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         12,
                                     ),
@@ -187,11 +187,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                         6,
                                     ),
                                 },
-                            ),
+                            },
                         ],
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         12,
                     ),
@@ -199,48 +199,48 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                         6,
                     ),
                 },
-            ),
-            satisfies_expr: (
-                Quantified(
+            },
+            satisfies_expr: Spanned {
+                value: Quantified(
                     QuantifiedExpr {
                         quantifier: Every,
                         var_name: Name {
                             name: "y",
                             namespace: None,
                         },
-                        var_expr: (
-                            Path(
+                        var_expr: Spanned {
+                            value: Path(
                                 PathExpr {
                                     steps: [
-                                        (
-                                            PrimaryExpr(
-                                                (
-                                                    Expr(
-                                                        (
-                                                            [
-                                                                (
-                                                                    Path(
+                                        Spanned {
+                                            value: PrimaryExpr(
+                                                Spanned {
+                                                    value: Expr(
+                                                        Spanned {
+                                                            value: [
+                                                                Spanned {
+                                                                    value: Path(
                                                                         PathExpr {
                                                                             steps: [
-                                                                                (
-                                                                                    PrimaryExpr(
-                                                                                        (
-                                                                                            Expr(
-                                                                                                (
-                                                                                                    [
-                                                                                                        (
-                                                                                                            Path(
+                                                                                Spanned {
+                                                                                    value: PrimaryExpr(
+                                                                                        Spanned {
+                                                                                            value: Expr(
+                                                                                                Spanned {
+                                                                                                    value: [
+                                                                                                        Spanned {
+                                                                                                            value: Path(
                                                                                                                 PathExpr {
                                                                                                                     steps: [
-                                                                                                                        (
-                                                                                                                            PrimaryExpr(
-                                                                                                                                (
-                                                                                                                                    Literal(
+                                                                                                                        Spanned {
+                                                                                                                            value: PrimaryExpr(
+                                                                                                                                Spanned {
+                                                                                                                                    value: Literal(
                                                                                                                                         Integer(
                                                                                                                                             3,
                                                                                                                                         ),
                                                                                                                                     ),
-                                                                                                                                    SourceSpan {
+                                                                                                                                    span: SourceSpan {
                                                                                                                                         offset: SourceOffset(
                                                                                                                                             27,
                                                                                                                                         ),
@@ -248,9 +248,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                             1,
                                                                                                                                         ),
                                                                                                                                     },
-                                                                                                                                ),
+                                                                                                                                },
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     27,
                                                                                                                                 ),
@@ -258,11 +258,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ],
                                                                                                                 },
                                                                                                             ),
-                                                                                                            SourceSpan {
+                                                                                                            span: SourceSpan {
                                                                                                                 offset: SourceOffset(
                                                                                                                     27,
                                                                                                                 ),
@@ -270,20 +270,20 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                     1,
                                                                                                                 ),
                                                                                                             },
-                                                                                                        ),
-                                                                                                        (
-                                                                                                            Path(
+                                                                                                        },
+                                                                                                        Spanned {
+                                                                                                            value: Path(
                                                                                                                 PathExpr {
                                                                                                                     steps: [
-                                                                                                                        (
-                                                                                                                            PrimaryExpr(
-                                                                                                                                (
-                                                                                                                                    Literal(
+                                                                                                                        Spanned {
+                                                                                                                            value: PrimaryExpr(
+                                                                                                                                Spanned {
+                                                                                                                                    value: Literal(
                                                                                                                                         Integer(
                                                                                                                                             4,
                                                                                                                                         ),
                                                                                                                                     ),
-                                                                                                                                    SourceSpan {
+                                                                                                                                    span: SourceSpan {
                                                                                                                                         offset: SourceOffset(
                                                                                                                                             30,
                                                                                                                                         ),
@@ -291,9 +291,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                             1,
                                                                                                                                         ),
                                                                                                                                     },
-                                                                                                                                ),
+                                                                                                                                },
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     30,
                                                                                                                                 ),
@@ -301,11 +301,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ],
                                                                                                                 },
                                                                                                             ),
-                                                                                                            SourceSpan {
+                                                                                                            span: SourceSpan {
                                                                                                                 offset: SourceOffset(
                                                                                                                     30,
                                                                                                                 ),
@@ -313,9 +313,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                                     1,
                                                                                                                 ),
                                                                                                             },
-                                                                                                        ),
+                                                                                                        },
                                                                                                     ],
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             27,
                                                                                                         ),
@@ -323,9 +323,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                             4,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ),
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     27,
                                                                                                 ),
@@ -333,9 +333,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                     4,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ),
-                                                                                    SourceSpan {
+                                                                                    span: SourceSpan {
                                                                                         offset: SourceOffset(
                                                                                             27,
                                                                                         ),
@@ -343,11 +343,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                             4,
                                                                                         ),
                                                                                     },
-                                                                                ),
+                                                                                },
                                                                             ],
                                                                         },
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             27,
                                                                         ),
@@ -355,9 +355,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                             4,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ],
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     26,
                                                                 ),
@@ -365,9 +365,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                     6,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ),
-                                                    SourceSpan {
+                                                    span: SourceSpan {
                                                         offset: SourceOffset(
                                                             26,
                                                         ),
@@ -375,9 +375,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                             6,
                                                         ),
                                                     },
-                                                ),
+                                                },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     26,
                                                 ),
@@ -385,11 +385,11 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                     6,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ],
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     26,
                                 ),
@@ -397,35 +397,35 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                     7,
                                 ),
                             },
-                        ),
-                        satisfies_expr: (
-                            Binary(
+                        },
+                        satisfies_expr: Spanned {
+                            value: Binary(
                                 BinaryExpr {
                                     operator: And,
                                     left: PathExpr {
                                         steps: [
-                                            (
-                                                PrimaryExpr(
-                                                    (
-                                                        Expr(
-                                                            (
-                                                                [
-                                                                    (
-                                                                        Binary(
+                                            Spanned {
+                                                value: PrimaryExpr(
+                                                    Spanned {
+                                                        value: Expr(
+                                                            Spanned {
+                                                                value: [
+                                                                    Spanned {
+                                                                        value: Binary(
                                                                             BinaryExpr {
                                                                                 operator: GenGt,
                                                                                 left: PathExpr {
                                                                                     steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
-                                                                                                (
-                                                                                                    VarRef(
+                                                                                        Spanned {
+                                                                                            value: PrimaryExpr(
+                                                                                                Spanned {
+                                                                                                    value: VarRef(
                                                                                                         Name {
                                                                                                             name: "x",
                                                                                                             namespace: None,
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             43,
                                                                                                         ),
@@ -433,9 +433,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                             2,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ),
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     43,
                                                                                                 ),
@@ -443,20 +443,20 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                     2,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ],
                                                                                 },
                                                                                 right: PathExpr {
                                                                                     steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
-                                                                                                (
-                                                                                                    Literal(
+                                                                                        Spanned {
+                                                                                            value: PrimaryExpr(
+                                                                                                Spanned {
+                                                                                                    value: Literal(
                                                                                                         Integer(
                                                                                                             0,
                                                                                                         ),
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             48,
                                                                                                         ),
@@ -464,9 +464,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ),
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     48,
                                                                                                 ),
@@ -474,12 +474,12 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                     1,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ],
                                                                                 },
                                                                             },
                                                                         ),
-                                                                        SourceSpan {
+                                                                        span: SourceSpan {
                                                                             offset: SourceOffset(
                                                                                 43,
                                                                             ),
@@ -487,9 +487,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                 7,
                                                                             ),
                                                                         },
-                                                                    ),
+                                                                    },
                                                                 ],
-                                                                SourceSpan {
+                                                                span: SourceSpan {
                                                                     offset: SourceOffset(
                                                                         43,
                                                                     ),
@@ -497,9 +497,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                         7,
                                                                     ),
                                                                 },
-                                                            ),
+                                                            },
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 43,
                                                             ),
@@ -507,9 +507,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                 7,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         43,
                                                     ),
@@ -517,33 +517,33 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                         7,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
                                     },
                                     right: PathExpr {
                                         steps: [
-                                            (
-                                                PrimaryExpr(
-                                                    (
-                                                        Expr(
-                                                            (
-                                                                [
-                                                                    (
-                                                                        Binary(
+                                            Spanned {
+                                                value: PrimaryExpr(
+                                                    Spanned {
+                                                        value: Expr(
+                                                            Spanned {
+                                                                value: [
+                                                                    Spanned {
+                                                                        value: Binary(
                                                                             BinaryExpr {
                                                                                 operator: GenGt,
                                                                                 left: PathExpr {
                                                                                     steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
-                                                                                                (
-                                                                                                    VarRef(
+                                                                                        Spanned {
+                                                                                            value: PrimaryExpr(
+                                                                                                Spanned {
+                                                                                                    value: VarRef(
                                                                                                         Name {
                                                                                                             name: "y",
                                                                                                             namespace: None,
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             54,
                                                                                                         ),
@@ -551,9 +551,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                             2,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ),
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     54,
                                                                                                 ),
@@ -561,20 +561,20 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                     2,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ],
                                                                                 },
                                                                                 right: PathExpr {
                                                                                     steps: [
-                                                                                        (
-                                                                                            PrimaryExpr(
-                                                                                                (
-                                                                                                    Literal(
+                                                                                        Spanned {
+                                                                                            value: PrimaryExpr(
+                                                                                                Spanned {
+                                                                                                    value: Literal(
                                                                                                         Integer(
                                                                                                             0,
                                                                                                         ),
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             59,
                                                                                                         ),
@@ -582,9 +582,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ),
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     59,
                                                                                                 ),
@@ -592,12 +592,12 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                                     1,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ],
                                                                                 },
                                                                             },
                                                                         ),
-                                                                        SourceSpan {
+                                                                        span: SourceSpan {
                                                                             offset: SourceOffset(
                                                                                 54,
                                                                             ),
@@ -605,9 +605,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                                 6,
                                                                             ),
                                                                         },
-                                                                    ),
+                                                                    },
                                                                 ],
-                                                                SourceSpan {
+                                                                span: SourceSpan {
                                                                     offset: SourceOffset(
                                                                         54,
                                                                     ),
@@ -615,9 +615,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                         6,
                                                                     ),
                                                                 },
-                                                            ),
+                                                            },
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 54,
                                                             ),
@@ -625,9 +625,9 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                                 6,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         54,
                                                     ),
@@ -635,12 +635,12 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                                         6,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
                                     },
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     43,
                                 ),
@@ -648,10 +648,10 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                                     17,
                                 ),
                             },
-                        ),
+                        },
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         0,
                     ),
@@ -659,10 +659,10 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
                         60,
                     ),
                 },
-            ),
+            },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -670,4 +670,4 @@ expression: "parse_expr_single(\"every $x in (1, 2), $y in (3, 4) satisfies $x >
             60,
         ),
     },
-)
+}

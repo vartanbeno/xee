@@ -4,41 +4,41 @@ expression: "parse_xpath_no_default_ns(\"(1, 2), (3, 4)\")"
 ---
 Ok(
     XPath {
-        exprs: (
-            [
-                (
-                    Path(
+        exprs: Spanned {
+            value: [
+                Spanned {
+                    value: Path(
                         PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Expr(
-                                                (
-                                                    [
-                                                        (
-                                                            Path(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Expr(
+                                                Spanned {
+                                                    value: [
+                                                        Spanned {
+                                                            value: Path(
                                                                 PathExpr {
                                                                     steps: [
-                                                                        (
-                                                                            PrimaryExpr(
-                                                                                (
-                                                                                    Expr(
-                                                                                        (
-                                                                                            [
-                                                                                                (
-                                                                                                    Path(
+                                                                        Spanned {
+                                                                            value: PrimaryExpr(
+                                                                                Spanned {
+                                                                                    value: Expr(
+                                                                                        Spanned {
+                                                                                            value: [
+                                                                                                Spanned {
+                                                                                                    value: Path(
                                                                                                         PathExpr {
                                                                                                             steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
-                                                                                                                        (
-                                                                                                                            Literal(
+                                                                                                                Spanned {
+                                                                                                                    value: PrimaryExpr(
+                                                                                                                        Spanned {
+                                                                                                                            value: Literal(
                                                                                                                                 Integer(
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     1,
                                                                                                                                 ),
@@ -46,9 +46,9 @@ Ok(
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ),
-                                                                                                                    SourceSpan {
+                                                                                                                    span: SourceSpan {
                                                                                                                         offset: SourceOffset(
                                                                                                                             1,
                                                                                                                         ),
@@ -56,11 +56,11 @@ Ok(
                                                                                                                             1,
                                                                                                                         ),
                                                                                                                     },
-                                                                                                                ),
+                                                                                                                },
                                                                                                             ],
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             1,
                                                                                                         ),
@@ -68,20 +68,20 @@ Ok(
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
-                                                                                                (
-                                                                                                    Path(
+                                                                                                },
+                                                                                                Spanned {
+                                                                                                    value: Path(
                                                                                                         PathExpr {
                                                                                                             steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
-                                                                                                                        (
-                                                                                                                            Literal(
+                                                                                                                Spanned {
+                                                                                                                    value: PrimaryExpr(
+                                                                                                                        Spanned {
+                                                                                                                            value: Literal(
                                                                                                                                 Integer(
                                                                                                                                     2,
                                                                                                                                 ),
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     4,
                                                                                                                                 ),
@@ -89,9 +89,9 @@ Ok(
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ),
-                                                                                                                    SourceSpan {
+                                                                                                                    span: SourceSpan {
                                                                                                                         offset: SourceOffset(
                                                                                                                             4,
                                                                                                                         ),
@@ -99,11 +99,11 @@ Ok(
                                                                                                                             1,
                                                                                                                         ),
                                                                                                                     },
-                                                                                                                ),
+                                                                                                                },
                                                                                                             ],
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             4,
                                                                                                         ),
@@ -111,9 +111,9 @@ Ok(
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ],
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     1,
                                                                                                 ),
@@ -121,9 +121,9 @@ Ok(
                                                                                                     4,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ),
-                                                                                    SourceSpan {
+                                                                                    span: SourceSpan {
                                                                                         offset: SourceOffset(
                                                                                             1,
                                                                                         ),
@@ -131,9 +131,9 @@ Ok(
                                                                                             4,
                                                                                         ),
                                                                                     },
-                                                                                ),
+                                                                                },
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     1,
                                                                                 ),
@@ -141,11 +141,11 @@ Ok(
                                                                                     4,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ],
                                                                 },
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     1,
                                                                 ),
@@ -153,9 +153,9 @@ Ok(
                                                                     4,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ],
-                                                    SourceSpan {
+                                                    span: SourceSpan {
                                                         offset: SourceOffset(
                                                             0,
                                                         ),
@@ -163,9 +163,9 @@ Ok(
                                                             6,
                                                         ),
                                                     },
-                                                ),
+                                                },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     0,
                                                 ),
@@ -173,9 +173,9 @@ Ok(
                                                     6,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             0,
                                         ),
@@ -183,11 +183,11 @@ Ok(
                                             6,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -195,40 +195,40 @@ Ok(
                             6,
                         ),
                     },
-                ),
-                (
-                    Path(
+                },
+                Spanned {
+                    value: Path(
                         PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Expr(
-                                                (
-                                                    [
-                                                        (
-                                                            Path(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Expr(
+                                                Spanned {
+                                                    value: [
+                                                        Spanned {
+                                                            value: Path(
                                                                 PathExpr {
                                                                     steps: [
-                                                                        (
-                                                                            PrimaryExpr(
-                                                                                (
-                                                                                    Expr(
-                                                                                        (
-                                                                                            [
-                                                                                                (
-                                                                                                    Path(
+                                                                        Spanned {
+                                                                            value: PrimaryExpr(
+                                                                                Spanned {
+                                                                                    value: Expr(
+                                                                                        Spanned {
+                                                                                            value: [
+                                                                                                Spanned {
+                                                                                                    value: Path(
                                                                                                         PathExpr {
                                                                                                             steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
-                                                                                                                        (
-                                                                                                                            Literal(
+                                                                                                                Spanned {
+                                                                                                                    value: PrimaryExpr(
+                                                                                                                        Spanned {
+                                                                                                                            value: Literal(
                                                                                                                                 Integer(
                                                                                                                                     3,
                                                                                                                                 ),
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     9,
                                                                                                                                 ),
@@ -236,9 +236,9 @@ Ok(
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ),
-                                                                                                                    SourceSpan {
+                                                                                                                    span: SourceSpan {
                                                                                                                         offset: SourceOffset(
                                                                                                                             9,
                                                                                                                         ),
@@ -246,11 +246,11 @@ Ok(
                                                                                                                             1,
                                                                                                                         ),
                                                                                                                     },
-                                                                                                                ),
+                                                                                                                },
                                                                                                             ],
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             9,
                                                                                                         ),
@@ -258,20 +258,20 @@ Ok(
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
-                                                                                                (
-                                                                                                    Path(
+                                                                                                },
+                                                                                                Spanned {
+                                                                                                    value: Path(
                                                                                                         PathExpr {
                                                                                                             steps: [
-                                                                                                                (
-                                                                                                                    PrimaryExpr(
-                                                                                                                        (
-                                                                                                                            Literal(
+                                                                                                                Spanned {
+                                                                                                                    value: PrimaryExpr(
+                                                                                                                        Spanned {
+                                                                                                                            value: Literal(
                                                                                                                                 Integer(
                                                                                                                                     4,
                                                                                                                                 ),
                                                                                                                             ),
-                                                                                                                            SourceSpan {
+                                                                                                                            span: SourceSpan {
                                                                                                                                 offset: SourceOffset(
                                                                                                                                     12,
                                                                                                                                 ),
@@ -279,9 +279,9 @@ Ok(
                                                                                                                                     1,
                                                                                                                                 ),
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        },
                                                                                                                     ),
-                                                                                                                    SourceSpan {
+                                                                                                                    span: SourceSpan {
                                                                                                                         offset: SourceOffset(
                                                                                                                             12,
                                                                                                                         ),
@@ -289,11 +289,11 @@ Ok(
                                                                                                                             1,
                                                                                                                         ),
                                                                                                                     },
-                                                                                                                ),
+                                                                                                                },
                                                                                                             ],
                                                                                                         },
                                                                                                     ),
-                                                                                                    SourceSpan {
+                                                                                                    span: SourceSpan {
                                                                                                         offset: SourceOffset(
                                                                                                             12,
                                                                                                         ),
@@ -301,9 +301,9 @@ Ok(
                                                                                                             1,
                                                                                                         ),
                                                                                                     },
-                                                                                                ),
+                                                                                                },
                                                                                             ],
-                                                                                            SourceSpan {
+                                                                                            span: SourceSpan {
                                                                                                 offset: SourceOffset(
                                                                                                     9,
                                                                                                 ),
@@ -311,9 +311,9 @@ Ok(
                                                                                                     4,
                                                                                                 ),
                                                                                             },
-                                                                                        ),
+                                                                                        },
                                                                                     ),
-                                                                                    SourceSpan {
+                                                                                    span: SourceSpan {
                                                                                         offset: SourceOffset(
                                                                                             9,
                                                                                         ),
@@ -321,9 +321,9 @@ Ok(
                                                                                             4,
                                                                                         ),
                                                                                     },
-                                                                                ),
+                                                                                },
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     9,
                                                                                 ),
@@ -331,11 +331,11 @@ Ok(
                                                                                     4,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ],
                                                                 },
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     9,
                                                                 ),
@@ -343,9 +343,9 @@ Ok(
                                                                     4,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ],
-                                                    SourceSpan {
+                                                    span: SourceSpan {
                                                         offset: SourceOffset(
                                                             8,
                                                         ),
@@ -353,9 +353,9 @@ Ok(
                                                             6,
                                                         ),
                                                     },
-                                                ),
+                                                },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     8,
                                                 ),
@@ -363,9 +363,9 @@ Ok(
                                                     6,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             8,
                                         ),
@@ -373,11 +373,11 @@ Ok(
                                             6,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             8,
                         ),
@@ -385,9 +385,9 @@ Ok(
                             6,
                         ),
                     },
-                ),
+                },
             ],
-            SourceSpan {
+            span: SourceSpan {
                 offset: SourceOffset(
                     0,
                 ),
@@ -395,6 +395,6 @@ Ok(
                     14,
                 ),
             },
-        ),
+        },
     },
 )

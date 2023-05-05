@@ -2,19 +2,19 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"1\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            Literal(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: Literal(
                                 Integer(
                                     1,
                                 ),
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -22,9 +22,9 @@ expression: "parse_expr_single(\"1\")"
                                     1,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -32,11 +32,11 @@ expression: "parse_expr_single(\"1\")"
                             1,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -44,4 +44,4 @@ expression: "parse_expr_single(\"1\")"
             1,
         ),
     },
-)
+}

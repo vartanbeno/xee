@@ -2,12 +2,12 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"@foo\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    AxisStep(
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Attribute,
                             node_test: NameTest(
@@ -21,7 +21,7 @@ expression: "parse_expr_single(\"@foo\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -29,11 +29,11 @@ expression: "parse_expr_single(\"@foo\")"
                             4,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -41,4 +41,4 @@ expression: "parse_expr_single(\"@foo\")"
             4,
         ),
     },
-)
+}

@@ -3,20 +3,20 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function(1 + 2, 3 + 4)\")"
 ---
 Ok(
-    (
-        Let(
+    Spanned {
+        value: Let(
             Let {
                 name: Name(
                     "v0",
                 ),
-                var_expr: (
-                    StaticFunctionReference(
+                var_expr: Spanned {
+                    value: StaticFunctionReference(
                         StaticFunctionId(
                             0,
                         ),
                         None,
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -24,23 +24,23 @@ Ok(
                             0,
                         ),
                     },
-                ),
-                return_expr: (
-                    Let(
+                },
+                return_expr: Spanned {
+                    value: Let(
                         Let {
                             name: Name(
                                 "v3",
                             ),
-                            var_expr: (
-                                Binary(
+                            var_expr: Spanned {
+                                value: Binary(
                                     Binary {
-                                        left: (
-                                            Const(
+                                        left: Spanned {
+                                            value: Const(
                                                 Integer(
                                                     1,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     12,
                                                 ),
@@ -48,15 +48,15 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                         op: Add,
-                                        right: (
-                                            Const(
+                                        right: Spanned {
+                                            value: Const(
                                                 Integer(
                                                     2,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     16,
                                                 ),
@@ -64,10 +64,10 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         12,
                                     ),
@@ -75,23 +75,23 @@ Ok(
                                         5,
                                     ),
                                 },
-                            ),
-                            return_expr: (
-                                Let(
+                            },
+                            return_expr: Spanned {
+                                value: Let(
                                     Let {
                                         name: Name(
                                             "v6",
                                         ),
-                                        var_expr: (
-                                            Binary(
+                                        var_expr: Spanned {
+                                            value: Binary(
                                                 Binary {
-                                                    left: (
-                                                        Const(
+                                                    left: Spanned {
+                                                        value: Const(
                                                             Integer(
                                                                 3,
                                                             ),
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 19,
                                                             ),
@@ -99,15 +99,15 @@ Ok(
                                                                 1,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                     op: Add,
-                                                    right: (
-                                                        Const(
+                                                    right: Spanned {
+                                                        value: Const(
                                                             Integer(
                                                                 4,
                                                             ),
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 23,
                                                             ),
@@ -115,10 +115,10 @@ Ok(
                                                                 1,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                 },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     19,
                                                 ),
@@ -126,17 +126,17 @@ Ok(
                                                     5,
                                                 ),
                                             },
-                                        ),
-                                        return_expr: (
-                                            FunctionCall(
+                                        },
+                                        return_expr: Spanned {
+                                            value: FunctionCall(
                                                 FunctionCall {
-                                                    atom: (
-                                                        Variable(
+                                                    atom: Spanned {
+                                                        value: Variable(
                                                             Name(
                                                                 "v0",
                                                             ),
                                                         ),
-                                                        SourceSpan {
+                                                        span: SourceSpan {
                                                             offset: SourceOffset(
                                                                 0,
                                                             ),
@@ -144,15 +144,15 @@ Ok(
                                                                 0,
                                                             ),
                                                         },
-                                                    ),
+                                                    },
                                                     args: [
-                                                        (
-                                                            Variable(
+                                                        Spanned {
+                                                            value: Variable(
                                                                 Name(
                                                                     "v3",
                                                                 ),
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     12,
                                                                 ),
@@ -160,14 +160,14 @@ Ok(
                                                                     5,
                                                                 ),
                                                             },
-                                                        ),
-                                                        (
-                                                            Variable(
+                                                        },
+                                                        Spanned {
+                                                            value: Variable(
                                                                 Name(
                                                                     "v6",
                                                                 ),
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     19,
                                                                 ),
@@ -175,11 +175,11 @@ Ok(
                                                                     5,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ],
                                                 },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     19,
                                                 ),
@@ -187,10 +187,10 @@ Ok(
                                                     5,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         12,
                                     ),
@@ -198,10 +198,10 @@ Ok(
                                         5,
                                     ),
                                 },
-                            ),
+                            },
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -209,10 +209,10 @@ Ok(
                             0,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -220,5 +220,5 @@ Ok(
                 25,
             ),
         },
-    ),
+    },
 )

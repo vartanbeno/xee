@@ -71,7 +71,7 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
     match expr {
         ir::Expr::FunctionDefinition(ir::FunctionDefinition { params, body, .. }) => {
             assert_eq!(params.len(), 3);
-            (params[0].0.clone(), body.0)
+            (params[0].0.clone(), body.value)
         }
         _ => panic!("expected inline function"),
     }

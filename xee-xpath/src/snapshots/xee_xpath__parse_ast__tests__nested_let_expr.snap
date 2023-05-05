@@ -2,26 +2,26 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
 ---
-(
-    Let(
+Spanned {
+    value: Let(
         LetExpr {
             var_name: Name {
                 name: "x",
                 namespace: None,
             },
-            var_expr: (
-                Path(
+            var_expr: Spanned {
+                value: Path(
                     PathExpr {
                         steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Literal(
+                            Spanned {
+                                value: PrimaryExpr(
+                                    Spanned {
+                                        value: Literal(
                                             Integer(
                                                 1,
                                             ),
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 10,
                                             ),
@@ -29,9 +29,9 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                                 1,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         10,
                                     ),
@@ -39,11 +39,11 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ],
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         10,
                     ),
@@ -51,27 +51,27 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                         1,
                     ),
                 },
-            ),
-            return_expr: (
-                Let(
+            },
+            return_expr: Spanned {
+                value: Let(
                     LetExpr {
                         var_name: Name {
                             name: "y",
                             namespace: None,
                         },
-                        var_expr: (
-                            Path(
+                        var_expr: Spanned {
+                            value: Path(
                                 PathExpr {
                                     steps: [
-                                        (
-                                            PrimaryExpr(
-                                                (
-                                                    Literal(
+                                        Spanned {
+                                            value: PrimaryExpr(
+                                                Spanned {
+                                                    value: Literal(
                                                         Integer(
                                                             2,
                                                         ),
                                                     ),
-                                                    SourceSpan {
+                                                    span: SourceSpan {
                                                         offset: SourceOffset(
                                                             19,
                                                         ),
@@ -79,9 +79,9 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                                             1,
                                                         ),
                                                     },
-                                                ),
+                                                },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     19,
                                                 ),
@@ -89,11 +89,11 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ],
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     19,
                                 ),
@@ -101,20 +101,20 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                     2,
                                 ),
                             },
-                        ),
-                        return_expr: (
-                            Path(
+                        },
+                        return_expr: Spanned {
+                            value: Path(
                                 PathExpr {
                                     steps: [
-                                        (
-                                            PrimaryExpr(
-                                                (
-                                                    Literal(
+                                        Spanned {
+                                            value: PrimaryExpr(
+                                                Spanned {
+                                                    value: Literal(
                                                         Integer(
                                                             5,
                                                         ),
                                                     ),
-                                                    SourceSpan {
+                                                    span: SourceSpan {
                                                         offset: SourceOffset(
                                                             28,
                                                         ),
@@ -122,9 +122,9 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                                             1,
                                                         ),
                                                     },
-                                                ),
+                                                },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     28,
                                                 ),
@@ -132,11 +132,11 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ],
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     28,
                                 ),
@@ -144,10 +144,10 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                                     1,
                                 ),
                             },
-                        ),
+                        },
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         0,
                     ),
@@ -155,10 +155,10 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
                         29,
                     ),
                 },
-            ),
+            },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -166,4 +166,4 @@ expression: "parse_expr_single(\"let $x := 1, $y := 2 return 5\")"
             29,
         ),
     },
-)
+}

@@ -3,16 +3,16 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1 + 2\")"
 ---
 Ok(
-    (
-        Binary(
+    Spanned {
+        value: Binary(
             Binary {
-                left: (
-                    Const(
+                left: Spanned {
+                    value: Const(
                         Integer(
                             1,
                         ),
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -20,15 +20,15 @@ Ok(
                             1,
                         ),
                     },
-                ),
+                },
                 op: Add,
-                right: (
-                    Const(
+                right: Spanned {
+                    value: Const(
                         Integer(
                             2,
                         ),
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             4,
                         ),
@@ -36,10 +36,10 @@ Ok(
                             1,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -47,5 +47,5 @@ Ok(
                 5,
             ),
         },
-    ),
+    },
 )

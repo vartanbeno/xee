@@ -3,8 +3,8 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"1, 2, 3\")"
 ---
 Ok(
-    (
-        FunctionDefinition(
+    Spanned {
+        value: FunctionDefinition(
             FunctionDefinition {
                 params: [
                     Param(
@@ -23,22 +23,22 @@ Ok(
                         ),
                     ),
                 ],
-                body: (
-                    Let(
+                body: Spanned {
+                    value: Let(
                         Let {
                             name: Name(
                                 "v5",
                             ),
-                            var_expr: (
-                                Binary(
+                            var_expr: Spanned {
+                                value: Binary(
                                     Binary {
-                                        left: (
-                                            Const(
+                                        left: Spanned {
+                                            value: Const(
                                                 Integer(
                                                     1,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     0,
                                                 ),
@@ -46,15 +46,15 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                         op: Comma,
-                                        right: (
-                                            Const(
+                                        right: Spanned {
+                                            value: Const(
                                                 Integer(
                                                     2,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     3,
                                                 ),
@@ -62,10 +62,10 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         3,
                                     ),
@@ -73,17 +73,17 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
-                            return_expr: (
-                                Binary(
+                            },
+                            return_expr: Spanned {
+                                value: Binary(
                                     Binary {
-                                        left: (
-                                            Variable(
+                                        left: Spanned {
+                                            value: Variable(
                                                 Name(
                                                     "v5",
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     3,
                                                 ),
@@ -91,15 +91,15 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                         op: Comma,
-                                        right: (
-                                            Const(
+                                        right: Spanned {
+                                            value: Const(
                                                 Integer(
                                                     3,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     6,
                                                 ),
@@ -107,10 +107,10 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         3,
                                     ),
@@ -118,10 +118,10 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             6,
                         ),
@@ -129,10 +129,10 @@ Ok(
                             1,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -140,5 +140,5 @@ Ok(
                 7,
             ),
         },
-    ),
+    },
 )

@@ -46,13 +46,13 @@ impl<'a> AstParser<'a> {
 
     fn pair_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         let expr_single = self.expr_single(pair);
-        let span = expr_single.1;
-        match expr_single.0 {
+        let span = expr_single.span;
+        match expr_single.value {
             ast::ExprSingle::Path(path_expr) => path_expr,
             _ => ast::PathExpr {
-                steps: vec![(
-                    ast::StepExpr::PrimaryExpr((
-                        ast::PrimaryExpr::Expr((vec![expr_single], span)),
+                steps: vec![Spanned::new(
+                    ast::StepExpr::PrimaryExpr(Spanned::new(
+                        ast::PrimaryExpr::Expr(Spanned::new(vec![expr_single], span)),
                         span,
                     )),
                     span,
@@ -311,8 +311,8 @@ impl<'a> AstParser<'a> {
             Rule::Expr => {
                 let span = &pair.as_span();
                 let exprs = self.exprs(pair);
-                if exprs.0.len() == 1 {
-                    exprs.0[0].clone()
+                if exprs.value.len() == 1 {
+                    exprs.value[0].clone()
                 } else {
                     spanned(
                         ast::ExprSingle::Path(ast::PathExpr {
@@ -346,13 +346,13 @@ impl<'a> AstParser<'a> {
         while let Some(operator) = get_operator(&mut pairs) {
             let right_pair = pairs.next().expect("operator but no right pair");
             let span_end = right_pair.as_span().end();
-            binary = (
+            binary = Spanned::new(
                 ast::ExprSingle::Binary(ast::BinaryExpr {
                     operator,
                     left: expr_single_to_path_expr(binary),
                     right: self.pair_to_path_expr(right_pair),
                 }),
-                ((span_start, span_end - span_start).into()),
+                (span_start, span_end - span_start).into(),
             )
         }
         binary
@@ -1092,12 +1092,15 @@ impl<'a> AstParser<'a> {
 }
 
 fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
-    let span = expr.1;
-    match expr.0 {
+    let span = expr.span;
+    match expr.value {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
-            steps: vec![(
-                ast::StepExpr::PrimaryExpr((ast::PrimaryExpr::Expr((vec![expr], span)), span)),
+            steps: vec![Spanned::new(
+                ast::StepExpr::PrimaryExpr(Spanned::new(
+                    ast::PrimaryExpr::Expr(Spanned::new(vec![expr], span)),
+                    span,
+                )),
                 span,
             )],
         },
@@ -1175,7 +1178,7 @@ fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
 }
 
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
-    (value, (span.start(), span.end() - span.start()).into())
+    Spanned::new(value, (span.start(), span.end() - span.start()).into())
 }
 
 #[cfg(test)]

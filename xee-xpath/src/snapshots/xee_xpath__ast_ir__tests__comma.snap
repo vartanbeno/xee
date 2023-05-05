@@ -3,8 +3,8 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"1, 2\")"
 ---
 Ok(
-    (
-        FunctionDefinition(
+    Spanned {
+        value: FunctionDefinition(
             FunctionDefinition {
                 params: [
                     Param(
@@ -23,16 +23,16 @@ Ok(
                         ),
                     ),
                 ],
-                body: (
-                    Binary(
+                body: Spanned {
+                    value: Binary(
                         Binary {
-                            left: (
-                                Const(
+                            left: Spanned {
+                                value: Const(
                                     Integer(
                                         1,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         0,
                                     ),
@@ -40,15 +40,15 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                             op: Comma,
-                            right: (
-                                Const(
+                            right: Spanned {
+                                value: Const(
                                     Integer(
                                         2,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         3,
                                     ),
@@ -56,10 +56,10 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             3,
                         ),
@@ -67,10 +67,10 @@ Ok(
                             1,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -78,5 +78,5 @@ Ok(
                 4,
             ),
         },
-    ),
+    },
 )

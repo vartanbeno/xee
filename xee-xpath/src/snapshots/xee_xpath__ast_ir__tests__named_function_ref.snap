@@ -3,14 +3,14 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"my_function#2\")"
 ---
 Ok(
-    (
-        StaticFunctionReference(
+    Spanned {
+        value: StaticFunctionReference(
             StaticFunctionId(
                 0,
             ),
             None,
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -18,5 +18,5 @@ Ok(
                 13,
             ),
         },
-    ),
+    },
 )

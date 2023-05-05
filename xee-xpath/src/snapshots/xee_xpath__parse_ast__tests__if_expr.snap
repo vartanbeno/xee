@@ -2,24 +2,24 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"if (1) then 2 else 3\")"
 ---
-(
-    If(
+Spanned {
+    value: If(
         IfExpr {
-            condition: (
-                [
-                    (
-                        Path(
+            condition: Spanned {
+                value: [
+                    Spanned {
+                        value: Path(
                             PathExpr {
                                 steps: [
-                                    (
-                                        PrimaryExpr(
-                                            (
-                                                Literal(
+                                    Spanned {
+                                        value: PrimaryExpr(
+                                            Spanned {
+                                                value: Literal(
                                                     Integer(
                                                         1,
                                                     ),
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         4,
                                                     ),
@@ -27,9 +27,9 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                         1,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 4,
                                             ),
@@ -37,11 +37,11 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                 1,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ],
                             },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 4,
                             ),
@@ -49,9 +49,9 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                 1,
                             ),
                         },
-                    ),
+                    },
                 ],
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         4,
                     ),
@@ -59,20 +59,20 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                         1,
                     ),
                 },
-            ),
-            then: (
-                Path(
+            },
+            then: Spanned {
+                value: Path(
                     PathExpr {
                         steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Literal(
+                            Spanned {
+                                value: PrimaryExpr(
+                                    Spanned {
+                                        value: Literal(
                                             Integer(
                                                 2,
                                             ),
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 12,
                                             ),
@@ -80,9 +80,9 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                 1,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         12,
                                     ),
@@ -90,11 +90,11 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ],
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         12,
                     ),
@@ -102,20 +102,20 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                         2,
                     ),
                 },
-            ),
-            else_: (
-                Path(
+            },
+            else_: Spanned {
+                value: Path(
                     PathExpr {
                         steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        Literal(
+                            Spanned {
+                                value: PrimaryExpr(
+                                    Spanned {
+                                        value: Literal(
                                             Integer(
                                                 3,
                                             ),
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 19,
                                             ),
@@ -123,9 +123,9 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                                 1,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         19,
                                     ),
@@ -133,11 +133,11 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ],
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         19,
                     ),
@@ -145,10 +145,10 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
                         1,
                     ),
                 },
-            ),
+            },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -156,4 +156,4 @@ expression: "parse_expr_single(\"if (1) then 2 else 3\")"
             20,
         ),
     },
-)
+}

@@ -2,20 +2,20 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"-1\")"
 ---
-(
-    Apply(
+Spanned {
+    value: Apply(
         ApplyExpr {
             path_expr: PathExpr {
                 steps: [
-                    (
-                        PrimaryExpr(
-                            (
-                                Literal(
+                    Spanned {
+                        value: PrimaryExpr(
+                            Spanned {
+                                value: Literal(
                                     Integer(
                                         1,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         1,
                                     ),
@@ -23,9 +23,9 @@ expression: "parse_expr_single(\"-1\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 1,
                             ),
@@ -33,7 +33,7 @@ expression: "parse_expr_single(\"-1\")"
                                 1,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
             operator: Unary(
@@ -43,7 +43,7 @@ expression: "parse_expr_single(\"-1\")"
             ),
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -51,4 +51,4 @@ expression: "parse_expr_single(\"-1\")"
             2,
         ),
     },
-)
+}

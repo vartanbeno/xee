@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            InlineFunction(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: InlineFunction(
                                 InlineFunction {
                                     params: [
                                         Param {
@@ -28,24 +28,24 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: (
-                                        [
-                                            (
-                                                Binary(
+                                    body: Spanned {
+                                        value: [
+                                            Spanned {
+                                                value: Binary(
                                                     BinaryExpr {
                                                         operator: Add,
                                                         left: PathExpr {
                                                             steps: [
-                                                                (
-                                                                    PrimaryExpr(
-                                                                        (
-                                                                            VarRef(
+                                                                Spanned {
+                                                                    value: PrimaryExpr(
+                                                                        Spanned {
+                                                                            value: VarRef(
                                                                                 Name {
                                                                                     name: "x",
                                                                                     namespace: None,
                                                                                 },
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     19,
                                                                                 ),
@@ -53,9 +53,9 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                                                     2,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             19,
                                                                         ),
@@ -63,21 +63,21 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                                             2,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ],
                                                         },
                                                         right: PathExpr {
                                                             steps: [
-                                                                (
-                                                                    PrimaryExpr(
-                                                                        (
-                                                                            VarRef(
+                                                                Spanned {
+                                                                    value: PrimaryExpr(
+                                                                        Spanned {
+                                                                            value: VarRef(
                                                                                 Name {
                                                                                     name: "y",
                                                                                     namespace: None,
                                                                                 },
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     24,
                                                                                 ),
@@ -85,9 +85,9 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                                                     2,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             24,
                                                                         ),
@@ -95,12 +95,12 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                                             2,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ],
                                                         },
                                                     },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         19,
                                                     ),
@@ -108,9 +108,9 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                         8,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 17,
                                             ),
@@ -118,10 +118,10 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                                 11,
                                             ),
                                         },
-                                    ),
+                                    },
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -129,9 +129,9 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                                     28,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -139,11 +139,11 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
                             28,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -151,4 +151,4 @@ expression: "parse_expr_single(\"function($x, $y) { $x + $y }\")"
             28,
         ),
     },
-)
+}

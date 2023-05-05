@@ -2,28 +2,28 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
 ---
-(
-    For(
+Spanned {
+    value: For(
         ForExpr {
             var_name: Name {
                 name: "x",
                 namespace: None,
             },
-            var_expr: (
-                Binary(
+            var_expr: Spanned {
+                value: Binary(
                     BinaryExpr {
                         operator: Range,
                         left: PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Literal(
                                                 Integer(
                                                     1,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     10,
                                                 ),
@@ -31,9 +31,9 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             10,
                                         ),
@@ -41,20 +41,20 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                             1,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                         right: PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Literal(
                                                 Integer(
                                                     2,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     15,
                                                 ),
@@ -62,9 +62,9 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             15,
                                         ),
@@ -72,12 +72,12 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                             1,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         10,
                     ),
@@ -85,21 +85,21 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                         7,
                     ),
                 },
-            ),
-            return_expr: (
-                Path(
+            },
+            return_expr: Spanned {
+                value: Path(
                     PathExpr {
                         steps: [
-                            (
-                                PrimaryExpr(
-                                    (
-                                        VarRef(
+                            Spanned {
+                                value: PrimaryExpr(
+                                    Spanned {
+                                        value: VarRef(
                                             Name {
                                                 name: "x",
                                                 namespace: None,
                                             },
                                         ),
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 24,
                                             ),
@@ -107,9 +107,9 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                                 2,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         24,
                                     ),
@@ -117,11 +117,11 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                                         2,
                                     ),
                                 },
-                            ),
+                            },
                         ],
                     },
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         24,
                     ),
@@ -129,10 +129,10 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
                         2,
                     ),
                 },
-            ),
+            },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -140,4 +140,4 @@ expression: "parse_expr_single(\"for $x in 1 to 2 return $x\")"
             26,
         ),
     },
-)
+}

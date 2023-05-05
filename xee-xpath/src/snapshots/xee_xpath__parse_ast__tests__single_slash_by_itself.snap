@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"/\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            FunctionCall(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: FunctionCall(
                                 FunctionCall {
                                     name: Name {
                                         name: "root",
@@ -18,12 +18,12 @@ expression: "parse_expr_single(\"/\")"
                                         ),
                                     },
                                     arguments: [
-                                        (
-                                            Path(
+                                        Spanned {
+                                            value: Path(
                                                 PathExpr {
                                                     steps: [
-                                                        (
-                                                            AxisStep(
+                                                        Spanned {
+                                                            value: AxisStep(
                                                                 AxisStep {
                                                                     axis: Self_,
                                                                     node_test: KindTest(
@@ -32,7 +32,7 @@ expression: "parse_expr_single(\"/\")"
                                                                     predicates: [],
                                                                 },
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     0,
                                                                 ),
@@ -40,11 +40,11 @@ expression: "parse_expr_single(\"/\")"
                                                                     0,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ],
                                                 },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     0,
                                                 ),
@@ -52,11 +52,11 @@ expression: "parse_expr_single(\"/\")"
                                                     0,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ],
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -64,9 +64,9 @@ expression: "parse_expr_single(\"/\")"
                                     0,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -74,11 +74,11 @@ expression: "parse_expr_single(\"/\")"
                             1,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -86,4 +86,4 @@ expression: "parse_expr_single(\"/\")"
             1,
         ),
     },
-)
+}

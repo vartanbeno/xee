@@ -2,12 +2,12 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    AxisStep(
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -18,7 +18,7 @@ expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -26,11 +26,11 @@ expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
                             29,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -38,4 +38,4 @@ expression: "parse_expr_single(\"child::Q{http://example.com}*\")"
             29,
         ),
     },
-)
+}

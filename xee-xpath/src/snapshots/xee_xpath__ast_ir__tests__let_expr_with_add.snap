@@ -3,22 +3,22 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"let $x := (1 + 2) return $x\")"
 ---
 Ok(
-    (
-        Let(
+    Spanned {
+        value: Let(
             Let {
                 name: Name(
                     "v0",
                 ),
-                var_expr: (
-                    Binary(
+                var_expr: Spanned {
+                    value: Binary(
                         Binary {
-                            left: (
-                                Const(
+                            left: Spanned {
+                                value: Const(
                                     Integer(
                                         1,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         11,
                                     ),
@@ -26,15 +26,15 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                             op: Add,
-                            right: (
-                                Const(
+                            right: Spanned {
+                                value: Const(
                                     Integer(
                                         2,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         15,
                                     ),
@@ -42,10 +42,10 @@ Ok(
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             11,
                         ),
@@ -53,16 +53,16 @@ Ok(
                             5,
                         ),
                     },
-                ),
-                return_expr: (
-                    Atom(
-                        (
-                            Variable(
+                },
+                return_expr: Spanned {
+                    value: Atom(
+                        Spanned {
+                            value: Variable(
                                 Name(
                                     "v0",
                                 ),
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     25,
                                 ),
@@ -70,9 +70,9 @@ Ok(
                                     2,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             25,
                         ),
@@ -80,10 +80,10 @@ Ok(
                             2,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -91,5 +91,5 @@ Ok(
                 27,
             ),
         },
-    ),
+    },
 )

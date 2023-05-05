@@ -2,21 +2,21 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"1 + 2\")"
 ---
-(
-    Binary(
+Spanned {
+    value: Binary(
         BinaryExpr {
             operator: Add,
             left: PathExpr {
                 steps: [
-                    (
-                        PrimaryExpr(
-                            (
-                                Literal(
+                    Spanned {
+                        value: PrimaryExpr(
+                            Spanned {
+                                value: Literal(
                                     Integer(
                                         1,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         0,
                                     ),
@@ -24,9 +24,9 @@ expression: "parse_expr_single(\"1 + 2\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 0,
                             ),
@@ -34,20 +34,20 @@ expression: "parse_expr_single(\"1 + 2\")"
                                 1,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
             right: PathExpr {
                 steps: [
-                    (
-                        PrimaryExpr(
-                            (
-                                Literal(
+                    Spanned {
+                        value: PrimaryExpr(
+                            Spanned {
+                                value: Literal(
                                     Integer(
                                         2,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         4,
                                     ),
@@ -55,9 +55,9 @@ expression: "parse_expr_single(\"1 + 2\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 4,
                             ),
@@ -65,12 +65,12 @@ expression: "parse_expr_single(\"1 + 2\")"
                                 1,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -78,4 +78,4 @@ expression: "parse_expr_single(\"1 + 2\")"
             5,
         ),
     },
-)
+}

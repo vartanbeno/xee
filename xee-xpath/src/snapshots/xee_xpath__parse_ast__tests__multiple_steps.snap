@@ -2,12 +2,12 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::foo/child::bar\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    AxisStep(
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -21,7 +21,7 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -29,9 +29,9 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                             10,
                         ),
                     },
-                ),
-                (
-                    AxisStep(
+                },
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -45,7 +45,7 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             11,
                         ),
@@ -53,11 +53,11 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
                             10,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -65,4 +65,4 @@ expression: "parse_expr_single(\"child::foo/child::bar\")"
             21,
         ),
     },
-)
+}

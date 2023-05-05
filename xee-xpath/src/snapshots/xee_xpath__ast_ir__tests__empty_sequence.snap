@@ -3,8 +3,8 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_xpath(\"()\")"
 ---
 Ok(
-    (
-        FunctionDefinition(
+    Spanned {
+        value: FunctionDefinition(
             FunctionDefinition {
                 params: [
                     Param(
@@ -23,13 +23,13 @@ Ok(
                         ),
                     ),
                 ],
-                body: (
-                    Atom(
-                        (
-                            Const(
+                body: Spanned {
+                    value: Atom(
+                        Spanned {
+                            value: Const(
                                 EmptySequence,
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -37,9 +37,9 @@ Ok(
                                     2,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -47,10 +47,10 @@ Ok(
                             2,
                         ),
                     },
-                ),
+                },
             },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -58,5 +58,5 @@ Ok(
                 2,
             ),
         },
-    ),
+    },
 )

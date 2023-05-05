@@ -2,12 +2,12 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::foo//child::bar\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    AxisStep(
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -21,7 +21,7 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -29,9 +29,9 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             10,
                         ),
                     },
-                ),
-                (
-                    AxisStep(
+                },
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: DescendantOrSelf,
                             node_test: KindTest(
@@ -40,7 +40,7 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             10,
                         ),
@@ -48,9 +48,9 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             2,
                         ),
                     },
-                ),
-                (
-                    AxisStep(
+                },
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -64,7 +64,7 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             predicates: [],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             12,
                         ),
@@ -72,11 +72,11 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
                             10,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -84,4 +84,4 @@ expression: "parse_expr_single(\"child::foo//child::bar\")"
             22,
         ),
     },
-)
+}

@@ -4,21 +4,21 @@ expression: "parse_xpath_no_default_ns(\"1, 2\")"
 ---
 Ok(
     XPath {
-        exprs: (
-            [
-                (
-                    Path(
+        exprs: Spanned {
+            value: [
+                Spanned {
+                    value: Path(
                         PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Literal(
                                                 Integer(
                                                     1,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     0,
                                                 ),
@@ -26,9 +26,9 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             0,
                                         ),
@@ -36,11 +36,11 @@ Ok(
                                             1,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -48,20 +48,20 @@ Ok(
                             1,
                         ),
                     },
-                ),
-                (
-                    Path(
+                },
+                Spanned {
+                    value: Path(
                         PathExpr {
                             steps: [
-                                (
-                                    PrimaryExpr(
-                                        (
-                                            Literal(
+                                Spanned {
+                                    value: PrimaryExpr(
+                                        Spanned {
+                                            value: Literal(
                                                 Integer(
                                                     2,
                                                 ),
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     3,
                                                 ),
@@ -69,9 +69,9 @@ Ok(
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ),
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             3,
                                         ),
@@ -79,11 +79,11 @@ Ok(
                                             1,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             3,
                         ),
@@ -91,9 +91,9 @@ Ok(
                             1,
                         ),
                     },
-                ),
+                },
             ],
-            SourceSpan {
+            span: SourceSpan {
                 offset: SourceOffset(
                     0,
                 ),
@@ -101,6 +101,6 @@ Ok(
                     4,
                 ),
             },
-        ),
+        },
     },
 )

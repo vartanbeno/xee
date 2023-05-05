@@ -3,15 +3,15 @@ source: xee-xpath/src/ast_ir.rs
 expression: "convert_expr_single(\"1\")"
 ---
 Ok(
-    (
-        Atom(
-            (
-                Const(
+    Spanned {
+        value: Atom(
+            Spanned {
+                value: Const(
                     Integer(
                         1,
                     ),
                 ),
-                SourceSpan {
+                span: SourceSpan {
                     offset: SourceOffset(
                         0,
                     ),
@@ -19,9 +19,9 @@ Ok(
                         1,
                     ),
                 },
-            ),
+            },
         ),
-        SourceSpan {
+        span: SourceSpan {
             offset: SourceOffset(
                 0,
             ),
@@ -29,5 +29,5 @@ Ok(
                 1,
             ),
         },
-    ),
+    },
 )

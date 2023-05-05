@@ -2,21 +2,21 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"1 + (2 * 3)\")"
 ---
-(
-    Binary(
+Spanned {
+    value: Binary(
         BinaryExpr {
             operator: Add,
             left: PathExpr {
                 steps: [
-                    (
-                        PrimaryExpr(
-                            (
-                                Literal(
+                    Spanned {
+                        value: PrimaryExpr(
+                            Spanned {
+                                value: Literal(
                                     Integer(
                                         1,
                                     ),
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         0,
                                     ),
@@ -24,9 +24,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                         1,
                                     ),
                                 },
-                            ),
+                            },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 0,
                             ),
@@ -34,32 +34,32 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                 1,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
             right: PathExpr {
                 steps: [
-                    (
-                        PrimaryExpr(
-                            (
-                                Expr(
-                                    (
-                                        [
-                                            (
-                                                Binary(
+                    Spanned {
+                        value: PrimaryExpr(
+                            Spanned {
+                                value: Expr(
+                                    Spanned {
+                                        value: [
+                                            Spanned {
+                                                value: Binary(
                                                     BinaryExpr {
                                                         operator: Mul,
                                                         left: PathExpr {
                                                             steps: [
-                                                                (
-                                                                    PrimaryExpr(
-                                                                        (
-                                                                            Literal(
+                                                                Spanned {
+                                                                    value: PrimaryExpr(
+                                                                        Spanned {
+                                                                            value: Literal(
                                                                                 Integer(
                                                                                     2,
                                                                                 ),
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     5,
                                                                                 ),
@@ -67,9 +67,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                                     1,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             5,
                                                                         ),
@@ -77,20 +77,20 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                             1,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ],
                                                         },
                                                         right: PathExpr {
                                                             steps: [
-                                                                (
-                                                                    PrimaryExpr(
-                                                                        (
-                                                                            Literal(
+                                                                Spanned {
+                                                                    value: PrimaryExpr(
+                                                                        Spanned {
+                                                                            value: Literal(
                                                                                 Integer(
                                                                                     3,
                                                                                 ),
                                                                             ),
-                                                                            SourceSpan {
+                                                                            span: SourceSpan {
                                                                                 offset: SourceOffset(
                                                                                     9,
                                                                                 ),
@@ -98,9 +98,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                                     1,
                                                                                 ),
                                                                             },
-                                                                        ),
+                                                                        },
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             9,
                                                                         ),
@@ -108,12 +108,12 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                                             1,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ],
                                                         },
                                                     },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         5,
                                                     ),
@@ -121,9 +121,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                         5,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 4,
                                             ),
@@ -131,9 +131,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                                 7,
                                             ),
                                         },
-                                    ),
+                                    },
                                 ),
-                                SourceSpan {
+                                span: SourceSpan {
                                     offset: SourceOffset(
                                         4,
                                     ),
@@ -141,9 +141,9 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                         7,
                                     ),
                                 },
-                            ),
+                            },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 4,
                             ),
@@ -151,12 +151,12 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
                                 7,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -164,4 +164,4 @@ expression: "parse_expr_single(\"1 + (2 * 3)\")"
             11,
         ),
     },
-)
+}

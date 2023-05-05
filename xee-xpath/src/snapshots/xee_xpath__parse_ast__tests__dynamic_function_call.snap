@@ -2,20 +2,20 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"$foo()\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PostfixExpr {
-                        primary: (
-                            VarRef(
+                Spanned {
+                    value: PostfixExpr {
+                        primary: Spanned {
+                            value: VarRef(
                                 Name {
                                     name: "foo",
                                     namespace: None,
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -23,14 +23,14 @@ expression: "parse_expr_single(\"$foo()\")"
                                     4,
                                 ),
                             },
-                        ),
+                        },
                         postfixes: [
                             ArgumentList(
                                 [],
                             ),
                         ],
                     },
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -38,11 +38,11 @@ expression: "parse_expr_single(\"$foo()\")"
                             6,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -50,4 +50,4 @@ expression: "parse_expr_single(\"$foo()\")"
             6,
         ),
     },
-)
+}

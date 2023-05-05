@@ -4,15 +4,15 @@ expression: "parse_path_expr(\"1\")"
 ---
 PathExpr {
     steps: [
-        (
-            PrimaryExpr(
-                (
-                    Literal(
+        Spanned {
+            value: PrimaryExpr(
+                Spanned {
+                    value: Literal(
                         Integer(
                             1,
                         ),
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -20,9 +20,9 @@ PathExpr {
                             1,
                         ),
                     },
-                ),
+                },
             ),
-            SourceSpan {
+            span: SourceSpan {
                 offset: SourceOffset(
                     0,
                 ),
@@ -30,6 +30,6 @@ PathExpr {
                     1,
                 ),
             },
-        ),
+        },
     ],
 }

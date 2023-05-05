@@ -2,12 +2,12 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::foo[1]\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    AxisStep(
+                Spanned {
+                    value: AxisStep(
                         AxisStep {
                             axis: Child,
                             node_test: NameTest(
@@ -19,21 +19,21 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                 ),
                             ),
                             predicates: [
-                                (
-                                    [
-                                        (
-                                            Path(
+                                Spanned {
+                                    value: [
+                                        Spanned {
+                                            value: Path(
                                                 PathExpr {
                                                     steps: [
-                                                        (
-                                                            PrimaryExpr(
-                                                                (
-                                                                    Literal(
+                                                        Spanned {
+                                                            value: PrimaryExpr(
+                                                                Spanned {
+                                                                    value: Literal(
                                                                         Integer(
                                                                             1,
                                                                         ),
                                                                     ),
-                                                                    SourceSpan {
+                                                                    span: SourceSpan {
                                                                         offset: SourceOffset(
                                                                             11,
                                                                         ),
@@ -41,9 +41,9 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                                                             1,
                                                                         ),
                                                                     },
-                                                                ),
+                                                                },
                                                             ),
-                                                            SourceSpan {
+                                                            span: SourceSpan {
                                                                 offset: SourceOffset(
                                                                     11,
                                                                 ),
@@ -51,11 +51,11 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                                                     1,
                                                                 ),
                                                             },
-                                                        ),
+                                                        },
                                                     ],
                                                 },
                                             ),
-                                            SourceSpan {
+                                            span: SourceSpan {
                                                 offset: SourceOffset(
                                                     11,
                                                 ),
@@ -63,9 +63,9 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                                     1,
                                                 ),
                                             },
-                                        ),
+                                        },
                                     ],
-                                    SourceSpan {
+                                    span: SourceSpan {
                                         offset: SourceOffset(
                                             11,
                                         ),
@@ -73,11 +73,11 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                                             1,
                                         ),
                                     },
-                                ),
+                                },
                             ],
                         },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -85,11 +85,11 @@ expression: "parse_expr_single(\"child::foo[1]\")"
                             13,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -97,4 +97,4 @@ expression: "parse_expr_single(\"child::foo[1]\")"
             13,
         ),
     },
-)
+}

@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"function($x) { $x }\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            InlineFunction(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: InlineFunction(
                                 InlineFunction {
                                     params: [
                                         Param {
@@ -21,22 +21,22 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                         },
                                     ],
                                     return_type: None,
-                                    body: (
-                                        [
-                                            (
-                                                Path(
+                                    body: Spanned {
+                                        value: [
+                                            Spanned {
+                                                value: Path(
                                                     PathExpr {
                                                         steps: [
-                                                            (
-                                                                PrimaryExpr(
-                                                                    (
-                                                                        VarRef(
+                                                            Spanned {
+                                                                value: PrimaryExpr(
+                                                                    Spanned {
+                                                                        value: VarRef(
                                                                             Name {
                                                                                 name: "x",
                                                                                 namespace: None,
                                                                             },
                                                                         ),
-                                                                        SourceSpan {
+                                                                        span: SourceSpan {
                                                                             offset: SourceOffset(
                                                                                 15,
                                                                             ),
@@ -44,9 +44,9 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                                                                 2,
                                                                             ),
                                                                         },
-                                                                    ),
+                                                                    },
                                                                 ),
-                                                                SourceSpan {
+                                                                span: SourceSpan {
                                                                     offset: SourceOffset(
                                                                         15,
                                                                     ),
@@ -54,11 +54,11 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                                                         2,
                                                                     ),
                                                                 },
-                                                            ),
+                                                            },
                                                         ],
                                                     },
                                                 ),
-                                                SourceSpan {
+                                                span: SourceSpan {
                                                     offset: SourceOffset(
                                                         15,
                                                     ),
@@ -66,9 +66,9 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                                         3,
                                                     ),
                                                 },
-                                            ),
+                                            },
                                         ],
-                                        SourceSpan {
+                                        span: SourceSpan {
                                             offset: SourceOffset(
                                                 13,
                                             ),
@@ -76,10 +76,10 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                                 6,
                                             ),
                                         },
-                                    ),
+                                    },
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -87,9 +87,9 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                                     19,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -97,11 +97,11 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
                             19,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -109,4 +109,4 @@ expression: "parse_expr_single(\"function($x) { $x }\")"
             19,
         ),
     },
-)
+}

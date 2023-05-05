@@ -21,8 +21,8 @@ pub(crate) struct InterpreterCompiler<'a> {
 
 impl<'a> InterpreterCompiler<'a> {
     pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> Result<()> {
-        let span = expr.1;
-        match &expr.0 {
+        let span = expr.span;
+        match &expr.value {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
             ir::Expr::Let(let_) => self.compile_let(let_, span),
             ir::Expr::Binary(binary) => self.compile_binary(binary, span),
@@ -46,7 +46,7 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
-        match &atom.0 {
+        match &atom.value {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
                     ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
@@ -56,10 +56,10 @@ impl<'a> InterpreterCompiler<'a> {
                     }
                     ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
-                self.builder.emit_constant(stack_value, atom.1);
+                self.builder.emit_constant(stack_value, atom.span);
                 Ok(())
             }
-            ir::Atom::Variable(name) => self.compile_variable(name, atom.1),
+            ir::Atom::Variable(name) => self.compile_variable(name, atom.span),
         }
     }
 

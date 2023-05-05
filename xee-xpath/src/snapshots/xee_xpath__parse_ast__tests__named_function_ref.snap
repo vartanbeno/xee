@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"my_function#2\")"
 ---
-(
-    Path(
+Spanned {
+    value: Path(
         PathExpr {
             steps: [
-                (
-                    PrimaryExpr(
-                        (
-                            NamedFunctionRef(
+                Spanned {
+                    value: PrimaryExpr(
+                        Spanned {
+                            value: NamedFunctionRef(
                                 NamedFunctionRef {
                                     name: Name {
                                         name: "my_function",
@@ -18,7 +18,7 @@ expression: "parse_expr_single(\"my_function#2\")"
                                     arity: 2,
                                 },
                             ),
-                            SourceSpan {
+                            span: SourceSpan {
                                 offset: SourceOffset(
                                     0,
                                 ),
@@ -26,9 +26,9 @@ expression: "parse_expr_single(\"my_function#2\")"
                                     13,
                                 ),
                             },
-                        ),
+                        },
                     ),
-                    SourceSpan {
+                    span: SourceSpan {
                         offset: SourceOffset(
                             0,
                         ),
@@ -36,11 +36,11 @@ expression: "parse_expr_single(\"my_function#2\")"
                             13,
                         ),
                     },
-                ),
+                },
             ],
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -48,4 +48,4 @@ expression: "parse_expr_single(\"my_function#2\")"
             13,
         ),
     },
-)
+}

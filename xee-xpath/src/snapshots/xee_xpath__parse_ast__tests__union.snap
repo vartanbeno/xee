@@ -2,14 +2,14 @@
 source: xee-xpath/src/parse_ast.rs
 expression: "parse_expr_single(\"child::foo | child::bar\")"
 ---
-(
-    Binary(
+Spanned {
+    value: Binary(
         BinaryExpr {
             operator: Union,
             left: PathExpr {
                 steps: [
-                    (
-                        AxisStep(
+                    Spanned {
+                        value: AxisStep(
                             AxisStep {
                                 axis: Child,
                                 node_test: NameTest(
@@ -23,7 +23,7 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 0,
                             ),
@@ -31,13 +31,13 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 11,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
             right: PathExpr {
                 steps: [
-                    (
-                        AxisStep(
+                    Spanned {
+                        value: AxisStep(
                             AxisStep {
                                 axis: Child,
                                 node_test: NameTest(
@@ -51,7 +51,7 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 predicates: [],
                             },
                         ),
-                        SourceSpan {
+                        span: SourceSpan {
                             offset: SourceOffset(
                                 13,
                             ),
@@ -59,12 +59,12 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
                                 10,
                             ),
                         },
-                    ),
+                    },
                 ],
             },
         },
     ),
-    SourceSpan {
+    span: SourceSpan {
         offset: SourceOffset(
             0,
         ),
@@ -72,4 +72,4 @@ expression: "parse_expr_single(\"child::foo | child::bar\")"
             23,
         ),
     },
-)
+}
