@@ -99,6 +99,31 @@ fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic
     }
 }
 
+fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+    numeric_op(
+        atomic_a,
+        atomic_b,
+        Ops {
+            integer_op: |a, b| {
+                if b == 0 {
+                    Err(ValueError::DivisionByZero)
+                } else {
+                    Ok(a % b)
+                }
+            },
+            decimal_op: |a, b| {
+                if b.is_zero() {
+                    Err(ValueError::DivisionByZero)
+                } else {
+                    Ok(a % b)
+                }
+            },
+            float_op: |a, b| a % b,
+            double_op: |a, b| a % b,
+        },
+    )
+}
+
 struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
 where
     IntegerOp: FnOnce(i64, i64) -> Result<i64>,
@@ -336,6 +361,15 @@ mod tests {
         assert_eq!(
             numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Double(f64::INFINITY)).unwrap(),
             Atomic::Integer(0)
+        );
+    }
+
+    #[test]
+    fn test_numeric_mod_nan_nan() {
+        assert!(
+            numeric_mod(&Atomic::Double(f64::NAN), &Atomic::Double(f64::NAN))
+                .unwrap()
+                .is_nan()
         );
     }
 }
