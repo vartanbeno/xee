@@ -108,9 +108,9 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_string().ok_or(ValueError::TypeError)?;
-                    let b = b.as_string().ok_or(ValueError::TypeError)?;
-                    let result = a + &b;
+                    let a = a.as_string()?;
+                    let b = b.as_string()?;
+                    let result = a.to_owned() + b;
                     self.stack
                         .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
                 }
@@ -190,7 +190,7 @@ impl<'a> Interpreter<'a> {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
-                    let a = a.as_bool().ok_or(ValueError::TypeError)?;
+                    let a = a.as_bool()?;
                     if a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;
@@ -200,7 +200,7 @@ impl<'a> Interpreter<'a> {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
-                    let a = a.as_bool().ok_or(ValueError::TypeError)?;
+                    let a = a.as_bool()?;
                     if !a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;

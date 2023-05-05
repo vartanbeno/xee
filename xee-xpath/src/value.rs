@@ -262,18 +262,18 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn as_bool(&self) -> Option<bool> {
+    pub(crate) fn as_bool(&self) -> Result<bool> {
         match self {
-            Atomic::Integer(i) => Some(*i != 0),
-            Atomic::Boolean(b) => Some(*b),
-            _ => None,
+            Atomic::Integer(i) => Ok(*i != 0),
+            Atomic::Boolean(b) => Ok(*b),
+            _ => Err(ValueError::TypeError),
         }
     }
 
-    pub(crate) fn as_string(&self) -> Option<String> {
+    pub(crate) fn as_string(&self) -> Result<&str> {
         match self {
-            Atomic::String(s) => Some(s.to_string()),
-            _ => None,
+            Atomic::String(s) => Ok(s),
+            _ => Err(ValueError::TypeError),
         }
     }
 }
