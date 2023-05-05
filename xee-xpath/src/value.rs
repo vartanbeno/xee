@@ -15,6 +15,7 @@ pub(crate) enum ValueError {
     XPTY0004,
     TypeError,
     OverflowError,
+    StackOverflow,
 }
 
 type Result<T> = std::result::Result<T, ValueError>;

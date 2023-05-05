@@ -1,3 +1,4 @@
+use arrayvec::ArrayVec;
 use miette::NamedSource;
 use std::cell::RefCell;
 use std::cmp::Ordering;
@@ -14,6 +15,8 @@ use crate::value::{
     StaticFunctionId, Step, ValueError,
 };
 
+const FRAMES_MAX: usize = 64;
+
 #[derive(Debug, Clone)]
 struct Frame {
     function: FunctionId,
@@ -26,7 +29,7 @@ pub(crate) struct Interpreter<'a> {
     program: &'a Program,
     context: &'a Context<'a>,
     stack: Vec<StackValue>,
-    frames: Vec<Frame>,
+    frames: ArrayVec<Frame, FRAMES_MAX>,
 }
 
 impl<'a> Interpreter<'a> {
@@ -35,7 +38,7 @@ impl<'a> Interpreter<'a> {
             program,
             context,
             stack: vec![],
-            frames: Vec::new(),
+            frames: ArrayVec::new(),
         }
     }
 
@@ -281,6 +284,9 @@ impl<'a> Interpreter<'a> {
                     if let Some(closure) = callable.as_closure() {
                         match closure.function_id {
                             ClosureFunctionId::Dynamic(function_id) => {
+                                if self.frames.len() >= self.frames.capacity() {
+                                    return Err(ValueError::StackOverflow);
+                                }
                                 self.call_closure(
                                     function_id,
                                     arity,
@@ -478,6 +484,7 @@ impl<'a> Interpreter<'a> {
                 span: (0, 0).into(),
             },
             ValueError::OverflowError => Error::FOAR0002,
+            ValueError::StackOverflow => Error::XPDY0130,
         }
     }
 }
