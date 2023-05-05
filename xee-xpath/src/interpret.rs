@@ -57,11 +57,12 @@ impl<'a> Interpreter<'a> {
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
     }
 
-    pub(crate) fn run2(&mut self) -> Result<(), Error> {
-        self.run().map_err(|e| self.err(e))
+    pub(crate) fn run(&mut self) -> Result<(), Error> {
+        // annotate run with detailed error information
+        self.run_actual().map_err(|e| self.err(e))
     }
 
-    pub(crate) fn run(&mut self) -> Result<(), ValueError> {
+    pub(crate) fn run_actual(&mut self) -> Result<(), ValueError> {
         let frame = self.frames.last().unwrap();
 
         let context = self.context;
@@ -513,7 +514,7 @@ mod tests {
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
-        interpreter.run()?;
+        interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
             vec![StackValue::Atomic(Atomic::Integer(3))]
@@ -573,7 +574,7 @@ mod tests {
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
-        interpreter.run()?;
+        interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
             vec![StackValue::Atomic(Atomic::Integer(3))]
@@ -606,7 +607,7 @@ mod tests {
         let context = Context::new(&xot, "", static_context);
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
-        interpreter.run()?;
+        interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
             vec![StackValue::Atomic(Atomic::Integer(4))]
