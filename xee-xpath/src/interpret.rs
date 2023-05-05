@@ -90,7 +90,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic(context)?;
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
-                    let result = a.checked_add(b).ok_or(ValueError::OverflowError)?;
+                    let result = a.checked_add(b).ok_or(ValueError::Overflow)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 EncodedInstruction::Sub => {
@@ -100,7 +100,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic(context)?;
                     let a = a.as_integer()?;
                     let b = b.as_integer()?;
-                    let result = a.checked_sub(b).ok_or(ValueError::OverflowError)?;
+                    let result = a.checked_sub(b).ok_or(ValueError::Overflow)?;
                     self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
                 }
                 EncodedInstruction::Concat => {
@@ -307,7 +307,7 @@ impl<'a> Interpreter<'a> {
                     } else if let Ok(step) = callable.as_step() {
                         self.call_step(step)?;
                     } else {
-                        return Err(ValueError::TypeError);
+                        return Err(ValueError::Type);
                     }
                 }
                 EncodedInstruction::Return => {
@@ -447,11 +447,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_step(&mut self, step: Rc<Step>) -> Result<(), ValueError> {
         // take one argument from the stack
-        let node = self
-            .stack
-            .pop()
-            .unwrap()
-            .as_node()?;
+        let node = self.stack.pop().unwrap().as_node()?;
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.context.xot);
@@ -466,12 +462,13 @@ impl<'a> Interpreter<'a> {
                 src: NamedSource::new("input", self.context.src.to_string()),
                 span: self.current_span(),
             },
-            ValueError::TypeError => Error::XPTY0004 {
+            ValueError::Type => Error::XPTY0004 {
                 src: NamedSource::new("input", self.context.src.to_string()),
                 span: self.current_span(),
             },
-            ValueError::OverflowError => Error::FOAR0002,
+            ValueError::Overflow => Error::FOAR0002,
             ValueError::StackOverflow => Error::XPDY0130,
+            ValueError::DivisionByZero => Error::FOAR0001,
         }
     }
 

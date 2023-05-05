@@ -9,12 +9,94 @@ fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
         atomic_a,
         atomic_b,
         Ops {
-            integer_op: |a, b| a.checked_add(b).ok_or(ValueError::OverflowError),
-            decimal_op: |a, b| a.checked_add(b).ok_or(ValueError::OverflowError),
+            integer_op: |a, b| a.checked_add(b).ok_or(ValueError::Overflow),
+            decimal_op: |a, b| a.checked_add(b).ok_or(ValueError::Overflow),
             float_op: |a, b| a + b,
             double_op: |a, b| a + b,
         },
     )
+}
+
+fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+    numeric_op(
+        atomic_a,
+        atomic_b,
+        Ops {
+            integer_op: |a, b| a.checked_sub(b).ok_or(ValueError::Overflow),
+            decimal_op: |a, b| a.checked_sub(b).ok_or(ValueError::Overflow),
+            float_op: |a, b| a - b,
+            double_op: |a, b| a - b,
+        },
+    )
+}
+
+fn numeric_multiply(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+    numeric_op(
+        atomic_a,
+        atomic_b,
+        Ops {
+            integer_op: |a, b| a.checked_mul(b).ok_or(ValueError::Overflow),
+            decimal_op: |a, b| a.checked_mul(b).ok_or(ValueError::Overflow),
+            float_op: |a, b| a * b,
+            double_op: |a, b| a * b,
+        },
+    )
+}
+
+fn numeric_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+    match (atomic_a, atomic_b) {
+        // As a special case, if the types of both $arg1 and $arg2 are
+        // xs:integer, then the return type is xs:decimal.
+        (Atomic::Integer(_), Atomic::Integer(_)) => numeric_divide(
+            &Atomic::Decimal(atomic_a.as_decimal().unwrap()),
+            &Atomic::Decimal(atomic_b.as_decimal().unwrap()),
+        ),
+        _ => {
+            numeric_op(
+                atomic_a,
+                atomic_b,
+                Ops {
+                    integer_op: |a, b| {
+                        if b == 0 {
+                            Err(ValueError::DivisionByZero)
+                        } else {
+                            Ok(a / b)
+                        }
+                    },
+                    decimal_op: |a, b| {
+                        if b.is_zero() {
+                            Err(ValueError::DivisionByZero)
+                        } else {
+                            Ok(a / b)
+                        }
+                    },
+                    // For xs:float and xs:double operands, floating point division is
+                    // performed as specified in [IEEE 754-2008].
+                    // Returns INF, INF or NaN
+                    float_op: |a, b| a / b,
+                    double_op: |a, b| a / b,
+                },
+            )
+        }
+    }
+}
+
+fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+    // A dynamic error is raised [err:FOAR0001] if the divisor is (positive or negative) zero.
+    if atomic_b.is_zero() {
+        return Err(ValueError::DivisionByZero);
+    }
+    // A dynamic error is raised [err:FOAR0002] if either operand is NaN or if $arg1 is INF or -INF.
+    if atomic_a.is_nan() || atomic_b.is_nan() || atomic_a.is_infinite() {
+        return Err(ValueError::Overflow);
+    }
+    match numeric_divide(atomic_a, atomic_b)? {
+        Atomic::Integer(i) => Ok(Atomic::Integer(i)),
+        Atomic::Decimal(d) => Ok(Atomic::Integer(d.trunc().to_i64().unwrap())),
+        Atomic::Float(f) => Ok(Atomic::Integer(f.trunc() as i64)),
+        Atomic::Double(d) => Ok(Atomic::Integer(d.trunc() as i64)),
+        _ => unreachable!(),
+    }
 }
 
 struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
@@ -104,7 +186,7 @@ where
             // float P double
             numeric_op(atomic_a, &Atomic::Double(atomic_b.as_double()?), ops)
         }
-        _ => Err(ValueError::TypeError),
+        _ => Err(ValueError::Type),
     }
 }
 
@@ -125,7 +207,7 @@ mod tests {
     fn test_add_integers_overflow() {
         assert_eq!(
             numeric_add(&Atomic::Integer(i64::MAX), &Atomic::Integer(2)),
-            Err(ValueError::OverflowError)
+            Err(ValueError::Overflow)
         );
     }
 
@@ -141,7 +223,7 @@ mod tests {
     fn test_add_decimals_overflow() {
         assert_eq!(
             numeric_add(&Atomic::Decimal(Decimal::MAX), &Atomic::Decimal(dec!(2.7))),
-            Err(ValueError::OverflowError)
+            Err(ValueError::Overflow)
         );
     }
 
@@ -174,6 +256,86 @@ mod tests {
         assert_eq!(
             numeric_add(&Atomic::Double(1.5), &Atomic::Decimal(dec!(2.7))).unwrap(),
             Atomic::Double(4.2)
+        );
+    }
+
+    #[test]
+    fn test_numeric_divide_both_integer_returns_decimal() {
+        assert_eq!(
+            numeric_divide(&Atomic::Integer(1), &Atomic::Integer(2)).unwrap(),
+            Atomic::Decimal(dec!(0.5))
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_10_by_3() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Integer(10), &Atomic::Integer(3)).unwrap(),
+            Atomic::Integer(3)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_minus_2() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Integer(3), &Atomic::Integer(-2)).unwrap(),
+            Atomic::Integer(-1)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_2() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Integer(-3), &Atomic::Integer(2)).unwrap(),
+            Atomic::Integer(-1)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_minus_2() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Integer(-3), &Atomic::Integer(-2)).unwrap(),
+            Atomic::Integer(1)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_9_point_0_by_3() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Double(9.0), &Atomic::Integer(3)).unwrap(),
+            Atomic::Integer(3)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_4() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Integer(4)).unwrap(),
+            Atomic::Integer(0)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_0() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Integer(3), &Atomic::Integer(0)),
+            Err(ValueError::DivisionByZero)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_0() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Integer(0)),
+            Err(ValueError::DivisionByZero)
+        );
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_inf() {
+        assert_eq!(
+            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Double(f64::INFINITY)).unwrap(),
+            Atomic::Integer(0)
         );
     }
 }

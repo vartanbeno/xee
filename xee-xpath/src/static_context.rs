@@ -185,7 +185,7 @@ impl StaticFunction {
         closure_values: &[StackValue],
     ) -> Result<StackValue, ValueError> {
         if arguments.len() != self.arity {
-            return Err(ValueError::TypeError);
+            return Err(ValueError::Type);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {
@@ -335,12 +335,12 @@ fn string_helper(context: &Context, value: &StackValue) -> Result<String, ValueE
             match len {
                 0 => "".to_string(),
                 1 => string_helper(context, &StackValue::from_item(sequence.items[0].clone()))?,
-                _ => Err(ValueError::TypeError)?,
+                _ => Err(ValueError::Type)?,
             }
         }
         StackValue::Node(node) => node.string(context.xot),
-        StackValue::Closure(_) => Err(ValueError::TypeError)?,
-        StackValue::Step(_) => Err(ValueError::TypeError)?,
+        StackValue::Closure(_) => Err(ValueError::Type)?,
+        StackValue::Step(_) => Err(ValueError::Type)?,
     };
     Ok(value)
 }

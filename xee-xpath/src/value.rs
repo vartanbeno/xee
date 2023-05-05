@@ -14,8 +14,9 @@ use crate::ir;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ValueError {
     XPTY0004,
-    TypeError,
-    OverflowError,
+    Type,
+    Overflow,
+    DivisionByZero,
     StackOverflow,
 }
 
@@ -205,21 +206,21 @@ impl StackValue {
             StackValue::Sequence(s) => Ok(s.clone()),
             StackValue::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
             StackValue::Node(a) => Ok(Rc::new(RefCell::new(Sequence::from_node(*a)))),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn as_closure(&self) -> Result<&Closure> {
         match self {
             StackValue::Closure(c) => Ok(c),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn as_step(&self) -> Result<Rc<Step>> {
         match self {
             StackValue::Step(s) => Ok(Rc::clone(s)),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
@@ -227,7 +228,7 @@ impl StackValue {
         match self {
             StackValue::Node(n) => Ok(*n),
             StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.as_node()),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 }
@@ -250,7 +251,7 @@ impl Atomic {
     pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
@@ -258,16 +259,16 @@ impl Atomic {
         match self {
             Atomic::Decimal(d) => Ok(*d),
             Atomic::Integer(i) => Ok(Decimal::from(*i)),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn as_float(&self) -> Result<f32> {
         match self {
             Atomic::Float(f) => Ok(*f),
-            Atomic::Decimal(d) => d.to_f32().ok_or(ValueError::TypeError),
-            Atomic::Integer(_) => self.as_decimal()?.to_f32().ok_or(ValueError::TypeError),
-            _ => Err(ValueError::TypeError),
+            Atomic::Decimal(d) => d.to_f32().ok_or(ValueError::Type),
+            Atomic::Integer(_) => self.as_decimal()?.to_f32().ok_or(ValueError::Type),
+            _ => Err(ValueError::Type),
         }
     }
 
@@ -275,9 +276,9 @@ impl Atomic {
         match self {
             Atomic::Double(d) => Ok(*d),
             Atomic::Float(f) => Ok(*f as f64),
-            Atomic::Decimal(d) => d.to_f64().ok_or(ValueError::TypeError),
-            Atomic::Integer(_) => self.as_decimal()?.to_f64().ok_or(ValueError::TypeError),
-            _ => Err(ValueError::TypeError),
+            Atomic::Decimal(d) => d.to_f64().ok_or(ValueError::Type),
+            Atomic::Integer(_) => self.as_decimal()?.to_f64().ok_or(ValueError::Type),
+            _ => Err(ValueError::Type),
         }
     }
 
@@ -285,14 +286,40 @@ impl Atomic {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),
             Atomic::Boolean(b) => Ok(*b),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn as_string(&self) -> Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
+        }
+    }
+
+    pub(crate) fn is_nan(&self) -> bool {
+        match self {
+            Atomic::Float(f) => f.is_nan(),
+            Atomic::Double(d) => d.is_nan(),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_infinite(&self) -> bool {
+        match self {
+            Atomic::Float(f) => f.is_infinite(),
+            Atomic::Double(d) => d.is_infinite(),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_zero(&self) -> bool {
+        match self {
+            Atomic::Float(f) => f.is_zero(),
+            Atomic::Double(d) => d.is_zero(),
+            Atomic::Decimal(d) => d.is_zero(),
+            Atomic::Integer(i) => *i == 0,
+            _ => false,
         }
     }
 }
@@ -309,13 +336,13 @@ impl Item {
     pub(crate) fn as_atomic(&self) -> Result<&Atomic> {
         match self {
             Item::Atomic(a) => Ok(a),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
     pub(crate) fn as_node(&self) -> Result<Node> {
         match self {
             Item::Node(n) => Ok(*n),
-            _ => Err(ValueError::TypeError),
+            _ => Err(ValueError::Type),
         }
     }
 }
@@ -354,7 +381,7 @@ impl Sequence {
         if self.items.len() == 1 {
             Ok(&self.items[0])
         } else {
-            Err(ValueError::TypeError)
+            Err(ValueError::Type)
         }
     }
 
@@ -423,16 +450,16 @@ impl Sequence {
         for item in &self.items {
             let node = match item {
                 Item::Node(node) => *node,
-                Item::Atomic(..) => return Err(ValueError::TypeError),
-                Item::Function(..) => return Err(ValueError::TypeError),
+                Item::Atomic(..) => return Err(ValueError::Type),
+                Item::Function(..) => return Err(ValueError::Type),
             };
             s.insert(node);
         }
         for item in &other.items {
             let node = match item {
                 Item::Node(node) => *node,
-                Item::Atomic(..) => return Err(ValueError::TypeError),
-                Item::Function(..) => return Err(ValueError::TypeError),
+                Item::Atomic(..) => return Err(ValueError::Type),
+                Item::Function(..) => return Err(ValueError::Type),
             };
             s.insert(node);
         }
