@@ -22,6 +22,8 @@ num-traits = "0.2.15"
 ordered-float = "3.6.0"
 pest = "2.5.6"
 pest_derive = "2.5.6"
+rust_decimal = "1.29.1"
+
 thiserror = "1.0.40"
 xot = { workspace = true }
 
@@ -30,3 +32,4 @@ insta = { version = "1.29.0", features = ["yaml", "glob"] }
 rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }
+rust_decimal_macros = "1.29.1"

@@ -326,6 +326,7 @@ fn string_helper(context: &Context, value: &StackValue) -> Result<String, ValueE
             Atomic::Float(float) => float.to_string(),
             Atomic::Boolean(boolean) => boolean.to_string(),
             Atomic::Double(double) => double.to_string(),
+            Atomic::Decimal(decimal) => decimal.to_string(),
             Atomic::Empty => "".to_string(),
         },
         StackValue::Sequence(sequence) => {

@@ -1,5 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 use miette::SourceSpan;
+use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
@@ -234,13 +235,11 @@ impl StackValue {
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, PartialEq)]
 pub enum Atomic {
-    // should string be Rc?
-    // String(String),
     Boolean(bool),
-    // Decimal, use a decimal type
-    Integer(i64), // is really a decimal, but special case it for now
+    Integer(i64),
     Float(f32),
     Double(f64),
+    Decimal(Decimal),
     // and many more
     String(Rc<String>),
     // a special marker to note empty sequences after atomization
@@ -251,6 +250,33 @@ impl Atomic {
     pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
+            _ => Err(ValueError::TypeError),
+        }
+    }
+
+    pub(crate) fn as_decimal(&self) -> Result<Decimal> {
+        match self {
+            Atomic::Decimal(d) => Ok(*d),
+            Atomic::Integer(i) => Ok(Decimal::from(*i)),
+            _ => Err(ValueError::TypeError),
+        }
+    }
+
+    pub(crate) fn as_float(&self) -> Result<f32> {
+        match self {
+            Atomic::Float(f) => Ok(*f),
+            Atomic::Decimal(d) => d.to_f32().ok_or(ValueError::TypeError),
+            Atomic::Integer(_) => self.as_decimal()?.to_f32().ok_or(ValueError::TypeError),
+            _ => Err(ValueError::TypeError),
+        }
+    }
+
+    pub(crate) fn as_double(&self) -> Result<f64> {
+        match self {
+            Atomic::Double(d) => Ok(*d),
+            Atomic::Float(f) => Ok(*f as f64),
+            Atomic::Decimal(d) => d.to_f64().ok_or(ValueError::TypeError),
+            Atomic::Integer(_) => self.as_decimal()?.to_f64().ok_or(ValueError::TypeError),
             _ => Err(ValueError::TypeError),
         }
     }
