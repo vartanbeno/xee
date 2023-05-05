@@ -176,8 +176,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Comma => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence().ok_or(ValueError::TypeError)?;
-                    let b = b.as_sequence().ok_or(ValueError::TypeError)?;
+                    let a = a.as_sequence()?;
+                    let b = b.as_sequence()?;
                     self.stack.push(StackValue::Sequence(Rc::new(RefCell::new(
                         a.borrow().concat(&b.borrow()),
                     ))));
@@ -277,8 +277,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence().ok_or(ValueError::TypeError)?;
-                    let b = b.as_sequence().ok_or(ValueError::TypeError)?;
+                    let a = a.as_sequence()?;
+                    let b = b.as_sequence()?;
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.context.documents.annotations)?;
@@ -371,7 +371,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::SequenceLen => {
                     let sequence = self.stack.pop().unwrap();
-                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
+                    let sequence = sequence.as_sequence()?;
                     let len = sequence.borrow().items.len();
                     self.stack
                         .push(StackValue::Atomic(Atomic::Integer(len as i64)));
@@ -380,7 +380,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let index = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
+                    let sequence = sequence.as_sequence()?;
                     let index = index.as_atomic(context)?;
                     let index = index.as_integer()?;
                     // substract 1 as Xpath is 1-indexed
@@ -401,7 +401,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let stack_value = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence().ok_or(ValueError::TypeError)?;
+                    let sequence = sequence.as_sequence()?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
                 EncodedInstruction::PrintTop => {

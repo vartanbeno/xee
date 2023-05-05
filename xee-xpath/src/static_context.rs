@@ -293,7 +293,7 @@ fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackVal
 }
 
 fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_sequence().ok_or(ValueError::TypeError)?;
+    let a = arguments[0].as_sequence()?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }

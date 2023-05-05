@@ -11,7 +11,7 @@ use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ValueError {
+pub enum ValueError {
     XPTY0004,
     TypeError,
     OverflowError,
@@ -199,12 +199,12 @@ impl StackValue {
         }
     }
 
-    pub fn as_sequence(&self) -> Option<Rc<RefCell<Sequence>>> {
+    pub fn as_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
         match self {
-            StackValue::Sequence(s) => Some(s.clone()),
-            StackValue::Atomic(a) => Some(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
-            StackValue::Node(a) => Some(Rc::new(RefCell::new(Sequence::from_node(*a)))),
-            _ => None,
+            StackValue::Sequence(s) => Ok(s.clone()),
+            StackValue::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
+            StackValue::Node(a) => Ok(Rc::new(RefCell::new(Sequence::from_node(*a)))),
+            _ => Err(ValueError::TypeError),
         }
     }
 
@@ -287,10 +287,10 @@ pub(crate) enum Item {
 }
 
 impl Item {
-    pub(crate) fn as_atomic(&self) -> Option<&Atomic> {
+    pub(crate) fn as_atomic(&self) -> Result<&Atomic> {
         match self {
-            Item::Atomic(a) => Some(a),
-            _ => None,
+            Item::Atomic(a) => Ok(a),
+            _ => Err(ValueError::TypeError),
         }
     }
     pub(crate) fn as_node(&self) -> Option<Node> {
