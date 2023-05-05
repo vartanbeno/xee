@@ -1166,6 +1166,7 @@ mod tests {
 
     #[test]
     fn test_atomize_too_many_values() {
+        // we can't atomize the sequence which happens because of addition
         assert_debug_snapshot!(run("0 + 12 + ((2, 3, 4) + 1)"));
     }
 
