@@ -1168,4 +1168,9 @@ mod tests {
     fn test_atomize_too_many_values() {
         assert_debug_snapshot!(run("0 + 12 + ((2, 3, 4) + 1)"));
     }
+
+    // #[test]
+    // fn test_fancy_math() {
+    //     assert_debug_snapshot!(run("12 * 15.4"));
+    // }
 }

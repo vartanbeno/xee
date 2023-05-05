@@ -5,6 +5,12 @@ pub(crate) enum Instruction {
     // binary operators
     Add,
     Sub,
+    Mul,
+    Div,
+    IntDiv,
+    Mod,
+    // UnaryPlus,
+    // UnaryMinus,
     Concat,
     Const(u16),
     Closure(u16),
@@ -40,6 +46,12 @@ pub(crate) enum Instruction {
 pub(crate) enum EncodedInstruction {
     Add,
     Sub,
+    Mul,
+    Div,
+    IntDiv,
+    Mod,
+    // UnaryPlus,
+    // UnaryMinus,
     Concat,
     Const,
     Closure,
@@ -77,6 +89,12 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
     match encoded_instruction {
         EncodedInstruction::Add => (Instruction::Add, 1),
         EncodedInstruction::Sub => (Instruction::Sub, 1),
+        EncodedInstruction::Mul => (Instruction::Mul, 1),
+        EncodedInstruction::Div => (Instruction::Div, 1),
+        EncodedInstruction::IntDiv => (Instruction::IntDiv, 1),
+        EncodedInstruction::Mod => (Instruction::Mod, 1),
+        // EncodedInstruction::UnaryPlus => (Instruction::UnaryPlus, 1),
+        // EncodedInstruction::UnaryMinus => (Instruction::UnaryMinus, 1),
         EncodedInstruction::Concat => (Instruction::Concat, 1),
         EncodedInstruction::Const => {
             let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -154,6 +172,12 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
     match instruction {
         Instruction::Add => bytes.push(EncodedInstruction::Add.to_u8().unwrap()),
         Instruction::Sub => bytes.push(EncodedInstruction::Sub.to_u8().unwrap()),
+        Instruction::Mul => bytes.push(EncodedInstruction::Mul.to_u8().unwrap()),
+        Instruction::Div => bytes.push(EncodedInstruction::Div.to_u8().unwrap()),
+        Instruction::IntDiv => bytes.push(EncodedInstruction::IntDiv.to_u8().unwrap()),
+        Instruction::Mod => bytes.push(EncodedInstruction::Mod.to_u8().unwrap()),
+        // Instruction::UnaryPlus => bytes.push(EncodedInstruction::UnaryPlus.to_u8().unwrap()),
+        // Instruction::UnaryMinus => bytes.push(EncodedInstruction::UnaryMinus.to_u8().unwrap()),
         Instruction::Concat => bytes.push(EncodedInstruction::Concat.to_u8().unwrap()),
         Instruction::Const(constant) => {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
@@ -227,6 +251,12 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
     match instruction {
         Instruction::Add
         | Instruction::Sub
+        | Instruction::Mul
+        | Instruction::Div
+        | Instruction::IntDiv
+        | Instruction::Mod
+        // | Instruction::UnaryPlus
+        // | Instruction::UnaryMinus
         | Instruction::Concat
         | Instruction::Comma
         | Instruction::Eq

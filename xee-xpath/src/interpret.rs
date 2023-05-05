@@ -8,6 +8,7 @@ use crate::builder::Program;
 use crate::context::Context;
 use crate::error::Error;
 use crate::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
+use crate::op;
 
 use crate::step::resolve_step;
 use crate::value::{
@@ -88,20 +89,48 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    let result = a.checked_add(b).ok_or(ValueError::Overflow)?;
-                    self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_add(&a, &b)?));
                 }
                 EncodedInstruction::Sub => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    let result = a.checked_sub(b).ok_or(ValueError::Overflow)?;
-                    self.stack.push(StackValue::Atomic(Atomic::Integer(result)));
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_substract(&a, &b)?));
+                }
+                EncodedInstruction::Mul => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_multiply(&a, &b)?));
+                }
+                EncodedInstruction::Div => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_divide(&a, &b)?));
+                }
+                EncodedInstruction::IntDiv => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_integer_divide(&a, &b)?));
+                }
+                EncodedInstruction::Mod => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let a = a.as_atomic(context)?;
+                    let b = b.as_atomic(context)?;
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_mod(&a, &b)?));
                 }
                 EncodedInstruction::Concat => {
                     let b = self.stack.pop().unwrap();

@@ -4,7 +4,7 @@ use crate::value::{Atomic, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
-fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     numeric_op(
         atomic_a,
         atomic_b,
@@ -17,7 +17,7 @@ fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     )
 }
 
-fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     numeric_op(
         atomic_a,
         atomic_b,
@@ -30,7 +30,7 @@ fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     )
 }
 
-fn numeric_multiply(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_multiply(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     numeric_op(
         atomic_a,
         atomic_b,
@@ -43,7 +43,7 @@ fn numeric_multiply(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     )
 }
 
-fn numeric_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     match (atomic_a, atomic_b) {
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
@@ -81,7 +81,7 @@ fn numeric_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     }
 }
 
-fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     // A dynamic error is raised [err:FOAR0001] if the divisor is (positive or negative) zero.
     if atomic_b.is_zero() {
         return Err(ValueError::DivisionByZero);
@@ -99,7 +99,7 @@ fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic
     }
 }
 
-fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
     numeric_op(
         atomic_a,
         atomic_b,
@@ -122,6 +122,28 @@ fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
             double_op: |a, b| a % b,
         },
     )
+}
+
+pub(crate) fn op_numeric_unary_plus(atomic: &Atomic) -> Result<Atomic> {
+    match atomic {
+        Atomic::Integer(_) => Ok(atomic.clone()),
+        Atomic::Decimal(_) => Ok(atomic.clone()),
+        Atomic::Float(_) => Ok(atomic.clone()),
+        Atomic::Double(_) => Ok(atomic.clone()),
+        // XXX function conversion rules?
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn op_numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
+    match atomic {
+        Atomic::Integer(i) => Ok(Atomic::Integer(-i)),
+        Atomic::Decimal(d) => Ok(Atomic::Decimal(-d)),
+        Atomic::Float(f) => Ok(Atomic::Float(-f)),
+        Atomic::Double(d) => Ok(Atomic::Double(-d)),
+        // XXX function conversion rules?
+        _ => Err(ValueError::Type),
+    }
 }
 
 struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
