@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use miette::{NamedSource, SourceSpan};
+use miette::SourceSpan;
 use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;

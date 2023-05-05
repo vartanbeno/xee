@@ -37,7 +37,7 @@ pub(crate) enum Instruction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
-enum EncodedInstruction {
+pub(crate) enum EncodedInstruction {
     Add,
     Sub,
     Concat,
