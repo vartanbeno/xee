@@ -167,9 +167,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     // the closure is always just below the base
-                    let closure = self.stack[self.frame().base - 1]
-                        .as_closure()
-                        .ok_or(ValueError::TypeError)?;
+                    let closure = self.stack[self.frame().base - 1].as_closure()?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
@@ -295,7 +293,7 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    if let Some(closure) = callable.as_closure() {
+                    if let Ok(closure) = callable.as_closure() {
                         match closure.function_id {
                             ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
@@ -306,7 +304,7 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Some(step) = callable.as_step() {
+                    } else if let Ok(step) = callable.as_step() {
                         self.call_step(step)?;
                     } else {
                         return Err(ValueError::TypeError);

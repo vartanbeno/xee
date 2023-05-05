@@ -208,24 +208,17 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_closure(&self) -> Option<&Closure> {
+    pub(crate) fn as_closure(&self) -> Result<&Closure> {
         match self {
-            StackValue::Closure(c) => Some(c),
-            _ => None,
+            StackValue::Closure(c) => Ok(c),
+            _ => Err(ValueError::TypeError),
         }
     }
 
-    // pub(crate) fn as_static_function(&self) -> Option<StaticFunctionId> {
-    //     match self {
-    //         StackValue::StaticFunction(f) => Some(*f),
-    //         _ => None,
-    //     }
-    // }
-
-    pub(crate) fn as_step(&self) -> Option<Rc<Step>> {
+    pub(crate) fn as_step(&self) -> Result<Rc<Step>> {
         match self {
-            StackValue::Step(s) => Some(Rc::clone(s)),
-            _ => None,
+            StackValue::Step(s) => Ok(Rc::clone(s)),
+            _ => Err(ValueError::TypeError),
         }
     }
 
