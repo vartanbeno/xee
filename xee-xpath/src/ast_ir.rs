@@ -451,7 +451,7 @@ impl<'a> IrConverter<'a> {
                     let mut right_bindings = self.expr_single(expr_single)?;
                     let expr = ir::Expr::Binary(ir::Binary {
                         left: left_bindings.atom(),
-                        op: ir::BinaryOp::Comma,
+                        op: ir::BinaryOperator::Comma,
                         right: right_bindings.atom(),
                     });
                     let span_end = expr_single.span.offset() + expr_single.span.len();
@@ -483,7 +483,7 @@ impl<'a> IrConverter<'a> {
         Ok(left_bindings.concat(right_bindings).bind(binding))
     }
 
-    fn binary_op(&mut self, operator: ast::Operator) -> ir::BinaryOp {
+    fn binary_op(&mut self, operator: ast::BinaryOperator) -> ir::BinaryOperator {
         operator
     }
 

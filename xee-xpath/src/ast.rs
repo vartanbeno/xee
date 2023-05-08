@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
-pub(crate) use crate::operator::Operator;
+pub(crate) use crate::operator::BinaryOperator;
 use crate::span::Spanned;
 
 pub(crate) type ExprSingleS = Spanned<ExprSingle>;
@@ -101,7 +101,7 @@ pub(crate) enum UnaryLookup {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct BinaryExpr {
-    pub(crate) operator: Operator,
+    pub(crate) operator: BinaryOperator,
     pub(crate) left: PathExpr,
     pub(crate) right: PathExpr,
 }

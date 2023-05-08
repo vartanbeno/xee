@@ -124,40 +124,40 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&binary.left)?;
         self.compile_atom(&binary.right)?;
         match &binary.op {
-            ir::BinaryOp::Add => {
+            ir::BinaryOperator::Add => {
                 self.builder.emit(Instruction::Add, span);
             }
-            ir::BinaryOp::Sub => {
+            ir::BinaryOperator::Sub => {
                 self.builder.emit(Instruction::Sub, span);
             }
-            ir::BinaryOp::ValueEq => {
+            ir::BinaryOperator::ValueEq => {
                 self.builder.emit(Instruction::Eq, span);
             }
-            ir::BinaryOp::ValueNe => {
+            ir::BinaryOperator::ValueNe => {
                 self.builder.emit(Instruction::Ne, span);
             }
-            ir::BinaryOp::ValueLt => {
+            ir::BinaryOperator::ValueLt => {
                 self.builder.emit(Instruction::Lt, span);
             }
-            ir::BinaryOp::ValueLe => {
+            ir::BinaryOperator::ValueLe => {
                 self.builder.emit(Instruction::Le, span);
             }
-            ir::BinaryOp::ValueGt => {
+            ir::BinaryOperator::ValueGt => {
                 self.builder.emit(Instruction::Gt, span);
             }
-            ir::BinaryOp::ValueGe => {
+            ir::BinaryOperator::ValueGe => {
                 self.builder.emit(Instruction::Ge, span);
             }
-            ir::BinaryOp::Comma => {
+            ir::BinaryOperator::Comma => {
                 self.builder.emit(Instruction::Comma, span);
             }
-            ir::BinaryOp::Union => {
+            ir::BinaryOperator::Union => {
                 self.builder.emit(Instruction::Union, span);
             }
-            ir::BinaryOp::Range => {
+            ir::BinaryOperator::Range => {
                 self.builder.emit(Instruction::Range, span);
             }
-            ir::BinaryOp::Concat => {
+            ir::BinaryOperator::Concat => {
                 self.builder.emit(Instruction::Concat, span);
             }
             _ => todo!("operator not supported yet: {:?}", binary.op),

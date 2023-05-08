@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Operator {
+pub(crate) enum BinaryOperator {
     // logical
     Or,
     And,
