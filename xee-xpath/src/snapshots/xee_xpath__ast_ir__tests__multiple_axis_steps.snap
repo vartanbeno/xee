@@ -174,7 +174,7 @@ Ok(
                                 ),
                                 span: SourceSpan {
                                     offset: SourceOffset(
-                                        0,
+                                        9,
                                     ),
                                     length: SourceOffset(
                                         8,

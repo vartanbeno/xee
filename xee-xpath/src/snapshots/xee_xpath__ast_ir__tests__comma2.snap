@@ -67,10 +67,10 @@ Ok(
                                 ),
                                 span: SourceSpan {
                                     offset: SourceOffset(
-                                        3,
+                                        0,
                                     ),
                                     length: SourceOffset(
-                                        1,
+                                        4,
                                     ),
                                 },
                             },
@@ -85,10 +85,10 @@ Ok(
                                             ),
                                             span: SourceSpan {
                                                 offset: SourceOffset(
-                                                    3,
+                                                    0,
                                                 ),
                                                 length: SourceOffset(
-                                                    1,
+                                                    4,
                                                 ),
                                             },
                                         },
@@ -112,10 +112,10 @@ Ok(
                                 ),
                                 span: SourceSpan {
                                     offset: SourceOffset(
-                                        3,
+                                        0,
                                     ),
                                     length: SourceOffset(
-                                        1,
+                                        7,
                                     ),
                                 },
                             },
@@ -123,10 +123,10 @@ Ok(
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
-                            6,
+                            0,
                         ),
                         length: SourceOffset(
-                            1,
+                            7,
                         ),
                     },
                 },

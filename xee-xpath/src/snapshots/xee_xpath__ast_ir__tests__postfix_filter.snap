@@ -47,10 +47,10 @@ Ok(
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
-                            4,
+                            1,
                         ),
                         length: SourceOffset(
-                            1,
+                            4,
                         ),
                     },
                 },
@@ -76,10 +76,10 @@ Ok(
                                 ),
                                 span: SourceSpan {
                                     offset: SourceOffset(
-                                        4,
+                                        1,
                                     ),
                                     length: SourceOffset(
-                                        1,
+                                        4,
                                     ),
                                 },
                             },
@@ -132,10 +132,10 @@ Ok(
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
-                            4,
+                            7,
                         ),
                         length: SourceOffset(
-                            1,
+                            6,
                         ),
                     },
                 },

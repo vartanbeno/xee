@@ -61,10 +61,10 @@ Ok(
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
-                            3,
+                            0,
                         ),
                         length: SourceOffset(
-                            1,
+                            4,
                         ),
                     },
                 },

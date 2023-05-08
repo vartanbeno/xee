@@ -32,3 +32,4 @@ mod xpath;
 
 pub use crate::error::Error;
 pub use crate::run::{evaluate, run_without_context};
+pub use crate::value::StackValue;

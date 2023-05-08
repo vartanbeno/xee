@@ -166,10 +166,10 @@ Ok(
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
-                            4,
+                            0,
                         ),
                         length: SourceOffset(
-                            6,
+                            33,
                         ),
                     },
                 },

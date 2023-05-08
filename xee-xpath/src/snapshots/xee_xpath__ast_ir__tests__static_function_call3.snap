@@ -232,10 +232,10 @@ Ok(
                                                         ),
                                                         span: SourceSpan {
                                                             offset: SourceOffset(
-                                                                23,
+                                                                0,
                                                             ),
                                                             length: SourceOffset(
-                                                                5,
+                                                                29,
                                                             ),
                                                         },
                                                     },
@@ -243,10 +243,10 @@ Ok(
                                             ),
                                             span: SourceSpan {
                                                 offset: SourceOffset(
-                                                    12,
+                                                    0,
                                                 ),
                                                 length: SourceOffset(
-                                                    9,
+                                                    29,
                                                 ),
                                             },
                                         },
@@ -254,10 +254,10 @@ Ok(
                                 ),
                                 span: SourceSpan {
                                     offset: SourceOffset(
-                                        12,
+                                        0,
                                     ),
                                     length: SourceOffset(
-                                        6,
+                                        29,
                                     ),
                                 },
                             },
@@ -268,7 +268,7 @@ Ok(
                             0,
                         ),
                         length: SourceOffset(
-                            0,
+                            29,
                         ),
                     },
                 },

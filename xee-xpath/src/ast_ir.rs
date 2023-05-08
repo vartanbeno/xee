@@ -58,7 +58,7 @@ impl Bindings {
                 ir::Expr::Let(ir::Let {
                     name: binding.name.clone(),
                     var_expr: Box::new(Spanned::new(binding.expr.clone(), binding.span)),
-                    return_expr: Box::new(Spanned::new(expr, binding.span)),
+                    return_expr: Box::new(Spanned::new(expr, last_binding.span)),
                 })
             }),
             last_binding.span,
@@ -431,6 +431,7 @@ impl<'a> IrConverter<'a> {
         if !exprs.value.is_empty() {
             // XXX could this be reduce?
             let first_expr = &exprs.value[0];
+            let span_start = &exprs.value[0].span.offset();
             let rest_exprs = &exprs.value[1..];
             rest_exprs
                 .iter()
@@ -442,7 +443,9 @@ impl<'a> IrConverter<'a> {
                         op: ir::BinaryOp::Comma,
                         right: right_bindings.atom(),
                     });
-                    let binding = self.new_binding(expr, expr_single.span);
+                    let span_end = expr_single.span.offset() + expr_single.span.len();
+                    let span = (*span_start, span_end - span_start).into();
+                    let binding = self.new_binding(expr, span);
                     Ok(left_bindings.concat(right_bindings).bind(binding))
                 })
         } else {
@@ -692,7 +695,7 @@ fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
     converter.convert_expr_single(&ast)
 }
 
-fn convert_xpath(s: &str) -> Result<ir::ExprS> {
+pub(crate) fn convert_xpath(s: &str) -> Result<ir::ExprS> {
     let namespaces = Namespaces::new(None, None);
     let ast = crate::parse_ast::parse_xpath(s, &namespaces)?;
     let static_context = StaticContext::new(&namespaces);
