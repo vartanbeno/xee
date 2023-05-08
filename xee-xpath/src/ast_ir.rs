@@ -408,34 +408,15 @@ impl<'a> IrConverter<'a> {
     }
 
     fn literal(&mut self, ast: &ast::Literal, span: SourceSpan) -> Bindings {
-        match ast {
-            ast::Literal::Integer(i) => {
-                let expr =
-                    ir::Expr::Atom(Spanned::new(ir::Atom::Const(ir::Const::Integer(*i)), span));
-                let binding = self.new_binding(expr, span);
-                Bindings::from_vec(vec![binding])
-            }
-            ast::Literal::String(s) => {
-                let expr = ir::Expr::Atom(Spanned::new(
-                    ir::Atom::Const(ir::Const::String(s.clone())),
-                    span,
-                ));
-                let binding = self.new_binding(expr, span);
-                Bindings::from_vec(vec![binding])
-            }
-            ast::Literal::Double(d) => {
-                let expr =
-                    ir::Expr::Atom(Spanned::new(ir::Atom::Const(ir::Const::Double(*d)), span));
-                let binding = self.new_binding(expr, span);
-                Bindings::from_vec(vec![binding])
-            }
-            ast::Literal::Decimal(d) => {
-                let expr =
-                    ir::Expr::Atom(Spanned::new(ir::Atom::Const(ir::Const::Decimal(*d)), span));
-                let binding = self.new_binding(expr, span);
-                Bindings::from_vec(vec![binding])
-            }
-        }
+        let atom = match ast {
+            ast::Literal::Integer(i) => ir::Atom::Const(ir::Const::Integer(*i)),
+            ast::Literal::String(s) => ir::Atom::Const(ir::Const::String(s.clone())),
+            ast::Literal::Double(d) => ir::Atom::Const(ir::Const::Double(*d)),
+            ast::Literal::Decimal(d) => ir::Atom::Const(ir::Const::Decimal(*d)),
+        };
+        let expr = ir::Expr::Atom(Spanned::new(atom, span));
+        let binding = self.new_binding(expr, span);
+        Bindings::from_vec(vec![binding])
     }
 
     fn exprs(&mut self, exprs: &ast::ExprS) -> Result<Bindings> {
