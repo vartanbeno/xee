@@ -19,13 +19,23 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Evaluate an xpath expression on an xml document.
-    Xpath { xml: PathBuf, xpath: String },
+    Xpath {
+        xml: PathBuf,
+        xpath: String,
+        /// The default namespace for elements
+        #[arg(long, short)]
+        namespace_default: Option<String>,
+    },
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Xpath { xml, xpath } => {
+        Commands::Xpath {
+            xml,
+            xpath,
+            namespace_default,
+        } => {
             let mut xot = Xot::new();
             let xml_file = File::open(xml)
                 .into_diagnostic()
@@ -40,7 +50,7 @@ fn main() -> Result<()> {
                 .parse(&xml)
                 .into_diagnostic()
                 .wrap_err("Cannot parse XML")?;
-            let result = evaluate_root(&xot, root, &xpath, None)?;
+            let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
             match result {
                 StackValue::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
                 StackValue::Sequence(sequence) => {
