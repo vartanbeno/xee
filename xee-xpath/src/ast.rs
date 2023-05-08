@@ -1,6 +1,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+pub(crate) use crate::operator::Operator;
 use crate::span::Spanned;
 
 pub(crate) type ExprSingleS = Spanned<ExprSingle>;
@@ -103,46 +104,6 @@ pub(crate) struct BinaryExpr {
     pub(crate) operator: Operator,
     pub(crate) left: PathExpr,
     pub(crate) right: PathExpr,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Operator {
-    // logical
-    Or,
-    And,
-    // value comp
-    ValueEq,
-    ValueNe,
-    ValueLt,
-    ValueLe,
-    ValueGt,
-    ValueGe,
-    // general comp
-    GenEq,
-    GenNe,
-    GenLt,
-    GenLe,
-    GenGt,
-    GenGe,
-    // node comp
-    Is,
-    Precedes,
-    Follows,
-    // string concat
-    Concat,
-    // range
-    Range,
-    // arithmetic
-    Add,
-    Sub,
-    Mul,
-    Div,
-    IDiv,
-    Mod,
-    // set
-    Union,
-    Intersect,
-    Except,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

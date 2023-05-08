@@ -130,22 +130,22 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOp::Sub => {
                 self.builder.emit(Instruction::Sub, span);
             }
-            ir::BinaryOp::Eq => {
+            ir::BinaryOp::ValueEq => {
                 self.builder.emit(Instruction::Eq, span);
             }
-            ir::BinaryOp::Ne => {
+            ir::BinaryOp::ValueNe => {
                 self.builder.emit(Instruction::Ne, span);
             }
-            ir::BinaryOp::Lt => {
+            ir::BinaryOp::ValueLt => {
                 self.builder.emit(Instruction::Lt, span);
             }
-            ir::BinaryOp::Le => {
+            ir::BinaryOp::ValueLe => {
                 self.builder.emit(Instruction::Le, span);
             }
-            ir::BinaryOp::Gt => {
+            ir::BinaryOp::ValueGt => {
                 self.builder.emit(Instruction::Gt, span);
             }
-            ir::BinaryOp::Ge => {
+            ir::BinaryOp::ValueGe => {
                 self.builder.emit(Instruction::Ge, span);
             }
             ir::BinaryOp::Comma => {
@@ -160,6 +160,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOp::Concat => {
                 self.builder.emit(Instruction::Concat, span);
             }
+            _ => todo!("operator not supported yet: {:?}", binary.op),
         }
         Ok(())
     }

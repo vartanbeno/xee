@@ -20,6 +20,7 @@ mod ir;
 mod ir_interpret;
 mod name;
 mod op;
+mod operator;
 mod parse;
 mod parse_ast;
 mod run;

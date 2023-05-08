@@ -435,7 +435,6 @@ impl<'a> IrConverter<'a> {
                 let binding = self.new_binding(expr, span);
                 Bindings::from_vec(vec![binding])
             }
-            _ => todo!("literal not implemented yet: {:?}", ast),
         }
     }
 
@@ -485,20 +484,7 @@ impl<'a> IrConverter<'a> {
     }
 
     fn binary_op(&mut self, operator: ast::Operator) -> ir::BinaryOp {
-        match operator {
-            ast::Operator::Add => ir::BinaryOp::Add,
-            ast::Operator::Sub => ir::BinaryOp::Sub,
-            ast::Operator::ValueEq => ir::BinaryOp::Eq,
-            ast::Operator::ValueNe => ir::BinaryOp::Ne,
-            ast::Operator::ValueLt => ir::BinaryOp::Lt,
-            ast::Operator::ValueLe => ir::BinaryOp::Le,
-            ast::Operator::ValueGt => ir::BinaryOp::Gt,
-            ast::Operator::ValueGe => ir::BinaryOp::Ge,
-            ast::Operator::Union => ir::BinaryOp::Union,
-            ast::Operator::Range => ir::BinaryOp::Range,
-            ast::Operator::Concat => ir::BinaryOp::Concat,
-            _ => todo!("binary_op: {:?}", operator),
-        }
+        operator
     }
 
     fn apply_expr(&mut self, ast: &ast::ApplyExpr, span: SourceSpan) -> Result<Bindings> {

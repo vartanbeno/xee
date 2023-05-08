@@ -5,6 +5,8 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use std::rc::Rc;
 
+use crate::operator::Operator;
+pub(crate) use crate::operator::Operator as BinaryOp;
 use crate::span::Spanned;
 use crate::value::{StaticFunctionId, Step};
 
@@ -72,24 +74,8 @@ pub(crate) struct If {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Binary {
     pub(crate) left: AtomS,
-    pub(crate) op: BinaryOp,
+    pub(crate) op: Operator,
     pub(crate) right: AtomS,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum BinaryOp {
-    Add,
-    Sub,
-    Eq,
-    Ne,
-    Lt,
-    Le,
-    Gt,
-    Ge,
-    Comma,
-    Union,
-    Range,
-    Concat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

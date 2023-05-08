@@ -107,7 +107,7 @@ Ok(
                                                             ),
                                                         },
                                                     },
-                                                    op: Gt,
+                                                    op: ValueGt,
                                                     right: Spanned {
                                                         value: Const(
                                                             Integer(
@@ -192,7 +192,7 @@ Ok(
                                                             ),
                                                         },
                                                     },
-                                                    op: Lt,
+                                                    op: ValueLt,
                                                     right: Spanned {
                                                         value: Const(
                                                             Integer(

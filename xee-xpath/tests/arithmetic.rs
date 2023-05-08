@@ -11,3 +11,8 @@ fn test_add_int_to_double() {
 fn test_add_int_to_decimal() {
     assert_debug_snapshot!(run_without_context("12 + 15.4"));
 }
+
+#[test]
+fn test_mul_int() {
+    assert_debug_snapshot!(run_without_context("12 * 15"));
+}
