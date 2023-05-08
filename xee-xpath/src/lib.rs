@@ -31,4 +31,4 @@ mod value;
 mod xpath;
 
 pub use crate::error::Error;
-pub use crate::run::evaluate;
+pub use crate::run::{evaluate, run_without_context};

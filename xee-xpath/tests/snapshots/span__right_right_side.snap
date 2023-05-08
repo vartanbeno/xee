@@ -1,0 +1,20 @@
+---
+source: xee-xpath/tests/span.rs
+expression: run_without_context(expr)
+---
+Err(
+    XPTY0004 {
+        src: NamedSource {
+            name: "input",
+            source: "<redacted>",
+        ,
+        span: SourceSpan {
+            offset: SourceOffset(
+                10,
+            ),
+            length: SourceOffset(
+                13,
+            ),
+        },
+    },
+)

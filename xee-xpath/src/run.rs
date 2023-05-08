@@ -26,3 +26,12 @@ pub fn evaluate(
     let xpath = CompiledXPath::new(&context, xpath)?;
     xpath.run_xot_node(document.root)
 }
+
+pub fn run_without_context(s: &str) -> Result<StackValue> {
+    let xot = Xot::new();
+    let namespaces = Namespaces::new(None, None);
+    let static_context = StaticContext::new(&namespaces);
+    let context = Context::new(&xot, s, static_context);
+    let xpath = CompiledXPath::new(&context, s)?;
+    xpath.run_without_context()
+}
