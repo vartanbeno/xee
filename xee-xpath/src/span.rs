@@ -51,9 +51,19 @@ mod tests {
     }
 
     // #[test]
-    // fn span_left_side_ir() {
-    //     let expr = "0 + (2, 3, 4)";
-    //     //          0123456789012
+    // fn span_too_long_problem_ast() {
+    //     let expr = "0 + (2, 3) + 3";
+    //     //          01234567890123
+    //     //          0           12
+    //     //  So from 0, 13 is expected
+    //     let namespaces = Namespaces::new(None, None);
+    //     assert_debug_snapshot!(parse_xpath(expr, &namespaces));
+    // }
+
+    // #[test]
+    // fn span_too_long_problem_ir() {
+    //     let expr = "0 + (2, 3) + 3";
+    //     //          01234567890123
     //     //          0           12
     //     //  So from 0, 13 is expected
     //     // let's examine the IR
