@@ -130,6 +130,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOperator::Sub => {
                 self.builder.emit(Instruction::Sub, span);
             }
+            ir::BinaryOperator::Mul => {
+                self.builder.emit(Instruction::Mul, span);
+            }
             ir::BinaryOperator::ValueEq => {
                 self.builder.emit(Instruction::Eq, span);
             }
