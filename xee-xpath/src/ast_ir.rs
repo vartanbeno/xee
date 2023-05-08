@@ -423,7 +423,19 @@ impl<'a> IrConverter<'a> {
                 let binding = self.new_binding(expr, span);
                 Bindings::from_vec(vec![binding])
             }
-            _ => todo!(),
+            ast::Literal::Double(d) => {
+                let expr =
+                    ir::Expr::Atom(Spanned::new(ir::Atom::Const(ir::Const::Double(*d)), span));
+                let binding = self.new_binding(expr, span);
+                Bindings::from_vec(vec![binding])
+            }
+            ast::Literal::Decimal(d) => {
+                let expr =
+                    ir::Expr::Atom(Spanned::new(ir::Atom::Const(ir::Const::Decimal(*d)), span));
+                let binding = self.new_binding(expr, span);
+                Bindings::from_vec(vec![binding])
+            }
+            _ => todo!("literal not implemented yet: {:?}", ast),
         }
     }
 

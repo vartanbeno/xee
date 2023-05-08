@@ -51,6 +51,8 @@ impl<'a> InterpreterCompiler<'a> {
                 let stack_value = match c {
                     ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
                     ir::Const::String(s) => StackValue::Atomic(Atomic::String(Rc::new(s.clone()))),
+                    ir::Const::Double(d) => StackValue::Atomic(Atomic::Double(d.into_inner())),
+                    ir::Const::Decimal(d) => StackValue::Atomic(Atomic::Decimal(*d)),
                     ir::Const::EmptySequence => {
                         StackValue::Sequence(Rc::new(RefCell::new(Sequence::new())))
                     }
@@ -1163,9 +1165,4 @@ mod tests {
             },
         )
     }
-
-    // #[test]
-    // fn test_fancy_math() {
-    //     assert_debug_snapshot!(run("12 * 15.4"));
-    // }
 }

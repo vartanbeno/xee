@@ -1,0 +1,11 @@
+---
+source: xee-xpath/tests/arithmetic.rs
+expression: "run_without_context(\"12 + 15.4\")"
+---
+Ok(
+    Atomic(
+        Decimal(
+            27.4,
+        ),
+    ),
+)

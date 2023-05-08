@@ -1,0 +1,11 @@
+---
+source: xee-xpath/tests/arithmetic.rs
+expression: "run_without_context(\"12 + 15.4e0\")"
+---
+Ok(
+    Atomic(
+        Double(
+            27.4,
+        ),
+    ),
+)

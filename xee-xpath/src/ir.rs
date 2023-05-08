@@ -1,6 +1,8 @@
 // an Intermediate Representation in ANF - administrative normal form
 // XXX is this really ANF? Maybe it is, though it doesn't support recursion
 // (without function arguments), as XPath doesn't.
+use ordered_float::OrderedFloat;
+use rust_decimal::Decimal;
 use std::rc::Rc;
 
 use crate::span::Spanned;
@@ -34,6 +36,8 @@ pub(crate) enum Atom {
 pub(crate) enum Const {
     Integer(i64),
     String(String),
+    Double(OrderedFloat<f64>),
+    Decimal(Decimal),
     // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
     // step is treated as a special function which takes the context node as

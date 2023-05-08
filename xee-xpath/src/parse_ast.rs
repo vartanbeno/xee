@@ -4,6 +4,7 @@ use ordered_float::OrderedFloat;
 use pest::error::InputLocation;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
+use rust_decimal::Decimal;
 
 use crate::ast;
 use crate::error::Error;
@@ -1074,10 +1075,7 @@ impl<'a> AstParser<'a> {
                 let factor = 10i64.pow(digits as u32);
                 let before_nr = before_nr * factor;
                 let nr = before_nr + after_nr;
-                ast::Literal::Decimal(ast::DecimalLiteral {
-                    value: nr,
-                    fraction_digits: digits as u8,
-                })
+                ast::Literal::Decimal(Decimal::new(nr, digits as u32))
             }
             Rule::DoubleLiteral => {
                 let s = pair.as_str();

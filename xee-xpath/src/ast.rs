@@ -1,4 +1,5 @@
 use ordered_float::OrderedFloat;
+use rust_decimal::prelude::*;
 
 use crate::span::Spanned;
 
@@ -197,14 +198,8 @@ pub(crate) struct ArrayConstructor {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct DecimalLiteral {
-    pub(crate) value: i64,
-    pub(crate) fraction_digits: u8,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Literal {
-    Decimal(DecimalLiteral),
+    Decimal(Decimal),
     Integer(i64),
     Double(OrderedFloat<f64>),
     String(String),
