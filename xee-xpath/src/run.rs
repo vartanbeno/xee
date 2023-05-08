@@ -15,12 +15,23 @@ pub fn evaluate(
     default_element_namespace: Option<&str>,
 ) -> Result<StackValue> {
     let mut xot = Xot::new();
+    let root = xot.parse(xml).unwrap();
+    evaluate_root(&xot, root, xpath, default_element_namespace)
+}
+
+/// A high level function that evaluates an xpath expression on an xml document.
+pub fn evaluate_root(
+    xot: &Xot,
+    root: xot::Node,
+    xpath: &str,
+    default_element_namespace: Option<&str>,
+) -> Result<StackValue> {
     let uri = Uri("http://example.com".to_string());
     let mut documents = Documents::new();
-    documents.add(&mut xot, &uri, xml).unwrap();
+    documents.add_root(xot, &uri, root);
     let namespaces = Namespaces::new(default_element_namespace, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);
-    let context = Context::with_documents(&xot, xpath, static_context, &documents);
+    let context = Context::with_documents(xot, xpath, static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
     let xpath = CompiledXPath::new(&context, xpath)?;

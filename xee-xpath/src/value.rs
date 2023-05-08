@@ -2,6 +2,7 @@ use ahash::{HashSet, HashSetExt};
 use miette::SourceSpan;
 use rust_decimal::prelude::*;
 use std::cell::RefCell;
+use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 use xot::Xot;
 
@@ -247,6 +248,20 @@ pub enum Atomic {
     Empty,
 }
 
+impl Display for Atomic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Atomic::Boolean(b) => write!(f, "{}", b),
+            Atomic::Integer(i) => write!(f, "{}", i),
+            Atomic::Float(n) => write!(f, "{}", n),
+            Atomic::Double(d) => write!(f, "{}", d),
+            Atomic::Decimal(d) => write!(f, "{}", d),
+            Atomic::String(s) => write!(f, "{}", s),
+            Atomic::Empty => write!(f, "()"),
+        }
+    }
+}
+
 impl Atomic {
     pub(crate) fn as_integer(&self) -> Result<i64> {
         match self {
@@ -325,7 +340,7 @@ impl Atomic {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Item {
+pub enum Item {
     Atomic(Atomic),
     // XXX what about static function references?
     Function(Rc<Closure>),
@@ -359,6 +374,14 @@ impl Sequence {
 
     pub fn len(&self) -> usize {
         self.items.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
+    pub fn as_slice(&self) -> &[Item] {
+        &self.items
     }
 
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {

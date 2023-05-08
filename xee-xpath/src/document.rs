@@ -30,6 +30,11 @@ impl Documents {
 
     pub(crate) fn add(&mut self, xot: &mut Xot, uri: &Uri, xml: &str) -> Result<(), xot::Error> {
         let root = xot.parse(xml)?;
+        self.add_root(xot, uri, root);
+        Ok(())
+    }
+
+    pub(crate) fn add_root(&mut self, xot: &Xot, uri: &Uri, root: xot::Node) {
         self.documents.insert(
             uri.clone(),
             Document {
@@ -38,7 +43,6 @@ impl Documents {
             },
         );
         self.annotations.add(xot, Node::Xot(root));
-        Ok(())
     }
 
     pub(crate) fn get(&self, uri: &Uri) -> Option<&Document> {

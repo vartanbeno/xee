@@ -32,5 +32,5 @@ mod value;
 mod xpath;
 
 pub use crate::error::Error;
-pub use crate::run::{evaluate, run_without_context};
-pub use crate::value::StackValue;
+pub use crate::run::{evaluate, evaluate_root, run_without_context};
+pub use crate::value::{Atomic, Item, Node, Sequence, StackValue};
