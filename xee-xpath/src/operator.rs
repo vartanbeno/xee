@@ -30,7 +30,7 @@ pub(crate) enum BinaryOperator {
     Sub,
     Mul,
     Div,
-    IDiv,
+    IntDiv,
     Mod,
     // set
     Union,

@@ -173,7 +173,7 @@ impl<'a> AstParser<'a> {
             Rule::MultiplicativeExpr => self.binary_op(pair, |r| match r {
                 Rule::Mult => ast::BinaryOperator::Mul,
                 Rule::Div => ast::BinaryOperator::Div,
-                Rule::IDiv => ast::BinaryOperator::IDiv,
+                Rule::IDiv => ast::BinaryOperator::IntDiv,
                 Rule::Mod => ast::BinaryOperator::Mod,
                 _ => {
                     unreachable!("unknown MultiplicativeExpr {:?}", r)

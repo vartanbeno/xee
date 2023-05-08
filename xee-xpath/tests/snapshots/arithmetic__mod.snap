@@ -1,0 +1,11 @@
+---
+source: xee-xpath/tests/arithmetic.rs
+expression: "run_without_context(\"12 mod 5\")"
+---
+Ok(
+    Atomic(
+        Integer(
+            2,
+        ),
+    ),
+)
