@@ -38,11 +38,11 @@ pub fn evaluate_root(
     xpath.run_xot_node(&context, document.root)
 }
 
-pub fn run_without_context(s: &str) -> Result<StackValue> {
+pub fn evaluate_without_focus(s: &str) -> Result<StackValue> {
     let xot = Xot::new();
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, s, static_context);
     let xpath = XPath::new(&context.static_context, s)?;
-    xpath.run_without_context(&context)
+    xpath.run_no_focus(&context)
 }

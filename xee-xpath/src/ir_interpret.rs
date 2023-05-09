@@ -504,7 +504,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, s, static_context);
         let xpath = XPath::new(&context.static_context, s)?;
-        xpath.run_without_context(&context)
+        xpath.run_no_focus(&context)
     }
 
     fn run_debug(s: &str) -> Result<StackValue> {
@@ -514,7 +514,7 @@ mod tests {
         let context = DynamicContext::new(&xot, s, static_context);
         let xpath = XPath::new(&context.static_context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.run_without_context(&context)
+        xpath.run_no_focus(&context)
     }
 
     fn run_xml(xml: &str, xpath: &str) -> Result<StackValue> {
