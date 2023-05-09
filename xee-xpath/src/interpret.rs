@@ -488,11 +488,11 @@ impl<'a> Interpreter<'a> {
     fn err(&self, value_error: ValueError) -> Error {
         match value_error {
             ValueError::XPTY0004 => Error::XPTY0004 {
-                src: NamedSource::new("input", self.dynamic_context.src.to_string()),
+                src: NamedSource::new("input", self.program.src.to_string()),
                 span: self.current_span(),
             },
             ValueError::Type => Error::XPTY0004 {
-                src: NamedSource::new("input", self.dynamic_context.src.to_string()),
+                src: NamedSource::new("input", self.program.src.to_string()),
                 span: self.current_span(),
             },
             ValueError::Overflow => Error::FOAR0002,
@@ -551,7 +551,7 @@ mod tests {
 
     #[test]
     fn test_interpreter() -> Result<(), ValueError> {
-        let mut program = Program::new();
+        let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
@@ -564,7 +564,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -578,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_emit_jump_forward() -> Result<(), Error> {
-        let mut program = Program::new();
+        let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
@@ -604,7 +604,7 @@ mod tests {
 
     #[test]
     fn test_condition_true() -> Result<(), ValueError> {
-        let mut program = Program::new();
+        let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
@@ -624,7 +624,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -638,7 +638,7 @@ mod tests {
 
     #[test]
     fn test_condition_false() -> Result<(), ValueError> {
-        let mut program = Program::new();
+        let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
@@ -658,7 +658,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, static_context);
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run_actual()?;

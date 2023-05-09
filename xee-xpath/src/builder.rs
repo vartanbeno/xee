@@ -6,12 +6,14 @@ use crate::value::{Function, FunctionId, StackValue};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
+    pub(crate) src: String,
     pub(crate) functions: Vec<Function>,
 }
 
 impl Program {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(src: String) -> Self {
         Program {
+            src,
             functions: Vec::new(),
         }
     }
