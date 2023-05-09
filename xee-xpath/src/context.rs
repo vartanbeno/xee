@@ -5,7 +5,7 @@ use xot::Xot;
 use crate::document::Documents;
 use crate::static_context::StaticContext;
 
-pub(crate) struct Context<'a> {
+pub struct Context<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) src: &'a str,
     pub(crate) static_context: StaticContext<'a>,
@@ -22,7 +22,7 @@ impl<'a> Debug for Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    pub(crate) fn new(xot: &'a Xot, src: &'a str, static_context: StaticContext<'a>) -> Self {
+    pub fn new(xot: &'a Xot, src: &'a str, static_context: StaticContext<'a>) -> Self {
         let documents = Documents::new();
         Self {
             xot,

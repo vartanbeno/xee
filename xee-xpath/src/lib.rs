@@ -31,6 +31,9 @@ mod step;
 mod value;
 mod xpath;
 
+pub use crate::context::Context;
 pub use crate::error::Error;
 pub use crate::run::{evaluate, evaluate_root, run_without_context};
+pub use crate::static_context::StaticContext;
 pub use crate::value::{Atomic, Item, Node, Sequence, StackValue};
+pub use crate::xpath::XPath;

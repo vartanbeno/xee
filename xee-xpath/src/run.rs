@@ -6,7 +6,7 @@ use crate::error::Result;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::static_context::StaticContext;
 use crate::value::StackValue;
-use crate::xpath::CompiledXPath;
+use crate::xpath::XPath;
 
 /// A high level function that evaluates an xpath expression on an xml document.
 pub fn evaluate(
@@ -34,7 +34,7 @@ pub fn evaluate_root(
     let context = Context::with_documents(xot, xpath, static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
-    let xpath = CompiledXPath::new(&context, xpath)?;
+    let xpath = XPath::new(&context, xpath)?;
     xpath.run_xot_node(document.root)
 }
 
@@ -43,6 +43,6 @@ pub fn run_without_context(s: &str) -> Result<StackValue> {
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let context = Context::new(&xot, s, static_context);
-    let xpath = CompiledXPath::new(&context, s)?;
+    let xpath = XPath::new(&context, s)?;
     xpath.run_without_context()
 }

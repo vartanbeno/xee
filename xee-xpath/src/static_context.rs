@@ -241,13 +241,13 @@ impl StaticFunctions {
 }
 
 #[derive(Debug)]
-pub(crate) struct StaticContext<'a> {
+pub struct StaticContext<'a> {
     pub(crate) namespaces: &'a Namespaces<'a>,
     pub(crate) functions: StaticFunctions,
 }
 
 impl<'a> StaticContext<'a> {
-    pub(crate) fn new(namespaces: &'a Namespaces<'a>) -> Self {
+    pub fn new(namespaces: &'a Namespaces<'a>) -> Self {
         Self {
             namespaces,
             functions: StaticFunctions::new(),

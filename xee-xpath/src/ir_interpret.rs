@@ -480,7 +480,7 @@ mod tests {
     use crate::name::Namespaces;
     use crate::run::evaluate;
     use crate::static_context::StaticContext;
-    use crate::xpath::CompiledXPath;
+    use crate::xpath::XPath;
     use crate::{
         document::{Document, Documents, Uri},
         value::{Item, Node, Sequence},
@@ -504,7 +504,7 @@ mod tests {
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = Context::new(&xot, s, static_context);
-        let xpath = CompiledXPath::new(&context, s)?;
+        let xpath = XPath::new(&context, s)?;
         xpath.run_without_context()
     }
 
@@ -513,7 +513,7 @@ mod tests {
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = Context::new(&xot, s, static_context);
-        let xpath = CompiledXPath::new(&context, s)?;
+        let xpath = XPath::new(&context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
         xpath.run_without_context()
     }
@@ -540,7 +540,7 @@ mod tests {
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 
-        let xpath = CompiledXPath::new(&context, xpath)?;
+        let xpath = XPath::new(&context, xpath)?;
         let result = xpath.run_xot_node(document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();

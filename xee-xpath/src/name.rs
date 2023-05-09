@@ -13,14 +13,14 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
 ];
 
 #[derive(Debug)]
-pub(crate) struct Namespaces<'a> {
+pub struct Namespaces<'a> {
     namespaces: HashMap<&'a str, &'a str>,
     pub(crate) default_element_namespace: Option<&'a str>,
     pub(crate) default_function_namespace: Option<&'a str>,
 }
 
 impl<'a> Namespaces<'a> {
-    pub(crate) fn new(
+    pub fn new(
         default_element_namespace: Option<&'a str>,
         default_function_namespace: Option<&'a str>,
     ) -> Self {

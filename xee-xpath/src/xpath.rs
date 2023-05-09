@@ -8,14 +8,14 @@ use crate::ir_interpret::{InterpreterCompiler, Scopes};
 use crate::parse_ast::parse_xpath;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
-pub struct CompiledXPath<'a> {
+pub struct XPath<'a> {
     pub(crate) program: Program,
     context: &'a Context<'a>,
     main: FunctionId,
 }
 
-impl<'a> CompiledXPath<'a> {
-    pub(crate) fn new(context: &'a Context, xpath: &str) -> Result<Self> {
+impl<'a> XPath<'a> {
+    pub fn new(context: &'a Context, xpath: &str) -> Result<Self> {
         let ast = parse_xpath(xpath, context.static_context.namespaces)?;
         let mut ir_converter = IrConverter::new(xpath, &context.static_context);
         let expr = ir_converter.convert_xpath(&ast)?;
@@ -45,7 +45,7 @@ impl<'a> CompiledXPath<'a> {
         self.run(Item::Atomic(Atomic::Integer(0)))
     }
 
-    pub(crate) fn run(&self, context_item: Item) -> Result<StackValue> {
+    pub fn run(&self, context_item: Item) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, self.context);
         interpreter.start(self.main, context_item);
         interpreter.run()?;
@@ -62,7 +62,7 @@ impl<'a> CompiledXPath<'a> {
         Ok(interpreter.stack().last().unwrap().clone())
     }
 
-    pub(crate) fn run_xot_node(&self, node: xot::Node) -> Result<StackValue> {
+    pub fn run_xot_node(&self, node: xot::Node) -> Result<StackValue> {
         self.run(Item::Node(Node::Xot(node)))
     }
 }
@@ -101,7 +101,7 @@ mod tests {
         let xpath = "1 + 2 +";
         let context = Context::with_documents(&xot, xpath, static_context, &documents);
 
-        let r = CompiledXPath::new(&context, xpath);
+        let r = XPath::new(&context, xpath);
         assert!(r.is_err())
     }
 }
