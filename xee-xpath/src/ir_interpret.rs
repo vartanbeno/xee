@@ -4,18 +4,17 @@ use std::rc::Rc;
 use miette::SourceSpan;
 
 use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
-use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::instruction::Instruction;
 use crate::ir;
-use crate::static_context::ContextRule;
+use crate::static_context::{ContextRule, StaticContext};
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};
 
 pub(crate) type Scopes = crate::scope::Scopes<ir::Name>;
 
 pub(crate) struct InterpreterCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
-    pub(crate) context: &'a Context<'a>,
+    pub(crate) static_context: &'a StaticContext<'a>,
     pub(crate) builder: FunctionBuilder<'a>,
 }
 
@@ -188,7 +187,7 @@ impl<'a> InterpreterCompiler<'a> {
         let mut compiler = InterpreterCompiler {
             builder: nested_builder,
             scopes: self.scopes,
-            context: self.context,
+            static_context: self.static_context,
         };
 
         for param in &function_definition.params {
@@ -224,7 +223,6 @@ impl<'a> InterpreterCompiler<'a> {
         span: SourceSpan,
     ) -> Result<()> {
         let static_function = self
-            .context
             .static_context
             .functions
             .get_by_index(static_function_id);
@@ -476,6 +474,7 @@ mod tests {
     use std::rc::Rc;
     use xot::Xot;
 
+    use crate::context::Context;
     use crate::error::Result;
     use crate::name::Namespaces;
     use crate::run::evaluate;

@@ -27,7 +27,7 @@ impl<'a> XPath<'a> {
         let mut compiler = InterpreterCompiler {
             builder,
             scopes: &mut scopes,
-            context,
+            static_context: &context.static_context,
         };
         compiler.compile_expr(&expr)?;
 
