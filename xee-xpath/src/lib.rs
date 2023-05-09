@@ -11,8 +11,8 @@ mod annotation;
 mod ast;
 mod ast_ir;
 mod builder;
-mod context;
 mod document;
+mod dynamic_context;
 mod error;
 mod instruction;
 mod interpret;
@@ -31,7 +31,7 @@ mod step;
 mod value;
 mod xpath;
 
-pub use crate::context::Context;
+pub use crate::dynamic_context::DynamicContext;
 pub use crate::error::Error;
 pub use crate::run::{evaluate, evaluate_root, run_without_context};
 pub use crate::static_context::StaticContext;

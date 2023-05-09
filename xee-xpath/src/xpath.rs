@@ -1,23 +1,24 @@
 use crate::ast_ir::IrConverter;
 use crate::builder::{FunctionBuilder, Program};
-use crate::context::Context;
+use crate::dynamic_context::DynamicContext;
 use crate::error::Result;
 use crate::interpret::Interpreter;
 use crate::ir;
 use crate::ir_interpret::{InterpreterCompiler, Scopes};
 use crate::parse_ast::parse_xpath;
+use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
 pub struct XPath<'a> {
     pub(crate) program: Program,
-    context: &'a Context<'a>,
+    static_context: &'a StaticContext<'a>,
     main: FunctionId,
 }
 
 impl<'a> XPath<'a> {
-    pub fn new(context: &'a Context, xpath: &str) -> Result<Self> {
-        let ast = parse_xpath(xpath, context.static_context.namespaces)?;
-        let mut ir_converter = IrConverter::new(xpath, &context.static_context);
+    pub fn new(static_context: &'a StaticContext, xpath: &str) -> Result<Self> {
+        let ast = parse_xpath(xpath, static_context.namespaces)?;
+        let mut ir_converter = IrConverter::new(xpath, static_context);
         let expr = ir_converter.convert_xpath(&ast)?;
         // this expression contains a function definition, we're getting it
         // in the end
@@ -27,7 +28,7 @@ impl<'a> XPath<'a> {
         let mut compiler = InterpreterCompiler {
             builder,
             scopes: &mut scopes,
-            static_context: &context.static_context,
+            static_context,
         };
         compiler.compile_expr(&expr)?;
 
@@ -35,18 +36,21 @@ impl<'a> XPath<'a> {
         let inline_id = FunctionId(program.functions.len() - 1);
         Ok(Self {
             program,
-            context,
+            static_context,
             main: inline_id,
         })
     }
 
-    pub(crate) fn run_without_context(&self) -> Result<StackValue> {
+    pub(crate) fn run_without_context(
+        &self,
+        dynamic_context: &DynamicContext,
+    ) -> Result<StackValue> {
         // a fake context value
-        self.run(Item::Atomic(Atomic::Integer(0)))
+        self.run(dynamic_context, Item::Atomic(Atomic::Integer(0)))
     }
 
-    pub fn run(&self, context_item: Item) -> Result<StackValue> {
-        let mut interpreter = Interpreter::new(&self.program, self.context);
+    pub fn run(&self, dynamic_context: &DynamicContext, context_item: Item) -> Result<StackValue> {
+        let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         interpreter.start(self.main, context_item);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
@@ -62,8 +66,12 @@ impl<'a> XPath<'a> {
         Ok(interpreter.stack().last().unwrap().clone())
     }
 
-    pub fn run_xot_node(&self, node: xot::Node) -> Result<StackValue> {
-        self.run(Item::Node(Node::Xot(node)))
+    pub fn run_xot_node(
+        &self,
+        dynamic_context: &DynamicContext,
+        node: xot::Node,
+    ) -> Result<StackValue> {
+        self.run(dynamic_context, Item::Node(Node::Xot(node)))
     }
 }
 
@@ -97,11 +105,8 @@ mod tests {
         documents.add(&mut xot, &uri, "<doc/>").unwrap();
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
         let static_context = StaticContext::new(&namespaces);
-
         let xpath = "1 + 2 +";
-        let context = Context::with_documents(&xot, xpath, static_context, &documents);
-
-        let r = XPath::new(&context, xpath);
+        let r = XPath::new(&static_context, xpath);
         assert!(r.is_err())
     }
 }

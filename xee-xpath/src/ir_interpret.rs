@@ -474,7 +474,7 @@ mod tests {
     use std::rc::Rc;
     use xot::Xot;
 
-    use crate::context::Context;
+    use crate::dynamic_context::DynamicContext;
     use crate::error::Result;
     use crate::name::Namespaces;
     use crate::run::evaluate;
@@ -502,19 +502,19 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, s, static_context);
-        let xpath = XPath::new(&context, s)?;
-        xpath.run_without_context()
+        let context = DynamicContext::new(&xot, s, static_context);
+        let xpath = XPath::new(&context.static_context, s)?;
+        xpath.run_without_context(&context)
     }
 
     fn run_debug(s: &str) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, s, static_context);
-        let xpath = XPath::new(&context, s)?;
+        let context = DynamicContext::new(&xot, s, static_context);
+        let xpath = XPath::new(&context.static_context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.run_without_context()
+        xpath.run_without_context(&context)
     }
 
     fn run_xml(xml: &str, xpath: &str) -> Result<StackValue> {
@@ -535,12 +535,12 @@ mod tests {
         documents.add(&mut xot, &uri, xml).unwrap();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::with_documents(&xot, xpath, static_context, &documents);
+        let context = DynamicContext::with_documents(&xot, xpath, static_context, &documents);
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 
-        let xpath = XPath::new(&context, xpath)?;
-        let result = xpath.run_xot_node(document.root)?;
+        let xpath = XPath::new(&context.static_context, xpath)?;
+        let result = xpath.run_xot_node(&context, document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();
         assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));

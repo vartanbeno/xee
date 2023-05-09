@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 use crate::ast;
-use crate::context::Context;
+use crate::dynamic_context::DynamicContext;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::value::ValueError;
 use crate::value::{Atomic, Node, StackValue, StaticFunctionId};
@@ -26,7 +26,7 @@ pub(crate) struct StaticFunctionDescription {
     name: ast::Name,
     arity: usize,
     function_type: Option<FunctionType>,
-    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
+    func: fn(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
 }
 
 impl StaticFunctionDescription {
@@ -164,7 +164,7 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
+    func: fn(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
 }
 
 impl Debug for StaticFunction {
@@ -180,7 +180,7 @@ impl Debug for StaticFunction {
 impl StaticFunction {
     pub(crate) fn invoke(
         &self,
-        context: &Context,
+        context: &DynamicContext,
         arguments: &[StackValue],
         closure_values: &[StackValue],
     ) -> Result<StackValue, ValueError> {
@@ -260,7 +260,7 @@ fn my_function(a: i64, b: i64) -> i64 {
 }
 
 fn bound_my_function(
-    context: &Context,
+    context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
     let a = arguments[0].as_atomic(context)?.as_integer()?;
@@ -268,37 +268,49 @@ fn bound_my_function(
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 
-fn bound_position(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn bound_position(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     // position should be the context value
     Ok(arguments[0].clone())
 }
 
-fn bound_last(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn bound_last(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     // size should be the context value
     Ok(arguments[0].clone())
 }
 
-fn local_name(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn local_name(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     let a = arguments[0].as_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.local_name(context.xot),
     ))))
 }
 
-fn namespace_uri(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn namespace_uri(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     let a = arguments[0].as_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(context.xot),
     ))))
 }
 
-fn count(_context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn count(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     let a = arguments[0].as_sequence()?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }
 
-fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn root(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     let a = arguments[0].as_node()?;
     let xot_node = match a {
         Node::Xot(node) => node,
@@ -311,14 +323,14 @@ fn root(context: &Context, arguments: &[StackValue]) -> Result<StackValue, Value
     Ok(StackValue::Node(Node::Xot(root)))
 }
 
-fn string(context: &Context, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn string(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
         context,
         &arguments[0],
     )?))))
 }
 
-fn string_helper(context: &Context, value: &StackValue) -> Result<String, ValueError> {
+fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String, ValueError> {
     let value = match value {
         StackValue::Atomic(atomic) => match atomic {
             Atomic::String(string) => string.to_string(),

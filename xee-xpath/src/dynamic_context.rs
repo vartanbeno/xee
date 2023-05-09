@@ -5,14 +5,14 @@ use xot::Xot;
 use crate::document::Documents;
 use crate::static_context::StaticContext;
 
-pub struct Context<'a> {
+pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) src: &'a str,
     pub(crate) static_context: StaticContext<'a>,
     pub(crate) documents: Cow<'a, Documents>,
 }
 
-impl<'a> Debug for Context<'a> {
+impl<'a> Debug for DynamicContext<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Context")
             .field("static_context", &self.static_context)
@@ -21,7 +21,7 @@ impl<'a> Debug for Context<'a> {
     }
 }
 
-impl<'a> Context<'a> {
+impl<'a> DynamicContext<'a> {
     pub fn new(xot: &'a Xot, src: &'a str, static_context: StaticContext<'a>) -> Self {
         let documents = Documents::new();
         Self {

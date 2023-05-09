@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::builder::Program;
-use crate::context::Context;
+use crate::dynamic_context::DynamicContext;
 use crate::error::Error;
 use crate::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 use crate::op;
@@ -28,16 +28,16 @@ struct Frame {
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
-    context: &'a Context<'a>,
+    dynamic_context: &'a DynamicContext<'a>,
     stack: Vec<StackValue>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program, context: &'a Context) -> Self {
+    pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext) -> Self {
         Interpreter {
             program,
-            context,
+            dynamic_context,
             stack: vec![],
             frames: ArrayVec::new(),
         }
@@ -78,7 +78,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn run_actual(&mut self) -> Result<(), ValueError> {
-        let context = self.context;
+        let context = self.dynamic_context;
         // we can make this an infinite loop as all functions end
         // with the return instruction
         loop {
@@ -163,7 +163,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::StaticClosure => {
                     let static_function_id = self.read_u16();
                     let static_function = &self
-                        .context
+                        .dynamic_context
                         .static_context
                         .functions
                         .get_by_index(StaticFunctionId(static_function_id as usize));
@@ -308,7 +308,7 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_sequence()?;
                     let combined = a
                         .borrow()
-                        .union(&b.borrow(), &self.context.documents.annotations)?;
+                        .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
                     self.stack
                         .push(StackValue::Sequence(Rc::new(RefCell::new(combined))));
                 }
@@ -450,12 +450,12 @@ impl<'a> Interpreter<'a> {
         closure_values: &[StackValue],
     ) -> Result<(), ValueError> {
         let static_function = &self
-            .context
+            .dynamic_context
             .static_context
             .functions
             .get_by_index(static_function_id);
         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(self.context, arguments, closure_values)?;
+        let result = static_function.invoke(self.dynamic_context, arguments, closure_values)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result);
@@ -479,7 +479,7 @@ impl<'a> Interpreter<'a> {
         let node = self.stack.pop().unwrap().as_node()?;
         // pop off the callable too
         self.stack.pop();
-        let sequence = resolve_step(step.as_ref(), node, self.context.xot);
+        let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);
         self.stack
             .push(StackValue::Sequence(Rc::new(RefCell::new(sequence))));
         Ok(())
@@ -488,11 +488,11 @@ impl<'a> Interpreter<'a> {
     fn err(&self, value_error: ValueError) -> Error {
         match value_error {
             ValueError::XPTY0004 => Error::XPTY0004 {
-                src: NamedSource::new("input", self.context.src.to_string()),
+                src: NamedSource::new("input", self.dynamic_context.src.to_string()),
                 span: self.current_span(),
             },
             ValueError::Type => Error::XPTY0004 {
-                src: NamedSource::new("input", self.context.src.to_string()),
+                src: NamedSource::new("input", self.dynamic_context.src.to_string()),
                 span: self.current_span(),
             },
             ValueError::Overflow => Error::FOAR0002,
@@ -564,7 +564,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, "", static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -624,7 +624,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, "", static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
@@ -658,7 +658,7 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = Context::new(&xot, "", static_context);
+        let context = DynamicContext::new(&xot, "", static_context);
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
         interpreter.run_actual()?;

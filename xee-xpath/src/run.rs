@@ -1,7 +1,7 @@
 use xot::Xot;
 
-use crate::context::Context;
 use crate::document::{Documents, Uri};
+use crate::dynamic_context::DynamicContext;
 use crate::error::Result;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::static_context::StaticContext;
@@ -31,18 +31,18 @@ pub fn evaluate_root(
     documents.add_root(xot, &uri, root);
     let namespaces = Namespaces::new(default_element_namespace, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);
-    let context = Context::with_documents(xot, xpath, static_context, &documents);
+    let context = DynamicContext::with_documents(xot, xpath, static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
-    let xpath = XPath::new(&context, xpath)?;
-    xpath.run_xot_node(document.root)
+    let xpath = XPath::new(&context.static_context, xpath)?;
+    xpath.run_xot_node(&context, document.root)
 }
 
 pub fn run_without_context(s: &str) -> Result<StackValue> {
     let xot = Xot::new();
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
-    let context = Context::new(&xot, s, static_context);
-    let xpath = XPath::new(&context, s)?;
-    xpath.run_without_context()
+    let context = DynamicContext::new(&xot, s, static_context);
+    let xpath = XPath::new(&context.static_context, s)?;
+    xpath.run_without_context(&context)
 }

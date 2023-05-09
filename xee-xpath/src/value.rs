@@ -8,7 +8,7 @@ use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::ast;
-use crate::context::Context;
+use crate::dynamic_context::DynamicContext;
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
@@ -192,7 +192,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_atomic(&self, context: &Context) -> Result<Atomic> {
+    pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         match self {
             StackValue::Atomic(a) => Ok(a.clone()),
             StackValue::Sequence(s) => s.borrow().as_atomic(context),
@@ -446,7 +446,7 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atomic(&self, context: &Context) -> Result<Atomic> {
+    pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         let mut atomized = self.atomize(context.xot);
         let len = atomized.items.len();
         match len {
