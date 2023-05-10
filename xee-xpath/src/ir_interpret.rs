@@ -503,7 +503,7 @@ mod tests {
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
-        let xpath = XPath::new(&context.static_context, s)?;
+        let xpath = XPath::new(context.static_context, s)?;
         xpath.run_no_focus(&context)
     }
 
@@ -512,7 +512,7 @@ mod tests {
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
-        let xpath = XPath::new(&context.static_context, s)?;
+        let xpath = XPath::new(context.static_context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
         xpath.run_no_focus(&context)
     }
@@ -539,7 +539,7 @@ mod tests {
         let document = documents.get(&uri).unwrap();
         let nodes = get_nodes(&xot, document);
 
-        let xpath = XPath::new(&context.static_context, xpath)?;
+        let xpath = XPath::new(context.static_context, xpath)?;
         let result = xpath.run_xot_node(&context, document.root)?;
         let sequence = as_sequence(&result);
         let sequence = sequence.borrow();

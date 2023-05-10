@@ -34,7 +34,7 @@ pub fn evaluate_root(
     let context = DynamicContext::with_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
-    let xpath = XPath::new(&context.static_context, xpath)?;
+    let xpath = XPath::new(context.static_context, xpath)?;
     xpath.run_xot_node(&context, document.root)
 }
 
@@ -43,6 +43,6 @@ pub fn evaluate_without_focus(s: &str) -> Result<StackValue> {
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
-    let xpath = XPath::new(&context.static_context, s)?;
+    let xpath = XPath::new(context.static_context, s)?;
     xpath.run_no_focus(&context)
 }
