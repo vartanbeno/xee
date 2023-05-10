@@ -38,12 +38,8 @@ impl<'a> Loader<'a> {
                     name: xpaths
                         .name
                         .one(&dynamic_context, n)?
-                        .as_atomic()
-                        .into_diagnostic()
-                        .wrap_err("Cannot find name")?
-                        .as_string()
-                        .into_diagnostic()
-                        .wrap_err("name is not a string")?,
+                        .as_atomic()?
+                        .as_string()?,
                     description: "".to_string(),
                     created: qt::Attribution {
                         by: "".to_string(),

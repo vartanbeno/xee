@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use miette::SourceSpan;
+use miette::{Diagnostic, SourceSpan};
 use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
@@ -13,7 +13,7 @@ use crate::dynamic_context::DynamicContext;
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
-#[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Error, Diagnostic, Clone, PartialEq, Eq, Hash)]
 pub enum ValueError {
     #[error("Type error")]
     XPTY0004,
