@@ -31,11 +31,21 @@ impl<'a> Namespaces<'a> {
         Self {
             namespaces,
             default_element_namespace,
-            default_function_namespace: default_function_namespace.or(Some(FN_NAMESPACE)),
+            default_function_namespace,
         }
+    }
+
+    pub fn with_default_element_namespace(uri: &'a str) -> Self {
+        Self::new(Some(uri), Some(FN_NAMESPACE))
     }
 
     pub(crate) fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).copied()
+    }
+}
+
+impl Default for Namespaces<'_> {
+    fn default() -> Self {
+        Self::new(None, Some(FN_NAMESPACE))
     }
 }

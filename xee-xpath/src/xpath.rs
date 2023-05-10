@@ -9,6 +9,7 @@ use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
+#[derive(Debug)]
 pub struct XPath<'a> {
     pub(crate) program: Program,
     static_context: &'a StaticContext<'a>,

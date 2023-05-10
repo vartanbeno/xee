@@ -23,6 +23,7 @@ mod op;
 mod operator;
 mod parse;
 mod parse_ast;
+mod query;
 mod run;
 mod scope;
 mod span;
