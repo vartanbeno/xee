@@ -29,7 +29,7 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
         .into_diagnostic()
         .wrap_err("Cannot parse XML")?;
     let root = Node::Xot(root);
-    let namespaces = Namespaces::new(Some(NS), None);
+    let namespaces = Namespaces::with_default_element_namespace(NS);
     let loader = Loader::new(&namespaces);
     let xpaths = XPaths::new(&loader.static_context)?;
 
@@ -64,7 +64,11 @@ impl<'a> Loader<'a> {
                         .one(&dynamic_context, n)?
                         .as_atomic()?
                         .as_string()?,
-                    description: "".to_string(),
+                    description: xpaths
+                        .description
+                        .one(&dynamic_context, n)?
+                        .as_atomic()?
+                        .as_string()?,
                     created: qt::Attribution {
                         by: "".to_string(),
                         on: "".to_string(),
@@ -84,13 +88,25 @@ impl<'a> Loader<'a> {
 struct XPaths<'a> {
     test_cases: XPath<'a>,
     name: XPath<'a>,
+    description: XPath<'a>,
+    by: XPath<'a>,
+    on: XPath<'a>,
+    modified: XPath<'a>,
+    test: XPath<'a>,
 }
 
+// static_context.one("/test-set/test-case", item => item.as_atomic()?.as_string()?)?
+// XPath::Query::new(static_context, "/test-set/test-case")?
 impl<'a> XPaths<'a> {
     fn new(static_context: &'a StaticContext<'a>) -> Result<Self> {
         Ok(XPaths {
             test_cases: XPath::new(static_context, "/test-set/test-case")?,
             name: XPath::new(static_context, "@name/string()")?,
+            description: XPath::new(static_context, "@description/string()")?,
+            by: XPath::new(static_context, "@by/string()")?,
+            on: XPath::new(static_context, "@on/string()")?,
+            modified: XPath::new(static_context, "modified")?,
+            test: XPath::new(static_context, "test")?,
         })
     }
 }

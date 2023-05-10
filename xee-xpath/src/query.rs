@@ -9,18 +9,18 @@ pub trait Convert<V>: Fn(Item) -> std::result::Result<V, ValueError> {}
 impl<T, V> Convert<V> for T where T: Fn(Item) -> std::result::Result<V, ValueError> {}
 
 #[derive(Debug)]
-pub struct OneQuery<'a, T, F>
+pub struct ManyQuery<'a, V, F>
 where
-    F: Convert<T>,
+    F: Convert<V>,
 {
     xpath: XPath<'a>,
     convert: F,
-    t: std::marker::PhantomData<T>,
+    t: std::marker::PhantomData<V>,
 }
 
-impl<'a, T, F> OneQuery<'a, T, F>
+impl<'a, V, F> ManyQuery<'a, V, F>
 where
-    F: Convert<T>,
+    F: Convert<V>,
 {
     pub fn new(static_context: &'a StaticContext<'a>, s: &str, convert: F) -> Result<Self> {
         let xpath = XPath::new(static_context, s)?;
@@ -31,7 +31,43 @@ where
         })
     }
 
-    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<T> {
+    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Vec<V>> {
+        let items = self.xpath.many(dynamic_context, item)?;
+        let mut result = Vec::with_capacity(items.len());
+        for item in items {
+            let item = (self.convert)(item).map_err(|value_error| {
+                Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
+            })?;
+            result.push(item);
+        }
+        Ok(result)
+    }
+}
+
+#[derive(Debug)]
+pub struct OneQuery<'a, V, F>
+where
+    F: Convert<V>,
+{
+    xpath: XPath<'a>,
+    convert: F,
+    t: std::marker::PhantomData<V>,
+}
+
+impl<'a, V, F> OneQuery<'a, V, F>
+where
+    F: Convert<V>,
+{
+    pub fn new(static_context: &'a StaticContext<'a>, s: &str, convert: F) -> Result<Self> {
+        let xpath = XPath::new(static_context, s)?;
+        Ok(Self {
+            xpath,
+            convert,
+            t: std::marker::PhantomData,
+        })
+    }
+
+    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
         let item = self.xpath.one(dynamic_context, item)?;
         (self.convert)(item).map_err(|value_error| {
             Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
@@ -40,18 +76,18 @@ where
 }
 
 #[derive(Debug)]
-pub struct OptionQuery<'a, T, F>
+pub struct OptionQuery<'a, V, F>
 where
-    F: Convert<T>,
+    F: Convert<V>,
 {
     xpath: XPath<'a>,
     convert: F,
-    t: std::marker::PhantomData<T>,
+    t: std::marker::PhantomData<V>,
 }
 
-impl<'a, T, F> OptionQuery<'a, T, F>
+impl<'a, V, F> OptionQuery<'a, V, F>
 where
-    F: Convert<T>,
+    F: Convert<V>,
 {
     pub fn new(static_context: &'a StaticContext<'a>, s: &str, convert: F) -> Result<Self> {
         let xpath = XPath::new(static_context, s)?;
@@ -62,7 +98,7 @@ where
         })
     }
 
-    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<T>> {
+    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<V>> {
         let item = self.xpath.option(dynamic_context, item)?;
         if let Some(item) = item {
             match (self.convert)(item) {
@@ -87,6 +123,22 @@ mod tests {
 
     use crate::Atomic;
     use crate::Namespaces;
+
+    #[test]
+    fn test_many_query() {
+        let namespaces = Namespaces::default();
+        let static_context = StaticContext::new(&namespaces);
+        let q = ManyQuery::new(&static_context, "(3, 4)", |item: Item| {
+            item.as_atomic()?.as_integer()
+        })
+        .unwrap();
+        let xot = Xot::new();
+        let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let r = q
+            .execute(&dynamic_context, &Item::Atomic(Atomic::Integer(1)))
+            .unwrap();
+        assert_eq!(r, vec![3, 4]);
+    }
 
     #[test]
     fn test_one_query() {
