@@ -1,6 +1,8 @@
 use miette::{Diagnostic, NamedSource, SourceSpan};
 use thiserror::Error;
 
+use crate::{builder::Program, value::ValueError};
+
 #[derive(Debug, Error, Diagnostic)]
 pub enum Error {
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
@@ -628,3 +630,25 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl Error {
+    pub(crate) fn from_value_error(
+        program: &Program,
+        span: SourceSpan,
+        value_error: ValueError,
+    ) -> Self {
+        match value_error {
+            ValueError::XPTY0004 => Error::XPTY0004 {
+                src: NamedSource::new("input", program.src.to_string()),
+                span,
+            },
+            ValueError::Type => Error::XPTY0004 {
+                src: NamedSource::new("input", program.src.to_string()),
+                span,
+            },
+            ValueError::Overflow => Error::FOAR0002,
+            ValueError::StackOverflow => Error::XPDY0130,
+            ValueError::DivisionByZero => Error::FOAR0001,
+        }
+    }
+}

@@ -1,7 +1,7 @@
 use crate::ast_ir::IrConverter;
 use crate::builder::{FunctionBuilder, Program};
 use crate::dynamic_context::DynamicContext;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::interpret::Interpreter;
 use crate::ir;
 use crate::ir_interpret::{InterpreterCompiler, Scopes};
@@ -43,10 +43,10 @@ impl<'a> XPath<'a> {
 
     pub(crate) fn run_no_focus(&self, dynamic_context: &DynamicContext) -> Result<StackValue> {
         // a fake context value
-        self.run(dynamic_context, Item::Atomic(Atomic::Integer(0)))
+        self.run(dynamic_context, &Item::Atomic(Atomic::Integer(0)))
     }
 
-    pub fn run(&self, dynamic_context: &DynamicContext, context_item: Item) -> Result<StackValue> {
+    pub fn run(&self, dynamic_context: &DynamicContext, context_item: &Item) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         interpreter.start(self.main, context_item);
         interpreter.run()?;
@@ -68,7 +68,60 @@ impl<'a> XPath<'a> {
         dynamic_context: &DynamicContext,
         node: xot::Node,
     ) -> Result<StackValue> {
-        self.run(dynamic_context, Item::Node(Node::Xot(node)))
+        self.run(dynamic_context, &Item::Node(Node::Xot(node)))
+    }
+
+    pub fn many(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Vec<Item>> {
+        let stack_value = self.run(dynamic_context, item)?;
+        match stack_value {
+            // XXX this clone here is not great
+            StackValue::Sequence(seq) => Ok(seq.borrow().items.clone()),
+            StackValue::Node(node) => Ok(vec![Item::Node(node)]),
+            StackValue::Atomic(atomic) => Ok(vec![Item::Atomic(atomic)]),
+            StackValue::Closure(closure) => Ok(vec![Item::Function(closure)]),
+            StackValue::Step(..) => panic!("step not expected"),
+        }
+    }
+
+    pub fn one(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Item> {
+        let stack_value = self.run(dynamic_context, item)?;
+        match stack_value {
+            StackValue::Sequence(seq) => {
+                let borrowed = seq.borrow();
+                let value = borrowed.singleton();
+                match value {
+                    Ok(value) => Ok(value.clone()),
+                    Err(_) => Err(Error::XPTY0004 {
+                        src: miette::NamedSource::new("input", self.program.src.clone()),
+                        span: (0, 0).into(),
+                    }),
+                }
+            }
+            StackValue::Node(node) => Ok(Item::Node(node)),
+            StackValue::Atomic(atomic) => Ok(Item::Atomic(atomic)),
+            StackValue::Closure(closure) => Ok(Item::Function(closure)),
+            StackValue::Step(..) => panic!("step not expected"),
+        }
+    }
+
+    pub fn option(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<Item>> {
+        let stack_value = self.run(dynamic_context, item)?;
+        match stack_value {
+            StackValue::Sequence(seq) => {
+                let borrowed = seq.borrow();
+                let value = borrowed.singleton();
+                // XXX not ideal that we turn an error back
+                // into an option, perhaps
+                match value {
+                    Ok(value) => Ok(Some(value.clone())),
+                    Err(_) => Ok(None),
+                }
+            }
+            StackValue::Node(node) => Ok(Some(Item::Node(node))),
+            StackValue::Atomic(atomic) => Ok(Some(Item::Atomic(atomic))),
+            StackValue::Closure(closure) => Ok(Some(Item::Function(closure))),
+            StackValue::Step(..) => panic!("step not expected"),
+        }
     }
 }
 

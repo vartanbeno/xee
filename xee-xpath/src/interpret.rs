@@ -1,5 +1,5 @@
 use arrayvec::ArrayVec;
-use miette::{NamedSource, SourceSpan};
+use miette::SourceSpan;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -47,14 +47,14 @@ impl<'a> Interpreter<'a> {
         &self.stack
     }
 
-    pub(crate) fn start(&mut self, function_id: FunctionId, context_item: Item) {
+    pub(crate) fn start(&mut self, function_id: FunctionId, context_item: &Item) {
         self.frames.push(Frame {
             function: function_id,
             ip: 0,
             base: 0,
         });
         // the context item
-        self.stack.push(StackValue::from_item(context_item));
+        self.stack.push(StackValue::from_item(context_item.clone()));
         // position & size
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
@@ -137,8 +137,8 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_string()?;
-                    let b = b.as_string()?;
+                    let a = a.as_str()?;
+                    let b = b.as_str()?;
                     let result = a.to_owned() + b;
                     self.stack
                         .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
@@ -486,19 +486,7 @@ impl<'a> Interpreter<'a> {
     }
 
     fn err(&self, value_error: ValueError) -> Error {
-        match value_error {
-            ValueError::XPTY0004 => Error::XPTY0004 {
-                src: NamedSource::new("input", self.program.src.to_string()),
-                span: self.current_span(),
-            },
-            ValueError::Type => Error::XPTY0004 {
-                src: NamedSource::new("input", self.program.src.to_string()),
-                span: self.current_span(),
-            },
-            ValueError::Overflow => Error::FOAR0002,
-            ValueError::StackOverflow => Error::XPDY0130,
-            ValueError::DivisionByZero => Error::FOAR0001,
-        }
+        Error::from_value_error(self.program, self.current_span(), value_error)
     }
 
     fn current_span(&self) -> SourceSpan {
@@ -564,10 +552,10 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, static_context);
+        let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -624,10 +612,10 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, static_context);
+        let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -658,9 +646,9 @@ mod tests {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
-        let context = DynamicContext::new(&xot, static_context);
+        let context = DynamicContext::new(&xot, &static_context);
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,

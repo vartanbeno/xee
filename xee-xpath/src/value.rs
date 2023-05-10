@@ -4,6 +4,7 @@ use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
+use thiserror::Error;
 use xot::Xot;
 
 use crate::annotation::Annotations;
@@ -12,12 +13,17 @@ use crate::dynamic_context::DynamicContext;
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
 pub enum ValueError {
+    #[error("Type error")]
     XPTY0004,
+    #[error("Type error")]
     Type,
+    #[error("Overflow/underflow")]
     Overflow,
+    #[error("Division by zero")]
     DivisionByZero,
+    #[error("Stack overflow")]
     StackOverflow,
 }
 
@@ -305,11 +311,15 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn as_string(&self) -> Result<&str> {
+    pub fn as_str(&self) -> Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
             _ => Err(ValueError::Type),
         }
+    }
+
+    pub fn as_string(&self) -> Result<String> {
+        Ok(self.as_str()?.to_string())
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -348,13 +358,13 @@ pub enum Item {
 }
 
 impl Item {
-    pub(crate) fn as_atomic(&self) -> Result<&Atomic> {
+    pub fn as_atomic(&self) -> Result<&Atomic> {
         match self {
             Item::Atomic(a) => Ok(a),
             _ => Err(ValueError::Type),
         }
     }
-    pub(crate) fn as_node(&self) -> Result<Node> {
+    pub fn as_node(&self) -> Result<Node> {
         match self {
             Item::Node(n) => Ok(*n),
             _ => Err(ValueError::Type),
