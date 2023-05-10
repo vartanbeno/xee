@@ -31,7 +31,7 @@ impl<'a> Namespaces<'a> {
         Self {
             namespaces,
             default_element_namespace,
-            default_function_namespace,
+            default_function_namespace: default_function_namespace.or(Some(FN_NAMESPACE)),
         }
     }
 
