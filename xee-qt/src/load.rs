@@ -1,3 +1,80 @@
+use miette::{IntoDiagnostic, Result, WrapErr};
+use std::path::{Path, PathBuf};
+use xee_xpath::{DynamicContext, Item, Namespaces, Node, StaticContext, XPath};
+use xot::Xot;
+
+use crate::qt;
+
+const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
+
+// use xee_xpath::evaluate_root;
+
+// fn load(path: &Path) -> Result<()> {
+
+// }
+struct Loader<'a> {
+    static_context: StaticContext<'a>,
+}
+
+impl<'a> Loader<'a> {
+    fn new(namespaces: &'a Namespaces<'a>) -> Self {
+        let static_context = StaticContext::new(namespaces);
+        Self { static_context }
+    }
+
+    fn test_cases(
+        &self,
+        xot: &Xot,
+        xpaths: &'a XPaths<'a>,
+        node: Node,
+    ) -> Result<Vec<qt::TestCase>> {
+        let dynamic_context = DynamicContext::new(xot, &self.static_context);
+        xpaths
+            .test_cases
+            .many(&dynamic_context, &Item::Node(node))?
+            .iter()
+            .map(|n| {
+                Ok(qt::TestCase {
+                    name: xpaths
+                        .name
+                        .one(&dynamic_context, n)?
+                        .as_atomic()
+                        .into_diagnostic()
+                        .wrap_err("Cannot find name")?
+                        .as_string()
+                        .into_diagnostic()
+                        .wrap_err("name is not a string")?,
+                    description: "".to_string(),
+                    created: qt::Attribution {
+                        by: "".to_string(),
+                        on: "".to_string(),
+                    },
+                    modified: Vec::new(),
+                    environments: Vec::new(),
+                    dependencies: Vec::new(),
+                    modules: Vec::new(),
+                    test: "".to_string(),
+                    result: qt::TestCaseResult::AssertTrue,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()
+    }
+}
+
+struct XPaths<'a> {
+    test_cases: XPath<'a>,
+    name: XPath<'a>,
+}
+
+impl<'a> XPaths<'a> {
+    fn new(static_context: &'a StaticContext<'a>) -> Result<Self> {
+        Ok(XPaths {
+            test_cases: XPath::new(static_context, "/test-set/test-case")?,
+            name: XPath::new(static_context, "@name/string()")?,
+        })
+    }
+}
+
 // use ahash::{HashMap, HashMapExt};
 // use xot::{NameId, NamespaceId, Node, Xot};
 

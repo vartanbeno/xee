@@ -1,18 +1,30 @@
 #[derive(Debug)]
-struct TestCase {
-    name: String,
-    description: String,
-    created_by: String,
-    created_on: String, // should be a date
-    environments: Vec<Environment>,
-    dependencies: Vec<Dependency>,
-    modules: Vec<Module>,
-    test: String,
-    result: TestCaseResult,
+pub(crate) struct TestCase {
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) created: Attribution,
+    pub(crate) modified: Vec<Modification>,
+    pub(crate) environments: Vec<Environment>,
+    pub(crate) dependencies: Vec<Dependency>,
+    pub(crate) modules: Vec<Module>,
+    pub(crate) test: String,
+    pub(crate) result: TestCaseResult,
 }
 
 #[derive(Debug)]
-enum TestCaseResult {
+pub(crate) struct Attribution {
+    pub(crate) by: String,
+    pub(crate) on: String, // should be a date
+}
+
+#[derive(Debug)]
+pub(crate) struct Modification {
+    attribution: Attribution,
+    description: String,
+}
+
+#[derive(Debug)]
+pub(crate) enum TestCaseResult {
     AnyOf(Vec<TestCaseResult>),
     AllOf(Vec<TestCaseResult>),
     Not(Box<TestCaseResult>),
@@ -30,10 +42,13 @@ enum TestCaseResult {
 }
 
 #[derive(Debug)]
-struct Environment;
+pub(crate) struct Environment;
 
 #[derive(Debug)]
-struct Dependency;
+pub(crate) struct Dependency {
+    type_: String,
+    value: String,
+}
 
 #[derive(Debug)]
-struct Module;
+pub(crate) struct Module;
