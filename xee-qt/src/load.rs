@@ -61,15 +61,21 @@ impl<'a> Loader<'a> {
         let description_query =
             OneQuery::new(&self.static_context, "description/string()", convert_string)?;
         let test_query = OneQuery::new(&self.static_context, "test/string()", convert_string)?;
+        let by_query = OneQuery::new(&self.static_context, "@by/string()", convert_string)?;
+        let on_query = OneQuery::new(&self.static_context, "@on/string()", convert_string)?;
+        let created_query = OneQuery::new(&self.static_context, "created", |item| {
+            Ok(qt::Attribution {
+                by: by_query.execute(dynamic_context, item)?,
+                on: on_query.execute(dynamic_context, item)?,
+            })
+        })?;
+
         let test_cases_query =
             ManyQuery::new(&self.static_context, "/test-set/test-case", |item| {
                 Ok(qt::TestCase {
                     name: name_query.execute(dynamic_context, item)?,
                     description: description_query.execute(dynamic_context, item)?,
-                    created: qt::Attribution {
-                        by: "".to_string(),
-                        on: "".to_string(),
-                    },
+                    created: created_query.execute(dynamic_context, item)?,
                     modified: Vec::new(),
                     environments: Vec::new(),
                     dependencies: Vec::new(),
