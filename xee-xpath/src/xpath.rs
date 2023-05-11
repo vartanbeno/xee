@@ -10,14 +10,13 @@ use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 
 #[derive(Debug)]
-pub struct XPath<'a> {
+pub struct XPath {
     pub(crate) program: Program,
-    static_context: &'a StaticContext<'a>,
     main: FunctionId,
 }
 
-impl<'a> XPath<'a> {
-    pub fn new(static_context: &'a StaticContext, xpath: &str) -> Result<Self> {
+impl XPath {
+    pub fn new(static_context: &StaticContext, xpath: &str) -> Result<Self> {
         let ast = parse_xpath(xpath, static_context.namespaces)?;
         let mut ir_converter = IrConverter::new(xpath, static_context);
         let expr = ir_converter.convert_xpath(&ast)?;
@@ -37,7 +36,6 @@ impl<'a> XPath<'a> {
         let inline_id = FunctionId(program.functions.len() - 1);
         Ok(Self {
             program,
-            static_context,
             main: inline_id,
         })
     }

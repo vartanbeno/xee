@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::dynamic_context::DynamicContext;
 use crate::error::Error;
 use crate::error::Result;
@@ -22,20 +24,20 @@ pub enum ConvertError {
 }
 
 #[derive(Debug)]
-pub struct ManyQuery<'s, V, F>
+pub struct ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    xpath: XPath<'s>,
+    xpath: XPath,
     convert: F,
     t: std::marker::PhantomData<V>,
 }
 
-impl<'s, V, F> ManyQuery<'s, V, F>
+impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn new(static_context: &'s StaticContext<'s>, s: &str, convert: F) -> Result<Self> {
+    pub fn new(static_context: &StaticContext, s: &str, convert: F) -> Result<Self> {
         let xpath = XPath::new(static_context, s)?;
         Ok(Self {
             xpath,
@@ -64,20 +66,20 @@ where
 }
 
 #[derive(Debug)]
-pub struct OneQuery<'s, V, F>
+pub struct OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    xpath: XPath<'s>,
+    xpath: XPath,
     convert: F,
     t: std::marker::PhantomData<V>,
 }
 
-impl<'s, V, F> OneQuery<'s, V, F>
+impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn new(static_context: &'s StaticContext<'s>, s: &str, convert: F) -> Result<Self> {
+    pub fn new(static_context: &StaticContext, s: &str, convert: F) -> Result<Self> {
         let xpath = XPath::new(static_context, s)?;
         Ok(Self {
             xpath,
@@ -98,20 +100,20 @@ where
 }
 
 #[derive(Debug)]
-pub struct OptionQuery<'s, V, F>
+pub struct OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    xpath: XPath<'s>,
+    xpath: XPath,
     convert: F,
     t: std::marker::PhantomData<V>,
 }
 
-impl<'s, V, F> OptionQuery<'s, V, F>
+impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn new(static_context: &'s StaticContext<'s>, s: &str, convert: F) -> Result<Self> {
+    pub fn new(static_context: &StaticContext, s: &str, convert: F) -> Result<Self> {
         let xpath = XPath::new(static_context, s)?;
         Ok(Self {
             xpath,
@@ -141,15 +143,23 @@ where
 }
 
 pub struct OneQueryRef<'s, V> {
-    inner: std::cell::RefCell<Option<OneQueryRefInner<'s, V>>>,
+    inner: std::cell::RefCell<Option<Box<dyn OneQueryTrait<V> + 's>>>,
 }
 
-struct OneQueryRefInner<'s, V> {
-    xpath: XPath<'s>,
-    convert: Box<dyn Convert<V>>,
+trait OneQueryTrait<V> {
+    fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V>;
 }
 
-impl<'s, V> OneQueryRef<'s, V> {
+impl<V, F> OneQueryTrait<V> for OneQuery<V, F>
+where
+    F: Convert<V>,
+{
+    fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
+        OneQuery::execute(self, dynamic_context, item)
+    }
+}
+
+impl<'s, V: 's> OneQueryRef<'s, V> {
     pub fn new() -> Self {
         Self {
             inner: std::cell::RefCell::new(None),
@@ -158,13 +168,7 @@ impl<'s, V> OneQueryRef<'s, V> {
 
     pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
         if let Some(inner) = self.inner.borrow().as_ref() {
-            let item = inner.xpath.one(dynamic_context, item)?;
-            (inner.convert)(dynamic_context, &item).map_err(|query_error| match query_error {
-                ConvertError::ValueError(value_error) => {
-                    Error::from_value_error(&inner.xpath.program, (0, 0).into(), value_error)
-                }
-                ConvertError::Error(error) => error,
-            })
+            inner.execute(dynamic_context, item)
         } else {
             panic!("No query set")
         }
@@ -172,15 +176,13 @@ impl<'s, V> OneQueryRef<'s, V> {
 
     pub fn fulfill(
         &self,
-        static_context: &'s StaticContext<'s>,
+        static_context: &StaticContext,
         s: &str,
-        f: Box<dyn Convert<V>>,
+        f: Box<dyn Convert<V> + 's>,
     ) -> Result<()> {
         let mut inner = self.inner.borrow_mut();
-        *inner = Some(OneQueryRefInner {
-            xpath: XPath::new(static_context, s)?,
-            convert: f,
-        });
+        let query = OneQuery::new(static_context, s, f)?;
+        *inner = Some(Box::new(query));
         Ok(())
     }
 }

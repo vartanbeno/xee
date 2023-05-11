@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use xee_xpath::OneQueryRef;
 use xee_xpath::{
     Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery,
     OptionQuery, StaticContext,
@@ -53,7 +54,7 @@ fn convert_string(_: &DynamicContext, item: &Item) -> Result<String, ConvertErro
 
 fn test_cases_query<'s>(
     static_context: &'s StaticContext<'s>,
-) -> Result<ManyQuery<'s, qt::TestCase, impl Convert<qt::TestCase> + 's>> {
+) -> Result<ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + 's>> {
     let name_query = OneQuery::new(static_context, "@name/string()", convert_string)?;
     let description_query = OneQuery::new(static_context, "description/string()", convert_string)?;
     let test_query = OneQuery::new(static_context, "test/string()", convert_string)?;
@@ -104,25 +105,32 @@ fn test_cases_query<'s>(
             code_query.execute(dynamic_context, item)?,
         ))
     })?;
-    let assert_true_query = OptionQuery::new(static_context, "assert-true", |_, item| {
+    let assert_true_query = OptionQuery::new(static_context, "assert-true", |_, _| {
         Ok(qt::TestCaseResult::AssertTrue)
     })?;
 
-    let result_query = OneQuery::new(static_context, "result", move |dynamic_context, item| {
-        let error = error_query.execute(dynamic_context, item)?;
-        if let Some(error) = error {
-            return Ok(error);
-        }
-        let assert_true = assert_true_query.execute(dynamic_context, item)?;
-        if let Some(assert_true) = assert_true {
-            return Ok(assert_true);
-        }
-        // XXX this is wrong, but for now we need a fallback
-        Ok(qt::TestCaseResult::AssertFalse)
-        // unreachable!("unknown result type")
-        // let any_of_query = OptionQuery::new(static_context, "any-of", |dynamic_context, item| {});
-        // let all_of_query = OptionQuery::new(static_context, "all-of", |dynamic_context, item| {});
-    })?;
+    // let any_of_query_ref = OneQueryRef::new();
+
+    let f: Box<dyn Convert<qt::TestCaseResult>> =
+        Box::new(move |dynamic_context: &DynamicContext, item: &Item| {
+            // let any_of = any_of_query_ref.execute(dynamic_context, item)?;
+            let error = error_query.execute(dynamic_context, item)?;
+            if let Some(error) = error {
+                return Ok(error);
+            }
+            let assert_true = assert_true_query.execute(dynamic_context, item)?;
+            if let Some(assert_true) = assert_true {
+                return Ok(assert_true);
+            };
+            Ok(qt::TestCaseResult::AssertFalse)
+        });
+
+    // any_of_query_ref.fulfill(&static_context, "any-of", f);
+
+    let result_query = OneQuery::new(static_context, "result", f)?;
+    // unreachable!("unknown result type")
+    // let all_of_query = OptionQuery::new(static_context, "all-of", |dynamic_context, item| {});
+    // })?;
 
     Ok(ManyQuery::new(
         static_context,
