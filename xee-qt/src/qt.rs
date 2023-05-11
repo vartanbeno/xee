@@ -19,8 +19,8 @@ pub(crate) struct Attribution {
 
 #[derive(Debug)]
 pub(crate) struct Modification {
-    attribution: Attribution,
-    description: String,
+    pub(crate) attribution: Attribution,
+    pub(crate) description: String,
 }
 
 #[derive(Debug)]

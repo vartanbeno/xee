@@ -24,7 +24,15 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             by: "Carmelo Montanez",
             on: "2005-11-17",
         },
-        modified: [],
+        modified: [
+            Modification {
+                attribution: Attribution {
+                    by: "Christian Gruen",
+                    on: "2020-01-17",
+                },
+                description: "alternative solution added for pre-evaluated expressions",
+            },
+        ],
         environments: [],
         dependencies: [],
         modules: [],
@@ -220,7 +228,15 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             by: "Carmelo Montanez",
             on: "2005-11-17",
         },
-        modified: [],
+        modified: [
+            Modification {
+                attribution: Attribution {
+                    by: "Christian Gruen",
+                    on: "2016-01-12",
+                },
+                description: "Reflect changes in lang.xml",
+            },
+        ],
         environments: [],
         dependencies: [],
         modules: [],
@@ -234,7 +250,15 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             by: "Carmelo Montanez",
             on: "2005-11-17",
         },
-        modified: [],
+        modified: [
+            Modification {
+                attribution: Attribution {
+                    by: "Christian Gruen",
+                    on: "2016-01-12",
+                },
+                description: "Reflect changes in lang.xml",
+            },
+        ],
         environments: [],
         dependencies: [],
         modules: [],
@@ -388,7 +412,22 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             by: "Frans Englich",
             on: "2007-11-26",
         },
-        modified: [],
+        modified: [
+            Modification {
+                attribution: Attribution {
+                    by: "Michael Kay",
+                    on: "2018-05-22",
+                },
+                description: "prevent over-eager optimization: root() must deliver a single node or an error,                  therefore the predicate [root()] can be optimized to [true()]",
+            },
+            Modification {
+                attribution: Attribution {
+                    by: "Benito van der Zander",
+                    on: "2020-09-24",
+                },
+                description: "add missing spec dependencies",
+            },
+        ],
         environments: [],
         dependencies: [],
         modules: [],
