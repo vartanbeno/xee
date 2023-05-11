@@ -68,7 +68,8 @@ fn test_cases_query<'s>(
     let change_query = OneQuery::new(static_context, "@change/string()", convert_string)?;
     // XXX this duplication is required to support the move, which is required
     // to make the lifetimes work, but it's still a pain. it's better than
-    // creating (and thus compiling) the query inside the closure.
+    // creating (and thus compiling) the query inside the closure, as
+    // that would have a compile per convert!
     let by_query = OneQuery::new(static_context, "@by/string()", convert_string)?;
     let on_query = OneQuery::new(static_context, "@on/string()", convert_string)?;
     let modified_query =
