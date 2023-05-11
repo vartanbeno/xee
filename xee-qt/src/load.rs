@@ -60,6 +60,7 @@ impl<'a> Loader<'a> {
         let name_query = OneQuery::new(&self.static_context, "@name/string()", convert_string)?;
         let description_query =
             OneQuery::new(&self.static_context, "description/string()", convert_string)?;
+        let test_query = OneQuery::new(&self.static_context, "test/string()", convert_string)?;
         let test_cases_query =
             ManyQuery::new(&self.static_context, "/test-set/test-case", |item| {
                 Ok(qt::TestCase {
@@ -73,7 +74,7 @@ impl<'a> Loader<'a> {
                     environments: Vec::new(),
                     dependencies: Vec::new(),
                     modules: Vec::new(),
-                    test: "".to_string(),
+                    test: test_query.execute(dynamic_context, item)?,
                     result: qt::TestCaseResult::AssertTrue,
                 })
             })?;
