@@ -83,6 +83,15 @@ impl<'a> Loader<'a> {
             })
         })?;
 
+        let type_query = OneQuery::new(&self.static_context, "@type/string()", convert_string)?;
+        let value_query = OneQuery::new(&self.static_context, "@value/string()", convert_string)?;
+        let dependency_query = ManyQuery::new(&self.static_context, "dependency", |item| {
+            Ok(qt::Dependency {
+                type_: type_query.execute(dynamic_context, item)?,
+                value: value_query.execute(dynamic_context, item)?,
+            })
+        })?;
+
         let test_cases_query =
             ManyQuery::new(&self.static_context, "/test-set/test-case", |item| {
                 Ok(qt::TestCase {
@@ -91,7 +100,7 @@ impl<'a> Loader<'a> {
                     created: created_query.execute(dynamic_context, item)?,
                     modified: modified_query.execute(dynamic_context, item)?,
                     environments: Vec::new(),
-                    dependencies: Vec::new(),
+                    dependencies: dependency_query.execute(dynamic_context, item)?,
                     modules: Vec::new(),
                     test: test_query.execute(dynamic_context, item)?,
                     result: qt::TestCaseResult::AssertTrue,

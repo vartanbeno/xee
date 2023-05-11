@@ -90,7 +90,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := <!-- A Comment Node --> return fn:root($var)",
         result: AssertTrue,
@@ -104,7 +109,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<!-- A Comment Node -->)",
         result: AssertTrue,
@@ -118,7 +128,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := <anElement>An Element Content</anElement> return fn:root($var)",
         result: AssertTrue,
@@ -132,7 +147,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<anElement>An Element Content</anElement>)",
         result: AssertTrue,
@@ -146,7 +166,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := <?format role=\"output\" ?> return fn:root($var)",
         result: AssertTrue,
@@ -160,7 +185,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<?format role=\"output\" ?>)",
         result: AssertTrue,
@@ -174,7 +204,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := element anElement {attribute anAttribute {\"Attribute Value\"}} return fn:root($var)",
         result: AssertTrue,
@@ -188,7 +223,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(element anElement {attribute anAttribute {\"Attribute Value\"}})",
         result: AssertTrue,
@@ -202,7 +242,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := document {<anElement><anInternalElement>element content</anInternalElement></anElement>} return fn:root($var)",
         result: AssertTrue,
@@ -216,7 +261,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(document {<anElement><anInternalElement>element content</anInternalElement></anElement>})",
         result: AssertTrue,
@@ -274,7 +324,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(text {\"A text Node\"})",
         result: AssertTrue,
@@ -288,7 +343,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := text {\"a text Node\"} return fn:root($var)",
         result: AssertTrue,
@@ -302,7 +362,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := element anElement {\"Element Content\"} return fn:root($var) is fn:root($var)",
         result: AssertTrue,
@@ -316,7 +381,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := element anElement {\"Element Content\"} return fn:root($var) is fn:root($var)",
         result: AssertTrue,
@@ -330,7 +400,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := element anElement {\"Element Content\"} return fn:count(fn:namespace-uri(fn:root($var)))",
         result: AssertTrue,
@@ -344,7 +419,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := <!-- An Element Node --> return fn:count(fn:namespace-uri(fn:root($var)))",
         result: AssertTrue,
@@ -358,7 +438,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := <?format role=\"output\" ?> return fn:count(fn:namespace-uri(fn:root($var)))",
         result: AssertTrue,
@@ -372,7 +457,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "let $var := text {\"A text node\"} return fn:count(fn:namespace-uri(fn:root($var)))",
         result: AssertTrue,
@@ -429,7 +519,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             },
         ],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XP30+ XQ30+",
+            },
+        ],
         modules: [],
         test: "(1, 2, 3)[root()[generate-id() != '***']]",
         result: AssertTrue,
@@ -471,7 +566,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<e/>)",
         result: AssertTrue,
@@ -485,7 +585,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "empty(fn:root(<e/>/..))",
         result: AssertTrue,
@@ -499,7 +604,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<!-- comment -->)",
         result: AssertTrue,
@@ -513,7 +623,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "<e>{fn:root(attribute name {\"value\"})}</e>",
         result: AssertTrue,
@@ -527,7 +642,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(<?target data?>)",
         result: AssertTrue,
@@ -541,7 +661,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(text{\"text node\"})",
         result: AssertTrue,
@@ -555,7 +680,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "fn:root(text{\"text node\"})",
         result: AssertTrue,
@@ -569,7 +699,12 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         },
         modified: [],
         environments: [],
-        dependencies: [],
+        dependencies: [
+            Dependency {
+                type_: "spec",
+                value: "XQ10+",
+            },
+        ],
         modules: [],
         test: "root(document {()}) instance of document-node()",
         result: AssertTrue,

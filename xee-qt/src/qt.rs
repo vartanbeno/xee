@@ -46,8 +46,8 @@ pub(crate) struct Environment;
 
 #[derive(Debug)]
 pub(crate) struct Dependency {
-    type_: String,
-    value: String,
+    pub(crate) type_: String,
+    pub(crate) value: String,
 }
 
 #[derive(Debug)]
