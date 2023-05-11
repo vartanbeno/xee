@@ -140,22 +140,28 @@ where
     }
 }
 
-pub struct OneQueryRef<V> {
-    convert: std::cell::RefCell<Option<Box<dyn Convert<V>>>>,
+pub struct OneQueryRef<'s, V> {
+    inner: std::cell::RefCell<Option<OneQueryRefInner<'s, V>>>,
 }
 
-impl<V> OneQueryRef<V> {
+struct OneQueryRefInner<'s, V> {
+    xpath: XPath<'s>,
+    convert: Box<dyn Convert<V>>,
+}
+
+impl<'s, V> OneQueryRef<'s, V> {
     pub fn new() -> Self {
         Self {
-            convert: std::cell::RefCell::new(None),
+            inner: std::cell::RefCell::new(None),
         }
     }
 
     pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
-        if let Some(convert) = self.convert.borrow().as_ref() {
-            convert(dynamic_context, item).map_err(|query_error| match query_error {
+        if let Some(inner) = self.inner.borrow().as_ref() {
+            let item = inner.xpath.one(dynamic_context, item)?;
+            (inner.convert)(dynamic_context, &item).map_err(|query_error| match query_error {
                 ConvertError::ValueError(value_error) => {
-                    todo!();
+                    Error::from_value_error(&inner.xpath.program, (0, 0).into(), value_error)
                 }
                 ConvertError::Error(error) => error,
             })
@@ -164,9 +170,18 @@ impl<V> OneQueryRef<V> {
         }
     }
 
-    pub fn fulfill(&self, f: Box<dyn Convert<V>>) {
-        let mut g = self.convert.borrow_mut();
-        *g = Some(f);
+    pub fn fulfill(
+        &self,
+        static_context: &'s StaticContext<'s>,
+        s: &str,
+        f: Box<dyn Convert<V>>,
+    ) -> Result<()> {
+        let mut inner = self.inner.borrow_mut();
+        *inner = Some(OneQueryRefInner {
+            xpath: XPath::new(static_context, s)?,
+            convert: f,
+        });
+        Ok(())
     }
 }
 
@@ -254,7 +269,13 @@ mod tests {
             Ok(v + s)
         })
         .unwrap();
-        one_query_ref.fulfill(Box::new(|_, _| Ok(5)));
+        one_query_ref
+            .fulfill(
+                &static_context,
+                "5",
+                Box::new(|_, item| Ok(item.as_atomic()?.as_integer()?)),
+            )
+            .unwrap();
 
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
