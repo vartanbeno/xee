@@ -141,22 +141,19 @@ where
 }
 
 pub struct OneQueryRef<V> {
-    t: std::marker::PhantomData<V>,
-    g: std::cell::RefCell<Option<Box<dyn Convert<V>>>>,
+    convert: std::cell::RefCell<Option<Box<dyn Convert<V>>>>,
 }
 
 impl<V> OneQueryRef<V> {
     pub fn new() -> Self {
         Self {
-            t: std::marker::PhantomData,
-            g: std::cell::RefCell::new(None),
-            // f: None,
+            convert: std::cell::RefCell::new(None),
         }
     }
 
     pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
-        if let Some(f) = self.g.borrow().as_ref() {
-            f(dynamic_context, item).map_err(|query_error| match query_error {
+        if let Some(convert) = self.convert.borrow().as_ref() {
+            convert(dynamic_context, item).map_err(|query_error| match query_error {
                 ConvertError::ValueError(value_error) => {
                     todo!();
                 }
@@ -168,7 +165,7 @@ impl<V> OneQueryRef<V> {
     }
 
     pub fn fulfill(&self, f: Box<dyn Convert<V>>) {
-        let mut g = self.g.borrow_mut();
+        let mut g = self.convert.borrow_mut();
         *g = Some(f);
     }
 }
