@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use std::rc::Rc;
 use xee_xpath::OneQueryRef;
 use xee_xpath::{
     Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery,
@@ -109,11 +110,13 @@ fn test_cases_query<'s>(
         Ok(qt::TestCaseResult::AssertTrue)
     })?;
 
-    // let any_of_query_ref = OneQueryRef::new();
+    // let any_of_query_ref = Rc::new(OneQueryRef::new());
+
+    // let any_of_query_ref2 = any_of_query_ref.clone();
 
     let f: Box<dyn Convert<qt::TestCaseResult>> =
         Box::new(move |dynamic_context: &DynamicContext, item: &Item| {
-            // let any_of = any_of_query_ref.execute(dynamic_context, item)?;
+            // let any_of = any_of_query_ref2.clone().execute(dynamic_context, item)?;
             let error = error_query.execute(dynamic_context, item)?;
             if let Some(error) = error {
                 return Ok(error);
