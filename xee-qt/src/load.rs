@@ -57,18 +57,18 @@ fn test_cases_query<'s>(
     let name_query = OneQuery::new(static_context, "@name/string()", convert_string)?;
     let description_query = OneQuery::new(static_context, "description/string()", convert_string)?;
     let test_query = OneQuery::new(static_context, "test/string()", convert_string)?;
-    let by_query = OneQuery::new(static_context, "@by/string()", convert_string)?;
-    let on_query = OneQuery::new(static_context, "@on/string()", convert_string)?;
-    let created_query = OneQuery::new(static_context, "created", move |dynamic_context, item| {
+    let created_query = OneQuery::new(static_context, "created", |dynamic_context, item| {
+        let by_query = OneQuery::new(static_context, "@by/string()", convert_string)?;
+        let on_query = OneQuery::new(static_context, "@on/string()", convert_string)?;
         Ok(qt::Attribution {
             by: by_query.execute(dynamic_context, item)?,
             on: on_query.execute(dynamic_context, item)?,
         })
     })?;
     let change_query = OneQuery::new(static_context, "@change/string()", convert_string)?;
-    // XXX this duplication is required to support the move,
-    // which is required to make the lifetimes work, but it's still
-    // a pain
+    // XXX this duplication is required to support the move, which is required
+    // to make the lifetimes work, but it's still a pain. it's better than
+    // creating (and thus compiling) the query inside the closure.
     let by_query = OneQuery::new(static_context, "@by/string()", convert_string)?;
     let on_query = OneQuery::new(static_context, "@on/string()", convert_string)?;
     let modified_query =
