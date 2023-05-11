@@ -3,7 +3,9 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
-use xee_xpath::{DynamicContext, Item, Namespaces, Node, StaticContext, XPath};
+use xee_xpath::{
+    ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery, StaticContext,
+};
 use xot::Xot;
 
 use crate::qt;
@@ -31,13 +33,17 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
     let root = Node::Xot(root);
     let namespaces = Namespaces::with_default_element_namespace(NS);
     let loader = Loader::new(&namespaces);
-    let xpaths = XPaths::new(&loader.static_context)?;
 
-    loader.test_cases(xot, &xpaths, root)
+    let dynamic_context = DynamicContext::new(xot, &loader.static_context);
+    loader.test_cases(&dynamic_context, root)
 }
 
 struct Loader<'a> {
     static_context: StaticContext<'a>,
+}
+
+fn convert_string(item: &Item) -> Result<String, ConvertError> {
+    Ok(item.as_atomic()?.as_string()?)
 }
 
 impl<'a> Loader<'a> {
@@ -48,27 +54,18 @@ impl<'a> Loader<'a> {
 
     fn test_cases(
         &self,
-        xot: &Xot,
-        xpaths: &'a XPaths<'a>,
+        dynamic_context: &'a DynamicContext<'a>,
         node: Node,
     ) -> Result<Vec<qt::TestCase>> {
-        let dynamic_context = DynamicContext::new(xot, &self.static_context);
-        xpaths
-            .test_cases
-            .many(&dynamic_context, &Item::Node(node))?
-            .iter()
-            .map(|n| {
+        let name_query = OneQuery::new(&self.static_context, "@name/string()", convert_string)?;
+        let description_query =
+            OneQuery::new(&self.static_context, "description/string()", convert_string)?;
+        let test_cases_query =
+            ManyQuery::new(&self.static_context, "/test-set/test-case", |item| {
+                dbg!(item);
                 Ok(qt::TestCase {
-                    name: xpaths
-                        .name
-                        .one(&dynamic_context, n)?
-                        .as_atomic()?
-                        .as_string()?,
-                    description: xpaths
-                        .description
-                        .one(&dynamic_context, n)?
-                        .as_atomic()?
-                        .as_string()?,
+                    name: name_query.execute(dynamic_context, item)?,
+                    description: description_query.execute(dynamic_context, item)?,
                     created: qt::Attribution {
                         by: "".to_string(),
                         on: "".to_string(),
@@ -80,34 +77,8 @@ impl<'a> Loader<'a> {
                     test: "".to_string(),
                     result: qt::TestCaseResult::AssertTrue,
                 })
-            })
-            .collect::<Result<Vec<_>, _>>()
-    }
-}
-
-struct XPaths<'a> {
-    test_cases: XPath<'a>,
-    name: XPath<'a>,
-    description: XPath<'a>,
-    by: XPath<'a>,
-    on: XPath<'a>,
-    modified: XPath<'a>,
-    test: XPath<'a>,
-}
-
-// static_context.one("/test-set/test-case", item => item.as_atomic()?.as_string()?)?
-// XPath::Query::new(static_context, "/test-set/test-case")?
-impl<'a> XPaths<'a> {
-    fn new(static_context: &'a StaticContext<'a>) -> Result<Self> {
-        Ok(XPaths {
-            test_cases: XPath::new(static_context, "/test-set/test-case")?,
-            name: XPath::new(static_context, "@name/string()")?,
-            description: XPath::new(static_context, "@description/string()")?,
-            by: XPath::new(static_context, "@by/string()")?,
-            on: XPath::new(static_context, "@on/string()")?,
-            modified: XPath::new(static_context, "modified")?,
-            test: XPath::new(static_context, "test")?,
-        })
+            })?;
+        Ok(test_cases_query.execute(dynamic_context, &Item::Node(node))?)
     }
 }
 
@@ -122,6 +93,6 @@ mod tests {
     #[test]
     fn test_load() {
         let mut xot = Xot::new();
-        assert_debug_snapshot!(load_from_xml(&mut xot, ROOT_FIXTURE));
+        assert_debug_snapshot!(load_from_xml(&mut xot, ROOT_FIXTURE).unwrap());
     }
 }

@@ -5,8 +5,18 @@ use crate::static_context::StaticContext;
 use crate::value::{Item, ValueError};
 use crate::xpath::XPath;
 
-pub trait Convert<V>: Fn(Item) -> std::result::Result<V, ValueError> {}
-impl<T, V> Convert<V> for T where T: Fn(Item) -> std::result::Result<V, ValueError> {}
+pub trait Convert<V>: Fn(&Item) -> std::result::Result<V, ConvertError> {}
+impl<T, V> Convert<V> for T where T: Fn(&Item) -> std::result::Result<V, ConvertError> {}
+
+/// Convert functions may return either a ValueError, or do queries of their
+/// own, which can result in a Error. We want to handle them both.
+#[derive(Debug, thiserror::Error)]
+pub enum ConvertError {
+    #[error("Value error")]
+    ValueError(#[from] ValueError),
+    #[error("Error")]
+    Error(#[from] Error),
+}
 
 #[derive(Debug)]
 pub struct ManyQuery<'a, V, F>
@@ -35,8 +45,11 @@ where
         let items = self.xpath.many(dynamic_context, item)?;
         let mut result = Vec::with_capacity(items.len());
         for item in items {
-            let item = (self.convert)(item).map_err(|value_error| {
-                Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
+            let item = (self.convert)(&item).map_err(|query_error| match query_error {
+                ConvertError::ValueError(value_error) => {
+                    Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
+                }
+                ConvertError::Error(error) => error,
             })?;
             result.push(item);
         }
@@ -69,8 +82,11 @@ where
 
     pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
         let item = self.xpath.one(dynamic_context, item)?;
-        (self.convert)(item).map_err(|value_error| {
-            Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
+        (self.convert)(&item).map_err(|query_error| match query_error {
+            ConvertError::ValueError(value_error) => {
+                Error::from_value_error(&self.xpath.program, (0, 0).into(), value_error)
+            }
+            ConvertError::Error(error) => error,
         })
     }
 }
@@ -101,13 +117,16 @@ where
     pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<V>> {
         let item = self.xpath.option(dynamic_context, item)?;
         if let Some(item) = item {
-            match (self.convert)(item) {
+            match (self.convert)(&item) {
                 Ok(value) => Ok(Some(value)),
-                Err(value_error) => Err(Error::from_value_error(
-                    &self.xpath.program,
-                    (0, 0).into(),
-                    value_error,
-                )),
+                Err(query_error) => match query_error {
+                    ConvertError::ValueError(value_error) => Err(Error::from_value_error(
+                        &self.xpath.program,
+                        (0, 0).into(),
+                        value_error,
+                    )),
+                    ConvertError::Error(error) => Err(error),
+                },
             }
         } else {
             Ok(None)
@@ -128,8 +147,8 @@ mod tests {
     fn test_many_query() {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
-        let q = ManyQuery::new(&static_context, "(3, 4)", |item: Item| {
-            item.as_atomic()?.as_integer()
+        let q = ManyQuery::new(&static_context, "(3, 4)", |item| {
+            Ok(item.as_atomic()?.as_integer()?)
         })
         .unwrap();
         let xot = Xot::new();
@@ -144,8 +163,8 @@ mod tests {
     fn test_one_query() {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
-        let q = OneQuery::new(&static_context, "1 + 2", |item: Item| {
-            item.as_atomic()?.as_integer()
+        let q = OneQuery::new(&static_context, "1 + 2", |item| {
+            Ok(item.as_atomic()?.as_integer()?)
         })
         .unwrap();
         let xot = Xot::new();
@@ -160,8 +179,8 @@ mod tests {
     fn test_option_query_some() {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
-        let q = OptionQuery::new(&static_context, "1 + 2", |item: Item| {
-            item.as_atomic()?.as_integer()
+        let q = OptionQuery::new(&static_context, "1 + 2", |item| {
+            Ok(item.as_atomic()?.as_integer()?)
         })
         .unwrap();
         let xot = Xot::new();
@@ -176,8 +195,8 @@ mod tests {
     fn test_option_query_none() {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
-        let q = OptionQuery::new(&static_context, "()", |item: Item| {
-            item.as_atomic()?.as_integer()
+        let q = OptionQuery::new(&static_context, "()", |item| {
+            Ok(item.as_atomic()?.as_integer()?)
         })
         .unwrap();
         let xot = Xot::new();
