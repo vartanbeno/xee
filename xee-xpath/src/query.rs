@@ -140,6 +140,39 @@ where
     }
 }
 
+pub struct OneQueryRef<V> {
+    t: std::marker::PhantomData<V>,
+    g: std::cell::RefCell<Option<Box<dyn Convert<V>>>>,
+}
+
+impl<V> OneQueryRef<V> {
+    pub fn new() -> Self {
+        Self {
+            t: std::marker::PhantomData,
+            g: std::cell::RefCell::new(None),
+            // f: None,
+        }
+    }
+
+    pub fn execute(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<V> {
+        if let Some(f) = self.g.borrow().as_ref() {
+            f(dynamic_context, item).map_err(|query_error| match query_error {
+                ConvertError::ValueError(value_error) => {
+                    todo!();
+                }
+                ConvertError::Error(error) => error,
+            })
+        } else {
+            panic!("No query set")
+        }
+    }
+
+    pub fn fulfill(&self, f: Box<dyn Convert<V>>) {
+        let mut g = self.g.borrow_mut();
+        *g = Some(f);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -211,5 +244,26 @@ mod tests {
             .execute(&dynamic_context, &Item::Atomic(Atomic::Integer(1)))
             .unwrap();
         assert_eq!(r, None);
+    }
+
+    #[test]
+    fn test_one_query_ref() {
+        let namespaces = Namespaces::default();
+        let static_context = StaticContext::new(&namespaces);
+        let one_query_ref = OneQueryRef::new();
+        let q = OneQuery::new(&static_context, "1 + 2", |dynamic_context, item| {
+            let v = item.as_atomic()?.as_integer()?;
+            let s = one_query_ref.execute(dynamic_context, item)?;
+            Ok(v + s)
+        })
+        .unwrap();
+        one_query_ref.fulfill(Box::new(|_, _| Ok(5)));
+
+        let xot = Xot::new();
+        let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let r = q
+            .execute(&dynamic_context, &Item::Atomic(Atomic::Integer(1)))
+            .unwrap();
+        assert_eq!(r, 8);
     }
 }
