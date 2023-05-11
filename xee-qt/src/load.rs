@@ -62,7 +62,6 @@ impl<'a> Loader<'a> {
             OneQuery::new(&self.static_context, "description/string()", convert_string)?;
         let test_cases_query =
             ManyQuery::new(&self.static_context, "/test-set/test-case", |item| {
-                dbg!(item);
                 Ok(qt::TestCase {
                     name: name_query.execute(dynamic_context, item)?,
                     description: description_query.execute(dynamic_context, item)?,
