@@ -51,7 +51,7 @@ where
         let items = self.xpath.many(dynamic_context, item)?;
         let mut result = Vec::with_capacity(items.len());
         for item in items {
-            let item =
+            let value =
                 (self.convert)(dynamic_context, &item).map_err(
                     |query_error| match query_error {
                         ConvertError::ValueError(value_error) => {
@@ -60,7 +60,7 @@ where
                         ConvertError::Error(error) => error,
                     },
                 )?;
-            result.push(item);
+            result.push(value);
         }
         Ok(result)
     }
