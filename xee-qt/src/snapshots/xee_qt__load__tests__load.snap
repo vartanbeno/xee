@@ -15,7 +15,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:root()",
-        result: AssertTrue,
+        result: Error(
+            "XPDY0002",
+        ),
     },
     TestCase {
         name: "fn-root-2",
@@ -37,7 +39,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "(1 to 100)[fn:root()]",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-2a",
@@ -51,7 +53,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "1 = (1, fn:root(1[. = 1]))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-2b",
@@ -65,7 +67,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "exists(1 = fn:root(1[. = 1]))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-3",
@@ -79,7 +81,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:count(fn:root(()))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-4",
@@ -98,7 +100,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := <!-- A Comment Node --> return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-5",
@@ -117,7 +119,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<!-- A Comment Node -->)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-6",
@@ -136,7 +138,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := <anElement>An Element Content</anElement> return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-7",
@@ -155,7 +157,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<anElement>An Element Content</anElement>)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-8",
@@ -174,7 +176,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := <?format role=\"output\" ?> return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-9",
@@ -193,7 +195,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<?format role=\"output\" ?>)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-10",
@@ -212,7 +214,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := element anElement {attribute anAttribute {\"Attribute Value\"}} return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-11",
@@ -231,7 +233,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(element anElement {attribute anAttribute {\"Attribute Value\"}})",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-12",
@@ -250,7 +252,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := document {<anElement><anInternalElement>element content</anInternalElement></anElement>} return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-13",
@@ -269,7 +271,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(document {<anElement><anInternalElement>element content</anInternalElement></anElement>})",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-14",
@@ -291,7 +293,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:root(fn:exactly-one(/langs[1]/para[1]))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-15",
@@ -313,7 +315,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:root(/langs[1]/para[1]/@xml:lang)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-16",
@@ -332,7 +334,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(text {\"A text Node\"})",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-17",
@@ -351,7 +353,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := text {\"a text Node\"} return fn:root($var)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-18",
@@ -408,7 +410,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := element anElement {\"Element Content\"} return fn:count(fn:namespace-uri(fn:root($var)))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-21",
@@ -427,7 +429,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := <!-- An Element Node --> return fn:count(fn:namespace-uri(fn:root($var)))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-22",
@@ -446,7 +448,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := <?format role=\"output\" ?> return fn:count(fn:namespace-uri(fn:root($var)))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-23",
@@ -465,7 +467,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "let $var := text {\"A text node\"} return fn:count(fn:namespace-uri(fn:root($var)))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "fn-root-24",
@@ -479,7 +481,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:root(.)",
-        result: AssertTrue,
+        result: Error(
+            "XPDY0002",
+        ),
     },
     TestCase {
         name: "K-NodeRootFunc-1",
@@ -493,7 +497,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "Root(2)",
-        result: AssertTrue,
+        result: Error(
+            "XPST0017",
+        ),
     },
     TestCase {
         name: "K-NodeRootFunc-2",
@@ -527,7 +533,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "(1, 2, 3)[root()[generate-id() != '***']]",
-        result: AssertTrue,
+        result: Error(
+            "XPTY0004",
+        ),
     },
     TestCase {
         name: "K-NodeRootFunc-3",
@@ -541,7 +549,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "root(2)",
-        result: AssertTrue,
+        result: Error(
+            "XPTY0004",
+        ),
     },
     TestCase {
         name: "K-NodeRootFunc-4",
@@ -555,7 +565,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "empty(root(()))",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-1",
@@ -574,7 +584,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<e/>)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-2",
@@ -612,7 +622,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<!-- comment -->)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-4",
@@ -631,7 +641,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "<e>{fn:root(attribute name {\"value\"})}</e>",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-5",
@@ -650,7 +660,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(<?target data?>)",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-6",
@@ -669,7 +679,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(text{\"text node\"})",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-7",
@@ -688,7 +698,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         ],
         modules: [],
         test: "fn:root(text{\"text node\"})",
-        result: AssertTrue,
+        result: AssertFalse,
     },
     TestCase {
         name: "K2-NodeRootFunc-8",

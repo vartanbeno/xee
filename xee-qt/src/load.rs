@@ -5,7 +5,7 @@ use std::io::BufReader;
 use std::path::Path;
 use xee_xpath::{
     Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery,
-    StaticContext,
+    OptionQuery, StaticContext,
 };
 use xot::Xot;
 
@@ -98,6 +98,32 @@ fn test_cases_query<'s>(
         },
     )?;
 
+    let error_query = OptionQuery::new(static_context, "error", |dynamic_context, item| {
+        let code_query = OneQuery::new(static_context, "@code/string()", convert_string)?;
+        Ok(qt::TestCaseResult::Error(
+            code_query.execute(dynamic_context, item)?,
+        ))
+    })?;
+    let assert_true_query = OptionQuery::new(static_context, "assert-true", |_, item| {
+        Ok(qt::TestCaseResult::AssertTrue)
+    })?;
+
+    let result_query = OneQuery::new(static_context, "result", move |dynamic_context, item| {
+        let error = error_query.execute(dynamic_context, item)?;
+        if let Some(error) = error {
+            return Ok(error);
+        }
+        let assert_true = assert_true_query.execute(dynamic_context, item)?;
+        if let Some(assert_true) = assert_true {
+            return Ok(assert_true);
+        }
+        // XXX this is wrong, but for now we need a fallback
+        Ok(qt::TestCaseResult::AssertFalse)
+        // unreachable!("unknown result type")
+        // let any_of_query = OptionQuery::new(static_context, "any-of", |dynamic_context, item| {});
+        // let all_of_query = OptionQuery::new(static_context, "all-of", |dynamic_context, item| {});
+    })?;
+
     Ok(ManyQuery::new(
         static_context,
         "/test-set/test-case",
@@ -111,7 +137,7 @@ fn test_cases_query<'s>(
                 dependencies: dependency_query.execute(dynamic_context, item)?,
                 modules: Vec::new(),
                 test: test_query.execute(dynamic_context, item)?,
-                result: qt::TestCaseResult::AssertTrue,
+                result: result_query.execute(dynamic_context, item)?,
             })
         },
     )?)
