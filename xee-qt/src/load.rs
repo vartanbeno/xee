@@ -49,7 +49,7 @@ fn convert_string<'a>(_: &'a DynamicContext<'a>, item: &Item) -> Result<String, 
     Ok(item.as_atomic()?.as_string()?)
 }
 
-fn test_cases_query<'a, 'b>(
+fn test_cases_query<'a>(
     static_context: &'a StaticContext<'a>,
 ) -> Result<ManyQuery<'a, qt::TestCase, impl Convert<'a, qt::TestCase>>> {
     let name_query = OneQuery::new(static_context, "@name/string()", convert_string)?;
