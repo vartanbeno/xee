@@ -38,20 +38,22 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
 
     // let loader = Loader::new(query)?;
 
-    let dynamic_context = DynamicContext::new(xot, &static_context);
     let query = test_cases_query(&static_context)?;
+    let dynamic_context = DynamicContext::new(xot, &static_context);
+    // the query has a lifetime for the dynamic context, and a lifetime
+    // for the static context
     let r = query.execute(&dynamic_context, &Item::Node(root))?;
     Ok(r)
     // loader.test_cases(&dynamic_context, root)
 }
 
-fn convert_string<'a>(_: &'a DynamicContext<'a>, item: &Item) -> Result<String, ConvertError> {
+fn convert_string(_: &DynamicContext, item: &Item) -> Result<String, ConvertError> {
     Ok(item.as_atomic()?.as_string()?)
 }
 
-fn test_cases_query<'a>(
-    static_context: &'a StaticContext<'a>,
-) -> Result<ManyQuery<'a, qt::TestCase, impl Convert<'a, qt::TestCase>>> {
+fn test_cases_query<'s>(
+    static_context: &'s StaticContext<'s>,
+) -> Result<ManyQuery<'s, qt::TestCase, impl Convert<qt::TestCase> + 's>> {
     let name_query = OneQuery::new(static_context, "@name/string()", convert_string)?;
     let description_query = OneQuery::new(static_context, "description/string()", convert_string)?;
     let test_query = OneQuery::new(static_context, "test/string()", convert_string)?;
