@@ -40,7 +40,7 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
 
     let queries = Queries::new(&static_context);
 
-    let (queries, query) = test_cases_query(&xot, queries)?;
+    let (queries, query) = test_cases_query(xot, queries)?;
 
     let dynamic_context = DynamicContext::new(xot, &static_context);
     let session = queries.session(&dynamic_context);
