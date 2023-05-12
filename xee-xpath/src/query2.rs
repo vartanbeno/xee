@@ -174,15 +174,6 @@ impl OneRecurseQuery {
         let item = xpath.one(session.dynamic_context, item)?;
         recurse.execute(session, &item)
     }
-
-    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<V>
-    where
-        F: Convert<V>,
-    {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.one(session.dynamic_context, item)?;
-        convert(session, &item).map_err(|convert_error| error(xpath, convert_error))
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -236,21 +227,6 @@ impl OptionRecurseQuery {
         let item = xpath.option(session.dynamic_context, item)?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Option<V>>
-    where
-        F: Convert<V>,
-    {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.option(session.dynamic_context, item)?;
-        if let Some(item) = item {
-            Ok(Some(
-                convert(session, &item).map_err(|convert_error| error(xpath, convert_error))?,
-            ))
         } else {
             Ok(None)
         }
@@ -311,21 +287,6 @@ impl ManyRecurseQuery {
         let mut values = Vec::with_capacity(item.len());
         for item in item {
             values.push(recurse.execute(session, &item)?);
-        }
-        Ok(values)
-    }
-
-    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Vec<V>>
-    where
-        F: Convert<V>,
-    {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.many(session.dynamic_context, item)?;
-        let mut values = Vec::with_capacity(item.len());
-        for item in item {
-            values.push(
-                convert(session, &item).map_err(|convert_error| error(xpath, convert_error))?,
-            );
         }
         Ok(values)
     }

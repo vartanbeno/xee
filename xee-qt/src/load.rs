@@ -6,13 +6,12 @@ use std::path::Path;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{
-    Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery,
-    OptionQuery, Queries, StaticContext,
+    Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, Queries,
+    StaticContext,
 };
 use xot::Xot;
 
 use crate::qt;
-use crate::qt::TestCase;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
@@ -39,8 +38,6 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
 
     let static_context = StaticContext::new(&namespaces);
 
-    // let loader = Loader::new(query)?;
-
     let queries = Queries::new(&static_context);
 
     let (queries, query) = test_cases_query(&xot, queries)?;
@@ -51,7 +48,6 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
     // for the static context
     let r = query.execute(&session, &Item::Node(root))?;
     Ok(r)
-    // loader.test_cases(&dynamic_context, root)
 }
 
 fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
@@ -59,7 +55,7 @@ fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
 }
 
 fn test_cases_query<'a>(
-    xot: &'a Xot,
+    _xot: &'a Xot,
     mut queries: Queries<'a>,
 ) -> Result<(
     Queries<'a>,
@@ -164,32 +160,6 @@ fn test_cases_query<'a>(
 
     Ok((queries, test_query))
 }
-
-// struct Loader<'a, F>
-// where
-//     F: Convert<'a, 'a, qt::TestCase>,
-// {
-//     test_cases_query: ManyQuery<'a, qt::TestCase, F>,
-// }
-
-// impl<'a, F> Loader<'a, F>
-// where
-//     F: Convert<'a, 'a, qt::TestCase>,
-// {
-//     fn new(test_cases_query: ManyQuery<'a, qt::TestCase, F>) -> Result<Self> {
-//         Ok(Self { test_cases_query })
-//     }
-
-//     fn test_cases(
-//         &self,
-//         dynamic_context: &'a DynamicContext<'a>,
-//         node: Node,
-//     ) -> Result<Vec<qt::TestCase>> {
-//         Ok(self
-//             .test_cases_query
-//             .execute(dynamic_context, &Item::Node(node))?)
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
