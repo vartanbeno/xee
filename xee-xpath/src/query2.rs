@@ -1,0 +1,281 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use crate::dynamic_context::DynamicContext;
+use crate::error::Error;
+use crate::error::Result;
+use crate::static_context::StaticContext;
+use crate::value::{Item, Node, ValueError};
+use crate::xpath::XPath;
+
+pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
+impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
+
+pub trait ConvertRecurse<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
+/// Convert functions may return either a ValueError, or do queries of their
+/// own, which can result in a Error. We want to handle them both.
+#[derive(Debug, thiserror::Error)]
+pub enum ConvertError {
+    #[error("Value error")]
+    ValueError(#[from] ValueError),
+    #[error("Error")]
+    Error(#[from] Error),
+}
+
+#[derive(Debug)]
+pub struct Queries<'s> {
+    queries: Vec<XPath>,
+    static_context: &'s StaticContext<'s>,
+}
+
+impl<'s> Queries<'s> {
+    pub fn new(static_context: &'s StaticContext<'s>) -> Self {
+        Self {
+            queries: Vec::new(),
+            static_context,
+        }
+    }
+
+    fn register(&mut self, s: &str) -> Result<usize> {
+        let xpath = XPath::new(self.static_context, s)?;
+        let id = self.queries.len();
+        self.queries.push(xpath);
+        Ok(id)
+    }
+
+    pub fn one<V, F>(&mut self, s: &str, convert: F) -> Result<OneQuery<V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s)?;
+        Ok(OneQuery {
+            id,
+            convert,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
+    pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s)?;
+        Ok(OptionQuery {
+            id,
+            convert,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
+    pub fn deferred_option(&mut self, s: &str) -> Result<DeferredOptionQuery> {
+        let id = self.register(s)?;
+        Ok(DeferredOptionQuery { id })
+    }
+
+    pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
+        Session {
+            dynamic_context,
+            queries: self,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Session<'s> {
+    dynamic_context: &'s DynamicContext<'s>,
+    queries: &'s Queries<'s>,
+}
+
+impl<'s> Session<'s> {
+    fn one_query_xpath(&self, id: usize) -> &XPath {
+        &self.queries.queries[id]
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct OneQuery<V, F>
+where
+    F: Convert<V>,
+{
+    id: usize,
+    convert: F,
+    phantom: std::marker::PhantomData<V>,
+}
+
+impl<V, F> OneQuery<V, F>
+where
+    F: Convert<V>,
+{
+    pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.one(session.dynamic_context, item)?;
+        (self.convert)(session, &item).map_err(|query_error| match query_error {
+            ConvertError::ValueError(value_error) => {
+                Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
+            }
+            ConvertError::Error(error) => error,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct OptionQuery<V, F>
+where
+    F: Convert<V>,
+{
+    id: usize,
+    convert: F,
+    phantom: std::marker::PhantomData<V>,
+}
+
+impl<V, F> OptionQuery<V, F>
+where
+    F: Convert<V>,
+{
+    pub fn execute(&self, session: &Session, item: &Item) -> Result<Option<V>> {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.option(session.dynamic_context, item)?;
+        if let Some(item) = item {
+            match (self.convert)(session, &item) {
+                Ok(value) => Ok(Some(value)),
+                Err(query_error) => match query_error {
+                    ConvertError::ValueError(value_error) => Err(Error::from_value_error(
+                        &xpath.program,
+                        (0, 0).into(),
+                        value_error,
+                    )),
+                    ConvertError::Error(error) => Err(error),
+                },
+            }
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct DeferredOptionQuery {
+    id: usize,
+}
+
+impl DeferredOptionQuery {
+    pub fn execute(&self, session: &Session, item: &Item) -> Result<Option<Item>> {
+        let xpath = session.one_query_xpath(self.id);
+        xpath.option(session.dynamic_context, item)
+
+        // if let Some(convert) = self.convert.borrow().as_ref() {
+        //     let option_query = OptionQuery {
+        //         id: self.id,
+        //         convert: convert.as_ref(),
+        //         phantom: std::marker::PhantomData,
+        //     };
+        //     option_query.execute(session, item)
+        // } else {
+        //     panic!("Cannot execute deferred option query without resolving it first")
+        // }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use xot::Xot;
+
+    use super::*;
+
+    use crate::name::Namespaces;
+    use crate::value::Atomic;
+
+    #[test]
+    fn test_one_query() {
+        let namespaces = Namespaces::default();
+        let static_context = StaticContext::new(&namespaces);
+        let mut queries = Queries::new(&static_context);
+        let q = queries
+            .one("1 + 2", |_, item| Ok(item.as_atomic()?.as_integer()?))
+            .unwrap();
+        let xot = Xot::new();
+        let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let session = queries.session(&dynamic_context);
+        let r = q
+            .execute(&session, &Item::Atomic(Atomic::Integer(1)))
+            .unwrap();
+        assert_eq!(r, 3);
+    }
+
+    #[test]
+    fn test_one_query_deferred() -> Result<()> {
+        let namespaces = Namespaces::default();
+        let static_context = StaticContext::new(&namespaces);
+        let mut queries = Queries::new(&static_context);
+        #[derive(Debug, PartialEq, Eq)]
+        enum Expr {
+            AnyOf(Box<Expr>),
+            Value(String),
+            Empty,
+        }
+        //     let result = queries.one("doc/result")?.execute()?;
+        //     let any_of_query = queries.option("any-of")?;
+        //     let value_query = queries.option("value")?;
+        //     let any_of = any_of_query.execute(session, result);
+        //     fn make_expression(item) {
+        //     let expr = if let Some(any_of) {
+        //         Expr::AnyOf(Box::new(make_expression(any_of)))
+        //     } else if let Some(value) = value_query.execute(session, result)? {
+        //         Expr::Value(value)
+        //     } else {
+        //         Expr::Empty
+        //     };
+        // }
+
+        let any_of_deferred = queries.deferred_option("any-of")?;
+        let value_query = queries
+            .option("value/string()", |_, item| {
+                Ok(item.as_atomic()?.as_string()?)
+            })
+            .unwrap();
+
+        struct Thingy<'s> {
+            f: &'s dyn Fn(&Thingy, &Session, &Item) -> Result<Expr>,
+        }
+        let thingy = Thingy {
+            f: &|thingy: &Thingy, session: &Session, item: &Item| {
+                let any_of = any_of_deferred.execute(session, item)?;
+                let any_of = if let Some(any_of) = any_of {
+                    Some((thingy.f)(thingy, session, &any_of)?)
+                } else {
+                    None
+                };
+                if let Some(any_of) = any_of {
+                    return Ok(Expr::AnyOf(Box::new(any_of)));
+                }
+                if let Some(value) = value_query.execute(session, item)? {
+                    return Ok(Expr::Value(value));
+                }
+                Ok(Expr::Empty)
+            },
+        };
+        // let f = |session: &Session, item: &Item| {
+        //     (thingy.f)(&thingy, session, item)
+        //     // let any_of = any_of_deferred.execute(session, helper)?;
+        //     // if let Some(any_of) = any_of {
+        //     //     return Ok(Expr::AnyOf(Box::new(any_of)));
+        //     // }
+        //     // if let Some(value) = value_query.execute(session, item)? {
+        //     //     return Ok(Expr::Value(value));
+        //     // }
+        //     // Ok(Expr::Empty)
+        // };
+        let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
+            Ok((thingy.f)(&thingy, session, item)?)
+        })?;
+
+        let mut xot = Xot::new();
+        let xml = "<doc><result><any-of><value>A</value></any-of></result></doc>";
+        let root = xot.parse(xml).unwrap();
+        let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let session = queries.session(&dynamic_context);
+        let r = result_query.execute(&session, &Item::Node(Node::Xot(root)))?;
+        assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
+        Ok(())
+    }
+}
