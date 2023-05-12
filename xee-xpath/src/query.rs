@@ -154,12 +154,7 @@ where
     pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.one(session.dynamic_context, item)?;
-        (self.convert)(session, &item).map_err(|query_error| match query_error {
-            ConvertError::ValueError(value_error) => {
-                Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
-            }
-            ConvertError::Error(error) => error,
-        })
+        (self.convert)(session, &item).map_err(|query_error| error(xpath, query_error))
     }
 }
 
@@ -196,14 +191,7 @@ where
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
-                Err(query_error) => match query_error {
-                    ConvertError::ValueError(value_error) => Err(Error::from_value_error(
-                        &xpath.program,
-                        (0, 0).into(),
-                        value_error,
-                    )),
-                    ConvertError::Error(error) => Err(error),
-                },
+                Err(query_error) => Err(error(xpath, query_error)),
             }
         } else {
             Ok(None)
@@ -254,16 +242,7 @@ where
         for item in items {
             match (self.convert)(session, &item) {
                 Ok(value) => values.push(value),
-                Err(query_error) => match query_error {
-                    ConvertError::ValueError(value_error) => {
-                        return Err(Error::from_value_error(
-                            &xpath.program,
-                            (0, 0).into(),
-                            value_error,
-                        ))
-                    }
-                    ConvertError::Error(error) => return Err(error),
-                },
+                Err(query_error) => return Err(error(xpath, query_error)),
             }
         }
         Ok(values)
