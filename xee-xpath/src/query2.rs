@@ -156,20 +156,24 @@ pub struct DeferredOptionQuery {
 }
 
 impl DeferredOptionQuery {
-    pub fn execute(&self, session: &Session, item: &Item) -> Result<Option<Item>> {
+    pub fn execute<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Option<V>>
+    where
+        F: Convert<V>,
+    {
         let xpath = session.one_query_xpath(self.id);
-        xpath.option(session.dynamic_context, item)
-
-        // if let Some(convert) = self.convert.borrow().as_ref() {
-        //     let option_query = OptionQuery {
-        //         id: self.id,
-        //         convert: convert.as_ref(),
-        //         phantom: std::marker::PhantomData,
-        //     };
-        //     option_query.execute(session, item)
-        // } else {
-        //     panic!("Cannot execute deferred option query without resolving it first")
-        // }
+        let item = xpath.option(session.dynamic_context, item)?;
+        if let Some(item) = item {
+            Ok(Some(convert(session, &item).map_err(
+                |convert_error| match convert_error {
+                    ConvertError::Error(error) => error,
+                    ConvertError::ValueError(value_error) => {
+                        Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
+                    }
+                },
+            )?))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -231,17 +235,26 @@ mod tests {
             })
             .unwrap();
 
+        struct Recurse<'s, V> {
+            f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>,
+        }
+        impl<'s, V> Recurse<'s, V> {
+            fn new(f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>) -> Self {
+                Self { f }
+            }
+            fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+                (self.f)(session, item, self)
+            }
+        }
+
         struct Thingy<'s> {
             f: &'s dyn Fn(&Thingy, &Session, &Item) -> Result<Expr>,
         }
         let thingy = Thingy {
             f: &|thingy: &Thingy, session: &Session, item: &Item| {
-                let any_of = any_of_deferred.execute(session, item)?;
-                let any_of = if let Some(any_of) = any_of {
-                    Some((thingy.f)(thingy, session, &any_of)?)
-                } else {
-                    None
-                };
+                let any_of = any_of_deferred.execute(session, item, |session, item| {
+                    Ok((thingy.f)(thingy, session, item)?)
+                })?;
                 if let Some(any_of) = any_of {
                     return Ok(Expr::AnyOf(Box::new(any_of)));
                 }
@@ -251,8 +264,37 @@ mod tests {
                 Ok(Expr::Empty)
             },
         };
+
+        let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
+            let any_of = any_of_deferred.execute(session, item, |session, item| {
+                Ok(recurse.execute(session, item)?)
+            })?;
+            if let Some(any_of) = any_of {
+                return Ok(Expr::AnyOf(Box::new(any_of)));
+            }
+            if let Some(value) = value_query.execute(session, item)? {
+                return Ok(Expr::Value(value));
+            }
+            Ok(Expr::Empty)
+        };
+        let recurse = Recurse::new(&f);
+
+        // let recurse2 = Recurse::new(&|recurse: &Recurse<Expr>, session: &Session, item: &Item| {
+        //     let any_of = any_of_deferred.execute(session, item, |session, item| {
+        //         Ok(recurse.execute(session, item)?)
+        //     })?;
+        //     if let Some(any_of) = any_of {
+        //         return Ok(Expr::AnyOf(Box::new(any_of)));
+        //     }
+        //     if let Some(value) = value_query.execute(session, item)? {
+        //         return Ok(Expr::Value(value));
+        //     }
+        //     Ok(Expr::Empty)
+        // });
+
         let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
-            Ok((thingy.f)(&thingy, session, item)?)
+            Ok(recurse.execute(session, item)?)
+            // Ok((thingy.f)(&thingy, session, item)?)
         })?;
 
         let mut xot = Xot::new();
