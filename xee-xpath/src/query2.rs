@@ -8,6 +8,13 @@ use crate::xpath::XPath;
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 
+// Recursion was very hard to get right. The trick is to use an intermediate
+// struct.
+// https://stackoverflow.com/questions/16946888/is-it-possible-to-make-a-recursive-closure-in-rust
+
+// The dyn and dereference are unavoidable, as closures are not allowed
+// to refer to themselves:
+// https://github.com/rust-lang/rust/issues/46062
 type RecurseFn<'s, V> = &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>;
 
 pub struct Recurse<'s, V> {
@@ -225,7 +232,7 @@ mod tests {
             Empty,
         }
 
-        let any_of_deferred = queries.option_recurse("any-of")?;
+        let any_of_recurse = queries.option_recurse("any-of")?;
         let value_query = queries
             .option("value/string()", |_, item| {
                 Ok(item.as_atomic()?.as_string()?)
@@ -233,7 +240,7 @@ mod tests {
             .unwrap();
 
         let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
-            let any_of = any_of_deferred.execute(session, item, recurse)?;
+            let any_of = any_of_recurse.execute(session, item, recurse)?;
             if let Some(any_of) = any_of {
                 return Ok(Expr::AnyOf(Box::new(any_of)));
             }
@@ -244,22 +251,8 @@ mod tests {
         };
         let recurse = Recurse::new(&f);
 
-        // let recurse2 = Recurse::new(&|recurse: &Recurse<Expr>, session: &Session, item: &Item| {
-        //     let any_of = any_of_deferred.execute(session, item, |session, item| {
-        //         Ok(recurse.execute(session, item)?)
-        //     })?;
-        //     if let Some(any_of) = any_of {
-        //         return Ok(Expr::AnyOf(Box::new(any_of)));
-        //     }
-        //     if let Some(value) = value_query.execute(session, item)? {
-        //         return Ok(Expr::Value(value));
-        //     }
-        //     Ok(Expr::Empty)
-        // });
-
         let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
             Ok(recurse.execute(session, item)?)
-            // Ok((thingy.f)(&thingy, session, item)?)
         })?;
 
         let mut xot = Xot::new();
