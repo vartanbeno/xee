@@ -8,6 +8,18 @@ use crate::xpath::XPath;
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 
+struct Recurse<'s, V> {
+    f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>,
+}
+impl<'s, V> Recurse<'s, V> {
+    fn new(f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>) -> Self {
+        Self { f }
+    }
+    fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+        (self.f)(session, item, self)
+    }
+}
+
 pub trait ConvertRecurse<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 /// Convert functions may return either a ValueError, or do queries of their
 /// own, which can result in a Error. We want to handle them both.
@@ -234,18 +246,6 @@ mod tests {
                 Ok(item.as_atomic()?.as_string()?)
             })
             .unwrap();
-
-        struct Recurse<'s, V> {
-            f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>,
-        }
-        impl<'s, V> Recurse<'s, V> {
-            fn new(f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>) -> Self {
-                Self { f }
-            }
-            fn execute(&self, session: &Session, item: &Item) -> Result<V> {
-                (self.f)(session, item, self)
-            }
-        }
 
         let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
             let any_of = any_of_deferred.execute(session, item, |session, item| {
