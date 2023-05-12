@@ -114,6 +114,11 @@ fn test_cases_query<'a>(
         Ok(qt::TestCaseResult::AssertCount(count))
     })?;
 
+    let assert_xml_query = queries.one("string()", |_, item| {
+        let xml = item.as_atomic()?.as_string()?;
+        Ok(qt::TestCaseResult::AssertXml(xml))
+    })?;
+
     let any_of_recurse = queries.many_recurse("*")?;
 
     let local_name_query = queries.one("local-name()", convert_string)?;
@@ -131,6 +136,8 @@ fn test_cases_query<'a>(
                 qt::TestCaseResult::AssertFalse
             } else if local_name == "assert-count" {
                 assert_count_query.execute(session, item)?
+            } else if local_name == "assert-xml" {
+                assert_xml_query.execute(session, item)?
             } else {
                 qt::TestCaseResult::AssertFalse
                 // panic!("unknown local name: {}", local_name);
@@ -140,9 +147,6 @@ fn test_cases_query<'a>(
         let recurse = Recurse::new(&f);
         Ok(recurse.execute(session, item)?)
     })?;
-    // unreachable!("unknown result type")
-    // let all_of_query = OptionQuery::new(static_context, "all-of", |dynamic_context, item| {});
-    // })?;
 
     let test_query = queries.many("/test-set/test-case", move |session, item| {
         Ok(qt::TestCase {
