@@ -55,6 +55,13 @@ impl<'s> Queries<'s> {
         }
     }
 
+    pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
+        Session {
+            dynamic_context,
+            queries: self,
+        }
+    }
+
     fn register(&mut self, s: &str) -> Result<usize> {
         let xpath = XPath::new(self.static_context, s)?;
         let id = self.queries.len();
@@ -74,6 +81,11 @@ impl<'s> Queries<'s> {
         })
     }
 
+    pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
+        let id = self.register(s)?;
+        Ok(OneRecurseQuery { id })
+    }
+
     pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
     where
         F: Convert<V>,
@@ -91,11 +103,16 @@ impl<'s> Queries<'s> {
         Ok(OptionRecurseQuery { id })
     }
 
-    pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
-        Session {
-            dynamic_context,
-            queries: self,
-        }
+    pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s)?;
+        Ok(ManyQuery {
+            id,
+            convert,
+            phantom: std::marker::PhantomData,
+        })
     }
 }
 
@@ -134,6 +151,19 @@ where
             }
             ConvertError::Error(error) => error,
         })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct OneRecurseQuery {
+    id: usize,
+}
+
+impl OneRecurseQuery {
+    pub fn execute<V>(&self, session: &Session, item: &Item, recurse: &Recurse<V>) -> Result<V> {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.one(session.dynamic_context, item)?;
+        recurse.execute(session, &item)
     }
 }
 
@@ -191,6 +221,65 @@ impl OptionRecurseQuery {
         } else {
             Ok(None)
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ManyQuery<V, F>
+where
+    F: Convert<V>,
+{
+    id: usize,
+    convert: F,
+    phantom: std::marker::PhantomData<V>,
+}
+
+impl<V, F> ManyQuery<V, F>
+where
+    F: Convert<V>,
+{
+    pub fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
+        let xpath = session.one_query_xpath(self.id);
+        let items = xpath.many(session.dynamic_context, item)?;
+        let mut values = Vec::with_capacity(items.len());
+        for item in items {
+            match (self.convert)(session, &item) {
+                Ok(value) => values.push(value),
+                Err(query_error) => match query_error {
+                    ConvertError::ValueError(value_error) => {
+                        return Err(Error::from_value_error(
+                            &xpath.program,
+                            (0, 0).into(),
+                            value_error,
+                        ))
+                    }
+                    ConvertError::Error(error) => return Err(error),
+                },
+            }
+        }
+        Ok(values)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ManyRecurseQuery {
+    id: usize,
+}
+
+impl ManyRecurseQuery {
+    pub fn execute<V>(
+        &self,
+        session: &Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<Vec<V>> {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.many(session.dynamic_context, item)?;
+        let mut values = Vec::with_capacity(item.len());
+        for item in item {
+            values.push(recurse.execute(session, &item)?);
+        }
+        Ok(values)
     }
 }
 
