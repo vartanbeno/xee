@@ -56,10 +56,7 @@ impl<'s> Queries<'s> {
     }
 
     pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
-        Session {
-            dynamic_context,
-            queries: self,
-        }
+        Session::new(dynamic_context, self)
     }
 
     fn register(&mut self, s: &str) -> Result<usize> {
@@ -123,6 +120,13 @@ pub struct Session<'s> {
 }
 
 impl<'s> Session<'s> {
+    pub fn new(dynamic_context: &'s DynamicContext<'s>, queries: &'s Queries<'s>) -> Self {
+        Self {
+            dynamic_context,
+            queries,
+        }
+    }
+
     fn one_query_xpath(&self, id: usize) -> &XPath {
         &self.queries.queries[id]
     }
