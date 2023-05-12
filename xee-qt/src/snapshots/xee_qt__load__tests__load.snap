@@ -128,6 +128,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -149,6 +150,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -170,6 +172,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -191,6 +194,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -212,6 +216,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -233,6 +238,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -254,6 +260,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -275,6 +282,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -296,6 +304,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -317,6 +326,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -386,6 +396,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -407,6 +418,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -428,6 +440,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -447,6 +460,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -466,6 +480,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -487,6 +502,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -508,6 +524,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -529,6 +546,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -597,6 +615,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XP30+ XQ30+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -655,6 +674,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -676,6 +696,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -695,6 +716,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -716,6 +738,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -737,6 +760,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -758,6 +782,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -779,6 +804,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],
@@ -800,6 +826,7 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
             Dependency {
                 type_: "spec",
                 value: "XQ10+",
+                satisfied: true,
             },
         ],
         modules: [],

@@ -94,10 +94,24 @@ fn test_cases_query<'a>(
 
     let type_query = queries.one("@type/string()", convert_string)?;
     let value_query = queries.one("@value/string()", convert_string)?;
+    let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
     let dependency_query = queries.many("dependency", move |session, item| {
+        let satisfied = satisfied_query.execute(session, item)?;
+        let satisfied = if let Some(satisfied) = satisfied {
+            if satisfied == "true" {
+                true
+            } else if satisfied == "false" {
+                false
+            } else {
+                panic!("Unexpected satisfied value: {:?}", satisfied);
+            }
+        } else {
+            true
+        };
         Ok(qt::Dependency {
             type_: type_query.execute(session, item)?,
             value: value_query.execute(session, item)?,
+            satisfied,
         })
     })?;
 
