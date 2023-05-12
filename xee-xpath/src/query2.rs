@@ -221,7 +221,7 @@ mod tests {
     }
 
     #[test]
-    fn test_one_query_deferred() -> Result<()> {
+    fn test_one_query_recurse() -> Result<()> {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
