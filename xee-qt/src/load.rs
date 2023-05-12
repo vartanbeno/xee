@@ -58,6 +58,7 @@ fn test_cases_query<'s>(
 ) -> Result<ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + 's>> {
     let name_query = OneQuery::new(static_context, "@name/string()", convert_string)?;
     let description_query = OneQuery::new(static_context, "description/string()", convert_string)?;
+
     let test_query = OneQuery::new(static_context, "test/string()", convert_string)?;
     let by_query = OneQuery::new(static_context, "@by/string()", convert_string)?;
     let on_query = OneQuery::new(static_context, "@on/string()", convert_string)?;
