@@ -145,6 +145,11 @@ fn test_cases_query<'a>(
 
     let any_of_recurse = queries.many_recurse("*")?;
 
+    // we use a local-name query here as it's the easiest way support this:
+    // there is a single entry in the "result" element, but this may be
+    // "any-of" and this contains a list of entries Using a relative path with
+    // `query.option()` to detect entries (like "error", "assert-true", etc)
+    // doesn't work for "any-of", as it contains a list of entries.
     let local_name_query = queries.one("local-name()", convert_string)?;
     let result_query = queries.one("result/*", move |session: &Session, item: &Item| {
         let f = |session: &Session, item: &Item, recurse: &Recurse<qt::TestCaseResult>| {
