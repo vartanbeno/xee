@@ -247,24 +247,6 @@ mod tests {
             }
         }
 
-        struct Thingy<'s> {
-            f: &'s dyn Fn(&Thingy, &Session, &Item) -> Result<Expr>,
-        }
-        let thingy = Thingy {
-            f: &|thingy: &Thingy, session: &Session, item: &Item| {
-                let any_of = any_of_deferred.execute(session, item, |session, item| {
-                    Ok((thingy.f)(thingy, session, item)?)
-                })?;
-                if let Some(any_of) = any_of {
-                    return Ok(Expr::AnyOf(Box::new(any_of)));
-                }
-                if let Some(value) = value_query.execute(session, item)? {
-                    return Ok(Expr::Value(value));
-                }
-                Ok(Expr::Empty)
-            },
-        };
-
         let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
             let any_of = any_of_deferred.execute(session, item, |session, item| {
                 Ok(recurse.execute(session, item)?)
