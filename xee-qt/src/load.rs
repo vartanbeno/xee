@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{
     Convert, ConvertError, DynamicContext, Item, ManyQuery, Namespaces, Node, OneQuery,
@@ -11,6 +12,7 @@ use xee_xpath::{
 use xot::Xot;
 
 use crate::qt;
+use crate::qt::TestCase;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
@@ -41,7 +43,7 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
 
     let queries = Queries::new(&static_context);
 
-    let (queries, query) = test_cases_query(queries)?;
+    let (queries, query) = test_cases_query(&xot, queries)?;
 
     let dynamic_context = DynamicContext::new(xot, &static_context);
     let session = queries.session(&dynamic_context);
@@ -56,11 +58,12 @@ fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
     Ok(item.as_atomic()?.as_string()?)
 }
 
-fn test_cases_query(
-    mut queries: Queries<'_>,
+fn test_cases_query<'a>(
+    xot: &'a Xot,
+    mut queries: Queries<'a>,
 ) -> Result<(
-    Queries<'_>,
-    ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + '_>,
+    Queries<'a>,
+    ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + 'a>,
 )> {
     let name_query = queries.one("@name/string()", convert_string)?;
     let description_query = queries.one("description/string()", convert_string)?;
@@ -103,34 +106,44 @@ fn test_cases_query(
     })?;
 
     let code_query = queries.one("@code/string()", convert_string)?;
-    let error_query = queries.option("error", move |session, item| {
+    let error_query = queries.one(".", move |session, item| {
         Ok(qt::TestCaseResult::Error(
             code_query.execute(session, item)?,
         ))
     })?;
-    let assert_true_query =
-        queries.option("assert-true", |_, _| Ok(qt::TestCaseResult::AssertTrue))?;
+    let assert_count_query = queries.one("string()", |_, item| {
+        let count = item.as_atomic()?.as_string()?;
+        // XXX unwrap is a hack
+        let count = count.parse::<usize>().unwrap();
+        Ok(qt::TestCaseResult::AssertCount(count))
+    })?;
 
-    // let any_of_query_ref = Rc::new(OneQueryRef::new());
+    let any_of_recurse = queries.many_recurse("*")?;
 
-    // let any_of_query_ref2 = any_of_query_ref.clone();
-
-    let f = move |session: &Session, item: &Item| {
-        // let any_of = any_of_query_ref2.clone().execute(dynamic_context, item)?;
-        let error = error_query.execute(session, item)?;
-        if let Some(error) = error {
-            return Ok(error);
-        }
-        let assert_true = assert_true_query.execute(session, item)?;
-        if let Some(assert_true) = assert_true {
-            return Ok(assert_true);
+    let local_name_query = queries.one("local-name()", convert_string)?;
+    let result_query = queries.one("result/*", move |session: &Session, item: &Item| {
+        let f = |session: &Session, item: &Item, recurse: &Recurse<qt::TestCaseResult>| {
+            let local_name = local_name_query.execute(session, item)?;
+            let r = if local_name == "any-of" {
+                let contents = any_of_recurse.execute(session, item, recurse)?;
+                qt::TestCaseResult::AnyOf(contents)
+            } else if local_name == "error" {
+                error_query.execute(session, item)?
+            } else if local_name == "assert-true" {
+                qt::TestCaseResult::AssertTrue
+            } else if local_name == "assert-false" {
+                qt::TestCaseResult::AssertFalse
+            } else if local_name == "assert-count" {
+                assert_count_query.execute(session, item)?
+            } else {
+                qt::TestCaseResult::AssertFalse
+                // panic!("unknown local name: {}", local_name);
+            };
+            Ok(r)
         };
-        Ok(qt::TestCaseResult::AssertFalse)
-    };
-
-    // any_of_query_ref.fulfill(&static_context, "any-of", f);
-
-    let result_query = queries.one("result", f)?;
+        let recurse = Recurse::new(&f);
+        Ok(recurse.execute(session, item)?)
+    })?;
     // unreachable!("unknown result type")
     // let all_of_query = OptionQuery::new(static_context, "all-of", |dynamic_context, item| {});
     // })?;

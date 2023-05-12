@@ -25,7 +25,7 @@ impl<'s, V> Recurse<'s, V> {
     pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
-    fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+    pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
         (self.f)(session, item, self)
     }
 }
@@ -111,6 +111,11 @@ impl<'s> Queries<'s> {
             phantom: std::marker::PhantomData,
         })
     }
+
+    pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
+        let id = self.register(s)?;
+        Ok(ManyRecurseQuery { id })
+    }
 }
 
 #[derive(Debug)]
@@ -169,6 +174,15 @@ impl OneRecurseQuery {
         let item = xpath.one(session.dynamic_context, item)?;
         recurse.execute(session, &item)
     }
+
+    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<V>
+    where
+        F: Convert<V>,
+    {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.one(session.dynamic_context, item)?;
+        convert(session, &item).map_err(|convert_error| error(xpath, convert_error))
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -222,6 +236,21 @@ impl OptionRecurseQuery {
         let item = xpath.option(session.dynamic_context, item)?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Option<V>>
+    where
+        F: Convert<V>,
+    {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.option(session.dynamic_context, item)?;
+        if let Some(item) = item {
+            Ok(Some(
+                convert(session, &item).map_err(|convert_error| error(xpath, convert_error))?,
+            ))
         } else {
             Ok(None)
         }
@@ -284,6 +313,30 @@ impl ManyRecurseQuery {
             values.push(recurse.execute(session, &item)?);
         }
         Ok(values)
+    }
+
+    pub fn execute2<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Vec<V>>
+    where
+        F: Convert<V>,
+    {
+        let xpath = session.one_query_xpath(self.id);
+        let item = xpath.many(session.dynamic_context, item)?;
+        let mut values = Vec::with_capacity(item.len());
+        for item in item {
+            values.push(
+                convert(session, &item).map_err(|convert_error| error(xpath, convert_error))?,
+            );
+        }
+        Ok(values)
+    }
+}
+
+fn error(xpath: &XPath, convert_error: ConvertError) -> Error {
+    match convert_error {
+        ConvertError::ValueError(value_error) => {
+            Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
+        }
+        ConvertError::Error(error) => error,
     }
 }
 

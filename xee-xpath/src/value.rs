@@ -69,6 +69,14 @@ impl Node {
         }
     }
 
+    pub fn xot_node(&self) -> xot::Node {
+        match self {
+            Node::Xot(node) => *node,
+            Node::Attribute(node, _) => *node,
+            Node::Namespace(node, _) => *node,
+        }
+    }
+
     // if node is a Node::Xot, then we can apply a Xot iterator to it and then wrap them
     // with Node::Xot and box the results. Otherwise we always get an empty iterator.
     pub(crate) fn xot_iterator<'a, F, G>(&self, f: F) -> Box<dyn Iterator<Item = Node> + 'a>

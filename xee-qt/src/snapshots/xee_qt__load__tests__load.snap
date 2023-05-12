@@ -39,7 +39,16 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "(1 to 100)[fn:root()]",
-        result: AssertFalse,
+        result: AnyOf(
+            [
+                AssertCount(
+                    100,
+                ),
+                Error(
+                    "XPTY0004",
+                ),
+            ],
+        ),
     },
     TestCase {
         name: "fn-root-2a",
@@ -53,7 +62,14 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "1 = (1, fn:root(1[. = 1]))",
-        result: AssertFalse,
+        result: AnyOf(
+            [
+                AssertTrue,
+                Error(
+                    "XPTY0004",
+                ),
+            ],
+        ),
     },
     TestCase {
         name: "fn-root-2b",
@@ -67,7 +83,14 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "exists(1 = fn:root(1[. = 1]))",
-        result: AssertFalse,
+        result: AnyOf(
+            [
+                AssertTrue,
+                Error(
+                    "XPTY0004",
+                ),
+            ],
+        ),
     },
     TestCase {
         name: "fn-root-3",
@@ -81,7 +104,14 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "fn:count(fn:root(()))",
-        result: AssertFalse,
+        result: AnyOf(
+            [
+                AssertFalse,
+                Error(
+                    "XPST0005",
+                ),
+            ],
+        ),
     },
     TestCase {
         name: "fn-root-4",
@@ -565,7 +595,14 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         dependencies: [],
         modules: [],
         test: "empty(root(()))",
-        result: AssertFalse,
+        result: AnyOf(
+            [
+                AssertTrue,
+                Error(
+                    "XPST0005",
+                ),
+            ],
+        ),
     },
     TestCase {
         name: "K2-NodeRootFunc-1",
