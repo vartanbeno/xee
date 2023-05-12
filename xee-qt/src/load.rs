@@ -68,7 +68,6 @@ fn test_cases_query(
     let test_query = queries.one("test/string()", convert_string)?;
     let by_query = queries.one("@by/string()", convert_string)?;
     let on_query = queries.one("@on/string()", convert_string)?;
-    // println!("on_query: {:?}", on_query);
     let by_query2 = by_query.clone();
     let on_query2 = on_query.clone();
     let created_query = queries.one("created", move |session, item| {
