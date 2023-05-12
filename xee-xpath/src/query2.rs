@@ -132,7 +132,7 @@ impl<'s> Session<'s> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OneQuery<V, F>
 where
     F: Convert<V>,
@@ -158,7 +158,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OneRecurseQuery {
     id: usize,
 }
@@ -171,7 +171,7 @@ impl OneRecurseQuery {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OptionQuery<V, F>
 where
     F: Convert<V>,
@@ -206,7 +206,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
     id: usize,
 }
@@ -228,7 +228,7 @@ impl OptionRecurseQuery {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ManyQuery<V, F>
 where
     F: Convert<V>,
@@ -265,7 +265,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ManyRecurseQuery {
     id: usize,
 }
