@@ -119,6 +119,16 @@ fn test_cases_query<'a>(
         Ok(qt::TestCaseResult::AssertXml(xml))
     })?;
 
+    let assert_eq_query = queries.one("string()", |_, item| {
+        let eq = item.as_atomic()?.as_string()?;
+        Ok(qt::TestCaseResult::AssertEq(eq))
+    })?;
+
+    let assert_string_value_query = queries.one("string()", |_, item| {
+        let string_value = item.as_atomic()?.as_string()?;
+        Ok(qt::TestCaseResult::AssertStringValue(string_value))
+    })?;
+
     let any_of_recurse = queries.many_recurse("*")?;
 
     let local_name_query = queries.one("local-name()", convert_string)?;
@@ -138,9 +148,13 @@ fn test_cases_query<'a>(
                 assert_count_query.execute(session, item)?
             } else if local_name == "assert-xml" {
                 assert_xml_query.execute(session, item)?
+            } else if local_name == "assert-eq" {
+                assert_eq_query.execute(session, item)?
+            } else if local_name == "assert-string-value" {
+                assert_string_value_query.execute(session, item)?
             } else {
-                qt::TestCaseResult::AssertFalse
-                // panic!("unknown local name: {}", local_name);
+                // qt::TestCaseResult::AssertFalse
+                panic!("unknown local name: {}", local_name);
             };
             Ok(r)
         };

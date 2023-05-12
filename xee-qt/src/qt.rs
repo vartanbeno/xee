@@ -37,7 +37,7 @@ pub(crate) enum TestCaseResult {
     AssertEmpty,
     AssertTrue,
     AssertFalse,
-    AssertStringValue,
+    AssertStringValue(String),
     Error(String),
 }
 
