@@ -79,9 +79,9 @@ impl<'s> Queries<'s> {
         })
     }
 
-    pub fn deferred_option(&mut self, s: &str) -> Result<DeferredOptionQuery> {
+    pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
         let id = self.register(s)?;
-        Ok(DeferredOptionQuery { id })
+        Ok(OptionRecurseQuery { id })
     }
 
     pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
@@ -166,26 +166,21 @@ where
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct DeferredOptionQuery {
+pub struct OptionRecurseQuery {
     id: usize,
 }
 
-impl DeferredOptionQuery {
-    pub fn execute<V, F>(&self, session: &Session, item: &Item, convert: F) -> Result<Option<V>>
-    where
-        F: Convert<V>,
-    {
+impl OptionRecurseQuery {
+    pub fn execute<V>(
+        &self,
+        session: &Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.option(session.dynamic_context, item)?;
         if let Some(item) = item {
-            Ok(Some(convert(session, &item).map_err(
-                |convert_error| match convert_error {
-                    ConvertError::Error(error) => error,
-                    ConvertError::ValueError(value_error) => {
-                        Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
-                    }
-                },
-            )?))
+            Ok(Some(recurse.execute(session, &item)?))
         } else {
             Ok(None)
         }
@@ -229,21 +224,8 @@ mod tests {
             Value(String),
             Empty,
         }
-        //     let result = queries.one("doc/result")?.execute()?;
-        //     let any_of_query = queries.option("any-of")?;
-        //     let value_query = queries.option("value")?;
-        //     let any_of = any_of_query.execute(session, result);
-        //     fn make_expression(item) {
-        //     let expr = if let Some(any_of) {
-        //         Expr::AnyOf(Box::new(make_expression(any_of)))
-        //     } else if let Some(value) = value_query.execute(session, result)? {
-        //         Expr::Value(value)
-        //     } else {
-        //         Expr::Empty
-        //     };
-        // }
 
-        let any_of_deferred = queries.deferred_option("any-of")?;
+        let any_of_deferred = queries.option_recurse("any-of")?;
         let value_query = queries
             .option("value/string()", |_, item| {
                 Ok(item.as_atomic()?.as_string()?)
@@ -251,9 +233,7 @@ mod tests {
             .unwrap();
 
         let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
-            let any_of = any_of_deferred.execute(session, item, |session, item| {
-                Ok(recurse.execute(session, item)?)
-            })?;
+            let any_of = any_of_deferred.execute(session, item, recurse)?;
             if let Some(any_of) = any_of {
                 return Ok(Expr::AnyOf(Box::new(any_of)));
             }
