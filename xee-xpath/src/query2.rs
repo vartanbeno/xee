@@ -8,11 +8,14 @@ use crate::xpath::XPath;
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
 
-struct Recurse<'s, V> {
-    f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>,
+type RecurseFn<'s, V> = &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>;
+
+pub struct Recurse<'s, V> {
+    f: RecurseFn<'s, V>,
 }
+
 impl<'s, V> Recurse<'s, V> {
-    fn new(f: &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>) -> Self {
+    pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
     fn execute(&self, session: &Session, item: &Item) -> Result<V> {
