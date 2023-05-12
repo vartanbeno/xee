@@ -1,11 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::dynamic_context::DynamicContext;
 use crate::error::Error;
 use crate::error::Result;
 use crate::static_context::StaticContext;
-use crate::value::{Item, Node, ValueError};
+use crate::value::{Item, ValueError};
 use crate::xpath::XPath;
 
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
@@ -183,7 +180,7 @@ mod tests {
     use super::*;
 
     use crate::name::Namespaces;
-    use crate::value::Atomic;
+    use crate::value::{Atomic, Node};
 
     #[test]
     fn test_one_query() {
@@ -254,17 +251,6 @@ mod tests {
                 Ok(Expr::Empty)
             },
         };
-        // let f = |session: &Session, item: &Item| {
-        //     (thingy.f)(&thingy, session, item)
-        //     // let any_of = any_of_deferred.execute(session, helper)?;
-        //     // if let Some(any_of) = any_of {
-        //     //     return Ok(Expr::AnyOf(Box::new(any_of)));
-        //     // }
-        //     // if let Some(value) = value_query.execute(session, item)? {
-        //     //     return Ok(Expr::Value(value));
-        //     // }
-        //     // Ok(Expr::Empty)
-        // };
         let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
             Ok((thingy.f)(&thingy, session, item)?)
         })?;
@@ -272,10 +258,17 @@ mod tests {
         let mut xot = Xot::new();
         let xml = "<doc><result><any-of><value>A</value></any-of></result></doc>";
         let root = xot.parse(xml).unwrap();
+        let xml2 = "<doc><result><value>A</value></result></doc>";
+        let root2 = xot.parse(xml2).unwrap();
+
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = result_query.execute(&session, &Item::Node(Node::Xot(root)))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
+
+        let session = queries.session(&dynamic_context);
+        let r = result_query.execute(&session, &Item::Node(Node::Xot(root2)))?;
+        assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }
 }
