@@ -239,19 +239,18 @@ mod tests {
             })
             .unwrap();
 
-        let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
-            let any_of = any_of_recurse.execute(session, item, recurse)?;
-            if let Some(any_of) = any_of {
-                return Ok(Expr::AnyOf(Box::new(any_of)));
-            }
-            if let Some(value) = value_query.execute(session, item)? {
-                return Ok(Expr::Value(value));
-            }
-            Ok(Expr::Empty)
-        };
-        let recurse = Recurse::new(&f);
-
         let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
+            let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
+                let any_of = any_of_recurse.execute(session, item, recurse)?;
+                if let Some(any_of) = any_of {
+                    return Ok(Expr::AnyOf(Box::new(any_of)));
+                }
+                if let Some(value) = value_query.execute(session, item)? {
+                    return Ok(Expr::Value(value));
+                }
+                Ok(Expr::Empty)
+            };
+            let recurse = Recurse::new(&f);
             Ok(recurse.execute(session, item)?)
         })?;
 
