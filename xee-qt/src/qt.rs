@@ -99,9 +99,14 @@ pub(crate) struct Collation {}
 
 #[derive(Debug)]
 pub(crate) struct Dependency {
+    pub(crate) spec: DependencySpec,
+    pub(crate) satisfied: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct DependencySpec {
     pub(crate) type_: String,
     pub(crate) value: String,
-    pub(crate) satisfied: bool,
 }
 
 #[derive(Debug)]

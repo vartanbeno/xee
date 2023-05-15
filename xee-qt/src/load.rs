@@ -109,8 +109,10 @@ fn test_cases_query<'a>(
             true
         };
         Ok(qt::Dependency {
-            type_: type_query.execute(session, item)?,
-            value: value_query.execute(session, item)?,
+            spec: qt::DependencySpec {
+                type_: type_query.execute(session, item)?,
+                value: value_query.execute(session, item)?,
+            },
             satisfied,
         })
     })?;

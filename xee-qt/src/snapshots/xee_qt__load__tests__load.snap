@@ -126,8 +126,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -148,8 +150,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -170,8 +174,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -192,8 +198,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -214,8 +222,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -236,8 +246,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -258,8 +270,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -280,8 +294,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -302,8 +318,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -324,8 +342,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -394,8 +414,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -416,8 +438,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -438,8 +462,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -458,8 +484,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -478,8 +506,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -500,8 +530,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -522,8 +554,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -544,8 +578,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -613,8 +649,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XP30+ XQ30+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XP30+ XQ30+",
+                },
                 satisfied: true,
             },
         ],
@@ -672,8 +710,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -694,8 +734,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -714,8 +756,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -736,8 +780,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -758,8 +804,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -780,8 +828,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -802,8 +852,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
@@ -824,8 +876,10 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
         environments: [],
         dependencies: [
             Dependency {
-                type_: "spec",
-                value: "XQ10+",
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ10+",
+                },
                 satisfied: true,
             },
         ],
