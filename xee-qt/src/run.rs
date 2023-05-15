@@ -1,4 +1,4 @@
-use ahash::{HashMap, HashSet};
+use ahash::HashSet;
 
 use crate::qt;
 
@@ -29,16 +29,30 @@ impl KnownDependencies {
 // if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
 
+struct TestSetResult {
+    results: Vec<TestCaseResult>,
+}
+
 enum TestCaseResult {
     Passed,
     Failed,
+    Errored,
     Unsupported,
     UnsupportedDependency,
 }
 
+impl qt::TestSet {
+    fn run(&self, known_dependencies: &KnownDependencies) -> TestSetResult {
+        let mut results = Vec::new();
+        for test_case in &self.test_cases {
+            let result = test_case.run(known_dependencies, &self.shared_environments);
+            results.push(result);
+        }
+        TestSetResult { results }
+    }
+}
+
 impl qt::TestCase {
-    // run should take a bunch of environments and dependencies
-    // under which it is run
     fn run(
         &self,
         known_dependencies: &KnownDependencies,
