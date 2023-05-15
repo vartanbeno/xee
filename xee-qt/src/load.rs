@@ -243,7 +243,7 @@ fn shared_environments_query<'a>(
     xot: &'a Xot,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::SharedEnvironments> + 'a)> {
-    let file_query = queries.one("@path/string()", convert_string)?;
+    let file_query = queries.one("@file/string()", convert_string)?;
     let role_query = queries.option("@role/string()", convert_string)?;
     let uri_query = queries.option("@uri/string()", convert_string)?;
     let (mut queries, metadata_query) = metadata_query(xot, queries)?;
@@ -276,7 +276,7 @@ fn shared_environments_query<'a>(
     })?;
 
     let name_query = queries.one("@name/string()", convert_string)?;
-    let environments_query = queries.many("environments", move |session, item| {
+    let environments_query = queries.many("environment", move |session, item| {
         let name = name_query.execute(session, item)?;
         let sources = sources_query.execute(session, item)?;
         let environment_spec = qt::EnvironmentSpec {
