@@ -3,6 +3,15 @@ use std::path::PathBuf;
 use ahash::HashMap;
 
 #[derive(Debug)]
+pub(crate) struct TestSet {
+    pub(crate) name: String,
+    pub(crate) descriptions: Vec<String>,
+    pub(crate) dependencies: Vec<Dependency>,
+    pub(crate) shared_environments: SharedEnvironments,
+    pub(crate) test_cases: Vec<TestCase>,
+}
+
+#[derive(Debug)]
 pub(crate) struct Metadata {
     pub(crate) description: Option<String>,
     pub(crate) created: Option<Attribution>,

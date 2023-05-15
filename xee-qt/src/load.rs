@@ -15,7 +15,7 @@ use crate::qt;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
-fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Vec<qt::TestCase>> {
+fn load_from_file(xot: &mut Xot, path: &Path) -> Result<qt::TestSet> {
     let xml_file = File::open(path)
         .into_diagnostic()
         .wrap_err("Cannot open XML file")?;
@@ -28,7 +28,7 @@ fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Vec<qt::TestCase>> {
     load_from_xml(xot, &xml)
 }
 
-fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
+fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<qt::TestSet> {
     let root = xot
         .parse(xml)
         .into_diagnostic()
@@ -40,7 +40,7 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
 
     let queries = Queries::new(&static_context);
 
-    let (queries, query) = test_cases_query(xot, queries)?;
+    let (queries, query) = test_set_query(xot, queries)?;
 
     let dynamic_context = DynamicContext::new(xot, &static_context);
     let session = queries.session(&dynamic_context);
@@ -48,6 +48,30 @@ fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Vec<qt::TestCase>> {
     // for the static context
     let r = query.execute(&session, &Item::Node(root))?;
     Ok(r)
+}
+
+fn test_set_query<'a>(
+    xot: &'a Xot,
+    mut queries: Queries<'a>,
+) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
+    let name_query = queries.one("@name/string()", convert_string)?;
+    // let descriptions_query = queries.many("description", convert_string)?;
+    let (queries, shared_environments_query) = shared_environments_query(xot, queries)?;
+    let (mut queries, test_cases_query) = test_cases_query(xot, queries)?;
+    let test_set_query = queries.one("/test-set", move |session, item| {
+        let name = name_query.execute(session, item)?;
+        // let descriptions = descriptions_query.execute(session, item)?;
+        let shared_environments = shared_environments_query.execute(session, item)?;
+        let test_cases = test_cases_query.execute(session, item)?;
+        Ok(qt::TestSet {
+            name,
+            descriptions: Vec::new(),
+            dependencies: Vec::new(),
+            shared_environments,
+            test_cases,
+        })
+    })?;
+    Ok((queries, test_set_query))
 }
 
 fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
@@ -200,7 +224,7 @@ fn test_cases_query<'a>(
         Ok(recurse.execute(session, item)?)
     })?;
 
-    let test_query = queries.many("/test-set/test-case", move |session, item| {
+    let test_query = queries.many("test-case", move |session, item| {
         Ok(qt::TestCase {
             name: name_query.execute(session, item)?,
             metadata: metadata_query.execute(session, item)?,
@@ -252,7 +276,7 @@ fn shared_environments_query<'a>(
     })?;
 
     let name_query = queries.one("@name/string()", convert_string)?;
-    let environments_query = queries.many("/test-set/environments", move |session, item| {
+    let environments_query = queries.many("environments", move |session, item| {
         let name = name_query.execute(session, item)?;
         let sources = sources_query.execute(session, item)?;
         let environment_spec = qt::EnvironmentSpec {
