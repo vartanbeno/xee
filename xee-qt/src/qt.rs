@@ -1,10 +1,20 @@
+use std::path::PathBuf;
+
+use ahash::HashMap;
+
+#[derive(Debug)]
+pub(crate) struct Metadata {
+    pub(crate) description: Option<String>,
+    pub(crate) created: Option<Attribution>,
+    pub(crate) modified: Vec<Modification>,
+}
+
 #[derive(Debug)]
 pub(crate) struct TestCase {
     pub(crate) name: String,
-    pub(crate) description: String,
-    pub(crate) created: Attribution,
-    pub(crate) modified: Vec<Modification>,
-    pub(crate) environments: Vec<Environment>,
+    pub(crate) metadata: Metadata,
+    // environments can be a reference by name, or a locally defined environment
+    pub(crate) environments: Vec<TestCaseEnvironment>,
     pub(crate) dependencies: Vec<Dependency>,
     pub(crate) modules: Vec<Module>,
     pub(crate) test: String,
@@ -42,32 +52,75 @@ pub(crate) enum TestCaseResult {
 }
 
 #[derive(Debug)]
-pub(crate) struct Environment {
-    name: Option<String>,
-    ref_: Option<String>,
-    schemas: Vec<Schema>,
-    sources: Vec<Source>,
-    resources: Vec<Resource>,
-    params: Vec<Param>,
-    context_items: Vec<ContextItem>,
-    decimal_formats: Vec<DecimalFormat>,
-    namespaces: Vec<Namespace>,
-    function_libraries: Vec<FunctionLibrary>,
-    collections: Vec<Collection>,
-    static_base_uris: Vec<StaticBaseUri>,
-    collations: Vec<Collation>,
+pub(crate) enum TestCaseEnvironment {
+    Local(LocalEnvironment),
+    Ref(EnvironmentRef),
+}
+
+#[derive(Debug)]
+pub(crate) struct EnvironmentRef {
+    pub(crate) ref_: String,
+}
+
+#[derive(Debug)]
+pub(crate) struct SharedEnvironments {
+    environments: HashMap<String, EnvironmentSpec>,
+}
+
+impl SharedEnvironments {
+    fn new(mut environments: HashMap<String, EnvironmentSpec>) -> Self {
+        // there is always an empty environment
+        if !environments.contains_key("empty") {
+            let empty = EnvironmentSpec::empty();
+            environments.insert("empty".to_string(), empty);
+        }
+        Self { environments }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct LocalEnvironment {
+    pub(crate) spec: EnvironmentSpec,
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct EnvironmentSpec {
+    pub(crate) schemas: Vec<Schema>,
+    pub(crate) sources: Vec<Source>,
+    pub(crate) resources: Vec<Resource>,
+    pub(crate) params: Vec<Param>,
+    pub(crate) context_items: Vec<ContextItem>,
+    pub(crate) decimal_formats: Vec<DecimalFormat>,
+    pub(crate) namespaces: Vec<Namespace>,
+    pub(crate) function_libraries: Vec<FunctionLibrary>,
+    pub(crate) collections: Vec<Collection>,
+    pub(crate) static_base_uris: Vec<StaticBaseUri>,
+    pub(crate) collations: Vec<Collation>,
+}
+
+impl EnvironmentSpec {
+    pub(crate) fn empty() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug)]
 pub(crate) struct Schema {}
 
 #[derive(Debug)]
+pub(crate) enum SourceRole {
+    Context,
+    Var(String),
+    Doc(String), // URI
+}
+
+#[derive(Debug)]
 pub(crate) struct Source {
-    role: String,
-    file: String, // PathBuf?
-    description: Option<String>,
-    created: Option<Attribution>,
-    modified: Vec<Modification>,
+    metadata: Metadata,
+    role: SourceRole,
+    file: PathBuf,
 }
 
 #[derive(Debug)]

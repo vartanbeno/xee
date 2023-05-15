@@ -1,7 +1,8 @@
-use ahash::HashSet;
+use ahash::{HashMap, HashSet};
 
 use crate::qt;
 
+#[derive(Debug)]
 struct KnownDependencies {
     specs: HashSet<qt::DependencySpec>,
 }
@@ -20,6 +21,7 @@ impl KnownDependencies {
         }
     }
 }
+
 // dependency indicator: hashset with type + value keys
 // environment: hashmap with environment name as key, empty key should
 // always be present. an environment contains a bunch of elements
@@ -37,12 +39,17 @@ enum TestCaseResult {
 impl qt::TestCase {
     // run should take a bunch of environments and dependencies
     // under which it is run
-    fn run(&self, known_dependencies: &KnownDependencies) -> TestCaseResult {
+    fn run(
+        &self,
+        known_dependencies: &KnownDependencies,
+        shared_environments: &qt::SharedEnvironments,
+    ) -> TestCaseResult {
         for dependency in &self.dependencies {
             if !known_dependencies.is_supported(dependency) {
                 return TestCaseResult::UnsupportedDependency;
             }
         }
+
         // execute test
         // compare with result
         TestCaseResult::Failed

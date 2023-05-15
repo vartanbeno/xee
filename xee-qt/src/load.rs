@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use xee_xpath::OneQuery;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{
@@ -54,22 +55,19 @@ fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
     Ok(item.as_atomic()?.as_string()?)
 }
 
-fn test_cases_query<'a>(
+fn metadata_query<'a>(
     _xot: &'a Xot,
     mut queries: Queries<'a>,
 ) -> Result<(
     Queries<'a>,
-    ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + 'a>,
+    OneQuery<qt::Metadata, impl Convert<qt::Metadata> + 'a>,
 )> {
-    let name_query = queries.one("@name/string()", convert_string)?;
-    let description_query = queries.one("description/string()", convert_string)?;
-
-    let test_query = queries.one("test/string()", convert_string)?;
+    let description_query = queries.option("description/string()", convert_string)?;
     let by_query = queries.one("@by/string()", convert_string)?;
     let on_query = queries.one("@on/string()", convert_string)?;
     let by_query2 = by_query.clone();
     let on_query2 = on_query.clone();
-    let created_query = queries.one("created", move |session, item| {
+    let created_query = queries.option("created", move |session, item| {
         {
             {
                 Ok(qt::Attribution {
@@ -79,6 +77,7 @@ fn test_cases_query<'a>(
             }
         }
     })?;
+
     let change_query = queries.one("@change/string()", convert_string)?;
     let modified_query = queries.many("modified", move |session, item| {
         let attribution = qt::Attribution {
@@ -91,6 +90,31 @@ fn test_cases_query<'a>(
             description,
         })
     })?;
+
+    let metadata_query = queries.one(".", move |session, item| {
+        let description = description_query.execute(session, item)?;
+        let created = created_query.execute(session, item)?;
+        let modified = modified_query.execute(session, item)?;
+        Ok(qt::Metadata {
+            description,
+            created,
+            modified,
+        })
+    })?;
+
+    Ok((queries, metadata_query))
+}
+
+fn test_cases_query<'a>(
+    _xot: &'a Xot,
+    mut queries: Queries<'a>,
+) -> Result<(
+    Queries<'a>,
+    ManyQuery<qt::TestCase, impl Convert<qt::TestCase> + 'a>,
+)> {
+    let name_query = queries.one("@name/string()", convert_string)?;
+    let (mut queries, metadata_query) = metadata_query(_xot, queries)?;
+    let test_query = queries.one("test/string()", convert_string)?;
 
     let type_query = queries.one("@type/string()", convert_string)?;
     let value_query = queries.one("@value/string()", convert_string)?;
@@ -186,9 +210,7 @@ fn test_cases_query<'a>(
     let test_query = queries.many("/test-set/test-case", move |session, item| {
         Ok(qt::TestCase {
             name: name_query.execute(session, item)?,
-            description: description_query.execute(session, item)?,
-            created: created_query.execute(session, item)?,
-            modified: modified_query.execute(session, item)?,
+            metadata: metadata_query.execute(session, item)?,
             environments: Vec::new(),
             dependencies: dependency_query.execute(session, item)?,
             modules: Vec::new(),
@@ -199,6 +221,43 @@ fn test_cases_query<'a>(
 
     Ok((queries, test_query))
 }
+
+// fn shared_environments_query<'a>(
+//     _xot: &'a Xot,
+//     mut queries: Queries<'a>,
+// ) -> Result<(
+//     Queries<'a>,
+//     ManyQuery<qt::SharedEnvironments, impl Convert<qt::SharedEnvironments> + 'a>,
+// )> {
+//     let file_query = queries.one("@path/string()", convert_string)?;
+//     let role_query = queries.option("@role/string()", convert_string)?;
+//     let uri_query = queries.option("@uri/string()", convert_string)?;
+
+//     let sources_query = queries.many("source", move |session, item| {
+//         let file = file_query.execute(session, item)?;
+//         let role = role_query.execute(session, item)?;
+//         let uri = uri_query.execute(session, item)?;
+//         if role.is_some() && uri.is_some() {
+//             panic!("role and uri are mutually exclusive");
+//         }
+//         let role = if let Some(role) = role {
+//             if role == "." {
+//                 qt::SourceRole::Context
+//             } else {
+//                 // XXX should start with $?
+//                 qt::SourceRole::Var(role)
+//             }
+//         } else if let Some(uri) = uri {
+//             qt::SourceRole::Doc(uri)
+//         } else {
+//             panic!("role or uri must be set");
+//         };
+
+//         let description_query = queries.one("description/string()", convert_string)?;
+
+//         Ok(qt::Source { role, file })
+//     })?;
+// }
 
 #[cfg(test)]
 mod tests {

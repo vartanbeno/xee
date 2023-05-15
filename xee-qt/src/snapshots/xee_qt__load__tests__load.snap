@@ -5,12 +5,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
 [
     TestCase {
         name: "fn-root-1",
-        description: " Evaluation of the fn:root function with no arguments and no context node set. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-09-20",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with no arguments and no context node set. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-09-20",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -21,20 +27,26 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-2",
-        description: " Evaluation of the fn:root function with no arguments that uses context node, which is not a node. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
-        },
-        modified: [
-            Modification {
-                attribution: Attribution {
-                    by: "Christian Gruen",
-                    on: "2020-01-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with no arguments that uses context node, which is not a node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
                 },
-                description: "alternative solution added for pre-evaluated expressions",
-            },
-        ],
+            ),
+            modified: [
+                Modification {
+                    attribution: Attribution {
+                        by: "Christian Gruen",
+                        on: "2020-01-17",
+                    },
+                    description: "alternative solution added for pre-evaluated expressions",
+                },
+            ],
+        },
         environments: [],
         dependencies: [],
         modules: [],
@@ -52,12 +64,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-2a",
-        description: " Expression with fn:root function that may be pre-evaluated. ",
-        created: Attribution {
-            by: "Christian Gruen",
-            on: "2020-01-17",
+        metadata: Metadata {
+            description: Some(
+                " Expression with fn:root function that may be pre-evaluated. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Christian Gruen",
+                    on: "2020-01-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -73,12 +91,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-2b",
-        description: " Expression with fn:root function that may be pre-evaluated. ",
-        created: Attribution {
-            by: "Christian Gruen",
-            on: "2020-01-17",
+        metadata: Metadata {
+            description: Some(
+                " Expression with fn:root function that may be pre-evaluated. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Christian Gruen",
+                    on: "2020-01-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -94,12 +118,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-3",
-        description: " Evaluation of the fn:root function with argument set to the empty sequence. Use count to avoid empty file. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to the empty sequence. Use count to avoid empty file. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -117,12 +147,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-4",
-        description: " Evaluation of the fn:root function with argument set to a comment node (via a variable). ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to a comment node (via a variable). ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -141,12 +177,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-5",
-        description: " Evaluation of the fn:root function with argument set to a comment node set directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to a comment node set directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -165,12 +207,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-6",
-        description: " Evaluation of the fn:root function with argument set to an elemnt node set via a variable. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an elemnt node set via a variable. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -189,12 +237,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-7",
-        description: " Evaluation of the fn:root function with argument set to an direct element node by setting directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an direct element node by setting directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -213,12 +267,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-8",
-        description: " Evaluation of the fn:root function with argument set to an processing instruction node by setting via a variable. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an processing instruction node by setting via a variable. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -237,12 +297,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-9",
-        description: " Evaluation of the fn:root function with argument set to an direct element node by setting directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an direct element node by setting directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -261,12 +327,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-10",
-        description: " Evaluation of the fn:root function with argument set to an computed element with attribute node by setting via a variable. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an computed element with attribute node by setting via a variable. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -285,12 +357,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-11",
-        description: " Evaluation of the fn:root function with argument set to an computed element with attribute node by setting directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an computed element with attribute node by setting directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -309,12 +387,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-12",
-        description: " Evaluation of the fn:root function with argument set to a document node by setting via a variable. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to a document node by setting via a variable. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -333,12 +417,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-13",
-        description: " Evaluation of the fn:root function with argument set to an computed document node by setting directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to an computed document node by setting directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -357,20 +447,26 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-14",
-        description: " Evaluation of the fn:root function with argument set to a element node by quering an xml file. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
-        },
-        modified: [
-            Modification {
-                attribution: Attribution {
-                    by: "Christian Gruen",
-                    on: "2016-01-12",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to a element node by quering an xml file. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
                 },
-                description: "Reflect changes in lang.xml",
-            },
-        ],
+            ),
+            modified: [
+                Modification {
+                    attribution: Attribution {
+                        by: "Christian Gruen",
+                        on: "2016-01-12",
+                    },
+                    description: "Reflect changes in lang.xml",
+                },
+            ],
+        },
         environments: [],
         dependencies: [],
         modules: [],
@@ -381,20 +477,26 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-15",
-        description: " Evaluation of the fn:root function with argument set to a attribute node by quering an xml file. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
-        },
-        modified: [
-            Modification {
-                attribution: Attribution {
-                    by: "Christian Gruen",
-                    on: "2016-01-12",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to a attribute node by quering an xml file. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
                 },
-                description: "Reflect changes in lang.xml",
-            },
-        ],
+            ),
+            modified: [
+                Modification {
+                    attribution: Attribution {
+                        by: "Christian Gruen",
+                        on: "2016-01-12",
+                    },
+                    description: "Reflect changes in lang.xml",
+                },
+            ],
+        },
         environments: [],
         dependencies: [],
         modules: [],
@@ -405,12 +507,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-16",
-        description: " Evaluation of the fn:root function with argument set to computed text node by setting directly on argument. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to computed text node by setting directly on argument. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -429,12 +537,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-17",
-        description: " Evaluation of the fn:root function with argument set to computed text node by setting argument vias a variable. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to computed text node by setting argument vias a variable. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -453,12 +567,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-18",
-        description: " Evaluation of the fn:root function used in conjunction with \"is\" operator (returns true). ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used in conjunction with \"is\" operator (returns true). ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -475,12 +595,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-19",
-        description: " Evaluation of the fn:root function used in conjunction with \"is\" operator (returns false). ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used in conjunction with \"is\" operator (returns false). ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -497,12 +623,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-20",
-        description: " Evaluation of the fn:root function used as argument to namespace-uri function (use an element). \n        Use fn:count to avoid empty file ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used as argument to namespace-uri function (use an element). \n        Use fn:count to avoid empty file ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -521,12 +653,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-21",
-        description: " Evaluation of the fn:root function used as argument to namespace-uri function (use a comment). \n        Use fn:count to avoid empty file ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used as argument to namespace-uri function (use a comment). \n        Use fn:count to avoid empty file ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -545,12 +683,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-22",
-        description: " Evaluation of the fn:root function used as argument to namespace-uri function (use a Processing Instruction). \n        Use fn:count to avoid empty file ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used as argument to namespace-uri function (use a Processing Instruction). \n        Use fn:count to avoid empty file ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -569,12 +713,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-23",
-        description: " Evaluation of the fn:root function used as argument to namespace-uri function (use a text node). use fn:count to avoid empty file ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2005-11-17",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function used as argument to namespace-uri function (use a text node). use fn:count to avoid empty file ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2005-11-17",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -593,12 +743,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "fn-root-24",
-        description: " Evaluation of the fn:root function with argument set to \".\" and no context node set. ",
-        created: Attribution {
-            by: "Carmelo Montanez",
-            on: "2006-02-08",
+        metadata: Metadata {
+            description: Some(
+                " Evaluation of the fn:root function with argument set to \".\" and no context node set. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Carmelo Montanez",
+                    on: "2006-02-08",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -609,12 +765,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K-NodeRootFunc-1",
-        description: " A test whose essence is: `Root(2)`. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " A test whose essence is: `Root(2)`. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -625,27 +787,33 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K-NodeRootFunc-2",
-        description: " A test whose essence is: `(1, 2, 3)[root()]`. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " A test whose essence is: `(1, 2, 3)[root()]`. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [
+                Modification {
+                    attribution: Attribution {
+                        by: "Michael Kay",
+                        on: "2018-05-22",
+                    },
+                    description: "prevent over-eager optimization: root() must deliver a single node or an error,                  therefore the predicate [root()] can be optimized to [true()]",
+                },
+                Modification {
+                    attribution: Attribution {
+                        by: "Benito van der Zander",
+                        on: "2020-09-24",
+                    },
+                    description: "add missing spec dependencies",
+                },
+            ],
         },
-        modified: [
-            Modification {
-                attribution: Attribution {
-                    by: "Michael Kay",
-                    on: "2018-05-22",
-                },
-                description: "prevent over-eager optimization: root() must deliver a single node or an error,                  therefore the predicate [root()] can be optimized to [true()]",
-            },
-            Modification {
-                attribution: Attribution {
-                    by: "Benito van der Zander",
-                    on: "2020-09-24",
-                },
-                description: "add missing spec dependencies",
-            },
-        ],
         environments: [],
         dependencies: [
             Dependency {
@@ -664,12 +832,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K-NodeRootFunc-3",
-        description: " A test whose essence is: `root(2)`. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " A test whose essence is: `root(2)`. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -680,12 +854,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K-NodeRootFunc-4",
-        description: " A test whose essence is: `empty(root(()))`. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " A test whose essence is: `empty(root(()))`. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [],
         modules: [],
@@ -701,12 +881,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-1",
-        description: " Apply fn:root() to a directly constructed element. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Apply fn:root() to a directly constructed element. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -725,12 +911,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-2",
-        description: " Apply fn:root() to an empty sequence coming from a parent axis. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Apply fn:root() to an empty sequence coming from a parent axis. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -747,12 +939,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-3",
-        description: " Invoke on a comment node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on a comment node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -771,12 +969,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-4",
-        description: " Invoke on an attribute node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on an attribute node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -795,12 +999,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-5",
-        description: " Invoke on a processing instruction node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on a processing instruction node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -819,12 +1029,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-6",
-        description: " Invoke on a processing instruction node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on a processing instruction node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -843,12 +1059,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-7",
-        description: " Invoke on a processing instruction node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on a processing instruction node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
@@ -867,12 +1089,18 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
     },
     TestCase {
         name: "K2-NodeRootFunc-8",
-        description: " Invoke on a single document node. ",
-        created: Attribution {
-            by: "Frans Englich",
-            on: "2007-11-26",
+        metadata: Metadata {
+            description: Some(
+                " Invoke on a single document node. ",
+            ),
+            created: Some(
+                Attribution {
+                    by: "Frans Englich",
+                    on: "2007-11-26",
+                },
+            ),
+            modified: [],
         },
-        modified: [],
         environments: [],
         dependencies: [
             Dependency {
