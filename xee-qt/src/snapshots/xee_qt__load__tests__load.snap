@@ -10,19 +10,6 @@ TestSet {
     dependencies: [],
     shared_environments: SharedEnvironments {
         environments: {
-            "empty": EnvironmentSpec {
-                schemas: [],
-                sources: [],
-                resources: [],
-                params: [],
-                context_items: [],
-                decimal_formats: [],
-                namespaces: [],
-                function_libraries: [],
-                collections: [],
-                static_base_uris: [],
-                collations: [],
-            },
             "lang": EnvironmentSpec {
                 schemas: [],
                 sources: [
@@ -43,6 +30,19 @@ TestSet {
                         file: "lang/lang.xml",
                     },
                 ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "empty": EnvironmentSpec {
+                schemas: [],
+                sources: [],
                 resources: [],
                 params: [],
                 context_items: [],

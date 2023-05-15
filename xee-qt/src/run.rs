@@ -1,14 +1,16 @@
-use ahash::HashSet;
+use xee_xpath::{Atomic, DynamicContext, Item, Namespaces, StaticContext, XPath};
+use xot::Xot;
 
+use crate::collection::FxIndexSet;
 use crate::qt;
 
 #[derive(Debug)]
 struct KnownDependencies {
-    specs: HashSet<qt::DependencySpec>,
+    specs: FxIndexSet<qt::DependencySpec>,
 }
 
 impl KnownDependencies {
-    fn new(specs: HashSet<qt::DependencySpec>) -> Self {
+    fn new(specs: FxIndexSet<qt::DependencySpec>) -> Self {
         Self { specs }
     }
 
@@ -36,7 +38,8 @@ struct TestSetResult {
 enum TestCaseResult {
     Passed,
     Failed,
-    Errored,
+    RuntimeError,
+    CompilationError,
     Unsupported,
     UnsupportedDependency,
 }
@@ -63,7 +66,22 @@ impl qt::TestCase {
                 return TestCaseResult::UnsupportedDependency;
             }
         }
-
+        let namespaces = Namespaces::default();
+        let static_context = StaticContext::new(&namespaces);
+        let xpath_result = XPath::new(&static_context, &self.test);
+        let xpath = match xpath_result {
+            Ok(xpath) => xpath,
+            Err(_err) => return TestCaseResult::CompilationError,
+        };
+        let xot = Xot::new();
+        let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let item = Item::Atomic(Atomic::Integer(0));
+        let run_result = xpath.run(&dynamic_context, &item);
+        // let value = match run_result {
+        //     Ok(stack_value) => stack_value,
+        //     // XXX need to handle expected errors
+        //     Err(_err) => return TestCaseResult::RuntimeError,
+        // };
         // execute test
         // compare with result
         TestCaseResult::Failed

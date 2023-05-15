@@ -12,11 +12,12 @@ documentation = "https://docs.rs/xee-qt"
 homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
-ahash = "0.8.3"
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
 miette = { workspace = true, features = ["fancy"]}
+fxhash = "0.2.1"
+indexmap = "1.9.3"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

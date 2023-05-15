@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use ahash::HashMap;
+use crate::collection::FxIndexMap;
 
 #[derive(Debug)]
 pub(crate) struct TestSet {
@@ -47,16 +47,70 @@ pub(crate) enum TestCaseResult {
     AnyOf(Vec<TestCaseResult>),
     AllOf(Vec<TestCaseResult>),
     Not(Box<TestCaseResult>),
+    // The assert element contains an XPath expression whose effective boolean
+    // value must be true; usually the expression will use the variable $result
+    // which references the result of the expression.
     Assert(String),
+    //  The assert element contains an XPath expression (usually a simple
+    //  string or numeric literal) which must be equal to the result of the
+    //  test case under the rules of the XPath 'eq' operator.
     AssertEq(String),
+    // Asserts that the result must be a sequence containing a given number of
+    // items. The value of the element is an integer giving the expected length
+    // of the sequence.
     AssertCount(usize),
+    // Asserts that the result must be a sequence of atomic values that is
+    // deep-equal to the supplied sequence under the rules of the deep-equal()
+    // function.
     AssertDeepEq(String),
+    //  Asserts that the result must be a sequence of atomic values that has
+    //  some permutation (reordering) that is deep-equal to the supplied
+    //  sequence under the rules of the deep-equal() function.
+    // Note this implies that NaN is equal to NaN.
     AssertPermutation(String),
+    // Asserts the result of the query by providing a serialization of the
+    // expression result using the default serialization parameters
+    // method="xml" indent="no" omit-xml-declaration="yes".
     AssertXml(String),
+    //  Asserts that the result of the test is an empty sequence.
     AssertEmpty,
+    // Asserts the result of serializing the query matches a given regular
+    // expression.
+    // XXX values not right
+    SerializationMatches,
+    // Asserts that the query can be executed without error, but serializing
+    // the result produces a serialization error. The result of the query must
+    // be serialized using the serialization options specified within the query
+    // (if any).
+    AssertSerializationError(String),
+    // Asserts that the result of the test matches the sequence type given as
+    // the value of the assert-type element.
+    AssertType(String),
+    // Asserts that the result of the test is the singleton boolean value
+    // false(). Note, the test expression must actually evaluate to false: this
+    // is not an assertion on the effective boolean value.
     AssertTrue,
+    // Asserts that the result of the test is the singleton boolean value
+    // false(). Note, the test expression must actually evaluate to false: this
+    // is not an assertion on the effective boolean value.
     AssertFalse,
+    // Asserts that the result of the test, after conversion to a string by
+    // applying the expression string-join(for $r in $result return string($r),
+    // " ") is equal to the string value of the assert-string-value element.
+    // Note that this test cannot be used if the result includes items that do
+    // not have a string value (elements with element-only content; function
+    // items) If the normalize-space attribute is present with the value true,
+    // then both the string value of the query result and the value of the
+    // assert-string-value element should be processed as if by the XPath
+    // normalize-space() function before the comparison.
     AssertStringValue(String),
+    //  Asserts that the test is expected to fail with a static or dynamic
+    //  error condition. The "code" attribute gives the expected error code.
+
+    // For the purpose of official test reporting, an implementation is
+    // considered to pass a test if the test expects and error and the
+    // implementation raises an error, regardless whether the error codes
+    // match.
     Error(String),
 }
 
@@ -73,11 +127,11 @@ pub(crate) struct EnvironmentRef {
 
 #[derive(Debug)]
 pub(crate) struct SharedEnvironments {
-    environments: HashMap<String, EnvironmentSpec>,
+    environments: FxIndexMap<String, EnvironmentSpec>,
 }
 
 impl SharedEnvironments {
-    pub(crate) fn new(mut environments: HashMap<String, EnvironmentSpec>) -> Self {
+    pub(crate) fn new(mut environments: FxIndexMap<String, EnvironmentSpec>) -> Self {
         // there is always an empty environment
         if !environments.contains_key("empty") {
             let empty = EnvironmentSpec::empty();
