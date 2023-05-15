@@ -38,11 +38,24 @@ struct TestSetResult {
 }
 
 enum TestResult {
+    // The test passed
     Passed,
-    Failed,
-    RuntimeError,
+    // The test passed because it errored, but the error
+    // code was unexpected
+    PassedWithWrongError(Error),
+    // We failed with an unexpected stack value
+    Failed(StackValue),
+    // We failed with an unexpected error
+    // XXX xee-xpath could distinguish between compile-time
+    // and run-time errors
+    RuntimeError(Error),
+    // We failed with a compilation error
     CompilationError,
-    Unsupported,
+    // We failed because our implementation does not yet
+    // implement something it should
+    Todo,
+    // We skipped this test as we don't support the stated
+    // dependency
     UnsupportedDependency,
 }
 
