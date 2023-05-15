@@ -68,7 +68,7 @@ pub(crate) struct SharedEnvironments {
 }
 
 impl SharedEnvironments {
-    fn new(mut environments: HashMap<String, EnvironmentSpec>) -> Self {
+    pub(crate) fn new(mut environments: HashMap<String, EnvironmentSpec>) -> Self {
         // there is always an empty environment
         if !environments.contains_key("empty") {
             let empty = EnvironmentSpec::empty();
@@ -118,9 +118,9 @@ pub(crate) enum SourceRole {
 
 #[derive(Debug)]
 pub(crate) struct Source {
-    metadata: Metadata,
-    role: SourceRole,
-    file: PathBuf,
+    pub(crate) metadata: Metadata,
+    pub(crate) role: SourceRole,
+    pub(crate) file: PathBuf,
 }
 
 #[derive(Debug)]

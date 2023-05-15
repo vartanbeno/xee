@@ -36,7 +36,7 @@ pub use crate::dynamic_context::DynamicContext;
 pub use crate::error::Error;
 pub use crate::name::Namespaces;
 pub use crate::query::{
-    Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Recurse, Session,
+    Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
 pub use crate::static_context::StaticContext;

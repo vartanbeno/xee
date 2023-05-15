@@ -137,6 +137,10 @@ impl<'s> Session<'s> {
     }
 }
 
+pub trait Query<V> {
+    fn execute(&self, session: &Session, item: &Item) -> Result<V>;
+}
+
 #[derive(Debug, Clone)]
 pub struct OneQuery<V, F>
 where
@@ -155,6 +159,15 @@ where
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.one(session.dynamic_context, item)?;
         (self.convert)(session, &item).map_err(|query_error| error(xpath, query_error))
+    }
+}
+
+impl<V, F> Query<V> for OneQuery<V, F>
+where
+    F: Convert<V>,
+{
+    fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+        Self::execute(self, session, item)
     }
 }
 
@@ -196,6 +209,15 @@ where
         } else {
             Ok(None)
         }
+    }
+}
+
+impl<V, F> Query<Option<V>> for OptionQuery<V, F>
+where
+    F: Convert<V>,
+{
+    fn execute(&self, session: &Session, item: &Item) -> Result<Option<V>> {
+        Self::execute(self, session, item)
     }
 }
 
@@ -246,6 +268,15 @@ where
             }
         }
         Ok(values)
+    }
+}
+
+impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
+where
+    F: Convert<V>,
+{
+    fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
+        Self::execute(self, session, item)
     }
 }
 
