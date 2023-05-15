@@ -1,4 +1,6 @@
-use xee_xpath::{Atomic, DynamicContext, Item, Namespaces, StaticContext, XPath};
+use xee_xpath::{
+    Atomic, DynamicContext, Error, Item, Namespaces, StackValue, StaticContext, XPath,
+};
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
@@ -32,10 +34,10 @@ impl KnownDependencies {
 // is an implicit dependency
 
 struct TestSetResult {
-    results: Vec<TestCaseResult>,
+    results: Vec<TestResult>,
 }
 
-enum TestCaseResult {
+enum TestResult {
     Passed,
     Failed,
     RuntimeError,
@@ -60,10 +62,10 @@ impl qt::TestCase {
         &self,
         known_dependencies: &KnownDependencies,
         shared_environments: &qt::SharedEnvironments,
-    ) -> TestCaseResult {
+    ) -> TestResult {
         for dependency in &self.dependencies {
             if !known_dependencies.is_supported(dependency) {
-                return TestCaseResult::UnsupportedDependency;
+                return TestResult::UnsupportedDependency;
             }
         }
         let namespaces = Namespaces::default();
@@ -71,12 +73,13 @@ impl qt::TestCase {
         let xpath_result = XPath::new(&static_context, &self.test);
         let xpath = match xpath_result {
             Ok(xpath) => xpath,
-            Err(_err) => return TestCaseResult::CompilationError,
+            Err(_err) => return TestResult::CompilationError,
         };
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let item = Item::Atomic(Atomic::Integer(0));
         let run_result = xpath.run(&dynamic_context, &item);
+        self.check_result(run_result)
         // let value = match run_result {
         //     Ok(stack_value) => stack_value,
         //     // XXX need to handle expected errors
@@ -84,6 +87,32 @@ impl qt::TestCase {
         // };
         // execute test
         // compare with result
-        TestCaseResult::Failed
+        // TestCaseResult::Failed
+    }
+
+    fn check_result(&self, run_result: Result<StackValue, Error>) -> TestResult {
+        match &self.result {
+            qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
+            qt::TestCaseResult::AssertEq(xpath_expr) => self.assert_eq(xpath_expr, run_result),
+            _ => {
+                panic!("unimplemented test case result")
+            }
+        }
+    }
+
+    fn assert_(
+        &self,
+        xpath_expr: &qt::XPathExpr,
+        stack_value: Result<StackValue, Error>,
+    ) -> TestResult {
+        unimplemented!()
+    }
+
+    fn assert_eq(
+        &self,
+        xpath_expr: &qt::XPathExpr,
+        stack_value: Result<StackValue, Error>,
+    ) -> TestResult {
+        unimplemented!()
     }
 }

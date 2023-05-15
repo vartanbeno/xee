@@ -43,6 +43,9 @@ pub(crate) struct Modification {
 }
 
 #[derive(Debug)]
+pub(crate) struct XPathExpr(pub(crate) String);
+
+#[derive(Debug)]
 pub(crate) enum TestCaseResult {
     AnyOf(Vec<TestCaseResult>),
     AllOf(Vec<TestCaseResult>),
@@ -50,11 +53,11 @@ pub(crate) enum TestCaseResult {
     // The assert element contains an XPath expression whose effective boolean
     // value must be true; usually the expression will use the variable $result
     // which references the result of the expression.
-    Assert(String),
+    Assert(XPathExpr),
     //  The assert element contains an XPath expression (usually a simple
     //  string or numeric literal) which must be equal to the result of the
     //  test case under the rules of the XPath 'eq' operator.
-    AssertEq(String),
+    AssertEq(XPathExpr),
     // Asserts that the result must be a sequence containing a given number of
     // items. The value of the element is an integer giving the expected length
     // of the sequence.
@@ -62,12 +65,12 @@ pub(crate) enum TestCaseResult {
     // Asserts that the result must be a sequence of atomic values that is
     // deep-equal to the supplied sequence under the rules of the deep-equal()
     // function.
-    AssertDeepEq(String),
+    AssertDeepEq(XPathExpr),
     //  Asserts that the result must be a sequence of atomic values that has
     //  some permutation (reordering) that is deep-equal to the supplied
     //  sequence under the rules of the deep-equal() function.
     // Note this implies that NaN is equal to NaN.
-    AssertPermutation(String),
+    AssertPermutation(XPathExpr),
     // Asserts the result of the query by providing a serialization of the
     // expression result using the default serialization parameters
     // method="xml" indent="no" omit-xml-declaration="yes".
@@ -106,7 +109,7 @@ pub(crate) enum TestCaseResult {
     AssertStringValue(String),
     //  Asserts that the test is expected to fail with a static or dynamic
     //  error condition. The "code" attribute gives the expected error code.
-
+    //
     // For the purpose of official test reporting, an implementation is
     // considered to pass a test if the test expects and error and the
     // implementation raises an error, regardless whether the error codes

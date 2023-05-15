@@ -178,7 +178,7 @@ fn test_cases_query<'a>(
 
     let assert_eq_query = queries.one("string()", |_, item| {
         let eq = item.as_atomic()?.as_string()?;
-        Ok(qt::TestCaseResult::AssertEq(eq))
+        Ok(qt::TestCaseResult::AssertEq(qt::XPathExpr(eq)))
     })?;
 
     let assert_string_value_query = queries.one("string()", |_, item| {

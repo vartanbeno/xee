@@ -190,7 +190,9 @@ TestSet {
             result: AnyOf(
                 [
                     AssertEq(
-                        "0",
+                        XPathExpr(
+                            "0",
+                        ),
                     ),
                     Error(
                         "XPST0005",
@@ -701,7 +703,9 @@ TestSet {
             modules: [],
             test: "let $var := element anElement {\"Element Content\"} return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                "1",
+                XPathExpr(
+                    "1",
+                ),
             ),
         },
         TestCase {
@@ -731,7 +735,9 @@ TestSet {
             modules: [],
             test: "let $var := <!-- An Element Node --> return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                "1",
+                XPathExpr(
+                    "1",
+                ),
             ),
         },
         TestCase {
@@ -761,7 +767,9 @@ TestSet {
             modules: [],
             test: "let $var := <?format role=\"output\" ?> return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                "1",
+                XPathExpr(
+                    "1",
+                ),
             ),
         },
         TestCase {
@@ -791,7 +799,9 @@ TestSet {
             modules: [],
             test: "let $var := text {\"A text node\"} return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                "1",
+                XPathExpr(
+                    "1",
+                ),
             ),
         },
         TestCase {
