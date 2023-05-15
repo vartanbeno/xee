@@ -4,7 +4,9 @@ expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
 ---
 TestSet {
     name: "fn-root",
-    descriptions: [],
+    descriptions: [
+        "Tests for the root() function",
+    ],
     dependencies: [],
     shared_environments: SharedEnvironments {
         environments: {

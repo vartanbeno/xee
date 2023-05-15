@@ -55,17 +55,17 @@ fn test_set_query<'a>(
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
-    // let descriptions_query = queries.many("description", convert_string)?;
+    let descriptions_query = queries.many("description/string()", convert_string)?;
     let (queries, shared_environments_query) = shared_environments_query(xot, queries)?;
     let (mut queries, test_cases_query) = test_cases_query(xot, queries)?;
     let test_set_query = queries.one("/test-set", move |session, item| {
         let name = name_query.execute(session, item)?;
-        // let descriptions = descriptions_query.execute(session, item)?;
+        let descriptions = descriptions_query.execute(session, item)?;
         let shared_environments = shared_environments_query.execute(session, item)?;
         let test_cases = test_cases_query.execute(session, item)?;
         Ok(qt::TestSet {
             name,
-            descriptions: Vec::new(),
+            descriptions,
             dependencies: Vec::new(),
             shared_environments,
             test_cases,
