@@ -239,6 +239,9 @@ impl StackValue {
             // this is the case when a single node is on the stack, just like if it
             // were in a sequence.
             StackValue::Node(_) => Ok(true),
+            // XXX the type error that the effective boolean wants is
+            // NOT the normal type error, but err:FORG0006. We don't
+            // make that distinction yet
             StackValue::Closure(_) => Err(ValueError::Type),
             StackValue::Step(_) => Err(ValueError::Type),
         }
