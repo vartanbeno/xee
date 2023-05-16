@@ -256,17 +256,6 @@ impl<'a> Interpreter<'a> {
                     let b = b.as_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_eq(&a, &b)?));
-                    // if a == Atomic::Empty {
-                    //     self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                    //     continue;
-                    // }
-                    // let b = b.as_atomic(context)?;
-                    // if b == Atomic::Empty {
-                    //     self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                    //     continue;
-                    // }
-                    // // XXX can functions be value compared?
-                    // self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
                 }
                 EncodedInstruction::Ne => {
                     let b = self.stack.pop().unwrap();
