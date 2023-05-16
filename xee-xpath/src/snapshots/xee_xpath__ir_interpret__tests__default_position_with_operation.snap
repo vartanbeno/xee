@@ -3,7 +3,7 @@ source: xee-xpath/src/ir_interpret.rs
 expression: "run(\"fn:position() + 1\")"
 ---
 Err(
-    XPDY0002 {
+    XPTY0004 {
         src: NamedSource {
             name: "input",
             source: "<redacted>",
@@ -13,7 +13,7 @@ Err(
                 0,
             ),
             length: SourceOffset(
-                13,
+                17,
             ),
         },
     },

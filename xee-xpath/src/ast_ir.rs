@@ -602,9 +602,19 @@ impl<'a> IrConverter<'a> {
         if arity > u8::MAX as usize {
             return Err(Error::XPDY0130);
         }
-        // we initially had fn:position and fn:last hardcoded, but
-        // unfortunately we cannot do that as we need to handle them being
-        // absent correctly, which the bound functions do.
+        // hardcoded fn:position and fn:last
+        // These should work without hardcoding them, but this is faster
+        // (until some advanced compiler optimization is implemented)
+        // unfortunately this can generate a type error instead of a 'context absent'
+        // error in some circumstances, but we can live with that for now as it's
+        // much more efficient
+        if ast.name == self.fn_position {
+            assert!(arity == 0);
+            return self.fn_position(span);
+        } else if ast.name == self.fn_last {
+            assert!(arity == 0);
+            return self.fn_last(span);
+        }
 
         let static_function_id = self
             .static_context

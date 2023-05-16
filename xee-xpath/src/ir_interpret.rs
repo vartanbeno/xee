@@ -1005,11 +1005,6 @@ mod tests {
     }
 
     #[test]
-    fn test_default_position_with_operation() {
-        assert_debug_snapshot!(run("fn:position() + 1"));
-    }
-
-    #[test]
     fn test_default_last() {
         assert_debug_snapshot!(run_xml("<doc/>", "fn:last()"));
     }
@@ -1257,5 +1252,11 @@ mod tests {
     #[test]
     fn test_absent_context_with_operation() {
         assert_debug_snapshot!(run(". + 1"));
+    }
+
+    // Same problem as before
+    #[test]
+    fn test_default_position_with_operation() {
+        assert_debug_snapshot!(run("fn:position() + 1"));
     }
 }
