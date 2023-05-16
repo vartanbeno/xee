@@ -25,6 +25,8 @@ pub enum ValueError {
     DivisionByZero,
     #[error("Stack overflow")]
     StackOverflow,
+    #[error("Absent")]
+    Absent,
 }
 
 type Result<T> = std::result::Result<T, ValueError>;
@@ -260,6 +262,8 @@ pub enum Atomic {
     String(Rc<String>),
     // a special marker to note empty sequences after atomization
     Empty,
+    // a special marker to indicate an absent context item
+    Absent,
 }
 
 impl Display for Atomic {
@@ -272,6 +276,7 @@ impl Display for Atomic {
             Atomic::Decimal(d) => write!(f, "{}", d),
             Atomic::String(s) => write!(f, "{}", s),
             Atomic::Empty => write!(f, "()"),
+            Atomic::Absent => write!(f, "absent"),
         }
     }
 }

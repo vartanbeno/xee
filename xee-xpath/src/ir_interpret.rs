@@ -505,7 +505,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
-        xpath.run_no_focus(&context)
+        xpath.run(&context, None)
     }
 
     fn run_with_variables(s: &str, variables: &[(ast::Name, StackValue)]) -> Result<StackValue> {
@@ -518,7 +518,7 @@ mod tests {
         let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
         let context = DynamicContext::with_variables(&xot, &static_context, variables);
         let xpath = XPath::new(context.static_context, s)?;
-        xpath.run_no_focus(&context)
+        xpath.run(&context, None)
     }
 
     fn run_debug(s: &str) -> Result<StackValue> {
@@ -528,7 +528,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.run_no_focus(&context)
+        xpath.run(&context, None)
     }
 
     fn run_xml(xml: &str, xpath: &str) -> Result<StackValue> {
@@ -996,11 +996,26 @@ mod tests {
 
     #[test]
     fn test_default_position() {
+        assert_debug_snapshot!(run_xml("<doc/>", "fn:position()"));
+    }
+
+    #[test]
+    fn test_default_position_no_context() {
         assert_debug_snapshot!(run("fn:position()"));
     }
 
     #[test]
+    fn test_default_position_with_operation() {
+        assert_debug_snapshot!(run("fn:position() + 1"));
+    }
+
+    #[test]
     fn test_default_last() {
+        assert_debug_snapshot!(run_xml("<doc/>", "fn:last()"));
+    }
+
+    #[test]
+    fn test_default_last_no_context() {
         assert_debug_snapshot!(run("fn:last()"));
     }
 
@@ -1227,5 +1242,20 @@ mod tests {
                 )
             ]
         ))
+    }
+
+    #[test]
+    fn test_absent_context() {
+        assert_debug_snapshot!(run("."));
+    }
+
+    // This results in a type error, because the context is absent and no
+    // operations with absent are permitted. This is not ideal - better would
+    // be if the access to . already resulted in a XPDY0002 error. But
+    // . is compiled away and no function call takes place (unlike for fn:position
+    // fn:last), so we don't get an error at that level.
+    #[test]
+    fn test_absent_context_with_operation() {
+        assert_debug_snapshot!(run(". + 1"));
     }
 }

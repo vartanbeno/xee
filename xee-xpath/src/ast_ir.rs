@@ -212,6 +212,8 @@ impl<'a> IrConverter<'a> {
                         span: empty_span,
                     }]))
                 }
+                // we can detect statically that the context is absent if it's in
+                // a function definition
                 ContextItem::Absent => Err(Error::XPDY0002 {
                     src: NamedSource::new("input", self.src.to_string()),
                     span,
@@ -600,16 +602,9 @@ impl<'a> IrConverter<'a> {
         if arity > u8::MAX as usize {
             return Err(Error::XPDY0130);
         }
-        // hardcoded fn:position and fn:last
-        // These should work without hardcoding them, but this is faster
-        // (until some advanced compiler optimization is implemented)
-        if ast.name == self.fn_position {
-            assert!(arity == 0);
-            return self.fn_position(span);
-        } else if ast.name == self.fn_last {
-            assert!(arity == 0);
-            return self.fn_last(span);
-        }
+        // we initially had fn:position and fn:last hardcoded, but
+        // unfortunately we cannot do that as we need to handle them being
+        // absent correctly, which the bound functions do.
 
         let static_function_id = self
             .static_context

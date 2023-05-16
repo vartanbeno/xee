@@ -651,6 +651,10 @@ impl Error {
             ValueError::Overflow => Error::FOAR0002,
             ValueError::StackOverflow => Error::XPDY0130,
             ValueError::DivisionByZero => Error::FOAR0001,
+            ValueError::Absent => Error::XPDY0002 {
+                src: NamedSource::new("input", program.src.to_string()),
+                span,
+            },
         }
     }
 }

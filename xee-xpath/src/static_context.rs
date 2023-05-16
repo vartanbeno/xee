@@ -283,6 +283,9 @@ fn bound_position(
     _context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
+        return Err(ValueError::Absent);
+    }
     // position should be the context value
     Ok(arguments[0].clone())
 }
@@ -291,6 +294,9 @@ fn bound_last(
     _context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
+        return Err(ValueError::Absent);
+    }
     // size should be the context value
     Ok(arguments[0].clone())
 }
@@ -351,6 +357,7 @@ fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String,
             Atomic::Double(double) => double.to_string(),
             Atomic::Decimal(decimal) => decimal.to_string(),
             Atomic::Empty => "".to_string(),
+            Atomic::Absent => Err(ValueError::Absent)?,
         },
         StackValue::Sequence(sequence) => {
             let sequence = sequence.borrow();

@@ -44,5 +44,5 @@ pub fn evaluate_without_focus(s: &str) -> Result<StackValue> {
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
     let xpath = XPath::new(context.static_context, s)?;
-    xpath.run_no_focus(&context)
+    xpath.run(&context, None)
 }

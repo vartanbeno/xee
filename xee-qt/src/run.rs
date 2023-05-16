@@ -89,7 +89,7 @@ impl qt::TestCase {
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let item = Item::Atomic(Atomic::Integer(0));
-        let run_result = xpath.run(&dynamic_context, &item);
+        let run_result = xpath.run(&dynamic_context, Some(&item));
         self.check_result(run_result)
         // let value = match run_result {
         //     Ok(stack_value) => stack_value,

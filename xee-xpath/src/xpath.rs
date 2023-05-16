@@ -1,3 +1,5 @@
+use miette::NamedSource;
+
 use crate::ast_ir::IrConverter;
 use crate::builder::{FunctionBuilder, Program};
 use crate::dynamic_context::DynamicContext;
@@ -40,12 +42,16 @@ impl XPath {
         })
     }
 
-    pub(crate) fn run_no_focus(&self, dynamic_context: &DynamicContext) -> Result<StackValue> {
-        // a fake context value;
-        self.run(dynamic_context, &Item::Atomic(Atomic::Integer(0)))
-    }
+    // pub(crate) fn run_no_focus(&self, dynamic_context: &DynamicContext) -> Result<StackValue> {
+    //     // a fake context value;
+    //     self.run(dynamic_context, &Item::Atomic(Atomic::Integer(0)))
+    // }
 
-    pub fn run(&self, dynamic_context: &DynamicContext, context_item: &Item) -> Result<StackValue> {
+    pub fn run(
+        &self,
+        dynamic_context: &DynamicContext,
+        context_item: Option<&Item>,
+    ) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
         interpreter.start(self.main, context_item, &arguments);
@@ -60,7 +66,15 @@ impl XPath {
             "stack must only have 1 value but found {:?}",
             interpreter.stack()
         );
-        Ok(interpreter.stack().last().unwrap().clone())
+        let value = interpreter.stack().last().unwrap().clone();
+        if matches!(value, StackValue::Atomic(Atomic::Absent)) {
+            Err(Error::XPDY0002 {
+                src: NamedSource::new("input", self.program.src.clone()),
+                span: (0, self.program.src.len()).into(),
+            })
+        } else {
+            Ok(value)
+        }
     }
 
     pub fn run_xot_node(
@@ -68,11 +82,11 @@ impl XPath {
         dynamic_context: &DynamicContext,
         node: xot::Node,
     ) -> Result<StackValue> {
-        self.run(dynamic_context, &Item::Node(Node::Xot(node)))
+        self.run(dynamic_context, Some(&Item::Node(Node::Xot(node))))
     }
 
     pub fn many(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Vec<Item>> {
-        let stack_value = self.run(dynamic_context, item)?;
+        let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
             // XXX this clone here is not great
             StackValue::Sequence(seq) => Ok(seq.borrow().items.clone()),
@@ -84,7 +98,7 @@ impl XPath {
     }
 
     pub fn one(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Item> {
-        let stack_value = self.run(dynamic_context, item)?;
+        let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
             StackValue::Sequence(seq) => {
                 let borrowed = seq.borrow();
@@ -105,7 +119,7 @@ impl XPath {
     }
 
     pub fn option(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<Item>> {
-        let stack_value = self.run(dynamic_context, item)?;
+        let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
             StackValue::Sequence(seq) => {
                 let borrowed = seq.borrow();
