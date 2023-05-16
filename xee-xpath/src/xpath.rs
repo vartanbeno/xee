@@ -67,13 +67,13 @@ impl XPath {
             interpreter.stack()
         );
         let value = interpreter.stack().last().unwrap().clone();
-        if matches!(value, StackValue::Atomic(Atomic::Absent)) {
-            Err(Error::XPDY0002 {
+        match value {
+            StackValue::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
                 src: NamedSource::new("input", self.program.src.clone()),
                 span: (0, self.program.src.len()).into(),
-            })
-        } else {
-            Ok(value)
+            }),
+            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Atomic(Atomic::Boolean(false))),
+            _ => Ok(value),
         }
     }
 

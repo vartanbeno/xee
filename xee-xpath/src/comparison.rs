@@ -5,7 +5,7 @@ use crate::value::{Atomic, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
-pub(crate) fn value_eq(a: &[Atomic], b: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn value_eq(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     generic_value_compare(
         a,
         b,
@@ -28,8 +28,8 @@ where
 }
 
 fn generic_value_compare<NumericOp, StringOp, BooleanOp>(
-    a: &[Atomic],
-    b: &[Atomic],
+    a: &Atomic,
+    b: &Atomic,
     ops: GenericComparisonOps<NumericOp, StringOp, BooleanOp>,
 ) -> Result<Atomic>
 where
@@ -39,17 +39,10 @@ where
 {
     // If an atomized operand is an empty sequence, the result of the value
     // comparison is an empty sequence
-    if a.is_empty() || b.is_empty() {
+    if matches!(a, Atomic::Empty) || matches!(b, Atomic::Empty) {
         return Ok(Atomic::Empty);
     }
-    // If an atomized operand is a sequence of length greater than one
-    // a type error is raised
-    if a.len() > 1 || b.len() > 1 {
-        return Err(ValueError::Type);
-    }
-    let a = &a[0];
-    let b = &b[0];
-    let b = match (a, b) {
+    let r = match (a, b) {
         (
             Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
             Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
@@ -58,7 +51,7 @@ where
         (Atomic::Boolean(_), Atomic::Boolean(_)) => (ops.boolean_op)(a, b),
         _ => Err(ValueError::Type),
     }?;
-    Ok(Atomic::Boolean(b))
+    Ok(Atomic::Boolean(r))
 }
 
 // generalized comparison, optimized eq version here we avoid O(n * m)

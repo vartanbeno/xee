@@ -10,6 +10,7 @@ use crate::error::Error;
 use crate::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 use crate::op;
 
+use crate::comparison;
 use crate::step::resolve_step;
 use crate::value::{
     Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StackValue,
@@ -250,18 +251,22 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Eq => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
-                    if a == Atomic::Empty {
-                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                        continue;
-                    }
                     let b = b.as_atomic(context)?;
-                    if b == Atomic::Empty {
-                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                        continue;
-                    }
-                    // XXX can functions be value compared?
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_eq(&a, &b)?));
+                    // if a == Atomic::Empty {
+                    //     self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                    //     continue;
+                    // }
+                    // let b = b.as_atomic(context)?;
+                    // if b == Atomic::Empty {
+                    //     self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
+                    //     continue;
+                    // }
+                    // // XXX can functions be value compared?
+                    // self.stack.push(StackValue::Atomic(Atomic::Boolean(a == b)));
                 }
                 EncodedInstruction::Ne => {
                     let b = self.stack.pop().unwrap();
