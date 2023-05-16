@@ -1254,7 +1254,7 @@ mod tests {
         assert_debug_snapshot!(run(". + 1"));
     }
 
-    // Same problem as before
+    // Same problem as before, type error instead of XPDY0002 error
     #[test]
     fn test_default_position_with_operation() {
         assert_debug_snapshot!(run("fn:position() + 1"));
