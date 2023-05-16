@@ -147,6 +147,8 @@ pub(crate) fn op_numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
     }
 }
 
+// pub(crate) fn op_numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {}
+
 struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
 where
     IntegerOp: FnOnce(i64, i64) -> Result<i64>,
@@ -160,6 +162,77 @@ where
     double_op: DoubleOp,
 }
 
+fn numeric_general_op<F>(atomic_a: &Atomic, atomic_b: &Atomic, op: F) -> Result<Atomic>
+where
+    F: FnOnce(&Atomic, &Atomic) -> Result<Atomic>,
+{
+    // S - type substition due to type hierarchy
+    //     https://www.w3.org/TR/xpath-datamodel-31/#types-hierarchy
+    // P - type promotion:
+    //    float -> double
+    //    decimal -> float
+    //    decimal -> double
+    match (atomic_a, atomic_b) {
+        // -> integer
+        (Atomic::Integer(_), Atomic::Integer(_)) => op(atomic_a, atomic_b),
+        // -> decimal
+        (Atomic::Decimal(_), Atomic::Decimal(_)) => op(atomic_a, atomic_b),
+        (Atomic::Integer(_), Atomic::Decimal(_)) => {
+            // integer S decimal
+            op(&Atomic::Decimal(atomic_a.as_decimal()?), atomic_b)
+        }
+        (Atomic::Decimal(_), Atomic::Integer(_)) => {
+            // integer S decimal
+            op(atomic_a, &Atomic::Decimal(atomic_b.as_decimal()?))
+        }
+        // -> float
+        (Atomic::Float(_), Atomic::Float(_)) => op(atomic_a, atomic_b),
+        (Atomic::Decimal(_), Atomic::Float(_)) => {
+            // decimal P float
+            op(&Atomic::Float(atomic_a.as_float()?), atomic_b)
+        }
+        (Atomic::Integer(_), Atomic::Float(_)) => {
+            // integer S decimal P float
+            op(&Atomic::Float(atomic_a.as_float()?), atomic_b)
+        }
+        (Atomic::Float(_), Atomic::Decimal(_)) => {
+            // decimal P float
+            op(atomic_a, &Atomic::Float(atomic_b.as_float()?))
+        }
+        (Atomic::Float(_), Atomic::Integer(_)) => {
+            // integer S decimal P float
+            op(atomic_a, &Atomic::Float(atomic_b.as_float()?))
+        }
+        // -> double
+        (Atomic::Double(_), Atomic::Double(_)) => op(atomic_a, atomic_b),
+        (Atomic::Decimal(_), Atomic::Double(_)) => {
+            // decimal P double
+            op(&Atomic::Double(atomic_a.as_double()?), atomic_b)
+        }
+        (Atomic::Integer(_), Atomic::Double(_)) => {
+            // integer S decimal P double
+            op(&Atomic::Double(atomic_a.as_double()?), atomic_b)
+        }
+        (Atomic::Double(_), Atomic::Decimal(_)) => {
+            // decimal P double
+            op(atomic_a, &Atomic::Double(atomic_b.as_double()?))
+        }
+        (Atomic::Double(_), Atomic::Integer(_)) => {
+            // integer S decimal P double
+            op(atomic_a, &Atomic::Double(atomic_b.as_double()?))
+        }
+        (Atomic::Float(_), Atomic::Double(_)) => {
+            // float P double
+            op(&Atomic::Double(atomic_a.as_double()?), atomic_b)
+        }
+        (Atomic::Double(_), Atomic::Float(_)) => {
+            // float P double
+            op(atomic_a, &Atomic::Double(atomic_b.as_double()?))
+        }
+        _ => Err(ValueError::Type),
+    }
+}
+
 fn numeric_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
     atomic_a: &Atomic,
     atomic_b: &Atomic,
@@ -171,71 +244,19 @@ where
     FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
     DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
 {
-    // S - type substition due to type hierarchy
-    //     https://www.w3.org/TR/xpath-datamodel-31/#types-hierarchy
-    // P - type promotion:
-    //    float -> double
-    //    decimal -> float
-    //    decimal -> double
-    match (atomic_a, atomic_b) {
-        // -> integer
-        (Atomic::Integer(a), Atomic::Integer(b)) => Ok(Atomic::Integer((ops.integer_op)(*a, *b)?)),
-        // -> decimal
-        (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok(Atomic::Decimal((ops.decimal_op)(*a, *b)?)),
-        (Atomic::Integer(_), Atomic::Decimal(_)) => {
-            // integer S decimal
-            numeric_op(&Atomic::Decimal(atomic_a.as_decimal()?), atomic_b, ops)
+    numeric_general_op(atomic_a, atomic_b, |atomic_a, atomic_b| {
+        match (atomic_a, atomic_b) {
+            (Atomic::Integer(a), Atomic::Integer(b)) => {
+                Ok(Atomic::Integer((ops.integer_op)(*a, *b)?))
+            }
+            (Atomic::Decimal(a), Atomic::Decimal(b)) => {
+                Ok(Atomic::Decimal((ops.decimal_op)(*a, *b)?))
+            }
+            (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float((ops.float_op)(*a, *b))),
+            (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double((ops.double_op)(*a, *b))),
+            _ => unreachable!("Illegal combination"),
         }
-        (Atomic::Decimal(_), Atomic::Integer(_)) => {
-            // integer S decimal
-            numeric_op(atomic_a, &Atomic::Decimal(atomic_b.as_decimal()?), ops)
-        }
-        // -> float
-        (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float((ops.float_op)(*a, *b))),
-        (Atomic::Decimal(_), Atomic::Float(_)) => {
-            // decimal P float
-            numeric_op(&Atomic::Float(atomic_a.as_float()?), atomic_b, ops)
-        }
-        (Atomic::Integer(_), Atomic::Float(_)) => {
-            // integer S decimal P float
-            numeric_op(&Atomic::Float(atomic_a.as_float()?), atomic_b, ops)
-        }
-        (Atomic::Float(_), Atomic::Decimal(_)) => {
-            // decimal P float
-            numeric_op(atomic_a, &Atomic::Float(atomic_b.as_float()?), ops)
-        }
-        (Atomic::Float(_), Atomic::Integer(_)) => {
-            // integer S decimal P float
-            numeric_op(atomic_a, &Atomic::Float(atomic_b.as_float()?), ops)
-        }
-        // -> double
-        (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double((ops.double_op)(*a, *b))),
-        (Atomic::Decimal(_), Atomic::Double(_)) => {
-            // decimal P double
-            numeric_op(&Atomic::Double(atomic_a.as_double()?), atomic_b, ops)
-        }
-        (Atomic::Integer(_), Atomic::Double(_)) => {
-            // integer S decimal P double
-            numeric_op(&Atomic::Double(atomic_a.as_double()?), atomic_b, ops)
-        }
-        (Atomic::Double(_), Atomic::Decimal(_)) => {
-            // decimal P double
-            numeric_op(atomic_a, &Atomic::Double(atomic_b.as_double()?), ops)
-        }
-        (Atomic::Double(_), Atomic::Integer(_)) => {
-            // integer S decimal P double
-            numeric_op(atomic_a, &Atomic::Double(atomic_b.as_double()?), ops)
-        }
-        (Atomic::Float(_), Atomic::Double(_)) => {
-            // float P double
-            numeric_op(&Atomic::Double(atomic_a.as_double()?), atomic_b, ops)
-        }
-        (Atomic::Double(_), Atomic::Float(_)) => {
-            // float P double
-            numeric_op(atomic_a, &Atomic::Double(atomic_b.as_double()?), ops)
-        }
-        _ => Err(ValueError::Type),
-    }
+    })
 }
 
 #[cfg(test)]
