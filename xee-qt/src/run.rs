@@ -45,12 +45,10 @@ enum TestResult {
     PassedWithWrongError(Error),
     // We failed with an unexpected stack value
     Failed(StackValue),
-    // We failed with an unexpected error
-    // XXX xee-xpath could distinguish between compile-time
-    // and run-time errors
+    // We failed with an unexpected error during runtime
     RuntimeError(Error),
     // We failed with a compilation error
-    CompilationError,
+    CompilationError(Error),
     // We failed because our implementation does not yet
     // implement something it should
     Todo,
@@ -86,7 +84,7 @@ impl qt::TestCase {
         let xpath_result = XPath::new(&static_context, &self.test);
         let xpath = match xpath_result {
             Ok(xpath) => xpath,
-            Err(_err) => return TestResult::CompilationError,
+            Err(error) => return TestResult::CompilationError(error),
         };
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);

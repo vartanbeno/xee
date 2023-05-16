@@ -1177,4 +1177,18 @@ mod tests {
             },
         )
     }
+
+    // #[test]
+    // fn test_external_variable() {
+    //     assert_debug_snapshot!(run_with_variables(
+    //         "$foo",
+    //         &[(
+    //             &Name {
+    //                 name: "foo".to_string(),
+    //                 namespace: None
+    //             },
+    //             StackValue::Atomic(Atomic::String(Rc::new("FOO".to_string())))
+    //         )],
+    //     ))
+    // }
 }

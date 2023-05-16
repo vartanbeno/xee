@@ -47,7 +47,7 @@ pub(crate) struct QuantifiedExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Name {
+pub struct Name {
     pub(crate) name: String,
     pub(crate) namespace: Option<String>,
 }
