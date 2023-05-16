@@ -218,6 +218,32 @@ impl StackValue {
         }
     }
 
+    pub(crate) fn as_bool(&self) -> Result<bool> {
+        match self {
+            StackValue::Atomic(a) => a.as_bool(),
+            StackValue::Sequence(s) => {
+                let s = s.borrow();
+                // If its operand is an empty sequence, fn:boolean returns false.
+                if s.is_empty() {
+                    return Ok(false);
+                }
+                // If its operand is a sequence whose first item is a node, fn:boolean returns true.
+                if matches!(s.items[0], Item::Node(_)) {
+                    return Ok(true);
+                }
+                // If its operand is a singleton value
+                let singleton = s.singleton()?;
+                singleton.as_bool()
+            }
+            // If its operand is a sequence whose first item is a node, fn:boolean returns true;
+            // this is the case when a single node is on the stack, just like if it
+            // were in a sequence.
+            StackValue::Node(_) => Ok(true),
+            StackValue::Closure(_) => Err(ValueError::Type),
+            StackValue::Step(_) => Err(ValueError::Type),
+        }
+    }
+
     pub fn as_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
         match self {
             StackValue::Sequence(s) => Ok(s.clone()),
@@ -319,8 +345,13 @@ impl Atomic {
     pub(crate) fn as_bool(&self) -> Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),
+            Atomic::Decimal(d) => Ok(!d.is_zero()),
+            Atomic::Float(f) => Ok(!f.is_zero()),
+            Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
-            _ => Err(ValueError::Type),
+            Atomic::String(s) => Ok(!s.is_empty()),
+            Atomic::Empty => Ok(false),
+            Atomic::Absent => Err(ValueError::Absent),
         }
     }
 
@@ -380,6 +411,12 @@ impl Item {
     pub fn as_node(&self) -> Result<Node> {
         match self {
             Item::Node(n) => Ok(*n),
+            _ => Err(ValueError::Type),
+        }
+    }
+    pub fn as_bool(&self) -> Result<bool> {
+        match self {
+            Item::Atomic(a) => a.as_bool(),
             _ => Err(ValueError::Type),
         }
     }
