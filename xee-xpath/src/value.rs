@@ -1,5 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 use miette::{Diagnostic, SourceSpan};
+use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
@@ -280,12 +281,12 @@ impl StackValue {
 }
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum Atomic {
     Boolean(bool),
     Integer(i64),
-    Float(f32),
-    Double(f64),
+    Float(OrderedFloat<f32>),
+    Double(OrderedFloat<f64>),
     Decimal(Decimal),
     // and many more
     String(Rc<String>),
@@ -326,21 +327,25 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn as_float(&self) -> Result<f32> {
+    pub(crate) fn as_float(&self) -> Result<OrderedFloat<f32>> {
         match self {
             Atomic::Float(f) => Ok(*f),
-            Atomic::Decimal(d) => d.to_f32().ok_or(ValueError::Type),
-            Atomic::Integer(_) => self.as_decimal()?.to_f32().ok_or(ValueError::Type),
+            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(ValueError::Type)?)),
+            Atomic::Integer(_) => Ok(OrderedFloat(
+                self.as_decimal()?.to_f32().ok_or(ValueError::Type)?,
+            )),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_double(&self) -> Result<f64> {
+    pub(crate) fn as_double(&self) -> Result<OrderedFloat<f64>> {
         match self {
             Atomic::Double(d) => Ok(*d),
-            Atomic::Float(f) => Ok(*f as f64),
-            Atomic::Decimal(d) => d.to_f64().ok_or(ValueError::Type),
-            Atomic::Integer(_) => self.as_decimal()?.to_f64().ok_or(ValueError::Type),
+            Atomic::Float(OrderedFloat(f)) => Ok(OrderedFloat(*f as f64)),
+            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(ValueError::Type)?)),
+            Atomic::Integer(_) => Ok(OrderedFloat(
+                self.as_decimal()?.to_f64().ok_or(ValueError::Type)?,
+            )),
             _ => Err(ValueError::Type),
         }
     }

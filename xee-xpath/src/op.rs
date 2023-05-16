@@ -1,3 +1,4 @@
+use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
 use crate::value::{Atomic, ValueError};
@@ -150,8 +151,8 @@ struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
 where
     IntegerOp: FnOnce(i64, i64) -> Result<i64>,
     DecimalOp: FnOnce(Decimal, Decimal) -> Result<Decimal>,
-    FloatOp: FnOnce(f32, f32) -> f32,
-    DoubleOp: FnOnce(f64, f64) -> f64,
+    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
+    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
 {
     integer_op: IntegerOp,
     decimal_op: DecimalOp,
@@ -167,8 +168,8 @@ fn numeric_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
 where
     IntegerOp: FnOnce(i64, i64) -> Result<i64>,
     DecimalOp: FnOnce(Decimal, Decimal) -> Result<Decimal>,
-    FloatOp: FnOnce(f32, f32) -> f32,
-    DoubleOp: FnOnce(f64, f64) -> f64,
+    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
+    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
 {
     // S - type substition due to type hierarchy
     //     https://www.w3.org/TR/xpath-datamodel-31/#types-hierarchy
@@ -277,16 +278,24 @@ mod tests {
     #[test]
     fn test_add_floats() {
         assert_eq!(
-            numeric_add(&Atomic::Float(1.5), &Atomic::Float(2.7)).unwrap(),
-            Atomic::Float(4.2)
+            numeric_add(
+                &Atomic::Float(OrderedFloat(1.5)),
+                &Atomic::Float(OrderedFloat(2.7))
+            )
+            .unwrap(),
+            Atomic::Float(OrderedFloat(4.2))
         );
     }
 
     #[test]
     fn test_add_doubles() {
         assert_eq!(
-            numeric_add(&Atomic::Double(1.5), &Atomic::Double(2.7)).unwrap(),
-            Atomic::Double(4.2)
+            numeric_add(
+                &Atomic::Double(OrderedFloat(1.5)),
+                &Atomic::Double(OrderedFloat(2.7))
+            )
+            .unwrap(),
+            Atomic::Double(OrderedFloat(4.2))
         );
     }
 
@@ -301,8 +310,12 @@ mod tests {
     #[test]
     fn test_add_double_decimal() {
         assert_eq!(
-            numeric_add(&Atomic::Double(1.5), &Atomic::Decimal(dec!(2.7))).unwrap(),
-            Atomic::Double(4.2)
+            numeric_add(
+                &Atomic::Double(OrderedFloat(1.5)),
+                &Atomic::Decimal(dec!(2.7))
+            )
+            .unwrap(),
+            Atomic::Double(OrderedFloat(4.2))
         );
     }
 
@@ -349,7 +362,8 @@ mod tests {
     #[test]
     fn test_numeric_integer_divide_9_point_0_by_3() {
         assert_eq!(
-            numeric_integer_divide(&Atomic::Double(9.0), &Atomic::Integer(3)).unwrap(),
+            numeric_integer_divide(&Atomic::Double(OrderedFloat(9.0)), &Atomic::Integer(3))
+                .unwrap(),
             Atomic::Integer(3)
         );
     }
@@ -357,7 +371,8 @@ mod tests {
     #[test]
     fn test_numeric_integer_divide_3_point_0_by_4() {
         assert_eq!(
-            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Integer(4)).unwrap(),
+            numeric_integer_divide(&Atomic::Double(OrderedFloat(3.0)), &Atomic::Integer(4))
+                .unwrap(),
             Atomic::Integer(0)
         );
     }
@@ -373,7 +388,7 @@ mod tests {
     #[test]
     fn test_numeric_integer_divide_3_point_0_by_0() {
         assert_eq!(
-            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Integer(0)),
+            numeric_integer_divide(&Atomic::Double(OrderedFloat(3.0)), &Atomic::Integer(0)),
             Err(ValueError::DivisionByZero)
         );
     }
@@ -381,17 +396,22 @@ mod tests {
     #[test]
     fn test_numeric_integer_divide_3_point_0_by_inf() {
         assert_eq!(
-            numeric_integer_divide(&Atomic::Double(3.0), &Atomic::Double(f64::INFINITY)).unwrap(),
+            numeric_integer_divide(
+                &Atomic::Double(OrderedFloat(3.0)),
+                &Atomic::Double(OrderedFloat(f64::INFINITY))
+            )
+            .unwrap(),
             Atomic::Integer(0)
         );
     }
 
     #[test]
     fn test_numeric_mod_nan_nan() {
-        assert!(
-            numeric_mod(&Atomic::Double(f64::NAN), &Atomic::Double(f64::NAN))
-                .unwrap()
-                .is_nan()
-        );
+        assert!(numeric_mod(
+            &Atomic::Double(OrderedFloat(f64::NAN)),
+            &Atomic::Double(OrderedFloat(f64::NAN))
+        )
+        .unwrap()
+        .is_nan());
     }
 }
