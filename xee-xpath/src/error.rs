@@ -24,6 +24,8 @@ pub enum Error {
         #[label("Context absent")]
         span: SourceSpan,
     },
+    #[error("Component absent in dynamic context")]
+    XPDY0002A,
     /// Parse error.
     ///
     /// It is a static error if an expression is not a valid instance of the

@@ -254,14 +254,25 @@ impl<'a> IrConverter<'a> {
 
     fn xpath(&mut self, ast: &ast::XPath) -> Result<Bindings> {
         let context_names = self.push_context();
+        // define any external variable names
+        let mut ir_names = Vec::new();
+        for name in &self.static_context.variables {
+            ir_names.push(self.new_var_name(name));
+        }
         let exprs_bindings = self.exprs(&ast.exprs)?;
         self.pop_context();
+        let mut params = vec![
+            ir::Param(context_names.item),
+            ir::Param(context_names.position),
+            ir::Param(context_names.last),
+        ];
+        // add any variables defined in static context as parameters
+        for ir_name in ir_names {
+            params.push(ir::Param(ir_name));
+        }
+        // params.extend(arguments);
         let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
-            params: vec![
-                ir::Param(context_names.item),
-                ir::Param(context_names.position),
-                ir::Param(context_names.last),
-            ],
+            params,
             body: Box::new(exprs_bindings.expr()),
         });
         let binding = self.new_binding(outer_function_expr, ast.exprs.span);

@@ -47,7 +47,12 @@ impl<'a> Interpreter<'a> {
         &self.stack
     }
 
-    pub(crate) fn start(&mut self, function_id: FunctionId, context_item: &Item) {
+    pub(crate) fn start(
+        &mut self,
+        function_id: FunctionId,
+        context_item: &Item,
+        arguments: &[StackValue],
+    ) {
         self.frames.push(Frame {
             function: function_id,
             ip: 0,
@@ -58,6 +63,10 @@ impl<'a> Interpreter<'a> {
         // position & size
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
         self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
+        // and any arguments
+        for arg in arguments {
+            self.stack.push(arg.clone());
+        }
     }
 
     pub(crate) fn run(&mut self) -> Result<(), Error> {
@@ -555,7 +564,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -615,7 +624,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -648,7 +657,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)));
+        interpreter.start(main_id, &Item::Atomic(Atomic::Integer(0)), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,

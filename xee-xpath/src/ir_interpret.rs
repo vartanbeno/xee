@@ -474,6 +474,7 @@ mod tests {
     use std::rc::Rc;
     use xot::Xot;
 
+    use crate::ast;
     use crate::dynamic_context::DynamicContext;
     use crate::error::Result;
     use crate::name::Namespaces;
@@ -503,6 +504,19 @@ mod tests {
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
+        let xpath = XPath::new(context.static_context, s)?;
+        xpath.run_no_focus(&context)
+    }
+
+    fn run_with_variables(s: &str, variables: &[(ast::Name, StackValue)]) -> Result<StackValue> {
+        let xot = Xot::new();
+        let namespaces = Namespaces::new(None, None);
+        let variable_names = variables
+            .iter()
+            .map(|(name, _)| name.clone())
+            .collect::<Vec<_>>();
+        let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
+        let context = DynamicContext::with_variables(&xot, &static_context, variables);
         let xpath = XPath::new(context.static_context, s)?;
         xpath.run_no_focus(&context)
     }
@@ -1178,17 +1192,40 @@ mod tests {
         )
     }
 
-    // #[test]
-    // fn test_external_variable() {
-    //     assert_debug_snapshot!(run_with_variables(
-    //         "$foo",
-    //         &[(
-    //             &Name {
-    //                 name: "foo".to_string(),
-    //                 namespace: None
-    //             },
-    //             StackValue::Atomic(Atomic::String(Rc::new("FOO".to_string())))
-    //         )],
-    //     ))
-    // }
+    #[test]
+    fn test_external_variable() {
+        assert_debug_snapshot!(run_with_variables(
+            "$foo",
+            &[(
+                ast::Name {
+                    name: "foo".to_string(),
+                    namespace: None
+                },
+                StackValue::Atomic(Atomic::String(Rc::new("FOO".to_string())))
+            )],
+        ))
+    }
+
+    #[test]
+    fn test_external_variables() {
+        assert_debug_snapshot!(run_with_variables(
+            "$foo + $bar",
+            &[
+                (
+                    ast::Name {
+                        name: "foo".to_string(),
+                        namespace: None
+                    },
+                    StackValue::Atomic(Atomic::Integer(1))
+                ),
+                (
+                    ast::Name {
+                        name: "bar".to_string(),
+                        namespace: None
+                    },
+                    StackValue::Atomic(Atomic::Integer(2))
+                )
+            ]
+        ))
+    }
 }

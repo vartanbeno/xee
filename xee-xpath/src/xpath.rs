@@ -41,13 +41,14 @@ impl XPath {
     }
 
     pub(crate) fn run_no_focus(&self, dynamic_context: &DynamicContext) -> Result<StackValue> {
-        // a fake context value
+        // a fake context value;
         self.run(dynamic_context, &Item::Atomic(Atomic::Integer(0)))
     }
 
     pub fn run(&self, dynamic_context: &DynamicContext, context_item: &Item) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
-        interpreter.start(self.main, context_item);
+        let arguments = dynamic_context.arguments()?;
+        interpreter.start(self.main, context_item, &arguments);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because

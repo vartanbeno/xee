@@ -1,14 +1,19 @@
+use ahash::{HashMap, HashMapExt};
 use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use xot::Xot;
 
+use crate::ast;
 use crate::document::Documents;
+use crate::error::Error;
 use crate::static_context::StaticContext;
+use crate::value::StackValue;
 
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, Documents>,
+    pub(crate) variables: HashMap<ast::Name, StackValue>,
 }
 
 impl<'a> Debug for DynamicContext<'a> {
@@ -27,6 +32,7 @@ impl<'a> DynamicContext<'a> {
             xot,
             static_context,
             documents: Cow::Owned(documents),
+            variables: HashMap::new(),
         }
     }
 
@@ -39,6 +45,29 @@ impl<'a> DynamicContext<'a> {
             xot,
             static_context,
             documents: Cow::Borrowed(documents),
+            variables: HashMap::new(),
         }
+    }
+
+    pub fn with_variables(
+        xot: &'a Xot,
+        static_context: &'a StaticContext<'a>,
+        variables: &[(ast::Name, StackValue)],
+    ) -> Self {
+        Self {
+            xot,
+            static_context,
+            documents: Cow::Owned(Documents::new()),
+            variables: variables.iter().cloned().collect(),
+        }
+    }
+
+    pub(crate) fn arguments(&self) -> Result<Vec<StackValue>, Error> {
+        let mut arguments = Vec::new();
+        for variable_name in &self.static_context.variables {
+            let value = self.variables.get(variable_name).ok_or(Error::XPDY0002A)?;
+            arguments.push(value.clone());
+        }
+        Ok(arguments)
     }
 }
