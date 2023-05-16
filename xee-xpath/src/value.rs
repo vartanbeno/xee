@@ -281,7 +281,7 @@ impl StackValue {
 }
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Atomic {
     Boolean(bool),
     Integer(i64),

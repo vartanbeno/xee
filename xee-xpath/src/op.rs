@@ -6,10 +6,10 @@ use crate::value::{Atomic, ValueError};
 type Result<T> = std::result::Result<T, ValueError>;
 
 pub(crate) fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
-    numeric_op(
+    arithmetic_op(
         atomic_a,
         atomic_b,
-        Ops {
+        ArithmeticOps {
             integer_op: |a, b| a.checked_add(b).ok_or(ValueError::Overflow),
             decimal_op: |a, b| a.checked_add(b).ok_or(ValueError::Overflow),
             float_op: |a, b| a + b,
@@ -19,10 +19,10 @@ pub(crate) fn numeric_add(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic
 }
 
 pub(crate) fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
-    numeric_op(
+    arithmetic_op(
         atomic_a,
         atomic_b,
-        Ops {
+        ArithmeticOps {
             integer_op: |a, b| a.checked_sub(b).ok_or(ValueError::Overflow),
             decimal_op: |a, b| a.checked_sub(b).ok_or(ValueError::Overflow),
             float_op: |a, b| a - b,
@@ -32,10 +32,10 @@ pub(crate) fn numeric_substract(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<
 }
 
 pub(crate) fn numeric_multiply(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
-    numeric_op(
+    arithmetic_op(
         atomic_a,
         atomic_b,
-        Ops {
+        ArithmeticOps {
             integer_op: |a, b| a.checked_mul(b).ok_or(ValueError::Overflow),
             decimal_op: |a, b| a.checked_mul(b).ok_or(ValueError::Overflow),
             float_op: |a, b| a * b,
@@ -53,10 +53,10 @@ pub(crate) fn numeric_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Ato
             &Atomic::Decimal(atomic_b.as_decimal().unwrap()),
         ),
         _ => {
-            numeric_op(
+            arithmetic_op(
                 atomic_a,
                 atomic_b,
-                Ops {
+                ArithmeticOps {
                     integer_op: |a, b| {
                         if b == 0 {
                             Err(ValueError::DivisionByZero)
@@ -101,10 +101,10 @@ pub(crate) fn numeric_integer_divide(atomic_a: &Atomic, atomic_b: &Atomic) -> Re
 }
 
 pub(crate) fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {
-    numeric_op(
+    arithmetic_op(
         atomic_a,
         atomic_b,
-        Ops {
+        ArithmeticOps {
             integer_op: |a, b| {
                 if b == 0 {
                     Err(ValueError::DivisionByZero)
@@ -147,9 +147,102 @@ pub(crate) fn op_numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
     }
 }
 
-// pub(crate) fn op_numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic> {}
+pub(crate) fn op_numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a == b,
+            decimal_op: |a, b| a == b,
+            float_op: |a, b| a == b,
+            double_op: |a, b| a == b,
+        },
+    )
+}
 
-struct Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>
+pub(crate) fn op_string_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a == b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn op_boolean_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a == b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn op_numeric_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a != b,
+            decimal_op: |a, b| a != b,
+            float_op: |a, b| a != b,
+            double_op: |a, b| a != b,
+        },
+    )
+}
+
+pub(crate) fn op_numeric_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a < b,
+            decimal_op: |a, b| a < b,
+            float_op: |a, b| a < b,
+            double_op: |a, b| a < b,
+        },
+    )
+}
+
+pub(crate) fn op_numeric_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a <= b,
+            decimal_op: |a, b| a <= b,
+            float_op: |a, b| a <= b,
+            double_op: |a, b| a <= b,
+        },
+    )
+}
+
+pub(crate) fn op_numeric_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a > b,
+            decimal_op: |a, b| a > b,
+            float_op: |a, b| a > b,
+            double_op: |a, b| a > b,
+        },
+    )
+}
+
+pub(crate) fn op_numeric_greater_than_or_equal(
+    atomic_a: &Atomic,
+    atomic_b: &Atomic,
+) -> Result<bool> {
+    numeric_comparison_op(
+        atomic_a,
+        atomic_b,
+        ComparisonOps {
+            integer_op: |a, b| a >= b,
+            decimal_op: |a, b| a >= b,
+            float_op: |a, b| a >= b,
+            double_op: |a, b| a >= b,
+        },
+    )
+}
+
+struct ArithmeticOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>
 where
     IntegerOp: FnOnce(i64, i64) -> Result<i64>,
     DecimalOp: FnOnce(Decimal, Decimal) -> Result<Decimal>,
@@ -162,9 +255,70 @@ where
     double_op: DoubleOp,
 }
 
-fn numeric_general_op<F>(atomic_a: &Atomic, atomic_b: &Atomic, op: F) -> Result<Atomic>
+fn arithmetic_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
+    atomic_a: &Atomic,
+    atomic_b: &Atomic,
+    ops: ArithmeticOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>,
+) -> Result<Atomic>
 where
-    F: FnOnce(&Atomic, &Atomic) -> Result<Atomic>,
+    IntegerOp: FnOnce(i64, i64) -> Result<i64>,
+    DecimalOp: FnOnce(Decimal, Decimal) -> Result<Decimal>,
+    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
+    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
+{
+    numeric_general_op(atomic_a, atomic_b, |atomic_a, atomic_b| {
+        match (atomic_a, atomic_b) {
+            (Atomic::Integer(a), Atomic::Integer(b)) => {
+                Ok(Atomic::Integer((ops.integer_op)(*a, *b)?))
+            }
+            (Atomic::Decimal(a), Atomic::Decimal(b)) => {
+                Ok(Atomic::Decimal((ops.decimal_op)(*a, *b)?))
+            }
+            (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float((ops.float_op)(*a, *b))),
+            (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double((ops.double_op)(*a, *b))),
+            _ => unreachable!("Illegal combination"),
+        }
+    })
+}
+
+struct ComparisonOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>
+where
+    IntegerOp: FnOnce(i64, i64) -> bool,
+    DecimalOp: FnOnce(Decimal, Decimal) -> bool,
+    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> bool,
+    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> bool,
+{
+    integer_op: IntegerOp,
+    decimal_op: DecimalOp,
+    float_op: FloatOp,
+    double_op: DoubleOp,
+}
+
+fn numeric_comparison_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
+    atomic_a: &Atomic,
+    atomic_b: &Atomic,
+    ops: ComparisonOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>,
+) -> Result<bool>
+where
+    IntegerOp: FnOnce(i64, i64) -> bool,
+    DecimalOp: FnOnce(Decimal, Decimal) -> bool,
+    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> bool,
+    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> bool,
+{
+    numeric_general_op(atomic_a, atomic_b, |atomic_a, atomic_b| {
+        match (atomic_a, atomic_b) {
+            (Atomic::Integer(a), Atomic::Integer(b)) => Ok((ops.integer_op)(*a, *b)),
+            (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok((ops.decimal_op)(*a, *b)),
+            (Atomic::Float(a), Atomic::Float(b)) => Ok((ops.float_op)(*a, *b)),
+            (Atomic::Double(a), Atomic::Double(b)) => Ok((ops.double_op)(*a, *b)),
+            _ => unreachable!("Illegal combination"),
+        }
+    })
+}
+
+fn numeric_general_op<F, V>(atomic_a: &Atomic, atomic_b: &Atomic, op: F) -> Result<V>
+where
+    F: FnOnce(&Atomic, &Atomic) -> Result<V>,
 {
     // S - type substition due to type hierarchy
     //     https://www.w3.org/TR/xpath-datamodel-31/#types-hierarchy
@@ -231,32 +385,6 @@ where
         }
         _ => Err(ValueError::Type),
     }
-}
-
-fn numeric_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
-    atomic_a: &Atomic,
-    atomic_b: &Atomic,
-    ops: Ops<IntegerOp, DecimalOp, FloatOp, DoubleOp>,
-) -> Result<Atomic>
-where
-    IntegerOp: FnOnce(i64, i64) -> Result<i64>,
-    DecimalOp: FnOnce(Decimal, Decimal) -> Result<Decimal>,
-    FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
-    DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
-{
-    numeric_general_op(atomic_a, atomic_b, |atomic_a, atomic_b| {
-        match (atomic_a, atomic_b) {
-            (Atomic::Integer(a), Atomic::Integer(b)) => {
-                Ok(Atomic::Integer((ops.integer_op)(*a, *b)?))
-            }
-            (Atomic::Decimal(a), Atomic::Decimal(b)) => {
-                Ok(Atomic::Decimal((ops.decimal_op)(*a, *b)?))
-            }
-            (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float((ops.float_op)(*a, *b))),
-            (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double((ops.double_op)(*a, *b))),
-            _ => unreachable!("Illegal combination"),
-        }
-    })
 }
 
 #[cfg(test)]
