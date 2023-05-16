@@ -232,7 +232,6 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::JumpIfTrue => {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
                     let a = a.as_bool()?;
                     if a {
                         self.frame_mut().ip =
@@ -242,7 +241,6 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::JumpIfFalse => {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
                     let a = a.as_bool()?;
                     if !a {
                         self.frame_mut().ip =
