@@ -1,0 +1,20 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"fn:position() + 1\")"
+---
+Err(
+    XPDY0002 {
+        src: NamedSource {
+            name: "input",
+            source: "<redacted>",
+        ,
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                13,
+            ),
+        },
+    },
+)
