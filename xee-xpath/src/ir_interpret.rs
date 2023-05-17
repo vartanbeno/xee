@@ -943,6 +943,28 @@ mod tests {
     }
 
     #[test]
+    fn test_sequence_predicate() {
+        // this should succeed, as IsNumeric sees the sequence as non-numeric.
+        // We create the sequence with (2, 3)[. > 2] to ensure it's indeed a
+        // sequence underneath, and not atomic. The sequence of a single value
+        // is interpreted as boolean and thus we see the full sequence
+        assert_debug_snapshot!(run("(1, 2, 3)[(2, 3)[. > 2]]"));
+    }
+
+    #[test]
+    fn test_sequence_predicate_sequence_too_long() {
+        // this should fail: 2, 3 is not a numeric nor an effective boolean value
+        assert_debug_snapshot!(run("(1, 2, 3)[(2, 3)]"));
+    }
+
+    #[test]
+    fn test_sequence_predicate_sequence_empty() {
+        // the empty sequence is asn effective boolean of false, so we should
+        // get the result of the empty sequence
+        assert_debug_snapshot!(run("(1, 2, 3)[()]"));
+    }
+
+    #[test]
     fn test_child_axis_step1() -> Result<()> {
         assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
             let doc_el = xot.document_element(document.root).unwrap();

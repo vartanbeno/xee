@@ -539,6 +539,9 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::IsNumeric => {
                     let value = self.stack.pop().unwrap();
+                    // as_atomic may fail. This is fine, as the only
+                    // check later on in Filter is to check for effective
+                    // boolean value, which uses effectively the same check
                     let value = value.as_atomic(context)?;
                     let is_numeric = value.is_numeric();
                     self.stack

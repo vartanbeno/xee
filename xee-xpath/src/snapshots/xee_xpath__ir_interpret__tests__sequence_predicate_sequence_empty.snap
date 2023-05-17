@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/ir_interpret.rs
+expression: "run(\"(1, 2, 3)[()]\")"
+---
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [],
+            },
+        },
+    ),
+)
