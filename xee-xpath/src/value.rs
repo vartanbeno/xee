@@ -541,18 +541,6 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atoms(&self, xot: &Xot) -> Vec<Atomic> {
-        let mut atoms = Vec::new();
-        let atomized = self.atomize(xot);
-        for item in atomized.items {
-            match item {
-                Item::Atomic(a) => atoms.push(a),
-                _ => unreachable!("atomize returned a non-atomic item"),
-            }
-        }
-        atoms
-    }
-
     pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         // we avoid using atomize as an optimization, so we don't
         // have to atomize all entries just to get the first item
@@ -574,6 +562,18 @@ impl Sequence {
             }
             _ => Err(ValueError::XPTY0004),
         }
+    }
+
+    pub(crate) fn as_atoms(&self, xot: &Xot) -> Vec<Atomic> {
+        let mut atoms = Vec::new();
+        let atomized = self.atomize(xot);
+        for item in atomized.items {
+            match item {
+                Item::Atomic(a) => atoms.push(a),
+                _ => unreachable!("atomize returned a non-atomic item"),
+            }
+        }
+        atoms
     }
 
     pub(crate) fn concat(&self, other: &Sequence) -> Sequence {
