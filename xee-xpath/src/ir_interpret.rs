@@ -943,6 +943,12 @@ mod tests {
     }
 
     #[test]
+    fn test_predicate_index_not_whole_number() {
+        // since no position matches, we should get the empty sequence
+        assert_debug_snapshot!(run("(1, 2, 3)[2.5]"));
+    }
+
+    #[test]
     fn test_sequence_predicate() {
         // this should succeed, as IsNumeric sees the sequence as non-numeric.
         // We create the sequence with (2, 3)[. > 2] to ensure it's indeed a

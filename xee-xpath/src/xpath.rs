@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use miette::NamedSource;
 
 use crate::ast_ir::IrConverter;
@@ -5,11 +8,11 @@ use crate::builder::{FunctionBuilder, Program};
 use crate::dynamic_context::DynamicContext;
 use crate::error::{Error, Result};
 use crate::interpret::Interpreter;
-use crate::ir;
 use crate::ir_interpret::{InterpreterCompiler, Scopes};
 use crate::parse_ast::parse_xpath;
 use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
+use crate::{ir, Sequence};
 
 #[derive(Debug)]
 pub struct XPath {
@@ -72,7 +75,9 @@ impl XPath {
                 src: NamedSource::new("input", self.program.src.clone()),
                 span: (0, self.program.src.len()).into(),
             }),
-            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Atomic(Atomic::Boolean(false))),
+            StackValue::Atomic(Atomic::Empty) => {
+                Ok(StackValue::Sequence(Rc::new(RefCell::new(Sequence::new()))))
+            }
             _ => Ok(value),
         }
     }
