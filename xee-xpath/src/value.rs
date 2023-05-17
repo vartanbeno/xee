@@ -299,6 +299,7 @@ pub enum Atomic {
     // and many more
     String(Rc<String>),
     // a special marker to note empty sequences after atomization
+    // This should be treated as an emtpy sequence.
     Empty,
     // a special marker to indicate an absent context item
     Absent,
@@ -553,18 +554,22 @@ impl Sequence {
     }
 
     pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
-        // XXX could optimize this by not atomizing everything, as
-        // we only need to atomize the first item
-        let mut atomized = self.atomize(context.xot);
-        let len = atomized.items.len();
-
-        match len {
+        // we avoid using atomize as an optimization, so we don't
+        // have to atomize all entries just to get the first item
+        match self.len() {
             0 => Ok(Atomic::Empty),
             1 => {
-                let item = atomized.items.remove(0);
+                let item = self.items[0].clone();
                 match item {
                     Item::Atomic(a) => Ok(a),
-                    _ => unreachable!("atomize returned a non-atomic item"),
+                    Item::Node(n) => {
+                        // this should get the typed-value, which is a sequence,
+                        // but for now we get the string value
+                        let s = n.string(context.xot);
+                        Ok(Atomic::String(Rc::new(s)))
+                    }
+                    // XXX need code to handle array case
+                    Item::Function(..) => panic!("cannot atomize a function"),
                 }
             }
             _ => Err(ValueError::XPTY0004),
