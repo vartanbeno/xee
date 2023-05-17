@@ -105,6 +105,8 @@ impl qt::TestCase {
         match &self.result {
             qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
             qt::TestCaseResult::AssertEq(xpath_expr) => self.assert_eq(xpath_expr, run_result),
+            qt::TestCaseResult::AssertTrue => self.assert_true(run_result),
+            qt::TestCaseResult::AssertFalse => self.assert_false(run_result),
             _ => {
                 panic!("unimplemented test case result")
             }
@@ -124,6 +126,14 @@ impl qt::TestCase {
         xpath_expr: &qt::XPathExpr,
         stack_value: Result<StackValue, Error>,
     ) -> TestResult {
+        unimplemented!()
+    }
+
+    fn assert_true(&self, stack_value: Result<StackValue, Error>) -> TestResult {
+        unimplemented!()
+    }
+
+    fn assert_false(&self, stack_value: Result<StackValue, Error>) -> TestResult {
         unimplemented!()
     }
 }
