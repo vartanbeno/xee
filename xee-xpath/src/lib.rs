@@ -29,6 +29,7 @@ mod run;
 mod scope;
 mod span;
 mod static_context;
+mod static_functions;
 mod step;
 mod value;
 mod xpath;

@@ -1,0 +1,177 @@
+use std::rc::Rc;
+
+use crate::{
+    ast,
+    name::FN_NAMESPACE,
+    static_context::{FunctionType, StaticFunctionDescription},
+    value::ValueError,
+    Atomic, DynamicContext, Node, StackValue,
+};
+
+fn my_function(a: i64, b: i64) -> i64 {
+    a + b
+}
+
+fn bound_my_function(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_atomic(context)?.as_integer()?;
+    let b = arguments[1].as_atomic(context)?.as_integer()?;
+    Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
+}
+
+fn bound_position(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
+        return Err(ValueError::Absent);
+    }
+    // position should be the context value
+    Ok(arguments[0].clone())
+}
+
+fn bound_last(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
+        return Err(ValueError::Absent);
+    }
+    // size should be the context value
+    Ok(arguments[0].clone())
+}
+
+fn local_name(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node()?;
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        a.local_name(context.xot),
+    ))))
+}
+
+fn namespace_uri(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node()?;
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        a.namespace_uri(context.xot),
+    ))))
+}
+
+fn count(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_sequence()?;
+    let a = a.borrow();
+    Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
+}
+
+fn root(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_node()?;
+    let xot_node = match a {
+        Node::Xot(node) => node,
+        Node::Attribute(node, _) => node,
+        Node::Namespace(node, _) => node,
+    };
+    // XXX there should be a xot.root() to obtain this in one step
+    let top = context.xot.top_element(xot_node);
+    let root = context.xot.parent(top).unwrap();
+    Ok(StackValue::Node(Node::Xot(root)))
+}
+
+fn string(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
+        context,
+        &arguments[0],
+    )?))))
+}
+
+fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String, ValueError> {
+    let value = match value {
+        StackValue::Atomic(atomic) => match atomic {
+            Atomic::String(string) => string.to_string(),
+            Atomic::Integer(integer) => integer.to_string(),
+            Atomic::Float(float) => float.to_string(),
+            Atomic::Boolean(boolean) => boolean.to_string(),
+            Atomic::Double(double) => double.to_string(),
+            Atomic::Decimal(decimal) => decimal.to_string(),
+            Atomic::Empty => "".to_string(),
+            Atomic::Absent => Err(ValueError::Absent)?,
+        },
+        StackValue::Sequence(sequence) => {
+            let sequence = sequence.borrow();
+            let len = sequence.len();
+            match len {
+                0 => "".to_string(),
+                1 => string_helper(context, &StackValue::from_item(sequence.items[0].clone()))?,
+                _ => Err(ValueError::Type)?,
+            }
+        }
+        StackValue::Node(node) => node.string(context.xot),
+        StackValue::Closure(_) => Err(ValueError::Type)?,
+        StackValue::Step(_) => Err(ValueError::Type)?,
+    };
+    Ok(value)
+}
+
+pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
+    vec![
+        StaticFunctionDescription {
+            name: ast::Name::new("my_function".to_string(), None),
+            arity: 2,
+            function_type: None,
+            func: bound_my_function,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: Some(FunctionType::Position),
+            func: bound_position,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: Some(FunctionType::Size),
+            func: bound_last,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: local_name,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: namespace_uri,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: count,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: root,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: string,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: string,
+        },
+    ]
+}
