@@ -10,12 +10,73 @@ pub(crate) fn value_eq(a: &Atomic, b: &Atomic) -> Result<Atomic> {
         a,
         b,
         GenericComparisonOps {
-            numeric_op: op::op_numeric_equal,
-            string_op: op::op_string_equal,
-            boolean_op: op::op_boolean_equal,
+            numeric_op: op::numeric_equal,
+            string_op: op::string_equal,
+            boolean_op: op::boolean_equal,
         },
     )
 }
+
+pub(crate) fn value_ne(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+    generic_value_compare(
+        a,
+        b,
+        GenericComparisonOps {
+            numeric_op: op::numeric_not_equal,
+            string_op: op::string_not_equal,
+            boolean_op: op::boolean_not_equal,
+        },
+    )
+}
+
+pub(crate) fn value_lt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+    generic_value_compare(
+        a,
+        b,
+        GenericComparisonOps {
+            numeric_op: op::numeric_less_than,
+            string_op: op::string_less_than,
+            boolean_op: op::boolean_less_than,
+        },
+    )
+}
+
+pub(crate) fn value_le(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+    generic_value_compare(
+        a,
+        b,
+        GenericComparisonOps {
+            numeric_op: op::numeric_less_than_or_equal,
+            string_op: op::string_less_than_or_equal,
+            boolean_op: op::boolean_less_than_or_equal,
+        },
+    )
+}
+
+pub(crate) fn value_gt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+    generic_value_compare(
+        a,
+        b,
+        GenericComparisonOps {
+            numeric_op: op::numeric_greater_than,
+            string_op: op::string_greater_than,
+            boolean_op: op::boolean_greater_than,
+        },
+    )
+}
+
+pub(crate) fn value_ge(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+    generic_value_compare(
+        a,
+        b,
+        GenericComparisonOps {
+            numeric_op: op::numeric_greater_than_or_equal,
+            string_op: op::string_greater_than_or_equal,
+            boolean_op: op::boolean_greater_than_or_equal,
+        },
+    )
+}
+
 struct GenericComparisonOps<NumericOp, StringOp, BooleanOp>
 where
     NumericOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,

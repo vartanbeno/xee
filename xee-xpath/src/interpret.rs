@@ -260,54 +260,47 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Ne => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
-                    if a == Atomic::Empty {
-                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                        continue;
-                    }
                     let b = b.as_atomic(context)?;
-                    if b == Atomic::Empty {
-                        self.stack.push(StackValue::Atomic(Atomic::Boolean(false)));
-                        continue;
-                    }
-                    // XXX can functions be value compared?
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a != b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_ne(&a, &b)?));
                 }
                 EncodedInstruction::Lt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a < b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_lt(&a, &b)?));
                 }
                 EncodedInstruction::Le => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a <= b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_le(&a, &b)?));
                 }
                 EncodedInstruction::Gt => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a > b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_gt(&a, &b)?));
                 }
                 EncodedInstruction::Ge => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
+
                     let a = a.as_atomic(context)?;
                     let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
-                    self.stack.push(StackValue::Atomic(Atomic::Boolean(a >= b)));
+                    self.stack
+                        .push(StackValue::Atomic(comparison::value_ge(&a, &b)?));
                 }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();

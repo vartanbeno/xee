@@ -125,7 +125,7 @@ pub(crate) fn numeric_mod(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<Atomic
     )
 }
 
-pub(crate) fn op_numeric_unary_plus(atomic: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_unary_plus(atomic: &Atomic) -> Result<Atomic> {
     match atomic {
         Atomic::Integer(_) => Ok(atomic.clone()),
         Atomic::Decimal(_) => Ok(atomic.clone()),
@@ -136,7 +136,7 @@ pub(crate) fn op_numeric_unary_plus(atomic: &Atomic) -> Result<Atomic> {
     }
 }
 
-pub(crate) fn op_numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
+pub(crate) fn numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
     match atomic {
         Atomic::Integer(i) => Ok(Atomic::Integer(-i)),
         Atomic::Decimal(d) => Ok(Atomic::Decimal(-d)),
@@ -147,7 +147,7 @@ pub(crate) fn op_numeric_unary_minus(atomic: &Atomic) -> Result<Atomic> {
     }
 }
 
-pub(crate) fn op_numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+pub(crate) fn numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -159,22 +159,7 @@ pub(crate) fn op_numeric_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<b
         },
     )
 }
-
-pub(crate) fn op_string_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
-    match (atomic_a, atomic_b) {
-        (Atomic::String(a), Atomic::String(b)) => Ok(a == b),
-        _ => Err(ValueError::Type),
-    }
-}
-
-pub(crate) fn op_boolean_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
-    match (atomic_a, atomic_b) {
-        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a == b),
-        _ => Err(ValueError::Type),
-    }
-}
-
-pub(crate) fn op_numeric_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+pub(crate) fn numeric_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -187,7 +172,7 @@ pub(crate) fn op_numeric_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Resu
     )
 }
 
-pub(crate) fn op_numeric_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+pub(crate) fn numeric_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -200,7 +185,7 @@ pub(crate) fn op_numeric_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Resu
     )
 }
 
-pub(crate) fn op_numeric_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+pub(crate) fn numeric_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -213,7 +198,7 @@ pub(crate) fn op_numeric_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic
     )
 }
 
-pub(crate) fn op_numeric_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+pub(crate) fn numeric_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -226,10 +211,7 @@ pub(crate) fn op_numeric_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> R
     )
 }
 
-pub(crate) fn op_numeric_greater_than_or_equal(
-    atomic_a: &Atomic,
-    atomic_b: &Atomic,
-) -> Result<bool> {
+pub(crate) fn numeric_greater_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -240,6 +222,90 @@ pub(crate) fn op_numeric_greater_than_or_equal(
             double_op: |a, b| a >= b,
         },
     )
+}
+
+pub(crate) fn string_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a == b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn string_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a != b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn string_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a < b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn string_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a <= b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn string_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a > b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn string_greater_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::String(a), Atomic::String(b)) => Ok(a >= b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a == b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_not_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a != b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_less_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a < b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_less_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a <= b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_greater_than(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a > b),
+        _ => Err(ValueError::Type),
+    }
+}
+
+pub(crate) fn boolean_greater_than_or_equal(atomic_a: &Atomic, atomic_b: &Atomic) -> Result<bool> {
+    match (atomic_a, atomic_b) {
+        (Atomic::Boolean(a), Atomic::Boolean(b)) => Ok(a >= b),
+        _ => Err(ValueError::Type),
+    }
 }
 
 struct ArithmeticOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>
