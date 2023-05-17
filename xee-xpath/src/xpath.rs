@@ -45,11 +45,6 @@ impl XPath {
         })
     }
 
-    // pub(crate) fn run_no_focus(&self, dynamic_context: &DynamicContext) -> Result<StackValue> {
-    //     // a fake context value;
-    //     self.run(dynamic_context, &Item::Atomic(Atomic::Integer(0)))
-    // }
-
     pub fn run(
         &self,
         dynamic_context: &DynamicContext,
