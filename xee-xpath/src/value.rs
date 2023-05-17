@@ -547,9 +547,9 @@ impl Sequence {
         match self.len() {
             0 => Ok(Atomic::Empty),
             1 => {
-                let item = self.items[0].clone();
+                let item = &self.items[0];
                 match item {
-                    Item::Atomic(a) => Ok(a),
+                    Item::Atomic(a) => Ok(a.clone()),
                     Item::Node(n) => {
                         // this should get the typed-value, which is a sequence,
                         // but for now we get the string value
