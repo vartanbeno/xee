@@ -912,10 +912,6 @@ mod tests {
     //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
     // }
 
-    // xml to parse
-    // a struct with node references
-    // expr, expected result based on struct
-
     #[test]
     fn test_child_axis_step1() -> Result<()> {
         assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
