@@ -302,6 +302,84 @@ impl<'a> Interpreter<'a> {
                     self.stack
                         .push(StackValue::Atomic(comparison::value_ge(&a, &b)?));
                 }
+                EncodedInstruction::GenEq => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_eq(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
+                EncodedInstruction::GenNe => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_ne(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
+                EncodedInstruction::GenLt => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_lt(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
+                EncodedInstruction::GenLe => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_le(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
+                EncodedInstruction::GenGt => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_gt(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
+                EncodedInstruction::GenGe => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+
+                    let sequence_a = a.as_sequence()?;
+                    let sequence_b = b.as_sequence()?;
+                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    self.stack.push(StackValue::Atomic(comparison::general_ge(
+                        &atomized_a,
+                        &atomized_b,
+                    )?));
+                }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();

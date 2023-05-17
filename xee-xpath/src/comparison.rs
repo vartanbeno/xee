@@ -1,5 +1,3 @@
-use ahash::{HashSet, HashSetExt};
-
 use crate::op;
 use crate::value::{Atomic, ValueError};
 
@@ -115,24 +113,40 @@ where
     Ok(Atomic::Boolean(r))
 }
 
-// generalized comparison, optimized eq version here we avoid O(n * m)
-// complexity by turning the shortest sequence into a hash set
-fn general_compare_eq(a: &[Atomic], b: &[Atomic]) -> bool {
-    // index the shortest sequence
-    if a.len() > b.len() {
-        return general_compare_eq(b, a);
+pub(crate) fn general_eq(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_eq)
+}
+
+pub(crate) fn general_ne(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_ne)
+}
+
+pub(crate) fn general_lt(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_lt)
+}
+
+pub(crate) fn general_le(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_le)
+}
+
+pub(crate) fn general_gt(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_gt)
+}
+
+pub(crate) fn general_ge(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+    generic_general_compare(a_atoms, b_atoms, value_ge)
+}
+
+fn generic_general_compare<F>(a_atoms: &[Atomic], b_atoms: &[Atomic], compare: F) -> Result<Atomic>
+where
+    F: Fn(&Atomic, &Atomic) -> Result<Atomic>,
+{
+    for a in a_atoms {
+        for b in b_atoms {
+            if compare(a, b)?.as_bool()? {
+                return Ok(Atomic::Boolean(true));
+            }
+        }
     }
-    // a should be the shortest sequence, turn into a hash set
-    let a: HashSet<_> = a.iter().collect();
-    // now look whether we find a match for any item in b
-    b.iter().any(|item| a.contains(item))
+    Ok(Atomic::Boolean(false))
 }
-
-fn general_compare_ne(a: &[Atomic], b: &[Atomic]) -> bool {
-    !general_compare_eq(a, b)
-}
-
-// fn general_compare_lt(a: &[Atomic], b: &[Atomic]) -> bool {
-//     // if any item in a is lt any item in b, then a < b
-//     a.iter().any(|a| b.iter().any(|b| a < b))
-// }

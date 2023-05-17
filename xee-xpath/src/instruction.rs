@@ -25,6 +25,12 @@ pub(crate) enum Instruction {
     Le,
     Gt,
     Ge,
+    GenEq,
+    GenNe,
+    GenLt,
+    GenLe,
+    GenGt,
+    GenGe,
     Union,
     Jump(i16),
     JumpIfTrue(i16),
@@ -66,6 +72,12 @@ pub(crate) enum EncodedInstruction {
     Le,
     Gt,
     Ge,
+    GenEq,
+    GenNe,
+    GenLt,
+    GenLe,
+    GenGt,
+    GenGe,
     Union,
     Jump,
     JumpIfTrue,
@@ -127,6 +139,12 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Le => (Instruction::Le, 1),
         EncodedInstruction::Gt => (Instruction::Gt, 1),
         EncodedInstruction::Ge => (Instruction::Ge, 1),
+        EncodedInstruction::GenEq => (Instruction::GenEq, 1),
+        EncodedInstruction::GenNe => (Instruction::GenNe, 1),
+        EncodedInstruction::GenLt => (Instruction::GenLt, 1),
+        EncodedInstruction::GenLe => (Instruction::GenLe, 1),
+        EncodedInstruction::GenGt => (Instruction::GenGt, 1),
+        EncodedInstruction::GenGe => (Instruction::GenGe, 1),
         EncodedInstruction::Union => (Instruction::Union, 1),
         EncodedInstruction::Jump => {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
@@ -210,6 +228,12 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Le => bytes.push(EncodedInstruction::Le.to_u8().unwrap()),
         Instruction::Gt => bytes.push(EncodedInstruction::Gt.to_u8().unwrap()),
         Instruction::Ge => bytes.push(EncodedInstruction::Ge.to_u8().unwrap()),
+        Instruction::GenEq => bytes.push(EncodedInstruction::GenEq.to_u8().unwrap()),
+        Instruction::GenNe => bytes.push(EncodedInstruction::GenNe.to_u8().unwrap()),
+        Instruction::GenLt => bytes.push(EncodedInstruction::GenLt.to_u8().unwrap()),
+        Instruction::GenLe => bytes.push(EncodedInstruction::GenLe.to_u8().unwrap()),
+        Instruction::GenGt => bytes.push(EncodedInstruction::GenGt.to_u8().unwrap()),
+        Instruction::GenGe => bytes.push(EncodedInstruction::GenGe.to_u8().unwrap()),
         Instruction::Union => bytes.push(EncodedInstruction::Union.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
@@ -265,6 +289,12 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Le
         | Instruction::Gt
         | Instruction::Ge
+        | Instruction::GenEq
+        | Instruction::GenNe
+        | Instruction::GenLt
+        | Instruction::GenLe
+        | Instruction::GenGt
+        | Instruction::GenGe
         | Instruction::Union
         | Instruction::Return
         | Instruction::Pop

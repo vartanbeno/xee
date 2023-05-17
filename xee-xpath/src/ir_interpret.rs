@@ -159,6 +159,24 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOperator::ValueGe => {
                 self.builder.emit(Instruction::Ge, span);
             }
+            ir::BinaryOperator::GenEq => {
+                self.builder.emit(Instruction::GenEq, span);
+            }
+            ir::BinaryOperator::GenNe => {
+                self.builder.emit(Instruction::GenNe, span);
+            }
+            ir::BinaryOperator::GenLt => {
+                self.builder.emit(Instruction::GenLt, span);
+            }
+            ir::BinaryOperator::GenLe => {
+                self.builder.emit(Instruction::GenLe, span);
+            }
+            ir::BinaryOperator::GenGt => {
+                self.builder.emit(Instruction::GenGt, span);
+            }
+            ir::BinaryOperator::GenGe => {
+                self.builder.emit(Instruction::GenGe, span);
+            }
             ir::BinaryOperator::Comma => {
                 self.builder.emit(Instruction::Comma, span);
             }
@@ -1258,5 +1276,10 @@ mod tests {
     #[test]
     fn test_default_position_with_operation() {
         assert_debug_snapshot!(run("fn:position() + 1"));
+    }
+
+    #[test]
+    fn test_string_compare_general_eq_true() {
+        assert_debug_snapshot!(run("'hello' = 'hello'"));
     }
 }
