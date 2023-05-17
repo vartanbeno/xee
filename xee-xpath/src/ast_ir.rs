@@ -794,6 +794,11 @@ mod tests {
     }
 
     #[test]
+    fn test_postfix_index() {
+        assert_debug_snapshot!(convert_expr_single("(1, 2)[1]"));
+    }
+
+    #[test]
     fn test_function_definition() {
         assert_debug_snapshot!(convert_expr_single("function($x) { $x + 1 }"));
     }
