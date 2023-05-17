@@ -339,8 +339,33 @@ impl<'a> InterpreterCompiler<'a> {
         // execute the filter expression, placing result on stack
         self.compile_expr(&filter.return_expr)?;
         self.scopes.pop_name();
+        // duplicate result so we can do the IsNumeric check
+        self.builder.emit(Instruction::Dup, span);
+        // the resulting value can be a numeric value, which is really
+        // an indexing operation.
+        self.builder.emit(Instruction::IsNumeric, span);
+        // if it's not a numeric expression we're going to interpret it as boolean,
+        // a normal filter
+        let is_not_numeric = self.builder.emit_jump_forward(JumpCondition::False, span);
+        // It was numeric, we have on the stack the index
+        // Place the sequence on the stack
+        self.compile_atom(&filter.var_atom)?;
+        // We have the index on the stack too, so we get it. This places
+        // either the item on the stack, or the empty sequence if we didn't find
+        // anything
+        self.builder.emit(Instruction::SequenceGetIndex, span);
+        // We need to get rid of the item to filter, the index, the length and the new sequence, as
+        // we're not using it
+        self.builder.emit(Instruction::LetDone, span);
+        self.builder.emit(Instruction::LetDone, span);
+        self.builder.emit(Instruction::LetDone, span);
+        self.builder.emit(Instruction::LetDone, span);
+        // This now has the right information on the stack, so jump to the end
+        let get_index_done = self.builder.emit_jump_forward(JumpCondition::Always, span);
 
+        // Otherwise we take the effective boolean value of the result
         // if filter is false, we skip this item
+        self.builder.patch_jump(is_not_numeric);
         let is_included = self.builder.emit_jump_forward(JumpCondition::True, span);
         // we need to clean up the stack after this
         self.builder.emit(Instruction::Pop, span);
@@ -359,6 +384,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end(span);
 
+        self.builder.patch_jump(get_index_done);
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
@@ -906,11 +932,15 @@ mod tests {
         assert_debug_snapshot!(run("() ! (. + 1)"));
     }
 
-    // not supported yet; do we need some form of type analysis?
-    // #[test]
-    // fn test_predicate_index() {
-    //     assert_debug_snapshot!(run("(1, 2, 3)[2]"));
-    // }
+    #[test]
+    fn test_predicate_index() {
+        assert_debug_snapshot!(run("(1, 2, 3)[2]"));
+    }
+
+    #[test]
+    fn test_predicate_index2() {
+        assert_debug_snapshot!(run("(1, 2, 3)[2] + (4, 5)[1]"));
+    }
 
     #[test]
     fn test_child_axis_step1() -> Result<()> {

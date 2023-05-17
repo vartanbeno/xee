@@ -407,6 +407,13 @@ impl Atomic {
             _ => false,
         }
     }
+
+    pub(crate) fn is_numeric(&self) -> bool {
+        matches!(
+            self,
+            Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_)
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -434,6 +441,14 @@ impl Item {
         match self {
             Item::Atomic(a) => a.as_bool(),
             _ => Err(ValueError::Type),
+        }
+    }
+
+    pub fn to_stack_value(self) -> StackValue {
+        match self {
+            Item::Atomic(a) => StackValue::Atomic(a),
+            Item::Node(n) => StackValue::Node(n),
+            Item::Function(f) => StackValue::Closure(f),
         }
     }
 }

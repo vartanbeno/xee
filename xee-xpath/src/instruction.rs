@@ -37,13 +37,17 @@ pub(crate) enum Instruction {
     JumpIfFalse(i16),
     Call(u8),
     Return,
+    Dup,
     Pop,
     LetDone,
+
     Range,
     SequenceNew,
     SequenceLen,
     SequenceGet,
     SequencePush,
+    SequenceGetIndex,
+    IsNumeric,
     PrintTop,
     PrintStack,
 }
@@ -84,6 +88,7 @@ pub(crate) enum EncodedInstruction {
     JumpIfFalse,
     Call,
     Return,
+    Dup,
     Pop,
     LetDone,
     Range,
@@ -91,6 +96,8 @@ pub(crate) enum EncodedInstruction {
     SequenceLen,
     SequenceGet,
     SequencePush,
+    SequenceGetIndex,
+    IsNumeric,
     PrintTop,
     PrintStack,
 }
@@ -163,6 +170,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             (Instruction::Call(arity), 2)
         }
         EncodedInstruction::Return => (Instruction::Return, 1),
+        EncodedInstruction::Dup => (Instruction::Dup, 1),
         EncodedInstruction::Pop => (Instruction::Pop, 1),
         EncodedInstruction::LetDone => (Instruction::LetDone, 1),
         EncodedInstruction::Range => (Instruction::Range, 1),
@@ -170,6 +178,8 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::SequenceLen => (Instruction::SequenceLen, 1),
         EncodedInstruction::SequenceGet => (Instruction::SequenceGet, 1),
         EncodedInstruction::SequencePush => (Instruction::SequencePush, 1),
+        EncodedInstruction::SequenceGetIndex => (Instruction::SequenceGetIndex, 1),
+        EncodedInstruction::IsNumeric => (Instruction::IsNumeric, 1),
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -252,6 +262,7 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(arity);
         }
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
+        Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::Pop => bytes.push(EncodedInstruction::Pop.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
         Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
@@ -259,6 +270,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
         Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
         Instruction::SequencePush => bytes.push(EncodedInstruction::SequencePush.to_u8().unwrap()),
+        Instruction::SequenceGetIndex => {
+            bytes.push(EncodedInstruction::SequenceGetIndex.to_u8().unwrap())
+        }
+        Instruction::IsNumeric => bytes.push(EncodedInstruction::IsNumeric.to_u8().unwrap()),
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }
@@ -297,6 +312,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::GenGe
         | Instruction::Union
         | Instruction::Return
+        | Instruction::Dup
         | Instruction::Pop
         | Instruction::LetDone
         | Instruction::Range
@@ -304,6 +320,8 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::SequenceLen
         | Instruction::SequenceGet
         | Instruction::SequencePush
+        | Instruction::SequenceGetIndex
+        | Instruction::IsNumeric
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,
