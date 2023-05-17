@@ -7,9 +7,21 @@ use crate::value::Node;
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct DocumentOrder(usize, usize);
 
+impl DocumentOrder {
+    pub(crate) fn generate_id(&self) -> String {
+        format!("id_{}_{}", self.0, self.1)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Annotation {
     document_order: DocumentOrder,
+}
+
+impl Annotation {
+    pub(crate) fn generate_id(&self) -> String {
+        self.document_order.generate_id()
+    }
 }
 
 #[derive(Debug, Clone)]

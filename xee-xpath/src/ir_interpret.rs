@@ -1292,4 +1292,9 @@ mod tests {
     fn test_compare_general_eq_sequence_false() {
         assert_debug_snapshot!(run("(1, 2) = (3, 4)"));
     }
+
+    #[test]
+    fn test_generate_id() {
+        assert_debug_snapshot!(run_xml(r#"<doc><a/><b/><c/></doc>"#, "generate-id(doc/a)",));
+    }
 }

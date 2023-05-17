@@ -117,6 +117,46 @@ fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String,
     Ok(value)
 }
 
+fn exists(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = &arguments[0];
+    Ok(StackValue::Atomic(Atomic::Boolean(!a.is_empty_sequence())))
+}
+
+fn exactly_one(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = arguments[0].as_sequence()?;
+    let a = a.borrow();
+    if a.items.len() == 1 {
+        Ok(StackValue::from_item(a.items[0].clone()))
+    } else {
+        // XXX should really be a FORG0005 error
+        Err(ValueError::Type)
+    }
+}
+
+fn empty(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = &arguments[0];
+    Ok(StackValue::Atomic(Atomic::Boolean(a.is_empty_sequence())))
+}
+
+fn generate_id(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = &arguments[0];
+    if a.is_empty_sequence() {
+        return Ok(StackValue::Atomic(Atomic::String(Rc::new("".to_string()))));
+    }
+    let annotations = &context.documents.annotations;
+    let node = a.as_node()?;
+    let annotation = annotations.get(node).unwrap();
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        annotation.generate_id(),
+    ))))
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
@@ -172,6 +212,30 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
             func: string,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: exists,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: exactly_one,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: empty,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: Some(FunctionType::ItemFirst),
+            func: generate_id,
         },
     ]
 }

@@ -278,6 +278,14 @@ impl StackValue {
             _ => Err(ValueError::Type),
         }
     }
+
+    pub(crate) fn is_empty_sequence(&self) -> bool {
+        match self {
+            StackValue::Sequence(s) => s.borrow().is_empty(),
+            StackValue::Atomic(Atomic::Empty) => true,
+            _ => false,
+        }
+    }
 }
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -457,6 +465,9 @@ impl Sequence {
     }
 
     pub(crate) fn from_atomic(atomic: Atomic) -> Self {
+        if matches!(atomic, Atomic::Empty) {
+            return Self::new();
+        }
         Self {
             items: vec![Item::Atomic(atomic)],
         }
