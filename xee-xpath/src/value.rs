@@ -515,8 +515,11 @@ impl Sequence {
     }
 
     pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
+        // XXX could optimize this by not atomizing everything, as
+        // we only need to atomize the first item
         let mut atomized = self.atomize(context.xot);
         let len = atomized.items.len();
+
         match len {
             0 => Ok(Atomic::Empty),
             1 => {
