@@ -1282,4 +1282,14 @@ mod tests {
     fn test_string_compare_general_eq_true() {
         assert_debug_snapshot!(run("'hello' = 'hello'"));
     }
+
+    #[test]
+    fn test_compare_general_eq_sequence_true() {
+        assert_debug_snapshot!(run("(1, 2) = (3, 2)"));
+    }
+
+    #[test]
+    fn test_compare_general_eq_sequence_false() {
+        assert_debug_snapshot!(run("(1, 2) = (3, 4)"));
+    }
 }
