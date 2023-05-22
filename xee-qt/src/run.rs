@@ -189,6 +189,7 @@ impl qt::TestCase {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -199,7 +200,7 @@ mod tests {
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
-    <description>True</description>
+    <description>Description</description>
     <created by="Martijn Faassen" on="2023-05-22"/>
     <environment ref="empty"/>
     <test>1 eq 1</test>
@@ -224,7 +225,7 @@ mod tests {
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
-    <description>True</description>
+    <description>Description</description>
     <created by="Martijn Faassen" on="2023-05-22"/>
     <environment ref="empty"/>
     <test>1 ne 1</test>
@@ -241,6 +242,143 @@ mod tests {
         assert_eq!(
             test_result.results[0].1,
             TestResult::Failed(StackValue::Atomic(Atomic::Boolean(false)))
+        );
+    }
+
+    #[test]
+    fn test_assert_count() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1, 2, 3</test>
+    <result>
+      <assert-count>3</assert-count>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_expected_error() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 div 0</test>
+    <result>
+      <error code="FOAR0001"/>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_error_code_unexpected() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 div 0</test>
+    <result>
+      <error code="FOAR0002"/>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::PassedWithWrongError(Error::FOAR0001)
+        );
+    }
+
+    #[test]
+    fn test_unexpected_runtime_error() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 div 0</test>
+    <result>
+      <assert-true/>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::RuntimeError(Error::FOAR0001)
+        );
+    }
+
+    #[test]
+    fn test_unexpected_compilation_error() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 @#!</test>
+    <result>
+      <assert-true/>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::CompilationError(Error::XPST0003 {
+                src: "1 @#!".to_string(),
+                span: (1, 0).into()
+            })
         );
     }
 }

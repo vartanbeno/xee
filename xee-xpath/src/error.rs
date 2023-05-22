@@ -210,11 +210,13 @@ pub enum Error {
     ///
     /// This error is raised whenever an attempt is made to divide by zero.
     #[error("Division by zero")]
+    #[diagnostic(code(FOAR0001))]
     FOAR0001,
     /// Numeric operation overflow/underflow.
     ///
     /// This error is raised whenever numeric operations result in an overflow or underflow.
     #[error("Numeric operation overflow/underflow")]
+    #[diagnostic(code(FOAR0002))]
     FOAR0002,
     /// Array index out of bounds.
     ///
