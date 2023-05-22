@@ -326,7 +326,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
         let q = queries
-            .one("1 + 2", |_, item| Ok(item.as_atomic()?.as_integer()?))
+            .one("1 + 2", |_, item| Ok(item.to_atomic()?.to_integer()?))
             .unwrap();
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
@@ -352,7 +352,7 @@ mod tests {
         let any_of_recurse = queries.option_recurse("any-of")?;
         let value_query = queries
             .option("value/string()", |_, item| {
-                Ok(item.as_atomic()?.as_string()?)
+                Ok(item.to_atomic()?.to_string()?)
             })
             .unwrap();
 

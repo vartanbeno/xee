@@ -143,7 +143,7 @@ where
 {
     for a in a_atoms {
         for b in b_atoms {
-            if compare(a, b)?.as_bool()? {
+            if compare(a, b)?.to_bool()? {
                 return Ok(Atomic::Boolean(true));
             }
         }

@@ -16,8 +16,8 @@ fn bound_my_function(
     context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_atomic(context)?.as_integer()?;
-    let b = arguments[1].as_atomic(context)?.as_integer()?;
+    let a = arguments[0].to_atomic(context)?.to_integer()?;
+    let b = arguments[1].to_atomic(context)?.to_integer()?;
     Ok(StackValue::Atomic(Atomic::Integer(my_function(a, b))))
 }
 
@@ -47,7 +47,7 @@ fn local_name(
     context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node()?;
+    let a = arguments[0].to_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.local_name(context.xot),
     ))))
@@ -57,20 +57,20 @@ fn namespace_uri(
     context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node()?;
+    let a = arguments[0].to_node()?;
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(context.xot),
     ))))
 }
 
 fn count(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_sequence()?;
+    let a = arguments[0].to_sequence()?;
     let a = a.borrow();
     Ok(StackValue::Atomic(Atomic::Integer(a.items.len() as i64)))
 }
 
 fn root(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_node()?;
+    let a = arguments[0].to_node()?;
     let xot_node = match a {
         Node::Xot(node) => node,
         Node::Attribute(node, _) => node,
@@ -126,7 +126,7 @@ fn exactly_one(
     _context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a = arguments[0].as_sequence()?;
+    let a = arguments[0].to_sequence()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(StackValue::from_item(a.items[0].clone()))
@@ -150,7 +150,7 @@ fn generate_id(
         return Ok(StackValue::Atomic(Atomic::String(Rc::new("".to_string()))));
     }
     let annotations = &context.documents.annotations;
-    let node = a.as_node()?;
+    let node = a.to_node()?;
     let annotation = annotations.get(node).unwrap();
     Ok(StackValue::Atomic(Atomic::String(Rc::new(
         annotation.generate_id(),

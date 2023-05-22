@@ -209,19 +209,19 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
+    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         match self {
             StackValue::Atomic(a) => Ok(a.clone()),
-            StackValue::Sequence(s) => s.borrow().as_atomic(context),
+            StackValue::Sequence(s) => s.borrow().to_atomic(context),
             _ => {
                 todo!("don't know how to atomize this yet")
             }
         }
     }
 
-    pub(crate) fn as_bool(&self) -> Result<bool> {
+    pub(crate) fn to_bool(&self) -> Result<bool> {
         match self {
-            StackValue::Atomic(a) => a.as_bool(),
+            StackValue::Atomic(a) => a.to_bool(),
             StackValue::Sequence(s) => {
                 let s = s.borrow();
                 // If its operand is an empty sequence, fn:boolean returns false.
@@ -234,7 +234,7 @@ impl StackValue {
                 }
                 // If its operand is a singleton value
                 let singleton = s.singleton()?;
-                singleton.as_bool()
+                singleton.to_bool()
             }
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
             // this is the case when a single node is on the stack, just like if it
@@ -248,7 +248,7 @@ impl StackValue {
         }
     }
 
-    pub fn as_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
+    pub fn to_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
         match self {
             StackValue::Sequence(s) => Ok(s.clone()),
             StackValue::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
@@ -257,24 +257,24 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn as_closure(&self) -> Result<&Closure> {
+    pub(crate) fn to_closure(&self) -> Result<&Closure> {
         match self {
             StackValue::Closure(c) => Ok(c),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_step(&self) -> Result<Rc<Step>> {
+    pub(crate) fn to_step(&self) -> Result<Rc<Step>> {
         match self {
             StackValue::Step(s) => Ok(Rc::clone(s)),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_node(&self) -> Result<Node> {
+    pub(crate) fn to_node(&self) -> Result<Node> {
         match self {
             StackValue::Node(n) => Ok(*n),
-            StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.as_node()),
+            StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(ValueError::Type),
         }
     }
@@ -321,14 +321,14 @@ impl Display for Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn as_integer(&self) -> Result<i64> {
+    pub(crate) fn to_integer(&self) -> Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_decimal(&self) -> Result<Decimal> {
+    pub(crate) fn to_decimal(&self) -> Result<Decimal> {
         match self {
             Atomic::Decimal(d) => Ok(*d),
             Atomic::Integer(i) => Ok(Decimal::from(*i)),
@@ -336,30 +336,30 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn as_float(&self) -> Result<OrderedFloat<f32>> {
+    pub(crate) fn to_float(&self) -> Result<OrderedFloat<f32>> {
         match self {
             Atomic::Float(f) => Ok(*f),
             Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(ValueError::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.as_decimal()?.to_f32().ok_or(ValueError::Type)?,
+                self.to_decimal()?.to_f32().ok_or(ValueError::Type)?,
             )),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_double(&self) -> Result<OrderedFloat<f64>> {
+    pub(crate) fn to_double(&self) -> Result<OrderedFloat<f64>> {
         match self {
             Atomic::Double(d) => Ok(*d),
             Atomic::Float(OrderedFloat(f)) => Ok(OrderedFloat(*f as f64)),
             Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(ValueError::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.as_decimal()?.to_f64().ok_or(ValueError::Type)?,
+                self.to_decimal()?.to_f64().ok_or(ValueError::Type)?,
             )),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn as_bool(&self) -> Result<bool> {
+    pub(crate) fn to_bool(&self) -> Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
@@ -372,15 +372,15 @@ impl Atomic {
         }
     }
 
-    pub fn as_str(&self) -> Result<&str> {
+    pub fn to_str(&self) -> Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub fn as_string(&self) -> Result<String> {
-        Ok(self.as_str()?.to_string())
+    pub fn to_string(&self) -> Result<String> {
+        Ok(self.to_str()?.to_string())
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -426,21 +426,21 @@ pub enum Item {
 }
 
 impl Item {
-    pub fn as_atomic(&self) -> Result<&Atomic> {
+    pub fn to_atomic(&self) -> Result<&Atomic> {
         match self {
             Item::Atomic(a) => Ok(a),
             _ => Err(ValueError::Type),
         }
     }
-    pub fn as_node(&self) -> Result<Node> {
+    pub fn to_node(&self) -> Result<Node> {
         match self {
             Item::Node(n) => Ok(*n),
             _ => Err(ValueError::Type),
         }
     }
-    pub fn as_bool(&self) -> Result<bool> {
+    pub fn to_bool(&self) -> Result<bool> {
         match self {
-            Item::Atomic(a) => a.as_bool(),
+            Item::Atomic(a) => a.to_bool(),
             _ => Err(ValueError::Type),
         }
     }
@@ -541,7 +541,7 @@ impl Sequence {
         Sequence { items }
     }
 
-    pub(crate) fn as_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
+    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         // we avoid using atomize as an optimization, so we don't
         // have to atomize all entries just to get the first item
         match self.len() {
@@ -564,7 +564,7 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn as_atoms(&self, xot: &Xot) -> Vec<Atomic> {
+    pub(crate) fn to_atoms(&self, xot: &Xot) -> Vec<Atomic> {
         let mut atoms = Vec::new();
         let atomized = self.atomize(xot);
         for item in atomized.items {

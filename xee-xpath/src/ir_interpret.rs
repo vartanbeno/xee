@@ -518,7 +518,7 @@ mod tests {
     };
 
     fn as_sequence(value: &StackValue) -> Rc<RefCell<Sequence>> {
-        value.as_sequence().unwrap()
+        value.to_sequence().unwrap()
     }
 
     fn xot_nodes_to_sequence(node: &[xot::Node]) -> Sequence {

@@ -75,7 +75,7 @@ fn test_set_query<'a>(
 }
 
 fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
-    Ok(item.as_atomic()?.as_string()?)
+    Ok(item.to_atomic()?.to_string()?)
 }
 
 fn metadata_query<'a>(
@@ -165,24 +165,24 @@ fn test_cases_query<'a>(
         ))
     })?;
     let assert_count_query = queries.one("string()", |_, item| {
-        let count = item.as_atomic()?.as_string()?;
+        let count = item.to_atomic()?.to_string()?;
         // XXX unwrap is a hack
         let count = count.parse::<usize>().unwrap();
         Ok(qt::TestCaseResult::AssertCount(count))
     })?;
 
     let assert_xml_query = queries.one("string()", |_, item| {
-        let xml = item.as_atomic()?.as_string()?;
+        let xml = item.to_atomic()?.to_string()?;
         Ok(qt::TestCaseResult::AssertXml(xml))
     })?;
 
     let assert_eq_query = queries.one("string()", |_, item| {
-        let eq = item.as_atomic()?.as_string()?;
+        let eq = item.to_atomic()?.to_string()?;
         Ok(qt::TestCaseResult::AssertEq(qt::XPathExpr(eq)))
     })?;
 
     let assert_string_value_query = queries.one("string()", |_, item| {
-        let string_value = item.as_atomic()?.as_string()?;
+        let string_value = item.to_atomic()?.to_string()?;
         Ok(qt::TestCaseResult::AssertStringValue(string_value))
     })?;
 

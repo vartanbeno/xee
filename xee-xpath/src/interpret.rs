@@ -104,58 +104,58 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_add(&a, &b)?));
                 }
                 EncodedInstruction::Sub => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_substract(&a, &b)?));
                 }
                 EncodedInstruction::Mul => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_multiply(&a, &b)?));
                 }
                 EncodedInstruction::Div => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_divide(&a, &b)?));
                 }
                 EncodedInstruction::IntDiv => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_integer_divide(&a, &b)?));
                 }
                 EncodedInstruction::Mod => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(op::numeric_mod(&a, &b)?));
                 }
                 EncodedInstruction::Concat => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
-                    let a = a.as_str()?;
-                    let b = b.as_str()?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
+                    let a = a.to_str()?;
+                    let b = b.to_str()?;
                     let result = a.to_owned() + b;
                     self.stack
                         .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
@@ -213,15 +213,15 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     // the closure is always just below the base
-                    let closure = self.stack[self.frame().base - 1].as_closure()?;
+                    let closure = self.stack[self.frame().base - 1].to_closure()?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 EncodedInstruction::Comma => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence()?;
-                    let b = b.as_sequence()?;
+                    let a = a.to_sequence()?;
+                    let b = b.to_sequence()?;
                     self.stack.push(StackValue::Sequence(Rc::new(RefCell::new(
                         a.borrow().concat(&b.borrow()),
                     ))));
@@ -233,7 +233,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::JumpIfTrue => {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_bool()?;
+                    let a = a.to_bool()?;
                     if a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;
@@ -242,7 +242,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::JumpIfFalse => {
                     let displacement = self.read_i16();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_bool()?;
+                    let a = a.to_bool()?;
                     if !a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;
@@ -252,8 +252,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_eq(&a, &b)?));
                 }
@@ -261,8 +261,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_ne(&a, &b)?));
                 }
@@ -270,8 +270,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_lt(&a, &b)?));
                 }
@@ -279,8 +279,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_le(&a, &b)?));
                 }
@@ -288,8 +288,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_gt(&a, &b)?));
                 }
@@ -297,8 +297,8 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
                     self.stack
                         .push(StackValue::Atomic(comparison::value_ge(&a, &b)?));
                 }
@@ -306,10 +306,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_eq(
                         &atomized_a,
                         &atomized_b,
@@ -319,10 +319,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_ne(
                         &atomized_a,
                         &atomized_b,
@@ -332,10 +332,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_lt(
                         &atomized_a,
                         &atomized_b,
@@ -345,10 +345,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_le(
                         &atomized_a,
                         &atomized_b,
@@ -358,10 +358,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_gt(
                         &atomized_a,
                         &atomized_b,
@@ -371,10 +371,10 @@ impl<'a> Interpreter<'a> {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
 
-                    let sequence_a = a.as_sequence()?;
-                    let sequence_b = b.as_sequence()?;
-                    let atomized_a = sequence_a.borrow().as_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().as_atoms(self.dynamic_context.xot);
+                    let sequence_a = a.to_sequence()?;
+                    let sequence_b = b.to_sequence()?;
+                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
+                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
                     self.stack.push(StackValue::Atomic(comparison::general_ge(
                         &atomized_a,
                         &atomized_b,
@@ -383,8 +383,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_sequence()?;
-                    let b = b.as_sequence()?;
+                    let a = a.to_sequence()?;
+                    let b = b.to_sequence()?;
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
@@ -406,7 +406,7 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    if let Ok(closure) = callable.as_closure() {
+                    if let Ok(closure) = callable.to_closure() {
                         match closure.function_id {
                             ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
@@ -417,7 +417,7 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Ok(step) = callable.as_step() {
+                    } else if let Ok(step) = callable.to_step() {
                         self.call_step(step)?;
                     } else {
                         return Err(ValueError::Type);
@@ -455,10 +455,10 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    let a = a.as_atomic(context)?;
-                    let b = b.as_atomic(context)?;
-                    let a = a.as_integer()?;
-                    let b = b.as_integer()?;
+                    let a = a.to_atomic(context)?;
+                    let b = b.to_atomic(context)?;
+                    let a = a.to_integer()?;
+                    let b = b.to_integer()?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -482,7 +482,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::SequenceLen => {
                     let sequence = self.stack.pop().unwrap();
-                    let sequence = sequence.as_sequence()?;
+                    let sequence = sequence.to_sequence()?;
                     let len = sequence.borrow().items.len();
                     self.stack
                         .push(StackValue::Atomic(Atomic::Integer(len as i64)));
@@ -491,9 +491,9 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let index = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence()?;
-                    let index = index.as_atomic(context)?;
-                    let index = index.as_integer()?;
+                    let sequence = sequence.to_sequence()?;
+                    let index = index.to_atomic(context)?;
+                    let index = index.to_integer()?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
                     self.stack.push(item.to_stack_value())
@@ -502,7 +502,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = self.stack.pop().unwrap();
                     let stack_value = self.stack.pop().unwrap();
 
-                    let sequence = sequence.as_sequence()?;
+                    let sequence = sequence.to_sequence()?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
                 EncodedInstruction::IsNumeric => {
@@ -510,7 +510,7 @@ impl<'a> Interpreter<'a> {
                     // as_atomic may fail. This is fine, as the only
                     // check later on in Filter is to check for effective
                     // boolean value, which uses effectively the same check
-                    let value = value.as_atomic(context)?;
+                    let value = value.to_atomic(context)?;
                     let is_numeric = value.is_numeric();
                     self.stack
                         .push(StackValue::Atomic(Atomic::Boolean(is_numeric)));
@@ -560,7 +560,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_step(&mut self, step: Rc<Step>) -> Result<(), ValueError> {
         // take one argument from the stack
-        let node = self.stack.pop().unwrap().as_node()?;
+        let node = self.stack.pop().unwrap().to_node()?;
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);
