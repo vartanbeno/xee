@@ -49,6 +49,9 @@ enum TestResult {
     RuntimeError(Error),
     // We failed with a compilation error
     CompilationError(Error),
+    // We could not compile some xpath expression in the test
+    // and therefore the test could not be executed
+    UnsupportedExpression(Error),
     // We failed because our implementation does not yet
     // implement something it should
     Todo,
@@ -87,7 +90,7 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::Error(expected_error) = &self.result {
-                    self.assert_expected_error(expected_error, error)
+                    self.assert_expected_error(expected_error, &error)
                 } else {
                     TestResult::CompilationError(error)
                 }
@@ -96,14 +99,28 @@ impl qt::TestCase {
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
 
-        let run_result = xpath.run(&dynamic_context, None);
-        self.check_result(run_result)
+        let value = xpath.run(&dynamic_context, None);
+        self.check_value(&self.result, &value)
     }
 
-    fn check_result(&self, run_result: Result<StackValue, Error>) -> TestResult {
+    fn check_value(
+        &self,
+        result: &qt::TestCaseResult,
+        run_result: &Result<StackValue, Error>,
+    ) -> TestResult {
         match run_result {
             Ok(value) => {
-                match &self.result {
+                let value = value.clone();
+                match result {
+                    qt::TestCaseResult::AnyOf(test_case_results) => {
+                        for test_case_result in test_case_results {
+                            let result = self.check_value(test_case_result, run_result);
+                            if result == TestResult::Passed {
+                                return TestResult::Passed;
+                            }
+                        }
+                        TestResult::Failed(value)
+                    }
                     // qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
                     qt::TestCaseResult::AssertEq(xpath_expr) => self.assert_eq(xpath_expr, value),
                     qt::TestCaseResult::AssertTrue => self.assert_true(value),
@@ -121,7 +138,7 @@ impl qt::TestCase {
                 if let qt::TestCaseResult::Error(expected_error) = &self.result {
                     self.assert_expected_error(expected_error, error)
                 } else {
-                    TestResult::RuntimeError(error)
+                    TestResult::RuntimeError(error.clone())
                 }
             }
         }
@@ -136,7 +153,20 @@ impl qt::TestCase {
     }
 
     fn assert_eq(&self, xpath_expr: &qt::XPathExpr, stack_value: StackValue) -> TestResult {
-        unimplemented!()
+        let expected_value = run_xpath(xpath_expr);
+        match expected_value {
+            Ok(expected_value) => {
+                if expected_value == stack_value {
+                    TestResult::Passed
+                } else {
+                    TestResult::Failed(stack_value)
+                }
+            }
+            // This only happens if we can't run the xpath expression
+            // with the expected value. These errors should stop
+            // appearing once we lift ourselves by our bootstraps
+            Err(error) => TestResult::UnsupportedExpression(error),
+        }
     }
 
     fn assert_true(&self, stack_value: StackValue) -> TestResult {
@@ -168,7 +198,7 @@ impl qt::TestCase {
         }
     }
 
-    fn assert_expected_error(&self, expected_error: &str, error: Error) -> TestResult {
+    fn assert_expected_error(&self, expected_error: &str, error: &Error) -> TestResult {
         // all errors are officially a pass, but we check whether the error
         // code matches too
         let code = error.code();
@@ -190,6 +220,15 @@ impl qt::TestCase {
     ) -> TestResult {
         TestResult::Failed(stack_value)
     }
+}
+
+fn run_xpath(expr: &qt::XPathExpr) -> Result<StackValue, Error> {
+    let namespaces = Namespaces::default();
+    let static_context = StaticContext::new(&namespaces);
+    let xpath = XPath::new(&static_context, &expr.0)?;
+    let xot = Xot::new();
+    let dynamic_context = DynamicContext::new(&xot, &static_context);
+    xpath.run(&dynamic_context, None)
 }
 
 #[cfg(test)]
@@ -411,4 +450,87 @@ mod tests {
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
+
+    #[test]
+    fn test_assert_eq_passes() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_eq_fails() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>5</test>
+    <result>
+      <assert-eq>6</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::Failed(StackValue::Atomic(Atomic::Integer(5)))
+        );
+    }
+    //     #[test]
+    //     fn test_assert_any_of_error_case() {
+    //         let mut xot = Xot::new();
+    //         let test_set = qt::TestSet::load_from_xml(
+    //             &mut xot,
+    //             r#"
+    // <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+    //   <test-case name="true">
+    //     <description>Description</description>
+    //     <created by="Martijn Faassen" on="2023-05-22"/>
+    //     <environment ref="empty"/>
+    //     <test>1 div 0</test>
+    //     <result>
+    //       <any-of>
+    //         <assert-eq>2</assert-eq>
+    //         <error code="FOAR0002"/>
+    //       </any-of>
+    //     </result>
+    //   </test-case>
+    //   </test-set>"#,
+    //         )
+    //         .unwrap();
+    //         let known_dependencies = KnownDependencies::default();
+    //         let test_result = test_set.run(&known_dependencies);
+    //         assert_eq!(test_result.results.len(), 1);
+    //         assert_eq!(
+    //             test_result.results[0].1,
+    //             TestResult::PassedWithWrongError(Error::FOAR0001)
+    //         );
+    //     }
 }
