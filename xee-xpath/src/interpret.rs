@@ -505,38 +505,6 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.as_sequence()?;
                     sequence.borrow_mut().push_stack_value(stack_value);
                 }
-                EncodedInstruction::SequenceGetIndex => {
-                    // get the index. If the index doesn't exist, place
-                    // the empty sequence on the stack. This is used
-                    // to implement the filter shortcut when a position is
-                    // requested
-                    let sequence = self.stack.pop().unwrap();
-                    let index = self.stack.pop().unwrap();
-                    let index = index.as_atomic(context)?;
-                    let index = index.as_double()?;
-                    let index_trunc = index.trunc();
-                    if index_trunc == *index {
-                        let index = index_trunc as i64;
-                        // index can never be 0 or less
-                        if index < 1 {
-                            self.stack.push(StackValue::Atomic(Atomic::Empty));
-                            continue;
-                        }
-                        let sequence = sequence.as_sequence()?;
-                        // if index is larger than the sequence, return empty
-                        if index > sequence.borrow().items.len() as i64 {
-                            self.stack.push(StackValue::Atomic(Atomic::Empty));
-                            continue;
-                        }
-                        // now get the item, -1 as xpath is 1-indexed
-                        let item = sequence.borrow().items[index as usize - 1].clone();
-                        self.stack.push(item.to_stack_value())
-                    } else {
-                        // we don't have a whole integer number, so we
-                        // return the empty sequence
-                        self.stack.push(StackValue::Atomic(Atomic::Empty));
-                    }
-                }
                 EncodedInstruction::IsNumeric => {
                     let value = self.stack.pop().unwrap();
                     // as_atomic may fail. This is fine, as the only
