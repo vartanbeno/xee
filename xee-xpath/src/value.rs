@@ -10,6 +10,7 @@ use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::ast;
+use crate::comparison;
 use crate::dynamic_context::DynamicContext;
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
@@ -289,7 +290,7 @@ impl StackValue {
 }
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Eq)]
 pub enum Atomic {
     Boolean(bool),
     Integer(i64),
@@ -414,6 +415,15 @@ impl Atomic {
             self,
             Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_)
         )
+    }
+}
+
+impl PartialEq for Atomic {
+    fn eq(&self, other: &Self) -> bool {
+        match comparison::value_eq(self, other) {
+            Ok(b) => b.to_bool().unwrap(),
+            Err(_) => false,
+        }
     }
 }
 
@@ -607,5 +617,17 @@ impl Sequence {
 
         let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
         Ok(Sequence { items })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_integer_compares_with_decimal() {
+        let a = Atomic::Integer(1);
+        let b = Atomic::Decimal(Decimal::from(1));
+        assert_eq!(a, b);
     }
 }

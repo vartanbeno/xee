@@ -188,7 +188,7 @@ fn test_cases_query<'a>(
         Ok(qt::TestCaseResult::AssertStringValue(string_value))
     })?;
 
-    let any_of_recurse = queries.many_recurse("*")?;
+    let any_all_recurse = queries.many_recurse("*")?;
 
     // we use a local-name query here as it's the easiest way support this:
     // there is a single entry in the "result" element, but this may be
@@ -200,8 +200,11 @@ fn test_cases_query<'a>(
         let f = |session: &Session, item: &Item, recurse: &Recurse<qt::TestCaseResult>| {
             let local_name = local_name_query.execute(session, item)?;
             let r = if local_name == "any-of" {
-                let contents = any_of_recurse.execute(session, item, recurse)?;
+                let contents = any_all_recurse.execute(session, item, recurse)?;
                 qt::TestCaseResult::AnyOf(contents)
+            } else if local_name == "all-of" {
+                let contents = any_all_recurse.execute(session, item, recurse)?;
+                qt::TestCaseResult::AllOf(contents)
             } else if local_name == "error" {
                 error_query.execute(session, item)?
             } else if local_name == "assert-true" {
