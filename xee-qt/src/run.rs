@@ -83,10 +83,15 @@ impl qt::TestCase {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let xpath = XPath::new(&static_context, &self.test);
-        // XXX compilation errors can be expected too
         let xpath = match xpath {
             Ok(xpath) => xpath,
-            Err(error) => return TestResult::CompilationError(error),
+            Err(error) => {
+                return if let qt::TestCaseResult::Error(expected_error) = &self.result {
+                    self.assert_expected_error(expected_error, error)
+                } else {
+                    TestResult::CompilationError(error)
+                }
+            }
         };
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
@@ -380,5 +385,30 @@ mod tests {
                 span: (1, 0).into()
             })
         );
+    }
+
+    #[test]
+    fn test_expected_compilation_error() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 @#!</test>
+    <result>
+      <error code="XPST0003" />
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
 }
