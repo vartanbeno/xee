@@ -1,6 +1,5 @@
-use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Namespaces, StackValue, StaticContext, XPath,
-};
+use miette::Diagnostic;
+use xee_xpath::{Atomic, DynamicContext, Error, Namespaces, StackValue, StaticContext, XPath};
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
@@ -81,15 +80,15 @@ impl qt::TestCase {
         }
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
-        let xpath_result = XPath::new(&static_context, &self.test);
-        let xpath = match xpath_result {
+        let xpath = XPath::new(&static_context, &self.test);
+        let xpath = match xpath {
             Ok(xpath) => xpath,
             Err(error) => return TestResult::CompilationError(error),
         };
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
-        let item = Item::Atomic(Atomic::Integer(0));
-        let run_result = xpath.run(&dynamic_context, Some(&item));
+
+        let run_result = xpath.run(&dynamic_context, None);
         self.check_result(run_result)
         // let value = match run_result {
         //     Ok(stack_value) => stack_value,
@@ -102,13 +101,25 @@ impl qt::TestCase {
     }
 
     fn check_result(&self, run_result: Result<StackValue, Error>) -> TestResult {
-        match &self.result {
-            qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
-            qt::TestCaseResult::AssertEq(xpath_expr) => self.assert_eq(xpath_expr, run_result),
-            qt::TestCaseResult::AssertTrue => self.assert_true(run_result),
-            qt::TestCaseResult::AssertFalse => self.assert_false(run_result),
-            _ => {
-                panic!("unimplemented test case result")
+        match run_result {
+            Ok(value) => {
+                match &self.result {
+                    // qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
+                    qt::TestCaseResult::AssertEq(xpath_expr) => self.assert_eq(xpath_expr, value),
+                    qt::TestCaseResult::AssertTrue => self.assert_true(value),
+                    qt::TestCaseResult::AssertFalse => self.assert_false(value),
+                    qt::TestCaseResult::AssertCount(number) => self.assert_count(*number, value),
+                    _ => {
+                        panic!("unimplemented test case result")
+                    }
+                }
+            }
+            Err(error) => {
+                if let qt::TestCaseResult::Error(expected_error) = &self.result {
+                    self.assert_error(expected_error, error)
+                } else {
+                    TestResult::RuntimeError(error)
+                }
             }
         }
     }
@@ -121,19 +132,49 @@ impl qt::TestCase {
         unimplemented!()
     }
 
-    fn assert_eq(
-        &self,
-        xpath_expr: &qt::XPathExpr,
-        stack_value: Result<StackValue, Error>,
-    ) -> TestResult {
+    fn assert_eq(&self, xpath_expr: &qt::XPathExpr, stack_value: StackValue) -> TestResult {
         unimplemented!()
     }
 
-    fn assert_true(&self, stack_value: Result<StackValue, Error>) -> TestResult {
-        unimplemented!()
+    fn assert_true(&self, stack_value: StackValue) -> TestResult {
+        if matches!(stack_value, StackValue::Atomic(Atomic::Boolean(true))) {
+            TestResult::Passed
+        } else {
+            TestResult::Failed(stack_value)
+        }
     }
 
-    fn assert_false(&self, stack_value: Result<StackValue, Error>) -> TestResult {
-        unimplemented!()
+    fn assert_false(&self, stack_value: StackValue) -> TestResult {
+        if matches!(stack_value, StackValue::Atomic(Atomic::Boolean(false))) {
+            TestResult::Passed
+        } else {
+            TestResult::Failed(stack_value)
+        }
+    }
+
+    fn assert_count(&self, count: usize, stack_value: StackValue) -> TestResult {
+        let sequence = stack_value.to_sequence();
+        if let Ok(sequence) = sequence {
+            if sequence.borrow().len() == count {
+                TestResult::Passed
+            } else {
+                TestResult::Failed(stack_value)
+            }
+        } else {
+            TestResult::Failed(stack_value)
+        }
+    }
+
+    fn assert_error(&self, expected_error: &str, error: Error) -> TestResult {
+        let code = error.code();
+        if let Some(code) = code {
+            if code.to_string() == expected_error {
+                TestResult::Passed
+            } else {
+                TestResult::PassedWithWrongError(error.clone())
+            }
+        } else {
+            TestResult::PassedWithWrongError(error.clone())
+        }
     }
 }

@@ -4,10 +4,7 @@ expression: "parse_xpath_no_default_ns(\"1 + 2 +\")"
 ---
 Err(
     XPST0003 {
-        src: NamedSource {
-            name: "input",
-            source: "<redacted>",
-        ,
+        src: "1 + 2 +",
         span: SourceSpan {
             offset: SourceOffset(
                 6,

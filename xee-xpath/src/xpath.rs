@@ -1,8 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use miette::NamedSource;
-
 use crate::ast_ir::IrConverter;
 use crate::builder::{FunctionBuilder, Program};
 use crate::dynamic_context::DynamicContext;
@@ -67,7 +65,7 @@ impl XPath {
         let value = interpreter.stack().last().unwrap().clone();
         match value {
             StackValue::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
-                src: NamedSource::new("input", self.program.src.clone()),
+                src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
             StackValue::Atomic(Atomic::Empty) => {
@@ -106,7 +104,7 @@ impl XPath {
                 match value {
                     Ok(value) => Ok(value.clone()),
                     Err(_) => Err(Error::XPTY0004 {
-                        src: miette::NamedSource::new("input", self.program.src.clone()),
+                        src: self.program.src.clone(),
                         span: (0, 0).into(),
                     }),
                 }

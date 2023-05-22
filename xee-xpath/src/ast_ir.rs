@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt};
-use miette::{NamedSource, SourceSpan};
+use miette::SourceSpan;
 
 use crate::ast;
 use crate::error::{Error, Result};
@@ -179,7 +179,7 @@ impl<'a> IrConverter<'a> {
 
     fn var_ref(&mut self, name: &ast::Name, span: SourceSpan) -> Result<Bindings> {
         let ir_name = self.variables.get(name).ok_or_else(|| Error::XPST0008 {
-            src: NamedSource::new("input", self.src.to_string()),
+            src: self.src.to_string(),
             span,
         })?;
         Ok(Bindings::from_vec(vec![Binding {
@@ -215,13 +215,13 @@ impl<'a> IrConverter<'a> {
                 // we can detect statically that the context is absent if it's in
                 // a function definition
                 ContextItem::Absent => Err(Error::XPDY0002 {
-                    src: NamedSource::new("input", self.src.to_string()),
+                    src: self.src.to_string(),
                     span,
                 }),
             }
         } else {
             Err(Error::XPDY0002 {
-                src: NamedSource::new("input", self.src.to_string()),
+                src: self.src.to_string(),
                 span,
             })
         }
@@ -622,7 +622,7 @@ impl<'a> IrConverter<'a> {
             .get_by_name(&ast.name, arity as u8)
             .ok_or_else(|| Error::XPST0017 {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
-                src: NamedSource::new("input", self.src.to_string()),
+                src: self.src.to_string(),
                 span
             })?;
         // XXX we don't know yet how to get the proper span here
@@ -650,7 +650,7 @@ impl<'a> IrConverter<'a> {
             .get_by_name(&ast.name, ast.arity)
             .ok_or_else(|| Error::XPST0017 {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, ast.arity),
-                src: NamedSource::new("input", self.src.to_string()),
+                src: self.src.to_string(),
                 span
             })?;
         Ok(self.static_function_ref(static_function_id, span))

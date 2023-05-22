@@ -1,5 +1,5 @@
 use crate::parse::XPathParser;
-use miette::{NamedSource, SourceSpan};
+use miette::SourceSpan;
 use ordered_float::OrderedFloat;
 use pest::error::InputLocation;
 use pest::iterators::{Pair, Pairs};
@@ -1159,7 +1159,7 @@ pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::X
     match result {
         Ok(xpath) => Ok(xpath),
         Err(e) => {
-            let src = NamedSource::new("input", input.to_string());
+            let src = input.to_string();
             let location = e.location;
             let span: SourceSpan = match location {
                 InputLocation::Pos(pos) => (pos - 1, 0).into(),

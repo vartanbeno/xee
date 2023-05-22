@@ -1,9 +1,9 @@
-use miette::{Diagnostic, NamedSource, SourceSpan};
+use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
 use crate::{builder::Program, value::ValueError};
 
-#[derive(Debug, Error, Diagnostic)]
+#[derive(Debug, Clone, Error, Diagnostic)]
 pub enum Error {
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.
@@ -20,7 +20,7 @@ pub enum Error {
     #[diagnostic(code(XPDY0002))]
     XPDY0002 {
         #[source_code]
-        src: NamedSource,
+        src: String,
         #[label("Context absent")]
         span: SourceSpan,
     },
@@ -34,7 +34,7 @@ pub enum Error {
     #[diagnostic(code(XPST0003), help("Invalid XPath expression"))]
     XPST0003 {
         #[source_code]
-        src: NamedSource,
+        src: String,
         #[label("Could not parse beyond this")]
         span: SourceSpan,
     },
@@ -49,7 +49,7 @@ pub enum Error {
     #[diagnostic(code(XPTY0004))]
     XPTY0004 {
         #[source_code]
-        src: NamedSource,
+        src: String,
         #[label("Type error")]
         span: SourceSpan,
     },
@@ -70,7 +70,7 @@ pub enum Error {
     #[diagnostic(code(XPST0008))]
     XPST0008 {
         #[source_code]
-        src: NamedSource,
+        src: String,
         #[label("Name not defined")]
         span: SourceSpan,
     },
@@ -92,7 +92,7 @@ pub enum Error {
         #[help]
         advice: String,
         #[source_code]
-        src: NamedSource,
+        src: String,
         #[label("The problem")]
         span: SourceSpan,
     },
@@ -641,18 +641,18 @@ impl Error {
     ) -> Self {
         match value_error {
             ValueError::XPTY0004 => Error::XPTY0004 {
-                src: NamedSource::new("input", program.src.to_string()),
+                src: program.src.to_string(),
                 span,
             },
             ValueError::Type => Error::XPTY0004 {
-                src: NamedSource::new("input", program.src.to_string()),
+                src: program.src.to_string(),
                 span,
             },
             ValueError::Overflow => Error::FOAR0002,
             ValueError::StackOverflow => Error::XPDY0130,
             ValueError::DivisionByZero => Error::FOAR0001,
             ValueError::Absent => Error::XPDY0002 {
-                src: NamedSource::new("input", program.src.to_string()),
+                src: program.src.to_string(),
                 span,
             },
         }

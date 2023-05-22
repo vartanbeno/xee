@@ -54,9 +54,9 @@ pub(crate) enum TestCaseResult {
     // value must be true; usually the expression will use the variable $result
     // which references the result of the expression.
     Assert(XPathExpr),
-    //  The assert element contains an XPath expression (usually a simple
-    //  string or numeric literal) which must be equal to the result of the
-    //  test case under the rules of the XPath 'eq' operator.
+    // The assert element contains an XPath expression (usually a simple string
+    // or numeric literal) which must be equal to the result of the test case
+    // under the rules of the XPath 'eq' operator.
     AssertEq(XPathExpr),
     // Asserts that the result must be a sequence containing a given number of
     // items. The value of the element is an integer giving the expected length
@@ -119,7 +119,7 @@ pub(crate) enum TestCaseResult {
 
 #[derive(Debug)]
 pub(crate) enum TestCaseEnvironment {
-    Local(LocalEnvironment),
+    Local(Box<LocalEnvironment>),
     Ref(EnvironmentRef),
 }
 
