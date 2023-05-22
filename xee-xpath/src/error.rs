@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{builder::Program, value::ValueError};
 
-#[derive(Debug, Clone, Error, Diagnostic)]
+#[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.

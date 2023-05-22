@@ -15,39 +15,41 @@ use crate::qt;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
-fn load_from_file(xot: &mut Xot, path: &Path) -> Result<qt::TestSet> {
-    let xml_file = File::open(path)
-        .into_diagnostic()
-        .wrap_err("Cannot open XML file")?;
-    let mut buf_reader = BufReader::new(xml_file);
-    let mut xml = String::new();
-    buf_reader
-        .read_to_string(&mut xml)
-        .into_diagnostic()
-        .wrap_err("Cannot read XML file")?;
-    load_from_xml(xot, &xml)
-}
+impl qt::TestSet {
+    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
+        let xml_file = File::open(path)
+            .into_diagnostic()
+            .wrap_err("Cannot open XML file")?;
+        let mut buf_reader = BufReader::new(xml_file);
+        let mut xml = String::new();
+        buf_reader
+            .read_to_string(&mut xml)
+            .into_diagnostic()
+            .wrap_err("Cannot read XML file")?;
+        Self::load_from_xml(xot, &xml)
+    }
 
-fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<qt::TestSet> {
-    let root = xot
-        .parse(xml)
-        .into_diagnostic()
-        .wrap_err("Cannot parse XML")?;
-    let root = Node::Xot(root);
-    let namespaces = Namespaces::with_default_element_namespace(NS);
+    pub(crate) fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Self> {
+        let root = xot
+            .parse(xml)
+            .into_diagnostic()
+            .wrap_err("Cannot parse XML")?;
+        let root = Node::Xot(root);
+        let namespaces = Namespaces::with_default_element_namespace(NS);
 
-    let static_context = StaticContext::new(&namespaces);
+        let static_context = StaticContext::new(&namespaces);
 
-    let queries = Queries::new(&static_context);
+        let queries = Queries::new(&static_context);
 
-    let (queries, query) = test_set_query(xot, queries)?;
+        let (queries, query) = test_set_query(xot, queries)?;
 
-    let dynamic_context = DynamicContext::new(xot, &static_context);
-    let session = queries.session(&dynamic_context);
-    // the query has a lifetime for the dynamic context, and a lifetime
-    // for the static context
-    let r = query.execute(&session, &Item::Node(root))?;
-    Ok(r)
+        let dynamic_context = DynamicContext::new(xot, &static_context);
+        let session = queries.session(&dynamic_context);
+        // the query has a lifetime for the dynamic context, and a lifetime
+        // for the static context
+        let r = query.execute(&session, &Item::Node(root))?;
+        Ok(r)
+    }
 }
 
 fn test_set_query<'a>(
@@ -305,6 +307,6 @@ mod tests {
     #[test]
     fn test_load() {
         let mut xot = Xot::new();
-        assert_debug_snapshot!(load_from_xml(&mut xot, ROOT_FIXTURE).unwrap());
+        assert_debug_snapshot!(qt::TestSet::load_from_xml(&mut xot, ROOT_FIXTURE).unwrap());
     }
 }

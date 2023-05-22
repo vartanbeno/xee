@@ -5,7 +5,7 @@ use xot::Xot;
 use crate::collection::FxIndexSet;
 use crate::qt;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct KnownDependencies {
     specs: FxIndexSet<qt::DependencySpec>,
 }
@@ -32,10 +32,11 @@ impl KnownDependencies {
 // if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
 
-struct TestSetResult {
-    results: Vec<TestResult>,
+struct TestSetResult<'a> {
+    results: Vec<(&'a qt::TestCase, TestResult)>,
 }
 
+#[derive(Debug, PartialEq)]
 enum TestResult {
     // The test passed
     Passed,
@@ -56,12 +57,13 @@ enum TestResult {
     UnsupportedDependency,
 }
 
-impl qt::TestSet {
-    fn run(&self, known_dependencies: &KnownDependencies) -> TestSetResult {
+impl<'a> qt::TestSet {
+    // XXX Make this result an iterator of results?
+    fn run(&'a self, known_dependencies: &KnownDependencies) -> TestSetResult<'a> {
         let mut results = Vec::new();
         for test_case in &self.test_cases {
             let result = test_case.run(known_dependencies, &self.shared_environments);
-            results.push(result);
+            results.push((test_case, result));
         }
         TestSetResult { results }
     }
@@ -81,6 +83,7 @@ impl qt::TestCase {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let xpath = XPath::new(&static_context, &self.test);
+        // XXX compilation errors can be expected too
         let xpath = match xpath {
             Ok(xpath) => xpath,
             Err(error) => return TestResult::CompilationError(error),
@@ -90,14 +93,6 @@ impl qt::TestCase {
 
         let run_result = xpath.run(&dynamic_context, None);
         self.check_result(run_result)
-        // let value = match run_result {
-        //     Ok(stack_value) => stack_value,
-        //     // XXX need to handle expected errors
-        //     Err(_err) => return TestCaseResult::RuntimeError,
-        // };
-        // execute test
-        // compare with result
-        // TestCaseResult::Failed
     }
 
     fn check_result(&self, run_result: Result<StackValue, Error>) -> TestResult {
@@ -109,6 +104,9 @@ impl qt::TestCase {
                     qt::TestCaseResult::AssertTrue => self.assert_true(value),
                     qt::TestCaseResult::AssertFalse => self.assert_false(value),
                     qt::TestCaseResult::AssertCount(number) => self.assert_count(*number, value),
+                    qt::TestCaseResult::Error(error) => {
+                        self.assert_unexpected_no_error(error, value)
+                    }
                     _ => {
                         panic!("unimplemented test case result")
                     }
@@ -116,7 +114,7 @@ impl qt::TestCase {
             }
             Err(error) => {
                 if let qt::TestCaseResult::Error(expected_error) = &self.result {
-                    self.assert_error(expected_error, error)
+                    self.assert_expected_error(expected_error, error)
                 } else {
                     TestResult::RuntimeError(error)
                 }
@@ -165,7 +163,9 @@ impl qt::TestCase {
         }
     }
 
-    fn assert_error(&self, expected_error: &str, error: Error) -> TestResult {
+    fn assert_expected_error(&self, expected_error: &str, error: Error) -> TestResult {
+        // all errors are officially a pass, but we check whether the error
+        // code matches too
         let code = error.code();
         if let Some(code) = code {
             if code.to_string() == expected_error {
@@ -176,5 +176,71 @@ impl qt::TestCase {
         } else {
             TestResult::PassedWithWrongError(error.clone())
         }
+    }
+
+    fn assert_unexpected_no_error(
+        &self,
+        _expected_error: &str,
+        stack_value: StackValue,
+    ) -> TestResult {
+        TestResult::Failed(stack_value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_assert_true() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>True</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 eq 1</test>
+    <result>
+      <assert-true />
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_true_fails() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="true">
+    <description>True</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <test>1 ne 1</test>
+    <result>
+      <assert-true />
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies);
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::Failed(StackValue::Atomic(Atomic::Boolean(false)))
+        );
     }
 }
