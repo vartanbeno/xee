@@ -130,7 +130,7 @@ impl Node {
         }
     }
 
-    pub(crate) fn string(&self, xot: &Xot) -> String {
+    pub(crate) fn string_value(&self, xot: &Xot) -> String {
         match self {
             Node::Xot(node) => match xot.value(*node) {
                 xot::Value::Element(_) => descendants_to_string(xot, *node),
@@ -373,6 +373,8 @@ impl Atomic {
         }
     }
 
+    // XXX is this named right? It's consistent with  to_double, to_bool, etc,
+    // but inconsistent with the to_string Rust convention
     pub fn to_str(&self) -> Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
@@ -382,6 +384,19 @@ impl Atomic {
 
     pub fn to_string(&self) -> Result<String> {
         Ok(self.to_str()?.to_string())
+    }
+
+    pub fn string_value(&self) -> String {
+        match self {
+            Atomic::String(s) => s.to_string(),
+            Atomic::Boolean(b) => b.to_string(),
+            Atomic::Integer(i) => i.to_string(),
+            Atomic::Float(f) => f.to_string(),
+            Atomic::Double(d) => d.to_string(),
+            Atomic::Decimal(d) => d.to_string(),
+            Atomic::Empty => "".to_string(),
+            Atomic::Absent => "<ABSENT>".to_string(),
+        }
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -451,6 +466,14 @@ impl Item {
     pub fn to_bool(&self) -> Result<bool> {
         match self {
             Item::Atomic(a) => a.to_bool(),
+            _ => Err(ValueError::Type),
+        }
+    }
+
+    pub fn string_value(&self, xot: &Xot) -> Result<String> {
+        match self {
+            Item::Atomic(a) => Ok(a.string_value()),
+            Item::Node(n) => Ok(n.string_value(xot)),
             _ => Err(ValueError::Type),
         }
     }
@@ -541,7 +564,7 @@ impl Sequence {
                 Item::Node(n) => {
                     // this should get the typed-value, which is a sequence,
                     // but for now we get the string value
-                    let a = n.string(xot);
+                    let a = n.string_value(xot);
                     items.push(Item::Atomic(Atomic::String(Rc::new(a))));
                 }
                 // XXX need code to handle array case
@@ -563,7 +586,7 @@ impl Sequence {
                     Item::Node(n) => {
                         // this should get the typed-value, which is a sequence,
                         // but for now we get the string value
-                        let s = n.string(context.xot);
+                        let s = n.string_value(context.xot);
                         Ok(Atomic::String(Rc::new(s)))
                     }
                     // XXX need code to handle array case

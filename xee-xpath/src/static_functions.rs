@@ -110,7 +110,7 @@ fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String,
                 _ => Err(ValueError::Type)?,
             }
         }
-        StackValue::Node(node) => node.string(context.xot),
+        StackValue::Node(node) => node.string_value(context.xot),
         StackValue::Closure(_) => Err(ValueError::Type)?,
         StackValue::Step(_) => Err(ValueError::Type)?,
     };

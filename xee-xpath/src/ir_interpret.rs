@@ -1343,4 +1343,12 @@ mod tests {
     fn test_generate_id() {
         assert_debug_snapshot!(run_xml(r#"<doc><a/><b/><c/></doc>"#, "generate-id(doc/a)",));
     }
+
+    #[test]
+    fn test_fn_string() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><p>Hello world!</p></doc>"#,
+            "/doc/p/string()",
+        ));
+    }
 }

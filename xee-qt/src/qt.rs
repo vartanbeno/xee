@@ -119,7 +119,7 @@ pub(crate) enum TestCaseResult {
 
 #[derive(Debug)]
 pub(crate) enum TestCaseEnvironment {
-    Local(Box<LocalEnvironment>),
+    Local(Box<EnvironmentSpec>),
     Ref(EnvironmentRef),
 }
 
@@ -142,11 +142,10 @@ impl SharedEnvironments {
         }
         Self { environments }
     }
-}
 
-#[derive(Debug)]
-pub(crate) struct LocalEnvironment {
-    pub(crate) spec: EnvironmentSpec,
+    pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&EnvironmentSpec> {
+        self.environments.get(&environment_ref.ref_)
+    }
 }
 
 #[derive(Debug, Default)]

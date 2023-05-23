@@ -1,8 +1,11 @@
-use miette::Diagnostic;
-use xee_xpath::{Atomic, DynamicContext, Error, Namespaces, StackValue, StaticContext, XPath};
+use miette::{Diagnostic, IntoDiagnostic, Result, WrapErr};
+use xee_xpath::{
+    Atomic, DynamicContext, Error, Item, Namespaces, StackValue, StaticContext, XPath,
+};
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
+use crate::environment::SourceCache;
 use crate::qt;
 
 #[derive(Debug, Default)]
@@ -62,13 +65,13 @@ enum TestResult {
 
 impl<'a> qt::TestSet {
     // XXX Make this result an iterator of results?
-    fn run(&'a self, known_dependencies: &KnownDependencies) -> TestSetResult<'a> {
+    fn run(&'a self, known_dependencies: &KnownDependencies) -> Result<TestSetResult<'a>> {
         let mut results = Vec::new();
         for test_case in &self.test_cases {
-            let result = test_case.run(known_dependencies, &self.shared_environments);
+            let result = test_case.run(known_dependencies, &self.shared_environments)?;
             results.push((test_case, result));
         }
-        TestSetResult { results }
+        Ok(TestSetResult { results })
     }
 }
 
@@ -77,10 +80,10 @@ impl qt::TestCase {
         &self,
         known_dependencies: &KnownDependencies,
         shared_environments: &qt::SharedEnvironments,
-    ) -> TestResult {
+    ) -> Result<TestResult> {
         for dependency in &self.dependencies {
             if !known_dependencies.is_supported(dependency) {
-                return TestResult::UnsupportedDependency;
+                return Ok(TestResult::UnsupportedDependency);
             }
         }
         let namespaces = Namespaces::default();
@@ -90,20 +93,54 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::Error(expected_error) = &self.result {
-                    Self::assert_expected_error(expected_error, &error)
+                    Ok(Self::assert_expected_error(expected_error, &error))
                 } else {
-                    TestResult::CompilationError(error)
+                    Ok(TestResult::CompilationError(error))
                 }
             }
         };
-        let xot = Xot::new();
+        let mut xot = Xot::new();
+        // XXX this way the cache has no effect as it's renewed each time
+        // If we were to pull the cache out of this, we also need to create
+        // Xot earlier, and we may run into mutability issues
+        // We also need to clean up Xot documents after each test if we do this
+        let mut source_cache = SourceCache::new();
+        let context_item = self.context_item(&mut xot, &mut source_cache, shared_environments)?;
         let dynamic_context = DynamicContext::new(&xot, &static_context);
+        let value = xpath.run(&dynamic_context, context_item.as_ref());
+        Ok(Self::check_value(&xot, &self.result, &value))
+    }
 
-        let value = xpath.run(&dynamic_context, None);
-        Self::check_value(&self.result, &value)
+    fn context_item(
+        &self,
+        xot: &mut Xot,
+        source_cache: &mut SourceCache,
+        shared_environments: &qt::SharedEnvironments,
+    ) -> Result<Option<Item>> {
+        for environment in &self.environments {
+            match environment {
+                qt::TestCaseEnvironment::Local(local_environment) => {
+                    let item = local_environment.context_item(xot, source_cache)?;
+                    if let Some(item) = item {
+                        return Ok(Some(item));
+                    }
+                }
+                qt::TestCaseEnvironment::Ref(environment_ref) => {
+                    let environment = shared_environments.get(environment_ref);
+                    if let Some(environment) = environment {
+                        let item = environment.context_item(xot, source_cache)?;
+                        if let Some(item) = item {
+                            return Ok(Some(item));
+                        }
+                    }
+                }
+            }
+        }
+        Ok(None)
     }
 
     fn check_value(
+        xot: &Xot,
         result: &qt::TestCaseResult,
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
@@ -111,10 +148,10 @@ impl qt::TestCase {
         // yet want to distinguish between value and error
         match result {
             qt::TestCaseResult::AllOf(test_case_results) => {
-                return Self::assert_all_of(test_case_results, run_result)
+                return Self::assert_all_of(xot, test_case_results, run_result)
             }
             qt::TestCaseResult::AnyOf(test_case_results) => {
-                return Self::assert_any_of(test_case_results, run_result)
+                return Self::assert_any_of(xot, test_case_results, run_result)
             }
             _ => {}
         }
@@ -127,6 +164,9 @@ impl qt::TestCase {
                     qt::TestCaseResult::AssertTrue => Self::assert_true(value),
                     qt::TestCaseResult::AssertFalse => Self::assert_false(value),
                     qt::TestCaseResult::AssertCount(number) => Self::assert_count(*number, value),
+                    qt::TestCaseResult::AssertStringValue(s) => {
+                        Self::assert_string_value(xot, s, value)
+                    }
                     qt::TestCaseResult::Error(error) => {
                         Self::assert_unexpected_no_error(error, value)
                     }
@@ -145,11 +185,12 @@ impl qt::TestCase {
     }
 
     fn assert_any_of(
+        xot: &Xot,
         test_case_results: &[qt::TestCaseResult],
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
         for test_case_result in test_case_results {
-            let result = Self::check_value(test_case_result, run_result);
+            let result = Self::check_value(xot, test_case_result, run_result);
             match result {
                 TestResult::Passed | TestResult::PassedWithWrongError(_) => return result,
                 _ => {}
@@ -162,11 +203,12 @@ impl qt::TestCase {
     }
 
     fn assert_all_of(
+        xot: &Xot,
         test_case_results: &[qt::TestCaseResult],
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
         for test_case_result in test_case_results {
-            let result = Self::check_value(test_case_result, run_result);
+            let result = Self::check_value(xot, test_case_result, run_result);
             if let TestResult::Failed(_) = result {
                 return result;
             }
@@ -224,6 +266,35 @@ impl qt::TestCase {
         }
     }
 
+    fn assert_string_value(xot: &Xot, s: &str, stack_value: StackValue) -> TestResult {
+        let seq = stack_value.to_sequence();
+        match seq {
+            Ok(seq) => {
+                let strings = seq
+                    .borrow()
+                    .as_slice()
+                    .iter()
+                    .map(|item| item.string_value(xot))
+                    .collect::<Result<Vec<_>, _>>();
+                match strings {
+                    Ok(strings) => {
+                        let joined = strings.join(" ");
+                        if joined == s {
+                            TestResult::Passed
+                        } else {
+                            // the string value is not what we expected
+                            TestResult::Failed(stack_value)
+                        }
+                    }
+                    // we weren't able to produce a string value
+                    Err(_) => TestResult::Failed(stack_value),
+                }
+            }
+            // we weren't able to produce a sequence
+            Err(_) => TestResult::Failed(stack_value),
+        }
+    }
+
     fn assert_expected_error(expected_error: &str, error: &Error) -> TestResult {
         // all errors are officially a pass, but we check whether the error
         // code matches too
@@ -256,6 +327,11 @@ impl qt::TestCase {
 #[cfg(test)]
 mod tests {
 
+    use std::env::set_current_dir;
+    use std::io::Write;
+    use std::{fs::File, rc::Rc};
+    use tempfile::tempdir;
+
     use super::*;
 
     #[test]
@@ -278,7 +354,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -303,7 +379,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
@@ -331,7 +407,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -356,7 +432,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -381,7 +457,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
@@ -409,7 +485,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
@@ -437,7 +513,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
@@ -468,7 +544,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -493,7 +569,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -518,7 +594,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -543,7 +619,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
@@ -574,7 +650,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -602,7 +678,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -630,7 +706,7 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
@@ -658,11 +734,131 @@ mod tests {
         )
         .unwrap();
         let known_dependencies = KnownDependencies::default();
-        let test_result = test_set.run(&known_dependencies);
+        let test_result = test_set.run(&known_dependencies).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
             test_result.results[0].1,
             TestResult::Failed(StackValue::Atomic(Atomic::Integer(2)))
         );
+    }
+
+    #[test]
+    fn test_assert_string_value_passes() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#"
+    <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+      <test-case name="true">
+        <description>Description</description>
+        <created by="Martijn Faassen" on="2023-05-22"/>
+        <environment ref="empty"/>
+        <test>"foo"</test>
+        <result>
+          <assert-string-value>foo</assert-string-value>
+        </result>
+      </test-case>
+      </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_string_value_fails() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#"
+    <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+      <test-case name="true">
+        <description>Description</description>
+        <created by="Martijn Faassen" on="2023-05-22"/>
+        <environment ref="empty"/>
+        <test>"foo"</test>
+        <result>
+          <assert-string-value>foo2</assert-string-value>
+        </result>
+      </test-case>
+      </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(
+            test_result.results[0].1,
+            TestResult::Failed(StackValue::Atomic(Atomic::String(Rc::new(
+                "foo".to_string()
+            ))))
+        );
+    }
+
+    #[test]
+    fn test_assert_string_value_sequence_passes() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            r#"
+    <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+      <test-case name="true">
+        <description>Description</description>
+        <created by="Martijn Faassen" on="2023-05-22"/>
+        <environment ref="empty"/>
+        <test>"foo", 3</test>
+        <result>
+          <assert-string-value>foo 3</assert-string-value>
+        </result>
+      </test-case>
+      </test-set>"#,
+        )
+        .unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_external_environment_source() {
+        // we do this in a temp dir so we can test file loading behavior
+
+        let tmp_dir = tempdir().unwrap();
+        set_current_dir(tmp_dir.path()).unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <environment name="data">
+            <source role="." file="data.xml">
+            </source>
+          </environment>
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment ref="data"/>
+            <test>/doc/p/string()</test>
+            <result>
+              <assert-string-value>Hello world!</assert-string-value>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
+
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
 }

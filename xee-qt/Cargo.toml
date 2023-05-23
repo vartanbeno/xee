@@ -21,3 +21,4 @@ indexmap = "1.9.3"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
+tempfile = "3.5.0"

@@ -1,6 +1,6 @@
 ---
 source: xee-qt/src/load.rs
-expression: "load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
+expression: "qt::TestSet::load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
 ---
 TestSet {
     name: "fn-root",
@@ -70,7 +70,13 @@ TestSet {
                 ),
                 modified: [],
             },
-            environments: [],
+            environments: [
+                Ref(
+                    EnvironmentRef {
+                        ref_: "empty",
+                    },
+                ),
+            ],
             dependencies: [],
             modules: [],
             test: "fn:root()",
@@ -522,7 +528,13 @@ TestSet {
                     },
                 ],
             },
-            environments: [],
+            environments: [
+                Ref(
+                    EnvironmentRef {
+                        ref_: "lang",
+                    },
+                ),
+            ],
             dependencies: [],
             modules: [],
             test: "fn:root(fn:exactly-one(/langs[1]/para[1]))",
@@ -552,7 +564,13 @@ TestSet {
                     },
                 ],
             },
-            environments: [],
+            environments: [
+                Ref(
+                    EnvironmentRef {
+                        ref_: "lang",
+                    },
+                ),
+            ],
             dependencies: [],
             modules: [],
             test: "fn:root(/langs[1]/para[1]/@xml:lang)",
@@ -818,7 +836,13 @@ TestSet {
                 ),
                 modified: [],
             },
-            environments: [],
+            environments: [
+                Ref(
+                    EnvironmentRef {
+                        ref_: "empty",
+                    },
+                ),
+            ],
             dependencies: [],
             modules: [],
             test: "fn:root(.)",
