@@ -68,7 +68,28 @@ enum TestResult {
 struct RunContext {
     xot: Xot,
     base_dir: PathBuf,
+    source_cache: SourceCache,
     known_dependencies: KnownDependencies,
+}
+
+impl RunContext {
+    fn new(xot: Xot) -> Self {
+        Self {
+            xot,
+            base_dir: PathBuf::new(),
+            source_cache: SourceCache::new(),
+            known_dependencies: KnownDependencies::default(),
+        }
+    }
+
+    fn with_base_dir(xot: Xot, base_dir: PathBuf) -> Self {
+        Self {
+            xot,
+            base_dir,
+            source_cache: SourceCache::new(),
+            known_dependencies: KnownDependencies::default(),
+        }
+    }
 }
 
 impl<'a> qt::TestSet {
@@ -107,25 +128,16 @@ impl qt::TestCase {
                 }
             }
         };
-        // let mut xot = Xot::new();
-        // XXX this way the cache has no effect as it's renewed each time
-        // If we were to pull the cache out of this, we also need to create
-        // Xot earlier, and we may run into mutability issues
-        // We also need to clean up Xot documents after each test if we do this
-        let mut source_cache = SourceCache::new();
+
         let context_item = self.context_item(
             &mut run_context.xot,
             &run_context.base_dir,
-            &mut source_cache,
+            &mut run_context.source_cache,
             shared_environments,
         )?;
-        let dynamic_context = DynamicContext::new(&mut run_context.xot, &static_context);
+        let dynamic_context = DynamicContext::new(&run_context.xot, &static_context);
         let value = xpath.run(&dynamic_context, context_item.as_ref());
-        Ok(Self::check_value(
-            &mut run_context.xot,
-            &self.result,
-            &value,
-        ))
+        Ok(Self::check_value(&run_context.xot, &self.result, &value))
     }
 
     fn context_item(
@@ -375,12 +387,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -405,12 +412,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -438,12 +440,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -468,12 +465,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -498,12 +490,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -531,12 +518,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -564,12 +546,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -600,12 +577,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -630,12 +602,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -660,12 +627,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -690,12 +652,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -726,12 +683,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -759,12 +711,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -792,12 +739,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -825,12 +767,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -858,12 +795,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -888,12 +820,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(
@@ -923,12 +850,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: PathBuf::new(),
-            known_dependencies,
-        };
+        let run_context = RunContext::new(xot);
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -965,12 +887,7 @@ mod tests {
 
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: tmp_dir.path().to_path_buf(),
-            known_dependencies,
-        };
+        let run_context = RunContext::with_base_dir(xot, tmp_dir.path().to_path_buf());
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
@@ -1006,12 +923,7 @@ mod tests {
 
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-        let known_dependencies = KnownDependencies::default();
-        let run_context = RunContext {
-            xot,
-            base_dir: tmp_dir.path().to_path_buf(),
-            known_dependencies,
-        };
+        let run_context = RunContext::with_base_dir(xot, tmp_dir.path().to_path_buf());
         let test_result = test_set.run(run_context).unwrap();
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
