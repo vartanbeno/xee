@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Namespaces, StackValue, StaticContext, XPath,
+    Atomic, DynamicContext, Error, Item, Namespaces, Node, StackValue, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -174,7 +174,7 @@ impl qt::TestCase {
             DynamicContext::new(&test_set_context.catalog_context.xot, &static_context);
         let value = xpath.run(&dynamic_context, context_item.as_ref());
         Ok(Self::check_value(
-            &test_set_context.catalog_context.xot,
+            &mut test_set_context.catalog_context.xot,
             &self.result,
             &value,
         ))
@@ -210,7 +210,7 @@ impl qt::TestCase {
     }
 
     fn check_value(
-        xot: &Xot,
+        xot: &mut Xot,
         result: &qt::TestCaseResult,
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
@@ -237,6 +237,7 @@ impl qt::TestCase {
                     qt::TestCaseResult::AssertStringValue(s) => {
                         Self::assert_string_value(xot, s, value)
                     }
+                    qt::TestCaseResult::AssertXml(xml) => Self::assert_xml(xot, xml, value),
                     qt::TestCaseResult::Error(error) => {
                         Self::assert_unexpected_no_error(error, value)
                     }
@@ -255,7 +256,7 @@ impl qt::TestCase {
     }
 
     fn assert_any_of(
-        xot: &Xot,
+        xot: &mut Xot,
         test_case_results: &[qt::TestCaseResult],
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
@@ -273,7 +274,7 @@ impl qt::TestCase {
     }
 
     fn assert_all_of(
-        xot: &Xot,
+        xot: &mut Xot,
         test_case_results: &[qt::TestCaseResult],
         run_result: &Result<StackValue, Error>,
     ) -> TestResult {
@@ -363,6 +364,55 @@ impl qt::TestCase {
             // we weren't able to produce a sequence
             Err(_) => TestResult::Failed(stack_value),
         }
+    }
+
+    fn assert_xml(xot: &mut Xot, xml: &str, value: StackValue) -> TestResult {
+        let xmls = match value {
+            StackValue::Atomic(Atomic::Empty) => vec!["".to_string()],
+            StackValue::Node(Node::Xot(node)) => {
+                let xml_value = xot.to_string(node);
+                if let Ok(xml_value) = xml_value {
+                    vec![xml_value]
+                } else {
+                    // cannot be represented as XML
+                    return TestResult::Failed(value);
+                }
+            }
+            StackValue::Sequence(seq_) => {
+                let seq = seq_.borrow();
+                let mut xmls = Vec::with_capacity(seq.len());
+                for item in seq.as_slice().iter() {
+                    if let Item::Node(Node::Xot(node)) = item {
+                        let xml_value = xot.to_string(*node);
+                        if let Ok(xml_value) = xml_value {
+                            xmls.push(xml_value);
+                        } else {
+                            // item in sequence cannot be represented as XML
+                            return TestResult::Failed(StackValue::Sequence(seq_.clone()));
+                        }
+                    } else {
+                        // item in sequence cannot be represented as XML
+                        return TestResult::Failed(StackValue::Sequence(seq_.clone()));
+                    }
+                }
+                xmls
+            }
+            _ => {
+                // cannot be represented as XML
+                return TestResult::Failed(value);
+            }
+        };
+        todo!();
+        // let expected = StackValue::from_xml(&xml);
+        // if let Ok(expected) = expected {
+        //     if expected == value {
+        //         TestResult::Passed
+        //     } else {
+        //         TestResult::Failed(value)
+        //     }
+        // } else {
+        //     TestResult::Failed(value)
+        // }
     }
 
     fn assert_expected_error(expected_error: &str, error: &Error) -> TestResult {
