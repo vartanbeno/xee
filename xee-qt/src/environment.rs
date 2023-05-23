@@ -49,12 +49,13 @@ impl Source {
         base_dir: &Path,
         source_cache: &mut SourceCache,
     ) -> Result<Node> {
-        let node = source_cache.nodes.get(&self.file);
+        let full_path = base_dir.join(&self.file);
+        let node = source_cache.nodes.get(&full_path);
         if let Some(node) = node {
             return Ok(*node);
         }
 
-        let xml_file = File::open(base_dir.join(&self.file))
+        let xml_file = File::open(&full_path)
             .into_diagnostic()
             .wrap_err("Cannot open XML file for source")?;
         let mut buf_reader = BufReader::new(xml_file);
@@ -69,7 +70,7 @@ impl Source {
             .wrap_err("Cannot parse XML file for source")?;
         let node = Node::Xot(root);
 
-        source_cache.nodes.insert(self.file.clone(), node);
+        source_cache.nodes.insert(full_path, node);
         Ok(node)
     }
 }
