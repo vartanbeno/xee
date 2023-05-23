@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::collection::FxIndexMap;
+use crate::collection::{FxIndexMap, FxIndexSet};
 
 #[derive(Debug)]
 pub(crate) struct Catalog {
@@ -8,6 +8,7 @@ pub(crate) struct Catalog {
     pub(crate) version: String,
     pub(crate) shared_environments: SharedEnvironments,
     pub(crate) test_sets: Vec<TestSetRef>,
+    pub(crate) file_paths: FxIndexSet<PathBuf>,
 }
 
 #[derive(Debug)]

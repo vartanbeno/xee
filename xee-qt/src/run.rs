@@ -65,7 +65,7 @@ enum TestResult {
     UnsupportedDependency,
 }
 
-struct RunContext {
+pub(crate) struct RunContext {
     xot: Xot,
     base_dir: PathBuf,
     source_cache: SourceCache,
@@ -361,9 +361,9 @@ impl qt::TestCase {
 }
 
 impl qt::Catalog {
-    pub(crate) fn run() {}
+    pub(crate) fn run(run_context: RunContext) {}
 
-    pub(crate) fn run_path() {}
+    pub(crate) fn run_path(run_context: RunContext, path: &Path) {}
 }
 
 #[cfg(test)]

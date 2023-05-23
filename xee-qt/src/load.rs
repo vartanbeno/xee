@@ -396,11 +396,13 @@ fn catalog_query<'a>(
         let version = version_query.execute(session, item)?;
         let shared_environments = shared_environments_query.execute(session, item)?;
         let test_sets = test_set_query.execute(session, item)?;
+        let file_paths = test_sets.iter().map(|t| t.file.clone()).collect();
         Ok(qt::Catalog {
             test_suite,
             version,
             shared_environments,
             test_sets,
+            file_paths,
         })
     })?;
     Ok((queries, catalog_query))
