@@ -40,6 +40,14 @@ impl SourceCache {
             nodes: FxHashMap::default(),
         }
     }
+
+    pub(crate) fn cleanup(&self, xot: &mut Xot) {
+        for node in self.nodes.values() {
+            if let Node::Xot(root) = node {
+                xot.remove(*root).unwrap();
+            }
+        }
+    }
 }
 
 impl Source {

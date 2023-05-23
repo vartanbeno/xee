@@ -73,7 +73,7 @@ struct RunContext {
 }
 
 impl RunContext {
-    fn new(xot: Xot) -> Self {
+    pub(crate) fn new(xot: Xot) -> Self {
         Self {
             xot,
             base_dir: PathBuf::new(),
@@ -82,13 +82,19 @@ impl RunContext {
         }
     }
 
-    fn with_base_dir(xot: Xot, base_dir: PathBuf) -> Self {
+    pub(crate) fn with_base_dir(xot: Xot, base_dir: PathBuf) -> Self {
         Self {
             xot,
             base_dir,
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
         }
+    }
+}
+
+impl Drop for RunContext {
+    fn drop(&mut self) {
+        self.source_cache.cleanup(&mut self.xot);
     }
 }
 
