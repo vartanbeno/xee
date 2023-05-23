@@ -824,8 +824,6 @@ mod tests {
 
     #[test]
     fn test_assert_external_environment_source() {
-        // we do this in a temp dir so we can test file loading behavior
-
         let tmp_dir = tempdir().unwrap();
         set_current_dir(tmp_dir.path()).unwrap();
         let test_cases_path = tmp_dir.path().join("test_cases.xml");
@@ -864,8 +862,6 @@ mod tests {
 
     #[test]
     fn test_assert_local_environment_source() {
-        // we do this in a temp dir so we can test file loading behavior
-
         let tmp_dir = tempdir().unwrap();
         set_current_dir(tmp_dir.path()).unwrap();
         let test_cases_path = tmp_dir.path().join("test_cases.xml");

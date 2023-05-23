@@ -160,7 +160,7 @@ fn test_cases_query<'a>(
         })
     })?;
     let ref_query = queries.option("@ref/string()", convert_string)?;
-    let (mut queries, environment_query) = environment_query(xot, queries)?;
+    let (mut queries, environment_query) = environment_spec_query(xot, queries)?;
     let local_environment_query = queries.many("environment", move |session, item| {
         let ref_ = ref_query.execute(session, item)?;
         if let Some(ref_) = ref_ {
@@ -256,7 +256,7 @@ fn test_cases_query<'a>(
     Ok((queries, test_query))
 }
 
-fn environment_query<'a>(
+fn environment_spec_query<'a>(
     xot: &'a Xot,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::EnvironmentSpec> + 'a)> {
@@ -308,46 +308,16 @@ fn shared_environments_query<'a>(
     xot: &'a Xot,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::SharedEnvironments> + 'a)> {
-    let file_query = queries.one("@file/string()", convert_string)?;
-    let role_query = queries.option("@role/string()", convert_string)?;
-    let uri_query = queries.option("@uri/string()", convert_string)?;
-    let (mut queries, metadata_query) = metadata_query(xot, queries)?;
-
-    let sources_query = queries.many("source", move |session, item| {
-        let file = PathBuf::from(file_query.execute(session, item)?);
-        let role = role_query.execute(session, item)?;
-        let uri = uri_query.execute(session, item)?;
-        if role.is_some() && uri.is_some() {
-            panic!("role and uri are mutually exclusive");
-        }
-        let role = if let Some(role) = role {
-            if role == "." {
-                qt::SourceRole::Context
-            } else {
-                // XXX should start with $?
-                qt::SourceRole::Var(role)
-            }
-        } else if let Some(uri) = uri {
-            qt::SourceRole::Doc(uri)
-        } else {
-            panic!("role or uri must be set");
-        };
-        let metadata = metadata_query.execute(session, item)?;
-        Ok(qt::Source {
-            metadata,
-            role,
-            file,
-        })
-    })?;
-
     let name_query = queries.one("@name/string()", convert_string)?;
+    let (mut queries, environment_spec_query) = environment_spec_query(xot, queries)?;
     let environments_query = queries.many("environment", move |session, item| {
         let name = name_query.execute(session, item)?;
-        let sources = sources_query.execute(session, item)?;
-        let environment_spec = qt::EnvironmentSpec {
-            sources,
-            ..Default::default()
-        };
+        let environment_spec = environment_spec_query.execute(session, item)?;
+        // let sources = sources_query.execute(session, item)?;
+        // let environment_spec = qt::EnvironmentSpec {
+        //     sources,
+        //     ..Default::default()
+        // };
         Ok((name, environment_spec))
     })?;
     let shared_environments_query = queries.one(".", move |session, item| {
