@@ -1,0 +1,2083 @@
+---
+source: xee-qt/src/load.rs
+expression: "qt::Catalog::load_from_xml(&mut xot, CATALOG_FIXTURE).unwrap()"
+---
+Catalog {
+    test_suite: "FOTS",
+    version: "3.1",
+    shared_environments: SharedEnvironments {
+        environments: {
+            "empty": EnvironmentSpec {
+                schemas: [],
+                sources: [],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "atomic": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "A Schema validated xml file, that contains values for data types. Can be used by any test.",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-08",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/atomic.xml",
+                    },
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "A Schema validated xml file, that contains values for data types. Can be used by any test.",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-08",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Doc(
+                            "http://www.w3.org/fots/docs/atomic.xml",
+                        ),
+                        file: "docs/atomic.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "atomic-xq": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "A Schema validated xml file, that contains values for data types. Can be used by any test.",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-08",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/atomic.xml",
+                    },
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "A Schema validated xml file, that contains values for data types. Can be used by any test.",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-08",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Doc(
+                            "http://www.w3.org/fots/docs/atomic.xml",
+                        ),
+                        file: "docs/atomic.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "works-mod": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for various NIST tests (abbreviated, unabbreviated syntax)",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-04",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/works-mod.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "works": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for various NIST tests",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-04",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/works.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "staff": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for various NIST tests",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-04",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/staff.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "works-and-staff": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for various NIST tests",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-04",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Var(
+                            "$works",
+                        ),
+                        file: "docs/works.xml",
+                    },
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for various NIST tests",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "Carmelo Montanez",
+                                    on: "2005-03-04",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Var(
+                            "$staff",
+                        ),
+                        file: "docs/staff.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "auction": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data for the the XML Query NS use cases: version for XPath tests",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "XQuery WG",
+                                    on: "2005-02-11",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/auction.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "qname": EnvironmentSpec {
+                schemas: [],
+                sources: [
+                    Source {
+                        metadata: Metadata {
+                            description: Some(
+                                "Data containing QNames in content",
+                            ),
+                            created: Some(
+                                Attribution {
+                                    by: "XQuery WG",
+                                    on: "2005-02-11",
+                                },
+                            ),
+                            modified: [],
+                        },
+                        role: Context,
+                        file: "docs/QName-source.xml",
+                    },
+                ],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "math": EnvironmentSpec {
+                schemas: [],
+                sources: [],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "array": EnvironmentSpec {
+                schemas: [],
+                sources: [],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "map": EnvironmentSpec {
+                schemas: [],
+                sources: [],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+            "array-and-map": EnvironmentSpec {
+                schemas: [],
+                sources: [],
+                resources: [],
+                params: [],
+                context_items: [],
+                decimal_formats: [],
+                namespaces: [],
+                function_libraries: [],
+                collections: [],
+                static_base_uris: [],
+                collations: [],
+            },
+        },
+    },
+    test_sets: [
+        TestSetRef {
+            name: "fn-abs",
+            file: "fn/abs.xml",
+        },
+        TestSetRef {
+            name: "fn-adjust-date-to-timezone",
+            file: "fn/adjust-date-to-timezone.xml",
+        },
+        TestSetRef {
+            name: "fn-adjust-dateTime-to-timezone",
+            file: "fn/adjust-dateTime-to-timezone.xml",
+        },
+        TestSetRef {
+            name: "fn-adjust-time-to-timezone",
+            file: "fn/adjust-time-to-timezone.xml",
+        },
+        TestSetRef {
+            name: "fn-analyze-string",
+            file: "fn/analyze-string.xml",
+        },
+        TestSetRef {
+            name: "fn-apply",
+            file: "fn/apply.xml",
+        },
+        TestSetRef {
+            name: "fn-available-environment-variables",
+            file: "fn/available-environment-variables.xml",
+        },
+        TestSetRef {
+            name: "fn-avg",
+            file: "fn/avg.xml",
+        },
+        TestSetRef {
+            name: "fn-base-uri",
+            file: "fn/base-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-boolean",
+            file: "fn/boolean.xml",
+        },
+        TestSetRef {
+            name: "fn-ceiling",
+            file: "fn/ceiling.xml",
+        },
+        TestSetRef {
+            name: "fn-codepoint-equal",
+            file: "fn/codepoint-equal.xml",
+        },
+        TestSetRef {
+            name: "fn-codepoints-to-string",
+            file: "fn/codepoints-to-string.xml",
+        },
+        TestSetRef {
+            name: "fn-collation-key",
+            file: "fn/collation-key.xml",
+        },
+        TestSetRef {
+            name: "fn-collection",
+            file: "fn/collection.xml",
+        },
+        TestSetRef {
+            name: "fn-compare",
+            file: "fn/compare.xml",
+        },
+        TestSetRef {
+            name: "fn-concat",
+            file: "fn/concat.xml",
+        },
+        TestSetRef {
+            name: "fn-contains",
+            file: "fn/contains.xml",
+        },
+        TestSetRef {
+            name: "fn-contains-token",
+            file: "fn/contains-token.xml",
+        },
+        TestSetRef {
+            name: "fn-count",
+            file: "fn/count.xml",
+        },
+        TestSetRef {
+            name: "fn-current-date",
+            file: "fn/current-date.xml",
+        },
+        TestSetRef {
+            name: "fn-current-dateTime",
+            file: "fn/current-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-current-time",
+            file: "fn/current-time.xml",
+        },
+        TestSetRef {
+            name: "fn-data",
+            file: "fn/data.xml",
+        },
+        TestSetRef {
+            name: "fn-dateTime",
+            file: "fn/dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-day-from-date",
+            file: "fn/day-from-date.xml",
+        },
+        TestSetRef {
+            name: "fn-day-from-dateTime",
+            file: "fn/day-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-days-from-duration",
+            file: "fn/days-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-deep-equal",
+            file: "fn/deep-equal.xml",
+        },
+        TestSetRef {
+            name: "fn-default-collation",
+            file: "fn/default-collation.xml",
+        },
+        TestSetRef {
+            name: "fn-default-language",
+            file: "fn/default-language.xml",
+        },
+        TestSetRef {
+            name: "fn-distinct-values",
+            file: "fn/distinct-values.xml",
+        },
+        TestSetRef {
+            name: "fn-doc",
+            file: "fn/doc.xml",
+        },
+        TestSetRef {
+            name: "fn-doc-available",
+            file: "fn/doc-available.xml",
+        },
+        TestSetRef {
+            name: "fn-document-uri",
+            file: "fn/document-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-element-with-id",
+            file: "fn/element-with-id.xml",
+        },
+        TestSetRef {
+            name: "fn-empty",
+            file: "fn/empty.xml",
+        },
+        TestSetRef {
+            name: "fn-encode-for-uri",
+            file: "fn/encode-for-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-ends-with",
+            file: "fn/ends-with.xml",
+        },
+        TestSetRef {
+            name: "fn-environment-variable",
+            file: "fn/environment-variable.xml",
+        },
+        TestSetRef {
+            name: "fn-error",
+            file: "fn/error.xml",
+        },
+        TestSetRef {
+            name: "fn-escape-html-uri",
+            file: "fn/escape-html-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-exactly-one",
+            file: "fn/exactly-one.xml",
+        },
+        TestSetRef {
+            name: "fn-exists",
+            file: "fn/exists.xml",
+        },
+        TestSetRef {
+            name: "fn-false",
+            file: "fn/false.xml",
+        },
+        TestSetRef {
+            name: "fn-filter",
+            file: "fn/filter.xml",
+        },
+        TestSetRef {
+            name: "fn-floor",
+            file: "fn/floor.xml",
+        },
+        TestSetRef {
+            name: "fn-fold-left",
+            file: "fn/fold-left.xml",
+        },
+        TestSetRef {
+            name: "fn-fold-right",
+            file: "fn/fold-right.xml",
+        },
+        TestSetRef {
+            name: "fn-for-each",
+            file: "fn/for-each.xml",
+        },
+        TestSetRef {
+            name: "fn-for-each-pair",
+            file: "fn/for-each-pair.xml",
+        },
+        TestSetRef {
+            name: "fn-format-date",
+            file: "fn/format-date.xml",
+        },
+        TestSetRef {
+            name: "fn-format-dateTime",
+            file: "fn/format-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-format-integer",
+            file: "fn/format-integer.xml",
+        },
+        TestSetRef {
+            name: "fn-format-number",
+            file: "fn/format-number.xml",
+        },
+        TestSetRef {
+            name: "fn-format-time",
+            file: "fn/format-time.xml",
+        },
+        TestSetRef {
+            name: "fn-function-lookup",
+            file: "fn/function-lookup.xml",
+        },
+        TestSetRef {
+            name: "fn-function-arity",
+            file: "fn/function-arity.xml",
+        },
+        TestSetRef {
+            name: "fn-function-name",
+            file: "fn/function-name.xml",
+        },
+        TestSetRef {
+            name: "fn-generate-id",
+            file: "fn/generate-id.xml",
+        },
+        TestSetRef {
+            name: "fn-has-children",
+            file: "fn/has-children.xml",
+        },
+        TestSetRef {
+            name: "fn-head",
+            file: "fn/head.xml",
+        },
+        TestSetRef {
+            name: "fn-hours-from-dateTime",
+            file: "fn/hours-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-hours-from-duration",
+            file: "fn/hours-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-hours-from-time",
+            file: "fn/hours-from-time.xml",
+        },
+        TestSetRef {
+            name: "fn-id",
+            file: "fn/id.xml",
+        },
+        TestSetRef {
+            name: "fn-idref",
+            file: "fn/idref.xml",
+        },
+        TestSetRef {
+            name: "fn-implicit-timezone",
+            file: "fn/implicit-timezone.xml",
+        },
+        TestSetRef {
+            name: "fn-innermost",
+            file: "fn/innermost.xml",
+        },
+        TestSetRef {
+            name: "fn-index-of",
+            file: "fn/index-of.xml",
+        },
+        TestSetRef {
+            name: "fn-insert-before",
+            file: "fn/insert-before.xml",
+        },
+        TestSetRef {
+            name: "fn-in-scope-prefixes",
+            file: "fn/in-scope-prefixes.xml",
+        },
+        TestSetRef {
+            name: "fn-iri-to-uri",
+            file: "fn/iri-to-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-json-doc",
+            file: "fn/json-doc.xml",
+        },
+        TestSetRef {
+            name: "fn-json-to-xml",
+            file: "fn/json-to-xml.xml",
+        },
+        TestSetRef {
+            name: "fn-lang",
+            file: "fn/lang.xml",
+        },
+        TestSetRef {
+            name: "fn-last",
+            file: "fn/last.xml",
+        },
+        TestSetRef {
+            name: "fn-load-xquery-module",
+            file: "fn/load-xquery-module.xml",
+        },
+        TestSetRef {
+            name: "fn-local-name",
+            file: "fn/local-name.xml",
+        },
+        TestSetRef {
+            name: "fn-local-name-from-QName",
+            file: "fn/local-name-from-QName.xml",
+        },
+        TestSetRef {
+            name: "fn-lower-case",
+            file: "fn/lower-case.xml",
+        },
+        TestSetRef {
+            name: "fn-max",
+            file: "fn/max.xml",
+        },
+        TestSetRef {
+            name: "fn-matches",
+            file: "fn/matches.xml",
+        },
+        TestSetRef {
+            name: "fn-matches.re",
+            file: "fn/matches.re.xml",
+        },
+        TestSetRef {
+            name: "fn-min",
+            file: "fn/min.xml",
+        },
+        TestSetRef {
+            name: "fn-minutes-from-dateTime",
+            file: "fn/minutes-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-minutes-from-duration",
+            file: "fn/minutes-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-minutes-from-time",
+            file: "fn/minutes-from-time.xml",
+        },
+        TestSetRef {
+            name: "fn-month-from-date",
+            file: "fn/month-from-date.xml",
+        },
+        TestSetRef {
+            name: "fn-months-from-duration",
+            file: "fn/months-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-month-from-dateTime",
+            file: "fn/month-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-name",
+            file: "fn/name.xml",
+        },
+        TestSetRef {
+            name: "fn-namespace-uri",
+            file: "fn/namespace-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-namespace-uri-for-prefix",
+            file: "fn/namespace-uri-for-prefix.xml",
+        },
+        TestSetRef {
+            name: "fn-namespace-uri-from-QName",
+            file: "fn/namespace-uri-from-QName.xml",
+        },
+        TestSetRef {
+            name: "fn-nilled",
+            file: "fn/nilled.xml",
+        },
+        TestSetRef {
+            name: "fn-node-name",
+            file: "fn/node-name.xml",
+        },
+        TestSetRef {
+            name: "fn-normalize-space",
+            file: "fn/normalize-space.xml",
+        },
+        TestSetRef {
+            name: "fn-normalize-unicode",
+            file: "fn/normalize-unicode.xml",
+        },
+        TestSetRef {
+            name: "fn-not",
+            file: "fn/not.xml",
+        },
+        TestSetRef {
+            name: "fn-number",
+            file: "fn/number.xml",
+        },
+        TestSetRef {
+            name: "fn-one-or-more",
+            file: "fn/one-or-more.xml",
+        },
+        TestSetRef {
+            name: "fn-outermost",
+            file: "fn/outermost.xml",
+        },
+        TestSetRef {
+            name: "fn-parse-ietf-date",
+            file: "fn/parse-ietf-date.xml",
+        },
+        TestSetRef {
+            name: "fn-parse-json",
+            file: "fn/parse-json.xml",
+        },
+        TestSetRef {
+            name: "fn-parse-xml",
+            file: "fn/parse-xml.xml",
+        },
+        TestSetRef {
+            name: "fn-parse-xml-fragment",
+            file: "fn/parse-xml-fragment.xml",
+        },
+        TestSetRef {
+            name: "fn-path",
+            file: "fn/path.xml",
+        },
+        TestSetRef {
+            name: "fn-position",
+            file: "fn/position.xml",
+        },
+        TestSetRef {
+            name: "fn-prefix-from-QName",
+            file: "fn/prefix-from-QName.xml",
+        },
+        TestSetRef {
+            name: "fn-QName",
+            file: "fn/QName.xml",
+        },
+        TestSetRef {
+            name: "fn-random-number-generator",
+            file: "fn/random-number-generator.xml",
+        },
+        TestSetRef {
+            name: "fn-remove",
+            file: "fn/remove.xml",
+        },
+        TestSetRef {
+            name: "fn-replace",
+            file: "fn/replace.xml",
+        },
+        TestSetRef {
+            name: "fn-resolve-QName",
+            file: "fn/resolve-QName.xml",
+        },
+        TestSetRef {
+            name: "fn-resolve-uri",
+            file: "fn/resolve-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-reverse",
+            file: "fn/reverse.xml",
+        },
+        TestSetRef {
+            name: "fn-root",
+            file: "fn/root.xml",
+        },
+        TestSetRef {
+            name: "fn-round",
+            file: "fn/round.xml",
+        },
+        TestSetRef {
+            name: "fn-round-half-to-even",
+            file: "fn/round-half-to-even.xml",
+        },
+        TestSetRef {
+            name: "fn-seconds-from-dateTime",
+            file: "fn/seconds-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-seconds-from-duration",
+            file: "fn/seconds-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-seconds-from-time",
+            file: "fn/seconds-from-time.xml",
+        },
+        TestSetRef {
+            name: "fn-serialize",
+            file: "fn/serialize.xml",
+        },
+        TestSetRef {
+            name: "fn-sort",
+            file: "fn/sort.xml",
+        },
+        TestSetRef {
+            name: "fn-starts-with",
+            file: "fn/starts-with.xml",
+        },
+        TestSetRef {
+            name: "fn-static-base-uri",
+            file: "fn/static-base-uri.xml",
+        },
+        TestSetRef {
+            name: "fn-string",
+            file: "fn/string.xml",
+        },
+        TestSetRef {
+            name: "fn-string-join",
+            file: "fn/string-join.xml",
+        },
+        TestSetRef {
+            name: "fn-string-length",
+            file: "fn/string-length.xml",
+        },
+        TestSetRef {
+            name: "fn-string-to-codepoints",
+            file: "fn/string-to-codepoints.xml",
+        },
+        TestSetRef {
+            name: "fn-subsequence",
+            file: "fn/subsequence.xml",
+        },
+        TestSetRef {
+            name: "fn-substring",
+            file: "fn/substring.xml",
+        },
+        TestSetRef {
+            name: "fn-substring-after",
+            file: "fn/substring-after.xml",
+        },
+        TestSetRef {
+            name: "fn-substring-before",
+            file: "fn/substring-before.xml",
+        },
+        TestSetRef {
+            name: "fn-sum",
+            file: "fn/sum.xml",
+        },
+        TestSetRef {
+            name: "fn-tail",
+            file: "fn/tail.xml",
+        },
+        TestSetRef {
+            name: "fn-timezone-from-date",
+            file: "fn/timezone-from-date.xml",
+        },
+        TestSetRef {
+            name: "fn-timezone-from-dateTime",
+            file: "fn/timezone-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-timezone-from-time",
+            file: "fn/timezone-from-time.xml",
+        },
+        TestSetRef {
+            name: "fn-tokenize",
+            file: "fn/tokenize.xml",
+        },
+        TestSetRef {
+            name: "fn-trace",
+            file: "fn/trace.xml",
+        },
+        TestSetRef {
+            name: "fn-transform",
+            file: "fn/transform.xml",
+        },
+        TestSetRef {
+            name: "fn-translate",
+            file: "fn/translate.xml",
+        },
+        TestSetRef {
+            name: "fn-true",
+            file: "fn/true.xml",
+        },
+        TestSetRef {
+            name: "fn-unordered",
+            file: "fn/unordered.xml",
+        },
+        TestSetRef {
+            name: "fn-unparsed-text",
+            file: "fn/unparsed-text.xml",
+        },
+        TestSetRef {
+            name: "fn-unparsed-text-available",
+            file: "fn/unparsed-text-available.xml",
+        },
+        TestSetRef {
+            name: "fn-unparsed-text-lines",
+            file: "fn/unparsed-text-lines.xml",
+        },
+        TestSetRef {
+            name: "fn-upper-case",
+            file: "fn/upper-case.xml",
+        },
+        TestSetRef {
+            name: "fn-uri-collection",
+            file: "fn/uri-collection.xml",
+        },
+        TestSetRef {
+            name: "fn-xml-to-json",
+            file: "fn/xml-to-json.xml",
+        },
+        TestSetRef {
+            name: "fn-year-from-date",
+            file: "fn/year-from-date.xml",
+        },
+        TestSetRef {
+            name: "fn-years-from-duration",
+            file: "fn/years-from-duration.xml",
+        },
+        TestSetRef {
+            name: "fn-year-from-dateTime",
+            file: "fn/year-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "fn-zero-or-one",
+            file: "fn/zero-or-one.xml",
+        },
+        TestSetRef {
+            name: "math-acos",
+            file: "math/math-acos.xml",
+        },
+        TestSetRef {
+            name: "math-asin",
+            file: "math/math-asin.xml",
+        },
+        TestSetRef {
+            name: "math-atan",
+            file: "math/math-atan.xml",
+        },
+        TestSetRef {
+            name: "math-atan2",
+            file: "math/math-atan2.xml",
+        },
+        TestSetRef {
+            name: "math-cos",
+            file: "math/math-cos.xml",
+        },
+        TestSetRef {
+            name: "math-exp",
+            file: "math/math-exp.xml",
+        },
+        TestSetRef {
+            name: "math-exp10",
+            file: "math/math-exp10.xml",
+        },
+        TestSetRef {
+            name: "math-log",
+            file: "math/math-log.xml",
+        },
+        TestSetRef {
+            name: "math-log10",
+            file: "math/math-log10.xml",
+        },
+        TestSetRef {
+            name: "math-pi",
+            file: "math/math-pi.xml",
+        },
+        TestSetRef {
+            name: "math-pow",
+            file: "math/math-pow.xml",
+        },
+        TestSetRef {
+            name: "math-sin",
+            file: "math/math-sin.xml",
+        },
+        TestSetRef {
+            name: "math-sqrt",
+            file: "math/math-sqrt.xml",
+        },
+        TestSetRef {
+            name: "math-tan",
+            file: "math/math-tan.xml",
+        },
+        TestSetRef {
+            name: "map-merge",
+            file: "map/merge.xml",
+        },
+        TestSetRef {
+            name: "map-contains",
+            file: "map/contains.xml",
+        },
+        TestSetRef {
+            name: "map-find",
+            file: "map/find.xml",
+        },
+        TestSetRef {
+            name: "map-get",
+            file: "map/get.xml",
+        },
+        TestSetRef {
+            name: "map-entry",
+            file: "map/entry.xml",
+        },
+        TestSetRef {
+            name: "map-size",
+            file: "map/size.xml",
+        },
+        TestSetRef {
+            name: "map-keys",
+            file: "map/keys.xml",
+        },
+        TestSetRef {
+            name: "map-put",
+            file: "map/put.xml",
+        },
+        TestSetRef {
+            name: "map-remove",
+            file: "map/remove.xml",
+        },
+        TestSetRef {
+            name: "map-for-each",
+            file: "map/for-each.xml",
+        },
+        TestSetRef {
+            name: "array-append",
+            file: "array/append.xml",
+        },
+        TestSetRef {
+            name: "array-filter",
+            file: "array/filter.xml",
+        },
+        TestSetRef {
+            name: "array-flatten",
+            file: "array/flatten.xml",
+        },
+        TestSetRef {
+            name: "array-fold-left",
+            file: "array/fold-left.xml",
+        },
+        TestSetRef {
+            name: "array-fold-right",
+            file: "array/fold-right.xml",
+        },
+        TestSetRef {
+            name: "array-for-each",
+            file: "array/for-each.xml",
+        },
+        TestSetRef {
+            name: "array-for-each-pair",
+            file: "array/for-each-pair.xml",
+        },
+        TestSetRef {
+            name: "array-get",
+            file: "array/get.xml",
+        },
+        TestSetRef {
+            name: "array-head",
+            file: "array/head.xml",
+        },
+        TestSetRef {
+            name: "array-insert-before",
+            file: "array/insert-before.xml",
+        },
+        TestSetRef {
+            name: "array-join",
+            file: "array/join.xml",
+        },
+        TestSetRef {
+            name: "array-put",
+            file: "array/put.xml",
+        },
+        TestSetRef {
+            name: "array-remove",
+            file: "array/remove.xml",
+        },
+        TestSetRef {
+            name: "array-reverse",
+            file: "array/reverse.xml",
+        },
+        TestSetRef {
+            name: "array-size",
+            file: "array/size.xml",
+        },
+        TestSetRef {
+            name: "array-sort",
+            file: "array/sort.xml",
+        },
+        TestSetRef {
+            name: "array-subarray",
+            file: "array/subarray.xml",
+        },
+        TestSetRef {
+            name: "array-tail",
+            file: "array/tail.xml",
+        },
+        TestSetRef {
+            name: "xs-anyURI",
+            file: "xs/anyURI.xml",
+        },
+        TestSetRef {
+            name: "xs-base64Binary",
+            file: "xs/base64Binary.xml",
+        },
+        TestSetRef {
+            name: "xs-dateTimeStamp",
+            file: "xs/dateTimeStamp.xml",
+        },
+        TestSetRef {
+            name: "xs-double",
+            file: "xs/double.xml",
+        },
+        TestSetRef {
+            name: "xs-error",
+            file: "xs/error.xml",
+        },
+        TestSetRef {
+            name: "xs-float",
+            file: "xs/float.xml",
+        },
+        TestSetRef {
+            name: "xs-hexBinary",
+            file: "xs/hexBinary.xml",
+        },
+        TestSetRef {
+            name: "xs-normalizedString",
+            file: "xs/normalizedString.xml",
+        },
+        TestSetRef {
+            name: "xs-numeric",
+            file: "xs/numeric.xml",
+        },
+        TestSetRef {
+            name: "xs-token",
+            file: "xs/token.xml",
+        },
+        TestSetRef {
+            name: "op-add-dayTimeDurations",
+            file: "op/add-dayTimeDurations.xml",
+        },
+        TestSetRef {
+            name: "op-add-dayTimeDuration-to-date",
+            file: "op/add-dayTimeDuration-to-date.xml",
+        },
+        TestSetRef {
+            name: "op-add-dayTimeDuration-to-dateTime",
+            file: "op/add-dayTimeDuration-to-dateTime.xml",
+        },
+        TestSetRef {
+            name: "op-add-dayTimeDuration-to-time",
+            file: "op/add-dayTimeDuration-to-time.xml",
+        },
+        TestSetRef {
+            name: "op-add-yearMonthDurations",
+            file: "op/add-yearMonthDurations.xml",
+        },
+        TestSetRef {
+            name: "op-add-yearMonthDuration-to-date",
+            file: "op/add-yearMonthDuration-to-date.xml",
+        },
+        TestSetRef {
+            name: "op-add-yearMonthDuration-to-dateTime",
+            file: "op/add-yearMonthDuration-to-dateTime.xml",
+        },
+        TestSetRef {
+            name: "op-anyURI-equal",
+            file: "op/anyURI-equal.xml",
+        },
+        TestSetRef {
+            name: "op-anyURI-greater-than",
+            file: "op/anyURI-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-anyURI-less-than",
+            file: "op/anyURI-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-bang",
+            file: "op/bang.xml",
+        },
+        TestSetRef {
+            name: "op-base64Binary-equal",
+            file: "op/base64Binary-equal.xml",
+        },
+        TestSetRef {
+            name: "op-base64Binary-less-than",
+            file: "op/base64Binary-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-base64Binary-greater-than",
+            file: "op/base64Binary-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-boolean-equal",
+            file: "op/boolean-equal.xml",
+        },
+        TestSetRef {
+            name: "op-boolean-greater-than",
+            file: "op/boolean-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-boolean-less-than",
+            file: "op/boolean-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-concat",
+            file: "op/concat.xml",
+        },
+        TestSetRef {
+            name: "op-concatenate",
+            file: "op/concatenate.xml",
+        },
+        TestSetRef {
+            name: "op-date-equal",
+            file: "op/date-equal.xml",
+        },
+        TestSetRef {
+            name: "op-date-greater-than",
+            file: "op/date-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-date-less-than",
+            file: "op/date-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-dateTime-equal",
+            file: "op/dateTime-equal.xml",
+        },
+        TestSetRef {
+            name: "op-dateTime-greater-than",
+            file: "op/dateTime-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-dateTime-less-than",
+            file: "op/dateTime-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-dayTimeDuration-greater-than",
+            file: "op/dayTimeDuration-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-dayTimeDuration-less-than",
+            file: "op/dayTimeDuration-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-divide-dayTimeDuration",
+            file: "op/divide-dayTimeDuration.xml",
+        },
+        TestSetRef {
+            name: "op-divide-dayTimeDuration-by-dayTimeDuration",
+            file: "op/divide-dayTimeDuration-by-dayTimeDuration.xml",
+        },
+        TestSetRef {
+            name: "op-divide-yearMonthDuration",
+            file: "op/divide-yearMonthDuration.xml",
+        },
+        TestSetRef {
+            name: "op-divide-yearMonthDuration-by-yearMonthDuration",
+            file: "op/divide-yearMonthDuration-by-yearMonthDuration.xml",
+        },
+        TestSetRef {
+            name: "op-duration-equal",
+            file: "op/duration-equal.xml",
+        },
+        TestSetRef {
+            name: "op-except",
+            file: "op/except.xml",
+        },
+        TestSetRef {
+            name: "op-gDay-equal",
+            file: "op/gDay-equal.xml",
+        },
+        TestSetRef {
+            name: "op-gMonth-equal",
+            file: "op/gMonth-equal.xml",
+        },
+        TestSetRef {
+            name: "op-gMonthDay-equal",
+            file: "op/gMonthDay-equal.xml",
+        },
+        TestSetRef {
+            name: "op-gYear-equal",
+            file: "op/gYear-equal.xml",
+        },
+        TestSetRef {
+            name: "op-gYearMonth-equal",
+            file: "op/gYearMonth-equal.xml",
+        },
+        TestSetRef {
+            name: "op-hexBinary-equal",
+            file: "op/hexBinary-equal.xml",
+        },
+        TestSetRef {
+            name: "op-hexBinary-greater-than",
+            file: "op/hexBinary-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-hexBinary-less-than",
+            file: "op/hexBinary-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-intersect",
+            file: "op/intersect.xml",
+        },
+        TestSetRef {
+            name: "op-is-same-node",
+            file: "op/is-same-node.xml",
+        },
+        TestSetRef {
+            name: "op-multiply-dayTimeDuration",
+            file: "op/multiply-dayTimeDuration.xml",
+        },
+        TestSetRef {
+            name: "op-multiply-yearMonthDuration",
+            file: "op/multiply-yearMonthDuration.xml",
+        },
+        TestSetRef {
+            name: "op-node-after",
+            file: "op/node-after.xml",
+        },
+        TestSetRef {
+            name: "op-node-before",
+            file: "op/node-before.xml",
+        },
+        TestSetRef {
+            name: "op-NOTATION-equal",
+            file: "op/NOTATION-equal.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-add",
+            file: "op/numeric-add.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-equal",
+            file: "op/numeric-equal.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-divide",
+            file: "op/numeric-divide.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-greater-than",
+            file: "op/numeric-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-integer-divide",
+            file: "op/numeric-integer-divide.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-less-than",
+            file: "op/numeric-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-mod",
+            file: "op/numeric-mod.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-multiply",
+            file: "op/numeric-multiply.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-subtract",
+            file: "op/numeric-subtract.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-unary-minus",
+            file: "op/numeric-unary-minus.xml",
+        },
+        TestSetRef {
+            name: "op-numeric-unary-plus",
+            file: "op/numeric-unary-plus.xml",
+        },
+        TestSetRef {
+            name: "op-QName-equal",
+            file: "op/QName-equal.xml",
+        },
+        TestSetRef {
+            name: "op-string-equal",
+            file: "op/string-equal.xml",
+        },
+        TestSetRef {
+            name: "op-string-greater-than",
+            file: "op/string-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-string-less-than",
+            file: "op/string-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dates",
+            file: "op/subtract-dates.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dateTimes",
+            file: "op/subtract-dateTimes.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dayTimeDuration-from-date",
+            file: "op/subtract-dayTimeDuration-from-date.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dayTimeDuration-from-dateTime",
+            file: "op/subtract-dayTimeDuration-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dayTimeDuration-from-time",
+            file: "op/subtract-dayTimeDuration-from-time.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-dayTimeDurations",
+            file: "op/subtract-dayTimeDurations.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-times",
+            file: "op/subtract-times.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-yearMonthDuration-from-date",
+            file: "op/subtract-yearMonthDuration-from-date.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-yearMonthDuration-from-dateTime",
+            file: "op/subtract-yearMonthDuration-from-dateTime.xml",
+        },
+        TestSetRef {
+            name: "op-subtract-yearMonthDurations",
+            file: "op/subtract-yearMonthDurations.xml",
+        },
+        TestSetRef {
+            name: "op-time-equal",
+            file: "op/time-equal.xml",
+        },
+        TestSetRef {
+            name: "op-time-greater-than",
+            file: "op/time-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-time-less-than",
+            file: "op/time-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-to",
+            file: "op/to.xml",
+        },
+        TestSetRef {
+            name: "op-union",
+            file: "op/union.xml",
+        },
+        TestSetRef {
+            name: "op-yearMonthDuration-greater-than",
+            file: "op/yearMonthDuration-greater-than.xml",
+        },
+        TestSetRef {
+            name: "op-yearMonthDuration-less-than",
+            file: "op/yearMonthDuration-less-than.xml",
+        },
+        TestSetRef {
+            name: "op-same-key",
+            file: "op/same-key.xml",
+        },
+        TestSetRef {
+            name: "prod-AllowingEmpty",
+            file: "prod/AllowingEmpty.xml",
+        },
+        TestSetRef {
+            name: "prod-Annotation",
+            file: "prod/Annotation.xml",
+        },
+        TestSetRef {
+            name: "prod-ArrayTest",
+            file: "prod/ArrayTest.xml",
+        },
+        TestSetRef {
+            name: "prod-ArrowPostfix",
+            file: "prod/ArrowPostfix.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep",
+            file: "prod/AxisStep.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.abbr",
+            file: "prod/AxisStep.abbr.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.ancestor",
+            file: "prod/AxisStep.ancestor.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.ancestor-or-self",
+            file: "prod/AxisStep.ancestor-or-self.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.following",
+            file: "prod/AxisStep.following.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.following-sibling",
+            file: "prod/AxisStep.following-sibling.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.preceding",
+            file: "prod/AxisStep.preceding.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.preceding-sibling",
+            file: "prod/AxisStep.preceding-sibling.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.static-typing",
+            file: "prod/AxisStep.static-typing.xml",
+        },
+        TestSetRef {
+            name: "prod-AxisStep.unabbr",
+            file: "prod/AxisStep.unabbr.xml",
+        },
+        TestSetRef {
+            name: "prod-BaseURIDecl",
+            file: "prod/BaseURIDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-BoundarySpaceDecl",
+            file: "prod/BoundarySpaceDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-CastableExpr",
+            file: "prod/CastableExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-CastExpr",
+            file: "prod/CastExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-CastExpr.derived",
+            file: "prod/CastExpr.derived.xml",
+        },
+        TestSetRef {
+            name: "prod-CastExpr.schema",
+            file: "prod/CastExpr.schema.xml",
+        },
+        TestSetRef {
+            name: "prod-Comment",
+            file: "prod/Comment.xml",
+        },
+        TestSetRef {
+            name: "prod-CompAttrConstructor",
+            file: "prod/CompAttrConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompDocConstructor",
+            file: "prod/CompDocConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompCommentConstructor",
+            file: "prod/CompCommentConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompElemConstructor",
+            file: "prod/CompElemConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompNamespaceConstructor",
+            file: "prod/CompNamespaceConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompPIConstructor",
+            file: "prod/CompPIConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-CompTextConstructor",
+            file: "prod/CompTextConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-ConstructionDecl",
+            file: "prod/ConstructionDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-ConstructionDecl.schema",
+            file: "prod/ConstructionDecl.schema.xml",
+        },
+        TestSetRef {
+            name: "prod-ContextItemDecl",
+            file: "prod/ContextItemDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-ContextItemExpr",
+            file: "prod/ContextItemExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-CopyNamespacesDecl",
+            file: "prod/CopyNamespacesDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-CountClause",
+            file: "prod/CountClause.xml",
+        },
+        TestSetRef {
+            name: "prod-CurlyArrayConstructor",
+            file: "prod/CurlyArrayConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-DecimalFormatDecl",
+            file: "prod/DecimalFormatDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-DefaultCollationDecl",
+            file: "prod/DefaultCollationDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-DefaultNamespaceDecl",
+            file: "prod/DefaultNamespaceDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-DirAttributeList",
+            file: "prod/DirAttributeList.xml",
+        },
+        TestSetRef {
+            name: "prod-DirectConstructor",
+            file: "prod/DirectConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-DirElemConstructor",
+            file: "prod/DirElemConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-DirElemContent",
+            file: "prod/DirElemContent.xml",
+        },
+        TestSetRef {
+            name: "prod-DirElemContent.namespace",
+            file: "prod/DirElemContent.namespace.xml",
+        },
+        TestSetRef {
+            name: "prod-DirElemContent.whitespace",
+            file: "prod/DirElemContent.whitespace.xml",
+        },
+        TestSetRef {
+            name: "prod-EmptyOrderDecl",
+            file: "prod/EmptyOrderDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-EQName",
+            file: "prod/EQName.xml",
+        },
+        TestSetRef {
+            name: "prod-ExtensionExpr",
+            file: "prod/ExtensionExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-FLWORExpr",
+            file: "prod/FLWORExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-FLWORExpr.static-typing",
+            file: "prod/FLWORExpr.static-typing.xml",
+        },
+        TestSetRef {
+            name: "prod-ForClause",
+            file: "prod/ForClause.xml",
+        },
+        TestSetRef {
+            name: "prod-FunctionCall",
+            file: "prod/FunctionCall.xml",
+        },
+        TestSetRef {
+            name: "prod-FunctionDecl",
+            file: "prod/FunctionDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.eq",
+            file: "prod/GeneralComp.eq.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.ge",
+            file: "prod/GeneralComp.ge.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.gt",
+            file: "prod/GeneralComp.gt.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.le",
+            file: "prod/GeneralComp.le.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.lt",
+            file: "prod/GeneralComp.lt.xml",
+        },
+        TestSetRef {
+            name: "prod-GeneralComp.ne",
+            file: "prod/GeneralComp.ne.xml",
+        },
+        TestSetRef {
+            name: "prod-GroupByClause",
+            file: "prod/GroupByClause.xml",
+        },
+        TestSetRef {
+            name: "prod-IfExpr",
+            file: "prod/IfExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-InlineFunctionExpr",
+            file: "prod/InlineFunctionExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-InstanceofExpr",
+            file: "prod/InstanceofExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-LetClause",
+            file: "prod/LetClause.xml",
+        },
+        TestSetRef {
+            name: "prod-Literal",
+            file: "prod/Literal.xml",
+        },
+        TestSetRef {
+            name: "prod-Lookup",
+            file: "prod/Lookup.xml",
+        },
+        TestSetRef {
+            name: "prod-MapConstructor",
+            file: "prod/MapConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-MapTest",
+            file: "prod/MapTest.xml",
+        },
+        TestSetRef {
+            name: "prod-ModuleImport",
+            file: "prod/ModuleImport.xml",
+        },
+        TestSetRef {
+            name: "prod-NamedFunctionRef",
+            file: "prod/NamedFunctionRef.xml",
+        },
+        TestSetRef {
+            name: "prod-NamespaceDecl",
+            file: "prod/NamespaceDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-NameTest",
+            file: "prod/NameTest.xml",
+        },
+        TestSetRef {
+            name: "prod-NodeTest",
+            file: "prod/NodeTest.xml",
+        },
+        TestSetRef {
+            name: "prod-OptionDecl",
+            file: "prod/OptionDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-OptionDecl.serialization",
+            file: "prod/OptionDecl.serialization.xml",
+        },
+        TestSetRef {
+            name: "prod-OrExpr",
+            file: "prod/OrExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-OrderByClause",
+            file: "prod/OrderByClause.xml",
+        },
+        TestSetRef {
+            name: "prod-OrderingModeDecl",
+            file: "prod/OrderingModeDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-PathExpr",
+            file: "prod/PathExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-ParenthesizedExpr",
+            file: "prod/ParenthesizedExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-PositionalVar",
+            file: "prod/PositionalVar.xml",
+        },
+        TestSetRef {
+            name: "prod-Predicate",
+            file: "prod/Predicate.xml",
+        },
+        TestSetRef {
+            name: "prod-QuantifiedExpr",
+            file: "prod/QuantifiedExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-ReturnClause",
+            file: "prod/ReturnClause.xml",
+        },
+        TestSetRef {
+            name: "prod-SchemaImport",
+            file: "prod/SchemaImport.xml",
+        },
+        TestSetRef {
+            name: "prod-SequenceType",
+            file: "prod/SequenceType.xml",
+        },
+        TestSetRef {
+            name: "prod-SquareArrayConstructor",
+            file: "prod/SquareArrayConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-StepExpr",
+            file: "prod/StepExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-StringConstructor",
+            file: "prod/StringConstructor.xml",
+        },
+        TestSetRef {
+            name: "prod-SwitchExpr",
+            file: "prod/SwitchExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-TreatExpr",
+            file: "prod/TreatExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-TryCatchExpr",
+            file: "prod/TryCatchExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-TypeswitchExpr",
+            file: "prod/TypeswitchExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-UnorderedExpr",
+            file: "prod/UnorderedExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-UnaryLookup",
+            file: "prod/UnaryLookup.xml",
+        },
+        TestSetRef {
+            name: "prod-ValidateExpr",
+            file: "prod/ValidateExpr.xml",
+        },
+        TestSetRef {
+            name: "prod-ValueComp",
+            file: "prod/ValueComp.xml",
+        },
+        TestSetRef {
+            name: "prod-VarDecl",
+            file: "prod/VarDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-VarDecl.external",
+            file: "prod/VarDecl.external.xml",
+        },
+        TestSetRef {
+            name: "prod-VarDefaultValue",
+            file: "prod/VarDefaultValue.xml",
+        },
+        TestSetRef {
+            name: "prod-VersionDecl",
+            file: "prod/VersionDecl.xml",
+        },
+        TestSetRef {
+            name: "prod-WhereClause",
+            file: "prod/WhereClause.xml",
+        },
+        TestSetRef {
+            name: "prod-WindowClause",
+            file: "prod/WindowClause.xml",
+        },
+        TestSetRef {
+            name: "misc-CombinedErrorCodes",
+            file: "misc/CombinedErrorCodes.xml",
+        },
+        TestSetRef {
+            name: "misc-AnnexE",
+            file: "misc/AnnexE.xml",
+        },
+        TestSetRef {
+            name: "misc-AppendixA4",
+            file: "misc/AppendixA4.xml",
+        },
+        TestSetRef {
+            name: "misc-ErrorsAndOptimization",
+            file: "misc/ErrorsAndOptimization.xml",
+        },
+        TestSetRef {
+            name: "misc-HigherOrderFunctions",
+            file: "misc/HigherOrderFunctions.xml",
+        },
+        TestSetRef {
+            name: "misc-JsonTestSuite",
+            file: "misc/JsonTestSuite.xml",
+        },
+        TestSetRef {
+            name: "misc-StaticContext",
+            file: "misc/StaticContext.xml",
+        },
+        TestSetRef {
+            name: "misc-Surrogates",
+            file: "misc/Surrogates.xml",
+        },
+        TestSetRef {
+            name: "misc-UCACollation",
+            file: "misc/UCACollation.xml",
+        },
+        TestSetRef {
+            name: "misc-XMLEdition",
+            file: "misc/XMLEdition.xml",
+        },
+        TestSetRef {
+            name: "method-adaptive",
+            file: "ser/method-adaptive.xml",
+        },
+        TestSetRef {
+            name: "method-html",
+            file: "ser/method-html.xml",
+        },
+        TestSetRef {
+            name: "method-json",
+            file: "ser/method-json.xml",
+        },
+        TestSetRef {
+            name: "method-text",
+            file: "ser/method-text.xml",
+        },
+        TestSetRef {
+            name: "method-xhtml",
+            file: "ser/method-xhtml.xml",
+        },
+        TestSetRef {
+            name: "method-xml",
+            file: "ser/method-xml.xml",
+        },
+        TestSetRef {
+            name: "app-CatalogCheck",
+            file: "app/CatalogCheck.xml",
+        },
+        TestSetRef {
+            name: "app-Demos",
+            file: "app/Demos.xml",
+        },
+        TestSetRef {
+            name: "app-Duplicates",
+            file: "app/Duplicates.xml",
+        },
+        TestSetRef {
+            name: "app-FunctxFn",
+            file: "app/FunctxFn.xml",
+        },
+        TestSetRef {
+            name: "app-FunctxFunctx",
+            file: "app/FunctxFunctx.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseCompoundValues",
+            file: "app/UseCaseCompoundValues.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseJSON",
+            file: "app/UseCaseJSON.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseNLP",
+            file: "app/UseCaseNLP.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseNS",
+            file: "app/UseCaseNS.xml",
+        },
+        TestSetRef {
+            name: "app-UseCasePARTS",
+            file: "app/UseCasePARTS.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseR",
+            file: "app/UseCaseR.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseR31",
+            file: "app/UseCaseR31.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseSEQ",
+            file: "app/UseCaseSEQ.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseSGML",
+            file: "app/UseCaseSGML.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseSTRING",
+            file: "app/UseCaseSTRING.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseTREE",
+            file: "app/UseCaseTREE.xml",
+        },
+        TestSetRef {
+            name: "app-UseCaseXMP",
+            file: "app/UseCaseXMP.xml",
+        },
+        TestSetRef {
+            name: "app-Walmsley",
+            file: "app/Walmsley.xml",
+        },
+        TestSetRef {
+            name: "app-XMark",
+            file: "app/XMark.xml",
+        },
+        TestSetRef {
+            name: "app-spec-examples",
+            file: "app/fo-spec-examples.xml",
+        },
+    ],
+}

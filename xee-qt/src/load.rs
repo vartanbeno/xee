@@ -52,6 +52,42 @@ impl qt::TestSet {
     }
 }
 
+impl qt::Catalog {
+    // XXX some duplication here with qt::TestSet
+    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
+        let xml_file = File::open(path)
+            .into_diagnostic()
+            .wrap_err("Cannot open XML file")?;
+        let mut buf_reader = BufReader::new(xml_file);
+        let mut xml = String::new();
+        buf_reader
+            .read_to_string(&mut xml)
+            .into_diagnostic()
+            .wrap_err("Cannot read XML file")?;
+        Self::load_from_xml(xot, &xml)
+    }
+
+    pub(crate) fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Self> {
+        let root = xot
+            .parse(xml)
+            .into_diagnostic()
+            .wrap_err("Cannot parse XML")?;
+        let root = Node::Xot(root);
+        let namespaces = Namespaces::with_default_element_namespace(NS);
+
+        let static_context = StaticContext::new(&namespaces);
+
+        let queries = Queries::new(&static_context);
+
+        let (queries, query) = catalog_query(xot, queries)?;
+
+        let dynamic_context = DynamicContext::new(xot, &static_context);
+        let session = queries.session(&dynamic_context);
+        let r = query.execute(&session, &Item::Node(root))?;
+        Ok(r)
+    }
+}
+
 fn test_set_query<'a>(
     xot: &'a Xot,
     mut queries: Queries<'a>,
@@ -269,31 +305,41 @@ fn environment_spec_query<'a>(
         let file = PathBuf::from(file_query.execute(session, item)?);
         let role = role_query.execute(session, item)?;
         let uri = uri_query.execute(session, item)?;
-        if role.is_some() && uri.is_some() {
-            panic!("role and uri are mutually exclusive");
-        }
-        let role = if let Some(role) = role {
-            if role == "." {
-                qt::SourceRole::Context
-            } else {
-                // XXX should start with $?
-                qt::SourceRole::Var(role)
-            }
-        } else if let Some(uri) = uri {
-            qt::SourceRole::Doc(uri)
-        } else {
-            panic!("role or uri must be set");
-        };
         let metadata = metadata_query.execute(session, item)?;
-        Ok(qt::Source {
-            metadata,
-            role,
-            file,
-        })
+        // we can return multiple sources if both role and uri are set
+        // we flatten it later
+        let mut sources = Vec::new();
+        if let Some(role) = role {
+            if role == "." {
+                sources.push(qt::Source {
+                    metadata: metadata.clone(),
+                    role: qt::SourceRole::Context,
+                    file: file.clone(),
+                })
+            } else {
+                sources.push(qt::Source {
+                    metadata: metadata.clone(),
+                    role: qt::SourceRole::Var(role),
+                    file: file.clone(),
+                });
+            }
+        };
+
+        if let Some(uri) = uri {
+            sources.push(qt::Source {
+                metadata,
+                role: qt::SourceRole::Doc(uri),
+                file,
+            });
+        }
+
+        Ok(sources)
     })?;
 
     let environment_query = queries.one(".", move |session, item| {
         let sources = sources_query.execute(session, item)?;
+        // we need to flatten sources
+        let sources = sources.into_iter().flatten().collect::<Vec<qt::Source>>();
         let environment_spec = qt::EnvironmentSpec {
             sources,
             ..Default::default()
@@ -324,6 +370,37 @@ fn shared_environments_query<'a>(
     Ok((queries, shared_environments_query))
 }
 
+fn catalog_query<'a>(
+    xot: &'a Xot,
+    mut queries: Queries<'a>,
+) -> Result<(Queries<'a>, impl Query<qt::Catalog> + 'a)> {
+    let test_suite_query = queries.one("@test-suite/string()", convert_string)?;
+    let version_query = queries.one("@version/string()", convert_string)?;
+
+    let (mut queries, shared_environments_query) = shared_environments_query(xot, queries)?;
+
+    let test_set_name_query = queries.one("@name/string()", convert_string)?;
+    let test_set_file_query = queries.one("@file/string()", convert_string)?;
+    let test_set_query = queries.many("test-set", move |session, item| {
+        let name = test_set_name_query.execute(session, item)?;
+        let file = PathBuf::from(test_set_file_query.execute(session, item)?);
+        Ok(qt::TestSetRef { name, file })
+    })?;
+    let catalog_query = queries.one("catalog", move |session, item| {
+        let test_suite = test_suite_query.execute(session, item)?;
+        let version = version_query.execute(session, item)?;
+        let shared_environments = shared_environments_query.execute(session, item)?;
+        let test_sets = test_set_query.execute(session, item)?;
+        Ok(qt::Catalog {
+            test_suite,
+            version,
+            shared_environments,
+            test_sets,
+        })
+    })?;
+    Ok((queries, catalog_query))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -331,10 +408,17 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     const ROOT_FIXTURE: &str = include_str!("fixtures/root.xml");
+    const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");
 
     #[test]
     fn test_load() {
         let mut xot = Xot::new();
         assert_debug_snapshot!(qt::TestSet::load_from_xml(&mut xot, ROOT_FIXTURE).unwrap());
+    }
+
+    #[test]
+    fn test_load_catalog() {
+        let mut xot = Xot::new();
+        assert_debug_snapshot!(qt::Catalog::load_from_xml(&mut xot, CATALOG_FIXTURE).unwrap());
     }
 }
