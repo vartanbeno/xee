@@ -70,22 +70,25 @@ impl qt::Catalog {
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Self> {
-        let root = xot
+        let xot_root = xot
             .parse(xml)
             .into_diagnostic()
             .wrap_err("Cannot parse XML")?;
-        let root = Node::Xot(root);
+        let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
 
         let static_context = StaticContext::new(&namespaces);
 
-        let queries = Queries::new(&static_context);
+        let r = {
+            let queries = Queries::new(&static_context);
 
-        let (queries, query) = catalog_query(xot, queries)?;
+            let (queries, query) = catalog_query(xot, queries)?;
 
-        let dynamic_context = DynamicContext::new(xot, &static_context);
-        let session = queries.session(&dynamic_context);
-        let r = query.execute(&session, &Item::Node(root))?;
+            let dynamic_context = DynamicContext::new(xot, &static_context);
+            let session = queries.session(&dynamic_context);
+            query.execute(&session, &Item::Node(root))?
+        };
+        xot.remove(xot_root).unwrap();
         Ok(r)
     }
 }
