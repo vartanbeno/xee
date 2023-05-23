@@ -3,6 +3,7 @@ use miette::{IntoDiagnostic, Result, WrapErr};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 use std::path::PathBuf;
 
 use xee_xpath::{Item, Node};
@@ -16,11 +17,12 @@ impl EnvironmentSpec {
     pub(crate) fn context_item(
         &self,
         xot: &mut Xot,
+        base_dir: &Path,
         source_cache: &mut SourceCache,
     ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let qt::SourceRole::Context = source.role {
-                let node = source.node(xot, source_cache)?;
+                let node = source.node(xot, base_dir, source_cache)?;
                 return Ok(Some(Item::Node(node)));
             }
         }
@@ -41,13 +43,18 @@ impl SourceCache {
 }
 
 impl Source {
-    pub(crate) fn node(&self, xot: &mut Xot, source_cache: &mut SourceCache) -> Result<Node> {
+    pub(crate) fn node(
+        &self,
+        xot: &mut Xot,
+        base_dir: &Path,
+        source_cache: &mut SourceCache,
+    ) -> Result<Node> {
         let node = source_cache.nodes.get(&self.file);
         if let Some(node) = node {
             return Ok(*node);
         }
 
-        let xml_file = File::open(&self.file)
+        let xml_file = File::open(base_dir.join(&self.file))
             .into_diagnostic()
             .wrap_err("Cannot open XML file for source")?;
         let mut buf_reader = BufReader::new(xml_file);
