@@ -63,9 +63,9 @@ impl Source {
             return Ok(*node);
         }
 
-        let xml_file = File::open(&full_path)
-            .into_diagnostic()
-            .wrap_err("Cannot open XML file for source")?;
+        let xml_file = File::open(&full_path).into_diagnostic().wrap_err_with(|| {
+            format!("Cannot open XML file for source: {}", full_path.display())
+        })?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
         buf_reader

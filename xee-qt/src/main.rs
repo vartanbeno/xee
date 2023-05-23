@@ -1,15 +1,16 @@
 #![allow(dead_code)]
+mod collection;
+mod environment;
+mod load;
+mod qt;
+mod run;
 
 use clap::Parser;
 use miette::{IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xot::Xot;
 
-mod collection;
-mod environment;
-mod load;
-mod qt;
-mod run;
+use crate::run::CatalogContext;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -25,11 +26,12 @@ fn main() -> Result<()> {
     if let Some((catalog_path, relative_path)) = paths(&path) {
         let mut xot = Xot::new();
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
-        // if relative_path.components().count() == 0 {
-        //     catalog.run(&xot);
-        // } else {
-        //     catalog.run_path(&xot, &relative_path)?;
-        // }
+        let catalog_context = CatalogContext::with_base_dir(xot, catalog_path.parent().unwrap());
+        if relative_path.components().count() == 0 {
+            catalog.run(catalog_context);
+        } else {
+            catalog.run_path(catalog_context, &relative_path)?;
+        }
     } else {
         println!("no qttests catalog.xml found!");
     }
