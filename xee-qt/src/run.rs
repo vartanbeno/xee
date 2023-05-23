@@ -861,4 +861,43 @@ mod tests {
         assert_eq!(test_result.results.len(), 1);
         assert_eq!(test_result.results[0].1, TestResult::Passed);
     }
+
+    #[test]
+    fn test_assert_local_environment_source() {
+        // we do this in a temp dir so we can test file loading behavior
+
+        let tmp_dir = tempdir().unwrap();
+        set_current_dir(tmp_dir.path()).unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment name="data">
+              <source role="." file="data.xml">
+              </source>
+            </environment>
+            <test>/doc/p/string()</test>
+            <result>
+              <assert-string-value>Hello world!</assert-string-value>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
+
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let known_dependencies = KnownDependencies::default();
+        let test_result = test_set.run(&known_dependencies).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
 }
