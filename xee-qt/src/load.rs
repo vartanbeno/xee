@@ -313,11 +313,6 @@ fn shared_environments_query<'a>(
     let environments_query = queries.many("environment", move |session, item| {
         let name = name_query.execute(session, item)?;
         let environment_spec = environment_spec_query.execute(session, item)?;
-        // let sources = sources_query.execute(session, item)?;
-        // let environment_spec = qt::EnvironmentSpec {
-        //     sources,
-        //     ..Default::default()
-        // };
         Ok((name, environment_spec))
     })?;
     let shared_environments_query = queries.one(".", move |session, item| {
