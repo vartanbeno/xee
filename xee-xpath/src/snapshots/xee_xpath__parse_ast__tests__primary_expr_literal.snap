@@ -5,7 +5,7 @@ expression: "parse_primary_expr(\"1\")"
 Spanned {
     value: Literal(
         Integer(
-            1,
+            "1",
         ),
     ),
     span: SourceSpan {

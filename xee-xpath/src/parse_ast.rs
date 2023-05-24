@@ -1017,11 +1017,7 @@ impl<'a> AstParser<'a> {
         debug_assert_eq!(pair.as_rule(), Rule::Param);
         let mut pairs = pair.into_inner();
         let name = self.eq_name_to_name(pairs.next().unwrap(), None);
-        let type_ = if let Some(_pair) = pairs.next() {
-            Some(ast::SequenceType::Unsupported)
-        } else {
-            None
-        };
+        let type_ = pairs.next().map(|_pair| ast::SequenceType::Unsupported);
         ast::Param { name, type_ }
     }
 
@@ -1052,9 +1048,7 @@ impl<'a> AstParser<'a> {
         match pair.as_rule() {
             Rule::IntegerLiteral => {
                 let s = pair.as_str();
-                // parser never delivers negative numbers
-                let i = s.parse::<i64>().unwrap();
-                ast::Literal::Integer(i)
+                ast::Literal::Integer(s.to_string())
             }
             Rule::DecimalLiteral => {
                 let s = pair.as_str();

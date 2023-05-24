@@ -331,7 +331,7 @@ impl<'a> IrConverter<'a> {
         let outer_ast = &ast.value;
         let span = ast.span;
         match outer_ast {
-            ast::PrimaryExpr::Literal(ast) => Ok(self.literal(ast, span)),
+            ast::PrimaryExpr::Literal(ast) => Ok(self.literal(ast, span)?),
             ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast, span),
             ast::PrimaryExpr::Expr(exprs) => self.exprs(exprs),
             ast::PrimaryExpr::ContextItem => self.context_item(span),
@@ -420,16 +420,19 @@ impl<'a> IrConverter<'a> {
         })
     }
 
-    fn literal(&mut self, ast: &ast::Literal, span: SourceSpan) -> Bindings {
+    fn literal(&mut self, ast: &ast::Literal, span: SourceSpan) -> Result<Bindings> {
         let atom = match ast {
-            ast::Literal::Integer(i) => ir::Atom::Const(ir::Const::Integer(*i)),
+            ast::Literal::Integer(i) => {
+                let i = i.parse::<i64>().map_err(|_e| Error::FOAR0002)?;
+                ir::Atom::Const(ir::Const::Integer(i))
+            }
             ast::Literal::String(s) => ir::Atom::Const(ir::Const::String(s.clone())),
             ast::Literal::Double(d) => ir::Atom::Const(ir::Const::Double(*d)),
             ast::Literal::Decimal(d) => ir::Atom::Const(ir::Const::Decimal(*d)),
         };
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
-        Bindings::from_vec(vec![binding])
+        Ok(Bindings::from_vec(vec![binding]))
     }
 
     fn exprs(&mut self, exprs: &ast::ExprS) -> Result<Bindings> {

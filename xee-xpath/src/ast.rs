@@ -161,7 +161,7 @@ pub(crate) struct ArrayConstructor {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Literal {
     Decimal(Decimal),
-    Integer(i64),
+    Integer(String),
     Double(OrderedFloat<f64>),
     String(String),
 }

@@ -16,7 +16,7 @@ Spanned {
                                             Spanned {
                                                 value: Literal(
                                                     Integer(
-                                                        1,
+                                                        "1",
                                                     ),
                                                 ),
                                                 span: SourceSpan {
@@ -69,7 +69,7 @@ Spanned {
                                     Spanned {
                                         value: Literal(
                                             Integer(
-                                                2,
+                                                "2",
                                             ),
                                         ),
                                         span: SourceSpan {
@@ -112,7 +112,7 @@ Spanned {
                                     Spanned {
                                         value: Literal(
                                             Integer(
-                                                3,
+                                                "3",
                                             ),
                                         ),
                                         span: SourceSpan {
