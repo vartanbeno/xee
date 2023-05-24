@@ -1,5 +1,5 @@
 use derive_builder::Builder;
-use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
+use miette::{Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
     Atomic, DynamicContext, Error, Item, Namespaces, Node, StackValue, StaticContext, XPath,
@@ -72,6 +72,8 @@ pub(crate) enum TestResult {
     // We failed because our implementation does not yet
     // implement something it should
     Unsupported,
+    // We couldn't load context item for some reason
+    ContextItemError(String),
     // We skipped this test as we don't support the stated
     // dependency
     UnsupportedDependency,
@@ -204,11 +206,11 @@ impl qt::TestCase {
             &test_set_context.catalog_context.shared_environments,
             shared_environments,
         );
-        let context_item = if let Ok(context_item) = context_item {
-            context_item
-        } else {
-            return TestResult::Unsupported;
+        let context_item = match context_item {
+            Ok(context_item) => context_item,
+            Err(error) => return TestResult::ContextItemError(error.to_string()),
         };
+
         let dynamic_context =
             DynamicContext::new(&test_set_context.catalog_context.xot, &static_context);
         let value = xpath.run(&dynamic_context, context_item.as_ref());
@@ -1031,7 +1033,8 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let test_set =
+            qt::TestSet::load_from_file(&mut xot, tmp_dir.path(), &test_cases_path).unwrap();
 
         let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(&mut catalog_context);
@@ -1069,7 +1072,8 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let test_set =
+            qt::TestSet::load_from_file(&mut xot, tmp_dir.path(), &test_cases_path).unwrap();
         let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
@@ -1107,7 +1111,8 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let test_set =
+            qt::TestSet::load_from_file(&mut xot, tmp_dir.path(), &test_cases_path).unwrap();
 
         let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(&mut catalog_context);
@@ -1146,7 +1151,8 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let test_set =
+            qt::TestSet::load_from_file(&mut xot, tmp_dir.path(), &test_cases_path).unwrap();
 
         let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(&mut catalog_context);
@@ -1189,7 +1195,8 @@ mod tests {
         .unwrap();
 
         let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let test_set =
+            qt::TestSet::load_from_file(&mut xot, tmp_dir.path(), &test_cases_path).unwrap();
 
         let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(&mut catalog_context);

@@ -16,7 +16,7 @@ use crate::qt;
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
 impl qt::TestSet {
-    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file(xot: &mut Xot, base_dir: &Path, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)
             .into_diagnostic()
             .wrap_err("Cannot open XML file")?;
@@ -26,7 +26,16 @@ impl qt::TestSet {
             .read_to_string(&mut xml)
             .into_diagnostic()
             .wrap_err("Cannot read XML file")?;
-        Self::load_from_xml(xot, path.parent().unwrap().to_path_buf(), &xml)
+
+        // calculate real base dir
+        let base_dir = path
+            .parent()
+            .unwrap()
+            .strip_prefix(base_dir)
+            .unwrap()
+            .to_path_buf();
+
+        Self::load_from_xml(xot, base_dir, &xml)
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, base_dir: PathBuf, xml: &str) -> Result<Self> {
@@ -66,10 +75,10 @@ impl qt::Catalog {
             .read_to_string(&mut xml)
             .into_diagnostic()
             .wrap_err("Cannot read XML file")?;
-        Self::load_from_xml(xot, path.parent().unwrap().to_path_buf(), &xml)
+        Self::load_from_xml(xot, &xml)
     }
 
-    pub(crate) fn load_from_xml(xot: &mut Xot, base_dir: PathBuf, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Self> {
         let xot_root = xot
             .parse(xml)
             .into_diagnostic()
@@ -82,7 +91,7 @@ impl qt::Catalog {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = catalog_query(xot, base_dir, queries)?;
+            let (queries, query) = catalog_query(xot, queries)?;
 
             let dynamic_context = DynamicContext::new(xot, &static_context);
             let session = queries.session(&dynamic_context);
@@ -390,14 +399,13 @@ fn shared_environments_query<'a>(
 
 fn catalog_query<'a>(
     xot: &'a Xot,
-    base_dir: PathBuf,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::Catalog> + 'a)> {
     let test_suite_query = queries.one("@test-suite/string()", convert_string)?;
     let version_query = queries.one("@version/string()", convert_string)?;
 
     let (mut queries, shared_environments_query) =
-        shared_environments_query(xot, base_dir, queries)?;
+        shared_environments_query(xot, PathBuf::from("."), queries)?;
 
     let test_set_name_query = queries.one("@name/string()", convert_string)?;
     let test_set_file_query = queries.one("@file/string()", convert_string)?;
@@ -446,11 +454,6 @@ mod tests {
     #[test]
     fn test_load_catalog() {
         let mut xot = Xot::new();
-        assert_debug_snapshot!(qt::Catalog::load_from_xml(
-            &mut xot,
-            PathBuf::from("."),
-            CATALOG_FIXTURE
-        )
-        .unwrap());
+        assert_debug_snapshot!(qt::Catalog::load_from_xml(&mut xot, CATALOG_FIXTURE).unwrap());
     }
 }

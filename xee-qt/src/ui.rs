@@ -37,7 +37,11 @@ fn run_path_helper(
     }
     let verbose = catalog_context.verbose;
     let full_path = catalog_context.base_dir.join(path);
-    let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
+    let test_set = qt::TestSet::load_from_file(
+        &mut catalog_context.xot,
+        &catalog_context.base_dir,
+        &full_path,
+    )?;
     let test_set_context = TestSetContext::with_file_path(catalog_context, path);
     if verbose {
         run_test_set(&test_set, test_set_context, stdout, VerboseRenderer::new())?;
@@ -158,6 +162,9 @@ impl Renderer for CharacterRenderer {
             TestResult::Unsupported => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
+            TestResult::ContextItemError(_) => {
+                execute!(stdout, style::PrintStyledContent("E".red()))?;
+            }
             TestResult::UnsupportedDependency => {
                 // do not show any output as this is skipped
             }
@@ -233,6 +240,9 @@ impl Renderer for VerboseRenderer {
             }
             TestResult::Unsupported => {
                 println!("{}", "UNSUPPORTED".red());
+            }
+            TestResult::ContextItemError(error) => {
+                println!("{} {}", "CONTEXT ITEM ERROR".red(), error);
             }
             TestResult::UnsupportedDependency => {
                 unreachable!();
