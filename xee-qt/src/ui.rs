@@ -86,6 +86,10 @@ fn run_test_set<R: Renderer>(
         .render_test_set(stdout, test_set, &test_set_context)
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
+        // skip any test case we don't support
+        if !test_case.is_supported(&test_set_context.catalog_context.known_dependencies) {
+            continue;
+        }
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
@@ -199,7 +203,7 @@ impl Renderer for VerboseRenderer {
         stdout: &mut Stdout,
         test_case: &qt::TestCase,
     ) -> crossterm::Result<()> {
-        println!("{} ... ", test_case.name);
+        print!("{} ... ", test_case.name);
         Ok(())
     }
 
@@ -208,9 +212,6 @@ impl Renderer for VerboseRenderer {
         stdout: &mut Stdout,
         test_result: &TestResult,
     ) -> crossterm::Result<()> {
-        if matches!(test_result, TestResult::UnsupportedDependency) {
-            return Ok(());
-        }
         match test_result {
             TestResult::Passed => {
                 println!("{}", "PASS".green());

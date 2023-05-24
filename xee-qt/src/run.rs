@@ -156,7 +156,7 @@ impl<'a> qt::TestSet {
 }
 
 impl qt::TestCase {
-    fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+    pub(crate) fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         // if we have no dependencies, we're always supported
         if self.dependencies.is_empty() {
             return true;
