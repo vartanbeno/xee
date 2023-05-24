@@ -12,7 +12,7 @@ use miette::{IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xot::Xot;
 
-use crate::run::CatalogContext;
+use crate::run::CatalogContextBuilder;
 use crate::ui::{run, run_path};
 
 #[derive(Parser)]
@@ -20,6 +20,9 @@ use crate::ui::{run, run_path};
 struct Cli {
     /// A path to a qttests directory or individual test file
     path: PathBuf,
+    /// Verbose mode
+    #[clap(short, long)]
+    verbose: bool,
 }
 
 fn main() -> Result<()> {
@@ -29,7 +32,12 @@ fn main() -> Result<()> {
     if let Some((catalog_path, relative_path)) = paths(&path) {
         let mut xot = Xot::new();
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
-        let catalog_context = CatalogContext::with_base_dir(xot, catalog_path.parent().unwrap());
+        let catalog_context = CatalogContextBuilder::default()
+            .xot(xot)
+            .base_dir(catalog_path.parent().unwrap().to_path_buf())
+            .verbose(cli.verbose)
+            .build()
+            .unwrap();
         if relative_path.components().count() == 0 {
             run(&catalog, catalog_context)?;
         } else {

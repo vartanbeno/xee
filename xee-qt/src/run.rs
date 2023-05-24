@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
@@ -10,7 +11,7 @@ use crate::environment::SourceCache;
 use crate::qt;
 use crate::serialize::serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct KnownDependencies {
     specs: FxIndexSet<qt::DependencySpec>,
 }
@@ -76,11 +77,17 @@ pub(crate) enum TestResult {
     UnsupportedDependency,
 }
 
+#[derive(Default, Builder)]
+#[builder(pattern = "owned")]
 pub(crate) struct CatalogContext {
     pub(crate) xot: Xot,
+    #[builder(default)]
     pub(crate) base_dir: PathBuf,
+    #[builder(default)]
     pub(crate) source_cache: SourceCache,
+    #[builder(default)]
     pub(crate) known_dependencies: KnownDependencies,
+    #[builder(default)]
     pub(crate) verbose: bool,
 }
 
@@ -141,7 +148,7 @@ impl<'a> qt::TestSet {
     fn run(&'a self, mut test_set_context: TestSetContext) -> Result<Vec<TestResult>> {
         let mut results = Vec::new();
         for test_case in &self.test_cases {
-            let result = test_case.run(&mut test_set_context, &self.shared_environments)?;
+            let result = test_case.run(&mut test_set_context, &self.shared_environments);
             results.push(result);
         }
         Ok(results)
@@ -167,9 +174,9 @@ impl qt::TestCase {
         &'a self,
         test_set_context: &'a mut TestSetContext,
         shared_environments: &qt::SharedEnvironments,
-    ) -> Result<TestResult> {
+    ) -> TestResult {
         if !self.is_supported(&test_set_context.catalog_context.known_dependencies) {
-            return Ok(TestResult::UnsupportedDependency);
+            return TestResult::UnsupportedDependency;
         }
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
@@ -178,9 +185,9 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::Error(expected_error) = &self.result {
-                    Ok(Self::assert_expected_error(expected_error, &error))
+                    Self::assert_expected_error(expected_error, &error)
                 } else {
-                    Ok(TestResult::CompilationError(error))
+                    TestResult::CompilationError(error)
                 }
             }
         };
@@ -194,15 +201,20 @@ impl qt::TestCase {
                 .join(test_set_context.file_path.parent().unwrap()),
             &mut test_set_context.catalog_context.source_cache,
             shared_environments,
-        )?;
+        );
+        let context_item = if let Ok(context_item) = context_item {
+            context_item
+        } else {
+            return TestResult::Unsupported;
+        };
         let dynamic_context =
             DynamicContext::new(&test_set_context.catalog_context.xot, &static_context);
         let value = xpath.run(&dynamic_context, context_item.as_ref());
-        Ok(Self::check_value(
+        Self::check_value(
             &mut test_set_context.catalog_context.xot,
             &self.result,
             &value,
-        ))
+        )
     }
 
     fn context_item(

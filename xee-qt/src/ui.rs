@@ -35,67 +35,196 @@ fn run_path_helper(
     if !catalog.file_paths.contains(path) {
         miette!("File not found in catalog: {:?}", path);
     }
+    let verbose = catalog_context.verbose;
     let full_path = catalog_context.base_dir.join(path);
     let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
     let test_set_context = TestSetContext::with_file_path(catalog_context, path);
-    run_test_set(&test_set, test_set_context, stdout)?;
+    if verbose {
+        run_test_set(&test_set, test_set_context, stdout, VerboseRenderer::new())?;
+    } else {
+        run_test_set(
+            &test_set,
+            test_set_context,
+            stdout,
+            CharacterRenderer::new(),
+        )?;
+    }
     Ok(())
 }
 
-fn run_test_set(
+trait Renderer {
+    fn render_test_set(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+        test_set_context: &TestSetContext,
+    ) -> crossterm::Result<()>;
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
+        test_case: &qt::TestCase,
+        test_result: &TestResult,
+    ) -> crossterm::Result<()>;
+    fn render_test_set_summary(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+    ) -> crossterm::Result<()>;
+}
+
+fn run_test_set<R: Renderer>(
     test_set: &qt::TestSet,
     mut test_set_context: TestSetContext,
     stdout: &mut Stdout,
+    renderer: R,
 ) -> Result<()> {
-    print!("{} ", test_set_context.file_path.display());
+    renderer
+        .render_test_set(stdout, test_set, &test_set_context)
+        .into_diagnostic()?;
     for test_case in &test_set.test_cases {
-        let result = test_case.run(&mut test_set_context, &test_set.shared_environments);
-        match result {
-            Ok(test_result) => {
-                render_test_result_character(stdout, &test_result).into_diagnostic()?;
-            }
-            Err(_) => {
-                render_test_crashed_character(stdout).into_diagnostic()?;
-            }
-        }
+        let test_result = test_case.run(&mut test_set_context, &test_set.shared_environments);
+        renderer
+            .render_test_result(stdout, test_case, &test_result)
+            .into_diagnostic()?;
     }
-    println!();
+    renderer
+        .render_test_set_summary(stdout, test_set)
+        .into_diagnostic()?;
     Ok(())
 }
 
-fn render_test_result_character(
-    stdout: &mut Stdout,
-    test_result: &TestResult,
-) -> crossterm::Result<()> {
-    match test_result {
-        TestResult::Passed => {
-            execute!(stdout, style::PrintStyledContent(".".green()))?;
-        }
-        TestResult::PassedWithWrongError(_) => {
-            execute!(stdout, style::PrintStyledContent(".".green()))?;
-        }
-        TestResult::Failed(_) => {
-            execute!(stdout, style::PrintStyledContent("F".red()))?;
-        }
-        TestResult::RuntimeError(_) => {
-            execute!(stdout, style::PrintStyledContent("E".red()))?;
-        }
-        TestResult::CompilationError(_) => {
-            execute!(stdout, style::PrintStyledContent("E".red()))?;
-        }
-        TestResult::UnsupportedExpression(_) => {
-            execute!(stdout, style::PrintStyledContent("E".red()))?;
-        }
-        TestResult::Unsupported => {
-            execute!(stdout, style::PrintStyledContent("E".red()))?;
-        }
-        TestResult::UnsupportedDependency => {
-            // do not show any output as this is skipped
-        }
+struct CharacterRenderer {}
+
+impl CharacterRenderer {
+    fn new() -> Self {
+        Self {}
     }
-    Ok(())
 }
 
-fn render_test_crashed_character(stdout: &mut Stdout) -> crossterm::Result<()> {
-    execute!(stdout, style::PrintStyledContent("C".red()))
+impl Renderer for CharacterRenderer {
+    fn render_test_set(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+        test_set_context: &TestSetContext,
+    ) -> crossterm::Result<()> {
+        print!("{} ", test_set_context.file_path.display());
+        Ok(())
+    }
+
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
+        test_case: &qt::TestCase,
+        test_result: &TestResult,
+    ) -> crossterm::Result<()> {
+        match test_result {
+            TestResult::Passed => {
+                execute!(stdout, style::PrintStyledContent(".".green()))?;
+            }
+            TestResult::PassedWithWrongError(_) => {
+                execute!(stdout, style::PrintStyledContent(".".green()))?;
+            }
+            TestResult::Failed(_) => {
+                execute!(stdout, style::PrintStyledContent("F".red()))?;
+            }
+            TestResult::RuntimeError(_) => {
+                execute!(stdout, style::PrintStyledContent("E".red()))?;
+            }
+            TestResult::CompilationError(_) => {
+                execute!(stdout, style::PrintStyledContent("E".red()))?;
+            }
+            TestResult::UnsupportedExpression(_) => {
+                execute!(stdout, style::PrintStyledContent("E".red()))?;
+            }
+            TestResult::Unsupported => {
+                execute!(stdout, style::PrintStyledContent("E".red()))?;
+            }
+            TestResult::UnsupportedDependency => {
+                // do not show any output as this is skipped
+            }
+        }
+        Ok(())
+    }
+
+    fn render_test_set_summary(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+    ) -> crossterm::Result<()> {
+        println!();
+        Ok(())
+    }
+}
+
+struct VerboseRenderer {}
+
+impl VerboseRenderer {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Renderer for VerboseRenderer {
+    fn render_test_set(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+        test_set_context: &TestSetContext,
+    ) -> crossterm::Result<()> {
+        println!("{}", test_set_context.file_path.display());
+        println!("{}", test_set.name);
+        for description in &test_set.descriptions {
+            println!("{} ", description);
+        }
+        Ok(())
+    }
+
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
+        test_case: &qt::TestCase,
+        test_result: &TestResult,
+    ) -> crossterm::Result<()> {
+        if matches!(test_result, TestResult::UnsupportedDependency) {
+            return Ok(());
+        }
+        print!("{} ... ", test_case.name);
+        match test_result {
+            TestResult::Passed => {
+                println!("{}", "PASS".green());
+            }
+            TestResult::PassedWithWrongError(_) => {
+                println!("{}", "PASS".green());
+            }
+            TestResult::Failed(_) => {
+                println!("{}", "FAIL".red());
+            }
+            TestResult::RuntimeError(_) => {
+                println!("{}", "ERROR".red());
+            }
+            TestResult::CompilationError(_) => {
+                println!("{}", "ERROR".red());
+            }
+            TestResult::UnsupportedExpression(_) => {
+                println!("{}", "ERROR".red());
+            }
+            TestResult::Unsupported => {
+                println!("{}", "ERROR".red());
+            }
+            TestResult::UnsupportedDependency => {
+                unreachable!();
+            }
+        }
+        Ok(())
+    }
+
+    fn render_test_set_summary(
+        &self,
+        stdout: &mut Stdout,
+        test_set: &qt::TestSet,
+    ) -> crossterm::Result<()> {
+        println!();
+        Ok(())
+    }
 }
