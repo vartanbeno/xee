@@ -273,8 +273,9 @@ fn test_cases_query<'a>(
             } else if local_name == "assert-string-value" {
                 assert_string_value_query.execute(session, item)?
             } else {
+                qt::TestCaseResult::Unsupported
                 // qt::TestCaseResult::AssertFalse
-                panic!("unknown local name: {}", local_name);
+                // panic!("unknown assertion: {}", local_name);
             };
             Ok(r)
         };

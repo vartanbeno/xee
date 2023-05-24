@@ -130,6 +130,8 @@ pub(crate) enum TestCaseResult {
     // implementation raises an error, regardless whether the error codes
     // match.
     Error(String),
+    // This assertion type is as of yet unsupported, and will automatically error
+    Unsupported,
 }
 
 #[derive(Debug)]

@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use xot::Xot;
 
 use crate::run::CatalogContext;
-use crate::ui::run_path;
+use crate::ui::{run, run_path};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
         let catalog_context = CatalogContext::with_base_dir(xot, catalog_path.parent().unwrap());
         if relative_path.components().count() == 0 {
-            catalog.run(catalog_context);
+            run(&catalog, catalog_context)?;
         } else {
             run_path(&catalog, catalog_context, &relative_path)?;
         }

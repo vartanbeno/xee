@@ -60,7 +60,7 @@ pub(crate) enum TestResult {
     UnsupportedExpression(Error),
     // We failed because our implementation does not yet
     // implement something it should
-    Todo,
+    Unsupported,
     // We skipped this test as we don't support the stated
     // dependency
     UnsupportedDependency,
@@ -99,22 +99,25 @@ impl Drop for CatalogContext {
     }
 }
 
-pub(crate) struct TestSetContext {
-    pub(crate) catalog_context: CatalogContext,
+pub(crate) struct TestSetContext<'a> {
+    pub(crate) catalog_context: &'a mut CatalogContext,
     pub(crate) file_path: PathBuf,
 }
 
-impl TestSetContext {
-    pub(crate) fn new(catalog_context: CatalogContext) -> Self {
+impl<'a> TestSetContext<'a> {
+    pub(crate) fn new(catalog_context: &'a mut CatalogContext) -> Self {
         Self {
             catalog_context,
             file_path: PathBuf::from("dummy.xml"),
         }
     }
 
-    pub(crate) fn with_file_path(run_context: CatalogContext, file_path: &Path) -> Self {
+    pub(crate) fn with_file_path(
+        catalog_context: &'a mut CatalogContext,
+        file_path: &Path,
+    ) -> Self {
         Self {
-            catalog_context: run_context,
+            catalog_context,
             file_path: file_path.to_path_buf(),
         }
     }
@@ -242,6 +245,7 @@ impl qt::TestCase {
                     qt::TestCaseResult::Error(error) => {
                         Self::assert_unexpected_no_error(error, value)
                     }
+                    qt::TestCaseResult::Unsupported => TestResult::Unsupported,
                     _ => {
                         panic!("unimplemented test case result {:?}", result);
                     }
@@ -425,26 +429,6 @@ impl qt::TestCase {
     }
 }
 
-impl qt::Catalog {
-    pub(crate) fn run(&self, catalog_context: CatalogContext) {}
-
-    pub(crate) fn run_path(&self, mut catalog_context: CatalogContext, path: &Path) -> Result<()> {
-        if !self.file_paths.contains(path) {
-            miette!("File not found in catalog: {:?}", path);
-        }
-        let full_path = catalog_context.base_dir.join(path);
-        let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
-        let test_set_context = TestSetContext::with_file_path(catalog_context, path);
-        let results = test_set.run(test_set_context)?;
-        for result in results {
-            // println!("{}: {:?}", test_case.name, result);
-        }
-        Ok(())
-        // println!("what");
-        // todo!();
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::io::Write;
@@ -472,8 +456,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -498,8 +482,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -527,8 +511,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -553,8 +537,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -579,8 +563,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -608,8 +592,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::RuntimeError(Error::FOAR0001));
@@ -634,8 +618,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -666,8 +650,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -692,8 +676,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -718,8 +702,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -744,8 +728,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -776,8 +760,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -805,8 +789,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -834,8 +818,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -863,8 +847,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -892,8 +876,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -918,8 +902,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(
@@ -949,8 +933,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let catalog_context = CatalogContext::new(xot);
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::new(xot);
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -988,8 +972,8 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
 
-        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -1025,8 +1009,8 @@ mod tests {
 
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -1064,8 +1048,8 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
 
-        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
@@ -1103,8 +1087,8 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
 
-        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert!(matches!(test_result[0], TestResult::Failed { .. }));
@@ -1146,8 +1130,8 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
 
-        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
-        let test_set_context = TestSetContext::new(catalog_context);
+        let mut catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(&mut catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
         assert_eq!(test_result.len(), 1);
         assert_eq!(test_result[0], TestResult::Passed);
