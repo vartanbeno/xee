@@ -38,8 +38,8 @@ impl KnownDependencies {
 // if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
 
-struct TestSetResult<'a> {
-    results: Vec<(&'a qt::TestCase, TestResult)>,
+struct TestSetResult {
+    results: Vec<TestResult>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -122,13 +122,13 @@ impl TestSetContext {
 
 impl<'a> qt::TestSet {
     // XXX Make this result an iterator of results?
-    fn run(&'a self, mut test_set_context: TestSetContext) -> Result<TestSetResult<'a>> {
+    fn run(&'a self, mut test_set_context: TestSetContext) -> Result<Vec<TestResult>> {
         let mut results = Vec::new();
         for test_case in &self.test_cases {
             let result = test_case.run(&mut test_set_context, &self.shared_environments)?;
-            results.push((test_case, result));
+            results.push(result);
         }
-        Ok(TestSetResult { results })
+        Ok(results)
     }
 }
 
@@ -436,8 +436,8 @@ impl qt::Catalog {
         let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
         let test_set_context = TestSetContext::with_file_path(catalog_context, path);
         let results = test_set.run(test_set_context)?;
-        for (test_case, result) in results.results {
-            println!("{}: {:?}", test_case.name, result);
+        for result in results {
+            // println!("{}: {:?}", test_case.name, result);
         }
         Ok(())
         // println!("what");
@@ -475,8 +475,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -501,9 +501,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::Failed(StackValue::Atomic(Atomic::Boolean(false)))
         );
     }
@@ -530,8 +530,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -556,8 +556,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -582,9 +582,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::PassedWithWrongError(Error::FOAR0001)
         );
     }
@@ -611,11 +611,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(
-            test_result.results[0].1,
-            TestResult::RuntimeError(Error::FOAR0001)
-        );
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::RuntimeError(Error::FOAR0001));
     }
 
     #[test]
@@ -640,9 +637,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::CompilationError(Error::XPST0003 {
                 src: "1 @#!".to_string(),
                 span: (1, 0).into()
@@ -672,8 +669,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -698,8 +695,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -724,8 +721,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -750,9 +747,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::Failed(StackValue::Atomic(Atomic::Integer(5)))
         );
     }
@@ -782,8 +779,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -811,8 +808,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -840,8 +837,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -869,9 +866,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::Failed(StackValue::Atomic(Atomic::Integer(2)))
         );
     }
@@ -898,8 +895,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -924,9 +921,9 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result.results[0].1,
+            test_result[0],
             TestResult::Failed(StackValue::Atomic(Atomic::String(Rc::new(
                 "foo".to_string()
             ))))
@@ -955,8 +952,8 @@ mod tests {
         let catalog_context = CatalogContext::new(xot);
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -994,8 +991,8 @@ mod tests {
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -1031,8 +1028,8 @@ mod tests {
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -1070,8 +1067,8 @@ mod tests {
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 
     #[test]
@@ -1109,11 +1106,8 @@ mod tests {
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert!(matches!(
-            test_result.results[0].1,
-            TestResult::Failed { .. }
-        ));
+        assert_eq!(test_result.len(), 1);
+        assert!(matches!(test_result[0], TestResult::Failed { .. }));
     }
 
     #[test]
@@ -1155,7 +1149,7 @@ mod tests {
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();
-        assert_eq!(test_result.results.len(), 1);
-        assert_eq!(test_result.results[0].1, TestResult::Passed);
+        assert_eq!(test_result.len(), 1);
+        assert_eq!(test_result[0], TestResult::Passed);
     }
 }
