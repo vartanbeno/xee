@@ -59,10 +59,14 @@ trait Renderer {
         test_set: &qt::TestSet,
         test_set_context: &TestSetContext,
     ) -> crossterm::Result<()>;
-    fn render_test_result(
+    fn render_test_case(
         &self,
         stdout: &mut Stdout,
         test_case: &qt::TestCase,
+    ) -> crossterm::Result<()>;
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
         test_result: &TestResult,
     ) -> crossterm::Result<()>;
     fn render_test_set_summary(
@@ -82,9 +86,12 @@ fn run_test_set<R: Renderer>(
         .render_test_set(stdout, test_set, &test_set_context)
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
+        renderer
+            .render_test_case(stdout, test_case)
+            .into_diagnostic()?;
         let test_result = test_case.run(&mut test_set_context, &test_set.shared_environments);
         renderer
-            .render_test_result(stdout, test_case, &test_result)
+            .render_test_result(stdout, &test_result)
             .into_diagnostic()?;
     }
     renderer
@@ -112,10 +119,17 @@ impl Renderer for CharacterRenderer {
         Ok(())
     }
 
-    fn render_test_result(
+    fn render_test_case(
         &self,
         stdout: &mut Stdout,
         test_case: &qt::TestCase,
+    ) -> crossterm::Result<()> {
+        Ok(())
+    }
+
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
         test_result: &TestResult,
     ) -> crossterm::Result<()> {
         match test_result {
@@ -180,16 +194,23 @@ impl Renderer for VerboseRenderer {
         Ok(())
     }
 
-    fn render_test_result(
+    fn render_test_case(
         &self,
         stdout: &mut Stdout,
         test_case: &qt::TestCase,
+    ) -> crossterm::Result<()> {
+        println!("{} ... ", test_case.name);
+        Ok(())
+    }
+
+    fn render_test_result(
+        &self,
+        stdout: &mut Stdout,
         test_result: &TestResult,
     ) -> crossterm::Result<()> {
         if matches!(test_result, TestResult::UnsupportedDependency) {
             return Ok(());
         }
-        print!("{} ... ", test_case.name);
         match test_result {
             TestResult::Passed => {
                 println!("{}", "PASS".green());

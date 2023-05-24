@@ -981,10 +981,10 @@ impl<'a> AstParser<'a> {
             vec![]
         };
         let return_type = if next.as_rule() == Rule::SequenceType {
+            next = pairs.next().unwrap();
             Some(ast::SequenceType::Unsupported)
             // panic!("unimplemented: return type");
             // let return_type = sequence_type(next);
-            // next = pairs.next().unwrap();
             // Some(return_type)
         } else {
             None
