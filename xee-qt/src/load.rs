@@ -192,13 +192,18 @@ fn test_cases_query<'a>(
         } else {
             true
         };
-        Ok(qt::Dependency {
-            spec: qt::DependencySpec {
-                type_: type_query.execute(session, item)?,
-                value: value_query.execute(session, item)?,
-            },
-            satisfied,
-        })
+        let value = value_query.execute(session, item)?;
+        let values = value.split(' ');
+        let type_ = type_query.execute(session, item)?;
+        Ok(values
+            .map(|value| qt::Dependency {
+                spec: qt::DependencySpec {
+                    type_: type_.clone(),
+                    value: value.to_string(),
+                },
+                satisfied,
+            })
+            .collect::<Vec<_>>())
     })?;
     let ref_query = queries.option("@ref/string()", convert_string)?;
     let (mut queries, environment_query) = environment_spec_query(xot, queries)?;
@@ -288,7 +293,11 @@ fn test_cases_query<'a>(
             name: name_query.execute(session, item)?,
             metadata: metadata_query.execute(session, item)?,
             environments: local_environment_query.execute(session, item)?,
-            dependencies: dependency_query.execute(session, item)?,
+            dependencies: dependency_query
+                .execute(session, item)?
+                .into_iter()
+                .flatten()
+                .collect(),
             modules: Vec::new(),
             test: test_query.execute(session, item)?,
             result: result_query.execute(session, item)?,

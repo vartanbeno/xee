@@ -11,7 +11,7 @@ use crate::environment::SourceCache;
 use crate::qt;
 use crate::serialize::serialize;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct KnownDependencies {
     specs: FxIndexSet<qt::DependencySpec>,
 }
@@ -28,6 +28,17 @@ impl KnownDependencies {
         } else {
             !contains
         }
+    }
+}
+
+impl Default for KnownDependencies {
+    fn default() -> Self {
+        let mut specs = FxIndexSet::default();
+        specs.insert(qt::DependencySpec {
+            type_: "spec".to_string(),
+            value: "XP30+".to_string(),
+        });
+        Self::new(specs)
     }
 }
 
@@ -136,19 +147,22 @@ impl<'a> qt::TestSet {
 }
 
 impl qt::TestCase {
+    fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        for dependency in &self.dependencies {
+            if known_dependencies.is_supported(dependency) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub(crate) fn run<'a>(
         &'a self,
         test_set_context: &'a mut TestSetContext,
         shared_environments: &qt::SharedEnvironments,
     ) -> Result<TestResult> {
-        for dependency in &self.dependencies {
-            if !test_set_context
-                .catalog_context
-                .known_dependencies
-                .is_supported(dependency)
-            {
-                return Ok(TestResult::UnsupportedDependency);
-            }
+        if !self.is_supported(&test_set_context.catalog_context.known_dependencies) {
+            return Ok(TestResult::UnsupportedDependency);
         }
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);

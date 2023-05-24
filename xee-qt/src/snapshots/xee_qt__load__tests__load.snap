@@ -906,7 +906,14 @@ TestSet {
                 Dependency {
                     spec: DependencySpec {
                         type_: "spec",
-                        value: "XP30+ XQ30+",
+                        value: "XP30+",
+                    },
+                    satisfied: true,
+                },
+                Dependency {
+                    spec: DependencySpec {
+                        type_: "spec",
+                        value: "XQ30+",
                     },
                     satisfied: true,
                 },
