@@ -384,10 +384,17 @@ impl qt::TestCase {
         let expected = xot.parse(&expected_xml).unwrap();
 
         // and compare
-        if xot.compare(expected, found) {
-            return TestResult::Passed;
+        let c = xot.compare(expected, found);
+
+        // clean up
+        xot.remove(found).unwrap();
+        xot.remove(expected).unwrap();
+
+        if c {
+            TestResult::Passed
+        } else {
+            TestResult::Failed(found_value)
         }
-        TestResult::Failed(found_value)
     }
 
     fn assert_expected_error(expected_error: &str, error: &Error) -> TestResult {
