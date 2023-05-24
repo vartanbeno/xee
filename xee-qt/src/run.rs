@@ -151,13 +151,9 @@ impl<'a> qt::TestSet {
     // XXX Make this result an iterator of results?
     fn run(&'a self, mut test_set_context: TestSetContext) -> Result<Vec<TestResult>> {
         let mut results = Vec::new();
-        // combine shared environments in catalog context with those in this set set
-        let shared_environments = test_set_context
-            .catalog_context
-            .shared_environments
-            .combine(&self.shared_environments);
+
         for test_case in &self.test_cases {
-            let result = test_case.run(&mut test_set_context, &shared_environments);
+            let result = test_case.run(&mut test_set_context, &self.shared_environments);
             results.push(result);
         }
         Ok(results)
@@ -203,12 +199,9 @@ impl qt::TestCase {
 
         let context_item = self.context_item(
             &mut test_set_context.catalog_context.xot,
-            // look up relative to the directory of the test set file
-            &test_set_context
-                .catalog_context
-                .base_dir
-                .join(test_set_context.file_path.parent().unwrap()),
+            &test_set_context.catalog_context.base_dir,
             &mut test_set_context.catalog_context.source_cache,
+            &test_set_context.catalog_context.shared_environments,
             shared_environments,
         );
         let context_item = if let Ok(context_item) = context_item {
@@ -231,22 +224,30 @@ impl qt::TestCase {
         xot: &mut Xot,
         base_dir: &Path,
         source_cache: &mut SourceCache,
-        shared_environments: &qt::SharedEnvironments,
+        catalog_shared_environments: &qt::SharedEnvironments,
+        test_set_shared_environments: &qt::SharedEnvironments,
     ) -> Result<Option<Item>> {
         for environment in &self.environments {
             match environment {
                 qt::TestCaseEnvironment::Local(local_environment) => {
-                    let item = local_environment.context_item(xot, base_dir, source_cache)?;
+                    // the base dir is the same as in the test set shared environments
+                    let base_dir = base_dir.join(&test_set_shared_environments.base_dir);
+                    let item = local_environment.context_item(xot, &base_dir, source_cache)?;
                     if let Some(item) = item {
                         return Ok(Some(item));
                     }
                 }
                 qt::TestCaseEnvironment::Ref(environment_ref) => {
-                    let environment = shared_environments.get(environment_ref);
-                    if let Some(environment) = environment {
-                        let item = environment.context_item(xot, base_dir, source_cache)?;
-                        if let Some(item) = item {
-                            return Ok(Some(item));
+                    for shared_environments in
+                        [test_set_shared_environments, catalog_shared_environments]
+                    {
+                        let environment = shared_environments.get(environment_ref);
+                        if let Some(environment) = environment {
+                            let base_dir = base_dir.join(&shared_environments.base_dir);
+                            let item = environment.context_item(xot, &base_dir, source_cache)?;
+                            if let Some(item) = item {
+                                return Ok(Some(item));
+                            }
                         }
                     }
                 }
@@ -484,6 +485,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -510,6 +512,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -539,6 +542,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -565,6 +569,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -591,6 +596,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -620,6 +626,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -646,6 +653,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -678,6 +686,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -704,6 +713,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -730,6 +740,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -756,6 +767,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#" 
 <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
   <test-case name="true">
@@ -785,6 +797,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -814,6 +827,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -843,6 +857,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -872,6 +887,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -904,6 +920,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -930,6 +947,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">
@@ -961,6 +979,7 @@ mod tests {
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_xml(
             &mut xot,
+            PathBuf::from("my/test"),
             r#"
     <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
       <test-case name="true">

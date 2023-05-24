@@ -147,27 +147,28 @@ pub(crate) struct EnvironmentRef {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments {
+    pub(crate) base_dir: PathBuf,
     environments: FxIndexMap<String, EnvironmentSpec>,
 }
 
 impl SharedEnvironments {
-    pub(crate) fn new(mut environments: FxIndexMap<String, EnvironmentSpec>) -> Self {
+    pub(crate) fn new(
+        base_dir: PathBuf,
+        mut environments: FxIndexMap<String, EnvironmentSpec>,
+    ) -> Self {
         // there is always an empty environment
         if !environments.contains_key("empty") {
             let empty = EnvironmentSpec::empty();
             environments.insert("empty".to_string(), empty);
         }
-        Self { environments }
+        Self {
+            base_dir,
+            environments,
+        }
     }
 
     pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&EnvironmentSpec> {
         self.environments.get(&environment_ref.ref_)
-    }
-
-    pub(crate) fn combine(&self, other: &SharedEnvironments) -> Self {
-        let mut environments = self.environments.clone();
-        environments.extend(other.environments.clone());
-        Self { environments }
     }
 }
 

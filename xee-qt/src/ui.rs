@@ -228,11 +228,11 @@ impl Renderer for VerboseRenderer {
             TestResult::CompilationError(error) => {
                 println!("{} {}", "ERROR".red(), error);
             }
-            TestResult::UnsupportedExpression(_) => {
-                println!("{}", "ERROR".red());
+            TestResult::UnsupportedExpression(error) => {
+                println!("{} {}", "ERROR".red(), error);
             }
             TestResult::Unsupported => {
-                println!("{}", "ERROR".red());
+                println!("{} Unsupported", "ERROR".red());
             }
             TestResult::UnsupportedDependency => {
                 unreachable!();

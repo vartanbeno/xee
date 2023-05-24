@@ -1,11 +1,12 @@
 ---
 source: xee-qt/src/load.rs
-expression: "qt::Catalog::load_from_xml(&mut xot, CATALOG_FIXTURE).unwrap()"
+expression: "qt::Catalog::load_from_xml(&mut xot, PathBuf::from(\".\"),\n        CATALOG_FIXTURE).unwrap()"
 ---
 Catalog {
     test_suite: "FOTS",
     version: "3.1",
     shared_environments: SharedEnvironments {
+        base_dir: ".",
         environments: {
             "empty": EnvironmentSpec {
                 schemas: [],

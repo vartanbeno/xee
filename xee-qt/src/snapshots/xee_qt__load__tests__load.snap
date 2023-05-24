@@ -1,6 +1,6 @@
 ---
 source: xee-qt/src/load.rs
-expression: "qt::TestSet::load_from_xml(&mut xot, ROOT_FIXTURE).unwrap()"
+expression: "qt::TestSet::load_from_xml(&mut xot, PathBuf::from(\"fn\"),\n        ROOT_FIXTURE).unwrap()"
 ---
 TestSet {
     name: "fn-root",
@@ -9,6 +9,7 @@ TestSet {
     ],
     dependencies: [],
     shared_environments: SharedEnvironments {
+        base_dir: "fn",
         environments: {
             "lang": EnvironmentSpec {
                 schemas: [],
