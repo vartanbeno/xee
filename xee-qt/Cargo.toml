@@ -19,6 +19,7 @@ miette = { workspace = true, features = ["fancy"]}
 fxhash = "0.2.1"
 indexmap = "1.9.3"
 clap = { workspace = true, features = ["derive"]}
+crossterm = "0.26.1"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

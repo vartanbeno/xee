@@ -5,6 +5,7 @@ mod load;
 mod qt;
 mod run;
 mod serialize;
+mod ui;
 
 use clap::Parser;
 use miette::{IntoDiagnostic, Result, WrapErr};
@@ -12,6 +13,7 @@ use std::path::{Path, PathBuf};
 use xot::Xot;
 
 use crate::run::CatalogContext;
+use crate::ui::run_path;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -31,7 +33,7 @@ fn main() -> Result<()> {
         if relative_path.components().count() == 0 {
             catalog.run(catalog_context);
         } else {
-            catalog.run_path(catalog_context, &relative_path)?;
+            run_path(&catalog, catalog_context, &relative_path)?;
         }
     } else {
         println!("no qttests catalog.xml found!");

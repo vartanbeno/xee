@@ -12,7 +12,7 @@ use crate::qt;
 use crate::serialize::serialize;
 
 #[derive(Debug, Default)]
-struct KnownDependencies {
+pub(crate) struct KnownDependencies {
     specs: FxIndexSet<qt::DependencySpec>,
 }
 
@@ -43,7 +43,7 @@ struct TestSetResult {
 }
 
 #[derive(Debug, PartialEq)]
-enum TestResult {
+pub(crate) enum TestResult {
     // The test passed
     Passed,
     // The test passed because it errored, but the error
@@ -67,10 +67,10 @@ enum TestResult {
 }
 
 pub(crate) struct CatalogContext {
-    xot: Xot,
-    base_dir: PathBuf,
-    source_cache: SourceCache,
-    known_dependencies: KnownDependencies,
+    pub(crate) xot: Xot,
+    pub(crate) base_dir: PathBuf,
+    pub(crate) source_cache: SourceCache,
+    pub(crate) known_dependencies: KnownDependencies,
 }
 
 impl CatalogContext {
@@ -99,9 +99,9 @@ impl Drop for CatalogContext {
     }
 }
 
-struct TestSetContext {
-    catalog_context: CatalogContext,
-    file_path: PathBuf,
+pub(crate) struct TestSetContext {
+    pub(crate) catalog_context: CatalogContext,
+    pub(crate) file_path: PathBuf,
 }
 
 impl TestSetContext {
@@ -133,7 +133,7 @@ impl<'a> qt::TestSet {
 }
 
 impl qt::TestCase {
-    fn run<'a>(
+    pub(crate) fn run<'a>(
         &'a self,
         test_set_context: &'a mut TestSetContext,
         shared_environments: &qt::SharedEnvironments,
