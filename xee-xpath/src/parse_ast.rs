@@ -981,7 +981,8 @@ impl<'a> AstParser<'a> {
             vec![]
         };
         let return_type = if next.as_rule() == Rule::SequenceType {
-            panic!("unimplemented: return type");
+            Some(ast::SequenceType::Unsupported)
+            // panic!("unimplemented: return type");
             // let return_type = sequence_type(next);
             // next = pairs.next().unwrap();
             // Some(return_type)
@@ -1017,7 +1018,7 @@ impl<'a> AstParser<'a> {
         let mut pairs = pair.into_inner();
         let name = self.eq_name_to_name(pairs.next().unwrap(), None);
         let type_ = if let Some(_pair) = pairs.next() {
-            panic!("unhandled type annotation");
+            Some(ast::SequenceType::Unsupported)
         } else {
             None
         };

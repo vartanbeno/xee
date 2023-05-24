@@ -293,6 +293,7 @@ pub(crate) struct URIQualifiedName {
 pub(crate) enum SequenceType {
     Empty,
     Item,
+    Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
