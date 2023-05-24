@@ -9,6 +9,7 @@ use xot::Xot;
 use crate::collection::FxIndexSet;
 use crate::environment::SourceCache;
 use crate::qt;
+use crate::serialize::serialize;
 
 #[derive(Debug, Default)]
 struct KnownDependencies {
@@ -366,53 +367,27 @@ impl qt::TestCase {
         }
     }
 
-    fn assert_xml(xot: &mut Xot, xml: &str, value: StackValue) -> TestResult {
-        let xmls = match value {
-            StackValue::Atomic(Atomic::Empty) => vec!["".to_string()],
-            StackValue::Node(Node::Xot(node)) => {
-                let xml_value = xot.to_string(node);
-                if let Ok(xml_value) = xml_value {
-                    vec![xml_value]
-                } else {
-                    // cannot be represented as XML
-                    return TestResult::Failed(value);
-                }
-            }
-            StackValue::Sequence(seq_) => {
-                let seq = seq_.borrow();
-                let mut xmls = Vec::with_capacity(seq.len());
-                for item in seq.as_slice().iter() {
-                    if let Item::Node(Node::Xot(node)) = item {
-                        let xml_value = xot.to_string(*node);
-                        if let Ok(xml_value) = xml_value {
-                            xmls.push(xml_value);
-                        } else {
-                            // item in sequence cannot be represented as XML
-                            return TestResult::Failed(StackValue::Sequence(seq_.clone()));
-                        }
-                    } else {
-                        // item in sequence cannot be represented as XML
-                        return TestResult::Failed(StackValue::Sequence(seq_.clone()));
-                    }
-                }
-                xmls
-            }
-            _ => {
-                // cannot be represented as XML
-                return TestResult::Failed(value);
-            }
+    fn assert_xml(xot: &mut Xot, expected_xml: &str, value: StackValue) -> TestResult {
+        let found_value = value.clone();
+        let xml = serialize(xot, value);
+
+        let xml = if let Ok(xml) = xml {
+            xml
+        } else {
+            return TestResult::Failed(found_value);
         };
-        todo!();
-        // let expected = StackValue::from_xml(&xml);
-        // if let Ok(expected) = expected {
-        //     if expected == value {
-        //         TestResult::Passed
-        //     } else {
-        //         TestResult::Failed(value)
-        //     }
-        // } else {
-        //     TestResult::Failed(value)
-        // }
+        // also wrap expected XML in a sequence element
+        let expected_xml = format!("<sequence>{}</sequence>", expected_xml);
+
+        // now parse both with Xot
+        let found = xot.parse(&xml).unwrap();
+        let expected = xot.parse(&expected_xml).unwrap();
+
+        // and compare
+        if xot.compare(expected, found) {
+            return TestResult::Passed;
+        }
+        TestResult::Failed(found_value)
     }
 
     fn assert_expected_error(expected_error: &str, error: &Error) -> TestResult {
@@ -1047,6 +1022,130 @@ mod tests {
 
         let mut xot = Xot::new();
         let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(catalog_context);
+        let test_result = test_set.run(test_set_context).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_xml_passed() {
+        let tmp_dir = tempdir().unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <environment name="data">
+            <source role="." file="data.xml">
+            </source>
+          </environment>
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment ref="data"/>
+            <test>/doc/p</test>
+            <result>
+              <assert-xml><![CDATA[<p>Hello world!</p>]]></assert-xml>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
+
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+
+        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(catalog_context);
+        let test_result = test_set.run(test_set_context).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert_eq!(test_result.results[0].1, TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_xml_failed() {
+        let tmp_dir = tempdir().unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <environment name="data">
+            <source role="." file="data.xml">
+            </source>
+          </environment>
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment ref="data"/>
+            <test>/doc/p</test>
+            <result>
+              <assert-xml><![CDATA[<p>Something else!</p>]]></assert-xml>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
+
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+
+        let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
+        let test_set_context = TestSetContext::new(catalog_context);
+        let test_result = test_set.run(test_set_context).unwrap();
+        assert_eq!(test_result.results.len(), 1);
+        assert!(matches!(
+            test_result.results[0].1,
+            TestResult::Failed { .. }
+        ));
+    }
+
+    #[test]
+    fn test_assert_xml_sequence() {
+        let tmp_dir = tempdir().unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <environment name="data">
+            <source role="." file="data.xml">
+            </source>
+          </environment>
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment ref="data"/>
+            <test>/doc/p</test>
+            <result>
+              <assert-xml><![CDATA[<p>Hello world!</p><p>Grabthar's Hammer</p>]]></assert-xml>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(
+            data_file,
+            r#"<doc><p>Hello world!</p><p>Grabthar's Hammer</p></doc>"#
+        )
+        .unwrap();
+
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
+
         let catalog_context = CatalogContext::with_base_dir(xot, tmp_dir.path());
         let test_set_context = TestSetContext::new(catalog_context);
         let test_result = test_set.run(test_set_context).unwrap();

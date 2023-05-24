@@ -4,6 +4,7 @@ mod environment;
 mod load;
 mod qt;
 mod run;
+mod serialize;
 
 use clap::Parser;
 use miette::{IntoDiagnostic, Result, WrapErr};
