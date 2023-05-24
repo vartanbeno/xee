@@ -222,11 +222,11 @@ impl Renderer for VerboseRenderer {
             TestResult::Failed(_) => {
                 println!("{}", "FAIL".red());
             }
-            TestResult::RuntimeError(_) => {
-                println!("{}", "ERROR".red());
+            TestResult::RuntimeError(error) => {
+                println!("{} {}", "ERROR".red(), error);
             }
-            TestResult::CompilationError(_) => {
-                println!("{}", "ERROR".red());
+            TestResult::CompilationError(error) => {
+                println!("{} {}", "ERROR".red(), error);
             }
             TestResult::UnsupportedExpression(_) => {
                 println!("{}", "ERROR".red());

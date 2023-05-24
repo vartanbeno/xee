@@ -145,7 +145,7 @@ pub(crate) struct EnvironmentRef {
     pub(crate) ref_: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments {
     environments: FxIndexMap<String, EnvironmentSpec>,
 }
@@ -163,9 +163,15 @@ impl SharedEnvironments {
     pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&EnvironmentSpec> {
         self.environments.get(&environment_ref.ref_)
     }
+
+    pub(crate) fn combine(&self, other: &SharedEnvironments) -> Self {
+        let mut environments = self.environments.clone();
+        environments.extend(other.environments.clone());
+        Self { environments }
+    }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct EnvironmentSpec {
     pub(crate) schemas: Vec<Schema>,
     pub(crate) sources: Vec<Source>,
@@ -188,48 +194,48 @@ impl EnvironmentSpec {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Schema {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum SourceRole {
     Context,
     Var(String),
     Doc(String), // URI
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Source {
     pub(crate) metadata: Metadata,
     pub(crate) role: SourceRole,
     pub(crate) file: PathBuf,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Resource {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Param {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ContextItem {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct DecimalFormat {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Namespace {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct FunctionLibrary {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Collection {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct StaticBaseUri {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Collation {}
 
 #[derive(Debug)]

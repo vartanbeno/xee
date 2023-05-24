@@ -36,6 +36,7 @@ fn main() -> Result<()> {
             .xot(xot)
             .base_dir(catalog_path.parent().unwrap().to_path_buf())
             .verbose(cli.verbose)
+            .shared_environments(catalog.shared_environments.clone())
             .build()
             .unwrap();
         if relative_path.components().count() == 0 {

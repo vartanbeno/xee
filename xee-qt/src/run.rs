@@ -89,6 +89,8 @@ pub(crate) struct CatalogContext {
     pub(crate) known_dependencies: KnownDependencies,
     #[builder(default)]
     pub(crate) verbose: bool,
+    #[builder(default)]
+    pub(crate) shared_environments: qt::SharedEnvironments,
 }
 
 impl CatalogContext {
@@ -99,6 +101,7 @@ impl CatalogContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
+            shared_environments: qt::SharedEnvironments::default(),
         }
     }
 
@@ -109,6 +112,7 @@ impl CatalogContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
+            shared_environments: qt::SharedEnvironments::default(),
         }
     }
 }
@@ -147,8 +151,13 @@ impl<'a> qt::TestSet {
     // XXX Make this result an iterator of results?
     fn run(&'a self, mut test_set_context: TestSetContext) -> Result<Vec<TestResult>> {
         let mut results = Vec::new();
+        // combine shared environments in catalog context with those in this set set
+        let shared_environments = test_set_context
+            .catalog_context
+            .shared_environments
+            .combine(&self.shared_environments);
         for test_case in &self.test_cases {
-            let result = test_case.run(&mut test_set_context, &self.shared_environments);
+            let result = test_case.run(&mut test_set_context, &shared_environments);
             results.push(result);
         }
         Ok(results)
