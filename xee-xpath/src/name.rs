@@ -2,6 +2,8 @@ use ahash::{HashMap, HashMapExt};
 
 pub(crate) const FN_NAMESPACE: &str = "http://www.w3.org/2005/xpath-functions";
 
+const XML_NAMESPACE: &str = "http://www.w3.org/XML/1998/namespace";
+
 const STATIC_NAMESPACES: [(&str, &str); 7] = [
     ("xs", "http://www.w3.org/2001/XMLSchema"),
     ("fn", FN_NAMESPACE),
@@ -25,6 +27,7 @@ impl<'a> Namespaces<'a> {
         default_function_namespace: Option<&'a str>,
     ) -> Self {
         let mut namespaces = HashMap::new();
+        namespaces.insert("xml", XML_NAMESPACE);
         for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
             namespaces.insert(prefix, uri);
         }
