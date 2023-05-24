@@ -368,13 +368,12 @@ impl qt::TestCase {
     }
 
     fn assert_xml(xot: &mut Xot, expected_xml: &str, value: StackValue) -> TestResult {
-        let found_value = value.clone();
-        let xml = serialize(xot, value);
+        let xml = serialize(xot, &value);
 
         let xml = if let Ok(xml) = xml {
             xml
         } else {
-            return TestResult::Failed(found_value);
+            return TestResult::Failed(value);
         };
         // also wrap expected XML in a sequence element
         let expected_xml = format!("<sequence>{}</sequence>", expected_xml);
@@ -393,7 +392,7 @@ impl qt::TestCase {
         if c {
             TestResult::Passed
         } else {
-            TestResult::Failed(found_value)
+            TestResult::Failed(value)
         }
     }
 
