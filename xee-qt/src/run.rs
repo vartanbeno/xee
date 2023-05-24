@@ -1,6 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
+use std::path::{Path, PathBuf};
 use xee_xpath::{
     Atomic, DynamicContext, Error, Item, Namespaces, Node, StackValue, StaticContext, XPath,
 };
@@ -11,7 +10,7 @@ use crate::environment::SourceCache;
 use crate::qt;
 use crate::serialize::serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct KnownDependencies {
     specs: FxIndexSet<qt::DependencySpec>,
 }
@@ -82,6 +81,7 @@ pub(crate) struct CatalogContext {
     pub(crate) base_dir: PathBuf,
     pub(crate) source_cache: SourceCache,
     pub(crate) known_dependencies: KnownDependencies,
+    pub(crate) verbose: bool,
 }
 
 impl CatalogContext {
@@ -91,6 +91,7 @@ impl CatalogContext {
             base_dir: PathBuf::new(),
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
+            verbose: false,
         }
     }
 
@@ -100,6 +101,7 @@ impl CatalogContext {
             base_dir: base_dir.to_path_buf(),
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
+            verbose: false,
         }
     }
 }
@@ -148,6 +150,11 @@ impl<'a> qt::TestSet {
 
 impl qt::TestCase {
     fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        // if we have no dependencies, we're always supported
+        if self.dependencies.is_empty() {
+            return true;
+        }
+        // if any of the listed dependencies is supported, we're supported
         for dependency in &self.dependencies {
             if known_dependencies.is_supported(dependency) {
                 return true;

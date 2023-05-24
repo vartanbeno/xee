@@ -30,6 +30,7 @@ impl EnvironmentSpec {
     }
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct SourceCache {
     nodes: FxHashMap<PathBuf, Node>,
 }
