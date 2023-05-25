@@ -7,42 +7,42 @@ use std::io::{stdout, Stdout};
 use std::path::Path;
 
 use crate::qt;
-use crate::run::{CatalogContext, TestResult};
+use crate::run::{RunContext, TestResult};
 
-pub(crate) fn run(catalog: &qt::Catalog, mut catalog_context: CatalogContext) -> Result<()> {
+pub(crate) fn run(catalog: &qt::Catalog, mut run_context: RunContext) -> Result<()> {
     let mut stdout = stdout();
     for file_path in &catalog.file_paths {
-        run_path_helper(catalog, &mut catalog_context, file_path, &mut stdout)?
+        run_path_helper(catalog, &mut run_context, file_path, &mut stdout)?
     }
     Ok(())
 }
 
 pub(crate) fn run_path(
     catalog: &qt::Catalog,
-    mut catalog_context: CatalogContext,
+    mut run_context: RunContext,
     path: &Path,
 ) -> Result<()> {
     let mut stdout = stdout();
-    run_path_helper(catalog, &mut catalog_context, path, &mut stdout)
+    run_path_helper(catalog, &mut run_context, path, &mut stdout)
 }
 
 fn run_path_helper(
     catalog: &qt::Catalog,
-    catalog_context: &mut CatalogContext,
+    run_context: &mut RunContext,
     path: &Path,
     stdout: &mut Stdout,
 ) -> Result<()> {
     if !catalog.file_paths.contains(path) {
         miette!("File not found in catalog: {:?}", path);
     }
-    let verbose = catalog_context.verbose;
-    let full_path = catalog_context.base_dir.join(path);
-    let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
+    let verbose = run_context.verbose;
+    let full_path = run_context.base_dir.join(path);
+    let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
         run_test_set(
             &test_set,
             catalog,
-            catalog_context,
+            run_context,
             stdout,
             VerboseRenderer::new(),
         )?;
@@ -50,7 +50,7 @@ fn run_path_helper(
         run_test_set(
             &test_set,
             catalog,
-            catalog_context,
+            run_context,
             stdout,
             CharacterRenderer::new(),
         )?;
@@ -85,7 +85,7 @@ trait Renderer {
 fn run_test_set<R: Renderer>(
     test_set: &qt::TestSet,
     catalog: &qt::Catalog,
-    catalog_context: &mut CatalogContext,
+    run_context: &mut RunContext,
     stdout: &mut Stdout,
     renderer: R,
 ) -> Result<()> {
@@ -94,13 +94,13 @@ fn run_test_set<R: Renderer>(
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
-        if !test_case.is_supported(&catalog_context.known_dependencies) {
+        if !test_case.is_supported(&run_context.known_dependencies) {
             continue;
         }
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(test_set, catalog_context, &test_set.shared_environments);
+        let test_result = test_case.run(test_set, run_context, &test_set.shared_environments);
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;

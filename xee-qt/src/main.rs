@@ -12,7 +12,7 @@ use miette::{IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xot::Xot;
 
-use crate::run::CatalogContextBuilder;
+use crate::run::RunContextBuilder;
 use crate::ui::{run, run_path};
 
 #[derive(Parser)]
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     if let Some((catalog_path, relative_path)) = paths(&path) {
         let mut xot = Xot::new();
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
-        let catalog_context = CatalogContextBuilder::default()
+        let run_context = RunContextBuilder::default()
             .xot(xot)
             .base_dir(catalog_path.parent().unwrap().to_path_buf())
             .verbose(cli.verbose)
@@ -40,9 +40,9 @@ fn main() -> Result<()> {
             .build()
             .unwrap();
         if relative_path.components().count() == 0 {
-            run(&catalog, catalog_context)?;
+            run(&catalog, run_context)?;
         } else {
-            run_path(&catalog, catalog_context, &relative_path)?;
+            run_path(&catalog, run_context, &relative_path)?;
         }
     } else {
         println!("no qttests catalog.xml found!");
