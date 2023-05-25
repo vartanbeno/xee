@@ -1,5 +1,5 @@
 use fxhash::FxHashMap;
-use miette::{IntoDiagnostic, Result, WrapErr};
+use miette::{miette, IntoDiagnostic, Result, WrapErr};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use xee_xpath::{Item, Node};
 use xot::Xot;
 
+use crate::collection::FxIndexMap;
 use crate::qt;
 use crate::qt::EnvironmentSpec;
 use crate::qt::Source;
@@ -27,6 +28,65 @@ impl EnvironmentSpec {
             }
         }
         Ok(None)
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct SharedEnvironments {
+    environments: FxIndexMap<String, EnvironmentSpec>,
+}
+
+impl SharedEnvironments {
+    pub(crate) fn new(mut environments: FxIndexMap<String, EnvironmentSpec>) -> Self {
+        // there is always an empty environment
+        if !environments.contains_key("empty") {
+            let empty = EnvironmentSpec::empty();
+            environments.insert("empty".to_string(), empty);
+        }
+        Self { environments }
+    }
+
+    pub(crate) fn get(&self, environment_ref: &qt::EnvironmentRef) -> Option<&EnvironmentSpec> {
+        self.environments.get(&environment_ref.ref_)
+    }
+}
+
+pub(crate) struct SharedEnvironmentsIter<'a> {
+    pub(crate) catalog_shared_environments: &'a SharedEnvironments,
+    pub(crate) test_set_shared_environments: &'a SharedEnvironments,
+    pub(crate) environments: &'a [qt::TestCaseEnvironment],
+    pub(crate) index: usize,
+}
+
+impl<'a> Iterator for SharedEnvironmentsIter<'a> {
+    type Item = Result<&'a qt::EnvironmentSpec>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.environments.len() {
+            return None;
+        }
+        let environment = &self.environments[self.index];
+        self.index += 1;
+        match environment {
+            qt::TestCaseEnvironment::Local(local_environment_spec) => {
+                Some(Ok(local_environment_spec))
+            }
+            qt::TestCaseEnvironment::Ref(environment_ref) => {
+                for shared_environments in [
+                    self.test_set_shared_environments,
+                    self.catalog_shared_environments,
+                ] {
+                    let environment_spec = shared_environments.get(environment_ref);
+                    if let Some(environment_spec) = environment_spec {
+                        return Some(Ok(environment_spec));
+                    }
+                }
+                Some(Err(miette!(
+                    "Unknown environment reference: {}",
+                    environment_ref
+                )))
+            }
+        }
     }
 }
 

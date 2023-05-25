@@ -11,6 +11,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
+use crate::environment::SharedEnvironments;
 use crate::qt;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
@@ -379,7 +380,7 @@ fn environment_spec_query<'a>(
 fn shared_environments_query<'a>(
     xot: &'a Xot,
     mut queries: Queries<'a>,
-) -> Result<(Queries<'a>, impl Query<qt::SharedEnvironments> + 'a)> {
+) -> Result<(Queries<'a>, impl Query<SharedEnvironments> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
     let (mut queries, environment_spec_query) = environment_spec_query(xot, queries)?;
     let environments_query = queries.many("environment", move |session, item| {
@@ -389,9 +390,7 @@ fn shared_environments_query<'a>(
     })?;
     let shared_environments_query = queries.one(".", move |session, item| {
         let environments = environments_query.execute(session, item)?;
-        Ok(qt::SharedEnvironments::new(
-            environments.into_iter().collect(),
-        ))
+        Ok(SharedEnvironments::new(environments.into_iter().collect()))
     })?;
     Ok((queries, shared_environments_query))
 }

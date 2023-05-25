@@ -1,6 +1,10 @@
-use std::path::PathBuf;
+use std::{
+    fmt::{self, Display, Formatter},
+    path::{Path, PathBuf},
+};
 
-use crate::collection::{FxIndexMap, FxIndexSet};
+use crate::collection::FxIndexSet;
+use crate::environment::SharedEnvironments;
 
 #[derive(Debug)]
 pub(crate) struct Catalog {
@@ -147,23 +151,9 @@ pub(crate) struct EnvironmentRef {
     pub(crate) ref_: String,
 }
 
-#[derive(Debug, Default, Clone)]
-pub(crate) struct SharedEnvironments {
-    environments: FxIndexMap<String, EnvironmentSpec>,
-}
-
-impl SharedEnvironments {
-    pub(crate) fn new(mut environments: FxIndexMap<String, EnvironmentSpec>) -> Self {
-        // there is always an empty environment
-        if !environments.contains_key("empty") {
-            let empty = EnvironmentSpec::empty();
-            environments.insert("empty".to_string(), empty);
-        }
-        Self { environments }
-    }
-
-    pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&EnvironmentSpec> {
-        self.environments.get(&environment_ref.ref_)
+impl Display for EnvironmentRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ref_)
     }
 }
 

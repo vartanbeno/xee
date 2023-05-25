@@ -1,5 +1,5 @@
 use derive_builder::Builder;
-use miette::{Diagnostic, IntoDiagnostic, Result, WrapErr};
+use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
     Atomic, DynamicContext, Error, Item, Name, Namespaces, Node, StackValue, StaticContext, XPath,
@@ -7,7 +7,7 @@ use xee_xpath::{
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
-use crate::environment::SourceCache;
+use crate::environment::{SharedEnvironments, SharedEnvironmentsIter, SourceCache};
 use crate::qt;
 use crate::serialize::serialize;
 
@@ -92,7 +92,7 @@ pub(crate) struct RunContext {
     #[builder(default)]
     pub(crate) verbose: bool,
     #[builder(default)]
-    pub(crate) shared_environments: qt::SharedEnvironments,
+    pub(crate) shared_environments: SharedEnvironments,
 }
 
 impl RunContext {
@@ -103,7 +103,7 @@ impl RunContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
-            shared_environments: qt::SharedEnvironments::default(),
+            shared_environments: SharedEnvironments::default(),
         }
     }
 
@@ -114,7 +114,7 @@ impl RunContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
-            shared_environments: qt::SharedEnvironments::default(),
+            shared_environments: SharedEnvironments::default(),
         }
     }
 }
@@ -210,15 +210,27 @@ impl qt::TestCase {
         Self::check_value(&mut run_context.xot, &self.result, &value)
     }
 
-    // fn environments(&self, catalog_shared_environments: &qt::SharedEnvironment, test_set_shared_environments: &)
+    fn environments<'a>(
+        &'a self,
+        catalog_shared_environments: &'a SharedEnvironments,
+        test_set_shared_environments: &'a SharedEnvironments,
+    ) -> SharedEnvironmentsIter<'a> {
+        SharedEnvironmentsIter {
+            environments: &self.environments,
+            catalog_shared_environments,
+            test_set_shared_environments,
+            index: 0,
+        }
+    }
+
     fn context_item(
         &self,
         xot: &mut Xot,
         source_cache: &mut SourceCache,
         catalog_base_dir: &Path,
         test_set_base_dir: &Path,
-        catalog_shared_environments: &qt::SharedEnvironments,
-        test_set_shared_environments: &qt::SharedEnvironments,
+        catalog_shared_environments: &SharedEnvironments,
+        test_set_shared_environments: &SharedEnvironments,
     ) -> Result<Option<Item>> {
         for environment in &self.environments {
             match environment {
