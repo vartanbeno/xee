@@ -34,6 +34,7 @@ mod step;
 mod value;
 mod xpath;
 
+pub use crate::ast::Name;
 pub use crate::dynamic_context::DynamicContext;
 pub use crate::error::Error;
 pub use crate::name::Namespaces;

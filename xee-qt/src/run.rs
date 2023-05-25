@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use miette::{Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Namespaces, Node, StackValue, StaticContext, XPath,
+    Atomic, DynamicContext, Error, Item, Name, Namespaces, Node, StackValue, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -203,7 +203,10 @@ impl qt::TestCase {
             Err(error) => return TestResult::ContextItemError(error.to_string()),
         };
 
-        let dynamic_context = DynamicContext::new(&run_context.xot, &static_context);
+        let variables = self.variables();
+
+        let dynamic_context =
+            DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
         let value = xpath.run(&dynamic_context, context_item.as_ref());
         Self::check_value(&mut run_context.xot, &self.result, &value)
     }
@@ -243,6 +246,10 @@ impl qt::TestCase {
             }
         }
         Ok(None)
+    }
+
+    fn variables(&self) -> Vec<(Name, StackValue)> {
+        vec![]
     }
 
     fn check_value(

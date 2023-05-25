@@ -226,8 +226,8 @@ impl Renderer for VerboseRenderer {
             TestResult::Passed => {
                 println!("{}", "PASS".green());
             }
-            TestResult::PassedWithWrongError(_) => {
-                println!("{}", "PASS".green());
+            TestResult::PassedWithWrongError(error) => {
+                println!("{} {}", "PASS".green(), error);
             }
             TestResult::Failed(_) => {
                 println!("{}", "FAIL".red());
