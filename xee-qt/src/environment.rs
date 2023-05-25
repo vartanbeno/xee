@@ -51,14 +51,14 @@ impl SharedEnvironments {
     }
 }
 
-pub(crate) struct SharedEnvironmentsIter<'a> {
+pub(crate) struct EnvironmentSpecIterator<'a> {
     pub(crate) catalog_shared_environments: &'a SharedEnvironments,
     pub(crate) test_set_shared_environments: &'a SharedEnvironments,
     pub(crate) environments: &'a [qt::TestCaseEnvironment],
     pub(crate) index: usize,
 }
 
-impl<'a> Iterator for SharedEnvironmentsIter<'a> {
+impl<'a> Iterator for EnvironmentSpecIterator<'a> {
     type Item = Result<&'a qt::EnvironmentSpec>;
 
     fn next(&mut self) -> Option<Self::Item> {

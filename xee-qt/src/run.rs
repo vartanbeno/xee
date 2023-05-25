@@ -7,7 +7,7 @@ use xee_xpath::{
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
-use crate::environment::{SharedEnvironments, SharedEnvironmentsIter, SourceCache};
+use crate::environment::{EnvironmentSpecIterator, SharedEnvironments, SourceCache};
 use crate::qt;
 use crate::serialize::serialize;
 
@@ -212,8 +212,8 @@ impl qt::TestCase {
         &'a self,
         catalog_shared_environments: &'a SharedEnvironments,
         test_set_shared_environments: &'a SharedEnvironments,
-    ) -> SharedEnvironmentsIter<'a> {
-        SharedEnvironmentsIter {
+    ) -> EnvironmentSpecIterator<'a> {
+        EnvironmentSpecIterator {
             environments: &self.environments,
             catalog_shared_environments,
             test_set_shared_environments,
