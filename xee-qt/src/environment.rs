@@ -18,12 +18,11 @@ impl EnvironmentSpec {
     pub(crate) fn context_item(
         &self,
         xot: &mut Xot,
-        base_dir: &Path,
         source_cache: &mut SourceCache,
     ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let qt::SourceRole::Context = source.role {
-                let node = source.node(xot, base_dir, source_cache)?;
+                let node = source.node(xot, &self.base_dir, source_cache)?;
                 return Ok(Some(Item::Node(node)));
             }
         }

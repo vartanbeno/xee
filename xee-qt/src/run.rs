@@ -232,8 +232,7 @@ impl qt::TestCase {
             self.environment_specs(catalog_shared_environments, test_set_shared_environments)
         {
             let environment_spec = environment_spec?;
-            let item =
-                environment_spec.context_item(xot, &environment_spec.base_dir, source_cache)?;
+            let item = environment_spec.context_item(xot, source_cache)?;
             if let Some(item) = item {
                 return Ok(Some(item));
             }
