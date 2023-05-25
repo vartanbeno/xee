@@ -100,7 +100,7 @@ fn run_test_set<R: Renderer>(
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(test_set, run_context);
+        let test_result = test_case.run(catalog, test_set, run_context);
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;

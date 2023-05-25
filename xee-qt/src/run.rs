@@ -87,8 +87,6 @@ pub(crate) struct RunContext {
     pub(crate) known_dependencies: KnownDependencies,
     #[builder(default)]
     pub(crate) verbose: bool,
-    #[builder(default)]
-    pub(crate) shared_environments: SharedEnvironments,
 }
 
 impl RunContext {
@@ -99,7 +97,6 @@ impl RunContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
-            shared_environments: SharedEnvironments::default(),
         }
     }
 
@@ -110,7 +107,6 @@ impl RunContext {
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
-            shared_environments: SharedEnvironments::default(),
         }
     }
 }
@@ -154,6 +150,7 @@ impl qt::TestCase {
 
     pub(crate) fn run<'a>(
         &'a self,
+        catalog: &'a qt::Catalog,
         test_set: &'a qt::TestSet,
         run_context: &'a mut RunContext,
     ) -> TestResult {
@@ -177,7 +174,7 @@ impl qt::TestCase {
         let context_item = self.context_item(
             &mut run_context.xot,
             &mut run_context.source_cache,
-            &run_context.shared_environments,
+            &catalog.shared_environments,
             &test_set.shared_environments,
         );
         let context_item = match context_item {
@@ -452,19 +449,26 @@ mod tests {
     use tempfile::tempdir;
 
     use super::*;
+    const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");
 
-    fn run(xot: Xot, test_set: qt::TestSet) -> TestResult {
+    fn run(mut xot: Xot, test_set: qt::TestSet) -> TestResult {
+        let catalog =
+            qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
+                .unwrap();
         let mut run_context = RunContext::new(xot);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&test_set, &mut run_context)
+        test_set.test_cases[0].run(&catalog, &test_set, &mut run_context)
     }
 
     fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
         let mut xot = Xot::new();
+        let catalog =
+            qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
+                .unwrap();
         let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
         let mut run_context = RunContext::with_base_dir(xot, tmp_dir_path);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&test_set, &mut run_context)
+        test_set.test_cases[0].run(&catalog, &test_set, &mut run_context)
     }
 
     #[test]
