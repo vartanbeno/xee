@@ -53,8 +53,15 @@ pub struct Name {
 }
 
 impl Name {
-    pub(crate) fn new(name: String, namespace: Option<String>) -> Self {
+    pub fn new(name: String, namespace: Option<String>) -> Self {
         Name { name, namespace }
+    }
+
+    pub fn without_ns(name: &str) -> Self {
+        Name {
+            name: name.to_string(),
+            namespace: None,
+        }
     }
 }
 

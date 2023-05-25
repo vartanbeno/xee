@@ -146,7 +146,16 @@ impl qt::TestCase {
             return TestResult::UnsupportedDependency;
         }
         let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(&namespaces);
+        let variables = self.variables(run_context, test_set);
+        let variables = match variables {
+            Ok(variables) => variables,
+            Err(error) => return TestResult::EnvironmentError(error.to_string()),
+        };
+        let variable_names = variables
+            .iter()
+            .map(|(name, _)| name.clone())
+            .collect::<Vec<_>>();
+        let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
         let xpath = XPath::new(&static_context, &self.test);
         let xpath = match xpath {
             Ok(xpath) => xpath,
@@ -162,12 +171,6 @@ impl qt::TestCase {
         let context_item = self.context_item(run_context, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
-            Err(error) => return TestResult::EnvironmentError(error.to_string()),
-        };
-
-        let variables = self.variables(run_context, test_set);
-        let variables = match variables {
-            Ok(variables) => variables,
             Err(error) => return TestResult::EnvironmentError(error.to_string()),
         };
 
@@ -214,15 +217,16 @@ impl qt::TestCase {
         run_context: &mut RunContext,
         test_set: &qt::TestSet,
     ) -> Result<Vec<(Name, StackValue)>> {
-        Ok(Vec::new())
-        // let environment_specs = self
-        //     .environment_specs(&run_context.catalog, test_set)
-        //     .collect::<Result<Vec<_>, _>>()?;
-        // let variables = Vec::new();
-        // for environment_spec in environment_specs {
-        //     let variables = environment_spec.variables(xot, source_cache)?;
-
-        // }
+        let environment_specs = self
+            .environment_specs(&run_context.catalog, test_set)
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut variables = Vec::new();
+        let xot = &mut run_context.xot;
+        let source_cache = &mut run_context.source_cache;
+        for environment_spec in environment_specs {
+            variables.extend(environment_spec.variables(xot, source_cache)?);
+        }
+        Ok(variables)
     }
 
     fn check_value(
@@ -1087,6 +1091,37 @@ mod tests {
             r#"<doc><p>Hello world!</p><p>Grabthar's Hammer</p></doc>"#
         )
         .unwrap();
+
+        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+    }
+
+    #[test]
+    fn test_assert_variable_source() {
+        let tmp_dir = tempdir().unwrap();
+        let test_cases_path = tmp_dir.path().join("test_cases.xml");
+        let mut test_cases_file = File::create(&test_cases_path).unwrap();
+        write!(
+            test_cases_file,
+            r#"
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+          <test-case name="true">
+            <description>Description</description>
+            <created by="Martijn Faassen" on="2023-05-22"/>
+            <environment name="data">
+              <source role="$data" file="data.xml">
+              </source>
+            </environment>
+            <test>$data/doc/p/string()</test>
+            <result>
+              <assert-string-value>Hello world!</assert-string-value>
+            </result>
+          </test-case>
+          </test-set>"#,
+        )
+        .unwrap();
+
+        let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
+        write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
     }

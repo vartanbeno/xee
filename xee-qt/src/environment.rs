@@ -5,6 +5,8 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
+use xee_xpath::Name;
+use xee_xpath::StackValue;
 
 use xee_xpath::{Item, Node};
 use xot::Xot;
@@ -27,6 +29,22 @@ impl EnvironmentSpec {
             }
         }
         Ok(None)
+    }
+
+    pub(crate) fn variables(
+        &self,
+        xot: &mut Xot,
+        source_cache: &mut SourceCache,
+    ) -> Result<Vec<(Name, StackValue)>> {
+        let mut variables = Vec::new();
+        for source in &self.sources {
+            if let qt::SourceRole::Var(name) = &source.role {
+                let name = &name[1..]; // without $
+                let node = source.node(xot, &self.base_dir, source_cache)?;
+                variables.push((Name::without_ns(name), StackValue::Node(node)));
+            }
+        }
+        Ok(variables)
     }
 }
 
