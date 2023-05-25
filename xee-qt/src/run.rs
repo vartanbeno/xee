@@ -192,8 +192,6 @@ impl qt::TestCase {
         let context_item = self.context_item(
             &mut run_context.xot,
             &mut run_context.source_cache,
-            &run_context.base_dir,
-            test_set.base_dir(),
             &run_context.shared_environments,
             &test_set.shared_environments,
         );
@@ -227,28 +225,32 @@ impl qt::TestCase {
         &self,
         xot: &mut Xot,
         source_cache: &mut SourceCache,
-        catalog_base_dir: &Path,
-        test_set_base_dir: &Path,
         catalog_shared_environments: &SharedEnvironments,
         test_set_shared_environments: &SharedEnvironments,
     ) -> Result<Option<Item>> {
         for environment in &self.environments {
             match environment {
                 qt::TestCaseEnvironment::Local(local_environment) => {
-                    let item =
-                        local_environment.context_item(xot, test_set_base_dir, source_cache)?;
+                    let item = local_environment.context_item(
+                        xot,
+                        &local_environment.base_dir,
+                        source_cache,
+                    )?;
                     if let Some(item) = item {
                         return Ok(Some(item));
                     }
                 }
                 qt::TestCaseEnvironment::Ref(environment_ref) => {
-                    for (base_dir, shared_environments) in [
-                        (test_set_base_dir, test_set_shared_environments),
-                        (catalog_base_dir, catalog_shared_environments),
-                    ] {
+                    for shared_environments in
+                        [test_set_shared_environments, catalog_shared_environments]
+                    {
                         let environment = shared_environments.get(environment_ref);
                         if let Some(environment) = environment {
-                            let item = environment.context_item(xot, base_dir, source_cache)?;
+                            let item = environment.context_item(
+                                xot,
+                                &environment.base_dir,
+                                source_cache,
+                            )?;
                             if let Some(item) = item {
                                 return Ok(Some(item));
                             }

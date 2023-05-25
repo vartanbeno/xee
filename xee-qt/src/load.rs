@@ -110,8 +110,8 @@ fn test_set_query<'a>(
 ) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
     let descriptions_query = queries.many("description/string()", convert_string)?;
-    let (queries, shared_environments_query) = shared_environments_query(xot, queries)?;
-    let (mut queries, test_cases_query) = test_cases_query(xot, queries)?;
+    let (queries, shared_environments_query) = shared_environments_query(xot, path, queries)?;
+    let (mut queries, test_cases_query) = test_cases_query(xot, path, queries)?;
     let test_set_query = queries.one("/test-set", move |session, item| {
         let name = name_query.execute(session, item)?;
         let descriptions = descriptions_query.execute(session, item)?;
@@ -182,6 +182,7 @@ fn metadata_query<'a>(
 
 fn test_cases_query<'a>(
     xot: &'a Xot,
+    path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<Vec<qt::TestCase>> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
@@ -218,7 +219,7 @@ fn test_cases_query<'a>(
             .collect::<Vec<_>>())
     })?;
     let ref_query = queries.option("@ref/string()", convert_string)?;
-    let (mut queries, environment_query) = environment_spec_query(xot, queries)?;
+    let (mut queries, environment_query) = environment_spec_query(xot, path, queries)?;
     let local_environment_query = queries.many("environment", move |session, item| {
         let ref_ = ref_query.execute(session, item)?;
         if let Some(ref_) = ref_ {
@@ -321,6 +322,7 @@ fn test_cases_query<'a>(
 
 fn environment_spec_query<'a>(
     xot: &'a Xot,
+    path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::EnvironmentSpec> + 'a)> {
     let file_query = queries.one("@file/string()", convert_string)?;
@@ -363,11 +365,15 @@ fn environment_spec_query<'a>(
         Ok(sources)
     })?;
 
+    // the environment base_dir is the same as the catalog/test set path,
+    // but without the file name
+    let path = path.parent().unwrap();
     let environment_query = queries.one(".", move |session, item| {
         let sources = sources_query.execute(session, item)?;
         // we need to flatten sources
         let sources = sources.into_iter().flatten().collect::<Vec<qt::Source>>();
         let environment_spec = qt::EnvironmentSpec {
+            base_dir: path.to_path_buf(),
             sources,
             ..Default::default()
         };
@@ -379,10 +385,11 @@ fn environment_spec_query<'a>(
 
 fn shared_environments_query<'a>(
     xot: &'a Xot,
+    path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<SharedEnvironments> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
-    let (mut queries, environment_spec_query) = environment_spec_query(xot, queries)?;
+    let (mut queries, environment_spec_query) = environment_spec_query(xot, path, queries)?;
     let environments_query = queries.many("environment", move |session, item| {
         let name = name_query.execute(session, item)?;
         let environment_spec = environment_spec_query.execute(session, item)?;
@@ -403,7 +410,7 @@ fn catalog_query<'a>(
     let test_suite_query = queries.one("@test-suite/string()", convert_string)?;
     let version_query = queries.one("@version/string()", convert_string)?;
 
-    let (mut queries, shared_environments_query) = shared_environments_query(xot, queries)?;
+    let (mut queries, shared_environments_query) = shared_environments_query(xot, path, queries)?;
 
     let test_set_name_query = queries.one("@name/string()", convert_string)?;
     let test_set_file_query = queries.one("@file/string()", convert_string)?;

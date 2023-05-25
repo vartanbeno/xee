@@ -12,6 +12,7 @@ TestSet {
     shared_environments: SharedEnvironments {
         environments: {
             "lang": EnvironmentSpec {
+                base_dir: "qt/fn",
                 schemas: [],
                 sources: [
                     Source {
@@ -42,6 +43,7 @@ TestSet {
                 collations: [],
             },
             "empty": EnvironmentSpec {
+                base_dir: "",
                 schemas: [],
                 sources: [],
                 resources: [],

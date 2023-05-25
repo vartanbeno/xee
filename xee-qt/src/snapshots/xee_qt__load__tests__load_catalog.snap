@@ -9,6 +9,7 @@ Catalog {
     shared_environments: SharedEnvironments {
         environments: {
             "empty": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [],
                 resources: [],
@@ -22,6 +23,7 @@ Catalog {
                 collations: [],
             },
             "atomic": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -70,6 +72,7 @@ Catalog {
                 collations: [],
             },
             "atomic-xq": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -118,6 +121,7 @@ Catalog {
                 collations: [],
             },
             "works-mod": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -148,6 +152,7 @@ Catalog {
                 collations: [],
             },
             "works": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -178,6 +183,7 @@ Catalog {
                 collations: [],
             },
             "staff": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -208,6 +214,7 @@ Catalog {
                 collations: [],
             },
             "works-and-staff": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -258,6 +265,7 @@ Catalog {
                 collations: [],
             },
             "auction": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -288,6 +296,7 @@ Catalog {
                 collations: [],
             },
             "qname": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [
                     Source {
@@ -318,6 +327,7 @@ Catalog {
                 collations: [],
             },
             "math": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [],
                 resources: [],
@@ -331,6 +341,7 @@ Catalog {
                 collations: [],
             },
             "array": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [],
                 resources: [],
@@ -344,6 +355,7 @@ Catalog {
                 collations: [],
             },
             "map": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [],
                 resources: [],
@@ -357,6 +369,7 @@ Catalog {
                 collations: [],
             },
             "array-and-map": EnvironmentSpec {
+                base_dir: "qt",
                 schemas: [],
                 sources: [],
                 resources: [],

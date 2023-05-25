@@ -159,6 +159,7 @@ impl Display for EnvironmentRef {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct EnvironmentSpec {
+    pub(crate) base_dir: PathBuf,
     pub(crate) schemas: Vec<Schema>,
     pub(crate) sources: Vec<Source>,
     pub(crate) resources: Vec<Resource>,
