@@ -42,10 +42,6 @@ impl Default for KnownDependencies {
     }
 }
 
-// dependency indicator: hashset with type + value keys
-// environment: hashmap with environment name as key, empty key should
-// always be present. an environment contains a bunch of elements
-
 // if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
 
@@ -126,17 +122,6 @@ impl Drop for RunContext {
 }
 
 impl qt::TestSet {
-    // XXX Make this result an iterator of results?
-    fn run(&self, run_context: &mut RunContext) -> Result<Vec<TestResult>> {
-        let mut results = Vec::new();
-
-        for test_case in &self.test_cases {
-            let result = test_case.run(self, run_context);
-            results.push(result);
-        }
-        Ok(results)
-    }
-
     fn base_dir(&self) -> &Path {
         self.full_path.parent().unwrap()
     }
@@ -468,6 +453,20 @@ mod tests {
 
     use super::*;
 
+    fn run(xot: Xot, test_set: qt::TestSet) -> TestResult {
+        let mut run_context = RunContext::new(xot);
+        assert_eq!(test_set.test_cases.len(), 1);
+        test_set.test_cases[0].run(&test_set, &mut run_context)
+    }
+
+    fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
+        let mut run_context = RunContext::with_base_dir(xot, tmp_dir_path);
+        assert_eq!(test_set.test_cases.len(), 1);
+        test_set.test_cases[0].run(&test_set, &mut run_context)
+    }
+
     #[test]
     fn test_assert_true() {
         let mut xot = Xot::new();
@@ -488,10 +487,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -514,11 +510,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::Failed(StackValue::Atomic(Atomic::Boolean(false)))
         );
     }
@@ -543,10 +536,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -569,10 +559,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -595,11 +582,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::PassedWithWrongError(Error::FOAR0001)
         );
     }
@@ -624,10 +608,10 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::RuntimeError(Error::FOAR0001));
+        assert_eq!(
+            run(xot, test_set),
+            TestResult::RuntimeError(Error::FOAR0001)
+        );
     }
 
     #[test]
@@ -650,11 +634,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::CompilationError(Error::XPST0003 {
                 src: "1 @#!".to_string(),
                 span: (1, 0).into()
@@ -682,10 +663,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -708,10 +686,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -734,10 +709,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -760,11 +732,8 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::Failed(StackValue::Atomic(Atomic::Integer(5)))
         );
     }
@@ -792,10 +761,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -821,10 +787,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -850,10 +813,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -879,11 +839,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::Failed(StackValue::Atomic(Atomic::Integer(2)))
         );
     }
@@ -908,10 +865,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -934,11 +888,8 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
         assert_eq!(
-            test_result[0],
+            run(xot, test_set),
             TestResult::Failed(StackValue::Atomic(Atomic::String(Rc::new(
                 "foo".to_string()
             ))))
@@ -965,10 +916,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        let mut run_context = RunContext::new(xot);
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run(xot, test_set), TestResult::Passed);
     }
 
     #[test]
@@ -1000,13 +948,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir.path());
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
     }
 
     #[test]
@@ -1037,12 +979,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir.path());
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
     }
 
     #[test]
@@ -1074,13 +1011,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir.path());
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
     }
 
     #[test]
@@ -1112,13 +1043,10 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir.path());
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert!(matches!(test_result[0], TestResult::Failed { .. }));
+        assert!(matches!(
+            run_fs(tmp_dir.path(), &test_cases_path),
+            TestResult::Failed { .. }
+        ));
     }
 
     #[test]
@@ -1154,12 +1082,6 @@ mod tests {
         )
         .unwrap();
 
-        let mut xot = Xot::new();
-        let test_set = qt::TestSet::load_from_file(&mut xot, &test_cases_path).unwrap();
-
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir.path());
-        let test_result = test_set.run(&mut run_context).unwrap();
-        assert_eq!(test_result.len(), 1);
-        assert_eq!(test_result[0], TestResult::Passed);
+        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
     }
 }
