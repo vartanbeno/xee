@@ -30,9 +30,9 @@ fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdou
     let full_path = run_context.base_dir.join(path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
-        run_test_set(&test_set, run_context, stdout, VerboseRenderer::new())?;
+        run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())?;
     } else {
-        run_test_set(&test_set, run_context, stdout, CharacterRenderer::new())?;
+        run_test_set(run_context, &test_set, stdout, CharacterRenderer::new())?;
     }
     Ok(())
 }
@@ -62,8 +62,8 @@ trait Renderer {
 }
 
 fn run_test_set<R: Renderer>(
-    test_set: &qt::TestSet,
     run_context: &mut RunContext,
+    test_set: &qt::TestSet,
     stdout: &mut Stdout,
     renderer: R,
 ) -> Result<()> {
@@ -78,7 +78,7 @@ fn run_test_set<R: Renderer>(
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(test_set, run_context);
+        let test_result = test_case.run(run_context, test_set);
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;

@@ -153,8 +153,8 @@ impl qt::TestCase {
 
     pub(crate) fn run<'a>(
         &'a self,
-        test_set: &'a qt::TestSet,
         run_context: &'a mut RunContext,
+        test_set: &'a qt::TestSet,
     ) -> TestResult {
         if !self.is_supported(&run_context.known_dependencies) {
             return TestResult::UnsupportedDependency;
@@ -454,7 +454,7 @@ mod tests {
                 .unwrap();
         let mut run_context = RunContext::new(xot, &catalog);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&test_set, &mut run_context)
+        test_set.test_cases[0].run(&mut run_context, &test_set)
     }
 
     fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
@@ -465,7 +465,7 @@ mod tests {
         let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
         let mut run_context = RunContext::with_base_dir(xot, &catalog, tmp_dir_path);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&test_set, &mut run_context)
+        test_set.test_cases[0].run(&mut run_context, &test_set)
     }
 
     #[test]
