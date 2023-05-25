@@ -7,7 +7,7 @@ use std::io::{stdout, Stdout};
 use std::path::Path;
 
 use crate::qt;
-use crate::run::{CatalogContext, TestResult, TestSetContext};
+use crate::run::{CatalogContext, TestResult};
 
 pub(crate) fn run(catalog: &qt::Catalog, mut catalog_context: CatalogContext) -> Result<()> {
     let mut stdout = stdout();
@@ -38,13 +38,19 @@ fn run_path_helper(
     let verbose = catalog_context.verbose;
     let full_path = catalog_context.base_dir.join(path);
     let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
-    let test_set_context = TestSetContext::with_file_path(catalog_context, path);
     if verbose {
-        run_test_set(&test_set, test_set_context, stdout, VerboseRenderer::new())?;
+        run_test_set(
+            &test_set,
+            catalog,
+            catalog_context,
+            stdout,
+            VerboseRenderer::new(),
+        )?;
     } else {
         run_test_set(
             &test_set,
-            test_set_context,
+            catalog,
+            catalog_context,
             stdout,
             CharacterRenderer::new(),
         )?;
@@ -57,7 +63,7 @@ trait Renderer {
         &self,
         stdout: &mut Stdout,
         test_set: &qt::TestSet,
-        test_set_context: &TestSetContext,
+        catalog: &qt::Catalog,
     ) -> crossterm::Result<()>;
     fn render_test_case(
         &self,
@@ -78,26 +84,23 @@ trait Renderer {
 
 fn run_test_set<R: Renderer>(
     test_set: &qt::TestSet,
-    mut test_set_context: TestSetContext,
+    catalog: &qt::Catalog,
+    catalog_context: &mut CatalogContext,
     stdout: &mut Stdout,
     renderer: R,
 ) -> Result<()> {
     renderer
-        .render_test_set(stdout, test_set, &test_set_context)
+        .render_test_set(stdout, test_set, catalog)
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
-        if !test_case.is_supported(&test_set_context.catalog_context.known_dependencies) {
+        if !test_case.is_supported(&catalog_context.known_dependencies) {
             continue;
         }
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(
-            test_set,
-            &mut test_set_context,
-            &test_set.shared_environments,
-        );
+        let test_result = test_case.run(test_set, catalog_context, &test_set.shared_environments);
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;
@@ -121,9 +124,9 @@ impl Renderer for CharacterRenderer {
         &self,
         stdout: &mut Stdout,
         test_set: &qt::TestSet,
-        test_set_context: &TestSetContext,
+        catalog: &qt::Catalog,
     ) -> crossterm::Result<()> {
-        print!("{} ", test_set_context.file_path.display());
+        print!("{} ", test_set.file_path(catalog).display());
         Ok(())
     }
 
@@ -195,9 +198,9 @@ impl Renderer for VerboseRenderer {
         &self,
         stdout: &mut Stdout,
         test_set: &qt::TestSet,
-        test_set_context: &TestSetContext,
+        catalog: &qt::Catalog,
     ) -> crossterm::Result<()> {
-        println!("{}", test_set_context.file_path.display());
+        println!("{}", test_set.file_path(catalog).display());
         println!("{}", test_set.name);
         for description in &test_set.descriptions {
             println!("{} ", description);
