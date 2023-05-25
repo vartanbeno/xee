@@ -147,7 +147,7 @@ impl qt::TestSet {
 }
 
 impl qt::Catalog {
-    fn base_dir(&self) -> &Path {
+    pub(crate) fn base_dir(&self) -> &Path {
         self.full_path.parent().unwrap()
     }
 }
