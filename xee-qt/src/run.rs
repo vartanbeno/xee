@@ -131,7 +131,7 @@ impl qt::TestSet {
         let mut results = Vec::new();
 
         for test_case in &self.test_cases {
-            let result = test_case.run(self, run_context, &self.shared_environments);
+            let result = test_case.run(self, run_context);
             results.push(result);
         }
         Ok(results)
@@ -171,7 +171,6 @@ impl qt::TestCase {
         &'a self,
         test_set: &'a qt::TestSet,
         run_context: &'a mut RunContext,
-        shared_environments: &qt::SharedEnvironments,
     ) -> TestResult {
         if !self.is_supported(&run_context.known_dependencies) {
             return TestResult::UnsupportedDependency;
@@ -196,7 +195,7 @@ impl qt::TestCase {
             &run_context.base_dir,
             test_set.base_dir(),
             &run_context.shared_environments,
-            shared_environments,
+            &test_set.shared_environments,
         );
         let context_item = match context_item {
             Ok(context_item) => context_item,
@@ -211,6 +210,7 @@ impl qt::TestCase {
         Self::check_value(&mut run_context.xot, &self.result, &value)
     }
 
+    // fn environments(&self, catalog_shared_environments: &qt::SharedEnvironment, test_set_shared_environments: &)
     fn context_item(
         &self,
         xot: &mut Xot,
