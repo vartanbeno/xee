@@ -287,6 +287,25 @@ impl StackValue {
             _ => false,
         }
     }
+
+    pub(crate) fn string_value(&self, xot: &Xot) -> Result<String> {
+        let value = match self {
+            StackValue::Atomic(atomic) => atomic.string_value()?,
+            StackValue::Sequence(sequence) => {
+                let sequence = sequence.borrow();
+                let len = sequence.len();
+                match len {
+                    0 => "".to_string(),
+                    1 => StackValue::from_item(sequence.items[0].clone()).string_value(xot)?,
+                    _ => Err(ValueError::Type)?,
+                }
+            }
+            StackValue::Node(node) => node.string_value(xot),
+            StackValue::Closure(_) => Err(ValueError::Type)?,
+            StackValue::Step(_) => Err(ValueError::Type)?,
+        };
+        Ok(value)
+    }
 }
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -297,8 +316,8 @@ pub enum Atomic {
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
     Decimal(Decimal),
-    // and many more
     String(Rc<String>),
+    Untyped(Rc<String>),
     // a special marker to note empty sequences after atomization
     // This should be treated as an emtpy sequence.
     Empty,
@@ -315,6 +334,7 @@ impl Display for Atomic {
             Atomic::Double(d) => write!(f, "{}", d),
             Atomic::Decimal(d) => write!(f, "{}", d),
             Atomic::String(s) => write!(f, "{}", s),
+            Atomic::Untyped(s) => write!(f, "{}", s),
             Atomic::Empty => write!(f, "()"),
             Atomic::Absent => write!(f, "absent"),
         }
@@ -368,6 +388,7 @@ impl Atomic {
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
             Atomic::String(s) => Ok(!s.is_empty()),
+            Atomic::Untyped(s) => Ok(!s.is_empty()),
             Atomic::Empty => Ok(false),
             Atomic::Absent => Err(ValueError::Absent),
         }
@@ -386,17 +407,18 @@ impl Atomic {
         Ok(self.to_str()?.to_string())
     }
 
-    pub fn string_value(&self) -> String {
-        match self {
+    pub fn string_value(&self) -> Result<String> {
+        Ok(match self {
             Atomic::String(s) => s.to_string(),
+            Atomic::Untyped(s) => s.to_string(),
             Atomic::Boolean(b) => b.to_string(),
             Atomic::Integer(i) => i.to_string(),
             Atomic::Float(f) => f.to_string(),
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
             Atomic::Empty => "".to_string(),
-            Atomic::Absent => "<ABSENT>".to_string(),
-        }
+            Atomic::Absent => Err(ValueError::Absent)?,
+        })
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -472,7 +494,7 @@ impl Item {
 
     pub fn string_value(&self, xot: &Xot) -> Result<String> {
         match self {
-            Item::Atomic(a) => Ok(a.string_value()),
+            Item::Atomic(a) => Ok(a.string_value()?),
             Item::Node(n) => Ok(n.string_value(xot)),
             _ => Err(ValueError::Type),
         }

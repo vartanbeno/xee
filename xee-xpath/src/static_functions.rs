@@ -83,38 +83,9 @@ fn root(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue
 }
 
 fn string(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
-    Ok(StackValue::Atomic(Atomic::String(Rc::new(string_helper(
-        context,
-        &arguments[0],
-    )?))))
-}
-
-fn string_helper(context: &DynamicContext, value: &StackValue) -> Result<String, ValueError> {
-    let value = match value {
-        StackValue::Atomic(atomic) => match atomic {
-            Atomic::String(string) => string.to_string(),
-            Atomic::Integer(integer) => integer.to_string(),
-            Atomic::Float(float) => float.to_string(),
-            Atomic::Boolean(boolean) => boolean.to_string(),
-            Atomic::Double(double) => double.to_string(),
-            Atomic::Decimal(decimal) => decimal.to_string(),
-            Atomic::Empty => "".to_string(),
-            Atomic::Absent => Err(ValueError::Absent)?,
-        },
-        StackValue::Sequence(sequence) => {
-            let sequence = sequence.borrow();
-            let len = sequence.len();
-            match len {
-                0 => "".to_string(),
-                1 => string_helper(context, &StackValue::from_item(sequence.items[0].clone()))?,
-                _ => Err(ValueError::Type)?,
-            }
-        }
-        StackValue::Node(node) => node.string_value(context.xot),
-        StackValue::Closure(_) => Err(ValueError::Type)?,
-        StackValue::Step(_) => Err(ValueError::Type)?,
-    };
-    Ok(value)
+    Ok(StackValue::Atomic(Atomic::String(Rc::new(
+        arguments[0].string_value(context.xot)?,
+    ))))
 }
 
 fn exists(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
