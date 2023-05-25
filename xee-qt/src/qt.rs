@@ -4,6 +4,7 @@ use crate::collection::{FxIndexMap, FxIndexSet};
 
 #[derive(Debug)]
 pub(crate) struct Catalog {
+    pub(crate) full_path: PathBuf,
     pub(crate) test_suite: String,
     pub(crate) version: String,
     pub(crate) shared_environments: SharedEnvironments,
@@ -13,6 +14,7 @@ pub(crate) struct Catalog {
 
 #[derive(Debug)]
 pub(crate) struct TestSet {
+    pub(crate) full_path: PathBuf,
     pub(crate) name: String,
     pub(crate) descriptions: Vec<String>,
     pub(crate) dependencies: Vec<Dependency>,
@@ -147,24 +149,17 @@ pub(crate) struct EnvironmentRef {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments {
-    pub(crate) base_dir: PathBuf,
     environments: FxIndexMap<String, EnvironmentSpec>,
 }
 
 impl SharedEnvironments {
-    pub(crate) fn new(
-        base_dir: PathBuf,
-        mut environments: FxIndexMap<String, EnvironmentSpec>,
-    ) -> Self {
+    pub(crate) fn new(mut environments: FxIndexMap<String, EnvironmentSpec>) -> Self {
         // there is always an empty environment
         if !environments.contains_key("empty") {
             let empty = EnvironmentSpec::empty();
             environments.insert("empty".to_string(), empty);
         }
-        Self {
-            base_dir,
-            environments,
-        }
+        Self { environments }
     }
 
     pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&EnvironmentSpec> {

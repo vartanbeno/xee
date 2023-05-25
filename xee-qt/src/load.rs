@@ -16,7 +16,7 @@ use crate::qt;
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
 impl qt::TestSet {
-    pub(crate) fn load_from_file(xot: &mut Xot, base_dir: &Path, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)
             .into_diagnostic()
             .wrap_err("Cannot open XML file")?;
@@ -27,18 +27,18 @@ impl qt::TestSet {
             .into_diagnostic()
             .wrap_err("Cannot read XML file")?;
 
-        // calculate real base dir
-        let base_dir = path
-            .parent()
-            .unwrap()
-            .strip_prefix(base_dir)
-            .unwrap()
-            .to_path_buf();
+        // // calculate real base dir
+        // let base_dir = path
+        //     .parent()
+        //     .unwrap()
+        //     .strip_prefix(base_dir)
+        //     .unwrap()
+        //     .to_path_buf();
 
-        Self::load_from_xml(xot, base_dir, &xml)
+        Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml(xot: &mut Xot, base_dir: PathBuf, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot
             .parse(xml)
             .into_diagnostic()
@@ -50,7 +50,7 @@ impl qt::TestSet {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = test_set_query(xot, base_dir, queries)?;
+            let (queries, query) = test_set_query(xot, path, queries)?;
 
             let dynamic_context = DynamicContext::new(xot, &static_context);
             let session = queries.session(&dynamic_context);
@@ -75,10 +75,10 @@ impl qt::Catalog {
             .read_to_string(&mut xml)
             .into_diagnostic()
             .wrap_err("Cannot read XML file")?;
-        Self::load_from_xml(xot, &xml)
+        Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml(xot: &mut Xot, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot
             .parse(xml)
             .into_diagnostic()
@@ -91,7 +91,7 @@ impl qt::Catalog {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = catalog_query(xot, queries)?;
+            let (queries, query) = catalog_query(xot, path, queries)?;
 
             let dynamic_context = DynamicContext::new(xot, &static_context);
             let session = queries.session(&dynamic_context);
@@ -104,12 +104,12 @@ impl qt::Catalog {
 
 fn test_set_query<'a>(
     xot: &'a Xot,
-    base_dir: PathBuf,
+    path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
     let descriptions_query = queries.many("description/string()", convert_string)?;
-    let (queries, shared_environments_query) = shared_environments_query(xot, base_dir, queries)?;
+    let (queries, shared_environments_query) = shared_environments_query(xot, queries)?;
     let (mut queries, test_cases_query) = test_cases_query(xot, queries)?;
     let test_set_query = queries.one("/test-set", move |session, item| {
         let name = name_query.execute(session, item)?;
@@ -117,6 +117,7 @@ fn test_set_query<'a>(
         let shared_environments = shared_environments_query.execute(session, item)?;
         let test_cases = test_cases_query.execute(session, item)?;
         Ok(qt::TestSet {
+            full_path: path.to_path_buf(),
             name,
             descriptions,
             dependencies: Vec::new(),
@@ -377,7 +378,6 @@ fn environment_spec_query<'a>(
 
 fn shared_environments_query<'a>(
     xot: &'a Xot,
-    base_dir: PathBuf,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::SharedEnvironments> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
@@ -390,7 +390,6 @@ fn shared_environments_query<'a>(
     let shared_environments_query = queries.one(".", move |session, item| {
         let environments = environments_query.execute(session, item)?;
         Ok(qt::SharedEnvironments::new(
-            base_dir.clone(),
             environments.into_iter().collect(),
         ))
     })?;
@@ -399,13 +398,13 @@ fn shared_environments_query<'a>(
 
 fn catalog_query<'a>(
     xot: &'a Xot,
+    path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::Catalog> + 'a)> {
     let test_suite_query = queries.one("@test-suite/string()", convert_string)?;
     let version_query = queries.one("@version/string()", convert_string)?;
 
-    let (mut queries, shared_environments_query) =
-        shared_environments_query(xot, PathBuf::from("."), queries)?;
+    let (mut queries, shared_environments_query) = shared_environments_query(xot, queries)?;
 
     let test_set_name_query = queries.one("@name/string()", convert_string)?;
     let test_set_file_query = queries.one("@file/string()", convert_string)?;
@@ -421,6 +420,7 @@ fn catalog_query<'a>(
         let test_sets = test_set_query.execute(session, item)?;
         let file_paths = test_sets.iter().map(|t| t.file.clone()).collect();
         Ok(qt::Catalog {
+            full_path: path.to_path_buf(),
             test_suite,
             version,
             shared_environments,
@@ -445,7 +445,7 @@ mod tests {
         let mut xot = Xot::new();
         assert_debug_snapshot!(qt::TestSet::load_from_xml(
             &mut xot,
-            PathBuf::from("fn"),
+            &PathBuf::from("qt/fn/test.xml"),
             ROOT_FIXTURE
         )
         .unwrap());
@@ -454,6 +454,11 @@ mod tests {
     #[test]
     fn test_load_catalog() {
         let mut xot = Xot::new();
-        assert_debug_snapshot!(qt::Catalog::load_from_xml(&mut xot, CATALOG_FIXTURE).unwrap());
+        assert_debug_snapshot!(qt::Catalog::load_from_xml(
+            &mut xot,
+            &PathBuf::from("qt/catalog.xml"),
+            CATALOG_FIXTURE
+        )
+        .unwrap());
     }
 }

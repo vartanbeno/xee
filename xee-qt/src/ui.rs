@@ -37,11 +37,7 @@ fn run_path_helper(
     }
     let verbose = catalog_context.verbose;
     let full_path = catalog_context.base_dir.join(path);
-    let test_set = qt::TestSet::load_from_file(
-        &mut catalog_context.xot,
-        &catalog_context.base_dir,
-        &full_path,
-    )?;
+    let test_set = qt::TestSet::load_from_file(&mut catalog_context.xot, &full_path)?;
     let test_set_context = TestSetContext::with_file_path(catalog_context, path);
     if verbose {
         run_test_set(&test_set, test_set_context, stdout, VerboseRenderer::new())?;
@@ -97,7 +93,11 @@ fn run_test_set<R: Renderer>(
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(&mut test_set_context, &test_set.shared_environments);
+        let test_result = test_case.run(
+            test_set,
+            &mut test_set_context,
+            &test_set.shared_environments,
+        );
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;
