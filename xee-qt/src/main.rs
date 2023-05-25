@@ -34,14 +34,15 @@ fn main() -> Result<()> {
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
         let run_context = RunContextBuilder::default()
             .xot(xot)
+            .catalog(&catalog)
             .base_dir(catalog.base_dir().to_path_buf())
             .verbose(cli.verbose)
             .build()
             .unwrap();
         if relative_path.components().count() == 0 {
-            run(&catalog, run_context)?;
+            run(run_context)?;
         } else {
-            run_path(&catalog, run_context, &relative_path)?;
+            run_path(run_context, &relative_path)?;
         }
     } else {
         println!("no qttests catalog.xml found!");

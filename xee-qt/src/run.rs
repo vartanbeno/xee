@@ -75,10 +75,11 @@ pub(crate) enum TestResult {
     UnsupportedDependency,
 }
 
-#[derive(Default, Builder)]
+#[derive(Builder)]
 #[builder(pattern = "owned")]
-pub(crate) struct RunContext {
+pub(crate) struct RunContext<'a> {
     pub(crate) xot: Xot,
+    pub(crate) catalog: &'a qt::Catalog,
     #[builder(default)]
     pub(crate) base_dir: PathBuf,
     #[builder(default)]
@@ -89,10 +90,11 @@ pub(crate) struct RunContext {
     pub(crate) verbose: bool,
 }
 
-impl RunContext {
-    pub(crate) fn new(xot: Xot) -> Self {
+impl<'a> RunContext<'a> {
+    pub(crate) fn new(xot: Xot, catalog: &'a qt::Catalog) -> Self {
         Self {
             xot,
+            catalog,
             base_dir: PathBuf::new(),
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
@@ -100,9 +102,10 @@ impl RunContext {
         }
     }
 
-    pub(crate) fn with_base_dir(xot: Xot, base_dir: &Path) -> Self {
+    pub(crate) fn with_base_dir(xot: Xot, catalog: &'a qt::Catalog, base_dir: &Path) -> Self {
         Self {
             xot,
+            catalog,
             base_dir: base_dir.to_path_buf(),
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
@@ -111,7 +114,7 @@ impl RunContext {
     }
 }
 
-impl Drop for RunContext {
+impl<'a> Drop for RunContext<'a> {
     fn drop(&mut self) {
         self.source_cache.cleanup(&mut self.xot);
     }
@@ -150,7 +153,6 @@ impl qt::TestCase {
 
     pub(crate) fn run<'a>(
         &'a self,
-        catalog: &'a qt::Catalog,
         test_set: &'a qt::TestSet,
         run_context: &'a mut RunContext,
     ) -> TestResult {
@@ -171,12 +173,7 @@ impl qt::TestCase {
             }
         };
 
-        let context_item = self.context_item(
-            &mut run_context.xot,
-            &mut run_context.source_cache,
-            catalog,
-            test_set,
-        );
+        let context_item = self.context_item(run_context, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
             Err(error) => return TestResult::ContextItemError(error.to_string()),
@@ -205,13 +202,15 @@ impl qt::TestCase {
 
     fn context_item(
         &self,
-        xot: &mut Xot,
-        source_cache: &mut SourceCache,
-        catalog: &qt::Catalog,
+        run_context: &mut RunContext,
         test_set: &qt::TestSet,
     ) -> Result<Option<Item>> {
-        for environment_spec in self.environment_specs(catalog, test_set) {
-            let environment_spec = environment_spec?;
+        let environment_specs = self
+            .environment_specs(run_context.catalog, test_set)
+            .collect::<Result<Vec<_>, _>>()?;
+        let xot = &mut run_context.xot;
+        let source_cache = &mut run_context.source_cache;
+        for environment_spec in environment_specs {
             let item = environment_spec.context_item(xot, source_cache)?;
             if let Some(item) = item {
                 return Ok(Some(item));
@@ -453,9 +452,9 @@ mod tests {
         let catalog =
             qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
                 .unwrap();
-        let mut run_context = RunContext::new(xot);
+        let mut run_context = RunContext::new(xot, &catalog);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&catalog, &test_set, &mut run_context)
+        test_set.test_cases[0].run(&test_set, &mut run_context)
     }
 
     fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
@@ -464,9 +463,9 @@ mod tests {
             qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
                 .unwrap();
         let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
-        let mut run_context = RunContext::with_base_dir(xot, tmp_dir_path);
+        let mut run_context = RunContext::with_base_dir(xot, &catalog, tmp_dir_path);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&catalog, &test_set, &mut run_context)
+        test_set.test_cases[0].run(&test_set, &mut run_context)
     }
 
     #[test]

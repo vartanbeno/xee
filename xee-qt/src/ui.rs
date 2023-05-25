@@ -9,51 +9,30 @@ use std::path::Path;
 use crate::qt;
 use crate::run::{RunContext, TestResult};
 
-pub(crate) fn run(catalog: &qt::Catalog, mut run_context: RunContext) -> Result<()> {
+pub(crate) fn run(mut run_context: RunContext) -> Result<()> {
     let mut stdout = stdout();
-    for file_path in &catalog.file_paths {
-        run_path_helper(catalog, &mut run_context, file_path, &mut stdout)?
+    for file_path in &run_context.catalog.file_paths {
+        run_path_helper(&mut run_context, file_path, &mut stdout)?
     }
     Ok(())
 }
 
-pub(crate) fn run_path(
-    catalog: &qt::Catalog,
-    mut run_context: RunContext,
-    path: &Path,
-) -> Result<()> {
+pub(crate) fn run_path(mut run_context: RunContext, path: &Path) -> Result<()> {
     let mut stdout = stdout();
-    run_path_helper(catalog, &mut run_context, path, &mut stdout)
+    run_path_helper(&mut run_context, path, &mut stdout)
 }
 
-fn run_path_helper(
-    catalog: &qt::Catalog,
-    run_context: &mut RunContext,
-    path: &Path,
-    stdout: &mut Stdout,
-) -> Result<()> {
-    if !catalog.file_paths.contains(path) {
+fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdout) -> Result<()> {
+    if !run_context.catalog.file_paths.contains(path) {
         miette!("File not found in catalog: {:?}", path);
     }
     let verbose = run_context.verbose;
     let full_path = run_context.base_dir.join(path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
-        run_test_set(
-            &test_set,
-            catalog,
-            run_context,
-            stdout,
-            VerboseRenderer::new(),
-        )?;
+        run_test_set(&test_set, run_context, stdout, VerboseRenderer::new())?;
     } else {
-        run_test_set(
-            &test_set,
-            catalog,
-            run_context,
-            stdout,
-            CharacterRenderer::new(),
-        )?;
+        run_test_set(&test_set, run_context, stdout, CharacterRenderer::new())?;
     }
     Ok(())
 }
@@ -84,13 +63,12 @@ trait Renderer {
 
 fn run_test_set<R: Renderer>(
     test_set: &qt::TestSet,
-    catalog: &qt::Catalog,
     run_context: &mut RunContext,
     stdout: &mut Stdout,
     renderer: R,
 ) -> Result<()> {
     renderer
-        .render_test_set(stdout, test_set, catalog)
+        .render_test_set(stdout, test_set, run_context.catalog)
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
@@ -100,7 +78,7 @@ fn run_test_set<R: Renderer>(
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(catalog, test_set, run_context);
+        let test_result = test_case.run(test_set, run_context);
         renderer
             .render_test_result(stdout, &test_result)
             .into_diagnostic()?;
