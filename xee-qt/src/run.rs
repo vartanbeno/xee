@@ -174,8 +174,8 @@ impl qt::TestCase {
         let context_item = self.context_item(
             &mut run_context.xot,
             &mut run_context.source_cache,
-            &catalog.shared_environments,
-            &test_set.shared_environments,
+            catalog,
+            test_set,
         );
         let context_item = match context_item {
             Ok(context_item) => context_item,
@@ -192,13 +192,13 @@ impl qt::TestCase {
 
     fn environment_specs<'a>(
         &'a self,
-        catalog_shared_environments: &'a SharedEnvironments,
-        test_set_shared_environments: &'a SharedEnvironments,
+        catalog: &'a qt::Catalog,
+        test_set: &'a qt::TestSet,
     ) -> EnvironmentSpecIterator<'a> {
         EnvironmentSpecIterator {
             environments: &self.environments,
-            catalog_shared_environments,
-            test_set_shared_environments,
+            catalog_shared_environments: &catalog.shared_environments,
+            test_set_shared_environments: &test_set.shared_environments,
             index: 0,
         }
     }
@@ -207,12 +207,10 @@ impl qt::TestCase {
         &self,
         xot: &mut Xot,
         source_cache: &mut SourceCache,
-        catalog_shared_environments: &SharedEnvironments,
-        test_set_shared_environments: &SharedEnvironments,
+        catalog: &qt::Catalog,
+        test_set: &qt::TestSet,
     ) -> Result<Option<Item>> {
-        for environment_spec in
-            self.environment_specs(catalog_shared_environments, test_set_shared_environments)
-        {
+        for environment_spec in self.environment_specs(catalog, test_set) {
             let environment_spec = environment_spec?;
             let item = environment_spec.context_item(xot, source_cache)?;
             if let Some(item) = item {
