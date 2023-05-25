@@ -144,7 +144,7 @@ impl Renderer for CharacterRenderer {
             TestResult::Unsupported => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
-            TestResult::ContextItemError(_) => {
+            TestResult::EnvironmentError(_) => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
             TestResult::UnsupportedDependency => {
@@ -223,7 +223,7 @@ impl Renderer for VerboseRenderer {
             TestResult::Unsupported => {
                 println!("{}", "UNSUPPORTED".red());
             }
-            TestResult::ContextItemError(error) => {
+            TestResult::EnvironmentError(error) => {
                 println!("{} {}", "CONTEXT ITEM ERROR".red(), error);
             }
             TestResult::UnsupportedDependency => {

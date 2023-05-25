@@ -68,8 +68,8 @@ pub(crate) enum TestResult {
     // We failed because our implementation does not yet
     // implement something it should
     Unsupported,
-    // We couldn't load context item for some reason
-    ContextItemError(String),
+    // We couldn't load environment for some reason
+    EnvironmentError(String),
     // We skipped this test as we don't support the stated
     // dependency
     UnsupportedDependency,
@@ -162,10 +162,14 @@ impl qt::TestCase {
         let context_item = self.context_item(run_context, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
-            Err(error) => return TestResult::ContextItemError(error.to_string()),
+            Err(error) => return TestResult::EnvironmentError(error.to_string()),
         };
 
-        let variables = self.variables();
+        let variables = self.variables(run_context, test_set);
+        let variables = match variables {
+            Ok(variables) => variables,
+            Err(error) => return TestResult::EnvironmentError(error.to_string()),
+        };
 
         let dynamic_context =
             DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
@@ -205,8 +209,20 @@ impl qt::TestCase {
         Ok(None)
     }
 
-    fn variables(&self) -> Vec<(Name, StackValue)> {
-        vec![]
+    fn variables(
+        &self,
+        run_context: &mut RunContext,
+        test_set: &qt::TestSet,
+    ) -> Result<Vec<(Name, StackValue)>> {
+        Ok(Vec::new())
+        // let environment_specs = self
+        //     .environment_specs(&run_context.catalog, test_set)
+        //     .collect::<Result<Vec<_>, _>>()?;
+        // let variables = Vec::new();
+        // for environment_spec in environment_specs {
+        //     let variables = environment_spec.variables(xot, source_cache)?;
+
+        // }
     }
 
     fn check_value(
