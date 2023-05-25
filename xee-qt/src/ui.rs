@@ -11,7 +11,8 @@ use crate::run::{RunContext, TestResult};
 
 pub(crate) fn run(mut run_context: RunContext) -> Result<()> {
     let mut stdout = stdout();
-    for file_path in &run_context.catalog.file_paths {
+    // XXX annoying clone
+    for file_path in &run_context.catalog.file_paths.clone() {
         run_path_helper(&mut run_context, file_path, &mut stdout)?
     }
     Ok(())
@@ -27,7 +28,7 @@ fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdou
         miette!("File not found in catalog: {:?}", path);
     }
     let verbose = run_context.verbose;
-    let full_path = run_context.base_dir.join(path);
+    let full_path = run_context.catalog.base_dir().join(path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
         run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())?;
@@ -68,7 +69,7 @@ fn run_test_set<R: Renderer>(
     renderer: R,
 ) -> Result<()> {
     renderer
-        .render_test_set(stdout, test_set, run_context.catalog)
+        .render_test_set(stdout, test_set, &run_context.catalog)
         .into_diagnostic()?;
     for test_case in &test_set.test_cases {
         // skip any test case we don't support

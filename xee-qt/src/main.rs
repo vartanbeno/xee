@@ -34,8 +34,7 @@ fn main() -> Result<()> {
         let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
         let run_context = RunContextBuilder::default()
             .xot(xot)
-            .catalog(&catalog)
-            .base_dir(catalog.base_dir().to_path_buf())
+            .catalog(catalog)
             .verbose(cli.verbose)
             .build()
             .unwrap();

@@ -77,11 +77,9 @@ pub(crate) enum TestResult {
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
-pub(crate) struct RunContext<'a> {
+pub(crate) struct RunContext {
     pub(crate) xot: Xot,
-    pub(crate) catalog: &'a qt::Catalog,
-    #[builder(default)]
-    pub(crate) base_dir: PathBuf,
+    pub(crate) catalog: qt::Catalog,
     #[builder(default)]
     pub(crate) source_cache: SourceCache,
     #[builder(default)]
@@ -90,23 +88,11 @@ pub(crate) struct RunContext<'a> {
     pub(crate) verbose: bool,
 }
 
-impl<'a> RunContext<'a> {
-    pub(crate) fn new(xot: Xot, catalog: &'a qt::Catalog) -> Self {
+impl RunContext {
+    pub(crate) fn new(xot: Xot, catalog: qt::Catalog) -> Self {
         Self {
             xot,
             catalog,
-            base_dir: PathBuf::new(),
-            source_cache: SourceCache::new(),
-            known_dependencies: KnownDependencies::default(),
-            verbose: false,
-        }
-    }
-
-    pub(crate) fn with_base_dir(xot: Xot, catalog: &'a qt::Catalog, base_dir: &Path) -> Self {
-        Self {
-            xot,
-            catalog,
-            base_dir: base_dir.to_path_buf(),
             source_cache: SourceCache::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
@@ -114,7 +100,7 @@ impl<'a> RunContext<'a> {
     }
 }
 
-impl<'a> Drop for RunContext<'a> {
+impl Drop for RunContext {
     fn drop(&mut self) {
         self.source_cache.cleanup(&mut self.xot);
     }
@@ -206,7 +192,7 @@ impl qt::TestCase {
         test_set: &qt::TestSet,
     ) -> Result<Option<Item>> {
         let environment_specs = self
-            .environment_specs(run_context.catalog, test_set)
+            .environment_specs(&run_context.catalog, test_set)
             .collect::<Result<Vec<_>, _>>()?;
         let xot = &mut run_context.xot;
         let source_cache = &mut run_context.source_cache;
@@ -452,18 +438,21 @@ mod tests {
         let catalog =
             qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
                 .unwrap();
-        let mut run_context = RunContext::new(xot, &catalog);
+        let mut run_context = RunContext::new(xot, catalog);
         assert_eq!(test_set.test_cases.len(), 1);
         test_set.test_cases[0].run(&mut run_context, &test_set)
     }
 
     fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
         let mut xot = Xot::new();
-        let catalog =
-            qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
-                .unwrap();
+        let catalog = qt::Catalog::load_from_xml(
+            &mut xot,
+            &tmp_dir_path.join("catalog.xml"),
+            CATALOG_FIXTURE,
+        )
+        .unwrap();
         let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
-        let mut run_context = RunContext::with_base_dir(xot, &catalog, tmp_dir_path);
+        let mut run_context = RunContext::new(xot, catalog);
         assert_eq!(test_set.test_cases.len(), 1);
         test_set.test_cases[0].run(&mut run_context, &test_set)
     }
