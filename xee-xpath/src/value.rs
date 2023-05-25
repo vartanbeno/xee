@@ -5,6 +5,7 @@ use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
+use std::vec;
 use thiserror::Error;
 use xot::Xot;
 
@@ -128,6 +129,12 @@ impl Node {
         } else {
             String::new()
         }
+    }
+
+    pub(crate) fn typed_value(&self, xot: &Xot) -> Vec<Atomic> {
+        // for now we don't know any types of nodes yet
+        let s = self.string_value(xot);
+        vec![Atomic::Untyped(Rc::new(s))]
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> String {
@@ -453,6 +460,29 @@ impl Atomic {
             Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_)
         )
     }
+
+    pub(crate) fn general_comparison_cast(&self, v: &str) -> Result<Atomic> {
+        match self {
+            // i. If T is a numeric type or is derived from a numeric type, then V
+            // is cast to xs:double.
+            Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_) => {
+                // cast string to double
+                // Need to unify the parsing code with literal parser in parse_ast
+                Ok(Atomic::Double(OrderedFloat(
+                    v.parse::<f64>().map_err(|_| ValueError::Overflow)?,
+                )))
+            }
+            // don't handle ii and iii for now
+            // iv. In all other cases, V is cast to the primitive base type of T.
+            Atomic::String(_) => Ok(Atomic::String(Rc::new(v.to_string()))),
+            Atomic::Boolean(_) => {
+                todo!();
+            }
+            Atomic::Untyped(_) => unreachable!(),
+            Atomic::Empty => unreachable!(),
+            Atomic::Absent => Err(ValueError::Type),
+        }
+    }
 }
 
 impl PartialEq for Atomic {
@@ -584,10 +614,9 @@ impl Sequence {
             match item {
                 Item::Atomic(a) => items.push(Item::Atomic(a.clone())),
                 Item::Node(n) => {
-                    // this should get the typed-value, which is a sequence,
-                    // but for now we get the string value
-                    let a = n.string_value(xot);
-                    items.push(Item::Atomic(Atomic::String(Rc::new(a))));
+                    for typed_value in n.typed_value(xot) {
+                        items.push(Item::Atomic(typed_value));
+                    }
                 }
                 // XXX need code to handle array case
                 Item::Function(..) => panic!("cannot atomize a function"),
@@ -606,10 +635,11 @@ impl Sequence {
                 match item {
                     Item::Atomic(a) => Ok(a.clone()),
                     Item::Node(n) => {
-                        // this should get the typed-value, which is a sequence,
-                        // but for now we get the string value
-                        let s = n.string_value(context.xot);
-                        Ok(Atomic::String(Rc::new(s)))
+                        let mut t = n.typed_value(context.xot);
+                        if t.len() != 1 {
+                            return Err(ValueError::XPTY0004);
+                        }
+                        Ok(t.remove(0))
                     }
                     // XXX need code to handle array case
                     Item::Function(..) => panic!("cannot atomize a function"),

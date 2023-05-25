@@ -101,16 +101,41 @@ where
     if matches!(a, Atomic::Empty) || matches!(b, Atomic::Empty) {
         return Ok(Atomic::Empty);
     }
-    let r = match (a, b) {
+    let (a, b) = cast_untyped(a, b)?;
+    let r = match (&a, &b) {
         (
             Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
             Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
-        ) => (ops.numeric_op)(a, b),
-        (Atomic::String(_), Atomic::String(_)) => (ops.string_op)(a, b),
-        (Atomic::Boolean(_), Atomic::Boolean(_)) => (ops.boolean_op)(a, b),
+        ) => (ops.numeric_op)(&a, &b),
+        (Atomic::String(_), Atomic::String(_)) => (ops.string_op)(&a, &b),
+        (Atomic::Boolean(_), Atomic::Boolean(_)) => (ops.boolean_op)(&a, &b),
         _ => Err(ValueError::Type),
     }?;
     Ok(Atomic::Boolean(r))
+}
+
+fn cast_untyped(a: &Atomic, b: &Atomic) -> Result<(Atomic, Atomic)> {
+    let r = match (a, b) {
+        // If both atomic values are instances of xs:untypedAtomic, then the
+        // values are cast to the type xs:string.
+        (Atomic::Untyped(a), Atomic::Untyped(b)) => {
+            (Atomic::String(a.clone()), Atomic::String(b.clone()))
+        }
+        // If exactly one of the atomic values is an instance of
+        // xs:untypedAtomic, it is cast to a type depending on the other
+        // value's dynamic type T according to the following rules, in which V
+        // denotes the value to be cast:
+        (Atomic::Untyped(a), _) => {
+            let a = b.general_comparison_cast(a)?;
+            (a, b.clone())
+        }
+        (_, Atomic::Untyped(b)) => {
+            let b = a.general_comparison_cast(b)?;
+            (a.clone(), b)
+        }
+        _ => (a.clone(), b.clone()),
+    };
+    Ok(r)
 }
 
 pub(crate) fn general_eq(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
