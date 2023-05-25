@@ -141,6 +141,12 @@ fn empty(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackVal
     Ok(StackValue::Atomic(Atomic::Boolean(a.is_empty_sequence())))
 }
 
+fn not(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    let a = &arguments[0];
+    let b = a.to_bool()?;
+    Ok(StackValue::Atomic(Atomic::Boolean(!b)))
+}
+
 fn generate_id(
     context: &DynamicContext,
     arguments: &[StackValue],
@@ -236,6 +242,12 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
             func: generate_id,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: not,
         },
     ]
 }
