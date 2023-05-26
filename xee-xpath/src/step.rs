@@ -91,8 +91,15 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
     match node_test {
         ast::NodeTest::KindTest(kind_test) => match kind_test {
             ast::KindTest::Any => true,
+            ast::KindTest::Text => {
+                if let Node::Xot(node) = node {
+                    xot.value_type(node) == ValueType::Text
+                } else {
+                    false
+                }
+            }
             _ => {
-                todo!("kind test not implemented yet");
+                todo!("kind test not implemented yet {:?}", kind_test);
             }
         },
         ast::NodeTest::NameTest(name_test) => {
