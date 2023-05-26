@@ -11,6 +11,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
+use crate::assert;
 use crate::environment::SharedEnvironments;
 use crate::qt;
 
@@ -233,30 +234,36 @@ fn test_cases_query<'a>(
 
     let code_query = queries.one("@code/string()", convert_string)?;
     let error_query = queries.one(".", move |session, item| {
-        Ok(qt::TestCaseResult::Error(
+        Ok(qt::TestCaseResult::AssertError(assert::AssertError::new(
             code_query.execute(session, item)?,
-        ))
+        )))
     })?;
     let assert_count_query = queries.one("string()", |_, item| {
         let count = item.to_atomic()?.to_string()?;
         // XXX unwrap is a hack
         let count = count.parse::<usize>().unwrap();
-        Ok(qt::TestCaseResult::AssertCount(count))
+        Ok(qt::TestCaseResult::AssertCount(assert::AssertCount::new(
+            count,
+        )))
     })?;
 
     let assert_xml_query = queries.one("string()", |_, item| {
         let xml = item.to_atomic()?.to_string()?;
-        Ok(qt::TestCaseResult::AssertXml(xml))
+        Ok(qt::TestCaseResult::AssertXml(assert::AssertXml::new(xml)))
     })?;
 
     let assert_eq_query = queries.one("string()", |_, item| {
         let eq = item.to_atomic()?.to_string()?;
-        Ok(qt::TestCaseResult::AssertEq(qt::XPathExpr(eq)))
+        Ok(qt::TestCaseResult::AssertEq(assert::AssertEq::new(
+            qt::XPathExpr(eq),
+        )))
     })?;
 
     let assert_string_value_query = queries.one("string()", |_, item| {
         let string_value = item.to_atomic()?.to_string()?;
-        Ok(qt::TestCaseResult::AssertStringValue(string_value))
+        Ok(qt::TestCaseResult::AssertStringValue(
+            assert::AssertStringValue::new(string_value),
+        ))
     })?;
 
     let any_all_recurse = queries.many_recurse("*")?;
@@ -272,16 +279,16 @@ fn test_cases_query<'a>(
             let local_name = local_name_query.execute(session, item)?;
             let r = if local_name == "any-of" {
                 let contents = any_all_recurse.execute(session, item, recurse)?;
-                qt::TestCaseResult::AnyOf(contents)
+                qt::TestCaseResult::AnyOf(assert::AssertAnyOf::new(contents))
             } else if local_name == "all-of" {
                 let contents = any_all_recurse.execute(session, item, recurse)?;
-                qt::TestCaseResult::AllOf(contents)
+                qt::TestCaseResult::AllOf(assert::AssertAllOf::new(contents))
             } else if local_name == "error" {
                 error_query.execute(session, item)?
             } else if local_name == "assert-true" {
-                qt::TestCaseResult::AssertTrue
+                qt::TestCaseResult::AssertTrue(assert::AssertTrue::new())
             } else if local_name == "assert-false" {
-                qt::TestCaseResult::AssertFalse
+                qt::TestCaseResult::AssertFalse(assert::AssertFalse::new())
             } else if local_name == "assert-count" {
                 assert_count_query.execute(session, item)?
             } else if local_name == "assert-xml" {

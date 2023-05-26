@@ -6,6 +6,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
+use crate::assert::{Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
 use crate::environment::{EnvironmentSpecIterator, SourceCache};
 use crate::qt;
@@ -44,36 +45,6 @@ impl Default for KnownDependencies {
 
 // if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
-
-struct TestSetResult {
-    results: Vec<TestResult>,
-}
-
-#[derive(Debug, PartialEq)]
-pub(crate) enum TestResult {
-    // The test passed
-    Passed,
-    // The test passed because it errored, but the error
-    // code was unexpected
-    PassedWithWrongError(Error),
-    // We failed with an unexpected stack value
-    Failed(StackValue),
-    // We failed with an unexpected error during runtime
-    RuntimeError(Error),
-    // We failed with a compilation error
-    CompilationError(Error),
-    // We could not compile some xpath expression in the test
-    // and therefore the test could not be executed
-    UnsupportedExpression(Error),
-    // We failed because our implementation does not yet
-    // implement something it should
-    Unsupported,
-    // We couldn't load environment for some reason
-    EnvironmentError(String),
-    // We skipped this test as we don't support the stated
-    // dependency
-    UnsupportedDependency,
-}
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
@@ -139,17 +110,14 @@ impl qt::TestCase {
 
     pub(crate) fn run<'a>(
         &'a self,
-        run_context: &'a mut RunContext,
+        run_context: &mut RunContext,
         test_set: &'a qt::TestSet,
-    ) -> TestResult {
-        if !self.is_supported(&run_context.known_dependencies) {
-            return TestResult::UnsupportedDependency;
-        }
+    ) -> TestOutcome<'a> {
         let namespaces = Namespaces::default();
         let variables = self.variables(run_context, test_set);
         let variables = match variables {
             Ok(variables) => variables,
-            Err(error) => return TestResult::EnvironmentError(error.to_string()),
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
         let variable_names = variables
             .iter()
@@ -160,10 +128,10 @@ impl qt::TestCase {
         let xpath = match xpath {
             Ok(xpath) => xpath,
             Err(error) => {
-                return if let qt::TestCaseResult::Error(expected_error) = &self.result {
-                    Self::assert_expected_error(expected_error, &error)
+                return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
+                    expected_error.assert_result(&mut run_context.xot, &Err(error))
                 } else {
-                    TestResult::CompilationError(error)
+                    TestOutcome::CompilationError(error)
                 }
             }
         };
@@ -171,13 +139,13 @@ impl qt::TestCase {
         let context_item = self.context_item(run_context, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
-            Err(error) => return TestResult::EnvironmentError(error.to_string()),
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
         let dynamic_context =
             DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
-        let value = xpath.run(&dynamic_context, context_item.as_ref());
-        Self::check_value(&mut run_context.xot, &self.result, &value)
+        let result = xpath.run(&dynamic_context, context_item.as_ref());
+        self.result.assert_result(&mut run_context.xot, &result)
     }
 
     fn environment_specs<'a>(
@@ -229,212 +197,6 @@ impl qt::TestCase {
         Ok(variables)
     }
 
-    fn check_value(
-        xot: &mut Xot,
-        result: &qt::TestCaseResult,
-        run_result: &Result<StackValue, Error>,
-    ) -> TestResult {
-        // we handle any of and all of first, because we don't
-        // yet want to distinguish between value and error
-        match result {
-            qt::TestCaseResult::AllOf(test_case_results) => {
-                return Self::assert_all_of(xot, test_case_results, run_result)
-            }
-            qt::TestCaseResult::AnyOf(test_case_results) => {
-                return Self::assert_any_of(xot, test_case_results, run_result)
-            }
-            _ => {}
-        }
-        match run_result {
-            Ok(value) => {
-                let value = value.clone();
-                match result {
-                    // qt::TestCaseResult::Assert(xpath_expr) => self.assert_(xpath_expr, run_result),
-                    qt::TestCaseResult::AssertEq(xpath_expr) => Self::assert_eq(xpath_expr, value),
-                    qt::TestCaseResult::AssertTrue => Self::assert_true(value),
-                    qt::TestCaseResult::AssertFalse => Self::assert_false(value),
-                    qt::TestCaseResult::AssertCount(number) => Self::assert_count(*number, value),
-                    qt::TestCaseResult::AssertStringValue(s) => {
-                        Self::assert_string_value(xot, s, value)
-                    }
-                    qt::TestCaseResult::AssertXml(xml) => Self::assert_xml(xot, xml, value),
-                    qt::TestCaseResult::Error(error) => {
-                        Self::assert_unexpected_no_error(error, value)
-                    }
-                    qt::TestCaseResult::Unsupported => TestResult::Unsupported,
-                    _ => {
-                        panic!("unimplemented test case result {:?}", result);
-                    }
-                }
-            }
-            Err(error) => match result {
-                qt::TestCaseResult::Error(expected_error) => {
-                    Self::assert_expected_error(expected_error, error)
-                }
-                _ => TestResult::RuntimeError(error.clone()),
-            },
-        }
-    }
-
-    fn assert_any_of(
-        xot: &mut Xot,
-        test_case_results: &[qt::TestCaseResult],
-        run_result: &Result<StackValue, Error>,
-    ) -> TestResult {
-        for test_case_result in test_case_results {
-            let result = Self::check_value(xot, test_case_result, run_result);
-            match result {
-                TestResult::Passed | TestResult::PassedWithWrongError(_) => return result,
-                _ => {}
-            }
-        }
-        match run_result {
-            Ok(value) => TestResult::Failed(value.clone()),
-            Err(error) => TestResult::RuntimeError(error.clone()),
-        }
-    }
-
-    fn assert_all_of(
-        xot: &mut Xot,
-        test_case_results: &[qt::TestCaseResult],
-        run_result: &Result<StackValue, Error>,
-    ) -> TestResult {
-        for test_case_result in test_case_results {
-            let result = Self::check_value(xot, test_case_result, run_result);
-            if let TestResult::Failed(_) = result {
-                return result;
-            }
-        }
-        TestResult::Passed
-    }
-
-    fn assert_(_xpath_expr: &qt::XPathExpr, _stack_value: Result<StackValue, Error>) -> TestResult {
-        unimplemented!()
-    }
-
-    fn assert_eq(xpath_expr: &qt::XPathExpr, stack_value: StackValue) -> TestResult {
-        let expected_value = Self::run_xpath(xpath_expr);
-        match expected_value {
-            Ok(expected_value) => {
-                if expected_value == stack_value {
-                    TestResult::Passed
-                } else {
-                    TestResult::Failed(stack_value)
-                }
-            }
-            // This only happens if we can't run the xpath expression
-            // with the expected value. These errors should stop
-            // appearing once we lift ourselves by our bootstraps
-            Err(error) => TestResult::UnsupportedExpression(error),
-        }
-    }
-
-    fn assert_true(stack_value: StackValue) -> TestResult {
-        if matches!(stack_value, StackValue::Atomic(Atomic::Boolean(true))) {
-            TestResult::Passed
-        } else {
-            TestResult::Failed(stack_value)
-        }
-    }
-
-    fn assert_false(stack_value: StackValue) -> TestResult {
-        if matches!(stack_value, StackValue::Atomic(Atomic::Boolean(false))) {
-            TestResult::Passed
-        } else {
-            TestResult::Failed(stack_value)
-        }
-    }
-
-    fn assert_count(count: usize, stack_value: StackValue) -> TestResult {
-        let sequence = stack_value.to_sequence();
-        if let Ok(sequence) = sequence {
-            if sequence.borrow().len() == count {
-                TestResult::Passed
-            } else {
-                TestResult::Failed(stack_value)
-            }
-        } else {
-            TestResult::Failed(stack_value)
-        }
-    }
-
-    fn assert_string_value(xot: &Xot, s: &str, stack_value: StackValue) -> TestResult {
-        let seq = stack_value.to_sequence();
-        match seq {
-            Ok(seq) => {
-                let strings = seq
-                    .borrow()
-                    .as_slice()
-                    .iter()
-                    .map(|item| item.string_value(xot))
-                    .collect::<Result<Vec<_>, _>>();
-                match strings {
-                    Ok(strings) => {
-                        let joined = strings.join(" ");
-                        if joined == s {
-                            TestResult::Passed
-                        } else {
-                            // the string value is not what we expected
-                            TestResult::Failed(stack_value)
-                        }
-                    }
-                    // we weren't able to produce a string value
-                    Err(_) => TestResult::Failed(stack_value),
-                }
-            }
-            // we weren't able to produce a sequence
-            Err(_) => TestResult::Failed(stack_value),
-        }
-    }
-
-    fn assert_xml(xot: &mut Xot, expected_xml: &str, value: StackValue) -> TestResult {
-        let xml = serialize(xot, &value);
-
-        let xml = if let Ok(xml) = xml {
-            xml
-        } else {
-            return TestResult::Failed(value);
-        };
-        // also wrap expected XML in a sequence element
-        let expected_xml = format!("<sequence>{}</sequence>", expected_xml);
-
-        // now parse both with Xot
-        let found = xot.parse(&xml).unwrap();
-        let expected = xot.parse(&expected_xml).unwrap();
-
-        // and compare
-        let c = xot.compare(expected, found);
-
-        // clean up
-        xot.remove(found).unwrap();
-        xot.remove(expected).unwrap();
-
-        if c {
-            TestResult::Passed
-        } else {
-            TestResult::Failed(value)
-        }
-    }
-
-    fn assert_expected_error(expected_error: &str, error: &Error) -> TestResult {
-        // all errors are officially a pass, but we check whether the error
-        // code matches too
-        let code = error.code();
-        if let Some(code) = code {
-            if code.to_string() == expected_error {
-                TestResult::Passed
-            } else {
-                TestResult::PassedWithWrongError(error.clone())
-            }
-        } else {
-            TestResult::PassedWithWrongError(error.clone())
-        }
-    }
-
-    fn assert_unexpected_no_error(_expected_error: &str, stack_value: StackValue) -> TestResult {
-        TestResult::Failed(stack_value)
-    }
-
     fn run_xpath(expr: &qt::XPathExpr) -> Result<StackValue, Error> {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
@@ -447,35 +209,29 @@ impl qt::TestCase {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
-    use std::{fs::File, rc::Rc};
     use tempfile::tempdir;
+
+    use crate::assert;
+    use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};
 
     use super::*;
     const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");
 
-    fn run(mut xot: Xot, test_set: qt::TestSet) -> TestResult {
+    fn run(mut xot: Xot, test_set: &'_ qt::TestSet) -> TestOutcome<'_> {
         let catalog =
             qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
                 .unwrap();
         let mut run_context = RunContext::new(xot, catalog);
         assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&mut run_context, &test_set)
+        let test_case = &test_set.test_cases[0];
+        test_case.run(&mut run_context, test_set)
     }
 
-    fn run_fs(tmp_dir_path: &Path, test_cases_path: &Path) -> TestResult {
-        let mut xot = Xot::new();
-        let catalog = qt::Catalog::load_from_xml(
-            &mut xot,
-            &tmp_dir_path.join("catalog.xml"),
-            CATALOG_FIXTURE,
-        )
-        .unwrap();
-        let test_set = qt::TestSet::load_from_file(&mut xot, test_cases_path).unwrap();
-        let mut run_context = RunContext::new(xot, catalog);
-        assert_eq!(test_set.test_cases.len(), 1);
-        test_set.test_cases[0].run(&mut run_context, &test_set)
+    fn load(xot: &mut Xot, tmp_dir_path: &Path, test_cases_path: &Path) -> qt::TestSet {
+        qt::TestSet::load_from_file(xot, test_cases_path).unwrap()
     }
 
     #[test]
@@ -498,7 +254,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -522,8 +278,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::Failed(StackValue::Atomic(Atomic::Boolean(false)))
+            run(xot, &test_set),
+            TestOutcome::Failed(Failure::True(
+                &assert::AssertTrue,
+                StackValue::Atomic(Atomic::Boolean(false))
+            ))
         );
     }
 
@@ -547,7 +306,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -570,7 +329,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -594,8 +353,8 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::PassedWithWrongError(Error::FOAR0001)
+            run(xot, &test_set),
+            TestOutcome::PassedWithUnexpectedError(UnexpectedError::Code("FOAR0001".to_string()))
         );
     }
 
@@ -620,8 +379,8 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::RuntimeError(Error::FOAR0001)
+            run(xot, &test_set),
+            TestOutcome::RuntimeError(Error::FOAR0001)
         );
     }
 
@@ -646,8 +405,8 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::CompilationError(Error::XPST0003 {
+            run(xot, &test_set),
+            TestOutcome::CompilationError(Error::XPST0003 {
                 src: "1 @#!".to_string(),
                 span: (1, 0).into()
             })
@@ -674,7 +433,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -697,7 +456,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -720,7 +479,7 @@ mod tests {
   </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -744,8 +503,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::Failed(StackValue::Atomic(Atomic::Integer(5)))
+            run(xot, &test_set),
+            TestOutcome::Failed(Failure::Eq(
+                &assert::AssertEq::new(qt::XPathExpr("6".to_string())),
+                StackValue::Atomic(Atomic::Integer(5))
+            ))
         );
     }
 
@@ -772,7 +534,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -798,7 +560,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -824,7 +586,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -851,8 +613,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::Failed(StackValue::Atomic(Atomic::Integer(2)))
+            run(xot, &test_set),
+            TestOutcome::Failed(Failure::Count(
+                &assert::AssertCount::new(8),
+                AssertCountFailure::WrongCount(1)
+            ))
         );
     }
 
@@ -876,7 +641,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -900,10 +665,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            run(xot, test_set),
-            TestResult::Failed(StackValue::Atomic(Atomic::String(Rc::new(
-                "foo".to_string()
-            ))))
+            run(xot, &test_set),
+            TestOutcome::Failed(Failure::StringValue(
+                &assert::AssertStringValue::new("foo2".to_string()),
+                AssertStringValueFailure::WrongStringValue("foo".to_string())
+            ))
         );
     }
 
@@ -927,7 +693,7 @@ mod tests {
       </test-set>"#,
         )
         .unwrap();
-        assert_eq!(run(xot, test_set), TestResult::Passed);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -958,8 +724,9 @@ mod tests {
 
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
-
-        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -989,8 +756,9 @@ mod tests {
 
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
-
-        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -1021,8 +789,9 @@ mod tests {
 
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
-
-        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -1054,10 +823,18 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        assert!(matches!(
-            run_fs(tmp_dir.path(), &test_cases_path),
-            TestResult::Failed { .. }
-        ));
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+
+        assert_eq!(
+            run(xot, &test_set),
+            TestOutcome::Failed(Failure::Xml(
+                &assert::AssertXml::new("<p>Something else!</p>".to_string()),
+                assert::AssertXmlFailure::WrongXml(
+                    "<sequence><p>Hello world!</p></sequence>".to_string()
+                )
+            ))
+        );
     }
 
     #[test]
@@ -1093,7 +870,10 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
     #[test]
@@ -1124,6 +904,9 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
-        assert_eq!(run_fs(tmp_dir.path(), &test_cases_path), TestResult::Passed);
+        let mut xot = Xot::new();
+        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+
+        assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 }

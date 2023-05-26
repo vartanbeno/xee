@@ -6,8 +6,9 @@ use miette::{miette, IntoDiagnostic, Result};
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
+use crate::assert::{TestOutcome, UnexpectedError};
 use crate::qt;
-use crate::run::{RunContext, TestResult};
+use crate::run::RunContext;
 
 pub(crate) fn run(mut run_context: RunContext) -> Result<()> {
     let mut stdout = stdout();
@@ -50,10 +51,10 @@ trait Renderer {
         stdout: &mut Stdout,
         test_case: &qt::TestCase,
     ) -> crossterm::Result<()>;
-    fn render_test_result(
+    fn render_test_outcome(
         &self,
         stdout: &mut Stdout,
-        test_result: &TestResult,
+        test_result: &TestOutcome,
     ) -> crossterm::Result<()>;
     fn render_test_set_summary(
         &self,
@@ -79,9 +80,9 @@ fn run_test_set<R: Renderer>(
         renderer
             .render_test_case(stdout, test_case)
             .into_diagnostic()?;
-        let test_result = test_case.run(run_context, test_set);
+        let outcome = test_case.run(run_context, test_set);
         renderer
-            .render_test_result(stdout, &test_result)
+            .render_test_outcome(stdout, &outcome)
             .into_diagnostic()?;
     }
     renderer
@@ -117,38 +118,35 @@ impl Renderer for CharacterRenderer {
         Ok(())
     }
 
-    fn render_test_result(
+    fn render_test_outcome(
         &self,
         stdout: &mut Stdout,
-        test_result: &TestResult,
+        outcome: &TestOutcome,
     ) -> crossterm::Result<()> {
-        match test_result {
-            TestResult::Passed => {
+        match outcome {
+            TestOutcome::Passed => {
                 execute!(stdout, style::PrintStyledContent(".".green()))?;
             }
-            TestResult::PassedWithWrongError(_) => {
+            TestOutcome::PassedWithUnexpectedError(_) => {
                 execute!(stdout, style::PrintStyledContent(".".green()))?;
             }
-            TestResult::Failed(_) => {
+            TestOutcome::Failed(_) => {
                 execute!(stdout, style::PrintStyledContent("F".red()))?;
             }
-            TestResult::RuntimeError(_) => {
+            TestOutcome::RuntimeError(_) => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
-            TestResult::CompilationError(_) => {
+            TestOutcome::CompilationError(_) => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
-            TestResult::UnsupportedExpression(_) => {
+            TestOutcome::UnsupportedExpression(_) => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
-            TestResult::Unsupported => {
+            TestOutcome::Unsupported => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
             }
-            TestResult::EnvironmentError(_) => {
+            TestOutcome::EnvironmentError(_) => {
                 execute!(stdout, style::PrintStyledContent("E".red()))?;
-            }
-            TestResult::UnsupportedDependency => {
-                // do not show any output as this is skipped
             }
         }
         Ok(())
@@ -196,38 +194,36 @@ impl Renderer for VerboseRenderer {
         Ok(())
     }
 
-    fn render_test_result(
+    fn render_test_outcome(
         &self,
         _stdout: &mut Stdout,
-        test_result: &TestResult,
+        test_result: &TestOutcome,
     ) -> crossterm::Result<()> {
         match test_result {
-            TestResult::Passed => {
+            TestOutcome::Passed => {
                 println!("{}", "PASS".green());
             }
-            TestResult::PassedWithWrongError(error) => {
-                println!("{} {}", "PASS".green(), error);
-            }
-            TestResult::Failed(_) => {
+            TestOutcome::PassedWithUnexpectedError(error) => match error {
+                UnexpectedError::Code(s) => println!("{} code: {}", "PASS".green(), s),
+                UnexpectedError::Error(e) => println!("{} error: {}", "PASS".green(), e),
+            },
+            TestOutcome::Failed(_) => {
                 println!("{}", "FAIL".red());
             }
-            TestResult::RuntimeError(error) => {
+            TestOutcome::RuntimeError(error) => {
                 println!("{} {}", "RUNTIME ERROR".red(), error);
             }
-            TestResult::CompilationError(error) => {
+            TestOutcome::CompilationError(error) => {
                 println!("{} {}", "COMPILATION ERROR".red(), error);
             }
-            TestResult::UnsupportedExpression(error) => {
+            TestOutcome::UnsupportedExpression(error) => {
                 println!("{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error);
             }
-            TestResult::Unsupported => {
+            TestOutcome::Unsupported => {
                 println!("{}", "UNSUPPORTED".red());
             }
-            TestResult::EnvironmentError(error) => {
+            TestOutcome::EnvironmentError(error) => {
                 println!("{} {}", "CONTEXT ITEM ERROR".red(), error);
-            }
-            TestResult::UnsupportedDependency => {
-                unreachable!();
             }
         }
         Ok(())

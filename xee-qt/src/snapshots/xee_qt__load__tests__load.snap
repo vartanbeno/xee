@@ -83,8 +83,10 @@ TestSet {
             dependencies: [],
             modules: [],
             test: "fn:root()",
-            result: Error(
-                "XPDY0002",
+            result: AssertError(
+                AssertError(
+                    "XPDY0002",
+                ),
             ),
         },
         TestCase {
@@ -114,14 +116,20 @@ TestSet {
             modules: [],
             test: "(1 to 100)[fn:root()]",
             result: AnyOf(
-                [
-                    AssertCount(
-                        100,
-                    ),
-                    Error(
-                        "XPTY0004",
-                    ),
-                ],
+                AssertAnyOf(
+                    [
+                        AssertCount(
+                            AssertCount(
+                                100,
+                            ),
+                        ),
+                        AssertError(
+                            AssertError(
+                                "XPTY0004",
+                            ),
+                        ),
+                    ],
+                ),
             ),
         },
         TestCase {
@@ -143,12 +151,18 @@ TestSet {
             modules: [],
             test: "1 = (1, fn:root(1[. = 1]))",
             result: AnyOf(
-                [
-                    AssertTrue,
-                    Error(
-                        "XPTY0004",
-                    ),
-                ],
+                AssertAnyOf(
+                    [
+                        AssertTrue(
+                            AssertTrue,
+                        ),
+                        AssertError(
+                            AssertError(
+                                "XPTY0004",
+                            ),
+                        ),
+                    ],
+                ),
             ),
         },
         TestCase {
@@ -170,12 +184,18 @@ TestSet {
             modules: [],
             test: "exists(1 = fn:root(1[. = 1]))",
             result: AnyOf(
-                [
-                    AssertTrue,
-                    Error(
-                        "XPTY0004",
-                    ),
-                ],
+                AssertAnyOf(
+                    [
+                        AssertTrue(
+                            AssertTrue,
+                        ),
+                        AssertError(
+                            AssertError(
+                                "XPTY0004",
+                            ),
+                        ),
+                    ],
+                ),
             ),
         },
         TestCase {
@@ -197,16 +217,22 @@ TestSet {
             modules: [],
             test: "fn:count(fn:root(()))",
             result: AnyOf(
-                [
-                    AssertEq(
-                        XPathExpr(
-                            "0",
+                AssertAnyOf(
+                    [
+                        AssertEq(
+                            AssertEq(
+                                XPathExpr(
+                                    "0",
+                                ),
+                            ),
                         ),
-                    ),
-                    Error(
-                        "XPST0005",
-                    ),
-                ],
+                        AssertError(
+                            AssertError(
+                                "XPST0005",
+                            ),
+                        ),
+                    ],
+                ),
             ),
         },
         TestCase {
@@ -236,7 +262,9 @@ TestSet {
             modules: [],
             test: "let $var := <!-- A Comment Node --> return fn:root($var)",
             result: AssertXml(
-                "<!-- A Comment Node -->",
+                AssertXml(
+                    "<!-- A Comment Node -->",
+                ),
             ),
         },
         TestCase {
@@ -266,7 +294,9 @@ TestSet {
             modules: [],
             test: "fn:root(<!-- A Comment Node -->)",
             result: AssertXml(
-                "<!-- A Comment Node -->",
+                AssertXml(
+                    "<!-- A Comment Node -->",
+                ),
             ),
         },
         TestCase {
@@ -296,7 +326,9 @@ TestSet {
             modules: [],
             test: "let $var := <anElement>An Element Content</anElement> return fn:root($var)",
             result: AssertXml(
-                "<anElement>An Element Content</anElement>",
+                AssertXml(
+                    "<anElement>An Element Content</anElement>",
+                ),
             ),
         },
         TestCase {
@@ -326,7 +358,9 @@ TestSet {
             modules: [],
             test: "fn:root(<anElement>An Element Content</anElement>)",
             result: AssertXml(
-                "<anElement>An Element Content</anElement>",
+                AssertXml(
+                    "<anElement>An Element Content</anElement>",
+                ),
             ),
         },
         TestCase {
@@ -356,7 +390,9 @@ TestSet {
             modules: [],
             test: "let $var := <?format role=\"output\" ?> return fn:root($var)",
             result: AssertXml(
-                "<?format role=\"output\" ?>",
+                AssertXml(
+                    "<?format role=\"output\" ?>",
+                ),
             ),
         },
         TestCase {
@@ -386,7 +422,9 @@ TestSet {
             modules: [],
             test: "fn:root(<?format role=\"output\" ?>)",
             result: AssertXml(
-                "<?format role=\"output\" ?>",
+                AssertXml(
+                    "<?format role=\"output\" ?>",
+                ),
             ),
         },
         TestCase {
@@ -416,7 +454,9 @@ TestSet {
             modules: [],
             test: "let $var := element anElement {attribute anAttribute {\"Attribute Value\"}} return fn:root($var)",
             result: AssertXml(
-                "<anElement anAttribute=\"Attribute Value\"/>",
+                AssertXml(
+                    "<anElement anAttribute=\"Attribute Value\"/>",
+                ),
             ),
         },
         TestCase {
@@ -446,7 +486,9 @@ TestSet {
             modules: [],
             test: "fn:root(element anElement {attribute anAttribute {\"Attribute Value\"}})",
             result: AssertXml(
-                "<anElement anAttribute=\"Attribute Value\"/>",
+                AssertXml(
+                    "<anElement anAttribute=\"Attribute Value\"/>",
+                ),
             ),
         },
         TestCase {
@@ -476,7 +518,9 @@ TestSet {
             modules: [],
             test: "let $var := document {<anElement><anInternalElement>element content</anInternalElement></anElement>} return fn:root($var)",
             result: AssertXml(
-                "<anElement><anInternalElement>element content</anInternalElement></anElement>",
+                AssertXml(
+                    "<anElement><anInternalElement>element content</anInternalElement></anElement>",
+                ),
             ),
         },
         TestCase {
@@ -506,7 +550,9 @@ TestSet {
             modules: [],
             test: "fn:root(document {<anElement><anInternalElement>element content</anInternalElement></anElement>})",
             result: AssertXml(
-                "<anElement><anInternalElement>element content</anInternalElement></anElement>",
+                AssertXml(
+                    "<anElement><anInternalElement>element content</anInternalElement></anElement>",
+                ),
             ),
         },
         TestCase {
@@ -542,7 +588,9 @@ TestSet {
             modules: [],
             test: "fn:root(fn:exactly-one(/langs[1]/para[1]))",
             result: AssertXml(
-                "<langs>\n <para xml:lang=\"en\"/>\n <div xml:lang=\"en\"><para>And now, and forever!</para></div>\n <para xml:lang=\"EN\"/>\n <para xml:lang=\"en-us\"/>\n <para xml:lang=\"de-DE-1996\">New German Orthography</para>\n</langs>",
+                AssertXml(
+                    "<langs>\n <para xml:lang=\"en\"/>\n <div xml:lang=\"en\"><para>And now, and forever!</para></div>\n <para xml:lang=\"EN\"/>\n <para xml:lang=\"en-us\"/>\n <para xml:lang=\"de-DE-1996\">New German Orthography</para>\n</langs>",
+                ),
             ),
         },
         TestCase {
@@ -578,7 +626,9 @@ TestSet {
             modules: [],
             test: "fn:root(/langs[1]/para[1]/@xml:lang)",
             result: AssertXml(
-                "<langs>\n <para xml:lang=\"en\"/>\n <div xml:lang=\"en\"><para>And now, and forever!</para></div>\n <para xml:lang=\"EN\"/>\n <para xml:lang=\"en-us\"/>\n <para xml:lang=\"de-DE-1996\">New German Orthography</para>\n</langs>",
+                AssertXml(
+                    "<langs>\n <para xml:lang=\"en\"/>\n <div xml:lang=\"en\"><para>And now, and forever!</para></div>\n <para xml:lang=\"EN\"/>\n <para xml:lang=\"en-us\"/>\n <para xml:lang=\"de-DE-1996\">New German Orthography</para>\n</langs>",
+                ),
             ),
         },
         TestCase {
@@ -608,7 +658,9 @@ TestSet {
             modules: [],
             test: "fn:root(text {\"A text Node\"})",
             result: AssertStringValue(
-                "A text Node",
+                AssertStringValue(
+                    "A text Node",
+                ),
             ),
         },
         TestCase {
@@ -638,7 +690,9 @@ TestSet {
             modules: [],
             test: "let $var := text {\"a text Node\"} return fn:root($var)",
             result: AssertStringValue(
-                "a text Node",
+                AssertStringValue(
+                    "a text Node",
+                ),
             ),
         },
         TestCase {
@@ -667,7 +721,9 @@ TestSet {
             ],
             modules: [],
             test: "let $var := element anElement {\"Element Content\"} return fn:root($var) is fn:root($var)",
-            result: AssertTrue,
+            result: AssertTrue(
+                AssertTrue,
+            ),
         },
         TestCase {
             name: "fn-root-19",
@@ -695,7 +751,9 @@ TestSet {
             ],
             modules: [],
             test: "let $var := element anElement {\"Element Content\"} return fn:root($var) is fn:root($var)",
-            result: AssertTrue,
+            result: AssertTrue(
+                AssertTrue,
+            ),
         },
         TestCase {
             name: "fn-root-20",
@@ -724,8 +782,10 @@ TestSet {
             modules: [],
             test: "let $var := element anElement {\"Element Content\"} return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                XPathExpr(
-                    "1",
+                AssertEq(
+                    XPathExpr(
+                        "1",
+                    ),
                 ),
             ),
         },
@@ -756,8 +816,10 @@ TestSet {
             modules: [],
             test: "let $var := <!-- An Element Node --> return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                XPathExpr(
-                    "1",
+                AssertEq(
+                    XPathExpr(
+                        "1",
+                    ),
                 ),
             ),
         },
@@ -788,8 +850,10 @@ TestSet {
             modules: [],
             test: "let $var := <?format role=\"output\" ?> return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                XPathExpr(
-                    "1",
+                AssertEq(
+                    XPathExpr(
+                        "1",
+                    ),
                 ),
             ),
         },
@@ -820,8 +884,10 @@ TestSet {
             modules: [],
             test: "let $var := text {\"A text node\"} return fn:count(fn:namespace-uri(fn:root($var)))",
             result: AssertEq(
-                XPathExpr(
-                    "1",
+                AssertEq(
+                    XPathExpr(
+                        "1",
+                    ),
                 ),
             ),
         },
@@ -849,8 +915,10 @@ TestSet {
             dependencies: [],
             modules: [],
             test: "fn:root(.)",
-            result: Error(
-                "XPDY0002",
+            result: AssertError(
+                AssertError(
+                    "XPDY0002",
+                ),
             ),
         },
         TestCase {
@@ -871,8 +939,10 @@ TestSet {
             dependencies: [],
             modules: [],
             test: "Root(2)",
-            result: Error(
-                "XPST0017",
+            result: AssertError(
+                AssertError(
+                    "XPST0017",
+                ),
             ),
         },
         TestCase {
@@ -923,8 +993,10 @@ TestSet {
             ],
             modules: [],
             test: "(1, 2, 3)[root()[generate-id() != '***']]",
-            result: Error(
-                "XPTY0004",
+            result: AssertError(
+                AssertError(
+                    "XPTY0004",
+                ),
             ),
         },
         TestCase {
@@ -945,8 +1017,10 @@ TestSet {
             dependencies: [],
             modules: [],
             test: "root(2)",
-            result: Error(
-                "XPTY0004",
+            result: AssertError(
+                AssertError(
+                    "XPTY0004",
+                ),
             ),
         },
         TestCase {
@@ -968,12 +1042,18 @@ TestSet {
             modules: [],
             test: "empty(root(()))",
             result: AnyOf(
-                [
-                    AssertTrue,
-                    Error(
-                        "XPST0005",
-                    ),
-                ],
+                AssertAnyOf(
+                    [
+                        AssertTrue(
+                            AssertTrue,
+                        ),
+                        AssertError(
+                            AssertError(
+                                "XPST0005",
+                            ),
+                        ),
+                    ],
+                ),
             ),
         },
         TestCase {
@@ -1003,7 +1083,9 @@ TestSet {
             modules: [],
             test: "fn:root(<e/>)",
             result: AssertXml(
-                "<e/>",
+                AssertXml(
+                    "<e/>",
+                ),
             ),
         },
         TestCase {
@@ -1032,7 +1114,9 @@ TestSet {
             ],
             modules: [],
             test: "empty(fn:root(<e/>/..))",
-            result: AssertTrue,
+            result: AssertTrue(
+                AssertTrue,
+            ),
         },
         TestCase {
             name: "K2-NodeRootFunc-3",
@@ -1061,7 +1145,9 @@ TestSet {
             modules: [],
             test: "fn:root(<!-- comment -->)",
             result: AssertXml(
-                "<!-- comment -->",
+                AssertXml(
+                    "<!-- comment -->",
+                ),
             ),
         },
         TestCase {
@@ -1091,7 +1177,9 @@ TestSet {
             modules: [],
             test: "<e>{fn:root(attribute name {\"value\"})}</e>",
             result: AssertXml(
-                "<e name=\"value\"/>",
+                AssertXml(
+                    "<e name=\"value\"/>",
+                ),
             ),
         },
         TestCase {
@@ -1121,7 +1209,9 @@ TestSet {
             modules: [],
             test: "fn:root(<?target data?>)",
             result: AssertXml(
-                "<?target data?>",
+                AssertXml(
+                    "<?target data?>",
+                ),
             ),
         },
         TestCase {
@@ -1151,7 +1241,9 @@ TestSet {
             modules: [],
             test: "fn:root(text{\"text node\"})",
             result: AssertStringValue(
-                "text node",
+                AssertStringValue(
+                    "text node",
+                ),
             ),
         },
         TestCase {
@@ -1181,7 +1273,9 @@ TestSet {
             modules: [],
             test: "fn:root(text{\"text node\"})",
             result: AssertStringValue(
-                "text node",
+                AssertStringValue(
+                    "text node",
+                ),
             ),
         },
         TestCase {
@@ -1210,7 +1304,9 @@ TestSet {
             ],
             modules: [],
             test: "root(document {()}) instance of document-node()",
-            result: AssertTrue,
+            result: AssertTrue(
+                AssertTrue,
+            ),
         },
     ],
 }
