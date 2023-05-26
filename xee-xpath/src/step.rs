@@ -98,6 +98,13 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                     false
                 }
             }
+            ast::KindTest::Comment => {
+                if let Node::Xot(node) = node {
+                    xot.value_type(node) == ValueType::Comment
+                } else {
+                    false
+                }
+            }
             _ => {
                 todo!("kind test not implemented yet {:?}", kind_test);
             }
