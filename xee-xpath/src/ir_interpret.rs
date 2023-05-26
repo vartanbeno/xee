@@ -189,6 +189,35 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOperator::Concat => {
                 self.builder.emit(Instruction::Concat, span);
             }
+            ir::BinaryOperator::And => {
+                // XXX we don't do any short-circuiting of evaluation yet
+                let first_false = self.builder.emit_jump_forward(JumpCondition::False, span);
+                let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
+                self.builder.patch_jump(first_false);
+                // pop the second item on the stack
+                self.builder.emit(Instruction::Pop, span);
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(false)), span);
+                let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
+                self.builder.patch_jump(second_true);
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(true)), span);
+                self.builder.patch_jump(end);
+            }
+            ir::BinaryOperator::Or => {
+                // XXX we don't do any short-circuiting of evaluation yet
+                let first_true = self.builder.emit_jump_forward(JumpCondition::True, span);
+                let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
+                // neither first nor second were true, so we return false
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(false)), span);
+                let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
+                self.builder.patch_jump(first_true);
+                self.builder.patch_jump(second_true);
+                self.builder
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(true)), span);
+                self.builder.patch_jump(end);
+            }
             _ => todo!("operator not supported yet: {:?}", binary.op),
         }
         Ok(())
