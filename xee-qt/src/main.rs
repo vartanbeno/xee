@@ -8,7 +8,7 @@ mod serialize;
 mod ui;
 
 use clap::Parser;
-use miette::{IntoDiagnostic, Result, WrapErr};
+use miette::Result;
 use std::path::{Path, PathBuf};
 use xot::Xot;
 

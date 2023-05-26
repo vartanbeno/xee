@@ -2,7 +2,7 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use miette::{miette, IntoDiagnostic, Result, WrapErr};
+use miette::{miette, IntoDiagnostic, Result};
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
@@ -101,7 +101,7 @@ impl CharacterRenderer {
 impl Renderer for CharacterRenderer {
     fn render_test_set(
         &self,
-        stdout: &mut Stdout,
+        _stdout: &mut Stdout,
         test_set: &qt::TestSet,
         catalog: &qt::Catalog,
     ) -> crossterm::Result<()> {
@@ -111,8 +111,8 @@ impl Renderer for CharacterRenderer {
 
     fn render_test_case(
         &self,
-        stdout: &mut Stdout,
-        test_case: &qt::TestCase,
+        _stdout: &mut Stdout,
+        _test_case: &qt::TestCase,
     ) -> crossterm::Result<()> {
         Ok(())
     }
@@ -156,8 +156,8 @@ impl Renderer for CharacterRenderer {
 
     fn render_test_set_summary(
         &self,
-        stdout: &mut Stdout,
-        test_set: &qt::TestSet,
+        _stdout: &mut Stdout,
+        _test_set: &qt::TestSet,
     ) -> crossterm::Result<()> {
         println!();
         Ok(())
@@ -175,7 +175,7 @@ impl VerboseRenderer {
 impl Renderer for VerboseRenderer {
     fn render_test_set(
         &self,
-        stdout: &mut Stdout,
+        _stdout: &mut Stdout,
         test_set: &qt::TestSet,
         catalog: &qt::Catalog,
     ) -> crossterm::Result<()> {
@@ -189,7 +189,7 @@ impl Renderer for VerboseRenderer {
 
     fn render_test_case(
         &self,
-        stdout: &mut Stdout,
+        _stdout: &mut Stdout,
         test_case: &qt::TestCase,
     ) -> crossterm::Result<()> {
         print!("{} ... ", test_case.name);
@@ -198,7 +198,7 @@ impl Renderer for VerboseRenderer {
 
     fn render_test_result(
         &self,
-        stdout: &mut Stdout,
+        _stdout: &mut Stdout,
         test_result: &TestResult,
     ) -> crossterm::Result<()> {
         match test_result {
@@ -235,8 +235,8 @@ impl Renderer for VerboseRenderer {
 
     fn render_test_set_summary(
         &self,
-        stdout: &mut Stdout,
-        test_set: &qt::TestSet,
+        _stdout: &mut Stdout,
+        _test_set: &qt::TestSet,
     ) -> crossterm::Result<()> {
         println!();
         Ok(())

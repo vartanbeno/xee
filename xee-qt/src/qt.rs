@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display, Formatter},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use crate::collection::FxIndexSet;

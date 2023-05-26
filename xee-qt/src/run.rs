@@ -1,13 +1,13 @@
 use derive_builder::Builder;
-use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
-use std::path::{Path, PathBuf};
+use miette::{Diagnostic, Result};
+use std::path::Path;
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Name, Namespaces, Node, StackValue, StaticContext, XPath,
+    Atomic, DynamicContext, Error, Item, Name, Namespaces, StackValue, StaticContext, XPath,
 };
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
-use crate::environment::{EnvironmentSpecIterator, SharedEnvironments, SourceCache};
+use crate::environment::{EnvironmentSpecIterator, SourceCache};
 use crate::qt;
 use crate::serialize::serialize;
 
@@ -308,7 +308,7 @@ impl qt::TestCase {
         TestResult::Passed
     }
 
-    fn assert_(xpath_expr: &qt::XPathExpr, stack_value: Result<StackValue, Error>) -> TestResult {
+    fn assert_(_xpath_expr: &qt::XPathExpr, _stack_value: Result<StackValue, Error>) -> TestResult {
         unimplemented!()
     }
 
@@ -448,6 +448,7 @@ impl qt::TestCase {
 #[cfg(test)]
 mod tests {
     use std::io::Write;
+    use std::path::PathBuf;
     use std::{fs::File, rc::Rc};
     use tempfile::tempdir;
 
