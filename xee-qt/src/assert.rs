@@ -498,7 +498,7 @@ impl<'a> fmt::Display for Failure<'a> {
                 }
                 Ok(())
             }
-            Failure::Not(a, outcome) => {
+            Failure::Not(_a, _outcome) => {
                 writeln!(f, "not:")?;
                 // writeln!(f, "  {}", outcome)?;
                 Ok(())

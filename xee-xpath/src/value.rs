@@ -480,7 +480,11 @@ impl Atomic {
             // iv. In all other cases, V is cast to the primitive base type of T.
             Atomic::String(_) => Ok(Atomic::String(Rc::new(v.to_string()))),
             Atomic::Boolean(_) => {
-                todo!();
+                // XXX casting rules are way more complex, see 19.2 in the
+                // XPath and Functions spec
+                Ok(Atomic::Boolean(
+                    v.parse::<bool>().map_err(|_| ValueError::Type)?,
+                ))
             }
             Atomic::Untyped(_) => unreachable!(),
             Atomic::Empty => unreachable!(),
