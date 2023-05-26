@@ -1615,4 +1615,9 @@ mod tests {
     fn test_xpath_parse_error() {
         assert_debug_snapshot!(parse_xpath_no_default_ns("1 + 2 +"));
     }
+
+    #[test]
+    fn test_xpath_ge() {
+        assert_debug_snapshot!(parse_xpath_no_default_ns("1 >= 2"));
+    }
 }

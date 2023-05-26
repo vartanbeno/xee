@@ -136,7 +136,7 @@ ValueExpr = { SimpleMapExpr }
 
 // GeneralComp
 // ::= "=" | "!=" | "<" | "<=" | ">" | ">="
-GeneralComp = _{ GenEq | GenNe | GenLt | GenLe | GenGt | GenGe }
+GeneralComp = _{ GenEq | GenNe | GenLe | GenLt | GenGe | GenGt }
 
 GenEq = { "=" }
 GenNe = { "!=" }
