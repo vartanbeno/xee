@@ -13,10 +13,11 @@ use crate::annotation::Annotations;
 use crate::ast;
 use crate::comparison;
 use crate::dynamic_context::DynamicContext;
+use crate::error::Error;
 use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
-#[derive(Debug, Error, Diagnostic, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
 pub enum ValueError {
     #[error("Type error")]
     XPTY0004,
@@ -30,6 +31,9 @@ pub enum ValueError {
     StackOverflow,
     #[error("Absent")]
     Absent,
+    // Explicit error raised with Error
+    #[error("Error")]
+    Error(Error),
 }
 
 type Result<T> = std::result::Result<T, ValueError>;

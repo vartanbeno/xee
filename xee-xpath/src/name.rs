@@ -1,11 +1,11 @@
 use ahash::{HashMap, HashMapExt};
 
 pub(crate) const FN_NAMESPACE: &str = "http://www.w3.org/2005/xpath-functions";
-
+pub(crate) const XS_NAMESPACE: &str = "http://www.w3.org/2001/XMLSchema";
 const XML_NAMESPACE: &str = "http://www.w3.org/XML/1998/namespace";
 
 const STATIC_NAMESPACES: [(&str, &str); 7] = [
-    ("xs", "http://www.w3.org/2001/XMLSchema"),
+    ("xs", XS_NAMESPACE),
     ("fn", FN_NAMESPACE),
     ("math", "http://www.w3.org/2005/xpath-functions/math"),
     ("map", "http://www.w3.org/2005/xpath-functions/map"),

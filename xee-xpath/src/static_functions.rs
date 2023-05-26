@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use crate::{
     ast,
-    name::FN_NAMESPACE,
+    name::{FN_NAMESPACE, XS_NAMESPACE},
     static_context::{FunctionType, StaticFunctionDescription},
     value::ValueError,
-    Atomic, DynamicContext, Node, StackValue,
+    Atomic, DynamicContext, Error, Node, StackValue,
 };
 
 fn my_function(a: i64, b: i64) -> i64 {
@@ -134,6 +134,19 @@ fn generate_id(
     ))))
 }
 
+fn untyped_atomic(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    let a = &arguments[0];
+    let s = a.to_atomic(context)?.to_string()?;
+    Ok(StackValue::Atomic(Atomic::Untyped(Rc::new(s))))
+}
+
+fn error(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    Err(ValueError::Error(Error::FOER0000))
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
@@ -219,6 +232,18 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             arity: 1,
             function_type: None,
             func: not,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("untypedAtomic".to_string(), Some(XS_NAMESPACE.to_string())),
+            arity: 1,
+            function_type: None,
+            func: untyped_atomic,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("error".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: None,
+            func: error,
         },
     ]
 }

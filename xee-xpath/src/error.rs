@@ -657,6 +657,7 @@ impl Error {
                 src: program.src.to_string(),
                 span,
             },
+            ValueError::Error(e) => e,
         }
     }
 }
