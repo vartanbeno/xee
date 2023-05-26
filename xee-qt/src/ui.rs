@@ -2,7 +2,7 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{miette, Diagnostic, IntoDiagnostic, Result};
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
@@ -207,15 +207,25 @@ impl Renderer for VerboseRenderer {
                 UnexpectedError::Code(s) => println!("{} code: {}", "PASS".green(), s),
                 UnexpectedError::Error(e) => println!("{} error: {}", "PASS".green(), e),
             },
-            TestOutcome::Failed(_) => {
-                println!("{}", "FAIL".red());
+            TestOutcome::Failed(failure) => {
+                println!("{} {}", "FAIL".red(), failure);
             }
-            TestOutcome::RuntimeError(error) => {
-                println!("{} {}", "RUNTIME ERROR".red(), error);
-            }
-            TestOutcome::CompilationError(error) => {
-                println!("{} {}", "COMPILATION ERROR".red(), error);
-            }
+            TestOutcome::RuntimeError(error) => match error.code() {
+                Some(code) => {
+                    println!("{} {} {}", "RUNTIME ERROR".red(), code, error);
+                }
+                None => {
+                    println!("{} {}", "RUNTIME ERROR".red(), error);
+                }
+            },
+            TestOutcome::CompilationError(error) => match error.code() {
+                Some(code) => {
+                    println!("{} {} {}", "COMPILATION ERROR".red(), code, error);
+                }
+                None => {
+                    println!("{} {}", "COMPILATION ERROR".red(), error);
+                }
+            },
             TestOutcome::UnsupportedExpression(error) => {
                 println!("{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error);
             }

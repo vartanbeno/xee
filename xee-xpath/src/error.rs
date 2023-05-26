@@ -363,6 +363,7 @@ pub enum Error {
     ///
     /// Error code used by fn:error when no other error code is provided.
     #[error("Unidentified error")]
+    #[diagnostic(code(FOER0000))]
     FOER0000,
     /// Invalid date/time formatting parameters.
     ///

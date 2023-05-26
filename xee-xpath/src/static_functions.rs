@@ -147,6 +147,14 @@ fn error(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackVa
     Err(ValueError::Error(Error::FOER0000))
 }
 
+fn true_(context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    Ok(StackValue::Atomic(Atomic::Boolean(true)))
+}
+
+fn false_(context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+    Ok(StackValue::Atomic(Atomic::Boolean(false)))
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
@@ -244,6 +252,18 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             arity: 0,
             function_type: None,
             func: error,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: None,
+            func: true_,
+        },
+        StaticFunctionDescription {
+            name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity: 0,
+            function_type: None,
+            func: false_,
         },
     ]
 }

@@ -481,6 +481,74 @@ pub(crate) enum Failure<'a> {
     Error(&'a AssertError, StackValue),
 }
 
+impl<'a> fmt::Display for Failure<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Failure::AnyOf(a, outcomes) => {
+                writeln!(f, "any of:")?;
+                for outcome in outcomes {
+                    match outcome {
+                        TestOutcome::Failed(failure) => {
+                            writeln!(f, "  {}", failure);
+                        }
+                        _ => {
+                            unreachable!()
+                        }
+                    }
+                }
+                Ok(())
+            }
+            Failure::Not(a, outcome) => {
+                writeln!(f, "not:")?;
+                // writeln!(f, "  {}", outcome)?;
+                Ok(())
+            }
+            Failure::Eq(a, stack_value) => {
+                writeln!(f, "eq:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", stack_value)?;
+                Ok(())
+            }
+            Failure::True(a, stack_value) => {
+                writeln!(f, "true:")?;
+                writeln!(f, "  expected: true")?;
+                writeln!(f, "  actual: {:?}", stack_value)?;
+                Ok(())
+            }
+            Failure::False(a, stack_value) => {
+                writeln!(f, "false:")?;
+                writeln!(f, "  expected: false")?;
+                writeln!(f, "  actual: {:?}", stack_value)?;
+                Ok(())
+            }
+            Failure::Count(a, failure) => {
+                writeln!(f, "count:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::StringValue(a, failure) => {
+                writeln!(f, "string-value:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Xml(a, failure) => {
+                writeln!(f, "xml:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Error(a, stack_value) => {
+                writeln!(f, "error:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", stack_value)?;
+                Ok(())
+            }
+        }
+    }
+}
+
 fn run_xpath(expr: &qt::XPathExpr) -> Result<StackValue, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
