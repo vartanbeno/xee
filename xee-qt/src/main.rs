@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+mod assert;
 mod collection;
 mod environment;
 mod load;
