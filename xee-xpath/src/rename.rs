@@ -27,23 +27,31 @@ impl UniqueNameGenerator {
 
 struct Names {
     names: Vec<(ast::Name, ast::Name)>,
+    generator: UniqueNameGenerator,
 }
 
 impl Names {
     fn new() -> Self {
-        Names { names: Vec::new() }
+        Names {
+            names: Vec::new(),
+            generator: UniqueNameGenerator::new(),
+        }
     }
 
-    fn get(&self, name: &ast::Name) -> Option<&ast::Name> {
+    fn get(&mut self, name: &ast::Name) -> ast::Name {
+        // this always returns a name, even if the
+        // name is unknown, in which case a unique bogus
+        // name is generated
         self.names
             .iter()
             .rev()
             .find(|(old_name, _)| old_name == name)
-            .map(|(_, new_name)| new_name)
+            .map(|(_, new_name)| new_name.clone())
+            .unwrap_or_else(|| self.generator.generate(name))
     }
 
-    fn push_name(&mut self, generator: &mut UniqueNameGenerator, name: &ast::Name) -> ast::Name {
-        let new_name = generator.generate(name);
+    fn push_name(&mut self, name: &ast::Name) -> ast::Name {
+        let new_name = self.generator.generate(name);
         self.names.push((name.clone(), new_name.clone()));
         new_name
     }
@@ -54,20 +62,18 @@ impl Names {
 }
 
 struct Renamer {
-    generator: UniqueNameGenerator,
     names: Names,
 }
 
 impl Renamer {
     fn new() -> Self {
         Renamer {
-            generator: UniqueNameGenerator::new(),
             names: Names::new(),
         }
     }
 
     fn push_name(&mut self, name: &ast::Name) -> ast::Name {
-        self.names.push_name(&mut self.generator, name)
+        self.names.push_name(name)
     }
 
     fn pop_name(&mut self) {
@@ -108,8 +114,8 @@ impl AstVisitor for Renamer {
     }
 
     fn visit_var_ref(&mut self, name: &mut ast::Name) {
-        let new_name = self.names.get(name).unwrap();
-        *name = new_name.clone();
+        let new_name = self.names.get(name);
+        *name = new_name;
     }
 }
 

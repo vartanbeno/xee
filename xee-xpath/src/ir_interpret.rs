@@ -1370,4 +1370,9 @@ mod tests {
             "/doc/p/string()",
         ));
     }
+
+    #[test]
+    fn test_let_uses_own_variable() {
+        assert_debug_snapshot!(run("let $x := $x return $x"));
+    }
 }
