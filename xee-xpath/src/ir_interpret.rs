@@ -1,7 +1,6 @@
+use miette::SourceSpan;
 use std::cell::RefCell;
 use std::rc::Rc;
-
-use miette::SourceSpan;
 
 use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::error::{Error, Result};

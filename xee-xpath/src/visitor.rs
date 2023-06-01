@@ -34,7 +34,7 @@ pub(crate) trait AstVisitor {
     fn visit_array_constructor(&mut self, expr: &mut ast::ArrayConstructor);
     fn visit_unary_lookup(&mut self, expr: &mut ast::UnaryLookup);
     fn visit_param(&mut self, expr: &mut ast::Param);
-    fn visit_sequence_type(&mut self, expr: &Option<ast::SequenceType>);
+    fn visit_sequence_type(&mut self, expr: &mut Option<ast::SequenceType>);
     fn visit_simple_map(&mut self, expr: &mut [ast::PathExpr]);
     fn visit_predicate(&mut self, expr: &mut ast::ExprS);
     fn visit_argument_list(&mut self, expr: &mut [ast::ExprSingleS]);
@@ -241,7 +241,8 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_kind_test<V: AstVisitor + ?Sized>(_v: &mut V, _expr: &mut ast::KindTest) {
-        todo!();
+        // intentionally left blank
+        // TODO: may need sub visitors
     }
 
     pub(crate) fn visit_primary_expr<V: AstVisitor + ?Sized>(
@@ -373,7 +374,7 @@ pub(crate) mod visit {
 
     pub(crate) fn visit_sequence_type<V: AstVisitor + ?Sized>(
         _v: &mut V,
-        _sequence_type: &Option<ast::SequenceType>,
+        _sequence_type: &mut Option<ast::SequenceType>,
     ) {
         todo!();
     }

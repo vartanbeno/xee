@@ -1,4 +1,5 @@
 use crate::parse::XPathParser;
+use crate::rename::unique_names;
 use miette::SourceSpan;
 use ordered_float::OrderedFloat;
 use pest::error::InputLocation;
@@ -1140,7 +1141,10 @@ pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::X
     let result = parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p));
 
     match result {
-        Ok(xpath) => Ok(xpath),
+        Ok(mut xpath) => {
+            unique_names(&mut xpath);
+            Ok(xpath)
+        }
         Err(e) => {
             let src = input.to_string();
             let location = e.location;

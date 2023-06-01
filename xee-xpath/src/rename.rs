@@ -41,13 +41,10 @@ impl Names {
             .map(|(_, new_name)| new_name)
     }
 
-    fn name(&self) -> Option<&ast::Name> {
-        self.names.last().map(|(_, new_name)| new_name)
-    }
-
-    fn push_name(&mut self, generator: &mut UniqueNameGenerator, name: &ast::Name) {
+    fn push_name(&mut self, generator: &mut UniqueNameGenerator, name: &ast::Name) -> ast::Name {
         let new_name = generator.generate(name);
-        self.names.push((name.clone(), new_name));
+        self.names.push((name.clone(), new_name.clone()));
+        new_name
     }
 
     fn pop_name(&mut self) {
@@ -61,8 +58,16 @@ struct Renamer {
 }
 
 impl Renamer {
-    fn push_name(&mut self, name: &ast::Name) {
-        self.names.push_name(&mut self.generator, name);
+    fn new() -> Self {
+        Renamer {
+            generator: UniqueNameGenerator::new(),
+            names: Names::new(),
+        }
+    }
+
+    #[must_use]
+    fn push_name(&mut self, name: &ast::Name) -> ast::Name {
+        self.names.push_name(&mut self.generator, name)
     }
 
     fn pop_name(&mut self) {
@@ -73,8 +78,42 @@ impl Renamer {
 impl AstVisitor for Renamer {
     fn visit_let_expr(&mut self, expr: &mut ast::LetExpr) {
         self.visit_expr_single(&mut expr.var_expr);
-        self.push_name(&expr.var_name);
+        expr.var_name = self.push_name(&expr.var_name);
         self.visit_expr_single(&mut expr.return_expr);
         self.pop_name();
     }
+
+    fn visit_for_expr(&mut self, expr: &mut ast::ForExpr) {
+        self.visit_expr_single(&mut expr.var_expr);
+        expr.var_name = self.push_name(&expr.var_name);
+        self.visit_expr_single(&mut expr.return_expr);
+        self.pop_name();
+    }
+
+    fn visit_quantified_expr(&mut self, expr: &mut ast::QuantifiedExpr) {
+        self.visit_expr_single(&mut expr.var_expr);
+        expr.var_name = self.push_name(&expr.var_name);
+        self.visit_expr_single(&mut expr.satisfies_expr);
+        self.pop_name();
+    }
+
+    fn visit_inline_function(&mut self, expr: &mut ast::InlineFunction) {
+        for param in &mut expr.params {
+            param.name = self.push_name(&param.name);
+        }
+        self.visit_expr(&mut expr.body);
+        for _ in &expr.params {
+            self.pop_name();
+        }
+    }
+
+    fn visit_var_ref(&mut self, name: &mut ast::Name) {
+        let new_name = self.names.get(name).unwrap();
+        *name = new_name.clone();
+    }
+}
+
+pub(crate) fn unique_names(expr: &mut ast::XPath) {
+    let mut renamer = Renamer::new();
+    renamer.visit_xpath(expr);
 }
