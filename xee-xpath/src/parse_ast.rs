@@ -1140,7 +1140,7 @@ pub(crate) fn parse_xpath(
     input: &str,
     static_context: &StaticContext,
 ) -> Result<ast::XPath, Error> {
-    let ast_parser = AstParser::new(&static_context.namespaces);
+    let ast_parser = AstParser::new(static_context.namespaces);
     let result = parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p));
 
     match result {
