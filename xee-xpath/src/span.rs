@@ -35,6 +35,7 @@ mod tests {
     use crate::ast_ir::convert_xpath;
     use crate::name::Namespaces;
     use crate::parse_ast::parse_xpath;
+    use crate::static_context::StaticContext;
 
     #[test]
     fn test_span_sequence_ast() {
@@ -44,7 +45,8 @@ mod tests {
         //  So from 0, 9 is expected
         // let's examine the AST
         let namespaces = Namespaces::new(None, None);
-        assert_debug_snapshot!(parse_xpath(expr, &namespaces));
+        let static_context = StaticContext::new(&namespaces);
+        assert_debug_snapshot!(parse_xpath(expr, &static_context));
     }
 
     #[test]

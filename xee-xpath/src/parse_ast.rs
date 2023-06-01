@@ -7,11 +7,11 @@ use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use rust_decimal::Decimal;
 
-use crate::ast;
 use crate::error::Error;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parse::Rule;
 use crate::span::{not_spanned, Spanned};
+use crate::{ast, StaticContext};
 
 struct AstParser<'a> {
     namespaces: &'a Namespaces<'a>,
@@ -1136,13 +1136,17 @@ pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingleS {
     parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p)).unwrap()
 }
 
-pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::XPath, Error> {
-    let ast_parser = AstParser::new(namespaces);
+pub(crate) fn parse_xpath(
+    input: &str,
+    static_context: &StaticContext,
+) -> Result<ast::XPath, Error> {
+    let ast_parser = AstParser::new(&static_context.namespaces);
     let result = parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p));
 
     match result {
         Ok(mut xpath) => {
-            unique_names(&mut xpath);
+            // rename all variables to unique names
+            unique_names(&mut xpath, static_context);
             Ok(xpath)
         }
         Err(e) => {
@@ -1159,7 +1163,8 @@ pub(crate) fn parse_xpath(input: &str, namespaces: &Namespaces) -> Result<ast::X
 
 fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     let namespaces = Namespaces::new(None, None);
-    parse_xpath(input, &namespaces)
+    let static_context = StaticContext::new(&namespaces);
+    parse_xpath(input, &static_context)
 }
 
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
