@@ -10,6 +10,13 @@ impl<T> Spanned<T> {
     pub(crate) fn new(value: T, span: SourceSpan) -> Self {
         Self { value, span }
     }
+
+    pub(crate) fn map(&self, f: impl FnOnce(&T) -> T) -> Self {
+        Self {
+            value: f(&self.value),
+            span: self.span,
+        }
+    }
 }
 
 // pub(crate) type Spanned<T> = (T, SourceSpan);

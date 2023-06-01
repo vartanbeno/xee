@@ -77,6 +77,15 @@ impl Name {
             xot.name(&self.name)
         }
     }
+
+    pub(crate) fn with_suffix(&self) -> Name {
+        let mut name = self.name.clone();
+        name.push('*');
+        Name {
+            name,
+            namespace: self.namespace.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

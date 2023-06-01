@@ -25,6 +25,7 @@ mod operator;
 mod parse;
 mod parse_ast;
 mod query;
+mod rename;
 mod run;
 mod scope;
 mod span;
@@ -32,6 +33,7 @@ mod static_context;
 mod static_functions;
 mod step;
 mod value;
+mod visitor;
 mod xpath;
 
 pub use crate::ast::Name;
