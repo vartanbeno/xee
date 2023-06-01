@@ -96,22 +96,22 @@ pub(crate) mod visit {
                 v.visit_simple_map(exprs);
             }
             ast::ApplyOperator::Unary(_unary_operators) => {
-                todo!()
+                // TODO
             }
             ast::ApplyOperator::Arrow(_arrows) => {
-                todo!()
+                // TODO
             }
             ast::ApplyOperator::Cast(_single_type) => {
-                todo!()
+                // TODO
             }
             ast::ApplyOperator::Castable(_single_type) => {
-                todo!()
+                // TODO
             }
             ast::ApplyOperator::Treat(_single_type) => {
-                todo!()
+                // TODO
             }
             ast::ApplyOperator::InstanceOf(_sequence_type) => {
-                todo!()
+                // TODO
             }
         }
     }
@@ -210,7 +210,7 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_lookup<V: AstVisitor + ?Sized>(_v: &mut V, _expr: &mut ast::Lookup) {
-        todo!();
+        // TODO
     }
 
     pub(crate) fn visit_axis_step<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::AxisStep) {
@@ -369,13 +369,13 @@ pub(crate) mod visit {
         _v: &mut V,
         _unary_lookup: &mut ast::UnaryLookup,
     ) {
-        todo!();
+        // TODO
     }
 
     pub(crate) fn visit_sequence_type<V: AstVisitor + ?Sized>(
         _v: &mut V,
         _sequence_type: &mut Option<ast::SequenceType>,
     ) {
-        todo!();
+        // TODO
     }
 }
