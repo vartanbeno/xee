@@ -147,11 +147,11 @@ fn error(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackVa
     Err(ValueError::Error(Error::FOER0000))
 }
 
-fn true_(context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn true_(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     Ok(StackValue::Atomic(Atomic::Boolean(true)))
 }
 
-fn false_(context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
+fn false_(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     Ok(StackValue::Atomic(Atomic::Boolean(false)))
 }
 
