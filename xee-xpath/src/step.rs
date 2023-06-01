@@ -115,7 +115,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
             }
             match name_test {
                 ast::NameTest::Name(name) => {
-                    let name_id = ast_name_to_name_id(xot, name);
+                    let name_id = name.to_name_id(xot);
                     // if name isn't present in XML document it's certainly
                     // false
                     if let Some(name_id) = name_id {
@@ -169,19 +169,6 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                 },
             }
         }
-    }
-}
-
-fn ast_name_to_name_id(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
-    if let Some(namespace) = &name.namespace {
-        let namespace_id = xot.namespace(namespace);
-        if let Some(namespace_id) = namespace_id {
-            xot.name_ns(&name.name, namespace_id)
-        } else {
-            None
-        }
-    } else {
-        xot.name(&name.name)
     }
 }
 
@@ -267,10 +254,7 @@ mod tests {
 
         let step = Step {
             axis: ast::Axis::Child,
-            node_test: ast::NodeTest::NameTest(ast::NameTest::Name(ast::Name {
-                name: "a".to_string(),
-                namespace: None,
-            })),
+            node_test: ast::NodeTest::NameTest(ast::NameTest::Name(ast::Name::without_ns("a"))),
         };
         let sequence = resolve_step(&step, Node::Xot(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a]));

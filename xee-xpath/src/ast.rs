@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use xot::Xot;
 
 pub(crate) use crate::operator::BinaryOperator;
 use crate::span::Spanned;
@@ -48,8 +49,8 @@ pub(crate) struct QuantifiedExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Name {
-    pub(crate) name: String,
-    pub(crate) namespace: Option<String>,
+    name: String,
+    namespace: Option<String>,
 }
 
 impl Name {
@@ -61,6 +62,19 @@ impl Name {
         Name {
             name: name.to_string(),
             namespace: None,
+        }
+    }
+
+    pub(crate) fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
+        if let Some(namespace) = &self.namespace {
+            let namespace_id = xot.namespace(namespace);
+            if let Some(namespace_id) = namespace_id {
+                xot.name_ns(&self.name, namespace_id)
+            } else {
+                None
+            }
+        } else {
+            xot.name(&self.name)
         }
     }
 }

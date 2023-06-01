@@ -846,10 +846,7 @@ impl<'a> AstParser<'a> {
             } else {
                 // XXX what if someone uses this as a parameter name?
                 let param_name = format!("placeholder{}", placeholder_index);
-                let name = ast::Name {
-                    name: param_name,
-                    namespace: None,
-                };
+                let name = ast::Name::without_ns(&param_name);
                 params.push(ast::Param {
                     name: name.clone(),
                     type_: None,
@@ -890,10 +887,7 @@ impl<'a> AstParser<'a> {
     fn var_name_to_name(&self, pair: Pair<Rule>) -> ast::Name {
         debug_assert_eq!(pair.as_rule(), Rule::VarName);
         // XXX no support for namespaces yet
-        ast::Name {
-            name: pair.as_str().to_string(),
-            namespace: None,
-        }
+        ast::Name::without_ns(pair.as_str())
     }
 
     fn eq_name_to_name(&self, pair: Pair<Rule>, default_namespace: Option<&'a str>) -> ast::Name {
@@ -926,10 +920,10 @@ impl<'a> AstParser<'a> {
         let uri = pairs.next().unwrap();
         let uri = uri.into_inner().next().unwrap();
         let local_part = pairs.next().unwrap();
-        ast::Name {
-            name: local_part.as_str().to_string(),
-            namespace: Some(uri.as_str().to_string()),
-        }
+        ast::Name::new(
+            local_part.as_str().to_string(),
+            Some(uri.as_str().to_string()),
+        )
     }
 
     fn prefixed_name_to_name(&self, pair: Pair<Rule>) -> ast::Name {
@@ -939,10 +933,7 @@ impl<'a> AstParser<'a> {
         // XXX unwrap should be an compile time error
         let namespace = self.namespaces.by_prefix(prefix).unwrap();
         let local_part = pairs.next().unwrap();
-        ast::Name {
-            name: local_part.as_str().to_string(),
-            namespace: Some(namespace.to_string()),
-        }
+        ast::Name::new(local_part.as_str().to_string(), Some(namespace.to_string()))
     }
 
     fn unprefixed_name_to_name(
@@ -952,10 +943,10 @@ impl<'a> AstParser<'a> {
     ) -> ast::Name {
         debug_assert_eq!(pair.as_rule(), Rule::UnprefixedName);
         let pair = pair.into_inner().next().unwrap();
-        ast::Name {
-            name: pair.as_str().to_string(),
-            namespace: default_namespace.map(|s| s.to_string()),
-        }
+        ast::Name::new(
+            pair.as_str().to_string(),
+            default_namespace.map(|s| s.to_string()),
+        )
     }
 
     fn named_function_ref_to_named_function_ref(&self, pair: Pair<Rule>) -> ast::NamedFunctionRef {
@@ -1104,10 +1095,7 @@ fn root_from_context(span: &pest::Span) -> ast::StepExprS {
     spanned(
         ast::StepExpr::PrimaryExpr(not_spanned(ast::PrimaryExpr::FunctionCall(
             ast::FunctionCall {
-                name: ast::Name {
-                    name: "root".to_string(),
-                    namespace: Some(FN_NAMESPACE.to_string()),
-                },
+                name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
                 arguments: vec![not_spanned(ast::ExprSingle::Path(ast::PathExpr {
                     steps: vec![not_spanned(ast::StepExpr::AxisStep(ast::AxisStep {
                         axis: ast::Axis::Self_,

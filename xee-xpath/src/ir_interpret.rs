@@ -1300,10 +1300,7 @@ mod tests {
         assert_debug_snapshot!(run_with_variables(
             "$foo",
             &[(
-                ast::Name {
-                    name: "foo".to_string(),
-                    namespace: None
-                },
+                ast::Name::without_ns("foo"),
                 StackValue::Atomic(Atomic::String(Rc::new("FOO".to_string())))
             )],
         ))
@@ -1315,17 +1312,11 @@ mod tests {
             "$foo + $bar",
             &[
                 (
-                    ast::Name {
-                        name: "foo".to_string(),
-                        namespace: None
-                    },
+                    ast::Name::without_ns("foo"),
                     StackValue::Atomic(Atomic::Integer(1))
                 ),
                 (
-                    ast::Name {
-                        name: "bar".to_string(),
-                        namespace: None
-                    },
+                    ast::Name::without_ns("bar"),
                     StackValue::Atomic(Atomic::Integer(2))
                 )
             ]
