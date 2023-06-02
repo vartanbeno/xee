@@ -1,0 +1,62 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_xpath(\"()\")"
+---
+Ok(
+    Spanned {
+        value: FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
+                            "v0",
+                        ),
+                    ),
+                    Param(
+                        Name(
+                            "v1",
+                        ),
+                    ),
+                    Param(
+                        Name(
+                            "v2",
+                        ),
+                    ),
+                ],
+                body: Spanned {
+                    value: Atom(
+                        Spanned {
+                            value: Const(
+                                EmptySequence,
+                            ),
+                            span: SourceSpan {
+                                offset: SourceOffset(
+                                    0,
+                                ),
+                                length: SourceOffset(
+                                    2,
+                                ),
+                            },
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            2,
+                        ),
+                    },
+                },
+            },
+        ),
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                2,
+            ),
+        },
+    },
+)

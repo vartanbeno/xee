@@ -1,0 +1,135 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"function($x) { $x + 1 }(3)\")"
+---
+Ok(
+    Spanned {
+        value: Let(
+            Let {
+                name: Name(
+                    "v3",
+                ),
+                var_expr: Spanned {
+                    value: FunctionDefinition(
+                        FunctionDefinition {
+                            params: [
+                                Param(
+                                    Name(
+                                        "v0",
+                                    ),
+                                ),
+                            ],
+                            body: Spanned {
+                                value: Binary(
+                                    Binary {
+                                        left: Spanned {
+                                            value: Variable(
+                                                Name(
+                                                    "v0",
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    15,
+                                                ),
+                                                length: SourceOffset(
+                                                    2,
+                                                ),
+                                            },
+                                        },
+                                        op: Add,
+                                        right: Spanned {
+                                            value: Const(
+                                                Integer(
+                                                    1,
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    20,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        },
+                                    },
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        15,
+                                    ),
+                                    length: SourceOffset(
+                                        7,
+                                    ),
+                                },
+                            },
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            23,
+                        ),
+                    },
+                },
+                return_expr: Spanned {
+                    value: FunctionCall(
+                        FunctionCall {
+                            atom: Spanned {
+                                value: Variable(
+                                    Name(
+                                        "v3",
+                                    ),
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        23,
+                                    ),
+                                },
+                            },
+                            args: [
+                                Spanned {
+                                    value: Const(
+                                        Integer(
+                                            3,
+                                        ),
+                                    ),
+                                    span: SourceSpan {
+                                        offset: SourceOffset(
+                                            24,
+                                        ),
+                                        length: SourceOffset(
+                                            1,
+                                        ),
+                                    },
+                                },
+                            ],
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            0,
+                        ),
+                    },
+                },
+            },
+        ),
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                0,
+            ),
+        },
+    },
+)

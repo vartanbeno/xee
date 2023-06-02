@@ -33,7 +33,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     use crate::ast::parse_xpath;
-    use crate::ast_ir::convert_xpath;
+    use crate::ir::convert_xpath;
     use crate::name::Namespaces;
     use crate::static_context::StaticContext;
 

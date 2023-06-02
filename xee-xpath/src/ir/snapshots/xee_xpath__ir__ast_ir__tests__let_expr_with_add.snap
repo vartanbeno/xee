@@ -1,0 +1,95 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"let $x := (1 + 2) return $x\")"
+---
+Ok(
+    Spanned {
+        value: Let(
+            Let {
+                name: Name(
+                    "v0",
+                ),
+                var_expr: Spanned {
+                    value: Binary(
+                        Binary {
+                            left: Spanned {
+                                value: Const(
+                                    Integer(
+                                        1,
+                                    ),
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        11,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
+                            },
+                            op: Add,
+                            right: Spanned {
+                                value: Const(
+                                    Integer(
+                                        2,
+                                    ),
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        15,
+                                    ),
+                                    length: SourceOffset(
+                                        1,
+                                    ),
+                                },
+                            },
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            11,
+                        ),
+                        length: SourceOffset(
+                            5,
+                        ),
+                    },
+                },
+                return_expr: Spanned {
+                    value: Atom(
+                        Spanned {
+                            value: Variable(
+                                Name(
+                                    "v0",
+                                ),
+                            ),
+                            span: SourceSpan {
+                                offset: SourceOffset(
+                                    25,
+                                ),
+                                length: SourceOffset(
+                                    2,
+                                ),
+                            },
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            25,
+                        ),
+                        length: SourceOffset(
+                            2,
+                        ),
+                    },
+                },
+            },
+        ),
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                27,
+            ),
+        },
+    },
+)

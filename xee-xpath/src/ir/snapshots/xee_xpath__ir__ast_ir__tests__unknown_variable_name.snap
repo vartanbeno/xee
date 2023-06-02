@@ -1,0 +1,17 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"$unknown\")"
+---
+Err(
+    XPST0008 {
+        src: "$unknown",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                8,
+            ),
+        },
+    },
+)

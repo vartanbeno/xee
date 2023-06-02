@@ -9,7 +9,6 @@ extern crate num_derive;
 
 mod annotation;
 mod ast;
-mod ast_ir;
 mod builder;
 mod comparison;
 mod document;

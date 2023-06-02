@@ -1,0 +1,144 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_xpath(\"1, 2, 3\")"
+---
+Ok(
+    Spanned {
+        value: FunctionDefinition(
+            FunctionDefinition {
+                params: [
+                    Param(
+                        Name(
+                            "v0",
+                        ),
+                    ),
+                    Param(
+                        Name(
+                            "v1",
+                        ),
+                    ),
+                    Param(
+                        Name(
+                            "v2",
+                        ),
+                    ),
+                ],
+                body: Spanned {
+                    value: Let(
+                        Let {
+                            name: Name(
+                                "v5",
+                            ),
+                            var_expr: Spanned {
+                                value: Binary(
+                                    Binary {
+                                        left: Spanned {
+                                            value: Const(
+                                                Integer(
+                                                    1,
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    0,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        },
+                                        op: Comma,
+                                        right: Spanned {
+                                            value: Const(
+                                                Integer(
+                                                    2,
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    3,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        },
+                                    },
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        4,
+                                    ),
+                                },
+                            },
+                            return_expr: Spanned {
+                                value: Binary(
+                                    Binary {
+                                        left: Spanned {
+                                            value: Variable(
+                                                Name(
+                                                    "v5",
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    0,
+                                                ),
+                                                length: SourceOffset(
+                                                    4,
+                                                ),
+                                            },
+                                        },
+                                        op: Comma,
+                                        right: Spanned {
+                                            value: Const(
+                                                Integer(
+                                                    3,
+                                                ),
+                                            ),
+                                            span: SourceSpan {
+                                                offset: SourceOffset(
+                                                    6,
+                                                ),
+                                                length: SourceOffset(
+                                                    1,
+                                                ),
+                                            },
+                                        },
+                                    },
+                                ),
+                                span: SourceSpan {
+                                    offset: SourceOffset(
+                                        0,
+                                    ),
+                                    length: SourceOffset(
+                                        7,
+                                    ),
+                                },
+                            },
+                        },
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            7,
+                        ),
+                    },
+                },
+            },
+        ),
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                7,
+            ),
+        },
+    },
+)

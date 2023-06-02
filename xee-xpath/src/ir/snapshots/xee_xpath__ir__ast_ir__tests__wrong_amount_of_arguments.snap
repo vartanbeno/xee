@@ -1,0 +1,18 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"fn:string(1, 2, 3)\")"
+---
+Err(
+    XPST0017 {
+        advice: "Either the function name Name { name: \"string\", namespace: Some(\"http://www.w3.org/2005/xpath-functions\") } does not exist, or you are calling it with the wrong number of arguments (3)",
+        src: "fn:string(1, 2, 3)",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                18,
+            ),
+        },
+    },
+)

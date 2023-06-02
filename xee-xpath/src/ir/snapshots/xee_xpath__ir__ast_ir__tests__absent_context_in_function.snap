@@ -1,0 +1,17 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_xpath(\"function() { . }\")"
+---
+Err(
+    XPDY0002 {
+        src: "function() { . }",
+        span: SourceSpan {
+            offset: SourceOffset(
+                13,
+            ),
+            length: SourceOffset(
+                1,
+            ),
+        },
+    },
+)

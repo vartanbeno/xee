@@ -1,0 +1,18 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"unknown_function#2\")"
+---
+Err(
+    XPST0017 {
+        advice: "Either the function name Name { name: \"unknown_function\", namespace: None } does not exist, or you are calling it with the wrong number of arguments (2)",
+        src: "unknown_function#2",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                18,
+            ),
+        },
+    },
+)
