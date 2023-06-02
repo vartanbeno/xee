@@ -1,7 +1,6 @@
-use crate::dynamic_context::DynamicContext;
+use crate::context::{DynamicContext, StaticContext};
 use crate::error::Error;
 use crate::error::Result;
-use crate::static_context::StaticContext;
 use crate::value::{Item, ValueError};
 use crate::xpath::XPath;
 
@@ -317,7 +316,7 @@ mod tests {
 
     use super::*;
 
-    use crate::name::Namespaces;
+    use crate::context::Namespaces;
     use crate::value::{Atomic, Node};
 
     #[test]

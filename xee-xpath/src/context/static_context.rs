@@ -2,9 +2,9 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 
 use crate::ast;
-use crate::dynamic_context::DynamicContext;
-use crate::name::Namespaces;
-use crate::static_functions::static_function_descriptions;
+use crate::context::dynamic_context::DynamicContext;
+use crate::context::namespaces::Namespaces;
+use crate::context::static_functions::static_function_descriptions;
 use crate::value::ValueError;
 use crate::value::{StackValue, StaticFunctionId};
 

@@ -6,8 +6,8 @@ use pest::Parser;
 use rust_decimal::Decimal;
 
 use crate::ast::rename::unique_names;
+use crate::context::{Namespaces, FN_NAMESPACE};
 use crate::error::Error;
-use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parser::Rule;
 use crate::parser::XPathParser;
 use crate::span::{not_spanned, Spanned};

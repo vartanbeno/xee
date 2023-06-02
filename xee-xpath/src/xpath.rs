@@ -2,11 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::ast::parse_xpath;
-use crate::dynamic_context::DynamicContext;
+use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
-use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 use crate::{ir, Sequence};
 
@@ -150,9 +149,8 @@ mod tests {
     use xot::Xot;
 
     use crate::{
+        context::{Namespaces, StaticContext, FN_NAMESPACE},
         document::{Documents, Uri},
-        name::{Namespaces, FN_NAMESPACE},
-        static_context::StaticContext,
     };
 
     use super::*;

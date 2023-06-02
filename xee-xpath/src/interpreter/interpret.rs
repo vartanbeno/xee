@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use crate::dynamic_context::DynamicContext;
+use crate::context::DynamicContext;
 use crate::error::Error;
 use crate::interpreter::builder::Program;
 use crate::interpreter::instruction::{
@@ -618,10 +618,9 @@ mod tests {
 
     use xot::Xot;
 
+    use crate::context::{Namespaces, StaticContext};
     use crate::interpreter::builder::{FunctionBuilder, JumpCondition};
     use crate::interpreter::instruction::{decode_instructions, Instruction};
-    use crate::name::Namespaces;
-    use crate::static_context::StaticContext;
 
     #[test]
     fn test_interpreter() -> Result<(), ValueError> {

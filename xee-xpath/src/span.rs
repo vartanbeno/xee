@@ -33,9 +33,8 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     use crate::ast::parse_xpath;
+    use crate::context::{Namespaces, StaticContext};
     use crate::ir::convert_xpath;
-    use crate::name::Namespaces;
-    use crate::static_context::StaticContext;
 
     #[test]
     fn test_span_sequence_ast() {

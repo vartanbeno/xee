@@ -10,32 +10,27 @@ extern crate num_derive;
 mod annotation;
 mod ast;
 mod comparison;
+mod context;
 mod document;
-mod dynamic_context;
 mod error;
 mod interpreter;
 mod ir;
-mod name;
 mod op;
 mod operator;
 mod parser;
 mod query;
 mod run;
 mod span;
-mod static_context;
-mod static_functions;
 mod step;
 mod value;
 mod xpath;
 
 pub use crate::ast::Name;
-pub use crate::dynamic_context::DynamicContext;
+pub use crate::context::{DynamicContext, Namespaces, StaticContext};
 pub use crate::error::Error;
-pub use crate::name::Namespaces;
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
-pub use crate::static_context::StaticContext;
 pub use crate::value::{Atomic, Item, Node, Sequence, StackValue};
 pub use crate::xpath::XPath;

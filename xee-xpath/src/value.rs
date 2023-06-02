@@ -12,7 +12,7 @@ use xot::Xot;
 use crate::annotation::Annotations;
 use crate::ast;
 use crate::comparison;
-use crate::dynamic_context::DynamicContext;
+use crate::context::DynamicContext;
 use crate::error::Error;
 use crate::ir;
 

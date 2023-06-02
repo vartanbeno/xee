@@ -4,12 +4,10 @@ use ahash::{HashMap, HashMapExt};
 use miette::SourceSpan;
 
 use crate::ast;
+use crate::context::{Namespaces, StaticContext, FN_NAMESPACE};
 use crate::error::{Error, Result};
 use crate::ir;
-use crate::name::Namespaces;
-use crate::name::FN_NAMESPACE;
 use crate::span::Spanned;
-use crate::static_context::StaticContext;
 use crate::value::StaticFunctionId;
 use crate::value::Step;
 

@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use crate::{
     ast,
-    name::{FN_NAMESPACE, XS_NAMESPACE},
-    static_context::{FunctionType, StaticFunctionDescription},
+    context::namespaces::{FN_NAMESPACE, XS_NAMESPACE},
+    context::static_context::{FunctionType, StaticFunctionDescription},
     value::ValueError,
     Atomic, DynamicContext, Error, Node, StackValue,
 };

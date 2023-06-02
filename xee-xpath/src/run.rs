@@ -1,10 +1,8 @@
 use xot::Xot;
 
+use crate::context::{DynamicContext, Namespaces, StaticContext, FN_NAMESPACE};
 use crate::document::{Documents, Uri};
-use crate::dynamic_context::DynamicContext;
 use crate::error::Result;
-use crate::name::{Namespaces, FN_NAMESPACE};
-use crate::static_context::StaticContext;
 use crate::value::StackValue;
 use crate::xpath::XPath;
 

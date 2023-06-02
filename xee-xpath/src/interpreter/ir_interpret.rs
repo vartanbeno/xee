@@ -2,13 +2,13 @@ use miette::SourceSpan;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::context::{ContextRule, StaticContext};
 use crate::error::{Error, Result};
 use crate::interpreter::builder::{
     BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition,
 };
 use crate::interpreter::instruction::Instruction;
 use crate::ir;
-use crate::static_context::{ContextRule, StaticContext};
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};
 
 pub(crate) type Scopes = crate::interpreter::scope::Scopes<ir::Name>;
@@ -536,11 +536,9 @@ mod tests {
     use xot::Xot;
 
     use crate::ast;
-    use crate::dynamic_context::DynamicContext;
+    use crate::context::{DynamicContext, Namespaces, StaticContext};
     use crate::error::Result;
-    use crate::name::Namespaces;
     use crate::run::evaluate;
-    use crate::static_context::StaticContext;
     use crate::xpath::XPath;
     use crate::{
         document::{Document, Documents, Uri},

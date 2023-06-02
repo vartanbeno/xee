@@ -4,9 +4,9 @@ use std::fmt::{Debug, Formatter};
 use xot::Xot;
 
 use crate::ast;
+use crate::context::static_context::StaticContext;
 use crate::document::Documents;
 use crate::error::Error;
-use crate::static_context::StaticContext;
 use crate::value::StackValue;
 
 pub struct DynamicContext<'a> {

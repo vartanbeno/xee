@@ -2,7 +2,7 @@ use ahash::{HashSet, HashSetExt};
 
 use crate::ast;
 use crate::ast::visitor::AstVisitor;
-use crate::static_context::StaticContext;
+use crate::context::StaticContext;
 
 struct UniqueNameGenerator {
     names: HashSet<ast::Name>,
