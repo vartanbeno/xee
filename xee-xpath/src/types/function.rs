@@ -1,9 +1,10 @@
 use ahash::AHashMap as HashMap;
 
-use crate::ast;
-use crate::context::{FN_NAMESPACE, XS_NAMESPACE};
+use crate::context::{DynamicContext, FN_NAMESPACE, XS_NAMESPACE};
 use crate::types::types_core::{Item, ItemType, Occurrence, SequenceType};
 use crate::value::Node;
+use crate::value::ValueError;
+use crate::{ast, Atomic, StackValue};
 
 #[derive(Debug)]
 struct Error {}
@@ -21,6 +22,31 @@ struct FunctionDescription {
 struct Argument {
     name: ast::Name,
     type_: SequenceType,
+}
+
+trait TypeConverter<T> {
+    fn to_value(
+        context: &DynamicContext,
+        stack_value: &StackValue,
+    ) -> std::result::Result<T, ValueError>;
+
+    fn to_stack_value(context: &DynamicContext, value: T) -> StackValue;
+}
+
+struct IntTypeConverter {}
+
+impl TypeConverter<i64> for IntTypeConverter {
+    fn to_value(
+        context: &DynamicContext,
+        stack_value: &StackValue,
+    ) -> std::result::Result<i64, ValueError> {
+        let atomic = stack_value.to_atomic(context)?;
+        atomic.to_integer()
+    }
+
+    fn to_stack_value(_context: &DynamicContext, value: i64) -> StackValue {
+        StackValue::Atomic(Atomic::Integer(value))
+    }
 }
 
 struct AtomicTypes<'a> {
