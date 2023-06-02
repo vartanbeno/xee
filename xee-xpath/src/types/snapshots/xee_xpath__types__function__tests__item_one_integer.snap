@@ -1,0 +1,50 @@
+---
+source: xee-xpath/src/types/function.rs
+expression: "convert(\"fn foo(a: i64) -> i64 { a + 1 }\")"
+---
+Ok(
+    FunctionDescription {
+        name: Name {
+            name: "foo",
+            namespace: Some(
+                "http://www.w3.org/2005/xpath-functions",
+            ),
+        },
+        arguments: [
+            Argument {
+                name: Name {
+                    name: "a",
+                    namespace: None,
+                },
+                type_: Item(
+                    Item {
+                        item_type: AtomicOrUnionType(
+                            Name {
+                                name: "integer",
+                                namespace: Some(
+                                    "http://www.w3.org/2001/XMLSchema",
+                                ),
+                            },
+                        ),
+                        occurrence: One,
+                    },
+                ),
+            },
+        ],
+        return_type: Some(
+            Item(
+                Item {
+                    item_type: AtomicOrUnionType(
+                        Name {
+                            name: "integer",
+                            namespace: Some(
+                                "http://www.w3.org/2001/XMLSchema",
+                            ),
+                        },
+                    ),
+                    occurrence: One,
+                },
+            ),
+        ),
+    },
+)

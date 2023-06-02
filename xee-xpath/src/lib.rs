@@ -22,6 +22,7 @@ mod query;
 mod run;
 mod span;
 mod step;
+mod types;
 mod value;
 mod xpath;
 
