@@ -43,6 +43,11 @@ fn bound_last(
     Ok(arguments[0].clone())
 }
 
+// #[xpath_fn]
+// fn local_name(context: &DynamicContext, a: Node) -> String {
+//     a.local_name(context.xot)
+// }
+
 fn local_name(
     context: &DynamicContext,
     arguments: &[StackValue],
@@ -92,6 +97,16 @@ fn exists(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackVa
     let a = &arguments[0];
     Ok(StackValue::Atomic(Atomic::Boolean(!a.is_empty_sequence())))
 }
+
+// #[xpath_fn]
+// fn exactly_one(context: &DynamicContext, a: &[Item]) -> Result<Item, ValueError> {
+//     if a.len() == 1 {
+//         Ok(a[0])
+//     } else {
+//         // XXX should really be a FORG0005 error
+//         Err(ValueError::Type)
+//     }
+// }
 
 fn exactly_one(
     _context: &DynamicContext,
