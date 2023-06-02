@@ -22,7 +22,6 @@ mod ir_interpret;
 mod name;
 mod op;
 mod operator;
-mod parse_ast;
 mod parser;
 mod query;
 mod rename;

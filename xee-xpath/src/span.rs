@@ -32,9 +32,9 @@ pub(crate) fn not_spanned<T>(value: T) -> Spanned<T> {
 mod tests {
     use insta::assert_debug_snapshot;
 
+    use crate::ast::parse_xpath;
     use crate::ast_ir::convert_xpath;
     use crate::name::Namespaces;
-    use crate::parse_ast::parse_xpath;
     use crate::static_context::StaticContext;
 
     #[test]

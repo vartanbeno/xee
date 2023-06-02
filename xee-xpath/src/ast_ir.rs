@@ -679,7 +679,7 @@ impl<'a> IrConverter<'a> {
 }
 
 fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
-    let ast = crate::parse_ast::parse_expr_single(s);
+    let ast = crate::ast::parse_expr_single(s);
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
@@ -689,7 +689,7 @@ fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
 pub(crate) fn convert_xpath(s: &str) -> Result<ir::ExprS> {
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
-    let ast = crate::parse_ast::parse_xpath(s, &static_context)?;
+    let ast = crate::ast::parse_xpath(s, &static_context)?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)
