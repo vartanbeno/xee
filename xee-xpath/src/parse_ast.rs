@@ -1,5 +1,3 @@
-use crate::parse::XPathParser;
-use crate::rename::unique_names;
 use miette::SourceSpan;
 use ordered_float::OrderedFloat;
 use pest::error::InputLocation;
@@ -9,7 +7,9 @@ use rust_decimal::Decimal;
 
 use crate::error::Error;
 use crate::name::{Namespaces, FN_NAMESPACE};
-use crate::parse::Rule;
+use crate::parser::Rule;
+use crate::parser::XPathParser;
+use crate::rename::unique_names;
 use crate::span::{not_spanned, Spanned};
 use crate::{ast, StaticContext};
 

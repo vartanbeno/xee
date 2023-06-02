@@ -9,7 +9,7 @@ use pest::iterators::Pairs;
 use pest::Parser;
 
 #[derive(Parser)]
-#[grammar = "xpath-31.pest"]
+#[grammar = "parser/xpath-31.pest"]
 pub(crate) struct XPathParser;
 
 #[allow(clippy::result_large_err)]
