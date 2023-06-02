@@ -1,5 +1,7 @@
 mod ast;
 mod parse_ast;
+mod rename;
+mod visitor;
 
 pub use ast::Name;
 pub(crate) use ast::*;

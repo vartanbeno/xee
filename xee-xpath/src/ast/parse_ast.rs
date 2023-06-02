@@ -5,11 +5,11 @@ use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use rust_decimal::Decimal;
 
+use crate::ast::rename::unique_names;
 use crate::error::Error;
 use crate::name::{Namespaces, FN_NAMESPACE};
 use crate::parser::Rule;
 use crate::parser::XPathParser;
-use crate::rename::unique_names;
 use crate::span::{not_spanned, Spanned};
 use crate::{ast, StaticContext};
 
