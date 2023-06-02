@@ -1,0 +1,34 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"descendant::* / fn:position()\")"
+---
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            2,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            3,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            4,
+                        ),
+                    ),
+                ],
+            },
+        },
+    ),
+)

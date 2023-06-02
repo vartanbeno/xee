@@ -2,9 +2,11 @@ use miette::SourceSpan;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use crate::error::{Error, Result};
 use crate::instruction::Instruction;
+use crate::interpreter::builder::{
+    BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition,
+};
 use crate::ir;
 use crate::static_context::{ContextRule, StaticContext};
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};

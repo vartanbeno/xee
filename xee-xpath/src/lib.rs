@@ -9,15 +9,13 @@ extern crate num_derive;
 
 mod annotation;
 mod ast;
-mod builder;
 mod comparison;
 mod document;
 mod dynamic_context;
 mod error;
 mod instruction;
-mod interpret;
+mod interpreter;
 mod ir;
-mod ir_interpret;
 mod name;
 mod op;
 mod operator;

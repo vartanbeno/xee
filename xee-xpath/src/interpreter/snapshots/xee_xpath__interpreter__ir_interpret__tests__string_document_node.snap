@@ -1,0 +1,11 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run_xml(r#\"<doc><a>A</a><b>B</b></doc>\"#, \"string(doc)\")"
+---
+Ok(
+    Atomic(
+        String(
+            "AB",
+        ),
+    ),
+)

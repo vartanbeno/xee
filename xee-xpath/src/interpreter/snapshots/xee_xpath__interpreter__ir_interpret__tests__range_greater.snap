@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"5 to 1\")"
+---
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [],
+            },
+        },
+    ),
+)

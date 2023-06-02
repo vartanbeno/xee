@@ -1,0 +1,11 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"function() { let $x := 3 return function() { let $y := 4 return function() { $x + $y }} }()()()\")"
+---
+Ok(
+    Atomic(
+        Integer(
+            7,
+        ),
+    ),
+)

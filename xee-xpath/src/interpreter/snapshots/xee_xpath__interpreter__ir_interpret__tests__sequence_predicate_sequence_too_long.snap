@@ -1,0 +1,17 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"(1, 2, 3)[(2, 3)]\")"
+---
+Err(
+    XPTY0004 {
+        src: "(1, 2, 3)[(2, 3)]",
+        span: SourceSpan {
+            offset: SourceOffset(
+                10,
+            ),
+            length: SourceOffset(
+                6,
+            ),
+        },
+    },
+)

@@ -1,0 +1,29 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"(4, 5, 6) ! (fn:last())\")"
+---
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        Integer(
+                            3,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            3,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            3,
+                        ),
+                    ),
+                ],
+            },
+        },
+    ),
+)

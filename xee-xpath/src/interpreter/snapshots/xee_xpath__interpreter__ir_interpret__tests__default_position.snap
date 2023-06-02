@@ -1,0 +1,11 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run_xml(\"<doc/>\", \"fn:position()\")"
+---
+Ok(
+    Atomic(
+        Integer(
+            1,
+        ),
+    ),
+)

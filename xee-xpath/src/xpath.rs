@@ -2,12 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::ast::parse_xpath;
-use crate::builder::{FunctionBuilder, Program};
 use crate::dynamic_context::DynamicContext;
 use crate::error::{Error, Result};
-use crate::interpret::Interpreter;
+use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
-use crate::ir_interpret::{InterpreterCompiler, Scopes};
 use crate::static_context::StaticContext;
 use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
 use crate::{ir, Sequence};

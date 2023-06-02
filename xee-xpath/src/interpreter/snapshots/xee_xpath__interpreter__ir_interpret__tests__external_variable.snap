@@ -1,0 +1,11 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run_with_variables(\"$foo\",\n    &[(ast::Name::without_ns(\"foo\"),\n                    StackValue::Atomic(Atomic::String(Rc::new(\"FOO\".to_string()))))])"
+---
+Ok(
+    Atomic(
+        String(
+            "FOO",
+        ),
+    ),
+)

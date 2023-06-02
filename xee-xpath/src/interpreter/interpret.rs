@@ -4,10 +4,10 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use crate::builder::Program;
 use crate::dynamic_context::DynamicContext;
 use crate::error::Error;
 use crate::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
+use crate::interpreter::builder::Program;
 use crate::op;
 
 use crate::comparison;
@@ -616,8 +616,8 @@ mod tests {
 
     use xot::Xot;
 
-    use crate::builder::{FunctionBuilder, JumpCondition};
     use crate::instruction::{decode_instructions, Instruction};
+    use crate::interpreter::builder::{FunctionBuilder, JumpCondition};
     use crate::name::Namespaces;
     use crate::static_context::StaticContext;
 

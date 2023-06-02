@@ -1,0 +1,17 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\". + 1\")"
+---
+Err(
+    XPTY0004 {
+        src: ". + 1",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                5,
+            ),
+        },
+    },
+)

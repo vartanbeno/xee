@@ -1,0 +1,34 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"for $i in (10, 20), $j in ($i + 1, $i + 2) return $i + $j\")"
+---
+Ok(
+    Sequence(
+        RefCell {
+            value: Sequence {
+                items: [
+                    Atomic(
+                        Integer(
+                            21,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            22,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            41,
+                        ),
+                    ),
+                    Atomic(
+                        Integer(
+                            42,
+                        ),
+                    ),
+                ],
+            },
+        },
+    ),
+)
