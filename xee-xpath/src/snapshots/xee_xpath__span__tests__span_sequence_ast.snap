@@ -1,6 +1,6 @@
 ---
 source: xee-xpath/src/span.rs
-expression: "parse_xpath(expr, &namespaces)"
+expression: "parse_xpath(expr, &static_context)"
 ---
 Ok(
     XPath {

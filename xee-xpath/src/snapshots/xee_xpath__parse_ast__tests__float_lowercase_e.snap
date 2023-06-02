@@ -1,9 +1,0 @@
----
-source: xee-xpath/src/parse_ast.rs
-expression: "parse_literal(\"1.5e0\")"
----
-Double(
-    OrderedFloat(
-        1.5,
-    ),
-)
