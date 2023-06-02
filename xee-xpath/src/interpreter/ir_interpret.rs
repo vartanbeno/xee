@@ -11,7 +11,7 @@ use crate::ir;
 use crate::static_context::{ContextRule, StaticContext};
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};
 
-pub(crate) type Scopes = crate::scope::Scopes<ir::Name>;
+pub(crate) type Scopes = crate::interpreter::scope::Scopes<ir::Name>;
 
 pub(crate) struct InterpreterCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,

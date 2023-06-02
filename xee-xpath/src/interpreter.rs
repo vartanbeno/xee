@@ -1,6 +1,7 @@
 mod builder;
 mod interpret;
 mod ir_interpret;
+mod scope;
 
 pub(crate) use builder::{FunctionBuilder, Program};
 pub(crate) use interpret::Interpreter;
