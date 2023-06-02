@@ -353,3 +353,13 @@ pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
     *ip += 1;
     byte
 }
+
+#[cfg(test)]
+use crate::value::Function;
+
+#[cfg(test)]
+impl Function {
+    pub(crate) fn decoded(&self) -> Vec<Instruction> {
+        decode_instructions(&self.chunk)
+    }
+}

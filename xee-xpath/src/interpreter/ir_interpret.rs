@@ -3,10 +3,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::error::{Error, Result};
-use crate::instruction::Instruction;
 use crate::interpreter::builder::{
     BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition,
 };
+use crate::interpreter::instruction::Instruction;
 use crate::ir;
 use crate::static_context::{ContextRule, StaticContext};
 use crate::value::{Atomic, Sequence, StackValue, StaticFunctionId};

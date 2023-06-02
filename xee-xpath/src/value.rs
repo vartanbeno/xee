@@ -14,7 +14,6 @@ use crate::ast;
 use crate::comparison;
 use crate::dynamic_context::DynamicContext;
 use crate::error::Error;
-use crate::instruction::{decode_instructions, Instruction};
 use crate::ir;
 
 #[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
@@ -178,12 +177,6 @@ pub(crate) struct Function {
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
-}
-
-impl Function {
-    pub(crate) fn decoded(&self) -> Vec<Instruction> {
-        decode_instructions(&self.chunk)
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

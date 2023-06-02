@@ -1,6 +1,6 @@
 use miette::SourceSpan;
 
-use crate::instruction::{encode_instruction, instruction_size, Instruction};
+use crate::interpreter::instruction::{encode_instruction, instruction_size, Instruction};
 use crate::ir;
 use crate::value::{Function, FunctionId, StackValue};
 

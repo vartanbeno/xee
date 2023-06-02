@@ -13,7 +13,6 @@ mod comparison;
 mod document;
 mod dynamic_context;
 mod error;
-mod instruction;
 mod interpreter;
 mod ir;
 mod name;
