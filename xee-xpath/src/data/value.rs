@@ -4,6 +4,7 @@ use xot::Xot;
 
 use crate::context::DynamicContext;
 use crate::data::atomic::Atomic;
+use crate::data::convert::ContextTryInto;
 use crate::data::error::ValueError;
 use crate::data::function::{Closure, Step};
 use crate::data::item::Item;
@@ -32,16 +33,6 @@ impl Value {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),
             Item::Function(f) => Value::Closure(f),
-        }
-    }
-
-    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
-        match self {
-            Value::Atomic(a) => Ok(a.clone()),
-            Value::Sequence(s) => s.borrow().to_atomic(context),
-            _ => {
-                todo!("don't know how to atomize this yet")
-            }
         }
     }
 

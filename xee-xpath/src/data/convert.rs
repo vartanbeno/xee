@@ -52,13 +52,19 @@ where
 
 impl ContextTryFrom<Value> for Atomic {
     fn context_try_from(value: Value, context: &DynamicContext) -> Result<Self> {
-        value.to_atomic(context)
+        ContextTryFrom::context_try_from(&value, context)
     }
 }
 
 impl ContextTryFrom<&Value> for Atomic {
     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
-        value.to_atomic(context)
+        match value {
+            Value::Atomic(a) => Ok(a.clone()),
+            Value::Sequence(s) => s.borrow().to_atomic(context),
+            _ => {
+                todo!("don't know how to atomize this yet")
+            }
+        }
     }
 }
 
