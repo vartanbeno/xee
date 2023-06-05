@@ -15,56 +15,17 @@ use crate::context::DynamicContext;
 use crate::ir;
 use crate::value::atomic::Atomic;
 use crate::value::error::ValueError;
+use crate::value::function::Closure;
+use crate::value::item::Item;
 use crate::value::node::Node;
 use crate::value::sequence::Sequence;
-use crate::value::item::Item;
 
 type Result<T> = std::result::Result<T, ValueError>;
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) struct FunctionId(pub(crate) usize);
-
-impl FunctionId {
-    pub(crate) fn as_u16(&self) -> u16 {
-        self.0 as u16
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) struct StaticFunctionId(pub(crate) usize);
-
-impl StaticFunctionId {
-    pub(crate) fn as_u16(&self) -> u16 {
-        self.0 as u16
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Step {
     pub(crate) axis: ast::Axis,
     pub(crate) node_test: ast::NodeTest,
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct Function {
-    pub(crate) name: String,
-    pub(crate) arity: usize,
-    pub(crate) constants: Vec<Value>,
-    pub(crate) closure_names: Vec<ir::Name>,
-    pub(crate) chunk: Vec<u8>,
-    pub(crate) spans: Vec<SourceSpan>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ClosureFunctionId {
-    Static(StaticFunctionId),
-    Dynamic(FunctionId),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Closure {
-    pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<Value>,
 }
 
 // Speculation: A rc value would be a lot smaller, though at the
