@@ -6,6 +6,8 @@ Xpath = { SOI ~ Expr ~ EOI }
 
 OuterExprSingle = { SOI ~ ExprSingle ~ EOI }
 
+OuterSignature = { SOI ~ Signature ~ EOI }
+
 // ParamList
 // ::= Param ("," Param)*
 ParamList = { Param ~ ("," ~ Param)* }
@@ -393,7 +395,11 @@ TypeDeclaration = { "as" ~ SequenceType }
 // SequenceType
 // ::= ("empty-sequence" "(" ")")
 // | (ItemType OccurrenceIndicator?)
-SequenceType = { ("empty-sequence" ~ "(" ~ ")") | (ItemType ~ OccurrenceIndicator?) }
+SequenceType = { EmptySequenceType | Item }
+
+EmptySequenceType = { "empty-sequence" ~ "(" ~ ")" }
+
+Item = { ItemType ~ OccurrenceIndicator? }
 
 // OccurrenceIndicator
 // ::= "?" | "*" | "+"
@@ -401,7 +407,9 @@ SequenceType = { ("empty-sequence" ~ "(" ~ ")") | (ItemType ~ OccurrenceIndicato
 OccurrenceIndicator = { "?" | "*" | "+" }
 
 // ItemType ::= KindTest | ("item" "(" ")") | FunctionTest | MapTest | ArrayTest | AtomicOrUnionType | ParenthesizedItemType
-ItemType = { KindTest | ("item" ~ "(" ~ ")") | FunctionTest | MapTest | ArrayTest | AtomicOrUnionType | ParenthesizedItemType }
+ItemType = { KindTest | AnyItemType | FunctionTest | MapTest | ArrayTest | AtomicOrUnionType | ParenthesizedItemType }
+
+AnyItemType = { "item" ~ "(" ~ ")" }
 
 // AtomicOrUnionType
 // ::= EQName

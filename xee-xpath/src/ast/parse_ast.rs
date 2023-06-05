@@ -989,6 +989,28 @@ impl<'a> AstParser<'a> {
         }
     }
 
+    fn signature(&self, pair: Pair<Rule>) -> ast::Signature {
+        debug_assert_eq!(pair.as_rule(), Rule::Signature);
+        let mut pairs = pair.into_inner();
+        let name = self.eq_name_to_name(pairs.next().unwrap(), None);
+        let mut next = pairs.next().unwrap();
+        let params = if next.as_rule() == Rule::SignatureParamList {
+            let params = self.signature_params(next);
+            next = pairs.next().unwrap();
+            params
+        } else {
+            vec![]
+        };
+
+        let return_type = self.sequence_type(next);
+
+        ast::Signature {
+            name,
+            params,
+            return_type,
+        }
+    }
+
     fn param_list_to_params(&self, pair: Pair<Rule>) -> Vec<ast::Param> {
         debug_assert_eq!(pair.as_rule(), Rule::ParamList);
         let mut parameters = vec![];
@@ -1011,6 +1033,95 @@ impl<'a> AstParser<'a> {
         let name = self.eq_name_to_name(pairs.next().unwrap(), None);
         let type_ = pairs.next().map(|_pair| ast::SequenceType::Unsupported);
         ast::Param { name, type_ }
+    }
+
+    fn signature_params(&self, pair: Pair<Rule>) -> Vec<ast::SignatureParam> {
+        debug_assert_eq!(pair.as_rule(), Rule::SignatureParamList);
+        let mut parameters = vec![];
+        for pair in pair.into_inner() {
+            match pair.as_rule() {
+                Rule::SignatureParam => {
+                    parameters.push(self.signature_param(pair));
+                }
+                _ => {
+                    panic!("unhandled ParamList: {:?}", pair.as_rule())
+                }
+            }
+        }
+        parameters
+    }
+
+    fn signature_param(&self, pair: Pair<Rule>) -> ast::SignatureParam {
+        debug_assert_eq!(pair.as_rule(), Rule::SignatureParam);
+        let mut pairs = pair.into_inner();
+        let name = self.eq_name_to_name(pairs.next().unwrap(), None);
+        let next = pairs.next().unwrap();
+        let type_ = self.type_declaration(next);
+        ast::SignatureParam { name, type_ }
+    }
+
+    fn type_declaration(&self, pair: Pair<Rule>) -> ast::SequenceType {
+        debug_assert_eq!(pair.as_rule(), Rule::TypeDeclaration);
+        let mut pairs = pair.into_inner();
+        let next = pairs.next().unwrap();
+        self.sequence_type(next)
+    }
+
+    fn sequence_type(&self, pair: Pair<Rule>) -> ast::SequenceType {
+        debug_assert_eq!(pair.as_rule(), Rule::SequenceType);
+        let pair = pair.into_inner().next().unwrap();
+        match pair.as_rule() {
+            Rule::EmptySequenceType => ast::SequenceType::Empty,
+            Rule::Item => ast::SequenceType::Item(self.item(pair)),
+            _ => {
+                panic!("unhandled SequenceType: {:?}", pair.as_rule())
+            }
+        }
+    }
+
+    fn item(&self, pair: Pair<Rule>) -> ast::Item {
+        debug_assert_eq!(pair.as_rule(), Rule::Item);
+        let mut pairs = pair.into_inner();
+        let pair = pairs.next().unwrap();
+        let item_type = self.item_type(pair);
+        let next = pairs.next();
+        let occurrence = if let Some(next) = next {
+            match next.as_str() {
+                "?" => ast::Occurrence::Option,
+                "+" => ast::Occurrence::NonEmpty,
+                "*" => ast::Occurrence::Many,
+                _ => {
+                    panic!("unhandled ItemType: {:?}", next.as_str())
+                }
+            }
+        } else {
+            ast::Occurrence::One
+        };
+        ast::Item {
+            item_type,
+            occurrence,
+        }
+    }
+
+    fn item_type(&self, pair: Pair<Rule>) -> ast::ItemType {
+        debug_assert_eq!(pair.as_rule(), Rule::ItemType);
+        let pair = pair.into_inner().next().unwrap();
+        match pair.as_rule() {
+            Rule::KindTest => ast::ItemType::KindTest(self.kind_test_to_kind_test(pair)),
+            Rule::AnyItemType => ast::ItemType::Item,
+            Rule::AtomicOrUnionType => {
+                ast::ItemType::AtomicOrUnionType(self.atomic_or_union_type(pair))
+            }
+            _ => {
+                panic!("unhandled ItemType: {:?}", pair.as_rule())
+            }
+        }
+    }
+
+    fn atomic_or_union_type(&self, pair: Pair<Rule>) -> ast::Name {
+        debug_assert_eq!(pair.as_rule(), Rule::AtomicOrUnionType);
+        let pair = pair.into_inner().next().unwrap();
+        self.eq_name_to_name(pair, None)
     }
 
     fn function_body_to_body(&self, pair: Pair<Rule>) -> ast::ExprS {
@@ -1165,6 +1276,27 @@ fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     parse_xpath(input, &static_context)
+}
+
+pub(crate) fn parse_signature(
+    input: &str,
+    static_context: &StaticContext,
+) -> Result<ast::Signature, Error> {
+    let ast_parser = AstParser::new(static_context.namespaces);
+    let result = parse_rule_start_end(Rule::OuterSignature, input, |p| ast_parser.signature(p));
+
+    match result {
+        Ok(signature) => Ok(signature),
+        Err(e) => {
+            let src = input.to_string();
+            let location = e.location;
+            let span: SourceSpan = match location {
+                InputLocation::Pos(pos) => (pos - 1, 0).into(),
+                InputLocation::Span((start, end)) => (start, end).into(),
+            };
+            Err(Error::XPST0003 { src, span })
+        }
+    }
 }
 
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
@@ -1616,5 +1748,29 @@ mod tests {
     #[test]
     fn test_xpath_ge() {
         assert_debug_snapshot!(parse_xpath_no_default_ns("1 >= 2"));
+    }
+
+    #[test]
+    fn test_signature_without_params() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let static_context = StaticContext::new(&namespaces);
+        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer", &static_context));
+    }
+
+    #[test]
+    fn test_signature_without_params2() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let static_context = StaticContext::new(&namespaces);
+        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer*", &static_context));
+    }
+
+    #[test]
+    fn test_signature_with_params() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let static_context = StaticContext::new(&namespaces);
+        assert_debug_snapshot!(parse_signature(
+            "fn:foo($a as xs:decimal*) as xs:integer",
+            &static_context
+        ));
     }
 }

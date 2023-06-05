@@ -215,10 +215,25 @@ pub(crate) struct InlineFunction {
     pub(crate) body: ExprS,
 }
 
+// a function signature as described by:
+// https://www.w3.org/TR/xpath-functions-31/#func-signatures
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Signature {
+    pub(crate) name: Name,
+    pub(crate) params: Vec<SignatureParam>,
+    pub(crate) return_type: SequenceType,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Param {
     pub(crate) name: Name,
     pub(crate) type_: Option<SequenceType>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct SignatureParam {
+    pub(crate) name: Name,
+    pub(crate) type_: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -322,30 +337,32 @@ pub(crate) struct URIQualifiedName {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum SequenceType {
     Empty,
-    Item,
+    Item(Item),
     Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Item {
     pub(crate) item_type: ItemType,
-    pub(crate) occurrence_indicator: Option<OccurrenceIndicator>,
+    pub(crate) occurrence: Occurrence,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ItemType {
+    Item,
+    AtomicOrUnionType(Name),
     KindTest(KindTest),
-    FunctionTest(FunctionTest),
-    MapTest(MapTest),
-    ArrayTest(ArrayTest),
-    AtomicOrUnionType(EQName),
+    FunctionTest(Box<FunctionTest>),
+    MapTest(Box<MapTest>),
+    ArrayTest(Box<ArrayTest>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum OccurrenceIndicator {
-    QuestionMark,
-    Asterisk,
-    Plus,
+pub(crate) enum Occurrence {
+    One,
+    Option,
+    Many,
+    NonEmpty,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -401,12 +418,12 @@ pub(crate) enum AttribNameOrWildcard {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct SchemaElementTest {
-    pub(crate) name: EQName,
+    pub(crate) name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct SchemaAttributeTest {
-    pub(crate) name: EQName,
+    pub(crate) name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -429,7 +446,7 @@ pub(crate) enum MapTest {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct TypedMapTest {
-    pub(crate) key_type: EQName,
+    pub(crate) key_type: Name,
     pub(crate) value_type: SequenceType,
 }
 
