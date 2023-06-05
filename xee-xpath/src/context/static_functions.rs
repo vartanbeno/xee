@@ -4,7 +4,7 @@ use crate::{
     ast,
     context::namespaces::{FN_NAMESPACE, XS_NAMESPACE},
     context::static_context::{FunctionType, StaticFunctionDescription},
-    data::ValueError,
+    data::{ContextInto, ContextTryInto, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };
 
@@ -13,9 +13,12 @@ fn my_function(a: i64, b: i64) -> i64 {
 }
 
 fn bound_my_function(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_atomic(context)?.to_integer()?;
-    let b = arguments[1].to_atomic(context)?.to_integer()?;
-    Ok(Value::Atomic(Atomic::Integer(my_function(a, b))))
+    let a: Atomic = (&arguments[0]).context_try_into(context)?;
+    let b: Atomic = (&arguments[1]).context_try_into(context)?;
+    Ok(Value::Atomic(Atomic::Integer(my_function(
+        a.try_into()?,
+        b.try_into()?,
+    ))))
 }
 
 fn bound_position(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -130,7 +133,8 @@ fn generate_id(context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
 
 fn untyped_atomic(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a = &arguments[0];
-    let s = a.to_atomic(context)?.to_string()?;
+    let a: Atomic = a.context_try_into(context)?;
+    let s = a.try_into()?;
     Ok(Value::Atomic(Atomic::Untyped(Rc::new(s))))
 }
 

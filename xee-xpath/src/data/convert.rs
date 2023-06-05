@@ -56,6 +56,12 @@ impl ContextTryFrom<Value> for Atomic {
     }
 }
 
+impl ContextTryFrom<&Value> for Atomic {
+    fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
+        value.to_atomic(context)
+    }
+}
+
 // impl<T> ContextTryFrom<Value> for T
 // where
 //     T: TryFrom<Atomic, Error = ValueError>,
