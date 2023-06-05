@@ -1,7 +1,9 @@
 use miette::Diagnostic;
 use std::fmt;
 
-use xee_xpath::{Atomic, DynamicContext, Error, Namespaces, StaticContext, Value, XPath};
+use xee_xpath::{
+    Atomic, DynamicContext, Error, Namespaces, Sequence, StaticContext, Value, ValueError, XPath,
+};
 use xot::Xot;
 
 use crate::qt;
@@ -147,7 +149,7 @@ impl AssertCount {
 
 impl Assertable for AssertCount {
     fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
-        let sequence = value.to_sequence();
+        let sequence: Result<Sequence, ValueError> = (&value).try_into();
         if let Ok(sequence) = sequence {
             let found_len = sequence.borrow().len();
             if found_len == self.0 {
@@ -271,7 +273,7 @@ impl AssertStringValue {
 
 impl Assertable for AssertStringValue {
     fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome {
-        let seq = value.to_sequence();
+        let seq: Result<Sequence, ValueError> = (&value).try_into();
         match seq {
             Ok(seq) => {
                 let strings = seq

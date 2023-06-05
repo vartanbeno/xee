@@ -528,7 +528,6 @@ mod tests {
     use super::*;
 
     use insta::assert_debug_snapshot;
-    use std::cell::RefCell;
     use std::rc::Rc;
     use xot::Xot;
 
@@ -543,7 +542,7 @@ mod tests {
     };
 
     fn as_sequence(value: &Value) -> Sequence {
-        value.to_sequence().unwrap()
+        value.try_into().unwrap()
     }
 
     fn xot_nodes_to_sequence(node: &[xot::Node]) -> InnerSequence {

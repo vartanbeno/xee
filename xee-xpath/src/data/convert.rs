@@ -66,6 +66,21 @@ impl ContextTryFrom<&Value> for Atomic {
     }
 }
 
+// impl TryFrom<Value> for Sequence {
+//     fn try_from(value: Value) -> Result<Self> {
+//         match self {
+//             Value::Sequence(s) => Ok(s.clone()),
+//             Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
+//             Value::Node(n) => Ok(Sequence::from_node(*n)),
+//             _ => Err(ValueError::Type),
+//         }
+//         // match value {
+//         //     Value::Sequence(s) => Ok(s),
+//         //     _ => todo!("don't know how to atomize this yet"),
+//         // }
+//     }
+// }
+
 // impl<T> ContextTryFrom<Value> for T
 // where
 //     T: TryFrom<Atomic, Error = ValueError>,
@@ -133,10 +148,19 @@ impl TryFrom<Atomic> for String {
         atomic.to_string()
     }
 }
+
 impl TryFrom<Value> for Sequence {
     type Error = ValueError;
 
     fn try_from(value: Value) -> Result<Self> {
+        value.to_sequence()
+    }
+}
+
+impl TryFrom<&Value> for Sequence {
+    type Error = ValueError;
+
+    fn try_from(value: &Value) -> Result<Self> {
         value.to_sequence()
     }
 }

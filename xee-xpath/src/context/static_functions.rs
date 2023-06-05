@@ -4,7 +4,7 @@ use crate::{
     ast,
     context::namespaces::{FN_NAMESPACE, XS_NAMESPACE},
     context::static_context::{FunctionType, StaticFunctionDescription},
-    data::{ContextTryInto, ValueError},
+    data::{ContextTryInto, Sequence, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };
 
@@ -57,7 +57,7 @@ fn namespace_uri(context: &DynamicContext, arguments: &[Value]) -> Result<Value,
 }
 
 fn count(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_sequence()?;
+    let a: Sequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     Ok(Value::Atomic(Atomic::Integer(a.items.len() as i64)))
 }
@@ -97,7 +97,7 @@ fn exists(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, Value
 // }
 
 fn exactly_one(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_sequence()?;
+    let a: Sequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(Value::from_item(a.items[0].clone()))
