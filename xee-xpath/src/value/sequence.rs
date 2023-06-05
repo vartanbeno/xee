@@ -8,8 +8,8 @@ use crate::annotation::Annotations;
 use crate::context::DynamicContext;
 use crate::value::atomic::Atomic;
 use crate::value::error::ValueError;
+use crate::value::item::Item;
 use crate::value::node::Node;
-use crate::value::value::Item;
 use crate::value::value::Value;
 
 type Result<T> = std::result::Result<T, ValueError>;
