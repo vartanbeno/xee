@@ -62,13 +62,6 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_step(&self) -> Result<Rc<Step>> {
-        match self {
-            Value::Step(s) => Ok(Rc::clone(s)),
-            _ => Err(ValueError::Type),
-        }
-    }
-
     pub(crate) fn to_node(&self) -> Result<Node> {
         match self {
             Value::Node(n) => Ok(*n),

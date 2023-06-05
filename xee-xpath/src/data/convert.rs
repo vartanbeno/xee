@@ -6,7 +6,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
 use crate::context::DynamicContext;
-use crate::data::{Atomic, Closure, Sequence, Value, ValueError};
+use crate::data::{Atomic, Closure, Sequence, Step, Value, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -73,6 +73,17 @@ impl<'a> TryFrom<&'a Value> for &'a Closure {
     fn try_from(value: &'a Value) -> Result<&'a Closure> {
         match value {
             Value::Closure(c) => Ok(c),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
+impl TryFrom<&Value> for Rc<Step> {
+    type Error = ValueError;
+
+    fn try_from(value: &Value) -> Result<Rc<Step>> {
+        match value {
+            Value::Step(s) => Ok(Rc::clone(s)),
             _ => Err(ValueError::Type),
         }
     }

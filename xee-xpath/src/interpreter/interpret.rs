@@ -312,8 +312,7 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    let closure: Result<&Closure, ValueError> = callable.try_into();
-                    if let Ok(closure) = closure {
+                    if let Ok(closure) = callable.try_into() as Result<&Closure, ValueError> {
                         match closure.function_id {
                             ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
@@ -324,7 +323,7 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Ok(step) = callable.to_step() {
+                    } else if let Ok(step) = callable.try_into() as Result<Rc<Step>, ValueError> {
                         self.call_step(step)?;
                     } else {
                         return Err(ValueError::Type);
