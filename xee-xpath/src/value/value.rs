@@ -1,39 +1,20 @@
 use ahash::{HashSet, HashSetExt};
-use miette::{Diagnostic, SourceSpan};
+use miette::SourceSpan;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 use std::vec;
-use thiserror::Error;
+
 use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::ast;
 use crate::comparison;
 use crate::context::DynamicContext;
-use crate::error::Error;
 use crate::ir;
-
-#[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
-pub enum ValueError {
-    #[error("Type error")]
-    XPTY0004,
-    #[error("Type error")]
-    Type,
-    #[error("Overflow/underflow")]
-    Overflow,
-    #[error("Division by zero")]
-    DivisionByZero,
-    #[error("Stack overflow")]
-    StackOverflow,
-    #[error("Absent")]
-    Absent,
-    // Explicit error raised with Error
-    #[error("Error")]
-    Error(Error),
-}
+use crate::value::error::ValueError;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
