@@ -173,7 +173,7 @@ fn descendants_to_string(xot: &Xot, node: xot::Node) -> String {
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
-    pub(crate) constants: Vec<StackValue>,
+    pub(crate) constants: Vec<Value>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
@@ -188,15 +188,15 @@ pub(crate) enum ClosureFunctionId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<StackValue>,
+    pub(crate) values: Vec<Value>,
 }
 
-// Speculation: A rc stack value would be a lot smaller, though at the
+// Speculation: A rc value would be a lot smaller, though at the
 // cost of indirection. So I'm not sure it would be faster; we'd get
 // faster stack operations but slower heap access and less cache locality.
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum StackValue {
+pub enum Value {
     Atomic(Atomic),
     Sequence(Rc<RefCell<Sequence>>),
     Closure(Rc<Closure>),
@@ -205,19 +205,19 @@ pub enum StackValue {
     Node(Node),
 }
 
-impl StackValue {
+impl Value {
     pub(crate) fn from_item(item: Item) -> Self {
         match item {
-            Item::Atomic(a) => StackValue::Atomic(a),
-            Item::Node(n) => StackValue::Node(n),
-            Item::Function(f) => StackValue::Closure(f),
+            Item::Atomic(a) => Value::Atomic(a),
+            Item::Node(n) => Value::Node(n),
+            Item::Function(f) => Value::Closure(f),
         }
     }
 
     pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
         match self {
-            StackValue::Atomic(a) => Ok(a.clone()),
-            StackValue::Sequence(s) => s.borrow().to_atomic(context),
+            Value::Atomic(a) => Ok(a.clone()),
+            Value::Sequence(s) => s.borrow().to_atomic(context),
             _ => {
                 todo!("don't know how to atomize this yet")
             }
@@ -226,8 +226,8 @@ impl StackValue {
 
     pub(crate) fn to_bool(&self) -> Result<bool> {
         match self {
-            StackValue::Atomic(a) => a.to_bool(),
-            StackValue::Sequence(s) => {
+            Value::Atomic(a) => a.to_bool(),
+            Value::Sequence(s) => {
                 let s = s.borrow();
                 // If its operand is an empty sequence, fn:boolean returns false.
                 if s.is_empty() {
@@ -244,69 +244,69 @@ impl StackValue {
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
             // this is the case when a single node is on the stack, just like if it
             // were in a sequence.
-            StackValue::Node(_) => Ok(true),
+            Value::Node(_) => Ok(true),
             // XXX the type error that the effective boolean wants is
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
-            StackValue::Closure(_) => Err(ValueError::Type),
-            StackValue::Step(_) => Err(ValueError::Type),
+            Value::Closure(_) => Err(ValueError::Type),
+            Value::Step(_) => Err(ValueError::Type),
         }
     }
 
     pub fn to_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
         match self {
-            StackValue::Sequence(s) => Ok(s.clone()),
-            StackValue::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
-            StackValue::Node(a) => Ok(Rc::new(RefCell::new(Sequence::from_node(*a)))),
+            Value::Sequence(s) => Ok(s.clone()),
+            Value::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
+            Value::Node(a) => Ok(Rc::new(RefCell::new(Sequence::from_node(*a)))),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn to_closure(&self) -> Result<&Closure> {
         match self {
-            StackValue::Closure(c) => Ok(c),
+            Value::Closure(c) => Ok(c),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn to_step(&self) -> Result<Rc<Step>> {
         match self {
-            StackValue::Step(s) => Ok(Rc::clone(s)),
+            Value::Step(s) => Ok(Rc::clone(s)),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn to_node(&self) -> Result<Node> {
         match self {
-            StackValue::Node(n) => Ok(*n),
-            StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
+            Value::Node(n) => Ok(*n),
+            Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
-            StackValue::Sequence(s) => s.borrow().is_empty(),
-            StackValue::Atomic(Atomic::Empty) => true,
+            Value::Sequence(s) => s.borrow().is_empty(),
+            Value::Atomic(Atomic::Empty) => true,
             _ => false,
         }
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> Result<String> {
         let value = match self {
-            StackValue::Atomic(atomic) => atomic.string_value()?,
-            StackValue::Sequence(sequence) => {
+            Value::Atomic(atomic) => atomic.string_value()?,
+            Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 let len = sequence.len();
                 match len {
                     0 => "".to_string(),
-                    1 => StackValue::from_item(sequence.items[0].clone()).string_value(xot)?,
+                    1 => Value::from_item(sequence.items[0].clone()).string_value(xot)?,
                     _ => Err(ValueError::Type)?,
                 }
             }
-            StackValue::Node(node) => node.string_value(xot),
-            StackValue::Closure(_) => Err(ValueError::Type)?,
-            StackValue::Step(_) => Err(ValueError::Type)?,
+            Value::Node(node) => node.string_value(xot),
+            Value::Closure(_) => Err(ValueError::Type)?,
+            Value::Step(_) => Err(ValueError::Type)?,
         };
         Ok(value)
     }
@@ -531,11 +531,11 @@ impl Item {
         }
     }
 
-    pub fn to_stack_value(self) -> StackValue {
+    pub fn to_stack_value(self) -> Value {
         match self {
-            Item::Atomic(a) => StackValue::Atomic(a),
-            Item::Node(n) => StackValue::Node(n),
-            Item::Function(f) => StackValue::Closure(f),
+            Item::Atomic(a) => Value::Atomic(a),
+            Item::Node(n) => Value::Node(n),
+            Item::Function(f) => Value::Closure(f),
         }
     }
 }
@@ -589,13 +589,13 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn push_stack_value(&mut self, value: StackValue) {
+    pub(crate) fn push_value(&mut self, value: Value) {
         match value {
-            StackValue::Atomic(a) => self.items.push(Item::Atomic(a)),
-            StackValue::Closure(c) => self.items.push(Item::Function(c)),
-            StackValue::Sequence(s) => self.extend(s),
-            StackValue::Node(n) => self.items.push(Item::Node(n)),
-            _ => panic!("unexpected stack value: {:?}", value),
+            Value::Atomic(a) => self.items.push(Item::Atomic(a)),
+            Value::Closure(c) => self.items.push(Item::Function(c)),
+            Value::Sequence(s) => self.extend(s),
+            Value::Node(n) => self.items.push(Item::Node(n)),
+            _ => panic!("unexpected value: {:?}", value),
         }
     }
 

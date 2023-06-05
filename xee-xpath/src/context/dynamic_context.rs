@@ -7,13 +7,13 @@ use crate::ast;
 use crate::context::static_context::StaticContext;
 use crate::document::Documents;
 use crate::error::Error;
-use crate::value::StackValue;
+use crate::value::Value;
 
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, Documents>,
-    pub(crate) variables: HashMap<ast::Name, StackValue>,
+    pub(crate) variables: HashMap<ast::Name, Value>,
 }
 
 impl<'a> Debug for DynamicContext<'a> {
@@ -52,7 +52,7 @@ impl<'a> DynamicContext<'a> {
     pub fn with_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: &[(ast::Name, StackValue)],
+        variables: &[(ast::Name, Value)],
     ) -> Self {
         Self {
             xot,
@@ -62,7 +62,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub(crate) fn arguments(&self) -> Result<Vec<StackValue>, Error> {
+    pub(crate) fn arguments(&self) -> Result<Vec<Value>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.variables {
             let value = self.variables.get(variable_name).ok_or(Error::XPDY0002A)?;

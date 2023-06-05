@@ -6,7 +6,7 @@ use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
-use crate::value::{Atomic, FunctionId, Item, Node, StackValue};
+use crate::value::{Atomic, FunctionId, Item, Node, Value};
 use crate::{ir, Sequence};
 
 #[derive(Debug)]
@@ -44,7 +44,7 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         context_item: Option<&Item>,
-    ) -> Result<StackValue> {
+    ) -> Result<Value> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
         interpreter.start(self.main, context_item, &arguments);
@@ -61,22 +61,18 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            StackValue::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
+            Value::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            StackValue::Atomic(Atomic::Empty) => {
-                Ok(StackValue::Sequence(Rc::new(RefCell::new(Sequence::new()))))
+            Value::Atomic(Atomic::Empty) => {
+                Ok(Value::Sequence(Rc::new(RefCell::new(Sequence::new()))))
             }
             _ => Ok(value),
         }
     }
 
-    pub fn run_xot_node(
-        &self,
-        dynamic_context: &DynamicContext,
-        node: xot::Node,
-    ) -> Result<StackValue> {
+    pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {
         self.run(dynamic_context, Some(&Item::Node(Node::Xot(node))))
     }
 
@@ -84,18 +80,18 @@ impl XPath {
         let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
             // XXX this clone here is not great
-            StackValue::Sequence(seq) => Ok(seq.borrow().items.clone()),
-            StackValue::Node(node) => Ok(vec![Item::Node(node)]),
-            StackValue::Atomic(atomic) => Ok(vec![Item::Atomic(atomic)]),
-            StackValue::Closure(closure) => Ok(vec![Item::Function(closure)]),
-            StackValue::Step(..) => panic!("step not expected"),
+            Value::Sequence(seq) => Ok(seq.borrow().items.clone()),
+            Value::Node(node) => Ok(vec![Item::Node(node)]),
+            Value::Atomic(atomic) => Ok(vec![Item::Atomic(atomic)]),
+            Value::Closure(closure) => Ok(vec![Item::Function(closure)]),
+            Value::Step(..) => panic!("step not expected"),
         }
     }
 
     pub fn one(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Item> {
         let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
-            StackValue::Sequence(seq) => {
+            Value::Sequence(seq) => {
                 let borrowed = seq.borrow();
                 let value = borrowed.singleton();
                 match value {
@@ -106,17 +102,17 @@ impl XPath {
                     }),
                 }
             }
-            StackValue::Node(node) => Ok(Item::Node(node)),
-            StackValue::Atomic(atomic) => Ok(Item::Atomic(atomic)),
-            StackValue::Closure(closure) => Ok(Item::Function(closure)),
-            StackValue::Step(..) => panic!("step not expected"),
+            Value::Node(node) => Ok(Item::Node(node)),
+            Value::Atomic(atomic) => Ok(Item::Atomic(atomic)),
+            Value::Closure(closure) => Ok(Item::Function(closure)),
+            Value::Step(..) => panic!("step not expected"),
         }
     }
 
     pub fn option(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<Item>> {
         let stack_value = self.run(dynamic_context, Some(item))?;
         match stack_value {
-            StackValue::Sequence(seq) => {
+            Value::Sequence(seq) => {
                 let borrowed = seq.borrow();
                 let value = borrowed.singleton();
                 // XXX not ideal that we turn an error back
@@ -126,10 +122,10 @@ impl XPath {
                     Err(_) => Ok(None),
                 }
             }
-            StackValue::Node(node) => Ok(Some(Item::Node(node))),
-            StackValue::Atomic(atomic) => Ok(Some(Item::Atomic(atomic))),
-            StackValue::Closure(closure) => Ok(Some(Item::Function(closure))),
-            StackValue::Step(..) => panic!("step not expected"),
+            Value::Node(node) => Ok(Some(Item::Node(node))),
+            Value::Atomic(atomic) => Ok(Some(Item::Atomic(atomic))),
+            Value::Closure(closure) => Ok(Some(Item::Function(closure))),
+            Value::Step(..) => panic!("step not expected"),
         }
     }
 }

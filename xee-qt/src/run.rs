@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use miette::{Diagnostic, Result};
 use std::path::Path;
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Name, Namespaces, StackValue, StaticContext, XPath,
+    Atomic, DynamicContext, Error, Item, Name, Namespaces, StaticContext, Value, XPath,
 };
 use xot::Xot;
 
@@ -184,7 +184,7 @@ impl qt::TestCase {
         &self,
         run_context: &mut RunContext,
         test_set: &qt::TestSet,
-    ) -> Result<Vec<(Name, StackValue)>> {
+    ) -> Result<Vec<(Name, Value)>> {
         let environment_specs = self
             .environment_specs(&run_context.catalog, test_set)
             .collect::<Result<Vec<_>, _>>()?;
@@ -197,7 +197,7 @@ impl qt::TestCase {
         Ok(variables)
     }
 
-    fn run_xpath(expr: &qt::XPathExpr) -> Result<StackValue, Error> {
+    fn run_xpath(expr: &qt::XPathExpr) -> Result<Value, Error> {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let xpath = XPath::new(&static_context, &expr.0)?;
@@ -281,7 +281,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::True(
                 &assert::AssertTrue,
-                StackValue::Atomic(Atomic::Boolean(false))
+                Value::Atomic(Atomic::Boolean(false))
             ))
         );
     }
@@ -506,7 +506,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
                 &assert::AssertEq::new(qt::XPathExpr("6".to_string())),
-                StackValue::Atomic(Atomic::Integer(5))
+                Value::Atomic(Atomic::Integer(5))
             ))
         );
     }

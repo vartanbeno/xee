@@ -3,15 +3,11 @@ use xot::Xot;
 use crate::context::{DynamicContext, Namespaces, StaticContext, FN_NAMESPACE};
 use crate::document::{Documents, Uri};
 use crate::error::Result;
-use crate::value::StackValue;
+use crate::value::Value;
 use crate::xpath::XPath;
 
 /// A high level function that evaluates an xpath expression on an xml document.
-pub fn evaluate(
-    xml: &str,
-    xpath: &str,
-    default_element_namespace: Option<&str>,
-) -> Result<StackValue> {
+pub fn evaluate(xml: &str, xpath: &str, default_element_namespace: Option<&str>) -> Result<Value> {
     let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
     evaluate_root(&xot, root, xpath, default_element_namespace)
@@ -23,7 +19,7 @@ pub fn evaluate_root(
     root: xot::Node,
     xpath: &str,
     default_element_namespace: Option<&str>,
-) -> Result<StackValue> {
+) -> Result<Value> {
     let uri = Uri("http://example.com".to_string());
     let mut documents = Documents::new();
     documents.add_root(xot, &uri, root);
@@ -36,7 +32,7 @@ pub fn evaluate_root(
     xpath.run_xot_node(&context, document.root)
 }
 
-pub fn evaluate_without_focus(s: &str) -> Result<StackValue> {
+pub fn evaluate_without_focus(s: &str) -> Result<Value> {
     let xot = Xot::new();
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);

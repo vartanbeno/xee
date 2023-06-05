@@ -1,8 +1,8 @@
 use miette::SourceSpan;
 
-use xee_xpath::{evaluate_without_focus, Error, StackValue};
+use xee_xpath::{evaluate_without_focus, Error, Value};
 
-fn span(result: Result<StackValue, Error>) -> Option<SourceSpan> {
+fn span(result: Result<Value, Error>) -> Option<SourceSpan> {
     match result.err().unwrap() {
         Error::XPTY0004 { span, .. } => Some(span),
         _ => None,

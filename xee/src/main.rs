@@ -6,7 +6,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::Atomic;
 use xee_xpath::Item;
-use xee_xpath::{evaluate_root, Node, Sequence, StackValue};
+use xee_xpath::{evaluate_root, Node, Sequence, Value};
 use xot::Xot;
 
 #[derive(Parser)]
@@ -52,8 +52,8 @@ fn main() -> Result<()> {
                 .wrap_err("Cannot parse XML")?;
             let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
             match result {
-                StackValue::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
-                StackValue::Sequence(sequence) => {
+                Value::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
+                Value::Sequence(sequence) => {
                     println!(
                         "sequence: \n{}",
                         display_sequence(&xot, &sequence.borrow())
@@ -61,9 +61,9 @@ fn main() -> Result<()> {
                             .wrap_err("Could not display sequence")?
                     )
                 }
-                StackValue::Closure(closure) => println!("{:?}", closure),
-                StackValue::Step(step) => println!("{:?}", step),
-                StackValue::Node(node) => println!(
+                Value::Closure(closure) => println!("{:?}", closure),
+                Value::Step(step) => println!("{:?}", step),
+                Value::Node(node) => println!(
                     "node: \n{}",
                     display_node(&xot, node)
                         .into_diagnostic()

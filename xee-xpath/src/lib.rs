@@ -33,5 +33,5 @@ pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
-pub use crate::value::{Atomic, Item, Node, Sequence, StackValue};
+pub use crate::value::{Atomic, Item, Node, Sequence, Value};
 pub use crate::xpath::XPath;

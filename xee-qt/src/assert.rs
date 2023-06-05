@@ -1,7 +1,7 @@
 use miette::Diagnostic;
 use std::fmt;
 
-use xee_xpath::{Atomic, DynamicContext, Error, Namespaces, StackValue, StaticContext, XPath};
+use xee_xpath::{Atomic, DynamicContext, Error, Namespaces, StaticContext, Value, XPath};
 use xot::Xot;
 
 use crate::qt;
@@ -26,14 +26,14 @@ pub(crate) enum TestOutcome<'a> {
 }
 
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<StackValue, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
         match result {
             Ok(value) => self.assert_value(xot, value.clone()),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, xot: &mut Xot, value: StackValue) -> TestOutcome;
+    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome;
 }
 
 #[derive(Debug, PartialEq)]
@@ -46,7 +46,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<StackValue, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -61,7 +61,7 @@ impl Assertable for AssertAnyOf {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: StackValue) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
         unreachable!();
     }
 }
@@ -76,7 +76,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<StackValue, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -87,7 +87,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: StackValue) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
         unreachable!();
     }
 }
@@ -120,7 +120,7 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, _xot: &mut Xot, value: StackValue) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
         let expected_value = run_xpath(&self.0);
 
         match expected_value {
@@ -146,7 +146,7 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(&self, _xot: &mut Xot, value: StackValue) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
         let sequence = value.to_sequence();
         if let Ok(sequence) = sequence {
             let found_len = sequence.borrow().len();
@@ -159,10 +159,7 @@ impl Assertable for AssertCount {
                 ))
             }
         } else {
-            TestOutcome::Failed(Failure::Count(
-                self,
-                AssertCountFailure::WrongStackValue(value),
-            ))
+            TestOutcome::Failed(Failure::Count(self, AssertCountFailure::WrongValue(value)))
         }
     }
 }
@@ -183,16 +180,13 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(&self, xot: &mut Xot, value: StackValue) -> TestOutcome {
+    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome {
         let xml = serialize(xot, &value);
 
         let xml = if let Ok(xml) = xml {
             xml
         } else {
-            return TestOutcome::Failed(Failure::Xml(
-                self,
-                AssertXmlFailure::WrongStackValue(value),
-            ));
+            return TestOutcome::Failed(Failure::Xml(self, AssertXmlFailure::WrongValue(value)));
         };
         // also wrap expected XML in a sequence element
         let expected_xml = format!("<sequence>{}</sequence>", self.0);
@@ -238,8 +232,8 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(&self, _xot: &mut Xot, value: StackValue) -> TestOutcome {
-        if matches!(value, StackValue::Atomic(Atomic::Boolean(true))) {
+    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
+        if matches!(value, Value::Atomic(Atomic::Boolean(true))) {
             TestOutcome::Passed
         } else {
             TestOutcome::Failed(Failure::True(self, value))
@@ -257,8 +251,8 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(&self, _xot: &mut Xot, value: StackValue) -> TestOutcome {
-        if matches!(value, StackValue::Atomic(Atomic::Boolean(false))) {
+    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
+        if matches!(value, Value::Atomic(Atomic::Boolean(false))) {
             TestOutcome::Passed
         } else {
             TestOutcome::Failed(Failure::False(self, value))
@@ -276,7 +270,7 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(&self, xot: &mut Xot, value: StackValue) -> TestOutcome {
+    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome {
         let seq = value.to_sequence();
         match seq {
             Ok(seq) => {
@@ -302,14 +296,14 @@ impl Assertable for AssertStringValue {
                     // we weren't able to produce a string value
                     Err(_) => TestOutcome::Failed(Failure::StringValue(
                         self,
-                        AssertStringValueFailure::WrongStackValue(value),
+                        AssertStringValueFailure::WrongValue(value),
                     )),
                 }
             }
             // we weren't able to produce a sequence
             Err(_) => TestOutcome::Failed(Failure::StringValue(
                 self,
-                AssertStringValueFailure::WrongStackValue(value),
+                AssertStringValueFailure::WrongValue(value),
             )),
         }
     }
@@ -325,7 +319,7 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<StackValue, Error>) -> TestOutcome {
+    fn assert_result(&self, _xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
         match result {
             Ok(value) => TestOutcome::Failed(Failure::Error(self, value.clone())),
             Err(error) => {
@@ -347,7 +341,7 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: StackValue) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
         unreachable!();
     }
 }
@@ -430,7 +424,7 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         xot: &mut Xot,
-        result: &Result<StackValue, Error>,
+        result: &Result<Value, Error>,
     ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),
@@ -453,32 +447,32 @@ impl TestCaseResult {
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertCountFailure {
     WrongCount(usize),
-    WrongStackValue(StackValue),
+    WrongValue(Value),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertStringValueFailure {
     WrongStringValue(String),
-    WrongStackValue(StackValue),
+    WrongValue(Value),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertXmlFailure {
     WrongXml(String),
-    WrongStackValue(StackValue),
+    WrongValue(Value),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Failure<'a> {
     AnyOf(&'a AssertAnyOf, Vec<TestOutcome<'a>>),
     Not(&'a AssertNot, Box<TestOutcome<'a>>),
-    Eq(&'a AssertEq, StackValue),
-    True(&'a AssertTrue, StackValue),
-    False(&'a AssertFalse, StackValue),
+    Eq(&'a AssertEq, Value),
+    True(&'a AssertTrue, Value),
+    False(&'a AssertFalse, Value),
     Count(&'a AssertCount, AssertCountFailure),
     StringValue(&'a AssertStringValue, AssertStringValueFailure),
     Xml(&'a AssertXml, AssertXmlFailure),
-    Error(&'a AssertError, StackValue),
+    Error(&'a AssertError, Value),
 }
 
 impl<'a> fmt::Display for Failure<'a> {
@@ -503,22 +497,22 @@ impl<'a> fmt::Display for Failure<'a> {
                 // writeln!(f, "  {}", outcome)?;
                 Ok(())
             }
-            Failure::Eq(a, stack_value) => {
+            Failure::Eq(a, value) => {
                 writeln!(f, "eq:")?;
                 writeln!(f, "  expected: {:?}", a.0)?;
-                writeln!(f, "  actual: {:?}", stack_value)?;
+                writeln!(f, "  actual: {:?}", value)?;
                 Ok(())
             }
-            Failure::True(a, stack_value) => {
+            Failure::True(_a, value) => {
                 writeln!(f, "true:")?;
                 writeln!(f, "  expected: true")?;
-                writeln!(f, "  actual: {:?}", stack_value)?;
+                writeln!(f, "  actual: {:?}", value)?;
                 Ok(())
             }
-            Failure::False(a, stack_value) => {
+            Failure::False(_a, value) => {
                 writeln!(f, "false:")?;
                 writeln!(f, "  expected: false")?;
-                writeln!(f, "  actual: {:?}", stack_value)?;
+                writeln!(f, "  actual: {:?}", value)?;
                 Ok(())
             }
             Failure::Count(a, failure) => {
@@ -539,17 +533,17 @@ impl<'a> fmt::Display for Failure<'a> {
                 writeln!(f, "  actual: {:?}", failure)?;
                 Ok(())
             }
-            Failure::Error(a, stack_value) => {
+            Failure::Error(a, value) => {
                 writeln!(f, "error:")?;
                 writeln!(f, "  expected: {:?}", a.0)?;
-                writeln!(f, "  actual: {:?}", stack_value)?;
+                writeln!(f, "  actual: {:?}", value)?;
                 Ok(())
             }
         }
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr) -> Result<StackValue, Error> {
+fn run_xpath(expr: &qt::XPathExpr) -> Result<Value, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
