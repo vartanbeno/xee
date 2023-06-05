@@ -1,5 +1,4 @@
 use miette::SourceSpan;
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
@@ -53,9 +52,7 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::String(s) => Value::Atomic(Atomic::String(Rc::new(s.clone()))),
                     ir::Const::Double(d) => Value::Atomic(Atomic::Double(*d)),
                     ir::Const::Decimal(d) => Value::Atomic(Atomic::Decimal(*d)),
-                    ir::Const::EmptySequence => {
-                        Value::Sequence(Rc::new(RefCell::new(Sequence::new())))
-                    }
+                    ir::Const::EmptySequence => Value::Sequence(Sequence::empty()),
                     ir::Const::Step(step) => Value::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value, atom.span);
@@ -541,16 +538,16 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
-        data::{Item, Node, Sequence},
+        data::{InnerSequence, Item, Node},
         document::{Document, Documents, Uri},
     };
 
-    fn as_sequence(value: &Value) -> Rc<RefCell<Sequence>> {
+    fn as_sequence(value: &Value) -> Sequence {
         value.to_sequence().unwrap()
     }
 
-    fn xot_nodes_to_sequence(node: &[xot::Node]) -> Sequence {
-        Sequence {
+    fn xot_nodes_to_sequence(node: &[xot::Node]) -> InnerSequence {
+        InnerSequence {
             items: node
                 .iter()
                 .map(|&node| Item::Node(Node::Xot(node)))

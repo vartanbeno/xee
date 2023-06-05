@@ -1,10 +1,7 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::context::DynamicContext;
 use crate::data::atomic::Atomic;
-use crate::data::convert::ContextTryInto;
 use crate::data::error::ValueError;
 use crate::data::function::{Closure, Step};
 use crate::data::item::Item;
@@ -20,7 +17,7 @@ type Result<T> = std::result::Result<T, ValueError>;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Atomic(Atomic),
-    Sequence(Rc<RefCell<Sequence>>),
+    Sequence(Sequence),
     Closure(Rc<Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<Step>),
@@ -65,11 +62,11 @@ impl Value {
         }
     }
 
-    pub fn to_sequence(&self) -> Result<Rc<RefCell<Sequence>>> {
+    pub fn to_sequence(&self) -> Result<Sequence> {
         match self {
             Value::Sequence(s) => Ok(s.clone()),
-            Value::Atomic(a) => Ok(Rc::new(RefCell::new(Sequence::from_atomic(a.clone())))),
-            Value::Node(a) => Ok(Rc::new(RefCell::new(Sequence::from_node(*a)))),
+            Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
+            Value::Node(n) => Ok(Sequence::from_node(*n)),
             _ => Err(ValueError::Type),
         }
     }

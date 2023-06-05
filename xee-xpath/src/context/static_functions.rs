@@ -4,7 +4,7 @@ use crate::{
     ast,
     context::namespaces::{FN_NAMESPACE, XS_NAMESPACE},
     context::static_context::{FunctionType, StaticFunctionDescription},
-    data::{ContextInto, ContextTryInto, ValueError},
+    data::{ContextTryInto, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };
 

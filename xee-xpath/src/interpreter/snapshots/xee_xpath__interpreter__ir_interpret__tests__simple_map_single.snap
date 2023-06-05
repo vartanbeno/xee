@@ -4,21 +4,23 @@ expression: "run(\"1 ! (. , 0)\")"
 ---
 Ok(
     Sequence(
-        RefCell {
-            value: Sequence {
-                items: [
-                    Atomic(
-                        Integer(
-                            1,
+        Sequence(
+            RefCell {
+                value: InnerSequence {
+                    items: [
+                        Atomic(
+                            Integer(
+                                1,
+                            ),
                         ),
-                    ),
-                    Atomic(
-                        Integer(
-                            0,
+                        Atomic(
+                            Integer(
+                                0,
+                            ),
                         ),
-                    ),
-                ],
+                    ],
+                },
             },
-        },
+        ),
     ),
 )

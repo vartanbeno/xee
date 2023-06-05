@@ -4,10 +4,12 @@ expression: "run(\"()\")"
 ---
 Ok(
     Sequence(
-        RefCell {
-            value: Sequence {
-                items: [],
+        Sequence(
+            RefCell {
+                value: InnerSequence {
+                    items: [],
+                },
             },
-        },
+        ),
     ),
 )

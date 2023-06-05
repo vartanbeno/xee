@@ -1,6 +1,5 @@
 use arrayvec::ArrayVec;
 use miette::SourceSpan;
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -17,8 +16,6 @@ use crate::interpreter::instruction::{
 };
 use crate::op;
 use crate::step::resolve_step;
-
-type Seq = Rc<RefCell<Sequence>>;
 
 const FRAMES_MAX: usize = 64;
 
@@ -98,7 +95,6 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn run_actual(&mut self) -> Result<(), ValueError> {
-        let context = self.dynamic_context;
         // we can make this an infinite loop as all functions end
         // with the return instruction
         loop {
@@ -198,9 +194,9 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Comma => {
                     let (a, b) = self.pop_seq2()?;
-                    self.stack.push(Value::Sequence(Rc::new(RefCell::new(
+                    self.stack.push(Value::Sequence(Sequence::new(
                         a.borrow().concat(&b.borrow()),
-                    ))));
+                    )));
                 }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
@@ -299,8 +295,7 @@ impl<'a> Interpreter<'a> {
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
-                    self.stack
-                        .push(Value::Sequence(Rc::new(RefCell::new(combined))));
+                    self.stack.push(Value::Sequence(Sequence::new(combined)));
                 }
                 EncodedInstruction::Dup => {
                     let value = self.stack.pop().unwrap();
@@ -368,9 +363,7 @@ impl<'a> Interpreter<'a> {
                     let a: i64 = a.try_into()?;
                     let b: i64 = b.try_into()?;
                     match a.cmp(&b) {
-                        Ordering::Greater => self
-                            .stack
-                            .push(Value::Sequence(Rc::new(RefCell::new(Sequence::new())))),
+                        Ordering::Greater => self.stack.push(Value::Sequence(Sequence::empty())),
                         Ordering::Equal => self.stack.push(Value::Atomic(Atomic::Integer(a))),
                         Ordering::Less => {
                             let sequence = Sequence::from_vec(
@@ -378,15 +371,12 @@ impl<'a> Interpreter<'a> {
                                     .map(|i| Item::Atomic(Atomic::Integer(i)))
                                     .collect::<Vec<Item>>(),
                             );
-                            self.stack
-                                .push(Value::Sequence(Rc::new(RefCell::new(sequence))));
+                            self.stack.push(Value::Sequence(sequence));
                         }
                     }
                 }
                 EncodedInstruction::SequenceNew => {
-                    let sequence = Sequence::new();
-                    self.stack
-                        .push(Value::Sequence(Rc::new(RefCell::new(sequence))));
+                    self.stack.push(Value::Sequence(Sequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
                     let sequence = self.pop_seq()?;
@@ -463,8 +453,7 @@ impl<'a> Interpreter<'a> {
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);
-        self.stack
-            .push(Value::Sequence(Rc::new(RefCell::new(sequence))));
+        self.stack.push(Value::Sequence(sequence));
         Ok(())
     }
 
@@ -479,12 +468,12 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> Result<Seq, ValueError> {
+    fn pop_seq(&mut self) -> Result<Sequence, ValueError> {
         let sequence = self.stack.pop().unwrap();
         sequence.try_into()
     }
 
-    fn pop_seq2(&mut self) -> Result<(Seq, Seq), ValueError> {
+    fn pop_seq2(&mut self) -> Result<(Sequence, Sequence), ValueError> {
         let b = self.pop_seq()?;
         let a = self.pop_seq()?;
         Ok((a, b))

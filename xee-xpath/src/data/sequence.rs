@@ -15,11 +15,39 @@ use crate::data::value::Value;
 type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Sequence {
+pub struct Sequence(Rc<RefCell<InnerSequence>>);
+
+impl Sequence {
+    pub(crate) fn new(sequence: InnerSequence) -> Self {
+        Self(Rc::new(RefCell::new(sequence)))
+    }
+    pub(crate) fn empty() -> Self {
+        Self::new(InnerSequence::new())
+    }
+    pub(crate) fn from_atomic(atomic: &Atomic) -> Self {
+        Self::new(InnerSequence::from_atomic(atomic.clone()))
+    }
+    pub(crate) fn from_node(node: Node) -> Self {
+        Self::new(InnerSequence::from_node(node))
+    }
+    pub(crate) fn from_vec(items: Vec<Item>) -> Self {
+        Self::new(InnerSequence::from_vec(items))
+    }
+
+    pub fn borrow(&self) -> std::cell::Ref<InnerSequence> {
+        self.0.borrow()
+    }
+    pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
+        self.0.borrow_mut()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct InnerSequence {
     pub(crate) items: Vec<Item>,
 }
 
-impl Sequence {
+impl InnerSequence {
     pub(crate) fn new() -> Self {
         Self { items: Vec::new() }
     }
@@ -77,13 +105,13 @@ impl Sequence {
         self.items.push(item.clone());
     }
 
-    pub(crate) fn extend(&mut self, other: Rc<RefCell<Sequence>>) {
+    pub(crate) fn extend(&mut self, other: Sequence) {
         for item in &other.borrow().items {
             self.push(item);
         }
     }
 
-    pub(crate) fn atomize(&self, xot: &Xot) -> Sequence {
+    pub(crate) fn atomize(&self, xot: &Xot) -> InnerSequence {
         let mut items = Vec::new();
         for item in &self.items {
             match item {
@@ -97,7 +125,7 @@ impl Sequence {
                 Item::Function(..) => panic!("cannot atomize a function"),
             }
         }
-        Sequence { items }
+        InnerSequence { items }
     }
 
     pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
@@ -136,13 +164,17 @@ impl Sequence {
         atoms
     }
 
-    pub(crate) fn concat(&self, other: &Sequence) -> Sequence {
+    pub(crate) fn concat(&self, other: &InnerSequence) -> InnerSequence {
         let mut items = self.items.clone();
         items.extend(other.items.clone());
-        Sequence { items }
+        InnerSequence { items }
     }
 
-    pub(crate) fn union(&self, other: &Sequence, annotations: &Annotations) -> Result<Sequence> {
+    pub(crate) fn union(
+        &self,
+        other: &InnerSequence,
+        annotations: &Annotations,
+    ) -> Result<InnerSequence> {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
@@ -166,6 +198,6 @@ impl Sequence {
         nodes.sort_by_key(|n| annotations.document_order(*n));
 
         let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
-        Ok(Sequence { items })
+        Ok(InnerSequence { items })
     }
 }

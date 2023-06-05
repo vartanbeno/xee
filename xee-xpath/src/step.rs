@@ -1,16 +1,16 @@
 use xot::{ValueType, Xot};
 
 use crate::ast;
-use crate::data::{Item, Node, Sequence, Step};
+use crate::data::{InnerSequence, Item, Node, Sequence, Step};
 
 pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> Sequence {
-    let mut new_sequence = Sequence::new();
+    let mut new_sequence = InnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
             new_sequence.push(&Item::Node(axis_node));
         }
     }
-    new_sequence
+    Sequence::new(new_sequence)
 }
 
 fn node_take_axis<'a>(
@@ -220,12 +220,12 @@ mod tests {
     use super::*;
 
     fn xot_nodes_to_sequence(node: &[xot::Node]) -> Sequence {
-        Sequence {
+        Sequence::new(InnerSequence {
             items: node
                 .iter()
                 .map(|&node| Item::Node(Node::Xot(node)))
                 .collect(),
-        }
+        })
     }
 
     #[test]

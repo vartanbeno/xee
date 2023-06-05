@@ -4,16 +4,18 @@ expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"//a / fn:local-name()\
 ---
 Ok(
     Sequence(
-        RefCell {
-            value: Sequence {
-                items: [
-                    Atomic(
-                        String(
-                            "a",
+        Sequence(
+            RefCell {
+                value: InnerSequence {
+                    items: [
+                        Atomic(
+                            String(
+                                "a",
+                            ),
                         ),
-                    ),
-                ],
+                    ],
+                },
             },
-        },
+        ),
     ),
 )

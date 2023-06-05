@@ -1,13 +1,11 @@
-use std::cell::RefCell;
 use std::convert::TryFrom;
-use std::rc::Rc;
 use std::vec::Vec;
 
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
 use crate::context::DynamicContext;
-use crate::data::{Atomic, Node, Sequence, Value, ValueError};
+use crate::data::{Atomic, Sequence, Value, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -135,7 +133,7 @@ impl TryFrom<Atomic> for String {
         atomic.to_string()
     }
 }
-impl TryFrom<Value> for Rc<RefCell<Sequence>> {
+impl TryFrom<Value> for Sequence {
     type Error = ValueError;
 
     fn try_from(value: Value) -> Result<Self> {
@@ -143,8 +141,8 @@ impl TryFrom<Value> for Rc<RefCell<Sequence>> {
     }
 }
 
-impl ContextFrom<Rc<RefCell<Sequence>>> for Vec<Atomic> {
-    fn context_from(sequence: Rc<RefCell<Sequence>>, context: &DynamicContext) -> Self {
+impl ContextFrom<Sequence> for Vec<Atomic> {
+    fn context_from(sequence: Sequence, context: &DynamicContext) -> Self {
         sequence.borrow().to_atoms(context.xot)
     }
 }

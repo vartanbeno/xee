@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::ast::parse_xpath;
 use crate::context::{DynamicContext, StaticContext};
 use crate::data::{Atomic, FunctionId, Item, Node, Value};
@@ -65,9 +62,7 @@ impl XPath {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            Value::Atomic(Atomic::Empty) => {
-                Ok(Value::Sequence(Rc::new(RefCell::new(Sequence::new()))))
-            }
+            Value::Atomic(Atomic::Empty) => Ok(Value::Sequence(Sequence::empty())),
             _ => Ok(value),
         }
     }

@@ -28,7 +28,7 @@ mod xpath;
 
 pub use crate::ast::Name;
 pub use crate::context::{DynamicContext, Namespaces, StaticContext};
-pub use crate::data::{Atomic, Item, Node, Sequence, Value};
+pub use crate::data::{Atomic, InnerSequence, Item, Node, Sequence, Value};
 pub use crate::error::Error;
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,

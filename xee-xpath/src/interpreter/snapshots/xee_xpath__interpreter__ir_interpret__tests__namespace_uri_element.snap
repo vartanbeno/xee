@@ -4,31 +4,33 @@ expression: "run_xml(r#\"<doc xmlns=\"http://example.com/\" xmlns:e=\"http://exa
 ---
 Ok(
     Sequence(
-        RefCell {
-            value: Sequence {
-                items: [
-                    Atomic(
-                        String(
-                            "http://example.com/",
+        Sequence(
+            RefCell {
+                value: InnerSequence {
+                    items: [
+                        Atomic(
+                            String(
+                                "http://example.com/",
+                            ),
                         ),
-                    ),
-                    Atomic(
-                        String(
-                            "http://example.com/",
+                        Atomic(
+                            String(
+                                "http://example.com/",
+                            ),
                         ),
-                    ),
-                    Atomic(
-                        String(
-                            "http://example.com/",
+                        Atomic(
+                            String(
+                                "http://example.com/",
+                            ),
                         ),
-                    ),
-                    Atomic(
-                        String(
-                            "http://example.com/e",
+                        Atomic(
+                            String(
+                                "http://example.com/e",
+                            ),
                         ),
-                    ),
-                ],
+                    ],
+                },
             },
-        },
+        ),
     ),
 )

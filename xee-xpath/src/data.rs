@@ -8,11 +8,11 @@ mod sequence;
 mod value;
 
 pub use atomic::Atomic;
-pub(crate) use convert::{ContextInto, ContextTryFrom, ContextTryInto};
+pub(crate) use convert::{ContextInto, ContextTryInto};
 pub use error::ValueError;
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};
 pub use item::Item;
 pub use node::Node;
-pub use sequence::Sequence;
+pub use sequence::{InnerSequence, Sequence};
 pub use value::Value;

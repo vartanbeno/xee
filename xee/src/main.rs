@@ -56,7 +56,7 @@ fn main() -> Result<()> {
                 Value::Sequence(sequence) => {
                     println!(
                         "sequence: \n{}",
-                        display_sequence(&xot, &sequence.borrow())
+                        display_sequence(&xot, &sequence)
                             .into_diagnostic()
                             .wrap_err("Could not display sequence")?
                     )
@@ -81,7 +81,7 @@ fn display_atomic(atomic: &Atomic) -> String {
 
 fn display_sequence(xot: &Xot, sequence: &Sequence) -> Result<String, xot::Error> {
     let mut v = Vec::new();
-    for item in sequence.as_slice() {
+    for item in sequence.borrow().as_slice() {
         match item {
             Item::Node(node) => {
                 v.push(format!("node: \n{}", display_node(xot, *node)?));
