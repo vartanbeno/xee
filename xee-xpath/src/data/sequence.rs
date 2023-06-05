@@ -6,11 +6,11 @@ use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::context::DynamicContext;
-use crate::value::atomic::Atomic;
-use crate::value::error::ValueError;
-use crate::value::item::Item;
-use crate::value::node::Node;
-use crate::value::value::Value;
+use crate::data::atomic::Atomic;
+use crate::data::error::ValueError;
+use crate::data::item::Item;
+use crate::data::node::Node;
+use crate::data::value::Value;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

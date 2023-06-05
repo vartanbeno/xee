@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use xot::Xot;
 
 use crate::annotation::Annotations;
-use crate::value::Node;
+use crate::data::Node;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) struct Uri(pub(crate) String);

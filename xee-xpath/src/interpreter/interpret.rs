@@ -13,11 +13,11 @@ use crate::interpreter::instruction::{
 use crate::op;
 
 use crate::comparison;
-use crate::step::resolve_step;
-use crate::value::{
+use crate::data::{
     Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StaticFunctionId,
     Step, Value, ValueError,
 };
+use crate::step::resolve_step;
 
 const FRAMES_MAX: usize = 64;
 

@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use crate::ast::parse_xpath;
 use crate::context::{DynamicContext, StaticContext};
+use crate::data::{Atomic, FunctionId, Item, Node, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
-use crate::value::{Atomic, FunctionId, Item, Node, Value};
 use crate::{ir, Sequence};
 
 #[derive(Debug)]

@@ -1,8 +1,8 @@
 use miette::SourceSpan;
 
+use crate::data::{Function, FunctionId, Value};
 use crate::interpreter::instruction::{encode_instruction, instruction_size, Instruction};
 use crate::ir;
-use crate::value::{Function, FunctionId, Value};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Program {

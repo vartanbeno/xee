@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
-use crate::value::{Atomic, ValueError};
+use crate::data::{Atomic, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 

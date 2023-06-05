@@ -2,7 +2,7 @@ use ::next_gen::prelude::*;
 use ahash::{HashMap, HashMapExt};
 use xot::Xot;
 
-use crate::value::Node;
+use crate::data::Node;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct DocumentOrder(usize, usize);

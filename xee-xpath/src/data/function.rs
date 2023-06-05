@@ -1,9 +1,9 @@
 use miette::SourceSpan;
 
 use crate::ast;
+use crate::data::error::ValueError;
+use crate::data::value::Value;
 use crate::ir;
-use crate::value::error::ValueError;
-use crate::value::value::Value;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

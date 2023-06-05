@@ -3,13 +3,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
+use crate::data::{Atomic, Sequence, StaticFunctionId, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::builder::{
     BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition,
 };
 use crate::interpreter::instruction::Instruction;
 use crate::ir;
-use crate::value::{Atomic, Sequence, StaticFunctionId, Value};
 
 pub(crate) type Scopes = crate::interpreter::scope::Scopes<ir::Name>;
 
@@ -541,8 +541,8 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
+        data::{Item, Node, Sequence},
         document::{Document, Documents, Uri},
-        value::{Item, Node, Sequence},
     };
 
     fn as_sequence(value: &Value) -> Rc<RefCell<Sequence>> {

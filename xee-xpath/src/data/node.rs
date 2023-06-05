@@ -3,7 +3,7 @@ use std::vec;
 
 use xot::Xot;
 
-use crate::value::atomic::Atomic;
+use crate::data::atomic::Atomic;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Node {

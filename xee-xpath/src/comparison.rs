@@ -1,5 +1,5 @@
+use crate::data::{Atomic, ValueError};
 use crate::op;
-use crate::value::{Atomic, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 

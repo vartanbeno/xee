@@ -1,7 +1,7 @@
 use crate::context::{DynamicContext, StaticContext};
+use crate::data::{Item, ValueError};
 use crate::error::Error;
 use crate::error::Result;
-use crate::value::{Item, ValueError};
 use crate::xpath::XPath;
 
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
@@ -317,7 +317,7 @@ mod tests {
     use super::*;
 
     use crate::context::Namespaces;
-    use crate::value::{Atomic, Node};
+    use crate::data::{Atomic, Node};
 
     #[test]
     fn test_one_query() {

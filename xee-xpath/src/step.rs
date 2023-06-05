@@ -1,7 +1,7 @@
 use xot::{ValueType, Xot};
 
 use crate::ast;
-use crate::value::{Item, Node, Sequence, Step};
+use crate::data::{Item, Node, Sequence, Step};
 
 pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> Sequence {
     let mut new_sequence = Sequence::new();

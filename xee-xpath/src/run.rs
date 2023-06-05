@@ -1,9 +1,9 @@
 use xot::Xot;
 
 use crate::context::{DynamicContext, Namespaces, StaticContext, FN_NAMESPACE};
+use crate::data::Value;
 use crate::document::{Documents, Uri};
 use crate::error::Result;
-use crate::value::Value;
 use crate::xpath::XPath;
 
 /// A high level function that evaluates an xpath expression on an xml document.

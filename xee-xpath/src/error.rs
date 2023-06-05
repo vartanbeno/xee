@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::{interpreter::Program, value::ValueError};
+use crate::{data::ValueError, interpreter::Program};
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {

@@ -11,6 +11,7 @@ mod annotation;
 mod ast;
 mod comparison;
 mod context;
+mod data;
 mod document;
 mod error;
 mod interpreter;
@@ -23,15 +24,14 @@ mod run;
 mod span;
 mod step;
 mod types;
-mod value;
 mod xpath;
 
 pub use crate::ast::Name;
 pub use crate::context::{DynamicContext, Namespaces, StaticContext};
+pub use crate::data::{Atomic, Item, Node, Sequence, Value};
 pub use crate::error::Error;
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
-pub use crate::value::{Atomic, Item, Node, Sequence, Value};
 pub use crate::xpath::XPath;

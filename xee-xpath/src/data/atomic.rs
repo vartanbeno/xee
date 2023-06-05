@@ -1,20 +1,10 @@
-use ahash::{HashSet, HashSetExt};
-use miette::SourceSpan;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
-use std::cell::RefCell;
 use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
-use std::vec;
-use xot::Xot;
 
-use crate::annotation::Annotations;
-use crate::ast;
 use crate::comparison;
-use crate::context::DynamicContext;
-use crate::ir;
-use crate::value::error::ValueError;
-use crate::value::node::Node;
+use crate::data::error::ValueError;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

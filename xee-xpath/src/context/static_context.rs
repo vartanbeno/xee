@@ -5,8 +5,8 @@ use crate::ast;
 use crate::context::dynamic_context::DynamicContext;
 use crate::context::namespaces::Namespaces;
 use crate::context::static_functions::static_function_descriptions;
-use crate::value::ValueError;
-use crate::value::{StaticFunctionId, Value};
+use crate::data::ValueError;
+use crate::data::{StaticFunctionId, Value};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum FunctionType {

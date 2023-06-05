@@ -21,5 +21,3 @@ pub enum ValueError {
     #[error("Error")]
     Error(Error),
 }
-
-type Result<T> = std::result::Result<T, ValueError>;

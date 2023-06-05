@@ -3,12 +3,12 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::context::DynamicContext;
-use crate::value::atomic::Atomic;
-use crate::value::error::ValueError;
-use crate::value::function::{Closure, Step};
-use crate::value::item::Item;
-use crate::value::node::Node;
-use crate::value::sequence::Sequence;
+use crate::data::atomic::Atomic;
+use crate::data::error::ValueError;
+use crate::data::function::{Closure, Step};
+use crate::data::item::Item;
+use crate::data::node::Node;
+use crate::data::sequence::Sequence;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
