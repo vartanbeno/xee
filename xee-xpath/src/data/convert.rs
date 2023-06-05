@@ -153,7 +153,7 @@ impl TryFrom<Value> for Sequence {
     type Error = ValueError;
 
     fn try_from(value: Value) -> Result<Self> {
-        value.to_sequence()
+        TryFrom::try_from(&value)
     }
 }
 
@@ -161,7 +161,12 @@ impl TryFrom<&Value> for Sequence {
     type Error = ValueError;
 
     fn try_from(value: &Value) -> Result<Self> {
-        value.to_sequence()
+        match value {
+            Value::Sequence(s) => Ok(s.clone()),
+            Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
+            Value::Node(n) => Ok(Sequence::from_node(*n)),
+            _ => Err(ValueError::Type),
+        }
     }
 }
 

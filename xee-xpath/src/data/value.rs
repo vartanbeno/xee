@@ -62,15 +62,6 @@ impl Value {
         }
     }
 
-    pub fn to_sequence(&self) -> Result<Sequence> {
-        match self {
-            Value::Sequence(s) => Ok(s.clone()),
-            Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
-            Value::Node(n) => Ok(Sequence::from_node(*n)),
-            _ => Err(ValueError::Type),
-        }
-    }
-
     pub(crate) fn to_closure(&self) -> Result<&Closure> {
         match self {
             Value::Closure(c) => Ok(c),
