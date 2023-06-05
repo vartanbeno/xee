@@ -49,6 +49,8 @@ where
     }
 }
 
+// Conversions from Value
+
 impl ContextTryFrom<Value> for Atomic {
     fn context_try_from(value: Value, context: &DynamicContext) -> Result<Self> {
         ContextTryFrom::context_try_from(&value, context)
@@ -109,40 +111,7 @@ impl TryFrom<&Value> for Node {
     }
 }
 
-// impl TryFrom<Value> for Sequence {
-//     fn try_from(value: Value) -> Result<Self> {
-//         match self {
-//             Value::Sequence(s) => Ok(s.clone()),
-//             Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
-//             Value::Node(n) => Ok(Sequence::from_node(*n)),
-//             _ => Err(ValueError::Type),
-//         }
-//         // match value {
-//         //     Value::Sequence(s) => Ok(s),
-//         //     _ => todo!("don't know how to atomize this yet"),
-//         // }
-//     }
-// }
-
-// impl<T> ContextTryFrom<Value> for T
-// where
-//     T: TryFrom<Atomic, Error = ValueError>,
-// {
-//     fn context_try_from(value: Value, context: &DynamicContext) -> Result<Self> {
-//         let atomic: Atomic = ContextTryInto::context_try_into(value, context)?;
-//         TryInto::try_into(atomic)
-//     }
-// }
-
-// impl<T> ContextTryFrom<Value> for T
-// where
-//     T: ContextFrom<Rc<RefCell<Sequence>>>,
-// {
-//     fn context_try_from(value: Value, context: &DynamicContext) -> Result<Self> {
-//         let sequence: Rc<RefCell<Sequence>> = ContextTryInto::context_try_into(value, context)?;
-//         Ok(ContextFrom::context_from(sequence, context))
-//     }
-// }
+// Conversions from Atomic
 
 impl TryFrom<Atomic> for i64 {
     type Error = ValueError;
@@ -184,6 +153,14 @@ impl TryFrom<Atomic> for bool {
     }
 }
 
+impl<'a> TryFrom<&'a Atomic> for &'a str {
+    type Error = ValueError;
+
+    fn try_from(atomic: &'a Atomic) -> Result<&'a str> {
+        atomic.to_str()
+    }
+}
+
 impl TryFrom<Atomic> for String {
     type Error = ValueError;
 
@@ -218,19 +195,3 @@ impl ContextFrom<Sequence> for Vec<Atomic> {
         sequence.borrow().to_atoms(context.xot)
     }
 }
-
-// impl TryFrom<Value> for Node {
-//     type Error = ValueError;
-
-//     fn try_from(value: Value) -> Result<Self> {
-//         value.to_node()
-//     }
-// }
-
-// impl TryFrom<Value> for Closure {
-//     type Error = ValueError;
-
-//     fn try_from(value: Value) -> Result<Self, Self::Error> {
-//         value.to_closure()
-//     }
-// }

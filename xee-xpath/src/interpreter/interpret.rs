@@ -129,8 +129,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
-                    let a = a.to_str()?;
-                    let b = b.to_str()?;
+                    let a: &str = (&a).try_into()?;
+                    let b: &str = (&b).try_into()?;
                     let result = a.to_owned() + b;
                     self.stack
                         .push(Value::Atomic(Atomic::String(Rc::new(result))));
