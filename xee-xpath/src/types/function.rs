@@ -1,5 +1,13 @@
 // use ahash::AHashMap as HashMap;
 
+// #[xpath_fn("foo($a as xs:integer, $b as xs:string) as xs:string")]
+// fn foo(a: i64, s: &str) -> String {}
+
+// wrapper should generate:
+// Value -> i64
+// Value -> &str
+// String -> Value
+
 // use crate::context::{DynamicContext, FN_NAMESPACE, XS_NAMESPACE};
 // use crate::types::types_core::{Item, ItemType, Occurrence, SequenceType};
 // use crate::value::Node;

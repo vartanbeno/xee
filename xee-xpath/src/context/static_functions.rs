@@ -111,7 +111,7 @@ fn empty(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueE
 
 fn not(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a = &arguments[0];
-    let b = a.to_bool()?;
+    let b = a.effective_boolean_value()?;
     Ok(Value::Atomic(Atomic::Boolean(!b)))
 }
 

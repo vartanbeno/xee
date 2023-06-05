@@ -45,7 +45,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_bool(&self) -> Result<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> Result<bool> {
         match self {
             Value::Atomic(a) => a.to_bool(),
             Value::Sequence(s) => {
