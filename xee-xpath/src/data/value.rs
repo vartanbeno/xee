@@ -62,13 +62,6 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_closure(&self) -> Result<&Closure> {
-        match self {
-            Value::Closure(c) => Ok(c),
-            _ => Err(ValueError::Type),
-        }
-    }
-
     pub(crate) fn to_step(&self) -> Result<Rc<Step>> {
         match self {
             Value::Step(s) => Ok(Rc::clone(s)),

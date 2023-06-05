@@ -1,11 +1,12 @@
 use std::convert::TryFrom;
+use std::rc::Rc;
 use std::vec::Vec;
 
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
 use crate::context::DynamicContext;
-use crate::data::{Atomic, Sequence, Value, ValueError};
+use crate::data::{Atomic, Closure, Sequence, Value, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -62,6 +63,17 @@ impl ContextTryFrom<&Value> for Atomic {
             _ => {
                 todo!("don't know how to atomize this yet")
             }
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for &'a Closure {
+    type Error = ValueError;
+
+    fn try_from(value: &'a Value) -> Result<&'a Closure> {
+        match value {
+            Value::Closure(c) => Ok(c),
+            _ => Err(ValueError::Type),
         }
     }
 }
