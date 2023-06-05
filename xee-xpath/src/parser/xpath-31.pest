@@ -339,6 +339,17 @@ NamedFunctionRef = { EQName ~ "#" ~ IntegerLiteral }
 // ::= "function" "(" ParamList? ")" ("as" SequenceType)? FunctionBody
 InlineFunctionExpr = { "function" ~ "(" ~ ParamList? ~ ")" ~ ("as" ~ SequenceType)? ~ FunctionBody }
 
+// Signatures describe external functions as in https://www.w3.org/TR/xpath-functions-31/#func-signatures
+// Differences from InlineFunctionExpr are:
+// - Starts with EQName, not `function`
+// - Parameter types are manadatory
+// - Return type is mandatory
+Signature = { EQName ~ "(" ~ SignatureParamList? ~ ")" ~ ("as" ~ SequenceType) }
+
+SignatureParamList = { SignatureParam ~ ("," ~ SignatureParam)* }
+
+SignatureParam = { "$" ~ EQName ~ TypeDeclaration }
+
 // MapConstructor
 // ::= "map" "{" (MapConstructorEntry ("," MapConstructorEntry)*)? "}"
 MapConstructor = { "map" ~ "{" ~ (MapConstructorEntry ~ ("," ~ MapConstructorEntry)*)? ~ "}" }

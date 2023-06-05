@@ -17,6 +17,15 @@ pub(crate) fn parse(xpath: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>
     XPathParser::parse(Rule::Xpath, xpath)
 }
 
+// parse function signature as described in
+// https://www.w3.org/TR/xpath-functions-31/#func-signatures
+// This is almost the same as an inline function definition except
+// for the name part.
+#[allow(clippy::result_large_err)]
+pub(crate) fn parse_signature(signature: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
+    XPathParser::parse(Rule::Signature, signature)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -57,5 +66,23 @@ mod tests {
     fn test_xpath_absolute_path() {
         let successful_parse = XPathParser::parse(Rule::Xpath, "/foo/bar");
         assert!(successful_parse.is_ok());
+    }
+
+    #[test]
+    fn test_signature() {
+        let successful_parse = parse_signature("math:exp($arg as xs:double?) as xs:double?");
+        assert!(successful_parse.is_ok());
+    }
+
+    #[test]
+    fn test_signature_parameter_type_required() {
+        let successful_parse = parse_signature("math:exp($arg) as xs:double?");
+        assert!(successful_parse.is_err());
+    }
+
+    #[test]
+    fn test_signature_return_type_required() {
+        let successful_parse = parse_signature("math:exp($arg as xs:double?)");
+        assert!(successful_parse.is_err());
     }
 }
