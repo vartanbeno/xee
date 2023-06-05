@@ -1,32 +1,16 @@
-use ahash::{HashSet, HashSetExt};
-use miette::SourceSpan;
-use ordered_float::OrderedFloat;
-use rust_decimal::prelude::*;
 use std::cell::RefCell;
-use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
-use std::vec;
 use xot::Xot;
 
-use crate::annotation::Annotations;
-use crate::ast;
-use crate::comparison;
 use crate::context::DynamicContext;
-use crate::ir;
 use crate::value::atomic::Atomic;
 use crate::value::error::ValueError;
-use crate::value::function::Closure;
+use crate::value::function::{Closure, Step};
 use crate::value::item::Item;
 use crate::value::node::Node;
 use crate::value::sequence::Sequence;
 
 type Result<T> = std::result::Result<T, ValueError>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Step {
-    pub(crate) axis: ast::Axis,
-    pub(crate) node_test: ast::NodeTest,
-}
 
 // Speculation: A rc value would be a lot smaller, though at the
 // cost of indirection. So I'm not sure it would be faster; we'd get
@@ -152,6 +136,7 @@ impl Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_decimal::Decimal;
 
     #[test]
     fn test_integer_compares_with_decimal() {

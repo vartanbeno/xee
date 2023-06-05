@@ -1,5 +1,6 @@
 use miette::SourceSpan;
 
+use crate::ast;
 use crate::ir;
 use crate::value::error::ValueError;
 use crate::value::value::Value;
@@ -44,4 +45,10 @@ pub(crate) enum ClosureFunctionId {
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
     pub(crate) values: Vec<Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Step {
+    pub(crate) axis: ast::Axis,
+    pub(crate) node_test: ast::NodeTest,
 }
