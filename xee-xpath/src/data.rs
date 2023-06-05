@@ -1,4 +1,5 @@
 mod atomic;
+mod convert;
 mod error;
 mod function;
 mod item;
@@ -7,6 +8,7 @@ mod sequence;
 mod value;
 
 pub use atomic::Atomic;
+pub(crate) use convert::{ContextInto, ContextTryFrom, ContextTryInto};
 pub use error::ValueError;
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};

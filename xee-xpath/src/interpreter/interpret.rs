@@ -7,8 +7,8 @@ use std::rc::Rc;
 use crate::comparison;
 use crate::context::DynamicContext;
 use crate::data::{
-    Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StaticFunctionId,
-    Step, Value, ValueError,
+    Atomic, Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId, Item,
+    Sequence, StaticFunctionId, Step, Value, ValueError,
 };
 use crate::error::Error;
 use crate::interpreter::builder::Program;
@@ -17,7 +17,6 @@ use crate::interpreter::instruction::{
 };
 use crate::op;
 use crate::step::resolve_step;
-use crate::types::{ContextInto, ContextTryInto};
 
 type Seq = Rc<RefCell<Sequence>>;
 
