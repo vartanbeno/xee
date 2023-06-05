@@ -62,14 +62,6 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_node(&self) -> Result<Node> {
-        match self {
-            Value::Node(n) => Ok(*n),
-            Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
-            _ => Err(ValueError::Type),
-        }
-    }
-
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
             Value::Sequence(s) => s.borrow().is_empty(),

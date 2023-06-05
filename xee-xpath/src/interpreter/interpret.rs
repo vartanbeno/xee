@@ -449,7 +449,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_step(&mut self, step: Rc<Step>) -> Result<(), ValueError> {
         // take one argument from the stack
-        let node = self.stack.pop().unwrap().to_node()?;
+        let node = self.stack.pop().unwrap().try_into()?;
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);

@@ -5,8 +5,8 @@ use std::vec::Vec;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
+use super::{Atomic, Closure, Node, Sequence, Step, Value, ValueError};
 use crate::context::DynamicContext;
-use crate::data::{Atomic, Closure, Sequence, Step, Value, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -84,6 +84,26 @@ impl TryFrom<&Value> for Rc<Step> {
     fn try_from(value: &Value) -> Result<Rc<Step>> {
         match value {
             Value::Step(s) => Ok(Rc::clone(s)),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
+impl TryFrom<Value> for Node {
+    type Error = ValueError;
+
+    fn try_from(value: Value) -> Result<Node> {
+        TryFrom::try_from(&value)
+    }
+}
+
+impl TryFrom<&Value> for Node {
+    type Error = ValueError;
+
+    fn try_from(value: &Value) -> Result<Node> {
+        match value {
+            Value::Node(n) => Ok(*n),
+            Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(ValueError::Type),
         }
     }

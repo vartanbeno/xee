@@ -43,14 +43,14 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
 // }
 
 fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_node()?;
+    let a: Node = (&arguments[0]).try_into()?;
     Ok(Value::Atomic(Atomic::String(Rc::new(
         a.local_name(context.xot),
     ))))
 }
 
 fn namespace_uri(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_node()?;
+    let a: Node = (&arguments[0]).try_into()?;
     Ok(Value::Atomic(Atomic::String(Rc::new(
         a.namespace_uri(context.xot),
     ))))
@@ -63,7 +63,7 @@ fn count(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueE
 }
 
 fn root(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = arguments[0].to_node()?;
+    let a: Node = (&arguments[0]).try_into()?;
     let xot_node = match a {
         Node::Xot(node) => node,
         Node::Attribute(node, _) => node,
@@ -124,7 +124,7 @@ fn generate_id(context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
         return Ok(Value::Atomic(Atomic::String(Rc::new("".to_string()))));
     }
     let annotations = &context.documents.annotations;
-    let node = a.to_node()?;
+    let node = a.try_into()?;
     let annotation = annotations.get(node).unwrap();
     Ok(Value::Atomic(Atomic::String(Rc::new(
         annotation.generate_id(),
