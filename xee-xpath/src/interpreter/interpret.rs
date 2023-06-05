@@ -4,20 +4,22 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
+use crate::comparison;
 use crate::context::DynamicContext;
+use crate::data::{
+    Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StaticFunctionId,
+    Step, Value, ValueError,
+};
 use crate::error::Error;
 use crate::interpreter::builder::Program;
 use crate::interpreter::instruction::{
     read_i16, read_instruction, read_u16, read_u8, EncodedInstruction,
 };
 use crate::op;
-
-use crate::comparison;
-use crate::data::{
-    Atomic, Closure, ClosureFunctionId, Function, FunctionId, Item, Sequence, StaticFunctionId,
-    Step, Value, ValueError,
-};
 use crate::step::resolve_step;
+use crate::types::{ContextInto, ContextTryInto};
+
+type Seq = Rc<RefCell<Sequence>>;
 
 const FRAMES_MAX: usize = 64;
 
@@ -104,55 +106,34 @@ impl<'a> Interpreter<'a> {
             let instruction = self.read_instruction();
             match instruction {
                 EncodedInstruction::Add => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack.push(Value::Atomic(op::numeric_add(&a, &b)?));
                 }
                 EncodedInstruction::Sub => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(op::numeric_substract(&a, &b)?));
                 }
                 EncodedInstruction::Mul => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(op::numeric_multiply(&a, &b)?));
                 }
                 EncodedInstruction::Div => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack.push(Value::Atomic(op::numeric_divide(&a, &b)?));
                 }
                 EncodedInstruction::IntDiv => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(op::numeric_integer_divide(&a, &b)?));
                 }
                 EncodedInstruction::Mod => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack.push(Value::Atomic(op::numeric_mod(&a, &b)?));
                 }
                 EncodedInstruction::Concat => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     let a = a.to_str()?;
                     let b = b.to_str()?;
                     let result = a.to_owned() + b;
@@ -217,10 +198,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 EncodedInstruction::Comma => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_sequence()?;
-                    let b = b.to_sequence()?;
+                    let (a, b) = self.pop_seq2()?;
                     self.stack.push(Value::Sequence(Rc::new(RefCell::new(
                         a.borrow().concat(&b.borrow()),
                     ))));
@@ -231,8 +209,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::JumpIfTrue => {
                     let displacement = self.read_i16();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.effective_boolean_value()?;
+                    let a = self.pop_effective_boolean()?;
                     if a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;
@@ -240,150 +217,86 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::JumpIfFalse => {
                     let displacement = self.read_i16();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.effective_boolean_value()?;
+                    let a = self.pop_effective_boolean()?;
                     if !a {
                         self.frame_mut().ip =
                             (self.frame().ip as i32 + displacement as i32) as usize;
                     }
                 }
                 EncodedInstruction::Eq => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_eq(&a, &b)?));
                 }
                 EncodedInstruction::Ne => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_ne(&a, &b)?));
                 }
                 EncodedInstruction::Lt => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_lt(&a, &b)?));
                 }
                 EncodedInstruction::Le => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_le(&a, &b)?));
                 }
                 EncodedInstruction::Gt => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_gt(&a, &b)?));
                 }
                 EncodedInstruction::Ge => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
+                    let (a, b) = self.pop_atomic2()?;
                     self.stack
                         .push(Value::Atomic(comparison::value_ge(&a, &b)?));
                 }
                 EncodedInstruction::GenEq => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_eq(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenNe => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_ne(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenLt => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_lt(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenLe => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_le(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenGt => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_gt(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenGe => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    let sequence_a = a.to_sequence()?;
-                    let sequence_b = b.to_sequence()?;
-                    let atomized_a = sequence_a.borrow().to_atoms(self.dynamic_context.xot);
-                    let atomized_b = sequence_b.borrow().to_atoms(self.dynamic_context.xot);
+                    let (atomized_a, atomized_b) = self.pop_atomized2()?;
                     self.stack.push(Value::Atomic(comparison::general_ge(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::Union => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_sequence()?;
-                    let b = b.to_sequence()?;
+                    let (a, b) = self.pop_seq2()?;
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
@@ -452,12 +365,9 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(return_value);
                 }
                 EncodedInstruction::Range => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let a = a.to_atomic(context)?;
-                    let b = b.to_atomic(context)?;
-                    let a = a.to_integer()?;
-                    let b = b.to_integer()?;
+                    let (a, b) = self.pop_atomic2()?;
+                    let a: i64 = a.try_into()?;
+                    let b: i64 = b.try_into()?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -480,36 +390,29 @@ impl<'a> Interpreter<'a> {
                         .push(Value::Sequence(Rc::new(RefCell::new(sequence))));
                 }
                 EncodedInstruction::SequenceLen => {
-                    let sequence = self.stack.pop().unwrap();
-                    let sequence = sequence.to_sequence()?;
+                    let sequence = self.pop_seq()?;
                     let len = sequence.borrow().items.len();
                     self.stack.push(Value::Atomic(Atomic::Integer(len as i64)));
                 }
                 EncodedInstruction::SequenceGet => {
-                    let sequence = self.stack.pop().unwrap();
-                    let index = self.stack.pop().unwrap();
-
-                    let sequence = sequence.to_sequence()?;
-                    let index = index.to_atomic(context)?;
-                    let index = index.to_integer()?;
+                    let sequence = self.pop_seq()?;
+                    let index = self.pop_atomic()?;
+                    let index: i64 = index.try_into()?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
                     self.stack.push(item.to_stack_value())
                 }
                 EncodedInstruction::SequencePush => {
-                    let sequence = self.stack.pop().unwrap();
+                    let sequence = self.pop_seq()?;
                     let stack_value = self.stack.pop().unwrap();
-
-                    let sequence = sequence.to_sequence()?;
                     sequence.borrow_mut().push_value(stack_value);
                 }
                 EncodedInstruction::IsNumeric => {
-                    let value = self.stack.pop().unwrap();
-                    // as_atomic may fail. This is fine, as the only
-                    // check later on in Filter is to check for effective
-                    // boolean value, which uses effectively the same check
-                    let value = value.to_atomic(context)?;
-                    let is_numeric = value.is_numeric();
+                    // This may fail. This is fine, as the only check later on
+                    // in Filter is to check for effective boolean value, which
+                    // uses effectively the same check
+                    let atomic = self.pop_atomic()?;
+                    let is_numeric = atomic.is_numeric();
                     self.stack.push(Value::Atomic(Atomic::Boolean(is_numeric)));
                 }
                 EncodedInstruction::PrintTop => {
@@ -564,6 +467,40 @@ impl<'a> Interpreter<'a> {
         self.stack
             .push(Value::Sequence(Rc::new(RefCell::new(sequence))));
         Ok(())
+    }
+
+    fn pop_atomic(&mut self) -> Result<Atomic, ValueError> {
+        let atomic = self.stack.pop().unwrap();
+        atomic.context_try_into(self.dynamic_context)
+    }
+
+    fn pop_atomic2(&mut self) -> Result<(Atomic, Atomic), ValueError> {
+        let b = self.pop_atomic()?;
+        let a = self.pop_atomic()?;
+        Ok((a, b))
+    }
+
+    fn pop_seq(&mut self) -> Result<Seq, ValueError> {
+        let sequence = self.stack.pop().unwrap();
+        sequence.try_into()
+    }
+
+    fn pop_seq2(&mut self) -> Result<(Seq, Seq), ValueError> {
+        let b = self.pop_seq()?;
+        let a = self.pop_seq()?;
+        Ok((a, b))
+    }
+
+    fn pop_atomized2(&mut self) -> Result<(Vec<Atomic>, Vec<Atomic>), ValueError> {
+        let (sequence_a, sequence_b) = self.pop_seq2()?;
+        let atomized_a = sequence_a.context_into(self.dynamic_context);
+        let atomized_b = sequence_b.context_into(self.dynamic_context);
+        Ok((atomized_a, atomized_b))
+    }
+
+    fn pop_effective_boolean(&mut self) -> Result<bool, ValueError> {
+        let a = self.stack.pop().unwrap();
+        a.effective_boolean_value()
     }
 
     fn err(&self, value_error: ValueError) -> Error {
