@@ -4,11 +4,10 @@ use std::rc::Rc;
 use crate::context::{ContextRule, StaticContext};
 use crate::data::{Atomic, Sequence, StaticFunctionId, Value};
 use crate::error::{Error, Result};
-use crate::interpreter::builder::{
-    BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition,
-};
-use crate::interpreter::instruction::Instruction;
 use crate::ir;
+
+use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
+use super::instruction::Instruction;
 
 pub(crate) type Scopes = crate::interpreter::scope::Scopes<ir::Name>;
 

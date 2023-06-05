@@ -1,6 +1,6 @@
 use blanket::blanket;
 
-use crate::ast;
+use super::ast_core as ast;
 
 #[blanket(default = "visit")]
 pub(crate) trait AstVisitor {

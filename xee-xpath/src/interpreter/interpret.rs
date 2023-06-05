@@ -10,12 +10,11 @@ use crate::data::{
     Sequence, StaticFunctionId, Step, Value, ValueError,
 };
 use crate::error::Error;
-use crate::interpreter::builder::Program;
-use crate::interpreter::instruction::{
-    read_i16, read_instruction, read_u16, read_u8, EncodedInstruction,
-};
 use crate::op;
 use crate::step::resolve_step;
+
+use super::builder::Program;
+use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
 const FRAMES_MAX: usize = 64;
 

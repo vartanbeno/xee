@@ -4,10 +4,11 @@ use std::fmt::{Debug, Formatter};
 use xot::Xot;
 
 use crate::ast;
-use crate::context::static_context::StaticContext;
 use crate::data::Value;
 use crate::document::Documents;
 use crate::error::Error;
+
+use super::static_context::StaticContext;
 
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,

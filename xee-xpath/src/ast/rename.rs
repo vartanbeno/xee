@@ -1,8 +1,9 @@
 use ahash::{HashSet, HashSetExt};
 
 use crate::ast;
-use crate::ast::visitor::AstVisitor;
 use crate::context::StaticContext;
+
+use super::visitor::AstVisitor;
 
 struct UniqueNameGenerator {
     names: HashSet<ast::Name>,

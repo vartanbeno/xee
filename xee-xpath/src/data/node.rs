@@ -1,9 +1,8 @@
 use std::rc::Rc;
 use std::vec;
-
 use xot::Xot;
 
-use crate::data::atomic::Atomic;
+use super::atomic::Atomic;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Node {

@@ -8,8 +8,9 @@ use crate::context::{Namespaces, StaticContext, FN_NAMESPACE};
 use crate::data::StaticFunctionId;
 use crate::data::Step;
 use crate::error::{Error, Result};
-use crate::ir;
 use crate::span::Spanned;
+
+use super::ir_core as ir;
 
 #[derive(Debug, Clone)]
 struct Binding {

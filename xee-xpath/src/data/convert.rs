@@ -1,12 +1,12 @@
+use ordered_float::OrderedFloat;
+use rust_decimal::Decimal;
 use std::convert::TryFrom;
 use std::rc::Rc;
 use std::vec::Vec;
 
-use ordered_float::OrderedFloat;
-use rust_decimal::Decimal;
+use crate::context::DynamicContext;
 
 use super::{Atomic, Closure, Node, Sequence, Step, Value, ValueError};
-use crate::context::DynamicContext;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

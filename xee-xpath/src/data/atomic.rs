@@ -4,7 +4,8 @@ use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::data::error::ValueError;
+
+use super::error::ValueError;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

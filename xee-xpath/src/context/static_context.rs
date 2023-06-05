@@ -2,11 +2,11 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 
 use crate::ast;
-use crate::context::dynamic_context::DynamicContext;
-use crate::context::namespaces::Namespaces;
-use crate::context::static_functions::static_function_descriptions;
-use crate::data::ValueError;
-use crate::data::{StaticFunctionId, Value};
+use crate::data::{StaticFunctionId, Value, ValueError};
+
+use super::dynamic_context::DynamicContext;
+use super::namespaces::Namespaces;
+use super::static_functions::static_function_descriptions;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum FunctionType {
