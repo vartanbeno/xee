@@ -2056,6 +2056,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xpath-ast"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.3",
+ "blanket",
+ "insta",
+ "miette",
+ "ordered-float",
+ "pest",
+ "pest_derive",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "thiserror",
+ "xot",
+]
+
+[[package]]
 name = "xee-xpath-macros"
 version = "0.1.0"
 dependencies = [

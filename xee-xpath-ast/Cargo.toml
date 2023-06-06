@@ -1,0 +1,28 @@
+[package]
+name = "xee-xpath-ast"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XPath AST implementation"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath"
+homepage = "https://github.com/Paligo/xee-xpath"
+
+[dependencies]
+ahash = "0.8.3"
+blanket = "0.2.0"
+miette = { workspace = true }
+ordered-float = "3.6.0"
+pest = "2.5.6"
+pest_derive = "2.5.6"
+rust_decimal = "1.29.1"
+thiserror = "1.0.40"
+xot = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
+xot = { workspace = true, features = ["proptest"] }
+rust_decimal_macros = "1.29.1"
