@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell};
 use std::rc::Rc;
 use std::vec;
 use xot::Xot;
@@ -34,12 +34,35 @@ impl Sequence {
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {
         Self::new(InnerSequence::from_vec(items))
     }
+    pub(crate) fn from_item(item: Item) -> Self {
+        Self::new(InnerSequence::from_item(item))
+    }
 
     pub fn borrow(&self) -> std::cell::Ref<InnerSequence> {
         self.0.borrow()
     }
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
+    }
+
+    pub(crate) fn to_one(&self) -> Result<Item> {
+        let s = self.0.borrow();
+        if s.len() == 1 {
+            Ok(s.items[0].clone())
+        } else {
+            Err(ValueError::Type)
+        }
+    }
+
+    pub(crate) fn to_option(&self) -> Result<Option<Item>> {
+        let s = self.0.borrow();
+        if s.len() == 1 {
+            Ok(Some(s.items[0].clone()))
+        } else if s.is_empty() {
+            Ok(None)
+        } else {
+            Err(ValueError::Type)
+        }
     }
 }
 
@@ -67,6 +90,10 @@ impl InnerSequence {
 
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {
         Self { items }
+    }
+
+    pub(crate) fn from_item(item: Item) -> Self {
+        Self { items: vec![item] }
     }
 
     pub(crate) fn from_atomic(atomic: Atomic) -> Self {

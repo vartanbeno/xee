@@ -6,7 +6,7 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::{Atomic, Closure, Node, Sequence, Step, Value, ValueError};
+use super::{Atomic, Closure, Item, Node, Sequence, Step, Value, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -69,6 +69,25 @@ impl ContextTryFrom<&Value> for Atomic {
     }
 }
 
+impl ContextTryFrom<&Value> for f64 {
+    fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
+        let atomic: Atomic = value.context_try_into(context)?;
+        atomic.try_into()
+    }
+}
+
+impl<T> ContextTryFrom<&Value> for Option<T>
+where
+    T: TryFrom<Item, Error = ValueError>,
+{
+    fn context_try_from(value: &Value, _context: &DynamicContext) -> Result<Self> {
+        match value.to_option()? {
+            Some(v) => Ok(Some(v.try_into()?)),
+            None => Ok(None),
+        }
+    }
+}
+
 impl<'a> TryFrom<&'a Value> for &'a Closure {
     type Error = ValueError;
 
@@ -111,6 +130,53 @@ impl TryFrom<&Value> for Node {
     }
 }
 
+// Conversions from Item
+
+impl TryFrom<Item> for Atomic {
+    type Error = ValueError;
+
+    fn try_from(item: Item) -> Result<Self> {
+        match item {
+            Item::Atomic(a) => Ok(a),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
+impl TryFrom<Item> for f64 {
+    type Error = ValueError;
+
+    fn try_from(item: Item) -> Result<Self> {
+        match item {
+            Item::Atomic(a) => a.try_into(),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
+// impl<T> ContextTryFrom<Option<Item>> for Option<T>
+// where
+//     T: TryFrom<T, Error = ValueError>,
+// {
+//     fn context_try_from(item: Option<Item>, context: &DynamicContext) -> Result<Option<T>> {
+//         match item {
+//             Some(i) => Ok(Some(i.try_into()?)),
+//             None => Ok(None),
+//         }
+//     }
+// }
+
+impl TryFrom<Item> for Node {
+    type Error = ValueError;
+
+    fn try_from(item: Item) -> Result<Self> {
+        match item {
+            Item::Node(n) => Ok(n),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
 // Conversions from Atomic
 
 impl TryFrom<Atomic> for i64 {
@@ -142,6 +208,14 @@ impl TryFrom<Atomic> for OrderedFloat<f64> {
 
     fn try_from(atomic: Atomic) -> Result<Self> {
         atomic.to_double()
+    }
+}
+
+impl TryFrom<Atomic> for f64 {
+    type Error = ValueError;
+
+    fn try_from(atomic: Atomic) -> Result<Self> {
+        atomic.to_double().map(|d| d.into())
     }
 }
 
@@ -193,5 +267,49 @@ impl TryFrom<&Value> for Sequence {
 impl ContextFrom<Sequence> for Vec<Atomic> {
     fn context_from(sequence: Sequence, context: &DynamicContext) -> Self {
         sequence.borrow().to_atoms(context.xot)
+    }
+}
+
+// Conversions from Rust values into Value
+
+impl From<String> for Value {
+    fn from(s: String) -> Value {
+        Value::Atomic(Atomic::String(Rc::new(s)))
+    }
+}
+
+impl From<f64> for Value {
+    fn from(f: f64) -> Value {
+        Value::Atomic(Atomic::Double(OrderedFloat(f)))
+    }
+}
+
+impl<T> From<Option<T>> for Value
+where
+    T: Into<Value>,
+{
+    fn from(o: Option<T>) -> Value {
+        match o {
+            Some(v) => v.into(),
+            None => Value::Atomic(Atomic::Empty),
+        }
+    }
+}
+
+// impl<T> From<Option<T>> for Value
+// where
+//     T: Into<Item>,
+// {
+//     fn from(o: Option<T>) -> Value {
+//         match o {
+//             Some(v) => Value::from_item(v.into()),
+//             None => Value::Atomic(Atomic::Empty),
+//         }
+//     }
+// }
+
+impl From<Item> for Value {
+    fn from(item: Item) -> Value {
+        Value::from_item(item)
     }
 }

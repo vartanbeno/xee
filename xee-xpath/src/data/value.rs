@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use std::cell::Ref;
 use std::rc::Rc;
 use xot::Xot;
 
@@ -6,7 +8,7 @@ use super::error::ValueError;
 use super::function::{Closure, Step};
 use super::item::Item;
 use super::node::Node;
-use super::sequence::Sequence;
+use super::sequence::{InnerSequence, Sequence};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -30,6 +32,33 @@ impl Value {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),
             Item::Function(f) => Value::Closure(f),
+        }
+    }
+
+    pub(crate) fn to_one(&self) -> Result<Item> {
+        match self {
+            Value::Atomic(a) => Ok(Item::Atomic(a.clone())),
+            Value::Sequence(s) => s.to_one(),
+            Value::Node(n) => Ok(Item::Node(*n)),
+            _ => Err(ValueError::Type),
+        }
+    }
+
+    pub(crate) fn to_option(&self) -> Result<Option<Item>> {
+        match self {
+            Value::Atomic(a) => Ok(Some(Item::Atomic(a.clone()))),
+            Value::Sequence(s) => s.to_option(),
+            Value::Node(n) => Ok(Some(Item::Node(*n))),
+            _ => Err(ValueError::Type),
+        }
+    }
+
+    pub(crate) fn to_many(&self) -> Result<Sequence> {
+        match self {
+            Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
+            Value::Sequence(s) => Ok(s.clone()),
+            Value::Node(n) => Ok(Sequence::from_node(*n)),
+            _ => Err(ValueError::Type),
         }
     }
 

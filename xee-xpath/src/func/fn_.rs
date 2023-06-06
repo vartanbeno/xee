@@ -37,11 +37,6 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
     Ok(arguments[0].clone())
 }
 
-// #[xpath_fn]
-// fn local_name(context: &DynamicContext, a: Node) -> String {
-//     a.local_name(context.xot)
-// }
-
 fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a: Node = (&arguments[0]).try_into()?;
     Ok(Value::Atomic(Atomic::String(Rc::new(
@@ -149,6 +144,27 @@ fn true_(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, Value
 fn false_(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, ValueError> {
     Ok(Value::Atomic(Atomic::Boolean(false)))
 }
+
+// Experimental exploration of wrapping with converters
+// fn wrap_math_exp(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+//     let a = &arguments[0];
+//     let a = a.context_try_into(context)?;
+//     Ok(real_math_exp(a).into())
+// }
+
+// fn real_math_exp(d: Option<f64>) -> Option<f64> {
+//     d.map(|d| d.exp())
+// }
+
+// fn wrap_local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+//     let a = (&arguments[0]).try_into()?;
+//     Ok(real_local_name(context, a).into())
+// }
+
+// // #[xpath_fn]
+// fn real_local_name(context: &DynamicContext, a: Node) -> String {
+//     a.local_name(context.xot)
+// }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
