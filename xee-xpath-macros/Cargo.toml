@@ -1,0 +1,20 @@
+[package]
+name = "xee-xpath-macros"
+version = "0.1.0"
+description = "Proc macros for xee-xpath package"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+edition = "2021"
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath"
+homepage = "https://github.com/Paligo/xee-xpath"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { version = "1", default-features = false }
+quote = "1"
+syn = { version = "2", features = ["full", "extra-traits"] }

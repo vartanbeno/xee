@@ -1,5 +1,26 @@
 // use ahash::AHashMap as HashMap;
 
+// use crate::ast::SequenceType;
+// use crate::context::DynamicContext;
+// use crate::data::{Atomic, ContextTryInto, Value, ValueError};
+
+// impl SequenceType {
+//     fn convert<T>(&self, value: Value, context: &DynamicContext) -> Result<T, ValueError>
+//     where
+//         T: std::convert::TryFrom<Atomic, Error = ValueError>,
+//     {
+//         let atomic: Atomic = value.context_try_into(context)?;
+//         atomic.try_into()
+//     }
+// }
+
+// fn foo(a: i64) {}
+
+// fn bar() {
+//     let value = Value::Atomic(Atomic::Integer(1));
+//     // let context = DynamicContext::new();
+//     foo(sequence_type.convert(value, &context)?)
+// }
 // #[xpath_fn("foo($a as xs:integer, $b as xs:string) as xs:string")]
 // fn foo(a: i64, s: &str) -> String {}
 

@@ -2056,6 +2056,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xpath-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2 1.0.59",
+ "quote 1.0.28",
+ "syn 2.0.18",
+]
+
+[[package]]
 name = "xmlparser"
 version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
