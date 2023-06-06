@@ -5,9 +5,10 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use std::rc::Rc;
 
+pub use xee_xpath_ast::ast::BinaryOperator;
+use xee_xpath_ast::span::Spanned;
+
 use crate::data::{StaticFunctionId, Step};
-pub(crate) use crate::operator::BinaryOperator;
-use crate::span::Spanned;
 
 pub(crate) type AtomS = Spanned<Atom>;
 pub(crate) type ExprS = Spanned<Expr>;

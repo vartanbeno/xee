@@ -634,6 +634,14 @@ pub enum Error {
     TypeError,
 }
 
+impl From<xee_xpath_ast::Error> for Error {
+    fn from(e: xee_xpath_ast::Error) -> Self {
+        match e {
+            xee_xpath_ast::Error::ParseError { src, span } => Error::XPST0003 { src, span },
+        }
+    }
+}
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Error {

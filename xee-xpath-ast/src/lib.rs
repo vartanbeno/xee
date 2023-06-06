@@ -4,9 +4,12 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-mod ast;
+pub mod ast;
 mod error;
 mod namespaces;
 mod operator;
 mod parser;
-mod span;
+pub mod span;
+
+pub use error::Error;
+pub use namespaces::{Namespaces, FN_NAMESPACE, XS_NAMESPACE};

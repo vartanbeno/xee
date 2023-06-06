@@ -1240,13 +1240,13 @@ where
     Ok(f(pair))
 }
 
-pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingleS {
+pub fn parse_expr_single(input: &str) -> ast::ExprSingleS {
     let namespaces = Namespaces::new(None, None);
     let ast_parser = AstParser::new(&namespaces);
     parse_rule_start_end(Rule::OuterExprSingle, input, |p| ast_parser.expr_single(p)).unwrap()
 }
 
-pub(crate) fn parse_xpath(
+pub fn parse_xpath(
     input: &str,
     namespaces: &Namespaces,
     variables: &[ast::Name],

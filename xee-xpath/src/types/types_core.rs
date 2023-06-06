@@ -1,6 +1,6 @@
 use crate::Name;
 
-use crate::ast::{ArrayTest, FunctionTest, KindTest, MapTest};
+use xee_xpath_ast::ast::{ArrayTest, FunctionTest, KindTest, MapTest};
 
 // #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 // pub(crate) enum SequenceType {

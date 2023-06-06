@@ -1,6 +1,7 @@
 use xot::{ValueType, Xot};
 
-use crate::ast;
+use xee_xpath_ast::ast;
+
 use crate::data::{InnerSequence, Item, Node, Sequence, Step};
 
 pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> Sequence {

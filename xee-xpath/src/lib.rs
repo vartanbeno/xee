@@ -8,7 +8,6 @@ extern crate num;
 extern crate num_derive;
 
 mod annotation;
-mod ast;
 mod comparison;
 mod context;
 mod data;
@@ -18,8 +17,6 @@ mod func;
 mod interpreter;
 mod ir;
 mod op;
-mod operator;
-mod parser;
 mod query;
 mod run;
 mod span;
@@ -27,8 +24,10 @@ mod step;
 mod types;
 mod xpath;
 
-pub use crate::ast::Name;
-pub use crate::context::{DynamicContext, Namespaces, StaticContext};
+pub use xee_xpath_ast::ast::Name;
+pub use xee_xpath_ast::Namespaces;
+
+pub use crate::context::{DynamicContext, StaticContext};
 pub use crate::data::{Atomic, InnerSequence, Item, Node, Sequence, Value, ValueError};
 pub use crate::error::Error;
 pub use crate::query::{

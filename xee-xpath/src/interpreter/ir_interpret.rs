@@ -530,8 +530,9 @@ mod tests {
     use std::rc::Rc;
     use xot::Xot;
 
-    use crate::ast;
-    use crate::context::{DynamicContext, Namespaces, StaticContext};
+    use xee_xpath_ast::{ast, Namespaces};
+
+    use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
     use crate::run::evaluate;
     use crate::xpath::XPath;

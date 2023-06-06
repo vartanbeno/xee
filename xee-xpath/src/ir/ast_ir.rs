@@ -3,12 +3,12 @@ use std::rc::Rc;
 use ahash::{HashMap, HashMapExt};
 use miette::SourceSpan;
 
-use crate::ast;
-use crate::context::{Namespaces, StaticContext, FN_NAMESPACE};
+use xee_xpath_ast::{ast, span::Spanned, Namespaces, FN_NAMESPACE};
+
+use crate::context::StaticContext;
 use crate::data::StaticFunctionId;
 use crate::data::Step;
 use crate::error::{Error, Result};
-use crate::span::Spanned;
 
 use super::ir_core as ir;
 
@@ -678,7 +678,7 @@ impl<'a> IrConverter<'a> {
 }
 
 fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
-    let ast = crate::ast::parse_expr_single(s);
+    let ast = xee_xpath_ast::ast::parse_expr_single(s);
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
@@ -687,7 +687,7 @@ fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
 
 pub(crate) fn convert_xpath(s: &str) -> Result<ir::ExprS> {
     let namespaces = Namespaces::new(None, None);
-    let ast = crate::ast::parse_xpath(s, &namespaces, &[])?;
+    let ast = xee_xpath_ast::ast::parse_xpath(s, &namespaces, &[])?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)

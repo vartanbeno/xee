@@ -28,6 +28,7 @@ rust_decimal = "1.29.1"
 syn = { version = "2.0.18", features = ["full"] }
 thiserror = "1.0.40"
 xot = { workspace = true }
+xee-xpath-ast = { path = "../xee-xpath-ast"}
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

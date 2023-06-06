@@ -535,9 +535,10 @@ impl<'a> Interpreter<'a> {
 mod tests {
     use super::*;
 
+    use xee_xpath_ast::Namespaces;
     use xot::Xot;
 
-    use crate::context::{Namespaces, StaticContext};
+    use crate::context::StaticContext;
     use crate::interpreter::builder::{FunctionBuilder, JumpCondition};
     use crate::interpreter::instruction::{decode_instructions, Instruction};
 

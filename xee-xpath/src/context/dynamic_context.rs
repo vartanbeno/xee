@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use xot::Xot;
 
-use crate::ast;
+use xee_xpath_ast::ast;
+
 use crate::data::Value;
 use crate::document::Documents;
 use crate::error::Error;

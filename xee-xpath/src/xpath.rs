@@ -1,4 +1,5 @@
-use crate::ast::parse_xpath;
+use xee_xpath_ast::ast::parse_xpath;
+
 use crate::context::{DynamicContext, StaticContext};
 use crate::data::{Atomic, FunctionId, Item, Node, Value};
 use crate::error::{Error, Result};
@@ -139,8 +140,10 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
 mod tests {
     use xot::Xot;
 
+    use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
+
     use crate::{
-        context::{Namespaces, StaticContext, FN_NAMESPACE},
+        context::StaticContext,
         document::{Documents, Uri},
     };
 

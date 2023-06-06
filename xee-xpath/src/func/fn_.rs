@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
+use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
+
 use crate::context::{FunctionType, StaticFunctionDescription};
-use crate::context::{FN_NAMESPACE, XS_NAMESPACE};
 use crate::{
-    ast,
     data::{ContextTryInto, Sequence, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };

@@ -1,17 +1,17 @@
 use miette::SourceSpan;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Spanned<T> {
-    pub(crate) value: T,
-    pub(crate) span: SourceSpan,
+pub struct Spanned<T> {
+    pub value: T,
+    pub span: SourceSpan,
 }
 
 impl<T> Spanned<T> {
-    pub(crate) fn new(value: T, span: SourceSpan) -> Self {
+    pub fn new(value: T, span: SourceSpan) -> Self {
         Self { value, span }
     }
 
-    pub(crate) fn map(&self, f: impl FnOnce(&T) -> T) -> Self {
+    pub fn map(&self, f: impl FnOnce(&T) -> T) -> Self {
         Self {
             value: f(&self.value),
             span: self.span,
@@ -19,9 +19,7 @@ impl<T> Spanned<T> {
     }
 }
 
-// pub(crate) type Spanned<T> = (T, SourceSpan);
-
-pub(crate) fn not_spanned<T>(value: T) -> Spanned<T> {
+pub fn not_spanned<T>(value: T) -> Spanned<T> {
     Spanned {
         value,
         span: (0, 0).into(),

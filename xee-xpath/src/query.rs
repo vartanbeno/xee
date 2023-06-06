@@ -316,7 +316,8 @@ mod tests {
 
     use super::*;
 
-    use crate::context::Namespaces;
+    use xee_xpath_ast::Namespaces;
+
     use crate::data::{Atomic, Node};
 
     #[test]

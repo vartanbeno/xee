@@ -1,6 +1,8 @@
 use xot::Xot;
 
-use crate::context::{DynamicContext, Namespaces, StaticContext, FN_NAMESPACE};
+use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
+
+use crate::context::{DynamicContext, StaticContext};
 use crate::data::Value;
 use crate::document::{Documents, Uri};
 use crate::error::Result;

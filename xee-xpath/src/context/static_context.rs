@@ -1,12 +1,12 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 
-use crate::ast;
-use crate::data::{StaticFunctionId, Value, ValueError};
+use xee_xpath_ast::ast;
+use xee_xpath_ast::Namespaces;
 
 use super::dynamic_context::DynamicContext;
-use super::namespaces::Namespaces;
 
+use crate::data::{StaticFunctionId, Value, ValueError};
 use crate::func::static_function_descriptions;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

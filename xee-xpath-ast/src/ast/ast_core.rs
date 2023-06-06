@@ -2,24 +2,24 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use xot::Xot;
 
-pub(crate) use crate::operator::BinaryOperator;
+pub use crate::operator::BinaryOperator;
 use crate::span::Spanned;
 
-pub(crate) type ExprSingleS = Spanned<ExprSingle>;
-pub(crate) type PrimaryExprS = Spanned<PrimaryExpr>;
-pub(crate) type StepExprS = Spanned<StepExpr>;
+pub type ExprSingleS = Spanned<ExprSingle>;
+pub type PrimaryExprS = Spanned<PrimaryExpr>;
+pub type StepExprS = Spanned<StepExpr>;
 
-pub(crate) type Expr = Vec<ExprSingleS>;
-pub(crate) type ExprS = Spanned<Expr>;
+pub type Expr = Vec<ExprSingleS>;
+pub type ExprS = Spanned<Expr>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct XPath {
+pub struct XPath {
     // at least one entry
-    pub(crate) exprs: ExprS,
+    pub exprs: ExprS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ExprSingle {
+pub enum ExprSingle {
     // a path expression
     Path(PathExpr),
     // something applied to a path expression
@@ -33,18 +33,18 @@ pub(crate) enum ExprSingle {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ForExpr {
-    pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingleS>,
-    pub(crate) return_expr: Box<ExprSingleS>,
+pub struct ForExpr {
+    pub var_name: Name,
+    pub var_expr: Box<ExprSingleS>,
+    pub return_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct QuantifiedExpr {
-    pub(crate) quantifier: Quantifier,
-    pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingleS>,
-    pub(crate) satisfies_expr: Box<ExprSingleS>,
+pub struct QuantifiedExpr {
+    pub quantifier: Quantifier,
+    pub var_name: Name,
+    pub var_expr: Box<ExprSingleS>,
+    pub satisfies_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -65,7 +65,7 @@ impl Name {
         }
     }
 
-    pub(crate) fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
+    pub fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         if let Some(namespace) = &self.namespace {
             let namespace_id = xot.namespace(namespace);
             if let Some(namespace_id) = namespace_id {
@@ -78,7 +78,7 @@ impl Name {
         }
     }
 
-    pub(crate) fn with_suffix(&self) -> Name {
+    pub fn with_suffix(&self) -> Name {
         let mut name = self.name.clone();
         name.push('*');
         Name {
@@ -89,27 +89,27 @@ impl Name {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct LetExpr {
-    pub(crate) var_name: Name,
-    pub(crate) var_expr: Box<ExprSingleS>,
-    pub(crate) return_expr: Box<ExprSingleS>,
+pub struct LetExpr {
+    pub var_name: Name,
+    pub var_expr: Box<ExprSingleS>,
+    pub return_expr: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct IfExpr {
-    pub(crate) condition: ExprS,
-    pub(crate) then: Box<ExprSingleS>,
-    pub(crate) else_: Box<ExprSingleS>,
+pub struct IfExpr {
+    pub condition: ExprS,
+    pub then: Box<ExprSingleS>,
+    pub else_: Box<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Quantifier {
+pub enum Quantifier {
     Some,
     Every,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum PrimaryExpr {
+pub enum PrimaryExpr {
     Literal(Literal),
     VarRef(Name),
     Expr(ExprS),
@@ -123,27 +123,27 @@ pub(crate) enum PrimaryExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum UnaryLookup {
+pub enum UnaryLookup {
     Name(String),
     IntegerLiteral(i64),
     Expr(ExprS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct BinaryExpr {
-    pub(crate) operator: BinaryOperator,
-    pub(crate) left: PathExpr,
-    pub(crate) right: PathExpr,
+pub struct BinaryExpr {
+    pub operator: BinaryOperator,
+    pub left: PathExpr,
+    pub right: PathExpr,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ApplyExpr {
-    pub(crate) path_expr: PathExpr,
-    pub(crate) operator: ApplyOperator,
+pub struct ApplyExpr {
+    pub path_expr: PathExpr,
+    pub operator: ApplyOperator,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ApplyOperator {
+pub enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
     Arrow(Vec<(ArrowFunctionSpecifier, Vec<ExprSingleS>)>),
@@ -154,42 +154,42 @@ pub(crate) enum ApplyOperator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum UnaryOperator {
+pub enum UnaryOperator {
     Plus,
     Minus,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SingleType {
-    pub(crate) name: EQName,
-    pub(crate) question_mark: bool,
+pub struct SingleType {
+    pub name: EQName,
+    pub question_mark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ArrowFunctionSpecifier {
+pub enum ArrowFunctionSpecifier {
     Name(EQName),
     VarRef(EQName),
     Expr(ExprS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct MapConstructor {
-    pub(crate) entries: Vec<MapConstructorEntry>,
+pub struct MapConstructor {
+    pub entries: Vec<MapConstructorEntry>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct MapConstructorEntry {
-    pub(crate) key: ExprSingleS,
-    pub(crate) value: ExprSingleS,
+pub struct MapConstructorEntry {
+    pub key: ExprSingleS,
+    pub value: ExprSingleS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ArrayConstructor {
-    pub(crate) members: Vec<ExprSingleS>,
+pub struct ArrayConstructor {
+    pub members: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Literal {
+pub enum Literal {
     Decimal(Decimal),
     Integer(String),
     Double(OrderedFloat<f64>),
@@ -197,47 +197,47 @@ pub(crate) enum Literal {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct FunctionCall {
-    pub(crate) name: Name,
-    pub(crate) arguments: Vec<ExprSingleS>,
+pub struct FunctionCall {
+    pub name: Name,
+    pub arguments: Vec<ExprSingleS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct NamedFunctionRef {
-    pub(crate) name: Name,
-    pub(crate) arity: u8,
+pub struct NamedFunctionRef {
+    pub name: Name,
+    pub arity: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct InlineFunction {
-    pub(crate) params: Vec<Param>,
-    pub(crate) return_type: Option<SequenceType>,
-    pub(crate) body: ExprS,
+pub struct InlineFunction {
+    pub params: Vec<Param>,
+    pub return_type: Option<SequenceType>,
+    pub body: ExprS,
 }
 
 // a function signature as described by:
 // https://www.w3.org/TR/xpath-functions-31/#func-signatures
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Signature {
-    pub(crate) name: Name,
-    pub(crate) params: Vec<SignatureParam>,
-    pub(crate) return_type: SequenceType,
+pub struct Signature {
+    pub name: Name,
+    pub params: Vec<SignatureParam>,
+    pub return_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Param {
-    pub(crate) name: Name,
-    pub(crate) type_: Option<SequenceType>,
+pub struct Param {
+    pub name: Name,
+    pub type_: Option<SequenceType>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SignatureParam {
-    pub(crate) name: Name,
-    pub(crate) type_: SequenceType,
+pub struct SignatureParam {
+    pub name: Name,
+    pub type_: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Postfix {
+pub enum Postfix {
     // vec contains at least 1 element
     Predicate(ExprS),
     ArgumentList(Vec<ExprSingleS>),
@@ -245,7 +245,7 @@ pub(crate) enum Postfix {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Lookup {
+pub enum Lookup {
     Name(String),
     IntegerLiteral(i64),
     Expr(Vec<ExprSingleS>),
@@ -253,12 +253,12 @@ pub(crate) enum Lookup {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct PathExpr {
-    pub(crate) steps: Vec<StepExprS>,
+pub struct PathExpr {
+    pub steps: Vec<StepExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum StepExpr {
+pub enum StepExpr {
     PrimaryExpr(PrimaryExprS),
     PostfixExpr {
         primary: PrimaryExprS,
@@ -268,14 +268,14 @@ pub(crate) enum StepExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct AxisStep {
-    pub(crate) axis: Axis,
-    pub(crate) node_test: NodeTest,
-    pub(crate) predicates: Vec<ExprS>,
+pub struct AxisStep {
+    pub axis: Axis,
+    pub node_test: NodeTest,
+    pub predicates: Vec<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Axis {
+pub enum Axis {
     Ancestor,
     AncestorOrSelf,
     Attribute,
@@ -292,13 +292,13 @@ pub(crate) enum Axis {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum NodeTest {
+pub enum NodeTest {
     KindTest(KindTest),
     NameTest(NameTest),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum NameTest {
+pub enum NameTest {
     Name(Name),
     Star,
     LocalName(String),
@@ -306,49 +306,49 @@ pub(crate) enum NameTest {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum EQName {
+pub enum EQName {
     QName(QName),
     URIQualifiedName(URIQualifiedName),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum QName {
+pub enum QName {
     PrefixedName(PrefixedName),
     UnprefixedName(UnprefixedName),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct PrefixedName {
-    pub(crate) prefix: String,
-    pub(crate) local_part: String,
+pub struct PrefixedName {
+    pub prefix: String,
+    pub local_part: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct UnprefixedName {
-    pub(crate) local_part: String,
+pub struct UnprefixedName {
+    pub local_part: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct URIQualifiedName {
-    pub(crate) uri: String,
-    pub(crate) local_part: String,
+pub struct URIQualifiedName {
+    pub uri: String,
+    pub local_part: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum SequenceType {
+pub enum SequenceType {
     Empty,
     Item(Item),
     Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Item {
-    pub(crate) item_type: ItemType,
-    pub(crate) occurrence: Occurrence,
+pub struct Item {
+    pub item_type: ItemType,
+    pub occurrence: Occurrence,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ItemType {
+pub enum ItemType {
     Item,
     AtomicOrUnionType(Name),
     KindTest(KindTest),
@@ -358,7 +358,7 @@ pub(crate) enum ItemType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Occurrence {
+pub enum Occurrence {
     One,
     Option,
     Many,
@@ -366,7 +366,7 @@ pub(crate) enum Occurrence {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum KindTest {
+pub enum KindTest {
     Document(Option<DocumentTest>),
     Element(Option<ElementTest>),
     Attribute(Option<AttributeTest>),
@@ -380,89 +380,89 @@ pub(crate) enum KindTest {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum DocumentTest {
+pub enum DocumentTest {
     Element(ElementTest),
     SchemaElement(SchemaElementTest),
     AnyKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ElementTest {
-    pub(crate) name_test: ElementNameOrWildcard,
-    pub(crate) type_name: Option<ElementTypeName>,
+pub struct ElementTest {
+    pub name_test: ElementNameOrWildcard,
+    pub type_name: Option<ElementTypeName>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct ElementTypeName {
-    pub(crate) name: Name,
-    pub(crate) question_mark: bool,
+pub struct ElementTypeName {
+    pub name: Name,
+    pub question_mark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ElementNameOrWildcard {
+pub enum ElementNameOrWildcard {
     Name(Name),
     Wildcard,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct AttributeTest {
-    pub(crate) name_test: AttribNameOrWildcard,
-    pub(crate) type_name: Option<Name>,
+pub struct AttributeTest {
+    pub name_test: AttribNameOrWildcard,
+    pub type_name: Option<Name>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum AttribNameOrWildcard {
+pub enum AttribNameOrWildcard {
     Name(Name),
     Wildcard,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SchemaElementTest {
-    pub(crate) name: Name,
+pub struct SchemaElementTest {
+    pub name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SchemaAttributeTest {
-    pub(crate) name: Name,
+pub struct SchemaAttributeTest {
+    pub name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum FunctionTest {
+pub enum FunctionTest {
     AnyFunctionTest,
     TypedFunctionTest(TypedFunctionTest),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TypedFunctionTest {
+pub struct TypedFunctionTest {
     parameter_types: Vec<SequenceType>,
     return_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum MapTest {
+pub enum MapTest {
     AnyMapTest,
     TypedMapTest(TypedMapTest),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TypedMapTest {
-    pub(crate) key_type: Name,
-    pub(crate) value_type: SequenceType,
+pub struct TypedMapTest {
+    pub key_type: Name,
+    pub value_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum ArrayTest {
+pub enum ArrayTest {
     AnyArrayTest,
     TypedArrayTest(TypedArrayTest),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct TypedArrayTest {
-    pub(crate) item_type: SequenceType,
+pub struct TypedArrayTest {
+    pub item_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum PITest {
+pub enum PITest {
     Name(String),
     StringLiteral(String),
 }

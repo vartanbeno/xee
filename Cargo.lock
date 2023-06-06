@@ -2052,6 +2052,7 @@ dependencies = [
  "syn 2.0.18",
  "test-generator",
  "thiserror",
+ "xee-xpath-ast",
  "xot",
 ]
 
