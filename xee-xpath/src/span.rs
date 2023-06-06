@@ -33,7 +33,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     use crate::ast::parse_xpath;
-    use crate::context::{Namespaces, StaticContext};
+    use crate::context::Namespaces;
     use crate::ir::convert_xpath;
 
     #[test]
@@ -44,8 +44,7 @@ mod tests {
         //  So from 0, 9 is expected
         // let's examine the AST
         let namespaces = Namespaces::new(None, None);
-        let static_context = StaticContext::new(&namespaces);
-        assert_debug_snapshot!(parse_xpath(expr, &static_context));
+        assert_debug_snapshot!(parse_xpath(expr, &namespaces, &[]));
     }
 
     #[test]

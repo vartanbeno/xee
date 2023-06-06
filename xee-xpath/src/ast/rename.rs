@@ -1,7 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 
 use crate::ast;
-use crate::context::StaticContext;
 
 use super::visitor::AstVisitor;
 
@@ -120,12 +119,12 @@ impl AstVisitor for Renamer {
     }
 }
 
-pub(crate) fn unique_names(expr: &mut ast::XPath, static_context: &StaticContext) {
+pub(crate) fn unique_names(expr: &mut ast::XPath, variables: &[ast::Name]) {
     let mut renamer = Renamer::new();
     // ensure we know of the outer variable names too;
     // these are never going to be changed as there isn't
     // any other shadowing yet at this point
-    for name in &static_context.variables {
+    for name in variables {
         renamer.push_name(name);
     }
     renamer.visit_xpath(expr);

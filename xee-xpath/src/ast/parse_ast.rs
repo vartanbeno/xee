@@ -1248,15 +1248,16 @@ pub(crate) fn parse_expr_single(input: &str) -> ast::ExprSingleS {
 
 pub(crate) fn parse_xpath(
     input: &str,
-    static_context: &StaticContext,
+    namespaces: &Namespaces,
+    variables: &[ast::Name],
 ) -> Result<ast::XPath, Error> {
-    let ast_parser = AstParser::new(static_context.namespaces);
+    let ast_parser = AstParser::new(namespaces);
     let result = parse_rule_start_end(Rule::Xpath, input, |p| ast_parser.xpath(p));
 
     match result {
         Ok(mut xpath) => {
             // rename all variables to unique names
-            unique_names(&mut xpath, static_context);
+            unique_names(&mut xpath, variables);
             Ok(xpath)
         }
         Err(e) => {
@@ -1273,15 +1274,14 @@ pub(crate) fn parse_xpath(
 
 fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
     let namespaces = Namespaces::new(None, None);
-    let static_context = StaticContext::new(&namespaces);
-    parse_xpath(input, &static_context)
+    parse_xpath(input, &namespaces, &[])
 }
 
 pub(crate) fn parse_signature(
     input: &str,
-    static_context: &StaticContext,
+    namespaces: &Namespaces,
 ) -> Result<ast::Signature, Error> {
-    let ast_parser = AstParser::new(static_context.namespaces);
+    let ast_parser = AstParser::new(namespaces);
     let result = parse_rule_start_end(Rule::OuterSignature, input, |p| ast_parser.signature(p));
 
     match result {
@@ -1752,24 +1752,21 @@ mod tests {
     #[test]
     fn test_signature_without_params() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        let static_context = StaticContext::new(&namespaces);
-        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer", &static_context));
+        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer", &namespaces));
     }
 
     #[test]
     fn test_signature_without_params2() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        let static_context = StaticContext::new(&namespaces);
-        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer*", &static_context));
+        assert_debug_snapshot!(parse_signature("fn:foo() as xs:integer*", &namespaces));
     }
 
     #[test]
     fn test_signature_with_params() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        let static_context = StaticContext::new(&namespaces);
         assert_debug_snapshot!(parse_signature(
             "fn:foo($a as xs:decimal*) as xs:integer",
-            &static_context
+            &namespaces
         ));
     }
 }
