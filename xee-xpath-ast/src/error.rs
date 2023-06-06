@@ -16,5 +16,3 @@ pub enum Error {
         span: SourceSpan,
     },
 }
-
-pub type Result<T> = std::result::Result<T, Error>;

@@ -32,18 +32,18 @@ impl<'a> AstParser<'a> {
         AstParser { namespaces }
     }
 
-    fn struct_wrap<T, W>(&self, pair: Pair<Rule>, outer_rule: Rule, inner_rule: Rule, wrap: W) -> T
-    where
-        W: Fn(Pair<Rule>) -> T,
-    {
-        debug_assert_eq!(pair.as_rule(), outer_rule);
-        let pair = pair.into_inner().next().unwrap();
-        if pair.as_rule() == inner_rule {
-            wrap(pair)
-        } else {
-            panic!("unhandled {:?}", pair.as_rule())
-        }
-    }
+    // fn struct_wrap<T, W>(&self, pair: Pair<Rule>, outer_rule: Rule, inner_rule: Rule, wrap: W) -> T
+    // where
+    //     W: Fn(Pair<Rule>) -> T,
+    // {
+    //     debug_assert_eq!(pair.as_rule(), outer_rule);
+    //     let pair = pair.into_inner().next().unwrap();
+    //     if pair.as_rule() == inner_rule {
+    //         wrap(pair)
+    //     } else {
+    //         panic!("unhandled {:?}", pair.as_rule())
+    //     }
+    // }
 
     fn pair_to_path_expr(&self, pair: Pair<Rule>) -> ast::PathExpr {
         let expr_single = self.expr_single(pair);
@@ -1220,15 +1220,6 @@ fn root_from_context(span: &pest::Span) -> ast::StepExprS {
     )
 }
 
-fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
-where
-    F: Fn(Pair<Rule>) -> T,
-{
-    let mut pairs = XPathParser::parse(rule, input).unwrap();
-    let pair = pairs.next().unwrap();
-    f(pair)
-}
-
 #[allow(clippy::result_large_err)]
 fn parse_rule_start_end<T, F>(rule: Rule, input: &str, f: F) -> Result<T, pest::error::Error<Rule>>
 where
@@ -1272,15 +1263,7 @@ pub fn parse_xpath(
     }
 }
 
-fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
-    let namespaces = Namespaces::new(None, None);
-    parse_xpath(input, &namespaces, &[])
-}
-
-pub(crate) fn parse_signature(
-    input: &str,
-    namespaces: &Namespaces,
-) -> Result<ast::Signature, Error> {
+pub fn parse_signature(input: &str, namespaces: &Namespaces) -> Result<ast::Signature, Error> {
     let ast_parser = AstParser::new(namespaces);
     let result = parse_rule_start_end(Rule::OuterSignature, input, |p| ast_parser.signature(p));
 
@@ -1306,6 +1289,20 @@ pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
 mod tests {
     use super::*;
     use insta::assert_debug_snapshot;
+
+    fn parse_rule<T, F>(rule: Rule, input: &str, f: F) -> T
+    where
+        F: Fn(Pair<Rule>) -> T,
+    {
+        let mut pairs = XPathParser::parse(rule, input).unwrap();
+        let pair = pairs.next().unwrap();
+        f(pair)
+    }
+
+    fn parse_xpath_no_default_ns(input: &str) -> Result<ast::XPath, Error> {
+        let namespaces = Namespaces::new(None, None);
+        parse_xpath(input, &namespaces, &[])
+    }
 
     fn parse_literal(input: &str) -> ast::Literal {
         let namespaces = Namespaces::new(None, None);

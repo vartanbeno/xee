@@ -5,30 +5,26 @@
 // XXX reserved function names still need to be handled:
 // https://www.w3.org/TR/xpath-31/#id-reserved-fn-names
 
-use pest::iterators::Pairs;
-use pest::Parser;
-
 #[derive(Parser)]
 #[grammar = "parser/xpath-31.pest"]
 pub(crate) struct XPathParser;
 
-#[allow(clippy::result_large_err)]
-pub(crate) fn parse(xpath: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
-    XPathParser::parse(Rule::Xpath, xpath)
-}
-
-// parse function signature as described in
-// https://www.w3.org/TR/xpath-functions-31/#func-signatures
-// This is almost the same as an inline function definition except
-// for the name part.
-#[allow(clippy::result_large_err)]
-pub(crate) fn parse_signature(signature: &str) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
-    XPathParser::parse(Rule::Signature, signature)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pest::iterators::Pairs;
+    use pest::Parser;
+
+    // parse function signature as described in
+    // https://www.w3.org/TR/xpath-functions-31/#func-signatures
+    // This is almost the same as an inline function definition except
+    // for the name part.
+    #[allow(clippy::result_large_err)]
+    pub(crate) fn parse_signature(
+        signature: &str,
+    ) -> Result<Pairs<Rule>, pest::error::Error<Rule>> {
+        XPathParser::parse(Rule::Signature, signature)
+    }
 
     #[test]
     fn test_char() {
