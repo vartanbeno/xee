@@ -1,13 +1,12 @@
 use std::rc::Rc;
 
+use crate::context::{FunctionType, StaticFunctionDescription};
+use crate::context::{FN_NAMESPACE, XS_NAMESPACE};
 use crate::{
     ast,
     data::{ContextTryInto, Sequence, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };
-
-use super::namespaces::{FN_NAMESPACE, XS_NAMESPACE};
-use super::static_context::{FunctionType, StaticFunctionDescription};
 
 fn my_function(a: i64, b: i64) -> i64 {
     a + b

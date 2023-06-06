@@ -14,6 +14,7 @@ mod context;
 mod data;
 mod document;
 mod error;
+mod func;
 mod interpreter;
 mod ir;
 mod op;
