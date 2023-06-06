@@ -130,6 +130,18 @@ impl TryFrom<&Value> for Node {
     }
 }
 
+// impl TryFrom<&Value> for Item {
+//     type Error = ValueError;
+
+//     fn try_from(value: &Value) -> Result<Item> {
+//         match value {
+//             Value::Atomic(a) => Ok(Item::Atomic(a.clone())),
+//             Value::Node(n) => Ok(Item::Node(*n)),
+//             Value::Sequence(s) => s.borrow().singleton(),
+//             Value::Closure(c) => Ok(Item::Closure(Rc::clone(c))),
+//         }
+//     }
+// }
 // Conversions from Item
 
 impl TryFrom<Item> for Atomic {

@@ -4,7 +4,7 @@ use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 
 use crate::context::{FunctionType, StaticFunctionDescription};
 use crate::{
-    data::{ContextTryInto, Sequence, ValueError},
+    data::{ContextTryInto, Item, Sequence, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
 };
 
@@ -164,6 +164,24 @@ fn false_(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, Valu
 // // #[xpath_fn]
 // fn real_local_name(context: &DynamicContext, a: Node) -> String {
 //     a.local_name(context.xot)
+// }
+
+// fn wrap_extract_one(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+//     let a = &arguments[0];
+//     let a: Sequence = a.try_into()?;
+//     let a = a.borrow();
+//     let s = a.as_slice();
+//     Ok(real_exactly_one(s)?.into())
+// }
+
+// // #[xpath_fn]
+// fn real_exactly_one(a: &[Item]) -> Result<Item, ValueError> {
+//     if a.len() == 1 {
+//         Ok(a[0].clone())
+//     } else {
+//         // XXX should really be a FORG0005 error
+//         Err(ValueError::Type)
+//     }
 // }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
