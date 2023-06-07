@@ -2053,6 +2053,7 @@ dependencies = [
  "test-generator",
  "thiserror",
  "xee-xpath-ast",
+ "xee-xpath-macros",
  "xot",
 ]
 
@@ -2077,9 +2078,11 @@ dependencies = [
 name = "xee-xpath-macros"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "proc-macro2 1.0.59",
  "quote 1.0.28",
  "syn 2.0.18",
+ "xee-xpath-ast",
 ]
 
 [[package]]

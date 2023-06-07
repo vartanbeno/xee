@@ -1,0 +1,30 @@
+---
+source: xee-xpath-macros/src/parse.rs
+expression: "syn::parse_str::<XPathFnOptions>(r#\"\"fn:foo() as xs:string\"\"#)"
+---
+Ok(
+    XPathFnOptions {
+        signature: Signature {
+            name: Name {
+                name: "foo",
+                namespace: Some(
+                    "http://www.w3.org/2005/xpath-functions",
+                ),
+            },
+            params: [],
+            return_type: Item(
+                Item {
+                    item_type: AtomicOrUnionType(
+                        Name {
+                            name: "string",
+                            namespace: Some(
+                                "http://www.w3.org/2001/XMLSchema",
+                            ),
+                        },
+                    ),
+                    occurrence: One,
+                },
+            ),
+        },
+    },
+)
