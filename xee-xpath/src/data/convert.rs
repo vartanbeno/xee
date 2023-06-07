@@ -86,6 +86,15 @@ where
     }
 }
 
+impl ContextTryFrom<&Value> for Node {
+    fn context_try_from(value: &Value, _context: &DynamicContext) -> Result<Self> {
+        match value.to_one()? {
+            Item::Node(n) => Ok(n),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
 // impl ContextTryFrom<&Value> for i64 {
 //     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
 //         let atomic: Atomic = value.context_try_into(context)?;

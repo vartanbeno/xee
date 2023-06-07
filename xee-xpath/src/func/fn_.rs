@@ -30,15 +30,17 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
     Ok(arguments[0].clone())
 }
 
-// #[xpath_fn("fn:local-name($arg as node()?) as xs:string")]
-// fn local_name2(context: &DynamicContext, arg: String) -> String {}
-
-fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a: Node = (&arguments[0]).try_into()?;
-    Ok(Value::Atomic(Atomic::String(Rc::new(
-        a.local_name(context.xot),
-    ))))
+#[xpath_fn("fn:local-name($arg as node()?) as xs:string")]
+fn local_name(context: &DynamicContext, arg: Node) -> String {
+    arg.local_name(context.xot)
 }
+
+// fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+//     let a: Node = (&arguments[0]).try_into()?;
+//     Ok(Value::Atomic(Atomic::String(Rc::new(
+//         a.local_name(context.xot),
+//     ))))
+// }
 
 fn namespace_uri(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a: Node = (&arguments[0]).try_into()?;
@@ -204,7 +206,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
-            func: local_name,
+            func: wrapper_local_name,
         },
         StaticFunctionDescription {
             name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
