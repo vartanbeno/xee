@@ -30,6 +30,9 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
     Ok(arguments[0].clone())
 }
 
+// #[xpath_fn("fn:local-name($arg as node()?) as xs:string")]
+// fn local_name2(context: &DynamicContext, arg: String) -> String {}
+
 fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a: Node = (&arguments[0]).try_into()?;
     Ok(Value::Atomic(Atomic::String(Rc::new(

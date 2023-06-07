@@ -9,12 +9,34 @@ pub(crate) fn xpath_fn_wrapper(
     ast: &mut ItemFn,
     options: &XPathFnOptions,
 ) -> syn::Result<proc_macro2::TokenStream> {
+    let mut context_ident = None;
+    if !ast.sig.inputs.is_empty() {
+        let maybe_context_arg = &ast.sig.inputs[0];
+        match &maybe_context_arg {
+            syn::FnArg::Typed(pat_type) => match &*pat_type.pat {
+                syn::Pat::Ident(ident) => {
+                    if ident.ident == "context" {
+                        context_ident = Some(ident.ident.clone());
+                    }
+                }
+                _ => {
+                    err_spanned!(pat_type.span() => "XPath functions can only take identifiers as arguments");
+                }
+            },
+            syn::FnArg::Receiver(r) => {
+                err_spanned!(r.span() => "XPath functions cannot take `self` as an argument");
+            }
+        }
+    };
     let name = &ast.sig.ident;
     let wrapper_name = format_ident!("wrapper_{}", name);
 
     let signature = &options.signature;
     let mut conversions = Vec::new();
     let mut conversion_names = Vec::new();
+    if let Some(context_ident) = context_ident {
+        conversion_names.push(context_ident);
+    }
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
@@ -22,6 +44,7 @@ pub(crate) fn xpath_fn_wrapper(
             let #name = crate::data::ContextTryInto::context_try_into(&arguments[#i], context)?;
         });
     }
+
     // for arg in &mut ast.sig.inputs {
     //     match arg {
     //         syn::FnArg::Receiver(r) => {
