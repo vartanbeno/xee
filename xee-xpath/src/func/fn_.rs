@@ -53,18 +53,36 @@ fn count(arg: &[Item]) -> i64 {
     arg.len() as i64
 }
 
-fn root(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a: Node = (&arguments[0]).try_into()?;
-    let xot_node = match a {
-        Node::Xot(node) => node,
-        Node::Attribute(node, _) => node,
-        Node::Namespace(node, _) => node,
-    };
-    // XXX there should be a xot.root() to obtain this in one step
-    let top = context.xot.top_element(xot_node);
-    let root = context.xot.parent(top).unwrap();
-    Ok(Value::Node(Node::Xot(root)))
+#[xpath_fn("fn:root($arg as node()?) as node()?")]
+fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
+    if let Some(arg) = arg {
+        let xot_node = match arg {
+            Node::Xot(node) => node,
+            Node::Attribute(node, _) => node,
+            Node::Namespace(node, _) => node,
+        };
+        // XXX there should be a xot.root() to obtain this in one step
+        let top = context.xot.top_element(xot_node);
+        let root = context.xot.parent(top).unwrap();
+
+        Some(Node::Xot(root))
+    } else {
+        None
+    }
 }
+
+// fn root(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+//     let a: Node = (&arguments[0]).try_into()?;
+//     let xot_node = match a {
+//         Node::Xot(node) => node,
+//         Node::Attribute(node, _) => node,
+//         Node::Namespace(node, _) => node,
+//     };
+
+//     let top = context.xot.top_element(xot_node);
+//     let root = context.xot.parent(top).unwrap();
+//     Ok(Value::Node(Node::Xot(root)))
+// }
 
 fn string(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     Ok(Value::Atomic(Atomic::String(Rc::new(
@@ -222,7 +240,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
-            func: root,
+            func: wrapper_root,
         },
         StaticFunctionDescription {
             name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),

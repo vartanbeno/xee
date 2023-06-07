@@ -328,6 +328,12 @@ impl From<i64> for Value {
     }
 }
 
+impl From<Node> for Value {
+    fn from(n: Node) -> Value {
+        Value::Node(n)
+    }
+}
+
 impl<T> From<Option<T>> for Value
 where
     T: Into<Value>,
