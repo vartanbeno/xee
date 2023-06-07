@@ -48,15 +48,9 @@ fn namespace_uri(context: &DynamicContext, arg: Option<Node>) -> String {
     }
 }
 
-// #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-// fn count2(arg: &[Item]) -> i64 {
-//     arg.len() as i64
-// }
-
-fn count(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a: Sequence = (&arguments[0]).try_into()?;
-    let a = a.borrow();
-    Ok(Value::Atomic(Atomic::Integer(a.items.len() as i64)))
+#[xpath_fn("fn:count($arg as item()*) as xs:integer")]
+fn count(arg: &[Item]) -> i64 {
+    arg.len() as i64
 }
 
 fn root(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -222,7 +216,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: None,
-            func: count,
+            func: wrapper_count,
         },
         StaticFunctionDescription {
             name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),

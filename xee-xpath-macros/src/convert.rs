@@ -50,10 +50,10 @@ impl ConvertCode for ItemType {
                 Occurrence::Option => ConvertedCode::new(quote!(#arg.to_option())),
                 // XXX what happens if we have multiple tmp?
                 Occurrence::Many => {
-                    let converted = ConvertedCode::new(quote!(tmp.as_slice()));
+                    let converted = ConvertedCode::new(quote!(Ok(tmp2.as_slice())));
                     converted.with_prepare(quote!(
-                        let tmp = #arg.to_many();
-                        let tmp = tmp.borrow();
+                        let tmp = #arg.to_many()?;
+                        let tmp2 = tmp.borrow();
                     ))
                 }
                 Occurrence::NonEmpty => panic!("NonEmpty not yet supported"),
