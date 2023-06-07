@@ -145,12 +145,14 @@ fn error(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, Value
     Err(ValueError::Error(Error::FOER0000))
 }
 
-fn true_(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, ValueError> {
-    Ok(Value::Atomic(Atomic::Boolean(true)))
+#[xpath_fn("fn:true() as xs:boolean")]
+fn true_() -> bool {
+    true
 }
 
-fn false_(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, ValueError> {
-    Ok(Value::Atomic(Atomic::Boolean(false)))
+#[xpath_fn("fn:false() as xs:boolean")]
+fn false_() -> bool {
+    false
 }
 
 // Experimental exploration of wrapping with converters
@@ -294,13 +296,13 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
             function_type: None,
-            func: true_,
+            func: wrapper_true_,
         },
         StaticFunctionDescription {
             name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
             function_type: None,
-            func: false_,
+            func: wrapper_false_,
         },
     ]
 }
