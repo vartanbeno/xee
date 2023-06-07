@@ -112,9 +112,9 @@ fn exactly_one(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, 
     }
 }
 
-fn empty(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = &arguments[0];
-    Ok(Value::Atomic(Atomic::Boolean(a.is_empty_sequence())))
+#[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
+fn empty(arg: &[Item]) -> bool {
+    arg.is_empty()
 }
 
 fn not(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -123,17 +123,15 @@ fn not(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueErr
     Ok(Value::Atomic(Atomic::Boolean(!b)))
 }
 
-fn generate_id(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = &arguments[0];
-    if a.is_empty_sequence() {
-        return Ok(Value::Atomic(Atomic::String(Rc::new("".to_string()))));
+#[xpath_fn("fn:generate-id($arg as node()?) as xs:string")]
+fn generate_id(context: &DynamicContext, arg: Option<Node>) -> String {
+    if let Some(arg) = arg {
+        let annotations = &context.documents.annotations;
+        let annotation = annotations.get(arg).unwrap();
+        annotation.generate_id()
+    } else {
+        "".to_string()
     }
-    let annotations = &context.documents.annotations;
-    let node = a.try_into()?;
-    let annotation = annotations.get(node).unwrap();
-    Ok(Value::Atomic(Atomic::String(Rc::new(
-        annotation.generate_id(),
-    ))))
 }
 
 fn untyped_atomic(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -266,13 +264,13 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: None,
-            func: empty,
+            func: wrapper_empty,
         },
         StaticFunctionDescription {
             name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
-            func: generate_id,
+            func: wrapper_generate_id,
         },
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
