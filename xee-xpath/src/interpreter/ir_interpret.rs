@@ -1136,6 +1136,11 @@ mod tests {
     }
 
     #[test]
+    fn test_local_name_empty() {
+        assert_debug_snapshot!(run("fn:local-name(())"));
+    }
+
+    #[test]
     fn test_namespace_uri_element() {
         assert_debug_snapshot!(run_xml(
             r#"<doc xmlns="http://example.com/" xmlns:e="http://example.com/e"><a/><b><e:c/></b></doc>"#,

@@ -31,14 +31,27 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
 }
 
 #[xpath_fn("fn:local-name($arg as node()?) as xs:string")]
-fn local_name(context: &DynamicContext, arg: Node) -> String {
-    arg.local_name(context.xot)
+fn local_name(context: &DynamicContext, arg: Option<Node>) -> String {
+    if let Some(arg) = arg {
+        arg.local_name(context.xot)
+    } else {
+        "".to_string()
+    }
 }
 
 #[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI")]
-fn namespace_uri(context: &DynamicContext, arg: Node) -> String {
-    arg.namespace_uri(context.xot)
+fn namespace_uri(context: &DynamicContext, arg: Option<Node>) -> String {
+    if let Some(arg) = arg {
+        arg.namespace_uri(context.xot)
+    } else {
+        "".to_string()
+    }
 }
+
+// #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
+// fn count2(arg: &[Item]) -> i64 {
+//     arg.len() as i64
+// }
 
 fn count(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     let a: Sequence = (&arguments[0]).try_into()?;
