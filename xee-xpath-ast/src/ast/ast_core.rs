@@ -49,7 +49,7 @@ pub struct QuantifiedExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Name {
-    pub name: String,
+    name: String,
     namespace: Option<String>,
 }
 
@@ -361,7 +361,7 @@ pub enum ItemType {
     ArrayTest(Box<ArrayTest>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Occurrence {
     One,
     Option,

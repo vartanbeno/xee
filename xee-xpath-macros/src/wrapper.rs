@@ -3,6 +3,7 @@ use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::ItemFn;
 
+use crate::convert::convert_code;
 use crate::parse::XPathFnOptions;
 
 pub(crate) fn xpath_fn_wrapper(
@@ -40,36 +41,15 @@ pub(crate) fn xpath_fn_wrapper(
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
+        let arg = quote!(&arguments[#i]);
+        let converted = convert_code(&param.type_, arg)?;
+        let prepare = converted.prepare;
+        let assign = converted.assign;
         conversions.push(quote! {
-            let #name = crate::data::ContextTryInto::context_try_into(&arguments[#i], context)?;
+            #prepare
+            let #name = #assign?;
         });
     }
-
-    // for arg in &mut ast.sig.inputs {
-    //     match arg {
-    //         syn::FnArg::Receiver(r) => {
-    //             err_spanned!(r.span() => "XPath functions cannot take `self` as an argument");
-    //         }
-    //         syn::FnArg::Typed(pat_type) => {
-    //             let pat = &*pat_type.pat;
-    //             match pat {
-    //                 syn::Pat::Ident(ident) => {
-    //                     // if ident.ident == "context" {
-    //                     //     err_spanned!(ident.ident.span() => "XPath functions cannot take `context` as an argument");
-    //                     // }
-    //                 }
-    //                 _ => {
-    //                     err_spanned!(pat_type.span() => "XPath functions can only take identifiers as arguments");
-    //                 }
-    //             }
-
-    //             let ty = &*pat_type.ty;
-    //             *arg = syn::parse_quote! { #pat: &#ty };
-    //         }
-    //     }
-    // }
-    // let signature = &options.signature;
-    // let signature = dbg!(signature);
     Ok(quote! {
         fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Value]) -> Result<crate::Value, crate::ValueError> {
             #(#conversions)*;

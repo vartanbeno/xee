@@ -2,6 +2,7 @@ extern crate proc_macro;
 
 #[macro_use]
 mod error;
+mod convert;
 mod parse;
 mod wrapper;
 
