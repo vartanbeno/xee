@@ -35,18 +35,9 @@ fn local_name(context: &DynamicContext, arg: Node) -> String {
     arg.local_name(context.xot)
 }
 
-// fn local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-//     let a: Node = (&arguments[0]).try_into()?;
-//     Ok(Value::Atomic(Atomic::String(Rc::new(
-//         a.local_name(context.xot),
-//     ))))
-// }
-
-fn namespace_uri(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a: Node = (&arguments[0]).try_into()?;
-    Ok(Value::Atomic(Atomic::String(Rc::new(
-        a.namespace_uri(context.xot),
-    ))))
+#[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI")]
+fn namespace_uri(context: &DynamicContext, arg: Node) -> String {
+    arg.namespace_uri(context.xot)
 }
 
 fn count(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -212,7 +203,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: Some(FunctionType::ItemFirst),
-            func: namespace_uri,
+            func: wrapper_namespace_uri,
         },
         StaticFunctionDescription {
             name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
