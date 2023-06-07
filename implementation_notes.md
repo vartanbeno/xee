@@ -1,7 +1,9 @@
 # Implementation Notes
 
 I'm grateful to all the authors of the various libraries I've used to implement
-this code. Here are various non-library resources I've relied on during the
+this code - see the dependencies in the various `Cargo.toml` files.
+
+Here are various non-library resources I've relied on during the
 implementation.
 
 The book [Crafting Interpreters](https://craftinginterpreters.com/) by Robert
@@ -19,3 +21,7 @@ https://course.ccs.neu.edu/cs4410/lec_anf_notes.html
 https://maxsnew.com/teaching/eecs-483-fa21/lec_anf_notes.html
 
 https://users.dcc.uchile.cl/~etanter/CC5116/lec_let-and-stack_notes.html
+
+[pyo3](https://github.com/PyO3/pyo3) lets you expose Rust functions to Python.
+Since I needed to expose functions to XPath, I studied the source code of the
+the pyo3 library to help me implement the `#[xpath_fn()]` macro.
