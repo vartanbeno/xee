@@ -1,4 +1,6 @@
+use proc_macro2::{Ident, Span};
 use quote::{format_ident, quote};
+use syn::spanned::Spanned;
 use syn::ItemFn;
 
 use crate::parse::XPathFnOptions;
@@ -6,15 +8,71 @@ use crate::parse::XPathFnOptions;
 pub(crate) fn xpath_fn_wrapper(
     ast: &mut ItemFn,
     options: &XPathFnOptions,
-) -> proc_macro2::TokenStream {
+) -> syn::Result<proc_macro2::TokenStream> {
     let name = &ast.sig.ident;
     let wrapper_name = format_ident!("wrapper_{}", name);
+
+    let signature = &options.signature;
+    let mut conversions = Vec::new();
+    let mut conversion_names = Vec::new();
+    for (i, param) in signature.params.iter().enumerate() {
+        let name = Ident::new(param.name.as_str(), Span::call_site());
+        conversion_names.push(name.clone());
+        conversions.push(quote! {
+            let #name = crate::data::ContextTryInto::context_try_into(arguments[#i], context)?;
+        });
+    }
+    // for arg in &mut ast.sig.inputs {
+    //     match arg {
+    //         syn::FnArg::Receiver(r) => {
+    //             err_spanned!(r.span() => "XPath functions cannot take `self` as an argument");
+    //         }
+    //         syn::FnArg::Typed(pat_type) => {
+    //             let pat = &*pat_type.pat;
+    //             match pat {
+    //                 syn::Pat::Ident(ident) => {
+    //                     // if ident.ident == "context" {
+    //                     //     err_spanned!(ident.ident.span() => "XPath functions cannot take `context` as an argument");
+    //                     // }
+    //                 }
+    //                 _ => {
+    //                     err_spanned!(pat_type.span() => "XPath functions can only take identifiers as arguments");
+    //                 }
+    //             }
+
+    //             let ty = &*pat_type.ty;
+    //             *arg = syn::parse_quote! { #pat: &#ty };
+    //         }
+    //     }
+    // }
     // let signature = &options.signature;
     // let signature = dbg!(signature);
-    quote! {
-        fn #wrapper_name(context: &xee_xpath::DynamicContext, arguments: &[&xee_xpath::Value]) -> Result<xee_xpath::Value, xee_xpath::ValueError> {
-            let value = #name();
+    Ok(quote! {
+        fn #wrapper_name(context: &crate::DynamicContext, arguments: &[&crate::Value]) -> Result<crate::Value, crate::ValueError> {
+            #(#conversions)*;
+            let value = #name(#(#conversion_names),*);
             Ok(value.into())
         }
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use insta::assert_debug_snapshot;
+    use syn::parse_str;
+
+    #[test]
+    fn test_wrapper() {
+        let options =
+            parse_str::<XPathFnOptions>(r#""fn:foo($x as xs:int) as xs:string""#).unwrap();
+        let mut ast = parse_str::<ItemFn>(
+            r#"
+            fn foo(x: &i64) -> String {
+                format!("{}", x)
+            }"#,
+        )
+        .unwrap();
+        assert_debug_snapshot!(xpath_fn_wrapper(&mut ast, &options).unwrap().to_string());
     }
 }

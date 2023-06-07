@@ -69,12 +69,29 @@ impl ContextTryFrom<&Value> for Atomic {
     }
 }
 
-impl ContextTryFrom<&Value> for f64 {
+// impl ContextTryFrom<&Value> for f64 {
+//     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
+//         let atomic: Atomic = value.context_try_into(context)?;
+//         atomic.try_into()
+//     }
+// }
+
+impl<T> ContextTryFrom<&Value> for T
+where
+    T: TryFrom<Atomic, Error = ValueError>,
+{
     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
         let atomic: Atomic = value.context_try_into(context)?;
         atomic.try_into()
     }
 }
+
+// impl ContextTryFrom<&Value> for i64 {
+//     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
+//         let atomic: Atomic = value.context_try_into(context)?;
+//         atomic.try_into()
+//     }
+// }
 
 impl<T> ContextTryFrom<&Value> for Option<T>
 where

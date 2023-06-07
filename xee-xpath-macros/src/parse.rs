@@ -9,7 +9,7 @@ use xee_xpath_ast::Namespaces;
 
 #[derive(Debug)]
 pub(crate) struct XPathFnOptions {
-    signature: Signature,
+    pub(crate) signature: Signature,
 }
 
 mod kw {

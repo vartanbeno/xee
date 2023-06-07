@@ -8,7 +8,7 @@ mod wrapper;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input,
+    parse_macro_input, Result,
 };
 
 use parse::XPathFnOptions;
@@ -21,11 +21,8 @@ pub fn xpath_fn(
 ) -> proc_macro::TokenStream {
     let options = parse_macro_input!(attr as XPathFnOptions);
     let mut ast = parse_macro_input!(input as syn::ItemFn);
-    let wrapper = xpath_fn_wrapper(&mut ast, &options);
-    // let options = dbg!(options);
+    let wrapper = xpath_fn_wrapper(&mut ast, &options).unwrap_or_else(|e| e.into_compile_error());
     quote!(
-        // Hello world
-        // #options
         #ast
         #wrapper
     )

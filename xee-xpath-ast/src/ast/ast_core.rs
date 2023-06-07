@@ -49,7 +49,7 @@ pub struct QuantifiedExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Name {
-    name: String,
+    pub name: String,
     namespace: Option<String>,
 }
 
@@ -85,6 +85,10 @@ impl Name {
             name,
             namespace: self.namespace.clone(),
         }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.name
     }
 }
 
