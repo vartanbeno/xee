@@ -328,6 +328,12 @@ impl From<i64> for Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(b: bool) -> Value {
+        Value::Atomic(Atomic::Boolean(b))
+    }
+}
+
 impl From<Node> for Value {
     fn from(n: Node) -> Value {
         Value::Node(n)

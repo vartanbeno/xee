@@ -71,28 +71,24 @@ fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
     }
 }
 
-// fn root(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-//     let a: Node = (&arguments[0]).try_into()?;
-//     let xot_node = match a {
-//         Node::Xot(node) => node,
-//         Node::Attribute(node, _) => node,
-//         Node::Namespace(node, _) => node,
-//     };
-
-//     let top = context.xot.top_element(xot_node);
-//     let root = context.xot.parent(top).unwrap();
-//     Ok(Value::Node(Node::Xot(root)))
-// }
-
 fn string(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
     Ok(Value::Atomic(Atomic::String(Rc::new(
         arguments[0].string_value(context.xot)?,
     ))))
 }
 
-fn exists(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a = &arguments[0];
-    Ok(Value::Atomic(Atomic::Boolean(!a.is_empty_sequence())))
+// #[xpath_fn("fn:string($arg as item()?) as xs:string")]
+// fn string(context: &DynamicContext, arg: Option<Item>) -> String {
+//     if let Some(arg) = arg {
+//         arg.string_value(context.xot)
+//     } else {
+//         "".to_string()
+//     }
+// }
+
+#[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
+fn exists(arg: &[Item]) -> bool {
+    !arg.is_empty()
 }
 
 // #[xpath_fn]
@@ -258,7 +254,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_type: None,
-            func: exists,
+            func: wrapper_exists,
         },
         StaticFunctionDescription {
             name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
