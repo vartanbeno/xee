@@ -602,9 +602,7 @@ impl<'a> AstParser<'a> {
     fn node_test_to_node_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NodeTest {
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
-            Rule::KindTest => ast::NodeTest::KindTest(
-                self.kind_test_to_kind_test(pair.into_inner().next().unwrap()),
-            ),
+            Rule::KindTest => ast::NodeTest::KindTest(self.kind_test_to_kind_test(pair)),
             Rule::NameTest => ast::NodeTest::NameTest(
                 self.name_test_to_name_test(pair.into_inner().next().unwrap(), is_attribute),
             ),
@@ -659,6 +657,7 @@ impl<'a> AstParser<'a> {
     }
 
     fn kind_test_to_kind_test(&self, pair: Pair<Rule>) -> ast::KindTest {
+        let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::AnyKindTest => ast::KindTest::Any,
             Rule::TextTest => ast::KindTest::Text,
@@ -1763,6 +1762,15 @@ mod tests {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
         assert_debug_snapshot!(parse_signature(
             "fn:foo($a as xs:decimal*) as xs:integer",
+            &namespaces
+        ));
+    }
+
+    #[test]
+    fn test_signature_with_node_param() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_debug_snapshot!(parse_signature(
+            "fn:foo($a as node()) as xs:integer",
             &namespaces
         ));
     }
