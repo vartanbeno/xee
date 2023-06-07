@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
+use xee_xpath_macros::xpath_fn;
 
 use crate::context::{FunctionType, StaticFunctionDescription};
 use crate::{
@@ -8,17 +9,9 @@ use crate::{
     Atomic, DynamicContext, Error, Node, Value,
 };
 
+#[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
 fn my_function(a: i64, b: i64) -> i64 {
     a + b
-}
-
-fn bound_my_function(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    let a: Atomic = (&arguments[0]).context_try_into(context)?;
-    let b: Atomic = (&arguments[1]).context_try_into(context)?;
-    Ok(Value::Atomic(Atomic::Integer(my_function(
-        a.try_into()?,
-        b.try_into()?,
-    ))))
 }
 
 fn bound_position(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
@@ -190,7 +183,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             name: ast::Name::new("my_function".to_string(), None),
             arity: 2,
             function_type: None,
-            func: bound_my_function,
+            func: wrapper_my_function,
         },
         StaticFunctionDescription {
             name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),

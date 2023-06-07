@@ -313,6 +313,12 @@ impl From<f64> for Value {
     }
 }
 
+impl From<i64> for Value {
+    fn from(i: i64) -> Value {
+        Value::Atomic(Atomic::Integer(i))
+    }
+}
+
 impl<T> From<Option<T>> for Value
 where
     T: Into<Value>,

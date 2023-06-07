@@ -34,7 +34,7 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
-            wrapper_int_to_string(&context, &[&Value::Atomic(Atomic::Integer(42))]),
+            wrapper_int_to_string(&context, &[Value::Atomic(Atomic::Integer(42))]),
             Ok(Value::Atomic(Atomic::String(Rc::new("42".to_string()))))
         );
     }

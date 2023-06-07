@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/wrapper.rs
 expression: "xpath_fn_wrapper(&mut ast, &options).unwrap().to_string()"
 ---
-"fn wrapper_foo (context : & crate :: DynamicContext , arguments : & [& crate :: Value]) -> Result < crate :: Value , crate :: ValueError > { let x = crate :: data :: ContextTryInto :: context_try_into (arguments [0usize] , context) ? ; ; let value = foo (x) ; Ok (value . into ()) }"
+"fn wrapper_foo (context : & crate :: DynamicContext , arguments : & [crate :: Value]) -> Result < crate :: Value , crate :: ValueError > { let x = crate :: data :: ContextTryInto :: context_try_into (& arguments [0usize] , context) ? ; ; let value = foo (x) ; Ok (value . into ()) }"

@@ -19,7 +19,7 @@ pub(crate) fn xpath_fn_wrapper(
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
         conversions.push(quote! {
-            let #name = crate::data::ContextTryInto::context_try_into(arguments[#i], context)?;
+            let #name = crate::data::ContextTryInto::context_try_into(&arguments[#i], context)?;
         });
     }
     // for arg in &mut ast.sig.inputs {
@@ -48,7 +48,7 @@ pub(crate) fn xpath_fn_wrapper(
     // let signature = &options.signature;
     // let signature = dbg!(signature);
     Ok(quote! {
-        fn #wrapper_name(context: &crate::DynamicContext, arguments: &[&crate::Value]) -> Result<crate::Value, crate::ValueError> {
+        fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Value]) -> Result<crate::Value, crate::ValueError> {
             #(#conversions)*;
             let value = #name(#(#conversion_names),*);
             Ok(value.into())
