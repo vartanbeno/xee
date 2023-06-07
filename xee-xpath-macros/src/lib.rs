@@ -3,6 +3,7 @@ extern crate proc_macro;
 #[macro_use]
 mod error;
 mod parse;
+mod wrapper;
 
 use quote::quote;
 use syn::{
@@ -11,19 +12,22 @@ use syn::{
 };
 
 use parse::XPathFnOptions;
+use wrapper::xpath_fn_wrapper;
 
 #[proc_macro_attribute]
 pub fn xpath_fn(
     attr: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    // let options = parse_macro_input!(attr as XPathFnOptions);
-    let ast = parse_macro_input!(input as syn::ItemFn);
-
+    let options = parse_macro_input!(attr as XPathFnOptions);
+    let mut ast = parse_macro_input!(input as syn::ItemFn);
+    let wrapper = xpath_fn_wrapper(&mut ast, &options);
     // let options = dbg!(options);
     quote!(
-        // options
+        // Hello world
+        // #options
         #ast
+        #wrapper
     )
     .into()
 }
