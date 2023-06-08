@@ -26,5 +26,6 @@ Ok(
                 },
             ),
         },
+        signature_string: "fn:foo() as xs:string",
     },
 )

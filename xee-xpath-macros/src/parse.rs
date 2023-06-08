@@ -10,6 +10,7 @@ use xee_xpath_ast::Namespaces;
 #[derive(Debug)]
 pub(crate) struct XPathFnOptions {
     pub(crate) signature: Signature,
+    pub(crate) signature_string: String,
 }
 
 mod kw {
@@ -31,11 +32,14 @@ impl Parse for XPathFnOptions {
                 }
             }
         }
-        let signature = signature.unwrap();
+        let signature_string = signature.unwrap();
         let namespaces = Namespaces::default();
-        let signature = parse_signature(&signature, &namespaces)
+        let signature = parse_signature(&signature_string, &namespaces)
             .map_err(|e| syn::Error::new(input.span(), e))?;
-        Ok(Self { signature })
+        Ok(Self {
+            signature,
+            signature_string,
+        })
     }
 }
 
