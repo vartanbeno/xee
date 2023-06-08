@@ -9,7 +9,7 @@ mod value;
 
 pub use atomic::Atomic;
 pub(crate) use convert::{ContextInto, ContextTryInto};
-pub use error::ValueError;
+pub use error::{ValueError, ValueResult};
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};
 pub use item::Item;

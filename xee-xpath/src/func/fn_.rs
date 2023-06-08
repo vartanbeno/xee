@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use xee_xpath_ast::Namespaces;
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
@@ -8,7 +7,7 @@ use crate::wrap_xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
-    data::{ContextTryInto, Item, Sequence, ValueError},
+    data::{ContextTryInto, Item, Sequence, ValueError, ValueResult},
     Atomic, DynamicContext, Error, Node, Value,
 };
 
@@ -74,20 +73,14 @@ fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
     }
 }
 
-fn string(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    Ok(Value::Atomic(Atomic::String(Rc::new(
-        arguments[0].string_value(context.xot)?,
-    ))))
+#[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
+fn string(context: &DynamicContext, arg: &Option<Item>) -> ValueResult<String> {
+    if let Some(arg) = arg {
+        arg.string_value(context.xot)
+    } else {
+        Ok("".to_string())
+    }
 }
-
-// #[xpath_fn("fn:string($arg as item()?) as xs:string")]
-// fn string(context: &DynamicContext, arg: Option<Item>) -> String {
-//     if let Some(arg) = arg {
-//         arg.string_value(context.xot)
-//     } else {
-//         "".to_string()
-//     }
-// }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
 fn exists(arg: &[Item]) -> bool {
@@ -216,18 +209,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(namespace_uri),
         wrap_xpath_fn!(count),
         wrap_xpath_fn!(root),
-        StaticFunctionDescription {
-            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_kind: Some(FunctionKind::ItemFirst),
-            func: string,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_kind: Some(FunctionKind::ItemFirst),
-            func: string,
-        },
+        wrap_xpath_fn!(string),
         wrap_xpath_fn!(exists),
         StaticFunctionDescription {
             name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
