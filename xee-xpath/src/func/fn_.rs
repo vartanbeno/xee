@@ -201,7 +201,7 @@ pub(crate) fn static_function_descriptions(
     namespaces: &Namespaces,
 ) -> Vec<StaticFunctionDescription> {
     vec![
-        wrap_xpath_fn!(my_function, None, namespaces),
+        wrap_xpath_fn!(my_function, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("my_function".to_string(), None),
         //     arity: 2,
@@ -220,28 +220,28 @@ pub(crate) fn static_function_descriptions(
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },
-        wrap_xpath_fn!(local_name, Some(FunctionKind::ItemFirst), namespaces),
+        wrap_xpath_fn!(local_name, Some(FunctionKind::ItemFirst)),
         // StaticFunctionDescription {
         //     name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
         //     function_kind: Some(FunctionKind::ItemFirst),
         //     func: wrapper_local_name,
         // },
-        wrap_xpath_fn!(namespace_uri, Some(FunctionKind::ItemFirst), namespaces),
+        wrap_xpath_fn!(namespace_uri, Some(FunctionKind::ItemFirst)),
         // StaticFunctionDescription {
         //     name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
         //     function_kind: Some(FunctionKind::ItemFirst),
         //     func: wrapper_namespace_uri,
         // },
-        wrap_xpath_fn!(count, None, namespaces),
+        wrap_xpath_fn!(count, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
         //     function_kind: None,
         //     func: wrapper_count,
         // },
-        wrap_xpath_fn!(root, Some(FunctionKind::ItemFirst), namespaces),
+        wrap_xpath_fn!(root, Some(FunctionKind::ItemFirst)),
         // StaticFunctionDescription {
         //     name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
@@ -260,7 +260,7 @@ pub(crate) fn static_function_descriptions(
             function_kind: Some(FunctionKind::ItemFirst),
             func: string,
         },
-        wrap_xpath_fn!(exists, None, namespaces),
+        wrap_xpath_fn!(exists, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
@@ -273,14 +273,14 @@ pub(crate) fn static_function_descriptions(
             function_kind: None,
             func: exactly_one,
         },
-        wrap_xpath_fn!(empty, None, namespaces),
+        wrap_xpath_fn!(empty, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
         //     function_kind: None,
         //     func: wrapper_empty,
         // },
-        wrap_xpath_fn!(generate_id, Some(FunctionKind::ItemFirst), namespaces),
+        wrap_xpath_fn!(generate_id, Some(FunctionKind::ItemFirst)),
         // StaticFunctionDescription {
         //     name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 1,
@@ -305,14 +305,14 @@ pub(crate) fn static_function_descriptions(
             function_kind: None,
             func: error,
         },
-        wrap_xpath_fn!(true_, None, namespaces),
+        wrap_xpath_fn!(true_, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 0,
         //     function_kind: None,
         //     func: wrapper_true_,
         // },
-        wrap_xpath_fn!(false_, None, namespaces),
+        wrap_xpath_fn!(false_, None),
         // StaticFunctionDescription {
         //     name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
         //     arity: 0,

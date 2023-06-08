@@ -59,13 +59,14 @@ impl StaticFunctionDescription {
 // into a StaticFunctionDescription
 #[macro_export]
 macro_rules! wrap_xpath_fn {
-    ($function:path, $kind:expr, $namespaces:path) => {{
+    ($function:path, $kind:expr) => {{
         use $function as wrapped_function;
+        let namespaces = xee_xpath_ast::Namespaces::default();
         $crate::context::StaticFunctionDescription::new(
             wrapped_function::WRAPPER,
             wrapped_function::SIGNATURE,
             $kind,
-            $namespaces,
+            &namespaces,
         )
     }};
 }
