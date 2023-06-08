@@ -52,7 +52,11 @@ pub(crate) fn xpath_fn_wrapper(
     }
     let vis = &ast.vis;
     let signature_string = LitStr::new(&options.signature_string, Span::call_site());
-
+    let kind = if let Some(kind) = &options.kind {
+        LitStr::new(kind, Span::call_site())
+    } else {
+        LitStr::new("", Span::call_site())
+    };
     Ok(quote! {
         // create a module with the same name as the function - this way `use
         // <the function> will bring both the function and module into scope.
@@ -67,6 +71,7 @@ pub(crate) fn xpath_fn_wrapper(
             // easier than trying to serialize a data structure, so it will
             // do for now.
             pub const SIGNATURE: &str = #signature_string;
+            pub const KIND: &str = #kind;
         }
 
         // Generate the function inside of the same scope at the original

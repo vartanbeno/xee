@@ -23,6 +23,19 @@ pub(crate) enum FunctionKind {
     Size,
 }
 
+impl FunctionKind {
+    pub(crate) fn parse(s: &str) -> Option<FunctionKind> {
+        match s {
+            "" => None,
+            "context_first" => Some(FunctionKind::ItemFirst),
+            "context_last" => Some(FunctionKind::ItemLast),
+            "position" => Some(FunctionKind::Position),
+            "size" => Some(FunctionKind::Size),
+            _ => panic!("Unknown function kind {}", s),
+        }
+    }
+}
+
 pub(crate) type StaticFunctionType =
     fn(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError>;
 
@@ -59,13 +72,13 @@ impl StaticFunctionDescription {
 // into a StaticFunctionDescription
 #[macro_export]
 macro_rules! wrap_xpath_fn {
-    ($function:path, $kind:expr) => {{
+    ($function:path) => {{
         use $function as wrapped_function;
         let namespaces = xee_xpath_ast::Namespaces::default();
         $crate::context::StaticFunctionDescription::new(
             wrapped_function::WRAPPER,
             wrapped_function::SIGNATURE,
-            $kind,
+            $crate::context::FunctionKind::parse(wrapped_function::KIND),
             &namespaces,
         )
     }};
@@ -196,9 +209,9 @@ pub(crate) struct StaticFunctions {
 }
 
 impl StaticFunctions {
-    pub(crate) fn new(namespaces: &Namespaces) -> Self {
+    pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
-        let descriptions = static_function_descriptions(namespaces);
+        let descriptions = static_function_descriptions();
         let mut by_index = Vec::new();
         for description in descriptions {
             by_index.extend(description.functions());

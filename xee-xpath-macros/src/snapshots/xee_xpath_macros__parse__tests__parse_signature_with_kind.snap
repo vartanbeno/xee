@@ -1,6 +1,6 @@
 ---
 source: xee-xpath-macros/src/parse.rs
-expression: "syn::parse_str::<XPathFnOptions>(r#\"\"fn:foo() as xs:string\"\"#)"
+expression: "syn::parse_str::<XPathFnOptions>(r#\"\"fn:foo() as xs:string\", context_first\"#)"
 ---
 Ok(
     XPathFnOptions {
@@ -26,7 +26,9 @@ Ok(
                 },
             ),
         },
-        kind: None,
+        kind: Some(
+            "context_first",
+        ),
         signature_string: "fn:foo() as xs:string",
     },
 )

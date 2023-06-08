@@ -1,6 +1,6 @@
 ---
 source: xee-xpath-macros/src/parse.rs
-expression: "syn::parse_str::<XPathFnOptions>(r#\"wrong\"#)"
+expression: "syn::parse_str::<XPathFnOptions>(r#\"\"fn:foo() as xs:string, context_first\", blah\"#)"
 ---
 Err(
     Error(

@@ -33,7 +33,7 @@ fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, V
     Ok(arguments[0].clone())
 }
 
-#[xpath_fn("fn:local-name($arg as node()?) as xs:string")]
+#[xpath_fn("fn:local-name($arg as node()?) as xs:string", context_first)]
 fn local_name(context: &DynamicContext, arg: Option<Node>) -> String {
     if let Some(arg) = arg {
         arg.local_name(context.xot)
@@ -42,7 +42,7 @@ fn local_name(context: &DynamicContext, arg: Option<Node>) -> String {
     }
 }
 
-#[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI")]
+#[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI", context_first)]
 fn namespace_uri(context: &DynamicContext, arg: Option<Node>) -> String {
     if let Some(arg) = arg {
         arg.namespace_uri(context.xot)
@@ -56,7 +56,7 @@ fn count(arg: &[Item]) -> i64 {
     arg.len() as i64
 }
 
-#[xpath_fn("fn:root($arg as node()?) as node()?")]
+#[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
     if let Some(arg) = arg {
         let xot_node = match arg {
@@ -126,7 +126,7 @@ fn not(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueErr
     Ok(Value::Atomic(Atomic::Boolean(!b)))
 }
 
-#[xpath_fn("fn:generate-id($arg as node()?) as xs:string")]
+#[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
 fn generate_id(context: &DynamicContext, arg: Option<Node>) -> String {
     if let Some(arg) = arg {
         let annotations = &context.documents.annotations;
@@ -197,17 +197,9 @@ fn false_() -> bool {
 //     }
 // }
 
-pub(crate) fn static_function_descriptions(
-    namespaces: &Namespaces,
-) -> Vec<StaticFunctionDescription> {
+pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
-        wrap_xpath_fn!(my_function, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("my_function".to_string(), None),
-        //     arity: 2,
-        //     function_kind: None,
-        //     func: wrapper_my_function,
-        // },
+        wrap_xpath_fn!(my_function),
         StaticFunctionDescription {
             name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
@@ -220,34 +212,10 @@ pub(crate) fn static_function_descriptions(
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },
-        wrap_xpath_fn!(local_name, Some(FunctionKind::ItemFirst)),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: Some(FunctionKind::ItemFirst),
-        //     func: wrapper_local_name,
-        // },
-        wrap_xpath_fn!(namespace_uri, Some(FunctionKind::ItemFirst)),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: Some(FunctionKind::ItemFirst),
-        //     func: wrapper_namespace_uri,
-        // },
-        wrap_xpath_fn!(count, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: None,
-        //     func: wrapper_count,
-        // },
-        wrap_xpath_fn!(root, Some(FunctionKind::ItemFirst)),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: Some(FunctionKind::ItemFirst),
-        //     func: wrapper_root,
-        // },
+        wrap_xpath_fn!(local_name),
+        wrap_xpath_fn!(namespace_uri),
+        wrap_xpath_fn!(count),
+        wrap_xpath_fn!(root),
         StaticFunctionDescription {
             name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
@@ -260,33 +228,15 @@ pub(crate) fn static_function_descriptions(
             function_kind: Some(FunctionKind::ItemFirst),
             func: string,
         },
-        wrap_xpath_fn!(exists, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: None,
-        //     func: wrapper_exists,
-        // },
+        wrap_xpath_fn!(exists),
         StaticFunctionDescription {
             name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
             function_kind: None,
             func: exactly_one,
         },
-        wrap_xpath_fn!(empty, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: None,
-        //     func: wrapper_empty,
-        // },
-        wrap_xpath_fn!(generate_id, Some(FunctionKind::ItemFirst)),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 1,
-        //     function_kind: Some(FunctionKind::ItemFirst),
-        //     func: wrapper_generate_id,
-        // },
+        wrap_xpath_fn!(empty),
+        wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
@@ -305,19 +255,7 @@ pub(crate) fn static_function_descriptions(
             function_kind: None,
             func: error,
         },
-        wrap_xpath_fn!(true_, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 0,
-        //     function_kind: None,
-        //     func: wrapper_true_,
-        // },
-        wrap_xpath_fn!(false_, None),
-        // StaticFunctionDescription {
-        //     name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
-        //     arity: 0,
-        //     function_kind: None,
-        //     func: wrapper_false_,
-        // },
+        wrap_xpath_fn!(true_),
+        wrap_xpath_fn!(false_),
     ]
 }
