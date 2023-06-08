@@ -18,7 +18,7 @@ impl<'a> StaticContext<'a> {
         Self {
             namespaces,
             variables: Vec::new(),
-            functions: StaticFunctions::new(),
+            functions: StaticFunctions::new(namespaces),
         }
     }
 
@@ -26,7 +26,7 @@ impl<'a> StaticContext<'a> {
         Self {
             namespaces,
             variables: variables.to_vec(),
-            functions: StaticFunctions::new(),
+            functions: StaticFunctions::new(namespaces),
         }
     }
 }

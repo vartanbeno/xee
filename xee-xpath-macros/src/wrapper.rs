@@ -54,37 +54,37 @@ pub(crate) fn xpath_fn_wrapper(
     let signature_string = LitStr::new(&options.signature_string, Span::call_site());
 
     Ok(quote! {
-        // #[doc(hidden)]
         // create a module with the same name as the function - this way `use
         // <the function> will bring both the function and module into scope.
         // This module contains information about the wrapper function
         // we access with the wrap_xpath_fn! macro.
-        // #vis mod #name {
-        //     pub(crate) struct MakeWrapper;
-        //     pub const WRAPPER: fn(&crate::DynamicContext, &[crate::Value]) -> Result<crate::Value, crate::ValueError> = MakeWrapper::WRAPPER;
-        //     // We store the signature as a string; this means we need to
-        //     // reparse it again later during registration, but it's a lot
-        //     // easier than trying to serialize a data structure, so it will
-        //     // do for now.
-        //     pub const SIGNATURE: String = #signature_string.to_string();
-        // }
+        #[doc(hidden)]
+        #vis mod #name {
+            pub(crate) struct MakeWrapper;
+            pub const WRAPPER: crate::context::StaticFunctionType = MakeWrapper::WRAPPER;
+            // We store the signature as a string; this means we need to
+            // reparse it again later during registration, but it's a lot
+            // easier than trying to serialize a data structure, so it will
+            // do for now.
+            pub const SIGNATURE: &str = #signature_string;
+        }
 
         // Generate the function inside of the same scope at the original
         // function (but in an isolated block), so that it can easily call the
         // original function. Using `super` isn't useful for that, as the
         // original function may be inside of a function body.
-        // const _: () = {
-        //     // This is a trick to ensure we can get it into the module defined
-        //     // above
-        //     impl #name::MakeWrapper {
-        //         const WRAPPER: fn(&crate::DynamicContext, &[crate::Value]) -> Result<crate::Value, crate::ValueError> = #wrapper_name;
-        //     }
+        const _: () = {
+            // This is a trick to ensure we can get it into the module defined
+            // above
+            impl #name::MakeWrapper {
+                const WRAPPER: crate::context::StaticFunctionType = #wrapper_name;
+            }
             fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Value]) -> Result<crate::Value, crate::ValueError> {
                 #(#conversions)*;
                 let value = #name(#(#conversion_names),*);
                 Ok(value.into())
             }
-        // }
+        };
     })
 }
 

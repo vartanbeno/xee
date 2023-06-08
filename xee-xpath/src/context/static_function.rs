@@ -2,6 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 
 use xee_xpath_ast::ast;
+use xee_xpath_ast::Namespaces;
 
 use super::dynamic_context::DynamicContext;
 
@@ -9,7 +10,7 @@ use crate::data::{StaticFunctionId, Value, ValueError};
 use crate::func::static_function_descriptions;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub(crate) enum FunctionType {
+pub(crate) enum FunctionKind {
     // generate a function with one less arity that takes the
     // item as the first argument
     ItemFirst,
@@ -22,18 +23,58 @@ pub(crate) enum FunctionType {
     Size,
 }
 
+pub(crate) type StaticFunctionType =
+    fn(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError>;
+
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
     pub(crate) arity: usize,
-    pub(crate) function_type: Option<FunctionType>,
-    pub(crate) func: fn(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError>,
+    pub(crate) function_kind: Option<FunctionKind>,
+    pub(crate) func: StaticFunctionType,
+}
+
+impl StaticFunctionDescription {
+    pub(crate) fn new(
+        func: StaticFunctionType,
+        signature: &str,
+        function_kind: Option<FunctionKind>,
+        namespaces: &Namespaces,
+    ) -> Self {
+        // XXX reparse signature; the macro could have stored the parsed
+        // version as code, but that's more work than I'm prepared to do
+        // right now.
+        let signature = ast::parse_signature(signature, namespaces)
+            .expect("Signature parse failed unexpectedly");
+
+        Self {
+            name: signature.name,
+            arity: signature.params.len(),
+            function_kind,
+            func,
+        }
+    }
+}
+
+// Wraps a Rust function annotated with `#[xpath_fn]` and turns it
+// into a StaticFunctionDescription
+#[macro_export]
+macro_rules! wrap_xpath_fn {
+    ($function:path, $kind:expr, $namespaces:path) => {{
+        use $function as wrapped_function;
+        $crate::context::StaticFunctionDescription::new(
+            wrapped_function::WRAPPER,
+            wrapped_function::SIGNATURE,
+            $kind,
+            $namespaces,
+        )
+    }};
 }
 
 impl StaticFunctionDescription {
     fn functions(&self) -> Vec<StaticFunction> {
-        if let Some(function_type) = &self.function_type {
-            match function_type {
-                FunctionType::ItemFirst => {
+        if let Some(function_kind) = &self.function_kind {
+            match function_kind {
+                FunctionKind::ItemFirst => {
                     vec![
                         StaticFunction {
                             name: self.name.clone(),
@@ -49,7 +90,7 @@ impl StaticFunctionDescription {
                         },
                     ]
                 }
-                FunctionType::ItemLast => {
+                FunctionKind::ItemLast => {
                     vec![
                         StaticFunction {
                             name: self.name.clone(),
@@ -65,7 +106,7 @@ impl StaticFunctionDescription {
                         },
                     ]
                 }
-                FunctionType::Position => {
+                FunctionKind::Position => {
                     vec![StaticFunction {
                         name: self.name.clone(),
                         arity: self.arity,
@@ -73,7 +114,7 @@ impl StaticFunctionDescription {
                         func: self.func,
                     }]
                 }
-                FunctionType::Size => {
+                FunctionKind::Size => {
                     vec![StaticFunction {
                         name: self.name.clone(),
                         arity: self.arity,
@@ -154,9 +195,9 @@ pub(crate) struct StaticFunctions {
 }
 
 impl StaticFunctions {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(namespaces: &Namespaces) -> Self {
         let mut by_name = HashMap::new();
-        let descriptions = static_function_descriptions();
+        let descriptions = static_function_descriptions(namespaces);
         let mut by_index = Vec::new();
         for description in descriptions {
             by_index.extend(description.functions());

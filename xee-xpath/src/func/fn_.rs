@@ -1,9 +1,12 @@
 use std::rc::Rc;
 
+use xee_xpath_ast::Namespaces;
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::{FunctionType, StaticFunctionDescription};
+use crate::wrap_xpath_fn;
+
+use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
     data::{ContextTryInto, Item, Sequence, ValueError},
     Atomic, DynamicContext, Error, Node, Value,
@@ -194,115 +197,127 @@ fn false_() -> bool {
 //     }
 // }
 
-pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
+pub(crate) fn static_function_descriptions(
+    namespaces: &Namespaces,
+) -> Vec<StaticFunctionDescription> {
     vec![
-        StaticFunctionDescription {
-            name: ast::Name::new("my_function".to_string(), None),
-            arity: 2,
-            function_type: None,
-            func: wrapper_my_function,
-        },
+        wrap_xpath_fn!(my_function, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("my_function".to_string(), None),
+        //     arity: 2,
+        //     function_kind: None,
+        //     func: wrapper_my_function,
+        // },
         StaticFunctionDescription {
             name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
-            function_type: Some(FunctionType::Position),
+            function_kind: Some(FunctionKind::Position),
             func: bound_position,
         },
         StaticFunctionDescription {
             name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
-            function_type: Some(FunctionType::Size),
+            function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },
-        StaticFunctionDescription {
-            name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
-            func: wrapper_local_name,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
-            func: wrapper_namespace_uri,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: None,
-            func: wrapper_count,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
-            func: wrapper_root,
-        },
+        wrap_xpath_fn!(local_name, Some(FunctionKind::ItemFirst), namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("local-name".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: Some(FunctionKind::ItemFirst),
+        //     func: wrapper_local_name,
+        // },
+        wrap_xpath_fn!(namespace_uri, Some(FunctionKind::ItemFirst), namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("namespace-uri".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: Some(FunctionKind::ItemFirst),
+        //     func: wrapper_namespace_uri,
+        // },
+        wrap_xpath_fn!(count, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("count".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: None,
+        //     func: wrapper_count,
+        // },
+        wrap_xpath_fn!(root, Some(FunctionKind::ItemFirst), namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: Some(FunctionKind::ItemFirst),
+        //     func: wrapper_root,
+        // },
         StaticFunctionDescription {
             name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
+            function_kind: Some(FunctionKind::ItemFirst),
             func: string,
         },
         StaticFunctionDescription {
             name: ast::Name::new("string".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
+            function_kind: Some(FunctionKind::ItemFirst),
             func: string,
         },
-        StaticFunctionDescription {
-            name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: None,
-            func: wrapper_exists,
-        },
+        wrap_xpath_fn!(exists, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("exists".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: None,
+        //     func: wrapper_exists,
+        // },
         StaticFunctionDescription {
             name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
-            function_type: None,
+            function_kind: None,
             func: exactly_one,
         },
-        StaticFunctionDescription {
-            name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: None,
-            func: wrapper_empty,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_type: Some(FunctionType::ItemFirst),
-            func: wrapper_generate_id,
-        },
+        wrap_xpath_fn!(empty, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("empty".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: None,
+        //     func: wrapper_empty,
+        // },
+        wrap_xpath_fn!(generate_id, Some(FunctionKind::ItemFirst), namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("generate-id".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 1,
+        //     function_kind: Some(FunctionKind::ItemFirst),
+        //     func: wrapper_generate_id,
+        // },
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
-            function_type: None,
+            function_kind: None,
             func: not,
         },
         StaticFunctionDescription {
             name: ast::Name::new("untypedAtomic".to_string(), Some(XS_NAMESPACE.to_string())),
             arity: 1,
-            function_type: None,
+            function_kind: None,
             func: untyped_atomic,
         },
         StaticFunctionDescription {
             name: ast::Name::new("error".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 0,
-            function_type: None,
+            function_kind: None,
             func: error,
         },
-        StaticFunctionDescription {
-            name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 0,
-            function_type: None,
-            func: wrapper_true_,
-        },
-        StaticFunctionDescription {
-            name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 0,
-            function_type: None,
-            func: wrapper_false_,
-        },
+        wrap_xpath_fn!(true_, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("true".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 0,
+        //     function_kind: None,
+        //     func: wrapper_true_,
+        // },
+        wrap_xpath_fn!(false_, None, namespaces),
+        // StaticFunctionDescription {
+        //     name: ast::Name::new("false".to_string(), Some(FN_NAMESPACE.to_string())),
+        //     arity: 0,
+        //     function_kind: None,
+        //     func: wrapper_false_,
+        // },
     ]
 }
