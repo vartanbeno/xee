@@ -1,7 +1,6 @@
-use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, LitStr, Result,
+    LitStr, Result,
 };
 
 use xee_xpath_ast::ast::{parse_signature, Signature};

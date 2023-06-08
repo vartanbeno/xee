@@ -7,10 +7,7 @@ mod parse;
 mod wrapper;
 
 use quote::quote;
-use syn::{
-    parse::{Parse, ParseStream},
-    parse_macro_input, Result,
-};
+use syn::parse_macro_input;
 
 use parse::XPathFnOptions;
 use wrapper::xpath_fn_wrapper;
