@@ -14,7 +14,6 @@ homepage = "https://github.com/Paligo/xee-xpath"
 [dependencies]
 ahash = "0.8.3"
 arrayvec = "0.7.2"
-blanket = "0.2.0"
 miette = { workspace = true }
 next-gen = "0.1.1"
 nonempty = "0.8.1"
@@ -22,10 +21,7 @@ num = "0.4.0"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
 ordered-float = "3.6.0"
-pest = "2.5.6"
-pest_derive = "2.5.6"
 rust_decimal = "1.29.1"
-syn = { version = "2.0.18", features = ["full"] }
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast"}
@@ -37,4 +33,3 @@ rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = "1.29.1"
-syn = { version = "2.0.18", features = ["full", "extra-traits"] }
