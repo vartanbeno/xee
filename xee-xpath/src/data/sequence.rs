@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use std::cell::{Ref, RefCell};
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::vec;
 use xot::Xot;

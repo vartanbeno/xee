@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-use std::cell::Ref;
 use std::rc::Rc;
 use xot::Xot;
 
@@ -8,7 +6,7 @@ use super::error::ValueError;
 use super::function::{Closure, Step};
 use super::item::Item;
 use super::node::Node;
-use super::sequence::{InnerSequence, Sequence};
+use super::sequence::Sequence;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
