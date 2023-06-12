@@ -73,8 +73,8 @@ pub(crate) enum TestCaseEnvironment {
     Ref(EnvironmentRef),
 }
 
-#[derive(Debug)]
-pub(crate) struct EnvironmentRef {
+#[derive(Debug, Clone)]
+pub struct EnvironmentRef {
     pub(crate) ref_: String,
 }
 

@@ -1,13 +1,17 @@
 use derive_builder::Builder;
-use miette::Result;
 use std::path::Path;
-use xee_xpath::{DynamicContext, Error, Item, Name, Namespaces, StaticContext, Value, XPath};
+use xee_xpath::{
+    DynamicContext, Error as XPathError, Item, Name, Namespaces, StaticContext, Value, XPath,
+};
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
 use crate::environment::{EnvironmentSpecIterator, SourceCache};
+use crate::error::Error;
 use crate::qt;
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub(crate) struct KnownDependencies {
@@ -65,6 +69,17 @@ impl RunContext {
             known_dependencies: KnownDependencies::default(),
             verbose: false,
         }
+    }
+
+    pub(crate) fn from_path(path: &Path) -> Result<Self> {
+        let mut xot = Xot::new();
+        let catalog = qt::Catalog::load_from_file(&mut xot, path)?;
+        Ok(RunContextBuilder::default()
+            .xot(xot)
+            .catalog(catalog)
+            .verbose(false)
+            .build()
+            .unwrap())
     }
 }
 
@@ -165,7 +180,7 @@ impl qt::TestCase {
     ) -> Result<Option<Item>> {
         let environment_specs = self
             .environment_specs(&run_context.catalog, test_set)
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>>>()?;
         let xot = &mut run_context.xot;
         let source_cache = &mut run_context.source_cache;
         for environment_spec in environment_specs {
@@ -184,7 +199,7 @@ impl qt::TestCase {
     ) -> Result<Vec<(Name, Value)>> {
         let environment_specs = self
             .environment_specs(&run_context.catalog, test_set)
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>>>()?;
         let mut variables = Vec::new();
         let xot = &mut run_context.xot;
         let source_cache = &mut run_context.source_cache;
@@ -194,7 +209,7 @@ impl qt::TestCase {
         Ok(variables)
     }
 
-    fn run_xpath(expr: &qt::XPathExpr) -> Result<Value, Error> {
+    fn run_xpath(expr: &qt::XPathExpr) -> std::result::Result<Value, XPathError> {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let xpath = XPath::new(&static_context, &expr.0)?;

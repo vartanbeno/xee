@@ -1,17 +1,15 @@
 use fxhash::FxHashMap;
-use miette::{miette, IntoDiagnostic, Result, WrapErr};
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{BufReader, Read};
 use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Name;
 use xee_xpath::Value;
-
 use xee_xpath::{Item, Node};
 use xot::Xot;
 
 use crate::collection::FxIndexMap;
+use crate::error::{Error, Result};
 use crate::qt;
 use crate::qt::EnvironmentSpec;
 use crate::qt::Source;
@@ -98,9 +96,8 @@ impl<'a> Iterator for EnvironmentSpecIterator<'a> {
                         return Some(Ok(environment_spec));
                     }
                 }
-                Some(Err(miette!(
-                    "Unknown environment reference: {}",
-                    environment_ref
+                Some(Err(Error::UnknownEnvironmentReference(
+                    environment_ref.clone(),
                 )))
             }
         }
@@ -141,19 +138,11 @@ impl Source {
             return Ok(*node);
         }
 
-        let xml_file = File::open(&full_path).into_diagnostic().wrap_err_with(|| {
-            format!("Cannot open XML file for source: {}", full_path.display())
-        })?;
+        let xml_file = File::open(&full_path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
-        buf_reader
-            .read_to_string(&mut xml)
-            .into_diagnostic()
-            .wrap_err("Cannot read XML file for source")?;
-        let root = xot
-            .parse(&xml)
-            .into_diagnostic()
-            .wrap_err("Cannot parse XML file for source")?;
+        buf_reader.read_to_string(&mut xml)?;
+        let root = xot.parse(&xml)?;
         let node = Node::Xot(root);
 
         source_cache.nodes.insert(full_path, node);

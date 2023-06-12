@@ -1,7 +1,11 @@
 use thiserror::Error;
 
+use crate::qt;
+
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Unknown environment reference")]
+    UnknownEnvironmentReference(qt::EnvironmentRef),
     #[error("Xee XPath error")]
     XeeXPath(xee_xpath::Error),
     #[error("Xot error")]
@@ -9,6 +13,8 @@ pub enum Error {
     #[error("IO error")]
     IO(std::io::Error),
 }
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 // turn any IO error into Error
 impl From<std::io::Error> for Error {

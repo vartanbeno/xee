@@ -12,10 +12,8 @@ use xot::Xot;
 
 use crate::assert;
 use crate::environment::SharedEnvironments;
-use crate::error::Error;
+use crate::error::Result;
 use crate::qt;
-
-type Result<T> = std::result::Result<T, Error>;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
