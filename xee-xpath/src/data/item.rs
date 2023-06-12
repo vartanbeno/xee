@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::atomic::Atomic;
+use super::atomic::{Atomic, OutputAtomic};
 use super::error::ValueError;
 use super::function::Closure;
 use super::node::Node;
@@ -17,7 +17,32 @@ pub enum Item {
     Node(Node),
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum OutputItem {
+    Atomic(OutputAtomic),
+    Function(Closure),
+    Node(Node),
+}
+
+impl From<OutputItem> for Item {
+    fn from(item: OutputItem) -> Self {
+        match item {
+            OutputItem::Atomic(a) => Item::Atomic(a.into()),
+            OutputItem::Function(f) => Item::Function(Rc::new(f)),
+            OutputItem::Node(n) => Item::Node(n),
+        }
+    }
+}
+
 impl Item {
+    pub fn to_output(&self) -> OutputItem {
+        match self {
+            Item::Atomic(a) => OutputItem::Atomic(a.to_output()),
+            Item::Function(f) => OutputItem::Function(f.as_ref().clone()),
+            Item::Node(n) => OutputItem::Node(*n),
+        }
+    }
+
     pub fn to_atomic(&self) -> Result<&Atomic> {
         match self {
             Item::Atomic(a) => Ok(a),
@@ -50,6 +75,27 @@ impl Item {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),
             Item::Function(f) => Value::Closure(f),
+        }
+    }
+}
+
+impl OutputItem {
+    pub fn to_atomic(&self) -> Result<&OutputAtomic> {
+        match self {
+            OutputItem::Atomic(a) => Ok(a),
+            _ => Err(ValueError::Type),
+        }
+    }
+    pub fn to_node(&self) -> Result<Node> {
+        match self {
+            OutputItem::Node(n) => Ok(*n),
+            _ => Err(ValueError::Type),
+        }
+    }
+    pub fn to_bool(&self) -> Result<bool> {
+        match self {
+            OutputItem::Atomic(a) => a.to_bool(),
+            _ => Err(ValueError::Type),
         }
     }
 }

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Name;
 use xee_xpath::Value;
-use xee_xpath::{Item, Node};
+use xee_xpath::{Node, OutputItem as Item};
 use xot::Xot;
 
 use crate::collection::FxIndexMap;

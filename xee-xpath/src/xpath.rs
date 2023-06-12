@@ -1,7 +1,7 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Atomic, FunctionId, Item, Node, Value};
+use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, OutputValue, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
@@ -68,61 +68,57 @@ impl XPath {
         }
     }
 
+    pub fn run_output(
+        &self,
+        dynamic_context: &DynamicContext,
+        context_item: Option<&OutputItem>,
+    ) -> Result<Vec<OutputItem>> {
+        let context_item: Option<Item> = context_item.map(|item| item.clone().into());
+        let value = self.run(dynamic_context, context_item.as_ref())?;
+        Ok(value.to_output().to_items())
+    }
+
     pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {
         self.run(dynamic_context, Some(&Item::Node(Node::Xot(node))))
     }
 
-    pub fn many(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Vec<Item>> {
-        let stack_value = self.run(dynamic_context, Some(item))?;
-        match stack_value {
-            // XXX this clone here is not great
-            Value::Sequence(seq) => Ok(seq.borrow().items.clone()),
-            Value::Node(node) => Ok(vec![Item::Node(node)]),
-            Value::Atomic(atomic) => Ok(vec![Item::Atomic(atomic)]),
-            Value::Closure(closure) => Ok(vec![Item::Function(closure)]),
-            Value::Step(..) => panic!("step not expected"),
-        }
+    pub fn many(
+        &self,
+        dynamic_context: &DynamicContext,
+        item: &OutputItem,
+    ) -> Result<Vec<OutputItem>> {
+        self.run_output(dynamic_context, Some(item))
     }
 
-    pub fn one(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Item> {
-        let stack_value = self.run(dynamic_context, Some(item))?;
-        match stack_value {
-            Value::Sequence(seq) => {
-                let borrowed = seq.borrow();
-                let value = borrowed.singleton();
-                match value {
-                    Ok(value) => Ok(value.clone()),
-                    Err(_) => Err(Error::XPTY0004 {
-                        src: self.program.src.clone(),
-                        span: (0, 0).into(),
-                    }),
-                }
-            }
-            Value::Node(node) => Ok(Item::Node(node)),
-            Value::Atomic(atomic) => Ok(Item::Atomic(atomic)),
-            Value::Closure(closure) => Ok(Item::Function(closure)),
-            Value::Step(..) => panic!("step not expected"),
-        }
+    pub fn one(&self, dynamic_context: &DynamicContext, item: &OutputItem) -> Result<OutputItem> {
+        let mut items = self.run_output(dynamic_context, Some(item))?;
+        Ok(if items.len() == 1 {
+            items.pop().unwrap()
+        } else {
+            return Err(Error::XPTY0004 {
+                src: self.program.src.clone(),
+                span: (0, 0).into(),
+            });
+        })
     }
 
-    pub fn option(&self, dynamic_context: &DynamicContext, item: &Item) -> Result<Option<Item>> {
-        let stack_value = self.run(dynamic_context, Some(item))?;
-        match stack_value {
-            Value::Sequence(seq) => {
-                let borrowed = seq.borrow();
-                let value = borrowed.singleton();
-                // XXX not ideal that we turn an error back
-                // into an option, perhaps
-                match value {
-                    Ok(value) => Ok(Some(value.clone())),
-                    Err(_) => Ok(None),
-                }
-            }
-            Value::Node(node) => Ok(Some(Item::Node(node))),
-            Value::Atomic(atomic) => Ok(Some(Item::Atomic(atomic))),
-            Value::Closure(closure) => Ok(Some(Item::Function(closure))),
-            Value::Step(..) => panic!("step not expected"),
-        }
+    pub fn option(
+        &self,
+        dynamic_context: &DynamicContext,
+        item: &OutputItem,
+    ) -> Result<Option<OutputItem>> {
+        let mut items = self.run_output(dynamic_context, Some(item))?;
+
+        Ok(if items.is_empty() {
+            None
+        } else if items.len() == 1 {
+            Some(items.pop().unwrap())
+        } else {
+            return Err(Error::XPTY0004 {
+                src: self.program.src.clone(),
+                span: (0, 0).into(),
+            });
+        })
     }
 }
 

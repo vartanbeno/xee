@@ -9,7 +9,7 @@ use crate::context::DynamicContext;
 
 use super::atomic::Atomic;
 use super::error::ValueError;
-use super::item::Item;
+use super::item::{Item, OutputItem};
 use super::node::Node;
 use super::value::Value;
 
@@ -43,6 +43,11 @@ impl Sequence {
     }
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
+    }
+
+    pub(crate) fn to_output(&self) -> Vec<OutputItem> {
+        let s = self.0.borrow();
+        s.items.iter().map(|i| i.to_output()).collect()
     }
 
     pub(crate) fn to_one(&self) -> Result<Item> {

@@ -7,12 +7,12 @@ mod node;
 mod sequence;
 mod value;
 
-pub use atomic::Atomic;
+pub use atomic::{Atomic, OutputAtomic};
 pub(crate) use convert::{ContextInto, ContextTryInto};
 pub use error::{ValueError, ValueResult};
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};
-pub use item::Item;
+pub use item::{Item, OutputItem};
 pub use node::Node;
 pub use sequence::{InnerSequence, Sequence};
-pub use value::Value;
+pub use value::{OutputValue, Value};

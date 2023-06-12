@@ -1,17 +1,16 @@
 use derive_builder::Builder;
 use std::path::Path;
 use xee_xpath::{
-    DynamicContext, Error as XPathError, Item, Name, Namespaces, StaticContext, Value, XPath,
+    DynamicContext, Error as XPathError, Name, Namespaces, OutputItem as Item, StaticContext,
+    Value, XPath,
 };
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
 use crate::environment::{EnvironmentSpecIterator, SourceCache};
-use crate::error::Error;
+use crate::error::Result;
 use crate::qt;
-
-type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub(crate) struct KnownDependencies {
@@ -120,11 +119,7 @@ impl qt::TestCase {
         false
     }
 
-    pub(crate) fn run<'a>(
-        &'a self,
-        run_context: &mut RunContext,
-        test_set: &'a qt::TestSet,
-    ) -> TestOutcome<'a> {
+    pub(crate) fn run(&self, run_context: &mut RunContext, test_set: &qt::TestSet) -> TestOutcome {
         let namespaces = Namespaces::default();
         let variables = self.variables(run_context, test_set);
         let variables = match variables {
@@ -156,7 +151,7 @@ impl qt::TestCase {
 
         let dynamic_context =
             DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
-        let result = xpath.run(&dynamic_context, context_item.as_ref());
+        let result = xpath.run_output(&dynamic_context, context_item.as_ref());
         self.result.assert_result(&mut run_context.xot, &result)
     }
 
@@ -234,7 +229,7 @@ mod tests {
     use super::*;
     const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");
 
-    fn run(mut xot: Xot, test_set: &'_ qt::TestSet) -> TestOutcome<'_> {
+    fn run(mut xot: Xot, test_set: &qt::TestSet) -> TestOutcome {
         let catalog =
             qt::Catalog::load_from_xml(&mut xot, &PathBuf::from("my/catalog.xml"), CATALOG_FIXTURE)
                 .unwrap();
@@ -294,7 +289,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::True(
-                &assert::AssertTrue,
+                assert::AssertTrue,
                 Value::Atomic(Atomic::Boolean(false))
             ))
         );
@@ -519,7 +514,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
-                &assert::AssertEq::new(qt::XPathExpr("6".to_string())),
+                assert::AssertEq::new(qt::XPathExpr("6".to_string())),
                 Value::Atomic(Atomic::Integer(5))
             ))
         );
@@ -629,7 +624,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Count(
-                &assert::AssertCount::new(8),
+                assert::AssertCount::new(8),
                 AssertCountFailure::WrongCount(1)
             ))
         );
@@ -681,7 +676,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::StringValue(
-                &assert::AssertStringValue::new("foo2".to_string()),
+                assert::AssertStringValue::new("foo2".to_string()),
                 AssertStringValueFailure::WrongStringValue("foo".to_string())
             ))
         );
@@ -843,7 +838,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Xml(
-                &assert::AssertXml::new("<p>Something else!</p>".to_string()),
+                assert::AssertXml::new("<p>Something else!</p>".to_string()),
                 assert::AssertXmlFailure::WrongXml(
                     "<sequence><p>Hello world!</p></sequence>".to_string()
                 )

@@ -1,41 +1,22 @@
 use miette::{miette, Result};
-use xee_xpath::{Atomic, Item, Node, Value};
+use xee_xpath::{Node, OutputItem as Item};
 use xot::Xot;
 
-// represent a stack value as XML, if possible, wrapped
+// represent items as XML, if possible, wrapped
 // in a sequence tag
-pub(crate) fn serialize(xot: &Xot, value: &Value) -> Result<String> {
-    let xmls = match value {
-        Value::Atomic(Atomic::Empty) => vec![],
-        Value::Node(Node::Xot(node)) => {
+pub(crate) fn serialize(xot: &Xot, items: &[Item]) -> Result<String> {
+    let mut xmls = Vec::with_capacity(items.len());
+    for item in items {
+        if let Item::Node(Node::Xot(node)) = item {
             let xml_value = xot.to_string(*node);
             if let Ok(xml_value) = xml_value {
-                vec![xml_value]
+                xmls.push(xml_value);
             } else {
                 return Err(miette!("cannot be represented as XML"));
             }
-        }
-        Value::Sequence(seq) => {
-            let seq = seq.borrow();
-            let mut xmls = Vec::with_capacity(seq.len());
-            for item in seq.as_slice().iter() {
-                if let Item::Node(Node::Xot(node)) = item {
-                    let xml_value = xot.to_string(*node);
-                    if let Ok(xml_value) = xml_value {
-                        xmls.push(xml_value);
-                    } else {
-                        return Err(miette!("cannot be represented as XML"));
-                    }
-                } else {
-                    return Err(miette!("cannot be represented as XML"));
-                }
-            }
-            xmls
-        }
-        _ => {
-            // cannot be represented as XML
+        } else {
             return Err(miette!("cannot be represented as XML"));
         }
-    };
+    }
     Ok(format!("<sequence>{}</sequence>", xmls.join("")))
 }

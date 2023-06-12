@@ -2,7 +2,8 @@ use miette::Diagnostic;
 use std::fmt;
 
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Namespaces, Sequence, StaticContext, Value, ValueError, XPath,
+    DynamicContext, Error, Namespaces, OutputAtomic as Atomic, OutputItem as Item, Sequence,
+    StaticContext, ValueError, XPath,
 };
 use xot::Xot;
 
@@ -16,10 +17,10 @@ pub(crate) enum UnexpectedError {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum TestOutcome<'a> {
+pub(crate) enum TestOutcome {
     Passed,
     PassedWithUnexpectedError(UnexpectedError),
-    Failed(Failure<'a>),
+    Failed(Failure),
     RuntimeError(Error),
     CompilationError(Error),
     UnsupportedExpression(Error),
@@ -27,18 +28,24 @@ pub(crate) enum TestOutcome<'a> {
     EnvironmentError(String),
 }
 
+impl TestOutcome {
+    pub(crate) fn is_passed(&self) -> bool {
+        matches!(self, Self::Passed | Self::PassedWithUnexpectedError(..))
+    }
+}
+
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
         match result {
-            Ok(value) => self.assert_value(xot, value.clone()),
+            Ok(items) => self.assert_value(xot, items),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome;
+    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertAnyOf(Vec<TestCaseResult>);
 
 impl AssertAnyOf {
@@ -48,7 +55,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -58,17 +65,17 @@ impl Assertable for AssertAnyOf {
             }
         }
         match result {
-            Ok(_value) => TestOutcome::Failed(Failure::AnyOf(self, failed_test_results)),
+            Ok(_value) => TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results)),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
         unreachable!();
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertAllOf(Vec<TestCaseResult>);
 
 impl AssertAllOf {
@@ -78,7 +85,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -89,12 +96,12 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
         unreachable!();
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct AssertNot(Box<TestCaseResult>);
 
 impl AssertNot {
@@ -109,10 +116,10 @@ impl fmt::Debug for AssertNot {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Assert(qt::XPathExpr);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertEq(qt::XPathExpr);
 
 impl AssertEq {
@@ -122,15 +129,15 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
-        let expected_value = run_xpath(&self.0);
+    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        let expected_items = run_xpath(&self.0);
 
-        match expected_value {
-            Ok(expected_value) => {
-                if expected_value == value {
+        match expected_items {
+            Ok(expected_items) => {
+                if expected_items == items {
                     TestOutcome::Passed
                 } else {
-                    TestOutcome::Failed(Failure::Eq(self, value))
+                    TestOutcome::Failed(Failure::Eq(self.clone(), items.to_vec()))
                 }
             }
             Err(error) => TestOutcome::UnsupportedExpression(error),
@@ -138,7 +145,7 @@ impl Assertable for AssertEq {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertCount(usize);
 
 impl AssertCount {
@@ -148,31 +155,26 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
-        let sequence: Result<Sequence, ValueError> = (&value).try_into();
-        if let Ok(sequence) = sequence {
-            let found_len = sequence.borrow().len();
-            if found_len == self.0 {
-                TestOutcome::Passed
-            } else {
-                TestOutcome::Failed(Failure::Count(
-                    self,
-                    AssertCountFailure::WrongCount(found_len),
-                ))
-            }
+    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        let found_len = items.len();
+        if found_len == self.0 {
+            TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::Count(self, AssertCountFailure::WrongValue(value)))
+            TestOutcome::Failed(Failure::Count(
+                self.clone(),
+                AssertCountFailure::WrongCount(found_len),
+            ))
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertDeepEq(qt::XPathExpr);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertPermutation(qt::XPathExpr);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertXml(String);
 
 impl AssertXml {
@@ -182,13 +184,16 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome {
-        let xml = serialize(xot, &value);
+    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        let xml = serialize(xot, items);
 
         let xml = if let Ok(xml) = xml {
             xml
         } else {
-            return TestOutcome::Failed(Failure::Xml(self, AssertXmlFailure::WrongValue(value)));
+            return TestOutcome::Failed(Failure::Xml(
+                self.clone(),
+                AssertXmlFailure::WrongValue(items.to_vec()),
+            ));
         };
         // also wrap expected XML in a sequence element
         let expected_xml = format!("<sequence>{}</sequence>", self.0);
@@ -207,24 +212,24 @@ impl Assertable for AssertXml {
         if c {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::Xml(self, AssertXmlFailure::WrongXml(xml)))
+            TestOutcome::Failed(Failure::Xml(self.clone(), AssertXmlFailure::WrongXml(xml)))
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertEmpty;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertSerializationMatches;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertSerializationError(String);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertType(String);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertTrue;
 
 impl AssertTrue {
@@ -234,16 +239,16 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
-        if matches!(value, Value::Atomic(Atomic::Boolean(true))) {
+    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(true))) {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::True(self, value))
+            TestOutcome::Failed(Failure::True(self.clone(), items.to_vec()))
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertFalse;
 
 impl AssertFalse {
@@ -253,16 +258,16 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(&self, _xot: &mut Xot, value: Value) -> TestOutcome {
-        if matches!(value, Value::Atomic(Atomic::Boolean(false))) {
+    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(false))) {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::False(self, value))
+            TestOutcome::Failed(Failure::False(self.clone(), items.to_vec()))
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertStringValue(String);
 
 impl AssertStringValue {
@@ -272,46 +277,34 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(&self, xot: &mut Xot, value: Value) -> TestOutcome {
-        let seq: Result<Sequence, ValueError> = (&value).try_into();
-        match seq {
-            Ok(seq) => {
-                let strings = seq
-                    .borrow()
-                    .as_slice()
-                    .iter()
-                    .map(|item| item.string_value(xot))
-                    .collect::<Result<Vec<_>, _>>();
-                match strings {
-                    Ok(strings) => {
-                        let joined = strings.join(" ");
-                        if joined == self.0 {
-                            TestOutcome::Passed
-                        } else {
-                            // the string value is not what we expected
-                            TestOutcome::Failed(Failure::StringValue(
-                                self,
-                                AssertStringValueFailure::WrongStringValue(joined),
-                            ))
-                        }
-                    }
-                    // we weren't able to produce a string value
-                    Err(_) => TestOutcome::Failed(Failure::StringValue(
-                        self,
-                        AssertStringValueFailure::WrongValue(value),
-                    )),
+    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome {
+        let strings = items
+            .iter()
+            .map(|item| item.string_value(xot))
+            .collect::<Result<Vec<_>, _>>();
+        match strings {
+            Ok(strings) => {
+                let joined = strings.join(" ");
+                if joined == self.0 {
+                    TestOutcome::Passed
+                } else {
+                    // the string value is not what we expected
+                    TestOutcome::Failed(Failure::StringValue(
+                        self.clone(),
+                        AssertStringValueFailure::WrongStringValue(joined),
+                    ))
                 }
             }
-            // we weren't able to produce a sequence
+            // we weren't able to produce a string value
             Err(_) => TestOutcome::Failed(Failure::StringValue(
-                self,
-                AssertStringValueFailure::WrongValue(value),
+                self.clone(),
+                AssertStringValueFailure::WrongValue(items.to_vec()),
             )),
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertError(String);
 
 impl AssertError {
@@ -321,9 +314,9 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<Value, Error>) -> TestOutcome {
+    fn assert_result(&self, _xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
         match result {
-            Ok(value) => TestOutcome::Failed(Failure::Error(self, value.clone())),
+            Ok(items) => TestOutcome::Failed(Failure::Error(self.clone(), items.to_vec())),
             Err(error) => {
                 // all errors are officially a pass, but we check whether the error
                 // code matches too
@@ -343,12 +336,12 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _value: Value) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
         unreachable!();
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum TestCaseResult {
     AnyOf(AssertAnyOf),
     AllOf(AssertAllOf),
@@ -426,7 +419,7 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         xot: &mut Xot,
-        result: &Result<Value, Error>,
+        result: &Result<&[Item], Error>,
     ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),
@@ -449,35 +442,35 @@ impl TestCaseResult {
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertCountFailure {
     WrongCount(usize),
-    WrongValue(Value),
+    WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertStringValueFailure {
     WrongStringValue(String),
-    WrongValue(Value),
+    WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum AssertXmlFailure {
     WrongXml(String),
-    WrongValue(Value),
+    WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum Failure<'a> {
-    AnyOf(&'a AssertAnyOf, Vec<TestOutcome<'a>>),
-    Not(&'a AssertNot, Box<TestOutcome<'a>>),
-    Eq(&'a AssertEq, Value),
-    True(&'a AssertTrue, Value),
-    False(&'a AssertFalse, Value),
-    Count(&'a AssertCount, AssertCountFailure),
-    StringValue(&'a AssertStringValue, AssertStringValueFailure),
-    Xml(&'a AssertXml, AssertXmlFailure),
-    Error(&'a AssertError, Value),
+pub(crate) enum Failure {
+    AnyOf(AssertAnyOf, Vec<TestOutcome>),
+    Not(AssertNot, Box<TestOutcome>),
+    Eq(AssertEq, Vec<Item>),
+    True(AssertTrue, Vec<Item>),
+    False(AssertFalse, Vec<Item>),
+    Count(AssertCount, AssertCountFailure),
+    StringValue(AssertStringValue, AssertStringValueFailure),
+    Xml(AssertXml, AssertXmlFailure),
+    Error(AssertError, Vec<Item>),
 }
 
-impl<'a> fmt::Display for Failure<'a> {
+impl<'a> fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Failure::AnyOf(a, outcomes) => {
@@ -545,11 +538,11 @@ impl<'a> fmt::Display for Failure<'a> {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr) -> Result<Value, Error> {
+fn run_xpath(expr: &qt::XPathExpr) -> Result<Vec<Item>, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
     let xot = Xot::new();
     let dynamic_context = DynamicContext::new(&xot, &static_context);
-    xpath.run(&dynamic_context, None)
+    xpath.run_output(&dynamic_context, None)
 }

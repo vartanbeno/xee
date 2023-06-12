@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{
-    ConvertError, DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext,
+    ConvertError, DynamicContext, Namespaces, Node, OutputItem as Item, Queries, Query,
+    StaticContext,
 };
 use xot::Xot;
 
@@ -18,7 +19,7 @@ use crate::qt;
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
 impl qt::TestSet {
-    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file<'a>(xot: &'a mut Xot, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
@@ -34,7 +35,7 @@ impl qt::TestSet {
         Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml<'a>(xot: &'a mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
@@ -58,7 +59,7 @@ impl qt::TestSet {
 
 impl qt::Catalog {
     // XXX some duplication here with qt::TestSet
-    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file<'a>(xot: &'a mut Xot, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
@@ -66,7 +67,7 @@ impl qt::Catalog {
         Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml<'a>(xot: &'a mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);

@@ -1,5 +1,5 @@
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Item, ValueError};
+use crate::data::{OutputItem as Item, ValueError};
 use crate::error::Error;
 use crate::error::Result;
 use crate::xpath::XPath;
@@ -318,7 +318,7 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
-    use crate::data::{Atomic, Node};
+    use crate::data::{Node, OutputAtomic as Atomic};
 
     #[test]
     fn test_one_query() {

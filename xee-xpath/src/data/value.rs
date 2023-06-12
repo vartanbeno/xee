@@ -1,10 +1,10 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::atomic::Atomic;
+use super::atomic::{Atomic, OutputAtomic};
 use super::error::ValueError;
 use super::function::{Closure, Step};
-use super::item::Item;
+use super::item::{Item, OutputItem};
 use super::node::Node;
 use super::sequence::Sequence;
 
@@ -24,12 +24,32 @@ pub enum Value {
     Node(Node),
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum OutputValue {
+    Atomic(OutputAtomic),
+    Sequence(Vec<OutputItem>),
+    Closure(Closure),
+    Step(Step),
+    Node(Node),
+}
+
 impl Value {
     pub(crate) fn from_item(item: Item) -> Self {
         match item {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),
             Item::Function(f) => Value::Closure(f),
+        }
+    }
+
+    pub fn to_output(&self) -> OutputValue {
+        match self {
+            Value::Atomic(Atomic::Empty) => OutputValue::Sequence(vec![]),
+            Value::Atomic(a) => OutputValue::Atomic(a.to_output()),
+            Value::Sequence(s) => OutputValue::Sequence(s.to_output()),
+            Value::Closure(f) => OutputValue::Closure(f.as_ref().clone()),
+            Value::Step(s) => OutputValue::Step(s.as_ref().clone()),
+            Value::Node(n) => OutputValue::Node(*n),
         }
     }
 
@@ -114,6 +134,18 @@ impl Value {
             Value::Step(_) => Err(ValueError::Type)?,
         };
         Ok(value)
+    }
+}
+
+impl OutputValue {
+    pub(crate) fn to_items(self) -> Vec<OutputItem> {
+        match self {
+            OutputValue::Atomic(a) => vec![OutputItem::Atomic(a)],
+            OutputValue::Sequence(s) => s,
+            OutputValue::Closure(_) => todo!("cannot convert closure to items yet"),
+            OutputValue::Step(_) => panic!("cannot convert step to items"),
+            OutputValue::Node(n) => vec![OutputItem::Node(n)],
+        }
     }
 }
 

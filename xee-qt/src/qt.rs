@@ -64,7 +64,7 @@ pub(crate) struct Modification {
     pub(crate) description: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct XPathExpr(pub(crate) String);
 
 #[derive(Debug)]
