@@ -2,7 +2,7 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use miette::{miette, Diagnostic, IntoDiagnostic, Result};
+use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
@@ -30,7 +30,9 @@ fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdou
     }
     let verbose = run_context.verbose;
     let full_path = run_context.catalog.base_dir().join(path);
-    let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
+    let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)
+        .into_diagnostic()
+        .wrap_err("Could not load test set")?;
     if verbose {
         run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())?;
     } else {

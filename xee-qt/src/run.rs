@@ -1,16 +1,13 @@
 use derive_builder::Builder;
-use miette::{Diagnostic, Result};
+use miette::Result;
 use std::path::Path;
-use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Name, Namespaces, StaticContext, Value, XPath,
-};
+use xee_xpath::{DynamicContext, Error, Item, Name, Namespaces, StaticContext, Value, XPath};
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
 use crate::environment::{EnvironmentSpecIterator, SourceCache};
 use crate::qt;
-use crate::serialize::serialize;
 
 #[derive(Debug)]
 pub(crate) struct KnownDependencies {
@@ -213,6 +210,8 @@ mod tests {
     use std::io::Write;
     use std::path::PathBuf;
     use tempfile::tempdir;
+
+    use xee_xpath::{Atomic, Error};
 
     use crate::assert;
     use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};

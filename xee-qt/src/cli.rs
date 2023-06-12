@@ -1,8 +1,9 @@
 use clap::Parser;
-use miette::Result;
+use miette::{IntoDiagnostic, Result, WrapErr};
 use std::path::{Path, PathBuf};
 use xot::Xot;
 
+use crate::path::paths;
 use crate::qt;
 use crate::run::RunContextBuilder;
 use crate::ui::{run, run_path};
@@ -23,7 +24,9 @@ pub fn cli() -> Result<()> {
 
     if let Some((catalog_path, relative_path)) = paths(&path) {
         let mut xot = Xot::new();
-        let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
+        let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)
+            .into_diagnostic()
+            .wrap_err("Couild not load catalog")?;
         let run_context = RunContextBuilder::default()
             .xot(xot)
             .catalog(catalog)
@@ -39,18 +42,4 @@ pub fn cli() -> Result<()> {
         println!("no qttests catalog.xml found!");
     }
     Ok(())
-}
-
-fn paths(path: &Path) -> Option<(PathBuf, PathBuf)> {
-    // look for a directory which contains a `catalog.xml`. This
-    // is the first path buf. any remaining path components are
-    // a relative path
-    for ancestor in path.ancestors() {
-        let catalog = ancestor.join("catalog.xml");
-        if catalog.exists() {
-            let relative = path.strip_prefix(ancestor).unwrap();
-            return Some((catalog, relative.to_path_buf()));
-        }
-    }
-    None
 }

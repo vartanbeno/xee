@@ -1,4 +1,3 @@
-use miette::{IntoDiagnostic, Result, WrapErr};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -13,22 +12,19 @@ use xot::Xot;
 
 use crate::assert;
 use crate::environment::SharedEnvironments;
+use crate::error::Error;
 use crate::qt;
+
+type Result<T> = std::result::Result<T, Error>;
 
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
 impl qt::TestSet {
     pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
-        let xml_file = File::open(path)
-            .into_diagnostic()
-            .wrap_err("Cannot open XML file")?;
+        let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
-        buf_reader
-            .read_to_string(&mut xml)
-            .into_diagnostic()
-            .wrap_err("Cannot read XML file")?;
-
+        buf_reader.read_to_string(&mut xml)?;
         // // calculate real base dir
         // let base_dir = path
         //     .parent()
@@ -41,10 +37,7 @@ impl qt::TestSet {
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
-        let xot_root = xot
-            .parse(xml)
-            .into_diagnostic()
-            .wrap_err("Cannot parse XML")?;
+        let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
 
@@ -68,23 +61,15 @@ impl qt::TestSet {
 impl qt::Catalog {
     // XXX some duplication here with qt::TestSet
     pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
-        let xml_file = File::open(path)
-            .into_diagnostic()
-            .wrap_err("Cannot open XML file")?;
+        let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
-        buf_reader
-            .read_to_string(&mut xml)
-            .into_diagnostic()
-            .wrap_err("Cannot read XML file")?;
+        buf_reader.read_to_string(&mut xml)?;
         Self::load_from_xml(xot, path, &xml)
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
-        let xot_root = xot
-            .parse(xml)
-            .into_diagnostic()
-            .wrap_err("Cannot parse XML")?;
+        let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
 
@@ -130,7 +115,7 @@ fn test_set_query<'a>(
     Ok((queries, test_set_query))
 }
 
-fn convert_string(_: &Session, item: &Item) -> Result<String, ConvertError> {
+fn convert_string(_: &Session, item: &Item) -> std::result::Result<String, ConvertError> {
     Ok(item.to_atomic()?.to_string()?)
 }
 
