@@ -244,7 +244,7 @@ mod tests {
         test_case.run(&mut run_context, test_set)
     }
 
-    fn load(xot: &mut Xot, tmp_dir_path: &Path, test_cases_path: &Path) -> qt::TestSet {
+    fn load(xot: &mut Xot, test_cases_path: &Path) -> qt::TestSet {
         qt::TestSet::load_from_file(xot, test_cases_path).unwrap()
     }
 
@@ -739,7 +739,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
@@ -771,7 +771,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
@@ -804,7 +804,7 @@ mod tests {
         let mut data_file = File::create(tmp_dir.path().join("data.xml")).unwrap();
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
 
@@ -838,7 +838,7 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
 
         assert_eq!(
             run(xot, &test_set),
@@ -885,7 +885,7 @@ mod tests {
         .unwrap();
 
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
 
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
@@ -919,7 +919,7 @@ mod tests {
         write!(data_file, r#"<doc><p>Hello world!</p></doc>"#).unwrap();
 
         let mut xot = Xot::new();
-        let test_set = load(&mut xot, tmp_dir.path(), &test_cases_path);
+        let test_set = load(&mut xot, &test_cases_path);
 
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
     }
