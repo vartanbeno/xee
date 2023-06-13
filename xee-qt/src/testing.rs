@@ -1,23 +1,19 @@
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use xot::Xot;
 
+use crate::assert::TestOutcomes;
 use crate::error::{Error, Result};
 use crate::{path::paths, qt, run::RunContextBuilder};
 
-pub fn test_all(path: &str) -> Result<()> {
+fn try_test_all(path: &str) -> Result<()> {
     // This environment variable only exists because of the .cargo/config.toml
     // hack described here https://github.com/rust-lang/cargo/issues/3946'
     let workspace_dir = env::var("CARGO_WORKSPACE_DIR")?;
     let workspace_path = PathBuf::from(&workspace_dir);
     let qt3tests_path = workspace_path.join("vendor/qt3tests");
     let path = qt3tests_path.join(path);
-    let path = if path.extension().is_none() {
-        // add the xml postfix
-        path.with_extension("xml")
-    } else {
-        path
-    };
+    let path = path.with_extension("xml");
     let (catalog_path, relative_path) = paths(&path)?;
     let mut xot = Xot::new();
     let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
@@ -40,8 +36,15 @@ pub fn test_all(path: &str) -> Result<()> {
         }
     }
     if !outcomes.is_empty() {
-        Err(Error::TestFailures(full_path, outcomes))
+        Err(Error::TestFailures(path, TestOutcomes(outcomes)))
     } else {
         Ok(())
+    }
+}
+
+pub fn test_all(path: &str) {
+    match try_test_all(path) {
+        Ok(_) => {}
+        Err(e) => panic!("{}", e),
     }
 }
