@@ -51,7 +51,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         function_id: FunctionId,
         context_item: Option<&Item>,
-        arguments: &[Value],
+        arguments: &[Vec<Item>],
     ) {
         self.frames.push(Frame {
             function: function_id,
@@ -72,7 +72,7 @@ impl<'a> Interpreter<'a> {
         }
         // and any arguments
         for arg in arguments {
-            self.stack.push(arg.clone());
+            self.stack.push(Value::from_items(arg));
         }
     }
 

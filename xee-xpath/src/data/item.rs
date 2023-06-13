@@ -24,13 +24,19 @@ pub enum OutputItem {
     Node(Node),
 }
 
-impl From<OutputItem> for Item {
-    fn from(item: OutputItem) -> Self {
+impl From<&OutputItem> for Item {
+    fn from(item: &OutputItem) -> Self {
         match item {
             OutputItem::Atomic(a) => Item::Atomic(a.into()),
             OutputItem::Function(_f) => todo!("Cannot turn output functions into functions yet"),
-            OutputItem::Node(n) => Item::Node(n),
+            OutputItem::Node(n) => Item::Node(*n),
         }
+    }
+}
+
+impl From<OutputItem> for Item {
+    fn from(item: OutputItem) -> Self {
+        (&item).into()
     }
 }
 

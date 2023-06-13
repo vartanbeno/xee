@@ -527,7 +527,6 @@ mod tests {
     use super::*;
 
     use insta::assert_debug_snapshot;
-    use std::rc::Rc;
     use xot::Xot;
 
     use xee_xpath_ast::{ast, Namespaces};
@@ -537,7 +536,7 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
-        data::{Node, OutputItem},
+        data::{Item, Node, OutputAtomic, OutputItem},
         document::{Document, Documents, Uri},
     };
 
@@ -560,7 +559,7 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_with_variables(s: &str, variables: &[(ast::Name, Value)]) -> Result<Value> {
+    fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<OutputItem>)]) -> Result<Value> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let variable_names = variables
@@ -568,7 +567,7 @@ mod tests {
             .map(|(name, _)| name.clone())
             .collect::<Vec<_>>();
         let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
-        let context = DynamicContext::with_variables(&xot, &static_context, variables);
+        let context = DynamicContext::with_variables(&xot, &static_context, &variables);
         let xpath = XPath::new(context.static_context, s)?;
         xpath.run_value(&context, None)
     }
@@ -1296,7 +1295,7 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                Value::Atomic(Atomic::String(Rc::new("FOO".to_string())))
+                vec![OutputItem::Atomic(OutputAtomic::String("FOO".to_string()))]
             )],
         ))
     }
@@ -1308,11 +1307,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    Value::Atomic(Atomic::Integer(1))
+                    vec![OutputItem::Atomic(OutputAtomic::Integer(1))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    Value::Atomic(Atomic::Integer(2))
+                    vec![OutputItem::Atomic(OutputAtomic::Integer(2))]
                 )
             ]
         ))

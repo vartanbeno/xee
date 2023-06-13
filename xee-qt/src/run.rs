@@ -1,8 +1,7 @@
 use derive_builder::Builder;
 use std::path::Path;
 use xee_xpath::{
-    DynamicContext, Error as XPathError, Name, Namespaces, OutputItem as Item, StaticContext,
-    Value, XPath,
+    DynamicContext, Error as XPathError, Name, Namespaces, OutputItem as Item, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -191,7 +190,7 @@ impl qt::TestCase {
         &self,
         run_context: &mut RunContext,
         test_set: &qt::TestSet,
-    ) -> Result<Vec<(Name, Value)>> {
+    ) -> Result<Vec<(Name, Vec<Item>)>> {
         let environment_specs = self
             .environment_specs(&run_context.catalog, test_set)
             .collect::<Result<Vec<_>>>()?;

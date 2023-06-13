@@ -34,6 +34,10 @@ impl Sequence {
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {
         Self::new(InnerSequence::from_vec(items))
     }
+    pub(crate) fn from_items(items: &[Item]) -> Self {
+        Self::new(InnerSequence::from_items(items))
+    }
+
     pub(crate) fn from_item(item: Item) -> Self {
         Self::new(InnerSequence::from_item(item))
     }
@@ -91,6 +95,12 @@ impl InnerSequence {
 
     pub fn as_slice(&self) -> &[Item] {
         &self.items
+    }
+
+    pub(crate) fn from_items(items: &[Item]) -> Self {
+        Self {
+            items: items.to_vec(),
+        }
     }
 
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {

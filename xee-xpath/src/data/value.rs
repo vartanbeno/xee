@@ -10,10 +10,8 @@ use super::sequence::Sequence;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
-// Speculation: A rc value would be a lot smaller, though at the
-// cost of indirection. So I'm not sure it would be faster; we'd get
-// faster stack operations but slower heap access and less cache locality.
-
+// TODO: the use in the macro needs to keep this public, needs to be investigated
+// further.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Atomic(Atomic),
@@ -30,6 +28,16 @@ impl Value {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),
             Item::Function(f) => Value::Closure(f),
+        }
+    }
+
+    pub(crate) fn from_items(items: &[Item]) -> Self {
+        if items.is_empty() {
+            Value::Atomic(Atomic::Empty)
+        } else if items.len() == 1 {
+            Value::from_item(items[0].clone())
+        } else {
+            Value::Sequence(Sequence::from_items(items))
         }
     }
 

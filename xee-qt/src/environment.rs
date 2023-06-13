@@ -4,7 +4,6 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Name;
-use xee_xpath::Value;
 use xee_xpath::{Node, OutputItem as Item};
 use xot::Xot;
 
@@ -33,13 +32,13 @@ impl EnvironmentSpec {
         &self,
         xot: &mut Xot,
         source_cache: &mut SourceCache,
-    ) -> Result<Vec<(Name, Value)>> {
+    ) -> Result<Vec<(Name, Vec<Item>)>> {
         let mut variables = Vec::new();
         for source in &self.sources {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, source_cache)?;
-                variables.push((Name::without_ns(name), Value::Node(node)));
+                variables.push((Name::without_ns(name), vec![Item::Node(node)]));
             }
         }
         Ok(variables)
