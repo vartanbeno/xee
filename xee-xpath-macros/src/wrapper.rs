@@ -91,7 +91,7 @@ fn make_wrapper(
     };
 
     Ok(
-        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Value]) -> Result<crate::Value, crate::ValueError> {
+        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::data::Value]) -> Result<crate::data::Value, crate::ValueError> {
             #body
         }),
     )

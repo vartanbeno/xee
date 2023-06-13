@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
-    use crate::{Atomic, DynamicContext, Namespaces, StaticContext, Value};
+    use crate::data::{Atomic, Value};
+    use crate::{DynamicContext, Namespaces, StaticContext};
     use std::rc::Rc;
     use xee_xpath_macros::xpath_fn;
     use xot::Xot;

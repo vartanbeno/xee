@@ -7,8 +7,8 @@ use crate::wrap_xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
-    data::{ContextTryInto, Item, Sequence, ValueError, ValueResult},
-    Atomic, DynamicContext, Error, Node, Value,
+    data::{Atomic, ContextTryInto, Item, Sequence, Value, ValueError, ValueResult},
+    DynamicContext, Error, Node,
 };
 
 #[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
