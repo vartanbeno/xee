@@ -75,7 +75,7 @@ impl XPath {
     ) -> Result<Vec<OutputItem>> {
         let context_item: Option<Item> = context_item.map(|item| item.clone().into());
         let value = self.run(dynamic_context, context_item.as_ref())?;
-        Ok(value.to_output().to_items())
+        Ok(value.to_output().into_items())
     }
 
     pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {

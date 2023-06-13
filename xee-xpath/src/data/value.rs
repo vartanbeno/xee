@@ -138,7 +138,7 @@ impl Value {
 }
 
 impl OutputValue {
-    pub(crate) fn to_items(self) -> Vec<OutputItem> {
+    pub(crate) fn into_items(self) -> Vec<OutputItem> {
         match self {
             OutputValue::Atomic(a) => vec![OutputItem::Atomic(a)],
             OutputValue::Sequence(s) => s,

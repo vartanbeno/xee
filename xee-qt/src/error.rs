@@ -28,26 +28,3 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-// impl<T> IntoDiagnostic<T, Error> for std::result::Result<T, Error> {}
-
-// // turn any IO error into Error
-// impl From<std::io::Error> for Error {
-//     fn from(err: std::io::Error) -> Self {
-//         Error::IO(err)
-//     }
-// }
-
-// // turn any Xot error into Error
-// impl From<xot::Error> for Error {
-//     fn from(err: xot::Error) -> Self {
-//         Error::Xot(err)
-//     }
-// }
-
-// // turn any Xee XPath error into Error
-// impl From<xee_xpath::Error> for Error {
-//     fn from(err: xee_xpath::Error) -> Self {
-//         Error::XeeXPath(err)
-//     }
-// }

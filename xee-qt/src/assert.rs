@@ -11,13 +11,13 @@ use crate::qt;
 use crate::serialize::serialize;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum UnexpectedError {
+pub enum UnexpectedError {
     Code(String),
     Error(Error),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum TestOutcome {
+pub enum TestOutcome {
     Passed,
     PassedWithUnexpectedError(UnexpectedError),
     Failed(Failure),
@@ -46,7 +46,7 @@ pub(crate) trait Assertable {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertAnyOf(Vec<TestCaseResult>);
+pub struct AssertAnyOf(Vec<TestCaseResult>);
 
 impl AssertAnyOf {
     pub(crate) fn new(test_case_results: Vec<TestCaseResult>) -> Self {
@@ -102,7 +102,7 @@ impl Assertable for AssertAllOf {
 }
 
 #[derive(PartialEq, Clone)]
-pub(crate) struct AssertNot(Box<TestCaseResult>);
+pub struct AssertNot(Box<TestCaseResult>);
 
 impl AssertNot {
     pub(crate) fn new(test_case_result: TestCaseResult) -> Self {
@@ -117,10 +117,10 @@ impl fmt::Debug for AssertNot {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Assert(qt::XPathExpr);
+pub struct Assert(qt::XPathExpr);
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertEq(qt::XPathExpr);
+pub struct AssertEq(qt::XPathExpr);
 
 impl AssertEq {
     pub(crate) fn new(expr: qt::XPathExpr) -> Self {
@@ -146,7 +146,7 @@ impl Assertable for AssertEq {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertCount(usize);
+pub struct AssertCount(usize);
 
 impl AssertCount {
     pub(crate) fn new(count: usize) -> Self {
@@ -169,13 +169,13 @@ impl Assertable for AssertCount {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertDeepEq(qt::XPathExpr);
+pub struct AssertDeepEq(qt::XPathExpr);
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertPermutation(qt::XPathExpr);
+pub struct AssertPermutation(qt::XPathExpr);
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertXml(String);
+pub struct AssertXml(String);
 
 impl AssertXml {
     pub(crate) fn new(xml: String) -> Self {
@@ -230,7 +230,7 @@ pub(crate) struct AssertSerializationError(String);
 pub(crate) struct AssertType(String);
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertTrue;
+pub struct AssertTrue;
 
 impl AssertTrue {
     pub(crate) fn new() -> Self {
@@ -249,7 +249,7 @@ impl Assertable for AssertTrue {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertFalse;
+pub struct AssertFalse;
 
 impl AssertFalse {
     pub(crate) fn new() -> Self {
@@ -268,7 +268,7 @@ impl Assertable for AssertFalse {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertStringValue(String);
+pub struct AssertStringValue(String);
 
 impl AssertStringValue {
     pub(crate) fn new(string: String) -> Self {
@@ -305,7 +305,7 @@ impl Assertable for AssertStringValue {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertError(String);
+pub struct AssertError(String);
 
 impl AssertError {
     pub(crate) fn new(code: String) -> Self {
@@ -440,25 +440,25 @@ impl TestCaseResult {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum AssertCountFailure {
+pub enum AssertCountFailure {
     WrongCount(usize),
     WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum AssertStringValueFailure {
+pub enum AssertStringValueFailure {
     WrongStringValue(String),
     WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum AssertXmlFailure {
+pub enum AssertXmlFailure {
     WrongXml(String),
     WrongValue(Vec<Item>),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum Failure {
+pub enum Failure {
     AnyOf(AssertAnyOf, Vec<TestOutcome>),
     Not(AssertNot, Box<TestOutcome>),
     Eq(AssertEq, Vec<Item>),

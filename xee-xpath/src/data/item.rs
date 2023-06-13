@@ -98,4 +98,11 @@ impl OutputItem {
             _ => Err(ValueError::Type),
         }
     }
+    pub fn string_value(&self, xot: &Xot) -> Result<String> {
+        match self {
+            OutputItem::Atomic(a) => Ok(a.string_value()?),
+            OutputItem::Node(n) => Ok(n.string_value(xot)),
+            _ => Err(ValueError::Type),
+        }
+    }
 }

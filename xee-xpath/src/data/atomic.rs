@@ -26,7 +26,7 @@ pub enum Atomic {
     Absent,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum OutputAtomic {
     Boolean(bool),
     Integer(i64),
@@ -44,14 +44,20 @@ pub enum OutputAtomic {
 
 impl From<OutputAtomic> for Atomic {
     fn from(a: OutputAtomic) -> Self {
+        (&a).into()
+    }
+}
+
+impl From<&OutputAtomic> for Atomic {
+    fn from(a: &OutputAtomic) -> Self {
         match a {
-            OutputAtomic::Boolean(b) => Atomic::Boolean(b),
-            OutputAtomic::Integer(i) => Atomic::Integer(i),
-            OutputAtomic::Float(f) => Atomic::Float(OrderedFloat(f)),
-            OutputAtomic::Double(d) => Atomic::Double(OrderedFloat(d)),
-            OutputAtomic::Decimal(d) => Atomic::Decimal(d),
-            OutputAtomic::String(s) => Atomic::String(Rc::new(s)),
-            OutputAtomic::Untyped(s) => Atomic::Untyped(Rc::new(s)),
+            OutputAtomic::Boolean(b) => Atomic::Boolean(*b),
+            OutputAtomic::Integer(i) => Atomic::Integer(*i),
+            OutputAtomic::Float(f) => Atomic::Float(OrderedFloat(*f)),
+            OutputAtomic::Double(d) => Atomic::Double(OrderedFloat(*d)),
+            OutputAtomic::Decimal(d) => Atomic::Decimal(*d),
+            OutputAtomic::String(s) => Atomic::String(Rc::new(s.clone())),
+            OutputAtomic::Untyped(s) => Atomic::Untyped(Rc::new(s.clone())),
             OutputAtomic::Empty => Atomic::Empty,
             OutputAtomic::Absent => Atomic::Absent,
         }
@@ -298,5 +304,28 @@ impl OutputAtomic {
 
     pub fn to_string(&self) -> Result<String> {
         Ok(self.to_str()?.to_string())
+    }
+
+    pub fn string_value(&self) -> Result<String> {
+        Ok(match self {
+            OutputAtomic::String(s) => s.to_string(),
+            OutputAtomic::Untyped(s) => s.to_string(),
+            OutputAtomic::Boolean(b) => b.to_string(),
+            OutputAtomic::Integer(i) => i.to_string(),
+            OutputAtomic::Float(f) => f.to_string(),
+            OutputAtomic::Double(d) => d.to_string(),
+            OutputAtomic::Decimal(d) => d.to_string(),
+            OutputAtomic::Empty => "".to_string(),
+            OutputAtomic::Absent => Err(ValueError::Absent)?,
+        })
+    }
+}
+
+impl PartialEq for OutputAtomic {
+    fn eq(&self, other: &Self) -> bool {
+        match comparison::value_eq(&self.into(), &other.into()) {
+            Ok(b) => b.to_bool().unwrap(),
+            Err(_) => false,
+        }
     }
 }
