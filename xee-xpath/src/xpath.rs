@@ -38,7 +38,7 @@ impl XPath {
         })
     }
 
-    pub fn run(
+    pub(crate) fn run_value(
         &self,
         dynamic_context: &DynamicContext,
         context_item: Option<&Item>,
@@ -68,30 +68,26 @@ impl XPath {
         }
     }
 
-    pub fn run_output(
-        &self,
-        dynamic_context: &DynamicContext,
-        context_item: Option<&OutputItem>,
-    ) -> Result<Vec<OutputItem>> {
-        let context_item: Option<Item> = context_item.map(|item| item.clone().into());
-        let value = self.run(dynamic_context, context_item.as_ref())?;
-        Ok(value.into_output_items())
-    }
-
     pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {
-        self.run(dynamic_context, Some(&Item::Node(Node::Xot(node))))
+        self.run_value(dynamic_context, Some(&Item::Node(Node::Xot(node))))
     }
 
     pub fn many(
         &self,
         dynamic_context: &DynamicContext,
-        item: &OutputItem,
+        item: Option<&OutputItem>,
     ) -> Result<Vec<OutputItem>> {
-        self.run_output(dynamic_context, Some(item))
+        let context_item: Option<Item> = item.map(|item| item.clone().into());
+        let value = self.run_value(dynamic_context, context_item.as_ref())?;
+        Ok(value.into_output_items())
     }
 
-    pub fn one(&self, dynamic_context: &DynamicContext, item: &OutputItem) -> Result<OutputItem> {
-        let mut items = self.run_output(dynamic_context, Some(item))?;
+    pub fn one(
+        &self,
+        dynamic_context: &DynamicContext,
+        item: Option<&OutputItem>,
+    ) -> Result<OutputItem> {
+        let mut items = self.many(dynamic_context, item)?;
         Ok(if items.len() == 1 {
             items.pop().unwrap()
         } else {
@@ -105,9 +101,9 @@ impl XPath {
     pub fn option(
         &self,
         dynamic_context: &DynamicContext,
-        item: &OutputItem,
+        item: Option<&OutputItem>,
     ) -> Result<Option<OutputItem>> {
-        let mut items = self.run_output(dynamic_context, Some(item))?;
+        let mut items = self.many(dynamic_context, item)?;
 
         Ok(if items.is_empty() {
             None

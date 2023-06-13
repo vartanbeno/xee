@@ -544,5 +544,5 @@ fn run_xpath(expr: &qt::XPathExpr) -> Result<Vec<Item>, Error> {
     let xpath = XPath::new(&static_context, &expr.0)?;
     let xot = Xot::new();
     let dynamic_context = DynamicContext::new(&xot, &static_context);
-    xpath.run_output(&dynamic_context, None)
+    xpath.many(&dynamic_context, None)
 }

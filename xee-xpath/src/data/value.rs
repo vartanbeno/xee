@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::atomic::{Atomic, OutputAtomic};
+use super::atomic::Atomic;
 use super::error::ValueError;
 use super::function::{Closure, Step};
 use super::item::{Item, OutputItem};
@@ -23,6 +23,7 @@ pub enum Value {
     Step(Rc<Step>),
     Node(Node),
 }
+
 impl Value {
     pub(crate) fn from_item(item: Item) -> Self {
         match item {

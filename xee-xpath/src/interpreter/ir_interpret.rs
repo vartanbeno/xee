@@ -560,7 +560,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
-        xpath.run(&context, None)
+        xpath.run_value(&context, None)
     }
 
     fn run_with_variables(s: &str, variables: &[(ast::Name, Value)]) -> Result<Value> {
@@ -573,7 +573,7 @@ mod tests {
         let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
         let context = DynamicContext::with_variables(&xot, &static_context, variables);
         let xpath = XPath::new(context.static_context, s)?;
-        xpath.run(&context, None)
+        xpath.run_value(&context, None)
     }
 
     fn run_debug(s: &str) -> Result<Value> {
@@ -583,7 +583,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
         dbg!(&xpath.program.get_function(0).decoded());
-        xpath.run(&context, None)
+        xpath.run_value(&context, None)
     }
 
     fn run_xml(xml: &str, xpath: &str) -> Result<Value> {

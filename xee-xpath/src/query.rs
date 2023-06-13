@@ -156,7 +156,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.one(session.dynamic_context, item)?;
+        let item = xpath.one(session.dynamic_context, Some(item))?;
         (self.convert)(session, &item).map_err(|query_error| error(xpath, query_error))
     }
 }
@@ -178,7 +178,7 @@ pub struct OneRecurseQuery {
 impl OneRecurseQuery {
     pub fn execute<V>(&self, session: &Session, item: &Item, recurse: &Recurse<V>) -> Result<V> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.one(session.dynamic_context, item)?;
+        let item = xpath.one(session.dynamic_context, Some(item))?;
         recurse.execute(session, &item)
     }
 }
@@ -199,7 +199,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &Item) -> Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.option(session.dynamic_context, item)?;
+        let item = xpath.option(session.dynamic_context, Some(item))?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -233,7 +233,7 @@ impl OptionRecurseQuery {
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.option(session.dynamic_context, item)?;
+        let item = xpath.option(session.dynamic_context, Some(item))?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
         } else {
@@ -258,7 +258,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let items = xpath.many(session.dynamic_context, item)?;
+        let items = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(items.len());
         for item in items {
             match (self.convert)(session, &item) {
@@ -292,7 +292,7 @@ impl ManyRecurseQuery {
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.many(session.dynamic_context, item)?;
+        let item = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(item.len());
         for item in item {
             values.push(recurse.execute(session, &item)?);

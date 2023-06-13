@@ -151,7 +151,7 @@ impl qt::TestCase {
 
         let dynamic_context =
             DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
-        let result = xpath.run_output(&dynamic_context, context_item.as_ref());
+        let result = xpath.many(&dynamic_context, context_item.as_ref());
         self.result.assert_result(&mut run_context.xot, &result)
     }
 
@@ -202,15 +202,6 @@ impl qt::TestCase {
             variables.extend(environment_spec.variables(xot, source_cache)?);
         }
         Ok(variables)
-    }
-
-    fn run_xpath(expr: &qt::XPathExpr) -> std::result::Result<Value, XPathError> {
-        let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(&namespaces);
-        let xpath = XPath::new(&static_context, &expr.0)?;
-        let xot = Xot::new();
-        let dynamic_context = DynamicContext::new(&xot, &static_context);
-        xpath.run(&dynamic_context, None)
     }
 }
 
