@@ -2048,6 +2048,7 @@ dependencies = [
  "rust_decimal_macros",
  "test-generator",
  "thiserror",
+ "xee-qt",
  "xee-xpath-ast",
  "xee-xpath-macros",
  "xot",

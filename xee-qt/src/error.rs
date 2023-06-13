@@ -25,6 +25,9 @@ pub enum Error {
     #[error("IO error")]
     #[diagnostic()]
     IO(#[from] std::io::Error),
+    #[error("Var error")]
+    #[diagnostic()]
+    VarError(#[from] std::env::VarError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
