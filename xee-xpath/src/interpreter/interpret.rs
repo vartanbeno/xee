@@ -388,7 +388,7 @@ impl<'a> Interpreter<'a> {
                     let index: i64 = index.try_into()?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
-                    self.stack.push(item.to_stack_value())
+                    self.stack.push(item.into_stack_value())
                 }
                 EncodedInstruction::SequencePush => {
                     let sequence = self.pop_seq()?;

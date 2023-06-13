@@ -14,5 +14,5 @@ pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};
 pub use item::{Item, OutputItem};
 pub use node::Node;
-pub use sequence::{InnerSequence, Sequence};
-pub use value::Value;
+pub(crate) use sequence::{InnerSequence, Sequence};
+pub(crate) use value::Value;

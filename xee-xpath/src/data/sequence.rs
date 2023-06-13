@@ -16,7 +16,7 @@ use super::value::Value;
 type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Sequence(Rc<RefCell<InnerSequence>>);
+pub(crate) struct Sequence(Rc<RefCell<InnerSequence>>);
 
 impl Sequence {
     pub(crate) fn new(sequence: InnerSequence) -> Self {
@@ -76,7 +76,7 @@ impl Sequence {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct InnerSequence {
+pub(crate) struct InnerSequence {
     pub(crate) items: Vec<Item>,
 }
 

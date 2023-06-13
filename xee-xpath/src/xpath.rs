@@ -1,11 +1,11 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, Value};
+use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, Sequence, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
+use crate::ir;
 use crate::ir::IrConverter;
-use crate::{ir, Sequence};
 
 #[derive(Debug)]
 pub struct XPath {

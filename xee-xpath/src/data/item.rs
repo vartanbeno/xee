@@ -76,7 +76,7 @@ impl Item {
         }
     }
 
-    pub fn to_stack_value(self) -> Value {
+    pub(crate) fn into_stack_value(self) -> Value {
         match self {
             Item::Atomic(a) => Value::Atomic(a),
             Item::Node(n) => Value::Node(n),

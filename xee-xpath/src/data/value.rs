@@ -13,7 +13,7 @@ type Result<T> = std::result::Result<T, ValueError>;
 // TODO: the use in the macro needs to keep this public, needs to be investigated
 // further.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Value {
+pub(crate) enum Value {
     Atomic(Atomic),
     Sequence(Sequence),
     Closure(Rc<Closure>),
