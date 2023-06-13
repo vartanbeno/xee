@@ -55,26 +55,6 @@ fn main() -> Result<()> {
                     .into_diagnostic()
                     .wrap_err("Could not display item")?;
             }
-
-            // match result {
-            //     Value::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
-            //     Value::Sequence(sequence) => {
-            //         println!(
-            //             "sequence: \n{}",
-            //             display_sequence(&xot, &sequence)
-            //                 .into_diagnostic()
-            //                 .wrap_err("Could not display sequence")?
-            //         )
-            //     }
-            //     Value::Closure(closure) => println!("{:?}", closure),
-            //     Value::Step(step) => println!("{:?}", step),
-            //     Value::Node(node) => println!(
-            //         "node: \n{}",
-            //         display_node(&xot, node)
-            //             .into_diagnostic()
-            //             .wrap_err("Could not display node")?
-            //     ),
-            // }
         }
     }
     Ok(())
@@ -94,20 +74,6 @@ fn display_item(xot: &Xot, item: Item) -> Result<(), xot::Error> {
 fn display_atomic(atomic: &Atomic) -> String {
     format!("{}", atomic)
 }
-
-// fn display_sequence(xot: &Xot, sequence: &Sequence) -> Result<String, xot::Error> {
-//     let mut v = Vec::new();
-//     for item in sequence.borrow().as_slice() {
-//         match item {
-//             Item::Node(node) => {
-//                 v.push(format!("node: \n{}", display_node(xot, *node)?));
-//             }
-//             Item::Atomic(value) => v.push(format!("atomic: {}", display_atomic(value))),
-//             Item::Function(function) => v.push(format!("{:?}", function)),
-//         }
-//     }
-//     Ok(v.join("\n"))
-// }
 
 fn display_node(xot: &Xot, node: Node) -> Result<String, xot::Error> {
     match node {
