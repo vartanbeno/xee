@@ -23,16 +23,6 @@ pub enum Value {
     Step(Rc<Step>),
     Node(Node),
 }
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum OutputValue {
-    Atomic(OutputAtomic),
-    Sequence(Vec<OutputItem>),
-    Closure(Closure),
-    Step(Step),
-    Node(Node),
-}
-
 impl Value {
     pub(crate) fn from_item(item: Item) -> Self {
         match item {
@@ -42,15 +32,9 @@ impl Value {
         }
     }
 
-    pub fn to_output(&self) -> OutputValue {
-        match self {
-            Value::Atomic(Atomic::Empty) => OutputValue::Sequence(vec![]),
-            Value::Atomic(a) => OutputValue::Atomic(a.to_output()),
-            Value::Sequence(s) => OutputValue::Sequence(s.to_output()),
-            Value::Closure(f) => OutputValue::Closure(f.as_ref().clone()),
-            Value::Step(s) => OutputValue::Step(s.as_ref().clone()),
-            Value::Node(n) => OutputValue::Node(*n),
-        }
+    pub(crate) fn into_output_items(self) -> Vec<OutputItem> {
+        let seq = self.to_many();
+        seq.to_output()
     }
 
     pub(crate) fn to_one(&self) -> Result<Item> {
@@ -71,12 +55,12 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_many(&self) -> Result<Sequence> {
+    pub(crate) fn to_many(&self) -> Sequence {
         match self {
-            Value::Atomic(a) => Ok(Sequence::from_atomic(a)),
-            Value::Sequence(s) => Ok(s.clone()),
-            Value::Node(n) => Ok(Sequence::from_node(*n)),
-            _ => Err(ValueError::Type),
+            Value::Atomic(a) => Sequence::from_atomic(a),
+            Value::Sequence(s) => s.clone(),
+            Value::Node(n) => Sequence::from_node(*n),
+            _ => panic!("Not handled yet"),
         }
     }
 
@@ -134,18 +118,6 @@ impl Value {
             Value::Step(_) => Err(ValueError::Type)?,
         };
         Ok(value)
-    }
-}
-
-impl OutputValue {
-    pub(crate) fn into_items(self) -> Vec<OutputItem> {
-        match self {
-            OutputValue::Atomic(a) => vec![OutputItem::Atomic(a)],
-            OutputValue::Sequence(s) => s,
-            OutputValue::Closure(_) => todo!("cannot convert closure to items yet"),
-            OutputValue::Step(_) => panic!("cannot convert step to items"),
-            OutputValue::Node(n) => vec![OutputItem::Node(n)],
-        }
     }
 }
 

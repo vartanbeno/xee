@@ -15,4 +15,4 @@ pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctio
 pub use item::{Item, OutputItem};
 pub use node::Node;
 pub use sequence::{InnerSequence, Sequence};
-pub use value::{OutputValue, Value};
+pub use value::Value;

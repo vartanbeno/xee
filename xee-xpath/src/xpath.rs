@@ -1,7 +1,7 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, OutputValue, Value};
+use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir::IrConverter;
@@ -75,7 +75,7 @@ impl XPath {
     ) -> Result<Vec<OutputItem>> {
         let context_item: Option<Item> = context_item.map(|item| item.clone().into());
         let value = self.run(dynamic_context, context_item.as_ref())?;
-        Ok(value.to_output().into_items())
+        Ok(value.into_output_items())
     }
 
     pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {

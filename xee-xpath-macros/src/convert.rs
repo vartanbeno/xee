@@ -52,7 +52,7 @@ impl ConvertCode for ItemType {
                 Occurrence::Many => {
                     let converted = ConvertedCode::new(quote!(Ok(tmp2.as_slice())));
                     converted.with_prepare(quote!(
-                        let tmp = #arg.to_many()?;
+                        let tmp = #arg.to_many();
                         let tmp2 = tmp.borrow();
                     ))
                 }
