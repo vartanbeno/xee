@@ -3,13 +3,5 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc xmlns=\"http://example.com\"><a/></doc>\"#, \"doc / local-name()\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [],
-                },
-            },
-        ),
-    ),
+    [],
 )

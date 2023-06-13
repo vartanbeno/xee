@@ -64,18 +64,18 @@ impl From<&OutputAtomic> for Atomic {
     }
 }
 
-impl Display for Atomic {
+impl Display for OutputAtomic {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Atomic::Boolean(b) => write!(f, "{}", b),
-            Atomic::Integer(i) => write!(f, "{}", i),
-            Atomic::Float(n) => write!(f, "{}", n),
-            Atomic::Double(d) => write!(f, "{}", d),
-            Atomic::Decimal(d) => write!(f, "{}", d),
-            Atomic::String(s) => write!(f, "{}", s),
-            Atomic::Untyped(s) => write!(f, "{}", s),
-            Atomic::Empty => write!(f, "()"),
-            Atomic::Absent => write!(f, "absent"),
+            OutputAtomic::Boolean(b) => write!(f, "{}", b),
+            OutputAtomic::Integer(i) => write!(f, "{}", i),
+            OutputAtomic::Float(n) => write!(f, "{}", n),
+            OutputAtomic::Double(d) => write!(f, "{}", d),
+            OutputAtomic::Decimal(d) => write!(f, "{}", d),
+            OutputAtomic::String(s) => write!(f, "{}", s),
+            OutputAtomic::Untyped(s) => write!(f, "{}", s),
+            OutputAtomic::Empty => write!(f, "()"),
+            OutputAtomic::Absent => write!(f, "absent"),
         }
     }
 }

@@ -537,7 +537,7 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
-        data::{InnerSequence, Item, Node},
+        data::{Node, OutputItem},
         document::{Document, Documents, Uri},
     };
 
@@ -545,13 +545,10 @@ mod tests {
         value.try_into().unwrap()
     }
 
-    fn xot_nodes_to_sequence(node: &[xot::Node]) -> InnerSequence {
-        InnerSequence {
-            items: node
-                .iter()
-                .map(|&node| Item::Node(Node::Xot(node)))
-                .collect(),
-        }
+    fn xot_nodes_to_items(node: &[xot::Node]) -> Vec<OutputItem> {
+        node.iter()
+            .map(|&node| OutputItem::Node(Node::Xot(node)))
+            .collect()
     }
 
     fn run(s: &str) -> Result<Value> {
@@ -586,11 +583,11 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_xml(xml: &str, xpath: &str) -> Result<Value> {
+    fn run_xml(xml: &str, xpath: &str) -> Result<Vec<OutputItem>> {
         evaluate(xml, xpath, None)
     }
 
-    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<Value> {
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<Vec<OutputItem>> {
         evaluate(xml, xpath, Some(ns))
     }
 
@@ -609,10 +606,8 @@ mod tests {
         let nodes = get_nodes(&xot, document);
 
         let xpath = XPath::new(context.static_context, xpath)?;
-        let result = xpath.run_xot_node(&context, document.root)?;
-        let sequence = as_sequence(&result);
-        let sequence = sequence.borrow();
-        assert_eq!(*sequence, xot_nodes_to_sequence(&nodes));
+        let result = xpath.many_xot_node(&context, document.root)?;
+        assert_eq!(result, xot_nodes_to_items(&nodes));
         Ok(())
     }
 

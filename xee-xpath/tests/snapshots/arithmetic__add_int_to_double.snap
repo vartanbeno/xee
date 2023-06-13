@@ -3,11 +3,11 @@ source: xee-xpath/tests/arithmetic.rs
 expression: "evaluate_without_focus(\"12 + 15.4e0\")"
 ---
 Ok(
-    Atomic(
-        Double(
-            OrderedFloat(
+    [
+        Atomic(
+            Double(
                 27.4,
             ),
         ),
-    ),
+    ],
 )

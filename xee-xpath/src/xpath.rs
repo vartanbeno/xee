@@ -68,8 +68,12 @@ impl XPath {
         }
     }
 
-    pub fn run_xot_node(&self, dynamic_context: &DynamicContext, node: xot::Node) -> Result<Value> {
-        self.run_value(dynamic_context, Some(&Item::Node(Node::Xot(node))))
+    pub fn many_xot_node(
+        &self,
+        dynamic_context: &DynamicContext,
+        node: xot::Node,
+    ) -> Result<Vec<OutputItem>> {
+        self.many(dynamic_context, Some(&OutputItem::Node(Node::Xot(node))))
     }
 
     pub fn many(

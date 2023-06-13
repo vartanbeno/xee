@@ -3,13 +3,5 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a/></doc>\"#, \"doc/a/@f eq 'FOO'\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [],
-                },
-            },
-        ),
-    ),
+    [],
 )

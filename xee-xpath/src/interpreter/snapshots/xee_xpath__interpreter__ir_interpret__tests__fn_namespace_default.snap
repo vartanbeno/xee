@@ -3,34 +3,26 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"descendant::* / local-name()\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            String(
-                                "doc",
-                            ),
-                        ),
-                        Atomic(
-                            String(
-                                "a",
-                            ),
-                        ),
-                        Atomic(
-                            String(
-                                "b",
-                            ),
-                        ),
-                        Atomic(
-                            String(
-                                "c",
-                            ),
-                        ),
-                    ],
-                },
-            },
+    [
+        Atomic(
+            String(
+                "doc",
+            ),
         ),
-    ),
+        Atomic(
+            String(
+                "a",
+            ),
+        ),
+        Atomic(
+            String(
+                "b",
+            ),
+        ),
+        Atomic(
+            String(
+                "c",
+            ),
+        ),
+    ],
 )

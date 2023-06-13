@@ -3,13 +3,17 @@ use xot::Xot;
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::Value;
+use crate::data::OutputItem as Item;
 use crate::document::{Documents, Uri};
 use crate::error::Result;
 use crate::xpath::XPath;
 
 /// A high level function that evaluates an xpath expression on an xml document.
-pub fn evaluate(xml: &str, xpath: &str, default_element_namespace: Option<&str>) -> Result<Value> {
+pub fn evaluate(
+    xml: &str,
+    xpath: &str,
+    default_element_namespace: Option<&str>,
+) -> Result<Vec<Item>> {
     let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
     evaluate_root(&xot, root, xpath, default_element_namespace)
@@ -21,7 +25,7 @@ pub fn evaluate_root(
     root: xot::Node,
     xpath: &str,
     default_element_namespace: Option<&str>,
-) -> Result<Value> {
+) -> Result<Vec<Item>> {
     let uri = Uri("http://example.com".to_string());
     let mut documents = Documents::new();
     documents.add_root(xot, &uri, root);
@@ -31,14 +35,14 @@ pub fn evaluate_root(
     let document = documents.get(&uri).unwrap();
 
     let xpath = XPath::new(context.static_context, xpath)?;
-    xpath.run_xot_node(&context, document.root)
+    xpath.many_xot_node(&context, document.root)
 }
 
-pub fn evaluate_without_focus(s: &str) -> Result<Value> {
+pub fn evaluate_without_focus(s: &str) -> Result<Vec<Item>> {
     let xot = Xot::new();
     let namespaces = Namespaces::new(None, None);
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
     let xpath = XPath::new(context.static_context, s)?;
-    xpath.run_value(&context, None)
+    xpath.many(&context, None)
 }

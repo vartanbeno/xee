@@ -3,19 +3,11 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc><p>Hello world!</p></doc>\"#, \"/doc/p/string()\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            String(
-                                "Hello world!",
-                            ),
-                        ),
-                    ],
-                },
-            },
+    [
+        Atomic(
+            String(
+                "Hello world!",
+            ),
         ),
-    ),
+    ],
 )
