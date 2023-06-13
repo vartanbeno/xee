@@ -37,7 +37,7 @@ pub(crate) struct Function {
     pub(crate) spans: Vec<SourceSpan>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) enum ClosureFunctionId {
     Static(StaticFunctionId),
     Dynamic(FunctionId),
@@ -47,6 +47,21 @@ pub(crate) enum ClosureFunctionId {
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
     pub(crate) values: Vec<Value>,
+}
+
+impl Closure {
+    pub(crate) fn to_output(&self) -> OutputClosure {
+        OutputClosure {
+            function_id: self.function_id,
+            // values: self.values.iter().map(|v| v.to_output()).collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OutputClosure {
+    pub(crate) function_id: ClosureFunctionId,
+    // pub(crate) values: Vec<Vec<OutputItem>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

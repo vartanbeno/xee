@@ -2,8 +2,8 @@ use miette::Diagnostic;
 use std::fmt;
 
 use xee_xpath::{
-    DynamicContext, Error, Namespaces, OutputAtomic as Atomic, OutputItem as Item, Sequence,
-    StaticContext, ValueError, XPath,
+    DynamicContext, Error, Namespaces, OutputAtomic as Atomic, OutputItem as Item, StaticContext,
+    ValueError, XPath,
 };
 use xot::Xot;
 
@@ -35,7 +35,7 @@ impl TestOutcome {
 }
 
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
         match result {
             Ok(items) => self.assert_value(xot, items),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
@@ -55,7 +55,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -85,7 +85,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -314,7 +314,7 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<&[Item], Error>) -> TestOutcome {
+    fn assert_result(&self, _xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
         match result {
             Ok(items) => TestOutcome::Failed(Failure::Error(self.clone(), items.to_vec())),
             Err(error) => {
@@ -419,7 +419,7 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         xot: &mut Xot,
-        result: &Result<&[Item], Error>,
+        result: &Result<Vec<Item>, Error>,
     ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),

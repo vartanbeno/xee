@@ -3,7 +3,7 @@ use xot::Xot;
 
 use super::atomic::{Atomic, OutputAtomic};
 use super::error::ValueError;
-use super::function::Closure;
+use super::function::{Closure, OutputClosure};
 use super::node::Node;
 use super::value::Value;
 
@@ -20,7 +20,7 @@ pub enum Item {
 #[derive(Debug, PartialEq, Clone)]
 pub enum OutputItem {
     Atomic(OutputAtomic),
-    Function(Closure),
+    Function(OutputClosure),
     Node(Node),
 }
 
@@ -28,7 +28,7 @@ impl From<OutputItem> for Item {
     fn from(item: OutputItem) -> Self {
         match item {
             OutputItem::Atomic(a) => Item::Atomic(a.into()),
-            OutputItem::Function(f) => Item::Function(Rc::new(f)),
+            OutputItem::Function(_f) => todo!("Cannot turn output functions into functions yet"),
             OutputItem::Node(n) => Item::Node(n),
         }
     }
@@ -38,7 +38,7 @@ impl Item {
     pub fn to_output(&self) -> OutputItem {
         match self {
             Item::Atomic(a) => OutputItem::Atomic(a.to_output()),
-            Item::Function(f) => OutputItem::Function(f.as_ref().clone()),
+            Item::Function(f) => OutputItem::Function(f.to_output()),
             Item::Node(n) => OutputItem::Node(*n),
         }
     }
