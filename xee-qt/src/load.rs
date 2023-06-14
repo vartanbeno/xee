@@ -282,6 +282,8 @@ fn test_cases_query<'a>(
                 assert_string_value_query.execute(session, item)?
             } else if local_name == "assert" {
                 assert_query.execute(session, item)?
+            } else if local_name == "assert-empty" {
+                qt::TestCaseResult::AssertEmpty(assert::AssertEmpty::new())
             } else {
                 qt::TestCaseResult::Unsupported
                 // qt::TestCaseResult::AssertFalse

@@ -302,7 +302,24 @@ impl Assertable for AssertXml {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertEmpty;
+pub struct AssertEmpty;
+
+impl AssertEmpty {
+    pub(crate) fn new() -> Self {
+        Self
+    }
+}
+
+impl Assertable for AssertEmpty {
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let items = sequence.items();
+        if items.is_empty() {
+            TestOutcome::Passed
+        } else {
+            TestOutcome::Failed(Failure::Empty(self.clone(), sequence.clone()))
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AssertSerializationMatches;
@@ -519,6 +536,7 @@ impl TestCaseResult {
             TestCaseResult::AssertXml(a) => a.assert_result(xot, result),
             TestCaseResult::Assert(a) => a.assert_result(xot, result),
             TestCaseResult::AssertError(a) => a.assert_result(xot, result),
+            TestCaseResult::AssertEmpty(a) => a.assert_result(xot, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
@@ -556,6 +574,7 @@ pub enum Failure {
     StringValue(AssertStringValue, AssertStringValueFailure),
     Xml(AssertXml, AssertXmlFailure),
     Assert(Assert, Sequence),
+    Empty(AssertEmpty, Sequence),
     Error(AssertError, Sequence),
 }
 
@@ -620,6 +639,11 @@ impl fmt::Display for Failure {
             Failure::Assert(_a, failure) => {
                 writeln!(f, "assert:")?;
                 writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Empty(_a, value) => {
+                writeln!(f, "empty:")?;
+                writeln!(f, "  actual: {:?}", value)?;
                 Ok(())
             }
             Failure::Error(a, value) => {
