@@ -52,40 +52,6 @@ impl Display for Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn to_integer(&self) -> stack::Result<i64> {
-        match self {
-            Atomic::Integer(i) => Ok(*i),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
-    pub(crate) fn to_decimal(&self) -> stack::Result<Decimal> {
-        match self {
-            Atomic::Decimal(d) => Ok(*d),
-            Atomic::Integer(i) => Ok(Decimal::from(*i)),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
-    pub(crate) fn to_float(&self) -> stack::Result<f32> {
-        match self {
-            Atomic::Float(f) => Ok(*f),
-            Atomic::Decimal(d) => Ok(d.to_f32().ok_or(stack::Error::Type)?),
-            Atomic::Integer(_) => Ok(self.to_decimal()?.to_f32().ok_or(stack::Error::Type)?),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
-    pub(crate) fn to_double(&self) -> stack::Result<f64> {
-        match self {
-            Atomic::Double(d) => Ok(*d),
-            Atomic::Float(f) => Ok(*f as f64),
-            Atomic::Decimal(d) => Ok(d.to_f64().ok_or(stack::Error::Type)?),
-            Atomic::Integer(_) => Ok(self.to_decimal()?.to_f64().ok_or(stack::Error::Type)?),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
     pub(crate) fn to_bool(&self) -> stack::Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),

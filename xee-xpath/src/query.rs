@@ -298,7 +298,7 @@ impl ManyRecurseQuery {
         let items = sequence.items();
         let mut values = Vec::with_capacity(items.len());
         for item in items {
-            values.push(recurse.execute(session, &item)?);
+            values.push(recurse.execute(session, item)?);
         }
         Ok(values)
     }
@@ -321,7 +321,7 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
-    use crate::output::Atomic;
+    use crate::output;
     use crate::xml;
 
     #[test]
@@ -330,13 +330,17 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
         let q = queries
-            .one("1 + 2", |_, item| Ok(item.to_atomic()?.to_integer()?))
+            .one("1 + 2", |_, item| match item.to_atomic()? {
+                output::Atomic::Integer(i) => Ok(*i),
+                _ => Err(ConvertError::ValueError(stack::Error::Type)),
+            })
             .unwrap();
+
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = q
-            .execute(&session, &Item::Atomic(Atomic::Integer(1)))
+            .execute(&session, &Item::Atomic(output::Atomic::Integer(1)))
             .unwrap();
         assert_eq!(r, 3);
     }
