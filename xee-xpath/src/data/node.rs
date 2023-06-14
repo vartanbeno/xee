@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::vec;
 use xot::Xot;
 
-use super::atomic::Atomic;
+use crate::stack::Atomic;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Node {

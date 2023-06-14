@@ -1,10 +1,11 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::atomic::{Atomic, OutputAtomic};
+use super::atomic::OutputAtomic;
 use super::error::ValueError;
 use super::function::{Closure, OutputClosure};
 use super::node::Node;
+use crate::stack::Atomic;
 use crate::stack::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;

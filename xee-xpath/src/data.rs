@@ -6,9 +6,10 @@ mod item;
 mod node;
 mod sequence;
 
+pub(crate) use crate::stack::Atomic;
 pub(crate) use crate::stack::StackValue;
 pub(crate) use crate::stack::{StackInnerSequence, StackSequence};
-pub use atomic::{Atomic, OutputAtomic};
+pub use atomic::OutputAtomic;
 pub(crate) use convert::{ContextInto, ContextTryInto};
 pub use error::{ValueError, ValueResult};
 pub use function::Closure;
