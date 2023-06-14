@@ -13,5 +13,5 @@ pub(crate) use error::{Error, Result};
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};
 pub(crate) use item::Item;
-pub(crate) use sequence::{StackInnerSequence, StackSequence};
+pub(crate) use sequence::{InnerSequence, Sequence};
 pub(crate) use value::StackValue;

@@ -106,7 +106,7 @@ fn exactly_one(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
 ) -> Result<stack::StackValue, stack::Error> {
-    let a: stack::StackSequence = (&arguments[0]).try_into()?;
+    let a: stack::Sequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(stack::StackValue::from_item(a.items[0].clone()))

@@ -54,7 +54,7 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::Double(d) => stack::StackValue::Atomic(stack::Atomic::Double(*d)),
                     ir::Const::Decimal(d) => stack::StackValue::Atomic(stack::Atomic::Decimal(*d)),
                     ir::Const::EmptySequence => {
-                        stack::StackValue::Sequence(stack::StackSequence::empty())
+                        stack::StackValue::Sequence(stack::Sequence::empty())
                     }
                     ir::Const::Step(step) => stack::StackValue::Step(step.clone()),
                 };
@@ -549,7 +549,7 @@ mod tests {
     use crate::xml;
     use crate::xpath::XPath;
 
-    fn as_sequence(value: &stack::StackValue) -> stack::StackSequence {
+    fn as_sequence(value: &stack::StackValue) -> stack::Sequence {
         value.try_into().unwrap()
     }
 

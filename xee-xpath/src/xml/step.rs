@@ -11,14 +11,14 @@ pub struct Step {
     pub(crate) node_test: ast::NodeTest,
 }
 
-pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::StackSequence {
-    let mut new_sequence = stack::StackInnerSequence::new();
+pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Sequence {
+    let mut new_sequence = stack::InnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
             new_sequence.push(&stack::Item::Node(axis_node));
         }
     }
-    stack::StackSequence::new(new_sequence)
+    stack::Sequence::new(new_sequence)
 }
 
 fn node_take_axis<'a>(
@@ -227,8 +227,8 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 mod tests {
     use super::*;
 
-    fn xot_nodes_to_sequence(node: &[xot::Node]) -> stack::StackSequence {
-        stack::StackSequence::new(stack::StackInnerSequence {
+    fn xot_nodes_to_sequence(node: &[xot::Node]) -> stack::Sequence {
+        stack::Sequence::new(stack::InnerSequence {
             items: node
                 .iter()
                 .map(|&node| stack::Item::Node(xml::Node::Xot(node)))

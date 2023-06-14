@@ -302,7 +302,7 @@ impl TryFrom<stack::Atomic> for String {
     }
 }
 
-impl TryFrom<stack::StackValue> for stack::StackSequence {
+impl TryFrom<stack::StackValue> for stack::Sequence {
     type Error = stack::Error;
 
     fn try_from(value: stack::StackValue) -> stack::Result<Self> {
@@ -310,21 +310,21 @@ impl TryFrom<stack::StackValue> for stack::StackSequence {
     }
 }
 
-impl TryFrom<&stack::StackValue> for stack::StackSequence {
+impl TryFrom<&stack::StackValue> for stack::Sequence {
     type Error = stack::Error;
 
     fn try_from(value: &stack::StackValue) -> stack::Result<Self> {
         match value {
             stack::StackValue::Sequence(s) => Ok(s.clone()),
-            stack::StackValue::Atomic(a) => Ok(stack::StackSequence::from_atomic(a)),
-            stack::StackValue::Node(n) => Ok(stack::StackSequence::from_node(*n)),
+            stack::StackValue::Atomic(a) => Ok(stack::Sequence::from_atomic(a)),
+            stack::StackValue::Node(n) => Ok(stack::Sequence::from_node(*n)),
             _ => Err(stack::Error::Type),
         }
     }
 }
 
-impl ContextFrom<stack::StackSequence> for Vec<stack::Atomic> {
-    fn context_from(sequence: stack::StackSequence, context: &DynamicContext) -> Self {
+impl ContextFrom<stack::Sequence> for Vec<stack::Atomic> {
+    fn context_from(sequence: stack::Sequence, context: &DynamicContext) -> Self {
         sequence.borrow().to_atoms(context.xot)
     }
 }

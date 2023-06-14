@@ -4,9 +4,9 @@ expression: "run(\"(1, 2) ! (., 0)\")"
 ---
 Ok(
     Sequence(
-        StackSequence(
+        Sequence(
             RefCell {
-                value: StackInnerSequence {
+                value: InnerSequence {
                     items: [
                         Atomic(
                             Integer(

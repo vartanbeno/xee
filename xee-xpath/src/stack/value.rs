@@ -10,7 +10,7 @@ use crate::xml;
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
     Atomic(stack::Atomic),
-    Sequence(stack::StackSequence),
+    Sequence(stack::Sequence),
     Closure(Rc<stack::Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<xml::Step>),
@@ -32,7 +32,7 @@ impl StackValue {
         } else if items.len() == 1 {
             StackValue::from_item(items[0].clone())
         } else {
-            StackValue::Sequence(stack::StackSequence::from_items(items))
+            StackValue::Sequence(stack::Sequence::from_items(items))
         }
     }
 
@@ -59,16 +59,16 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn to_many(&self) -> stack::StackSequence {
+    pub(crate) fn to_many(&self) -> stack::Sequence {
         match self {
-            StackValue::Atomic(a) => stack::StackSequence::from_atomic(a),
+            StackValue::Atomic(a) => stack::Sequence::from_atomic(a),
             StackValue::Sequence(s) => s.clone(),
-            StackValue::Node(n) => stack::StackSequence::from_node(*n),
+            StackValue::Node(n) => stack::Sequence::from_node(*n),
             // TODO: we need to handle the function case here, but
             // we don't handle it yet
             _ => {
                 dbg!("unhandled to_many value {:?}", self);
-                stack::StackSequence::empty()
+                stack::Sequence::empty()
             }
         }
     }

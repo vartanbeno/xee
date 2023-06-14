@@ -210,7 +210,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Comma => {
                     let (a, b) = self.pop_seq2()?;
                     self.stack
-                        .push(stack::StackValue::Sequence(stack::StackSequence::new(
+                        .push(stack::StackValue::Sequence(stack::Sequence::new(
                             a.borrow().concat(&b.borrow()),
                         )));
                 }
@@ -318,9 +318,7 @@ impl<'a> Interpreter<'a> {
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
                     self.stack
-                        .push(stack::StackValue::Sequence(stack::StackSequence::new(
-                            combined,
-                        )));
+                        .push(stack::StackValue::Sequence(stack::Sequence::new(combined)));
                 }
                 EncodedInstruction::Dup => {
                     let value = self.stack.pop().unwrap();
@@ -390,12 +388,12 @@ impl<'a> Interpreter<'a> {
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
-                            .push(stack::StackValue::Sequence(stack::StackSequence::empty())),
+                            .push(stack::StackValue::Sequence(stack::Sequence::empty())),
                         Ordering::Equal => self
                             .stack
                             .push(stack::StackValue::Atomic(stack::Atomic::Integer(a))),
                         Ordering::Less => {
-                            let sequence = stack::StackSequence::from_vec(
+                            let sequence = stack::Sequence::from_vec(
                                 (a..=b)
                                     .map(|i| stack::Item::Atomic(stack::Atomic::Integer(i)))
                                     .collect::<Vec<stack::Item>>(),
@@ -406,7 +404,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::SequenceNew => {
                     self.stack
-                        .push(stack::StackValue::Sequence(stack::StackSequence::empty()));
+                        .push(stack::StackValue::Sequence(stack::Sequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
                     let sequence = self.pop_seq()?;
@@ -504,12 +502,12 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> stack::Result<stack::StackSequence> {
+    fn pop_seq(&mut self) -> stack::Result<stack::Sequence> {
         let sequence = self.stack.pop().unwrap();
         sequence.try_into()
     }
 
-    fn pop_seq2(&mut self) -> stack::Result<(stack::StackSequence, stack::StackSequence)> {
+    fn pop_seq2(&mut self) -> stack::Result<(stack::Sequence, stack::Sequence)> {
         let b = self.pop_seq()?;
         let a = self.pop_seq()?;
         Ok((a, b))

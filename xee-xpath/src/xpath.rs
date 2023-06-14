@@ -66,7 +66,7 @@ impl XPath {
                 span: (0, self.program.src.len()).into(),
             }),
             stack::StackValue::Atomic(stack::Atomic::Empty) => {
-                Ok(stack::StackValue::Sequence(stack::StackSequence::empty()))
+                Ok(stack::StackValue::Sequence(stack::Sequence::empty()))
             }
             _ => Ok(value),
         }

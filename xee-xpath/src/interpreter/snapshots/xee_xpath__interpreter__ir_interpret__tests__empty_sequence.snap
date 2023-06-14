@@ -4,9 +4,9 @@ expression: "run(\"()\")"
 ---
 Ok(
     Sequence(
-        StackSequence(
+        Sequence(
             RefCell {
-                value: StackInnerSequence {
+                value: InnerSequence {
                     items: [],
                 },
             },
