@@ -1,9 +1,7 @@
 use miette::SourceSpan;
 
-use xee_xpath_ast::ast;
-
 use crate::ir;
-use crate::stack::StackValue;
+use crate::stack;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
@@ -27,7 +25,7 @@ impl StaticFunctionId {
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
-    pub(crate) constants: Vec<StackValue>,
+    pub(crate) constants: Vec<stack::StackValue>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
@@ -42,7 +40,7 @@ pub(crate) enum ClosureFunctionId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<StackValue>,
+    pub(crate) values: Vec<stack::StackValue>,
 }
 
 impl Closure {
@@ -58,10 +56,4 @@ impl Closure {
 pub struct OutputClosure {
     pub(crate) function_id: ClosureFunctionId,
     // pub(crate) values: Vec<Vec<OutputItem>>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Step {
-    pub(crate) axis: ast::Axis,
-    pub(crate) node_test: ast::NodeTest,
 }
