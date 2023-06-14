@@ -151,6 +151,18 @@ fn false_() -> bool {
     false
 }
 
+// #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
+// fn string_join(arg1: &[Atomic], arg2: &str) -> String {
+//     let mut s = String::new();
+//     for (i, a) in arg1.iter().enumerate() {
+//         if i > 0 {
+//             s.push_str(arg2);
+//         }
+//         s.push_str(&a.to_string());
+//     }
+//     s
+// }
+
 // Experimental exploration of wrapping with converters
 // fn wrap_math_exp(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
 //     let a = &arguments[0];

@@ -63,6 +63,14 @@ impl ConvertCode for ItemType {
                 Occurrence::One | Occurrence::Option => ConvertedCode::new(quote!(
                     crate::data::ContextTryInto::context_try_into(#arg, context)
                 )),
+                Occurrence::Many => {
+                    let converted = ConvertedCode::new(quote!(Ok(tmp3.as_slice())));
+                    converted.with_prepare(quote!(
+                      let tmp = #arg.to_many();
+                      let tmp2 = tmp.borrow();
+                      let tmp3 =  tmp2.as_slice().iter().map(|v| v.try_into()?).collect::<Vec<_>>();
+                    ;))
+                }
                 _ => panic!("Unsupported occurrence for atomic or union"),
             }),
             ItemType::KindTest(kind_test) => kind_test.code(arg, occurrence),

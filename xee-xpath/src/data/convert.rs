@@ -170,6 +170,17 @@ impl TryFrom<&Value> for Node {
 // }
 // Conversions from Item
 
+impl TryFrom<&Item> for Atomic {
+    type Error = ValueError;
+
+    fn try_from(item: &Item) -> Result<Self> {
+        match item {
+            Item::Atomic(a) => Ok(a.clone()),
+            _ => Err(ValueError::Type),
+        }
+    }
+}
+
 impl TryFrom<Item> for Atomic {
     type Error = ValueError;
 
