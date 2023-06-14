@@ -1,7 +1,7 @@
 use xot::Xot;
 
 use super::atomic::OutputAtomic;
-use super::function::OutputClosure;
+use crate::data;
 use crate::stack;
 use crate::xml;
 
@@ -10,7 +10,7 @@ type Result<T> = std::result::Result<T, stack::ValueError>;
 #[derive(Debug, PartialEq, Clone)]
 pub enum OutputItem {
     Atomic(OutputAtomic),
-    Function(OutputClosure),
+    Function(data::OutputClosure),
     Node(xml::Node),
 }
 

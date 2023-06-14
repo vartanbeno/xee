@@ -6,8 +6,8 @@ use miette::SourceSpan;
 use xee_xpath_ast::{ast, span::Spanned, Namespaces, FN_NAMESPACE};
 
 use crate::context::StaticContext;
-use crate::data::StaticFunctionId;
 use crate::error::{Error, Result};
+use crate::stack;
 use crate::xml;
 
 use super::ir_core as ir;
@@ -653,7 +653,7 @@ impl<'a> IrConverter<'a> {
 
     fn static_function_ref(
         &mut self,
-        static_function_id: StaticFunctionId,
+        static_function_id: stack::StaticFunctionId,
         span: SourceSpan,
     ) -> Bindings {
         let expr =

@@ -355,7 +355,7 @@ pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
 }
 
 #[cfg(test)]
-use crate::data::Function;
+use crate::stack::Function;
 
 #[cfg(test)]
 impl Function {

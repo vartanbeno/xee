@@ -8,7 +8,7 @@ use std::rc::Rc;
 pub use xee_xpath_ast::ast::BinaryOperator;
 use xee_xpath_ast::span::Spanned;
 
-use crate::data::StaticFunctionId;
+use crate::stack::StaticFunctionId;
 use crate::xml;
 
 pub(crate) type AtomS = Spanned<Atom>;

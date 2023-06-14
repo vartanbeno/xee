@@ -1,14 +1,12 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
-
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 
-use super::dynamic_context::DynamicContext;
-
-use crate::data::StaticFunctionId;
 use crate::func::static_function_descriptions;
 use crate::stack;
+
+use super::dynamic_context::DynamicContext;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum FunctionKind {
@@ -210,7 +208,7 @@ impl StaticFunction {
 
 #[derive(Debug)]
 pub(crate) struct StaticFunctions {
-    by_name: HashMap<(ast::Name, u8), StaticFunctionId>,
+    by_name: HashMap<(ast::Name, u8), stack::StaticFunctionId>,
     by_index: Vec<StaticFunction>,
 }
 
@@ -226,18 +224,25 @@ impl StaticFunctions {
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
                 (static_function.name.clone(), static_function.arity as u8),
-                StaticFunctionId(i),
+                stack::StaticFunctionId(i),
             );
         }
         Self { by_name, by_index }
     }
 
-    pub(crate) fn get_by_name(&self, name: &ast::Name, arity: u8) -> Option<StaticFunctionId> {
+    pub(crate) fn get_by_name(
+        &self,
+        name: &ast::Name,
+        arity: u8,
+    ) -> Option<stack::StaticFunctionId> {
         // XXX annoying clone
         self.by_name.get(&(name.clone(), arity)).copied()
     }
 
-    pub(crate) fn get_by_index(&self, static_function_id: StaticFunctionId) -> &StaticFunction {
+    pub(crate) fn get_by_index(
+        &self,
+        static_function_id: stack::StaticFunctionId,
+    ) -> &StaticFunction {
         &self.by_index[static_function_id.0]
     }
 }

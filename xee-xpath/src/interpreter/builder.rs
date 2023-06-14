@@ -1,6 +1,5 @@
 use miette::SourceSpan;
 
-use crate::data::{Function, FunctionId};
 use crate::ir;
 use crate::stack;
 
@@ -9,7 +8,7 @@ use super::instruction::{encode_instruction, instruction_size, Instruction};
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
     pub(crate) src: String,
-    pub(crate) functions: Vec<Function>,
+    pub(crate) functions: Vec<stack::Function>,
 }
 
 impl Program {
@@ -20,17 +19,17 @@ impl Program {
         }
     }
 
-    pub(crate) fn add_function(&mut self, function: Function) -> FunctionId {
+    pub(crate) fn add_function(&mut self, function: stack::Function) -> stack::FunctionId {
         let id = self.functions.len();
         if id > u16::MAX as usize {
             panic!("too many functions");
         }
         self.functions.push(function);
 
-        FunctionId(id)
+        stack::FunctionId(id)
     }
 
-    pub(crate) fn get_function(&self, index: usize) -> &Function {
+    pub(crate) fn get_function(&self, index: usize) -> &stack::Function {
         &self.functions[index]
     }
 }
@@ -173,9 +172,14 @@ impl<'a> FunctionBuilder<'a> {
         self.compiled[jump_ref.0 + 2] = offset_bytes[1];
     }
 
-    pub(crate) fn finish(mut self, name: String, arity: usize, span: SourceSpan) -> Function {
+    pub(crate) fn finish(
+        mut self,
+        name: String,
+        arity: usize,
+        span: SourceSpan,
+    ) -> stack::Function {
         self.emit(Instruction::Return, span);
-        Function {
+        stack::Function {
             name,
             arity,
             chunk: self.compiled,
@@ -189,7 +193,7 @@ impl<'a> FunctionBuilder<'a> {
         FunctionBuilder::new(self.program)
     }
 
-    pub(crate) fn add_function(&mut self, function: Function) -> FunctionId {
+    pub(crate) fn add_function(&mut self, function: stack::Function) -> stack::FunctionId {
         self.program.add_function(function)
     }
 }

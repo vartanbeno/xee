@@ -1,8 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data::Closure;
-use crate::data::OutputSequence;
+use crate::data;
 use crate::stack;
 use crate::xml;
 
@@ -12,7 +11,7 @@ use crate::xml;
 pub(crate) enum StackValue {
     Atomic(stack::Atomic),
     Sequence(stack::StackSequence),
-    Closure(Rc<Closure>),
+    Closure(Rc<stack::Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<xml::Step>),
     Node(xml::Node),
@@ -37,7 +36,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn into_output_sequence(self) -> OutputSequence {
+    pub(crate) fn into_output_sequence(self) -> data::OutputSequence {
         let seq = self.to_many();
         seq.to_output()
     }

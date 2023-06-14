@@ -5,9 +5,7 @@ use std::rc::Rc;
 
 use crate::comparison;
 use crate::context::DynamicContext;
-use crate::data::{
-    Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId, StaticFunctionId,
-};
+use crate::data::{ContextInto, ContextTryInto};
 use crate::error::Error;
 use crate::op;
 use crate::stack;
@@ -20,7 +18,7 @@ const FRAMES_MAX: usize = 64;
 
 #[derive(Debug, Clone)]
 struct Frame {
-    function: FunctionId,
+    function: stack::FunctionId,
     ip: usize,
     base: usize,
 }
@@ -49,7 +47,7 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn start(
         &mut self,
-        function_id: FunctionId,
+        function_id: stack::FunctionId,
         context_item: Option<&stack::StackItem>,
         arguments: &[Vec<stack::StackItem>],
     ) {
@@ -95,7 +93,7 @@ impl<'a> Interpreter<'a> {
         self.frames.last_mut().unwrap()
     }
 
-    pub(crate) fn function(&self) -> &Function {
+    pub(crate) fn function(&self) -> &stack::Function {
         &self.program.functions[self.frame().function.0]
     }
 
@@ -159,10 +157,13 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..closure_function.closure_names.len() {
                         values.push(self.stack.pop().unwrap());
                     }
-                    self.stack.push(stack::StackValue::Closure(Rc::new(Closure {
-                        function_id: ClosureFunctionId::Dynamic(FunctionId(function_id as usize)),
-                        values,
-                    })));
+                    self.stack
+                        .push(stack::StackValue::Closure(Rc::new(stack::Closure {
+                            function_id: stack::ClosureFunctionId::Dynamic(stack::FunctionId(
+                                function_id as usize,
+                            )),
+                            values,
+                        })));
                 }
                 EncodedInstruction::StaticClosure => {
                     let static_function_id = self.read_u16();
@@ -170,7 +171,7 @@ impl<'a> Interpreter<'a> {
                         .dynamic_context
                         .static_context
                         .functions
-                        .get_by_index(StaticFunctionId(static_function_id as usize));
+                        .get_by_index(stack::StaticFunctionId(static_function_id as usize));
                     // get any context value from the stack if needed
                     let values = match static_function.context_rule {
                         Some(_) => {
@@ -180,12 +181,13 @@ impl<'a> Interpreter<'a> {
                             vec![]
                         }
                     };
-                    self.stack.push(stack::StackValue::Closure(Rc::new(Closure {
-                        function_id: ClosureFunctionId::Static(StaticFunctionId(
-                            static_function_id as usize,
-                        )),
-                        values,
-                    })));
+                    self.stack
+                        .push(stack::StackValue::Closure(Rc::new(stack::Closure {
+                            function_id: stack::ClosureFunctionId::Static(stack::StaticFunctionId(
+                                static_function_id as usize,
+                            )),
+                            values,
+                        })));
                 }
                 EncodedInstruction::Var => {
                     let index = self.read_u16();
@@ -200,7 +202,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     // the closure is always just below the base
-                    let closure: &Closure = (&self.stack[self.frame().base - 1]).try_into()?;
+                    let closure: &stack::Closure =
+                        (&self.stack[self.frame().base - 1]).try_into()?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
                 }
@@ -334,12 +337,13 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    if let Ok(closure) = callable.try_into() as stack::ValueResult<&Closure> {
+                    if let Ok(closure) = callable.try_into() as stack::ValueResult<&stack::Closure>
+                    {
                         match closure.function_id {
-                            ClosureFunctionId::Dynamic(function_id) => {
+                            stack::ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
                             }
-                            ClosureFunctionId::Static(static_function_id) => {
+                            stack::ClosureFunctionId::Static(static_function_id) => {
                                 // XXX wish I didn't need to clone
                                 let closure_values = &closure.values.clone();
                                 self.call_static(static_function_id, arity, closure_values)?;
@@ -453,7 +457,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_static(
         &mut self,
-        static_function_id: StaticFunctionId,
+        static_function_id: stack::StaticFunctionId,
         arity: u8,
         closure_values: &[stack::StackValue],
     ) -> stack::ValueResult<()> {
@@ -470,7 +474,11 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_closure(&mut self, function_id: FunctionId, arity: u8) -> stack::ValueResult<()> {
+    fn call_closure(
+        &mut self,
+        function_id: stack::FunctionId,
+        arity: u8,
+    ) -> stack::ValueResult<()> {
         if self.frames.len() >= self.frames.capacity() {
             return Err(stack::ValueError::StackOverflow);
         }

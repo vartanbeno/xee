@@ -1,8 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data::Closure;
-use crate::data::OutputItem;
+use crate::data;
 use crate::stack;
 use crate::xml;
 
@@ -10,16 +9,16 @@ use crate::xml;
 pub(crate) enum StackItem {
     Atomic(stack::Atomic),
     // XXX what about static function references?
-    Function(Rc<Closure>),
+    Function(Rc<stack::Closure>),
     Node(xml::Node),
 }
 
 impl StackItem {
-    pub(crate) fn to_output(&self) -> OutputItem {
+    pub(crate) fn to_output(&self) -> data::OutputItem {
         match self {
-            StackItem::Atomic(a) => OutputItem::Atomic(a.to_output()),
-            StackItem::Function(f) => OutputItem::Function(f.to_output()),
-            StackItem::Node(n) => OutputItem::Node(*n),
+            StackItem::Atomic(a) => data::OutputItem::Atomic(a.to_output()),
+            StackItem::Function(f) => data::OutputItem::Function(f.to_output()),
+            StackItem::Node(n) => data::OutputItem::Node(*n),
         }
     }
 

@@ -2,7 +2,6 @@ use miette::SourceSpan;
 use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
-use crate::data::StaticFunctionId;
 use crate::error::{Error, Result};
 use crate::ir;
 use crate::stack;
@@ -275,7 +274,7 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_static_function_reference(
         &mut self,
-        static_function_id: StaticFunctionId,
+        static_function_id: stack::StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
         span: SourceSpan,
     ) -> Result<()> {

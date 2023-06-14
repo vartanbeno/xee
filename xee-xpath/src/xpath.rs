@@ -1,7 +1,7 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{FunctionId, OutputItem, OutputSequence};
+use crate::data;
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
@@ -12,7 +12,7 @@ use crate::xml;
 #[derive(Debug)]
 pub struct XPath {
     pub(crate) program: Program,
-    main: FunctionId,
+    main: stack::FunctionId,
 }
 
 impl XPath {
@@ -33,7 +33,7 @@ impl XPath {
         compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
-        let inline_id = FunctionId(program.functions.len() - 1);
+        let inline_id = stack::FunctionId(program.functions.len() - 1);
         Ok(Self {
             program,
             main: inline_id,
@@ -76,18 +76,18 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
-    ) -> Result<OutputSequence> {
+    ) -> Result<data::OutputSequence> {
         self.many(
             dynamic_context,
-            Some(&OutputItem::Node(xml::Node::Xot(node))),
+            Some(&data::OutputItem::Node(xml::Node::Xot(node))),
         )
     }
 
     pub fn many(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&OutputItem>,
-    ) -> Result<OutputSequence> {
+        item: Option<&data::OutputItem>,
+    ) -> Result<data::OutputSequence> {
         let context_item: Option<stack::StackItem> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
@@ -96,8 +96,8 @@ impl XPath {
     pub fn one(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&OutputItem>,
-    ) -> Result<OutputItem> {
+        item: Option<&data::OutputItem>,
+    ) -> Result<data::OutputItem> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
         Ok(if items.len() == 1 {
@@ -113,8 +113,8 @@ impl XPath {
     pub fn option(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&OutputItem>,
-    ) -> Result<Option<OutputItem>> {
+        item: Option<&data::OutputItem>,
+    ) -> Result<Option<data::OutputItem>> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
 

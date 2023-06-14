@@ -6,7 +6,6 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::Closure;
 use crate::stack;
 use crate::xml;
 
@@ -129,10 +128,10 @@ where
     }
 }
 
-impl<'a> TryFrom<&'a stack::StackValue> for &'a Closure {
+impl<'a> TryFrom<&'a stack::StackValue> for &'a stack::Closure {
     type Error = stack::ValueError;
 
-    fn try_from(value: &'a stack::StackValue) -> stack::ValueResult<&'a Closure> {
+    fn try_from(value: &'a stack::StackValue) -> stack::ValueResult<&'a stack::Closure> {
         match value {
             stack::StackValue::Closure(c) => Ok(c),
             _ => Err(stack::ValueError::Type),
