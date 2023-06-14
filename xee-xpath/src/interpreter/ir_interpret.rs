@@ -543,15 +543,12 @@ mod tests {
     use xot::Xot;
 
     use crate::context::{DynamicContext, StaticContext};
+    use crate::data::{OutputAtomic, OutputItem, OutputSequence};
     use crate::error::Result;
     use crate::run::evaluate;
     use crate::stack;
     use crate::xml;
     use crate::xpath::XPath;
-    use crate::{
-        data::{OutputAtomic, OutputItem, OutputSequence},
-        document::{Document, Documents, Uri},
-    };
 
     fn as_sequence(value: &stack::StackValue) -> stack::StackSequence {
         value.try_into().unwrap()
@@ -610,11 +607,11 @@ mod tests {
 
     fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
     where
-        S: Fn(&Xot, &Document) -> Vec<xot::Node>,
+        S: Fn(&Xot, &xml::Document) -> Vec<xot::Node>,
     {
         let mut xot = Xot::new();
-        let uri = Uri("http://example.com".to_string());
-        let mut documents = Documents::new();
+        let uri = xml::Uri("http://example.com".to_string());
+        let mut documents = xml::Documents::new();
         documents.add(&mut xot, &uri, xml).unwrap();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);

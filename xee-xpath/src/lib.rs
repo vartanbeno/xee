@@ -4,11 +4,9 @@ extern crate num;
 #[macro_use]
 extern crate num_derive;
 
-mod annotation;
 mod comparison;
 mod context;
 mod data;
-mod document;
 mod error;
 mod func;
 mod interpreter;

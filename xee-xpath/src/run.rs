@@ -4,8 +4,8 @@ use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::data::OutputSequence;
-use crate::document::{Documents, Uri};
 use crate::error::Result;
+use crate::xml;
 use crate::xpath::XPath;
 
 /// A high level function that evaluates an xpath expression on an xml document.
@@ -26,8 +26,8 @@ pub fn evaluate_root(
     xpath: &str,
     default_element_namespace: Option<&str>,
 ) -> Result<OutputSequence> {
-    let uri = Uri("http://example.com".to_string());
-    let mut documents = Documents::new();
+    let uri = xml::Uri("http://example.com".to_string());
+    let mut documents = xml::Documents::new();
     documents.add_root(xot, &uri, root);
     let namespaces = Namespaces::new(default_element_namespace, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);

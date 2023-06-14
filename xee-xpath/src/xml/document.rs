@@ -2,8 +2,9 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::Debug;
 use xot::Xot;
 
-use crate::annotation::Annotations;
 use crate::xml;
+
+use super::annotation::Annotations;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) struct Uri(pub(crate) String);

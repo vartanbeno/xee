@@ -143,22 +143,18 @@ fn unwrap_inline_function(expr: ir::Expr) -> (ir::Name, ir::Expr) {
 
 #[cfg(test)]
 mod tests {
-    use xot::Xot;
+    use super::*;
 
     use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
+    use xot::Xot;
 
-    use crate::{
-        context::StaticContext,
-        document::{Documents, Uri},
-    };
-
-    use super::*;
+    use crate::context::StaticContext;
 
     #[test]
     fn test_parse_error() {
         let mut xot = Xot::new();
-        let uri = Uri("http://example.com".to_string());
-        let mut documents = Documents::new();
+        let uri = xml::Uri("http://example.com".to_string());
+        let mut documents = xml::Documents::new();
         documents.add(&mut xot, &uri, "<doc/>").unwrap();
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
         let static_context = StaticContext::new(&namespaces);

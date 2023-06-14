@@ -4,7 +4,6 @@ use std::rc::Rc;
 use std::vec;
 use xot::Xot;
 
-use crate::annotation::Annotations;
 use crate::context::DynamicContext;
 use crate::data::OutputSequence;
 use crate::stack;
@@ -211,7 +210,7 @@ impl StackInnerSequence {
     pub(crate) fn union(
         &self,
         other: &StackInnerSequence,
-        annotations: &Annotations,
+        annotations: &xml::Annotations,
     ) -> stack::ValueResult<StackInnerSequence> {
         let mut s = HashSet::new();
         for item in &self.items {
