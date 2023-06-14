@@ -9,6 +9,6 @@ fn test_root() {
 #[test]
 fn test_something() {
     Tests::new("prod/IfExpr")
-        .include("CondExpr008 CondExpr009 CondExpr010 CondExpr014 CondExpr015")
+        .include("CondExpr008 CondExpr009 CondExpr010 CondExpr014 CondExpr015 CondExpr016")
         .run()
 }

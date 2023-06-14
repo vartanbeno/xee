@@ -19,23 +19,15 @@ use crate::qt;
 const NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
 impl qt::TestSet {
-    pub(crate) fn load_from_file<'a>(xot: &'a mut Xot, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
         buf_reader.read_to_string(&mut xml)?;
-        // // calculate real base dir
-        // let base_dir = path
-        //     .parent()
-        //     .unwrap()
-        //     .strip_prefix(base_dir)
-        //     .unwrap()
-        //     .to_path_buf();
-
         Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml<'a>(xot: &'a mut Xot, path: &Path, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
@@ -59,7 +51,7 @@ impl qt::TestSet {
 
 impl qt::Catalog {
     // XXX some duplication here with qt::TestSet
-    pub(crate) fn load_from_file<'a>(xot: &'a mut Xot, path: &Path) -> Result<Self> {
+    pub(crate) fn load_from_file(xot: &mut Xot, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
@@ -67,7 +59,7 @@ impl qt::Catalog {
         Self::load_from_xml(xot, path, &xml)
     }
 
-    pub(crate) fn load_from_xml<'a>(xot: &'a mut Xot, path: &Path, xml: &str) -> Result<Self> {
+    pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
         let namespaces = Namespaces::with_default_element_namespace(NS);
@@ -250,6 +242,13 @@ fn test_cases_query<'a>(
         ))
     })?;
 
+    let assert_query = queries.one("string()", |_, item| {
+        let xpath = item.to_atomic()?.to_string()?;
+        Ok(qt::TestCaseResult::Assert(assert::Assert::new(
+            qt::XPathExpr(xpath),
+        )))
+    })?;
+
     let any_all_recurse = queries.many_recurse("*")?;
 
     // we use a local-name query here as it's the easiest way support this:
@@ -281,6 +280,8 @@ fn test_cases_query<'a>(
                 assert_eq_query.execute(session, item)?
             } else if local_name == "assert-string-value" {
                 assert_string_value_query.execute(session, item)?
+            } else if local_name == "assert" {
+                assert_query.execute(session, item)?
             } else {
                 qt::TestCaseResult::Unsupported
                 // qt::TestCaseResult::AssertFalse

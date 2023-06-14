@@ -176,28 +176,31 @@ impl fmt::Debug for AssertNot {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Assert(qt::XPathExpr);
 
-// impl Assert {
-//     pub(crate) fn new(expr: qt::XPathExpr) -> Self {
-//         Self(expr)
-//     }
-// }
+impl Assert {
+    pub(crate) fn new(expr: qt::XPathExpr) -> Self {
+        Self(expr)
+    }
+}
 
-// impl Assertable for Assert {
-//     fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
-//         let expected_items = run_xpath_with_result(&self.0, items);
+impl Assertable for Assert {
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let result_sequence = run_xpath_with_result(&self.0, sequence, xot);
 
-//         match expected_items {
-//             Ok(expected_items) => {
-//                 if expected_items == items {
-//                     TestOutcome::Failed(Failure::Eq(self.clone(), items.to_vec()))
-//                 } else {
-//                     TestOutcome::Passed
-//                 }
-//             }
-//             Err(error) => TestOutcome::UnsupportedExpression(error),
-//         }
-//     }
-// }
+        match result_sequence {
+            Ok(result_sequence) => match result_sequence.effective_boolean_value() {
+                Ok(value) => {
+                    if value {
+                        TestOutcome::Passed
+                    } else {
+                        TestOutcome::Failed(Failure::Assert(self.clone(), sequence.clone()))
+                    }
+                }
+                Err(error) => TestOutcome::RuntimeError(error),
+            },
+            Err(error) => TestOutcome::UnsupportedExpression(error),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertEq(qt::XPathExpr);
@@ -209,8 +212,8 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0);
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0, xot);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -514,6 +517,7 @@ impl TestCaseResult {
             TestCaseResult::AssertCount(a) => a.assert_result(xot, result),
             TestCaseResult::AssertStringValue(a) => a.assert_result(xot, result),
             TestCaseResult::AssertXml(a) => a.assert_result(xot, result),
+            TestCaseResult::Assert(a) => a.assert_result(xot, result),
             TestCaseResult::AssertError(a) => a.assert_result(xot, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
@@ -551,10 +555,11 @@ pub enum Failure {
     Count(AssertCount, AssertCountFailure),
     StringValue(AssertStringValue, AssertStringValueFailure),
     Xml(AssertXml, AssertXmlFailure),
+    Assert(Assert, Sequence),
     Error(AssertError, Sequence),
 }
 
-impl<'a> fmt::Display for Failure {
+impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Failure::AnyOf(a, outcomes) => {
@@ -562,7 +567,7 @@ impl<'a> fmt::Display for Failure {
                 for outcome in outcomes {
                     match outcome {
                         TestOutcome::Failed(failure) => {
-                            writeln!(f, "  {}", failure);
+                            writeln!(f, "  {}", failure)?;
                         }
                         _ => {
                             unreachable!()
@@ -612,6 +617,11 @@ impl<'a> fmt::Display for Failure {
                 writeln!(f, "  actual: {:?}", failure)?;
                 Ok(())
             }
+            Failure::Assert(_a, failure) => {
+                writeln!(f, "assert:")?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
             Failure::Error(a, value) => {
                 writeln!(f, "error:")?;
                 writeln!(f, "  expected: {:?}", a.0)?;
@@ -622,21 +632,25 @@ impl<'a> fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr) -> Result<Sequence, Error> {
+fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let xot = Xot::new();
     let dynamic_context = DynamicContext::new(&xot, &static_context);
     xpath.many(&dynamic_context, None)
 }
 
-fn run_xpath_with_result(expr: &qt::XPathExpr, sequence: &Sequence) -> Result<Sequence, Error> {
+fn run_xpath_with_result(
+    expr: &qt::XPathExpr,
+    sequence: &Sequence,
+    xot: &Xot,
+) -> Result<Sequence, Error> {
     let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(&namespaces);
+    let name = Name::without_ns("result");
+    let names = vec![name.clone()];
+    let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let xot = Xot::new();
-    let variables = vec![(Name::without_ns("result"), sequence.items().to_vec())];
+    let variables = vec![(name, sequence.items().to_vec())];
     let dynamic_context = DynamicContext::with_variables(&xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }
