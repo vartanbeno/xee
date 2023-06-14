@@ -201,43 +201,7 @@ impl Renderer for VerboseRenderer {
         _stdout: &mut Stdout,
         test_result: &TestOutcome,
     ) -> crossterm::Result<()> {
-        match test_result {
-            TestOutcome::Passed => {
-                println!("{}", "PASS".green());
-            }
-            TestOutcome::PassedWithUnexpectedError(error) => match error {
-                UnexpectedError::Code(s) => println!("{} code: {}", "PASS".green(), s),
-                UnexpectedError::Error(e) => println!("{} error: {}", "PASS".green(), e),
-            },
-            TestOutcome::Failed(failure) => {
-                println!("{} {}", "FAIL".red(), failure);
-            }
-            TestOutcome::RuntimeError(error) => match error.code() {
-                Some(code) => {
-                    println!("{} {} {}", "RUNTIME ERROR".red(), code, error);
-                }
-                None => {
-                    println!("{} {}", "RUNTIME ERROR".red(), error);
-                }
-            },
-            TestOutcome::CompilationError(error) => match error.code() {
-                Some(code) => {
-                    println!("{} {} {}", "COMPILATION ERROR".red(), code, error);
-                }
-                None => {
-                    println!("{} {}", "COMPILATION ERROR".red(), error);
-                }
-            },
-            TestOutcome::UnsupportedExpression(error) => {
-                println!("{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error);
-            }
-            TestOutcome::Unsupported => {
-                println!("{}", "UNSUPPORTED".red());
-            }
-            TestOutcome::EnvironmentError(error) => {
-                println!("{} {}", "CONTEXT ITEM ERROR".red(), error);
-            }
-        }
+        println!("{}", test_result);
         Ok(())
     }
 

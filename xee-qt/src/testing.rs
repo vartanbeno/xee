@@ -32,7 +32,7 @@ fn try_test_all(path: &str) -> Result<()> {
         }
         let outcome = test_case.run(&mut run_context, &test_set);
         if !outcome.is_passed() {
-            outcomes.push(outcome);
+            outcomes.push((test_case.name.clone(), outcome));
         }
     }
     if !outcomes.is_empty() {

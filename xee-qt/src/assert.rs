@@ -30,13 +30,13 @@ pub enum TestOutcome {
 }
 
 #[derive(Debug)]
-pub struct TestOutcomes(pub Vec<TestOutcome>);
+pub struct TestOutcomes(pub Vec<(String, TestOutcome)>);
 
 impl std::fmt::Display for TestOutcomes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f)?;
-        for test_outcome in self.0.iter() {
-            writeln!(f, "{}", test_outcome)?;
+        for (name, test_outcome) in self.0.iter() {
+            writeln!(f, "{} ... {}", name, test_outcome)?;
         }
         Ok(())
     }
@@ -85,6 +85,9 @@ impl std::fmt::Display for TestOutcome {
 impl TestOutcome {
     pub(crate) fn is_passed(&self) -> bool {
         matches!(self, Self::Passed | Self::PassedWithUnexpectedError(..))
+    }
+    pub(crate) fn is_exactly_passed(&self) -> bool {
+        matches!(self, Self::Passed)
     }
 }
 
