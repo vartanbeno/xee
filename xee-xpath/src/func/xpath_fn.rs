@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod test {
-    use crate::data::{Atomic, StackValue};
-    use crate::{DynamicContext, Namespaces, StaticContext};
     use std::rc::Rc;
     use xee_xpath_macros::xpath_fn;
     use xot::Xot;
+
+    use crate::stack;
+    use crate::{DynamicContext, Namespaces, StaticContext};
 
     #[xpath_fn("fn:foo() as xs:string")]
     fn foo() -> String {
@@ -24,7 +25,7 @@ mod test {
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
             foo::WRAPPER(&context, &[]),
-            Ok(StackValue::Atomic(Atomic::String(Rc::new(
+            Ok(stack::StackValue::Atomic(stack::Atomic::String(Rc::new(
                 "foo".to_string()
             ))))
         );
@@ -37,8 +38,11 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
-            int_to_string::WRAPPER(&context, &[StackValue::Atomic(Atomic::Integer(42))]),
-            Ok(StackValue::Atomic(Atomic::String(Rc::new(
+            int_to_string::WRAPPER(
+                &context,
+                &[stack::StackValue::Atomic(stack::Atomic::Integer(42))]
+            ),
+            Ok(stack::StackValue::Atomic(stack::Atomic::String(Rc::new(
                 "42".to_string()
             ))))
         );

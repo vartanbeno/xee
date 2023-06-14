@@ -6,10 +6,6 @@ mod item;
 mod node;
 mod sequence;
 
-pub(crate) use crate::stack::Atomic;
-pub(crate) use crate::stack::StackItem;
-pub(crate) use crate::stack::StackValue;
-pub(crate) use crate::stack::{StackInnerSequence, StackSequence};
 pub use atomic::OutputAtomic;
 pub(crate) use convert::{ContextInto, ContextTryInto};
 pub use error::{ValueError, ValueResult};

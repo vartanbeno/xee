@@ -7,11 +7,13 @@ use xot::Xot;
 use crate::annotation::Annotations;
 use crate::context::DynamicContext;
 
-use crate::data::Atomic;
 use crate::data::Node;
+use crate::data::OutputSequence;
 use crate::data::ValueError;
-use crate::data::{OutputSequence, StackItem};
 use crate::stack::StackValue;
+
+use super::atomic::Atomic;
+use super::item::StackItem;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

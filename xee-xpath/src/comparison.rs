@@ -1,9 +1,10 @@
-use crate::data::{Atomic, ValueError};
+use crate::data::ValueError;
 use crate::op;
+use crate::stack;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
-pub(crate) fn value_eq(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_eq(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -15,7 +16,7 @@ pub(crate) fn value_eq(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     )
 }
 
-pub(crate) fn value_ne(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_ne(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -27,7 +28,7 @@ pub(crate) fn value_ne(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     )
 }
 
-pub(crate) fn value_lt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_lt(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -39,7 +40,7 @@ pub(crate) fn value_lt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     )
 }
 
-pub(crate) fn value_le(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_le(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -51,7 +52,7 @@ pub(crate) fn value_le(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     )
 }
 
-pub(crate) fn value_gt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_gt(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -63,7 +64,7 @@ pub(crate) fn value_gt(a: &Atomic, b: &Atomic) -> Result<Atomic> {
     )
 }
 
-pub(crate) fn value_ge(a: &Atomic, b: &Atomic) -> Result<Atomic> {
+pub(crate) fn value_ge(a: &stack::Atomic, b: &stack::Atomic) -> Result<stack::Atomic> {
     generic_value_compare(
         a,
         b,
@@ -77,9 +78,9 @@ pub(crate) fn value_ge(a: &Atomic, b: &Atomic) -> Result<Atomic> {
 
 struct GenericComparisonOps<NumericOp, StringOp, BooleanOp>
 where
-    NumericOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
-    StringOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
-    BooleanOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
+    NumericOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
+    StringOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
+    BooleanOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
 {
     numeric_op: NumericOp,
     string_op: StringOp,
@@ -87,49 +88,56 @@ where
 }
 
 fn generic_value_compare<NumericOp, StringOp, BooleanOp>(
-    a: &Atomic,
-    b: &Atomic,
+    a: &stack::Atomic,
+    b: &stack::Atomic,
     ops: GenericComparisonOps<NumericOp, StringOp, BooleanOp>,
-) -> Result<Atomic>
+) -> Result<stack::Atomic>
 where
-    NumericOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
-    StringOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
-    BooleanOp: FnOnce(&Atomic, &Atomic) -> Result<bool>,
+    NumericOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
+    StringOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
+    BooleanOp: FnOnce(&stack::Atomic, &stack::Atomic) -> Result<bool>,
 {
     // If an atomized operand is an empty sequence, the result of the value
     // comparison is an empty sequence
-    if matches!(a, Atomic::Empty) || matches!(b, Atomic::Empty) {
-        return Ok(Atomic::Empty);
+    if matches!(a, stack::Atomic::Empty) || matches!(b, stack::Atomic::Empty) {
+        return Ok(stack::Atomic::Empty);
     }
     let (a, b) = cast_untyped(a, b)?;
     let r = match (&a, &b) {
         (
-            Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
-            Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_),
+            stack::Atomic::Integer(_)
+            | stack::Atomic::Decimal(_)
+            | stack::Atomic::Float(_)
+            | stack::Atomic::Double(_),
+            stack::Atomic::Integer(_)
+            | stack::Atomic::Decimal(_)
+            | stack::Atomic::Float(_)
+            | stack::Atomic::Double(_),
         ) => (ops.numeric_op)(&a, &b),
-        (Atomic::String(_), Atomic::String(_)) => (ops.string_op)(&a, &b),
-        (Atomic::Boolean(_), Atomic::Boolean(_)) => (ops.boolean_op)(&a, &b),
+        (stack::Atomic::String(_), stack::Atomic::String(_)) => (ops.string_op)(&a, &b),
+        (stack::Atomic::Boolean(_), stack::Atomic::Boolean(_)) => (ops.boolean_op)(&a, &b),
         _ => Err(ValueError::Type),
     }?;
-    Ok(Atomic::Boolean(r))
+    Ok(stack::Atomic::Boolean(r))
 }
 
-fn cast_untyped(a: &Atomic, b: &Atomic) -> Result<(Atomic, Atomic)> {
+fn cast_untyped(a: &stack::Atomic, b: &stack::Atomic) -> Result<(stack::Atomic, stack::Atomic)> {
     let r = match (a, b) {
         // If both atomic values are instances of xs:untypedAtomic, then the
         // values are cast to the type xs:string.
-        (Atomic::Untyped(a), Atomic::Untyped(b)) => {
-            (Atomic::String(a.clone()), Atomic::String(b.clone()))
-        }
+        (stack::Atomic::Untyped(a), stack::Atomic::Untyped(b)) => (
+            stack::Atomic::String(a.clone()),
+            stack::Atomic::String(b.clone()),
+        ),
         // If exactly one of the atomic values is an instance of
         // xs:untypedAtomic, it is cast to a type depending on the other
         // value's dynamic type T according to the following rules, in which V
         // denotes the value to be cast:
-        (Atomic::Untyped(a), _) => {
+        (stack::Atomic::Untyped(a), _) => {
             let a = b.general_comparison_cast(a)?;
             (a, b.clone())
         }
-        (_, Atomic::Untyped(b)) => {
+        (_, stack::Atomic::Untyped(b)) => {
             let b = a.general_comparison_cast(b)?;
             (a.clone(), b)
         }
@@ -138,40 +146,62 @@ fn cast_untyped(a: &Atomic, b: &Atomic) -> Result<(Atomic, Atomic)> {
     Ok(r)
 }
 
-pub(crate) fn general_eq(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_eq(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_eq)
 }
 
-pub(crate) fn general_ne(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_ne(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_ne)
 }
 
-pub(crate) fn general_lt(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_lt(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_lt)
 }
 
-pub(crate) fn general_le(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_le(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_le)
 }
 
-pub(crate) fn general_gt(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_gt(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_gt)
 }
 
-pub(crate) fn general_ge(a_atoms: &[Atomic], b_atoms: &[Atomic]) -> Result<Atomic> {
+pub(crate) fn general_ge(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+) -> Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_ge)
 }
 
-fn generic_general_compare<F>(a_atoms: &[Atomic], b_atoms: &[Atomic], compare: F) -> Result<Atomic>
+fn generic_general_compare<F>(
+    a_atoms: &[stack::Atomic],
+    b_atoms: &[stack::Atomic],
+    compare: F,
+) -> Result<stack::Atomic>
 where
-    F: Fn(&Atomic, &Atomic) -> Result<Atomic>,
+    F: Fn(&stack::Atomic, &stack::Atomic) -> Result<stack::Atomic>,
 {
     for a in a_atoms {
         for b in b_atoms {
             if compare(a, b)?.to_bool()? {
-                return Ok(Atomic::Boolean(true));
+                return Ok(stack::Atomic::Boolean(true));
             }
         }
     }
-    Ok(Atomic::Boolean(false))
+    Ok(stack::Atomic::Boolean(false))
 }

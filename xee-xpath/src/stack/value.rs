@@ -1,12 +1,12 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data::Atomic;
 use crate::data::Node;
-use crate::data::StackItem;
+use crate::data::OutputSequence;
 use crate::data::ValueError;
 use crate::data::{Closure, Step};
-use crate::data::{OutputSequence, StackSequence};
+
+use crate::stack;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -14,8 +14,8 @@ type Result<T> = std::result::Result<T, ValueError>;
 // further.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
-    Atomic(Atomic),
-    Sequence(StackSequence),
+    Atomic(stack::Atomic),
+    Sequence(stack::StackSequence),
     Closure(Rc<Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<Step>),
@@ -23,21 +23,21 @@ pub(crate) enum StackValue {
 }
 
 impl StackValue {
-    pub(crate) fn from_item(item: StackItem) -> Self {
+    pub(crate) fn from_item(item: stack::StackItem) -> Self {
         match item {
-            StackItem::Atomic(a) => StackValue::Atomic(a),
-            StackItem::Node(n) => StackValue::Node(n),
-            StackItem::Function(f) => StackValue::Closure(f),
+            stack::StackItem::Atomic(a) => StackValue::Atomic(a),
+            stack::StackItem::Node(n) => StackValue::Node(n),
+            stack::StackItem::Function(f) => StackValue::Closure(f),
         }
     }
 
-    pub(crate) fn from_items(items: &[StackItem]) -> Self {
+    pub(crate) fn from_items(items: &[stack::StackItem]) -> Self {
         if items.is_empty() {
-            StackValue::Atomic(Atomic::Empty)
+            StackValue::Atomic(stack::Atomic::Empty)
         } else if items.len() == 1 {
             StackValue::from_item(items[0].clone())
         } else {
-            StackValue::Sequence(StackSequence::from_items(items))
+            StackValue::Sequence(stack::StackSequence::from_items(items))
         }
     }
 
@@ -46,34 +46,34 @@ impl StackValue {
         seq.to_output()
     }
 
-    pub(crate) fn to_one(&self) -> Result<StackItem> {
+    pub(crate) fn to_one(&self) -> Result<stack::StackItem> {
         match self {
-            StackValue::Atomic(a) => Ok(StackItem::Atomic(a.clone())),
+            StackValue::Atomic(a) => Ok(stack::StackItem::Atomic(a.clone())),
             StackValue::Sequence(s) => s.to_one(),
-            StackValue::Node(n) => Ok(StackItem::Node(*n)),
+            StackValue::Node(n) => Ok(stack::StackItem::Node(*n)),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn to_option(&self) -> Result<Option<StackItem>> {
+    pub(crate) fn to_option(&self) -> Result<Option<stack::StackItem>> {
         match self {
-            StackValue::Atomic(a) => Ok(Some(StackItem::Atomic(a.clone()))),
+            StackValue::Atomic(a) => Ok(Some(stack::StackItem::Atomic(a.clone()))),
             StackValue::Sequence(s) => s.to_option(),
-            StackValue::Node(n) => Ok(Some(StackItem::Node(*n))),
+            StackValue::Node(n) => Ok(Some(stack::StackItem::Node(*n))),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn to_many(&self) -> StackSequence {
+    pub(crate) fn to_many(&self) -> stack::StackSequence {
         match self {
-            StackValue::Atomic(a) => StackSequence::from_atomic(a),
+            StackValue::Atomic(a) => stack::StackSequence::from_atomic(a),
             StackValue::Sequence(s) => s.clone(),
-            StackValue::Node(n) => StackSequence::from_node(*n),
+            StackValue::Node(n) => stack::StackSequence::from_node(*n),
             // TODO: we need to handle the function case here, but
             // we don't handle it yet
             _ => {
                 dbg!("unhandled to_many value {:?}", self);
-                StackSequence::empty()
+                stack::StackSequence::empty()
             }
         }
     }
@@ -88,7 +88,7 @@ impl StackValue {
                     return Ok(false);
                 }
                 // If its operand is a sequence whose first item is a node, fn:boolean returns true.
-                if matches!(s.items[0], StackItem::Node(_)) {
+                if matches!(s.items[0], stack::StackItem::Node(_)) {
                     return Ok(true);
                 }
                 // If its operand is a singleton value
@@ -110,7 +110,7 @@ impl StackValue {
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
             StackValue::Sequence(s) => s.borrow().is_empty(),
-            StackValue::Atomic(Atomic::Empty) => true,
+            StackValue::Atomic(stack::Atomic::Empty) => true,
             _ => false,
         }
     }
@@ -142,8 +142,8 @@ mod tests {
 
     #[test]
     fn test_integer_compares_with_decimal() {
-        let a = Atomic::Integer(1);
-        let b = Atomic::Decimal(Decimal::from(1));
+        let a = stack::Atomic::Integer(1);
+        let b = stack::Atomic::Decimal(Decimal::from(1));
         assert_eq!(a, b);
     }
 }

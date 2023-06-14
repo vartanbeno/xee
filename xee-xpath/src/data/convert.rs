@@ -6,7 +6,8 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::{Atomic, Closure, Node, StackItem, StackSequence, StackValue, Step, ValueError};
+use super::{Closure, Node, Step, ValueError};
+use crate::stack;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -51,17 +52,17 @@ where
 
 // Conversions from Value
 
-impl ContextTryFrom<StackValue> for Atomic {
-    fn context_try_from(value: StackValue, context: &DynamicContext) -> Result<Self> {
+impl ContextTryFrom<stack::StackValue> for stack::Atomic {
+    fn context_try_from(value: stack::StackValue, context: &DynamicContext) -> Result<Self> {
         ContextTryFrom::context_try_from(&value, context)
     }
 }
 
-impl ContextTryFrom<&StackValue> for Atomic {
-    fn context_try_from(value: &StackValue, context: &DynamicContext) -> Result<Self> {
+impl ContextTryFrom<&stack::StackValue> for stack::Atomic {
+    fn context_try_from(value: &stack::StackValue, context: &DynamicContext) -> Result<Self> {
         match value {
-            StackValue::Atomic(a) => Ok(a.clone()),
-            StackValue::Sequence(s) => s.borrow().to_atomic(context),
+            stack::StackValue::Atomic(a) => Ok(a.clone()),
+            stack::StackValue::Sequence(s) => s.borrow().to_atomic(context),
             _ => {
                 todo!("don't know how to atomize this yet")
             }
@@ -71,25 +72,25 @@ impl ContextTryFrom<&StackValue> for Atomic {
 
 // impl ContextTryFrom<&Value> for f64 {
 //     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
-//         let atomic: Atomic = value.context_try_into(context)?;
+//         let atomic: stack::Atomic = value.context_try_into(context)?;
 //         atomic.try_into()
 //     }
 // }
 
-impl<T> ContextTryFrom<&StackValue> for T
+impl<T> ContextTryFrom<&stack::StackValue> for T
 where
-    T: TryFrom<Atomic, Error = ValueError>,
+    T: TryFrom<stack::Atomic, Error = ValueError>,
 {
-    fn context_try_from(value: &StackValue, context: &DynamicContext) -> Result<Self> {
-        let atomic: Atomic = value.context_try_into(context)?;
+    fn context_try_from(value: &stack::StackValue, context: &DynamicContext) -> Result<Self> {
+        let atomic: stack::Atomic = value.context_try_into(context)?;
         atomic.try_into()
     }
 }
 
-impl ContextTryFrom<&StackValue> for Node {
-    fn context_try_from(value: &StackValue, _context: &DynamicContext) -> Result<Self> {
+impl ContextTryFrom<&stack::StackValue> for Node {
+    fn context_try_from(value: &stack::StackValue, _context: &DynamicContext) -> Result<Self> {
         match value.to_one()? {
-            StackItem::Node(n) => Ok(n),
+            stack::StackItem::Node(n) => Ok(n),
             _ => Err(ValueError::Type),
         }
     }
@@ -97,16 +98,16 @@ impl ContextTryFrom<&StackValue> for Node {
 
 // impl ContextTryFrom<&Value> for i64 {
 //     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
-//         let atomic: Atomic = value.context_try_into(context)?;
+//         let atomic: stack::Atomic = value.context_try_into(context)?;
 //         atomic.try_into()
 //     }
 // }
 
-impl<T> ContextTryFrom<&StackValue> for Option<T>
+impl<T> ContextTryFrom<&stack::StackValue> for Option<T>
 where
-    T: TryFrom<StackItem, Error = ValueError>,
+    T: TryFrom<stack::StackItem, Error = ValueError>,
 {
-    fn context_try_from(value: &StackValue, _context: &DynamicContext) -> Result<Self> {
+    fn context_try_from(value: &stack::StackValue, _context: &DynamicContext) -> Result<Self> {
         match value.to_option()? {
             Some(v) => Ok(Some(v.try_into()?)),
             None => Ok(None),
@@ -114,43 +115,43 @@ where
     }
 }
 
-impl<'a> TryFrom<&'a StackValue> for &'a Closure {
+impl<'a> TryFrom<&'a stack::StackValue> for &'a Closure {
     type Error = ValueError;
 
-    fn try_from(value: &'a StackValue) -> Result<&'a Closure> {
+    fn try_from(value: &'a stack::StackValue) -> Result<&'a Closure> {
         match value {
-            StackValue::Closure(c) => Ok(c),
+            stack::StackValue::Closure(c) => Ok(c),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl TryFrom<&StackValue> for Rc<Step> {
+impl TryFrom<&stack::StackValue> for Rc<Step> {
     type Error = ValueError;
 
-    fn try_from(value: &StackValue) -> Result<Rc<Step>> {
+    fn try_from(value: &stack::StackValue) -> Result<Rc<Step>> {
         match value {
-            StackValue::Step(s) => Ok(Rc::clone(s)),
+            stack::StackValue::Step(s) => Ok(Rc::clone(s)),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl TryFrom<StackValue> for Node {
+impl TryFrom<stack::StackValue> for Node {
     type Error = ValueError;
 
-    fn try_from(value: StackValue) -> Result<Node> {
+    fn try_from(value: stack::StackValue) -> Result<Node> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&StackValue> for Node {
+impl TryFrom<&stack::StackValue> for Node {
     type Error = ValueError;
 
-    fn try_from(value: &StackValue) -> Result<Node> {
+    fn try_from(value: &stack::StackValue) -> Result<Node> {
         match value {
-            StackValue::Node(n) => Ok(*n),
-            StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
+            stack::StackValue::Node(n) => Ok(*n),
+            stack::StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(ValueError::Type),
         }
     }
@@ -161,7 +162,7 @@ impl TryFrom<&StackValue> for Node {
 
 //     fn try_from(value: &Value) -> Result<Item> {
 //         match value {
-//             Value::Atomic(a) => Ok(Item::Atomic(a.clone())),
+//             Value::stack::Atomic(a) => Ok(Item::stack::Atomic(a.clone())),
 //             Value::Node(n) => Ok(Item::Node(*n)),
 //             Value::Sequence(s) => s.borrow().singleton(),
 //             Value::Closure(c) => Ok(Item::Closure(Rc::clone(c))),
@@ -170,34 +171,34 @@ impl TryFrom<&StackValue> for Node {
 // }
 // Conversions from Item
 
-impl TryFrom<&StackItem> for Atomic {
+impl TryFrom<&stack::StackItem> for stack::Atomic {
     type Error = ValueError;
 
-    fn try_from(item: &StackItem) -> Result<Self> {
+    fn try_from(item: &stack::StackItem) -> Result<Self> {
         match item {
-            StackItem::Atomic(a) => Ok(a.clone()),
+            stack::StackItem::Atomic(a) => Ok(a.clone()),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl TryFrom<StackItem> for Atomic {
+impl TryFrom<stack::StackItem> for stack::Atomic {
     type Error = ValueError;
 
-    fn try_from(item: StackItem) -> Result<Self> {
+    fn try_from(item: stack::StackItem) -> Result<Self> {
         match item {
-            StackItem::Atomic(a) => Ok(a),
+            stack::StackItem::Atomic(a) => Ok(a),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl TryFrom<StackItem> for f64 {
+impl TryFrom<stack::StackItem> for f64 {
     type Error = ValueError;
 
-    fn try_from(item: StackItem) -> Result<Self> {
+    fn try_from(item: stack::StackItem) -> Result<Self> {
         match item {
-            StackItem::Atomic(a) => a.try_into(),
+            stack::StackItem::Atomic(a) => a.try_into(),
             _ => Err(ValueError::Type),
         }
     }
@@ -215,150 +216,150 @@ impl TryFrom<StackItem> for f64 {
 //     }
 // }
 
-impl TryFrom<StackItem> for Node {
+impl TryFrom<stack::StackItem> for Node {
     type Error = ValueError;
 
-    fn try_from(item: StackItem) -> Result<Self> {
+    fn try_from(item: stack::StackItem) -> Result<Self> {
         match item {
-            StackItem::Node(n) => Ok(n),
+            stack::StackItem::Node(n) => Ok(n),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-// Conversions from Atomic
+// Conversions from stack::Atomic
 
-impl TryFrom<Atomic> for i64 {
+impl TryFrom<stack::Atomic> for i64 {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_integer()
     }
 }
 
-impl TryFrom<Atomic> for Decimal {
+impl TryFrom<stack::Atomic> for Decimal {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_decimal()
     }
 }
 
-impl TryFrom<Atomic> for OrderedFloat<f32> {
+impl TryFrom<stack::Atomic> for OrderedFloat<f32> {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_float()
     }
 }
 
-impl TryFrom<Atomic> for OrderedFloat<f64> {
+impl TryFrom<stack::Atomic> for OrderedFloat<f64> {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_double()
     }
 }
 
-impl TryFrom<Atomic> for f64 {
+impl TryFrom<stack::Atomic> for f64 {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_double().map(|d| d.into())
     }
 }
 
-impl TryFrom<Atomic> for bool {
+impl TryFrom<stack::Atomic> for bool {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_bool()
     }
 }
 
-impl<'a> TryFrom<&'a Atomic> for &'a str {
+impl<'a> TryFrom<&'a stack::Atomic> for &'a str {
     type Error = ValueError;
 
-    fn try_from(atomic: &'a Atomic) -> Result<&'a str> {
+    fn try_from(atomic: &'a stack::Atomic) -> Result<&'a str> {
         atomic.to_str()
     }
 }
 
-impl TryFrom<Atomic> for String {
+impl TryFrom<stack::Atomic> for String {
     type Error = ValueError;
 
-    fn try_from(atomic: Atomic) -> Result<Self> {
+    fn try_from(atomic: stack::Atomic) -> Result<Self> {
         atomic.to_string()
     }
 }
 
-impl TryFrom<StackValue> for StackSequence {
+impl TryFrom<stack::StackValue> for stack::StackSequence {
     type Error = ValueError;
 
-    fn try_from(value: StackValue) -> Result<Self> {
+    fn try_from(value: stack::StackValue) -> Result<Self> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&StackValue> for StackSequence {
+impl TryFrom<&stack::StackValue> for stack::StackSequence {
     type Error = ValueError;
 
-    fn try_from(value: &StackValue) -> Result<Self> {
+    fn try_from(value: &stack::StackValue) -> Result<Self> {
         match value {
-            StackValue::Sequence(s) => Ok(s.clone()),
-            StackValue::Atomic(a) => Ok(StackSequence::from_atomic(a)),
-            StackValue::Node(n) => Ok(StackSequence::from_node(*n)),
+            stack::StackValue::Sequence(s) => Ok(s.clone()),
+            stack::StackValue::Atomic(a) => Ok(stack::StackSequence::from_atomic(a)),
+            stack::StackValue::Node(n) => Ok(stack::StackSequence::from_node(*n)),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl ContextFrom<StackSequence> for Vec<Atomic> {
-    fn context_from(sequence: StackSequence, context: &DynamicContext) -> Self {
+impl ContextFrom<stack::StackSequence> for Vec<stack::Atomic> {
+    fn context_from(sequence: stack::StackSequence, context: &DynamicContext) -> Self {
         sequence.borrow().to_atoms(context.xot)
     }
 }
 
 // Conversions from Rust values into Value
 
-impl From<String> for StackValue {
-    fn from(s: String) -> StackValue {
-        StackValue::Atomic(Atomic::String(Rc::new(s)))
+impl From<String> for stack::StackValue {
+    fn from(s: String) -> stack::StackValue {
+        stack::StackValue::Atomic(stack::Atomic::String(Rc::new(s)))
     }
 }
 
-impl From<f64> for StackValue {
-    fn from(f: f64) -> StackValue {
-        StackValue::Atomic(Atomic::Double(OrderedFloat(f)))
+impl From<f64> for stack::StackValue {
+    fn from(f: f64) -> stack::StackValue {
+        stack::StackValue::Atomic(stack::Atomic::Double(OrderedFloat(f)))
     }
 }
 
-impl From<i64> for StackValue {
-    fn from(i: i64) -> StackValue {
-        StackValue::Atomic(Atomic::Integer(i))
+impl From<i64> for stack::StackValue {
+    fn from(i: i64) -> stack::StackValue {
+        stack::StackValue::Atomic(stack::Atomic::Integer(i))
     }
 }
 
-impl From<bool> for StackValue {
-    fn from(b: bool) -> StackValue {
-        StackValue::Atomic(Atomic::Boolean(b))
+impl From<bool> for stack::StackValue {
+    fn from(b: bool) -> stack::StackValue {
+        stack::StackValue::Atomic(stack::Atomic::Boolean(b))
     }
 }
 
-impl From<Node> for StackValue {
-    fn from(n: Node) -> StackValue {
-        StackValue::Node(n)
+impl From<Node> for stack::StackValue {
+    fn from(n: Node) -> stack::StackValue {
+        stack::StackValue::Node(n)
     }
 }
 
-impl<T> From<Option<T>> for StackValue
+impl<T> From<Option<T>> for stack::StackValue
 where
-    T: Into<StackValue>,
+    T: Into<stack::StackValue>,
 {
-    fn from(o: Option<T>) -> StackValue {
+    fn from(o: Option<T>) -> stack::StackValue {
         match o {
             Some(v) => v.into(),
-            None => StackValue::Atomic(Atomic::Empty),
+            None => stack::StackValue::Atomic(stack::Atomic::Empty),
         }
     }
 }
@@ -370,13 +371,13 @@ where
 //     fn from(o: Option<T>) -> Value {
 //         match o {
 //             Some(v) => Value::from_item(v.into()),
-//             None => Value::Atomic(Atomic::Empty),
+//             None => Value::stack::Atomic(stack::Atomic::Empty),
 //         }
 //     }
 // }
 
-impl From<StackItem> for StackValue {
-    fn from(item: StackItem) -> StackValue {
-        StackValue::from_item(item)
+impl From<stack::StackItem> for stack::StackValue {
+    fn from(item: stack::StackItem) -> stack::StackValue {
+        stack::StackValue::from_item(item)
     }
 }

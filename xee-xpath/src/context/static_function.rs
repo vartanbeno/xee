@@ -6,8 +6,9 @@ use xee_xpath_ast::Namespaces;
 
 use super::dynamic_context::DynamicContext;
 
-use crate::data::{StackValue, StaticFunctionId, ValueError};
+use crate::data::{StaticFunctionId, ValueError};
 use crate::func::static_function_descriptions;
+use crate::stack;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum FunctionKind {
@@ -36,8 +37,10 @@ impl FunctionKind {
     }
 }
 
-pub(crate) type StaticFunctionType =
-    fn(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError>;
+pub(crate) type StaticFunctionType = fn(
+    context: &DynamicContext,
+    arguments: &[stack::StackValue],
+) -> Result<stack::StackValue, ValueError>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
@@ -160,7 +163,10 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError>,
+    func: fn(
+        context: &DynamicContext,
+        arguments: &[stack::StackValue],
+    ) -> Result<stack::StackValue, ValueError>,
 }
 
 impl Debug for StaticFunction {
@@ -177,9 +183,9 @@ impl StaticFunction {
     pub(crate) fn invoke(
         &self,
         context: &DynamicContext,
-        arguments: &[StackValue],
-        closure_values: &[StackValue],
-    ) -> Result<StackValue, ValueError> {
+        arguments: &[stack::StackValue],
+        closure_values: &[stack::StackValue],
+    ) -> Result<stack::StackValue, ValueError> {
         if arguments.len() != self.arity {
             return Err(ValueError::Type);
         }

@@ -2,16 +2,17 @@ use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
-use crate::data::{Node, StackInnerSequence, StackItem, StackSequence, Step};
+use crate::data::{Node, Step};
+use crate::stack;
 
-pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> StackSequence {
-    let mut new_sequence = StackInnerSequence::new();
+pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> stack::StackSequence {
+    let mut new_sequence = stack::StackInnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
-            new_sequence.push(&StackItem::Node(axis_node));
+            new_sequence.push(&stack::StackItem::Node(axis_node));
         }
     }
-    StackSequence::new(new_sequence)
+    stack::StackSequence::new(new_sequence)
 }
 
 fn node_take_axis<'a>(
@@ -220,11 +221,11 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 mod tests {
     use super::*;
 
-    fn xot_nodes_to_sequence(node: &[xot::Node]) -> StackSequence {
-        StackSequence::new(StackInnerSequence {
+    fn xot_nodes_to_sequence(node: &[xot::Node]) -> stack::StackSequence {
+        stack::StackSequence::new(stack::StackInnerSequence {
             items: node
                 .iter()
-                .map(|&node| StackItem::Node(Node::Xot(node)))
+                .map(|&node| stack::StackItem::Node(Node::Xot(node)))
                 .collect(),
         })
     }

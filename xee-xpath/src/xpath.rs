@@ -1,13 +1,12 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{
-    Atomic, FunctionId, Node, OutputItem, OutputSequence, StackItem, StackSequence, StackValue,
-};
+use crate::data::{FunctionId, Node, OutputItem, OutputSequence};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
+use crate::stack;
 
 #[derive(Debug)]
 pub struct XPath {
@@ -43,8 +42,8 @@ impl XPath {
     pub(crate) fn run_value(
         &self,
         dynamic_context: &DynamicContext,
-        context_item: Option<&StackItem>,
-    ) -> Result<StackValue> {
+        context_item: Option<&stack::StackItem>,
+    ) -> Result<stack::StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
         interpreter.start(self.main, context_item, &arguments);
@@ -61,11 +60,13 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            StackValue::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
+            stack::StackValue::Atomic(stack::Atomic::Absent) => Err(Error::XPDY0002 {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Sequence(StackSequence::empty())),
+            stack::StackValue::Atomic(stack::Atomic::Empty) => {
+                Ok(stack::StackValue::Sequence(stack::StackSequence::empty()))
+            }
             _ => Ok(value),
         }
     }
@@ -83,7 +84,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&OutputItem>,
     ) -> Result<OutputSequence> {
-        let context_item: Option<StackItem> = item.map(|item| item.clone().into());
+        let context_item: Option<stack::StackItem> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
     }
