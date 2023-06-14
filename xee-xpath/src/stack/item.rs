@@ -1,12 +1,13 @@
 use std::rc::Rc;
 use xot::Xot;
 
+use super::Atomic;
+use super::StackValue;
+
 use crate::data::Closure;
 use crate::data::Node;
 use crate::data::OutputItem;
 use crate::data::ValueError;
-use crate::stack::Atomic;
-use crate::stack::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
