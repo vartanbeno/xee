@@ -35,10 +35,8 @@ impl FunctionKind {
     }
 }
 
-pub(crate) type StaticFunctionType = fn(
-    context: &DynamicContext,
-    arguments: &[stack::StackValue],
-) -> stack::Result<stack::StackValue>;
+pub(crate) type StaticFunctionType =
+    fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
@@ -161,10 +159,7 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(
-        context: &DynamicContext,
-        arguments: &[stack::StackValue],
-    ) -> stack::Result<stack::StackValue>,
+    func: fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>,
 }
 
 impl Debug for StaticFunction {
@@ -181,9 +176,9 @@ impl StaticFunction {
     pub(crate) fn invoke(
         &self,
         context: &DynamicContext,
-        arguments: &[stack::StackValue],
-        closure_values: &[stack::StackValue],
-    ) -> stack::Result<stack::StackValue> {
+        arguments: &[stack::Value],
+        closure_values: &[stack::Value],
+    ) -> stack::Result<stack::Value> {
         if arguments.len() != self.arity {
             return Err(stack::Error::Type);
         }

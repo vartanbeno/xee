@@ -25,7 +25,7 @@ mod test {
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
             foo::WRAPPER(&context, &[]),
-            Ok(stack::StackValue::Atomic(stack::Atomic::String(Rc::new(
+            Ok(stack::Value::Atomic(stack::Atomic::String(Rc::new(
                 "foo".to_string()
             ))))
         );
@@ -40,9 +40,9 @@ mod test {
         assert_eq!(
             int_to_string::WRAPPER(
                 &context,
-                &[stack::StackValue::Atomic(stack::Atomic::Integer(42))]
+                &[stack::Value::Atomic(stack::Atomic::Integer(42))]
             ),
-            Ok(stack::StackValue::Atomic(stack::Atomic::String(Rc::new(
+            Ok(stack::Value::Atomic(stack::Atomic::String(Rc::new(
                 "42".to_string()
             ))))
         );

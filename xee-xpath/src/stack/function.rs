@@ -26,7 +26,7 @@ impl StaticFunctionId {
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
-    pub(crate) constants: Vec<stack::StackValue>,
+    pub(crate) constants: Vec<stack::Value>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
@@ -41,7 +41,7 @@ pub(crate) enum ClosureFunctionId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<stack::StackValue>,
+    pub(crate) values: Vec<stack::Value>,
 }
 
 impl Closure {

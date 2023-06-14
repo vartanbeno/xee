@@ -63,7 +63,7 @@ pub(crate) struct FunctionBuilder<'a> {
     program: &'a mut Program,
     compiled: Vec<u8>,
     spans: Vec<SourceSpan>,
-    constants: Vec<stack::StackValue>,
+    constants: Vec<stack::Value>,
     closure_names: Vec<ir::Name>,
 }
 
@@ -85,7 +85,7 @@ impl<'a> FunctionBuilder<'a> {
         encode_instruction(instruction, &mut self.compiled);
     }
 
-    pub(crate) fn emit_constant(&mut self, constant: stack::StackValue, span: SourceSpan) {
+    pub(crate) fn emit_constant(&mut self, constant: stack::Value, span: SourceSpan) {
         let constant_id = self.constants.len();
         self.constants.push(constant);
         if constant_id > (u16::MAX as usize) {

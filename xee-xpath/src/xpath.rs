@@ -44,7 +44,7 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         context_item: Option<&stack::Item>,
-    ) -> Result<stack::StackValue> {
+    ) -> Result<stack::Value> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
         interpreter.start(self.main, context_item, &arguments);
@@ -61,12 +61,12 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            stack::StackValue::Atomic(stack::Atomic::Absent) => Err(Error::XPDY0002 {
+            stack::Value::Atomic(stack::Atomic::Absent) => Err(Error::XPDY0002 {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            stack::StackValue::Atomic(stack::Atomic::Empty) => {
-                Ok(stack::StackValue::Sequence(stack::Sequence::empty()))
+            stack::Value::Atomic(stack::Atomic::Empty) => {
+                Ok(stack::Value::Sequence(stack::Sequence::empty()))
             }
             _ => Ok(value),
         }

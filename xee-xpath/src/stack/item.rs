@@ -49,11 +49,11 @@ impl Item {
         }
     }
 
-    pub(crate) fn into_stack_value(self) -> stack::StackValue {
+    pub(crate) fn into_stack_value(self) -> stack::Value {
         match self {
-            Item::Atomic(a) => stack::StackValue::Atomic(a),
-            Item::Node(n) => stack::StackValue::Node(n),
-            Item::Function(f) => stack::StackValue::Closure(f),
+            Item::Atomic(a) => stack::Value::Atomic(a),
+            Item::Node(n) => stack::Value::Node(n),
+            Item::Function(f) => stack::Value::Closure(f),
         }
     }
 }

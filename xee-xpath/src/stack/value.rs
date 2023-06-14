@@ -8,7 +8,7 @@ use crate::xml;
 // TODO: the use in the macro needs to keep this public, needs to be investigated
 // further.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum StackValue {
+pub(crate) enum Value {
     Atomic(stack::Atomic),
     Sequence(stack::Sequence),
     Closure(Rc<stack::Closure>),
@@ -17,22 +17,22 @@ pub(crate) enum StackValue {
     Node(xml::Node),
 }
 
-impl StackValue {
+impl Value {
     pub(crate) fn from_item(item: stack::Item) -> Self {
         match item {
-            stack::Item::Atomic(a) => StackValue::Atomic(a),
-            stack::Item::Node(n) => StackValue::Node(n),
-            stack::Item::Function(f) => StackValue::Closure(f),
+            stack::Item::Atomic(a) => Value::Atomic(a),
+            stack::Item::Node(n) => Value::Node(n),
+            stack::Item::Function(f) => Value::Closure(f),
         }
     }
 
     pub(crate) fn from_items(items: &[stack::Item]) -> Self {
         if items.is_empty() {
-            StackValue::Atomic(stack::Atomic::Empty)
+            Value::Atomic(stack::Atomic::Empty)
         } else if items.len() == 1 {
-            StackValue::from_item(items[0].clone())
+            Value::from_item(items[0].clone())
         } else {
-            StackValue::Sequence(stack::Sequence::from_items(items))
+            Value::Sequence(stack::Sequence::from_items(items))
         }
     }
 
@@ -43,27 +43,27 @@ impl StackValue {
 
     pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
         match self {
-            StackValue::Atomic(a) => Ok(stack::Item::Atomic(a.clone())),
-            StackValue::Sequence(s) => s.to_one(),
-            StackValue::Node(n) => Ok(stack::Item::Node(*n)),
+            Value::Atomic(a) => Ok(stack::Item::Atomic(a.clone())),
+            Value::Sequence(s) => s.to_one(),
+            Value::Node(n) => Ok(stack::Item::Node(*n)),
             _ => Err(stack::Error::Type),
         }
     }
 
     pub(crate) fn to_option(&self) -> stack::Result<Option<stack::Item>> {
         match self {
-            StackValue::Atomic(a) => Ok(Some(stack::Item::Atomic(a.clone()))),
-            StackValue::Sequence(s) => s.to_option(),
-            StackValue::Node(n) => Ok(Some(stack::Item::Node(*n))),
+            Value::Atomic(a) => Ok(Some(stack::Item::Atomic(a.clone()))),
+            Value::Sequence(s) => s.to_option(),
+            Value::Node(n) => Ok(Some(stack::Item::Node(*n))),
             _ => Err(stack::Error::Type),
         }
     }
 
     pub(crate) fn to_many(&self) -> stack::Sequence {
         match self {
-            StackValue::Atomic(a) => stack::Sequence::from_atomic(a),
-            StackValue::Sequence(s) => s.clone(),
-            StackValue::Node(n) => stack::Sequence::from_node(*n),
+            Value::Atomic(a) => stack::Sequence::from_atomic(a),
+            Value::Sequence(s) => s.clone(),
+            Value::Node(n) => stack::Sequence::from_node(*n),
             // TODO: we need to handle the function case here, but
             // we don't handle it yet
             _ => {
@@ -75,8 +75,8 @@ impl StackValue {
 
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
-            StackValue::Atomic(a) => a.to_bool(),
-            StackValue::Sequence(s) => {
+            Value::Atomic(a) => a.to_bool(),
+            Value::Sequence(s) => {
                 let s = s.borrow();
                 // If its operand is an empty sequence, fn:boolean returns false.
                 if s.is_empty() {
@@ -93,38 +93,38 @@ impl StackValue {
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
             // this is the case when a single node is on the stack, just like if it
             // were in a sequence.
-            StackValue::Node(_) => Ok(true),
+            Value::Node(_) => Ok(true),
             // XXX the type error that the effective boolean wants is
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
-            StackValue::Closure(_) => Err(stack::Error::Type),
-            StackValue::Step(_) => Err(stack::Error::Type),
+            Value::Closure(_) => Err(stack::Error::Type),
+            Value::Step(_) => Err(stack::Error::Type),
         }
     }
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
-            StackValue::Sequence(s) => s.borrow().is_empty(),
-            StackValue::Atomic(stack::Atomic::Empty) => true,
+            Value::Sequence(s) => s.borrow().is_empty(),
+            Value::Atomic(stack::Atomic::Empty) => true,
             _ => false,
         }
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
-            StackValue::Atomic(atomic) => atomic.string_value()?,
-            StackValue::Sequence(sequence) => {
+            Value::Atomic(atomic) => atomic.string_value()?,
+            Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 let len = sequence.len();
                 match len {
                     0 => "".to_string(),
-                    1 => StackValue::from_item(sequence.items[0].clone()).string_value(xot)?,
+                    1 => Value::from_item(sequence.items[0].clone()).string_value(xot)?,
                     _ => Err(stack::Error::Type)?,
                 }
             }
-            StackValue::Node(node) => node.string_value(xot),
-            StackValue::Closure(_) => Err(stack::Error::Type)?,
-            StackValue::Step(_) => Err(stack::Error::Type)?,
+            Value::Node(node) => node.string_value(xot),
+            Value::Closure(_) => Err(stack::Error::Type)?,
+            Value::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
     }

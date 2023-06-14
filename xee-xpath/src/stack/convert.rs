@@ -49,20 +49,17 @@ where
 
 // Conversions from Value
 
-impl ContextTryFrom<stack::StackValue> for stack::Atomic {
-    fn context_try_from(value: stack::StackValue, context: &DynamicContext) -> stack::Result<Self> {
+impl ContextTryFrom<stack::Value> for stack::Atomic {
+    fn context_try_from(value: stack::Value, context: &DynamicContext) -> stack::Result<Self> {
         ContextTryFrom::context_try_from(&value, context)
     }
 }
 
-impl ContextTryFrom<&stack::StackValue> for stack::Atomic {
-    fn context_try_from(
-        value: &stack::StackValue,
-        context: &DynamicContext,
-    ) -> stack::Result<Self> {
+impl ContextTryFrom<&stack::Value> for stack::Atomic {
+    fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
         match value {
-            stack::StackValue::Atomic(a) => Ok(a.clone()),
-            stack::StackValue::Sequence(s) => s.borrow().to_atomic(context),
+            stack::Value::Atomic(a) => Ok(a.clone()),
+            stack::Value::Sequence(s) => s.borrow().to_atomic(context),
             _ => {
                 todo!("don't know how to atomize this yet")
             }
@@ -77,24 +74,18 @@ impl ContextTryFrom<&stack::StackValue> for stack::Atomic {
 //     }
 // }
 
-impl<T> ContextTryFrom<&stack::StackValue> for T
+impl<T> ContextTryFrom<&stack::Value> for T
 where
     T: TryFrom<stack::Atomic, Error = stack::Error>,
 {
-    fn context_try_from(
-        value: &stack::StackValue,
-        context: &DynamicContext,
-    ) -> stack::Result<Self> {
+    fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
         let atomic: stack::Atomic = value.context_try_into(context)?;
         atomic.try_into()
     }
 }
 
-impl ContextTryFrom<&stack::StackValue> for xml::Node {
-    fn context_try_from(
-        value: &stack::StackValue,
-        _context: &DynamicContext,
-    ) -> stack::Result<Self> {
+impl ContextTryFrom<&stack::Value> for xml::Node {
+    fn context_try_from(value: &stack::Value, _context: &DynamicContext) -> stack::Result<Self> {
         match value.to_one()? {
             stack::Item::Node(n) => Ok(n),
             _ => Err(stack::Error::Type),
@@ -109,14 +100,11 @@ impl ContextTryFrom<&stack::StackValue> for xml::Node {
 //     }
 // }
 
-impl<T> ContextTryFrom<&stack::StackValue> for Option<T>
+impl<T> ContextTryFrom<&stack::Value> for Option<T>
 where
     T: TryFrom<stack::Item, Error = stack::Error>,
 {
-    fn context_try_from(
-        value: &stack::StackValue,
-        _context: &DynamicContext,
-    ) -> stack::Result<Self> {
+    fn context_try_from(value: &stack::Value, _context: &DynamicContext) -> stack::Result<Self> {
         match value.to_option()? {
             Some(v) => Ok(Some(v.try_into()?)),
             None => Ok(None),
@@ -124,43 +112,43 @@ where
     }
 }
 
-impl<'a> TryFrom<&'a stack::StackValue> for &'a stack::Closure {
+impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
     type Error = stack::Error;
 
-    fn try_from(value: &'a stack::StackValue) -> stack::Result<&'a stack::Closure> {
+    fn try_from(value: &'a stack::Value) -> stack::Result<&'a stack::Closure> {
         match value {
-            stack::StackValue::Closure(c) => Ok(c),
+            stack::Value::Closure(c) => Ok(c),
             _ => Err(stack::Error::Type),
         }
     }
 }
 
-impl TryFrom<&stack::StackValue> for Rc<xml::Step> {
+impl TryFrom<&stack::Value> for Rc<xml::Step> {
     type Error = stack::Error;
 
-    fn try_from(value: &stack::StackValue) -> stack::Result<Rc<xml::Step>> {
+    fn try_from(value: &stack::Value) -> stack::Result<Rc<xml::Step>> {
         match value {
-            stack::StackValue::Step(s) => Ok(Rc::clone(s)),
+            stack::Value::Step(s) => Ok(Rc::clone(s)),
             _ => Err(stack::Error::Type),
         }
     }
 }
 
-impl TryFrom<stack::StackValue> for xml::Node {
+impl TryFrom<stack::Value> for xml::Node {
     type Error = stack::Error;
 
-    fn try_from(value: stack::StackValue) -> stack::Result<xml::Node> {
+    fn try_from(value: stack::Value) -> stack::Result<xml::Node> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&stack::StackValue> for xml::Node {
+impl TryFrom<&stack::Value> for xml::Node {
     type Error = stack::Error;
 
-    fn try_from(value: &stack::StackValue) -> stack::Result<xml::Node> {
+    fn try_from(value: &stack::Value) -> stack::Result<xml::Node> {
         match value {
-            stack::StackValue::Node(n) => Ok(*n),
-            stack::StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
+            stack::Value::Node(n) => Ok(*n),
+            stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(stack::Error::Type),
         }
     }
@@ -302,22 +290,22 @@ impl TryFrom<stack::Atomic> for String {
     }
 }
 
-impl TryFrom<stack::StackValue> for stack::Sequence {
+impl TryFrom<stack::Value> for stack::Sequence {
     type Error = stack::Error;
 
-    fn try_from(value: stack::StackValue) -> stack::Result<Self> {
+    fn try_from(value: stack::Value) -> stack::Result<Self> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&stack::StackValue> for stack::Sequence {
+impl TryFrom<&stack::Value> for stack::Sequence {
     type Error = stack::Error;
 
-    fn try_from(value: &stack::StackValue) -> stack::Result<Self> {
+    fn try_from(value: &stack::Value) -> stack::Result<Self> {
         match value {
-            stack::StackValue::Sequence(s) => Ok(s.clone()),
-            stack::StackValue::Atomic(a) => Ok(stack::Sequence::from_atomic(a)),
-            stack::StackValue::Node(n) => Ok(stack::Sequence::from_node(*n)),
+            stack::Value::Sequence(s) => Ok(s.clone()),
+            stack::Value::Atomic(a) => Ok(stack::Sequence::from_atomic(a)),
+            stack::Value::Node(n) => Ok(stack::Sequence::from_node(*n)),
             _ => Err(stack::Error::Type),
         }
     }
@@ -331,44 +319,44 @@ impl ContextFrom<stack::Sequence> for Vec<stack::Atomic> {
 
 // Conversions from Rust values into Value
 
-impl From<String> for stack::StackValue {
-    fn from(s: String) -> stack::StackValue {
-        stack::StackValue::Atomic(stack::Atomic::String(Rc::new(s)))
+impl From<String> for stack::Value {
+    fn from(s: String) -> stack::Value {
+        stack::Value::Atomic(stack::Atomic::String(Rc::new(s)))
     }
 }
 
-impl From<f64> for stack::StackValue {
-    fn from(f: f64) -> stack::StackValue {
-        stack::StackValue::Atomic(stack::Atomic::Double(OrderedFloat(f)))
+impl From<f64> for stack::Value {
+    fn from(f: f64) -> stack::Value {
+        stack::Value::Atomic(stack::Atomic::Double(OrderedFloat(f)))
     }
 }
 
-impl From<i64> for stack::StackValue {
-    fn from(i: i64) -> stack::StackValue {
-        stack::StackValue::Atomic(stack::Atomic::Integer(i))
+impl From<i64> for stack::Value {
+    fn from(i: i64) -> stack::Value {
+        stack::Value::Atomic(stack::Atomic::Integer(i))
     }
 }
 
-impl From<bool> for stack::StackValue {
-    fn from(b: bool) -> stack::StackValue {
-        stack::StackValue::Atomic(stack::Atomic::Boolean(b))
+impl From<bool> for stack::Value {
+    fn from(b: bool) -> stack::Value {
+        stack::Value::Atomic(stack::Atomic::Boolean(b))
     }
 }
 
-impl From<xml::Node> for stack::StackValue {
-    fn from(n: xml::Node) -> stack::StackValue {
-        stack::StackValue::Node(n)
+impl From<xml::Node> for stack::Value {
+    fn from(n: xml::Node) -> stack::Value {
+        stack::Value::Node(n)
     }
 }
 
-impl<T> From<Option<T>> for stack::StackValue
+impl<T> From<Option<T>> for stack::Value
 where
-    T: Into<stack::StackValue>,
+    T: Into<stack::Value>,
 {
-    fn from(o: Option<T>) -> stack::StackValue {
+    fn from(o: Option<T>) -> stack::Value {
         match o {
             Some(v) => v.into(),
-            None => stack::StackValue::Atomic(stack::Atomic::Empty),
+            None => stack::Value::Atomic(stack::Atomic::Empty),
         }
     }
 }
@@ -385,8 +373,8 @@ where
 //     }
 // }
 
-impl From<stack::Item> for stack::StackValue {
-    fn from(item: stack::Item) -> stack::StackValue {
-        stack::StackValue::from_item(item)
+impl From<stack::Item> for stack::Value {
+    fn from(item: stack::Item) -> stack::Value {
+        stack::Value::from_item(item)
     }
 }

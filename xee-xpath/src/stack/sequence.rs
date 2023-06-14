@@ -128,12 +128,12 @@ impl InnerSequence {
         }
     }
 
-    pub(crate) fn push_value(&mut self, value: stack::StackValue) {
+    pub(crate) fn push_value(&mut self, value: stack::Value) {
         match value {
-            stack::StackValue::Atomic(a) => self.items.push(stack::Item::Atomic(a)),
-            stack::StackValue::Closure(c) => self.items.push(stack::Item::Function(c)),
-            stack::StackValue::Sequence(s) => self.extend(s),
-            stack::StackValue::Node(n) => self.items.push(stack::Item::Node(n)),
+            stack::Value::Atomic(a) => self.items.push(stack::Item::Atomic(a)),
+            stack::Value::Closure(c) => self.items.push(stack::Item::Function(c)),
+            stack::Value::Sequence(s) => self.extend(s),
+            stack::Value::Node(n) => self.items.push(stack::Item::Node(n)),
             _ => panic!("unexpected value: {:?}", value),
         }
     }
