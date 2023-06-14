@@ -25,14 +25,14 @@ impl StackSequence {
     pub(crate) fn from_node(node: xml::Node) -> Self {
         Self::new(StackInnerSequence::from_node(node))
     }
-    pub(crate) fn from_vec(items: Vec<stack::StackItem>) -> Self {
+    pub(crate) fn from_vec(items: Vec<stack::Item>) -> Self {
         Self::new(StackInnerSequence::from_vec(items))
     }
-    pub(crate) fn from_items(items: &[stack::StackItem]) -> Self {
+    pub(crate) fn from_items(items: &[stack::Item]) -> Self {
         Self::new(StackInnerSequence::from_items(items))
     }
 
-    pub(crate) fn from_item(item: stack::StackItem) -> Self {
+    pub(crate) fn from_item(item: stack::Item) -> Self {
         Self::new(StackInnerSequence::from_item(item))
     }
 
@@ -48,7 +48,7 @@ impl StackSequence {
         output::Sequence::new(s.items.iter().map(|i| i.to_output()).collect())
     }
 
-    pub(crate) fn to_one(&self) -> stack::Result<stack::StackItem> {
+    pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
         let s = self.0.borrow();
         if s.len() == 1 {
             Ok(s.items[0].clone())
@@ -57,7 +57,7 @@ impl StackSequence {
         }
     }
 
-    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::StackItem>> {
+    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::Item>> {
         let s = self.0.borrow();
         if s.len() == 1 {
             Ok(Some(s.items[0].clone()))
@@ -71,7 +71,7 @@ impl StackSequence {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StackInnerSequence {
-    pub(crate) items: Vec<stack::StackItem>,
+    pub(crate) items: Vec<stack::Item>,
 }
 
 impl StackInnerSequence {
@@ -87,21 +87,21 @@ impl StackInnerSequence {
         self.items.is_empty()
     }
 
-    pub fn as_slice(&self) -> &[stack::StackItem] {
+    pub fn as_slice(&self) -> &[stack::Item] {
         &self.items
     }
 
-    pub(crate) fn from_items(items: &[stack::StackItem]) -> Self {
+    pub(crate) fn from_items(items: &[stack::Item]) -> Self {
         Self {
             items: items.to_vec(),
         }
     }
 
-    pub(crate) fn from_vec(items: Vec<stack::StackItem>) -> Self {
+    pub(crate) fn from_vec(items: Vec<stack::Item>) -> Self {
         Self { items }
     }
 
-    pub(crate) fn from_item(item: stack::StackItem) -> Self {
+    pub(crate) fn from_item(item: stack::Item) -> Self {
         Self { items: vec![item] }
     }
 
@@ -110,17 +110,17 @@ impl StackInnerSequence {
             return Self::new();
         }
         Self {
-            items: vec![stack::StackItem::Atomic(atomic)],
+            items: vec![stack::Item::Atomic(atomic)],
         }
     }
 
     pub(crate) fn from_node(node: xml::Node) -> Self {
         Self {
-            items: vec![stack::StackItem::Node(node)],
+            items: vec![stack::Item::Node(node)],
         }
     }
 
-    pub(crate) fn singleton(&self) -> stack::Result<&stack::StackItem> {
+    pub(crate) fn singleton(&self) -> stack::Result<&stack::Item> {
         if self.items.len() == 1 {
             Ok(&self.items[0])
         } else {
@@ -130,15 +130,15 @@ impl StackInnerSequence {
 
     pub(crate) fn push_value(&mut self, value: stack::StackValue) {
         match value {
-            stack::StackValue::Atomic(a) => self.items.push(stack::StackItem::Atomic(a)),
-            stack::StackValue::Closure(c) => self.items.push(stack::StackItem::Function(c)),
+            stack::StackValue::Atomic(a) => self.items.push(stack::Item::Atomic(a)),
+            stack::StackValue::Closure(c) => self.items.push(stack::Item::Function(c)),
             stack::StackValue::Sequence(s) => self.extend(s),
-            stack::StackValue::Node(n) => self.items.push(stack::StackItem::Node(n)),
+            stack::StackValue::Node(n) => self.items.push(stack::Item::Node(n)),
             _ => panic!("unexpected value: {:?}", value),
         }
     }
 
-    pub(crate) fn push(&mut self, item: &stack::StackItem) {
+    pub(crate) fn push(&mut self, item: &stack::Item) {
         self.items.push(item.clone());
     }
 
@@ -152,14 +152,14 @@ impl StackInnerSequence {
         let mut items = Vec::new();
         for item in &self.items {
             match item {
-                stack::StackItem::Atomic(a) => items.push(stack::StackItem::Atomic(a.clone())),
-                stack::StackItem::Node(n) => {
+                stack::Item::Atomic(a) => items.push(stack::Item::Atomic(a.clone())),
+                stack::Item::Node(n) => {
                     for typed_value in n.typed_value(xot) {
-                        items.push(stack::StackItem::Atomic(typed_value));
+                        items.push(stack::Item::Atomic(typed_value));
                     }
                 }
                 // XXX need code to handle array case
-                stack::StackItem::Function(..) => panic!("cannot atomize a function"),
+                stack::Item::Function(..) => panic!("cannot atomize a function"),
             }
         }
         StackInnerSequence { items }
@@ -173,8 +173,8 @@ impl StackInnerSequence {
             1 => {
                 let item = &self.items[0];
                 match item {
-                    stack::StackItem::Atomic(a) => Ok(a.clone()),
-                    stack::StackItem::Node(n) => {
+                    stack::Item::Atomic(a) => Ok(a.clone()),
+                    stack::Item::Node(n) => {
                         let mut t = n.typed_value(context.xot);
                         if t.len() != 1 {
                             return Err(stack::Error::XPTY0004);
@@ -182,7 +182,7 @@ impl StackInnerSequence {
                         Ok(t.remove(0))
                     }
                     // XXX need code to handle array case
-                    stack::StackItem::Function(..) => panic!("cannot atomize a function"),
+                    stack::Item::Function(..) => panic!("cannot atomize a function"),
                 }
             }
             _ => Err(stack::Error::XPTY0004),
@@ -194,7 +194,7 @@ impl StackInnerSequence {
         let atomized = self.atomize(xot);
         for item in atomized.items {
             match item {
-                stack::StackItem::Atomic(a) => atoms.push(a),
+                stack::Item::Atomic(a) => atoms.push(a),
                 _ => unreachable!("atomize returned a non-atomic item"),
             }
         }
@@ -215,17 +215,17 @@ impl StackInnerSequence {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
-                stack::StackItem::Node(node) => *node,
-                stack::StackItem::Atomic(..) => return Err(stack::Error::Type),
-                stack::StackItem::Function(..) => return Err(stack::Error::Type),
+                stack::Item::Node(node) => *node,
+                stack::Item::Atomic(..) => return Err(stack::Error::Type),
+                stack::Item::Function(..) => return Err(stack::Error::Type),
             };
             s.insert(node);
         }
         for item in &other.items {
             let node = match item {
-                stack::StackItem::Node(node) => *node,
-                stack::StackItem::Atomic(..) => return Err(stack::Error::Type),
-                stack::StackItem::Function(..) => return Err(stack::Error::Type),
+                stack::Item::Node(node) => *node,
+                stack::Item::Atomic(..) => return Err(stack::Error::Type),
+                stack::Item::Function(..) => return Err(stack::Error::Type),
             };
             s.insert(node);
         }
@@ -234,10 +234,7 @@ impl StackInnerSequence {
         let mut nodes = s.into_iter().collect::<Vec<_>>();
         nodes.sort_by_key(|n| annotations.document_order(*n));
 
-        let items = nodes
-            .into_iter()
-            .map(stack::StackItem::Node)
-            .collect::<Vec<_>>();
+        let items = nodes.into_iter().map(stack::Item::Node).collect::<Vec<_>>();
         Ok(StackInnerSequence { items })
     }
 }

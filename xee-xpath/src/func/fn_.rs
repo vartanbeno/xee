@@ -56,7 +56,7 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[stack::StackItem]) -> i64 {
+fn count(arg: &[stack::Item]) -> i64 {
     arg.len() as i64
 }
 
@@ -79,7 +79,7 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> stack::Result<String> {
+fn string(context: &DynamicContext, arg: &Option<stack::Item>) -> stack::Result<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -88,7 +88,7 @@ fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> stack::Re
 }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[stack::StackItem]) -> bool {
+fn exists(arg: &[stack::Item]) -> bool {
     !arg.is_empty()
 }
 
@@ -117,7 +117,7 @@ fn exactly_one(
 }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[stack::StackItem]) -> bool {
+fn empty(arg: &[stack::Item]) -> bool {
     arg.is_empty()
 }
 

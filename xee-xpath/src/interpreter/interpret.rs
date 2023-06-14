@@ -48,8 +48,8 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn start(
         &mut self,
         function_id: stack::FunctionId,
-        context_item: Option<&stack::StackItem>,
-        arguments: &[Vec<stack::StackItem>],
+        context_item: Option<&stack::Item>,
+        arguments: &[Vec<stack::Item>],
     ) {
         self.frames.push(Frame {
             function: function_id,
@@ -397,8 +397,8 @@ impl<'a> Interpreter<'a> {
                         Ordering::Less => {
                             let sequence = stack::StackSequence::from_vec(
                                 (a..=b)
-                                    .map(|i| stack::StackItem::Atomic(stack::Atomic::Integer(i)))
-                                    .collect::<Vec<stack::StackItem>>(),
+                                    .map(|i| stack::Item::Atomic(stack::Atomic::Integer(i)))
+                                    .collect::<Vec<stack::Item>>(),
                             );
                             self.stack.push(stack::StackValue::Sequence(sequence));
                         }
@@ -605,7 +605,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::StackItem::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
             &[],
         );
         interpreter.run_actual()?;
@@ -687,7 +687,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::StackItem::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
             &[],
         );
         interpreter.run_actual()?;
@@ -736,7 +736,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::StackItem::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
             &[],
         );
         interpreter.run_actual()?;

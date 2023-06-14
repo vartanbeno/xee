@@ -43,7 +43,7 @@ impl XPath {
     pub(crate) fn run_value(
         &self,
         dynamic_context: &DynamicContext,
-        context_item: Option<&stack::StackItem>,
+        context_item: Option<&stack::Item>,
     ) -> Result<stack::StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
@@ -88,7 +88,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<output::Sequence> {
-        let context_item: Option<stack::StackItem> = item.map(|item| item.clone().into());
+        let context_item: Option<stack::Item> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
     }

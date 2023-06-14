@@ -16,7 +16,7 @@ pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
-    pub(crate) variables: HashMap<ast::Name, Vec<stack::StackItem>>,
+    pub(crate) variables: HashMap<ast::Name, Vec<stack::Item>>,
 }
 
 impl<'a> Debug for DynamicContext<'a> {
@@ -68,7 +68,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub(crate) fn arguments(&self) -> Result<Vec<Vec<stack::StackItem>>, Error> {
+    pub(crate) fn arguments(&self) -> Result<Vec<Vec<stack::Item>>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.variables {
             let items = self.variables.get(variable_name).ok_or(Error::XPDY0002A)?;

@@ -11,17 +11,17 @@ pub enum Item {
     Node(xml::Node),
 }
 
-impl From<&Item> for stack::StackItem {
+impl From<&Item> for stack::Item {
     fn from(item: &Item) -> Self {
         match item {
-            Item::Atomic(a) => stack::StackItem::Atomic(a.into()),
+            Item::Atomic(a) => stack::Item::Atomic(a.into()),
             Item::Function(_f) => todo!("Cannot turn output functions into functions yet"),
-            Item::Node(n) => stack::StackItem::Node(*n),
+            Item::Node(n) => stack::Item::Node(*n),
         }
     }
 }
 
-impl From<Item> for stack::StackItem {
+impl From<Item> for stack::Item {
     fn from(item: Item) -> Self {
         (&item).into()
     }

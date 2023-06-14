@@ -12,6 +12,6 @@ pub(crate) use error::{Error, Result};
 // XXX should not have any public things in here
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};
-pub(crate) use item::StackItem;
+pub(crate) use item::Item;
 pub(crate) use sequence::{StackInnerSequence, StackSequence};
 pub(crate) use value::StackValue;

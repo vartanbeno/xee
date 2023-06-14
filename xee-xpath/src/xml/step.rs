@@ -15,7 +15,7 @@ pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::St
     let mut new_sequence = stack::StackInnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
-            new_sequence.push(&stack::StackItem::Node(axis_node));
+            new_sequence.push(&stack::Item::Node(axis_node));
         }
     }
     stack::StackSequence::new(new_sequence)
@@ -231,7 +231,7 @@ mod tests {
         stack::StackSequence::new(stack::StackInnerSequence {
             items: node
                 .iter()
-                .map(|&node| stack::StackItem::Node(xml::Node::Xot(node)))
+                .map(|&node| stack::Item::Node(xml::Node::Xot(node)))
                 .collect(),
         })
     }

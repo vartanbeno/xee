@@ -96,7 +96,7 @@ impl ContextTryFrom<&stack::StackValue> for xml::Node {
         _context: &DynamicContext,
     ) -> stack::Result<Self> {
         match value.to_one()? {
-            stack::StackItem::Node(n) => Ok(n),
+            stack::Item::Node(n) => Ok(n),
             _ => Err(stack::Error::Type),
         }
     }
@@ -111,7 +111,7 @@ impl ContextTryFrom<&stack::StackValue> for xml::Node {
 
 impl<T> ContextTryFrom<&stack::StackValue> for Option<T>
 where
-    T: TryFrom<stack::StackItem, Error = stack::Error>,
+    T: TryFrom<stack::Item, Error = stack::Error>,
 {
     fn context_try_from(
         value: &stack::StackValue,
@@ -180,34 +180,34 @@ impl TryFrom<&stack::StackValue> for xml::Node {
 // }
 // Conversions from Item
 
-impl TryFrom<&stack::StackItem> for stack::Atomic {
+impl TryFrom<&stack::Item> for stack::Atomic {
     type Error = stack::Error;
 
-    fn try_from(item: &stack::StackItem) -> stack::Result<Self> {
+    fn try_from(item: &stack::Item) -> stack::Result<Self> {
         match item {
-            stack::StackItem::Atomic(a) => Ok(a.clone()),
+            stack::Item::Atomic(a) => Ok(a.clone()),
             _ => Err(stack::Error::Type),
         }
     }
 }
 
-impl TryFrom<stack::StackItem> for stack::Atomic {
+impl TryFrom<stack::Item> for stack::Atomic {
     type Error = stack::Error;
 
-    fn try_from(item: stack::StackItem) -> stack::Result<Self> {
+    fn try_from(item: stack::Item) -> stack::Result<Self> {
         match item {
-            stack::StackItem::Atomic(a) => Ok(a),
+            stack::Item::Atomic(a) => Ok(a),
             _ => Err(stack::Error::Type),
         }
     }
 }
 
-impl TryFrom<stack::StackItem> for f64 {
+impl TryFrom<stack::Item> for f64 {
     type Error = stack::Error;
 
-    fn try_from(item: stack::StackItem) -> stack::Result<Self> {
+    fn try_from(item: stack::Item) -> stack::Result<Self> {
         match item {
-            stack::StackItem::Atomic(a) => a.try_into(),
+            stack::Item::Atomic(a) => a.try_into(),
             _ => Err(stack::Error::Type),
         }
     }
@@ -225,12 +225,12 @@ impl TryFrom<stack::StackItem> for f64 {
 //     }
 // }
 
-impl TryFrom<stack::StackItem> for xml::Node {
+impl TryFrom<stack::Item> for xml::Node {
     type Error = stack::Error;
 
-    fn try_from(item: stack::StackItem) -> stack::Result<Self> {
+    fn try_from(item: stack::Item) -> stack::Result<Self> {
         match item {
-            stack::StackItem::Node(n) => Ok(n),
+            stack::Item::Node(n) => Ok(n),
             _ => Err(stack::Error::Type),
         }
     }
@@ -385,8 +385,8 @@ where
 //     }
 // }
 
-impl From<stack::StackItem> for stack::StackValue {
-    fn from(item: stack::StackItem) -> stack::StackValue {
+impl From<stack::Item> for stack::StackValue {
+    fn from(item: stack::Item) -> stack::StackValue {
         stack::StackValue::from_item(item)
     }
 }
