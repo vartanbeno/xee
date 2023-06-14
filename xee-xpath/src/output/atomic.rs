@@ -64,8 +64,6 @@ impl Atomic {
         }
     }
 
-    // XXX is this named right? It's consistent with  to_double, to_bool, etc,
-    // but inconsistent with the to_string Rust convention
     pub fn to_str(&self) -> stack::Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
