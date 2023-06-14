@@ -38,6 +38,9 @@ impl FunctionKind {
 pub(crate) type StaticFunctionType =
     fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
 
+// pub(crate) type StaticFunctionType2 =
+//     fn(context: &DynamicContext, arguments: &[output::Sequence]) -> stack::Result<output::Sequence>;
+
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
     pub(crate) arity: usize,
