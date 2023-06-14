@@ -14,4 +14,4 @@ mod ui;
 
 pub use crate::cli::cli;
 pub use crate::error::{Error, Result};
-pub use crate::testing::test_all;
+pub use crate::testing::{test_all, Tests};

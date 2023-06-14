@@ -28,6 +28,9 @@ pub enum Error {
     #[error("Var error")]
     #[diagnostic()]
     VarError(#[from] std::env::VarError),
+    #[error("Globset error")]
+    #[diagnostic()]
+    GlobSet(#[from] globset::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

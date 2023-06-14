@@ -1,8 +1,6 @@
 use derive_builder::Builder;
 use std::path::Path;
-use xee_xpath::{
-    DynamicContext, Error as XPathError, Name, Namespaces, OutputItem as Item, StaticContext, XPath,
-};
+use xee_xpath::{DynamicContext, Name, Namespaces, OutputItem as Item, StaticContext, XPath};
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
@@ -42,7 +40,7 @@ impl Default for KnownDependencies {
     }
 }
 
-// if an environment with a schema is referenced, then schema-awareness
+// TODO: if an environment with a schema is referenced, then schema-awareness
 // is an implicit dependency
 
 #[derive(Builder)]

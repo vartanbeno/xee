@@ -3,8 +3,8 @@ use miette::Diagnostic;
 use std::fmt;
 
 use xee_xpath::{
-    DynamicContext, Error, Namespaces, OutputAtomic as Atomic, OutputItem as Item, StaticContext,
-    XPath,
+    DynamicContext, Error, Name, Namespaces, OutputAtomic as Atomic, OutputItem as Item,
+    StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -153,7 +153,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
         unreachable!();
     }
 }
@@ -175,6 +175,29 @@ impl fmt::Debug for AssertNot {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Assert(qt::XPathExpr);
+
+// impl Assert {
+//     pub(crate) fn new(expr: qt::XPathExpr) -> Self {
+//         Self(expr)
+//     }
+// }
+
+// impl Assertable for Assert {
+//     fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+//         let expected_items = run_xpath_with_result(&self.0, items);
+
+//         match expected_items {
+//             Ok(expected_items) => {
+//                 if expected_items == items {
+//                     TestOutcome::Failed(Failure::Eq(self.clone(), items.to_vec()))
+//                 } else {
+//                     TestOutcome::Passed
+//                 }
+//             }
+//             Err(error) => TestOutcome::UnsupportedExpression(error),
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertEq(qt::XPathExpr);
@@ -601,5 +624,15 @@ fn run_xpath(expr: &qt::XPathExpr) -> Result<Vec<Item>, Error> {
     let xpath = XPath::new(&static_context, &expr.0)?;
     let xot = Xot::new();
     let dynamic_context = DynamicContext::new(&xot, &static_context);
+    xpath.many(&dynamic_context, None)
+}
+
+fn run_xpath_with_result(expr: &qt::XPathExpr, items: &[Item]) -> Result<Vec<Item>, Error> {
+    let namespaces = Namespaces::default();
+    let static_context = StaticContext::new(&namespaces);
+    let xpath = XPath::new(&static_context, &expr.0)?;
+    let xot = Xot::new();
+    let variables = vec![(Name::without_ns("result"), items.to_vec())];
+    let dynamic_context = DynamicContext::with_variables(&xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }

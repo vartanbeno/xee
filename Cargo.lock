@@ -2020,6 +2020,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "fxhash",
+ "globset",
  "indexmap",
  "insta",
  "miette",
