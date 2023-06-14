@@ -1,7 +1,8 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::{data::ValueError, interpreter::Program};
+use crate::interpreter::Program;
+use crate::stack;
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
@@ -648,25 +649,25 @@ impl Error {
     pub(crate) fn from_value_error(
         program: &Program,
         span: SourceSpan,
-        value_error: ValueError,
+        value_error: stack::ValueError,
     ) -> Self {
         match value_error {
-            ValueError::XPTY0004 => Error::XPTY0004 {
+            stack::ValueError::XPTY0004 => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
-            ValueError::Type => Error::XPTY0004 {
+            stack::ValueError::Type => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
-            ValueError::Overflow => Error::FOAR0002,
-            ValueError::StackOverflow => Error::XPDY0130,
-            ValueError::DivisionByZero => Error::FOAR0001,
-            ValueError::Absent => Error::XPDY0002 {
+            stack::ValueError::Overflow => Error::FOAR0002,
+            stack::ValueError::StackOverflow => Error::XPDY0130,
+            stack::ValueError::DivisionByZero => Error::FOAR0001,
+            stack::ValueError::Absent => Error::XPDY0002 {
                 src: program.src.to_string(),
                 span,
             },
-            ValueError::Error(e) => e,
+            stack::ValueError::Error(e) => e,
         }
     }
 }

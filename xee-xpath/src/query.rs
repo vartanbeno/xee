@@ -1,7 +1,8 @@
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{OutputItem as Item, ValueError};
+use crate::data::OutputItem as Item;
 use crate::error::Error;
 use crate::error::Result;
+use crate::stack;
 use crate::xpath::XPath;
 
 pub trait Convert<V>: Fn(&Session, &Item) -> std::result::Result<V, ConvertError> {}
@@ -35,7 +36,7 @@ pub trait ConvertRecurse<V>: Fn(&Session, &Item) -> std::result::Result<V, Conve
 #[derive(Debug, thiserror::Error)]
 pub enum ConvertError {
     #[error("Value error")]
-    ValueError(#[from] ValueError),
+    ValueError(#[from] stack::ValueError),
     #[error("Error")]
     Error(#[from] Error),
 }

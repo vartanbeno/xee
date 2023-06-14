@@ -3,11 +3,7 @@ use miette::SourceSpan;
 use xee_xpath_ast::ast;
 
 use crate::ir;
-
-use super::error::ValueError;
 use crate::stack::StackValue;
-
-type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);

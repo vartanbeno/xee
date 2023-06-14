@@ -6,7 +6,7 @@ use xee_xpath_ast::Namespaces;
 
 use super::dynamic_context::DynamicContext;
 
-use crate::data::{StaticFunctionId, ValueError};
+use crate::data::StaticFunctionId;
 use crate::func::static_function_descriptions;
 use crate::stack;
 
@@ -40,7 +40,7 @@ impl FunctionKind {
 pub(crate) type StaticFunctionType = fn(
     context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError>;
+) -> stack::ValueResult<stack::StackValue>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
@@ -166,7 +166,7 @@ pub(crate) struct StaticFunction {
     func: fn(
         context: &DynamicContext,
         arguments: &[stack::StackValue],
-    ) -> Result<stack::StackValue, ValueError>,
+    ) -> stack::ValueResult<stack::StackValue>,
 }
 
 impl Debug for StaticFunction {
@@ -185,9 +185,9 @@ impl StaticFunction {
         context: &DynamicContext,
         arguments: &[stack::StackValue],
         closure_values: &[stack::StackValue],
-    ) -> Result<stack::StackValue, ValueError> {
+    ) -> stack::ValueResult<stack::StackValue> {
         if arguments.len() != self.arity {
-            return Err(ValueError::Type);
+            return Err(stack::ValueError::Type);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {

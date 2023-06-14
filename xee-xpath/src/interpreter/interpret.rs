@@ -7,7 +7,7 @@ use crate::comparison;
 use crate::context::DynamicContext;
 use crate::data::{
     Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId,
-    StaticFunctionId, Step, ValueError,
+    StaticFunctionId, Step,
 };
 use crate::error::Error;
 use crate::op;
@@ -100,7 +100,7 @@ impl<'a> Interpreter<'a> {
         &self.program.functions[self.frame().function.0]
     }
 
-    pub(crate) fn run_actual(&mut self) -> Result<(), ValueError> {
+    pub(crate) fn run_actual(&mut self) -> stack::ValueResult<()> {
         // we can make this an infinite loop as all functions end
         // with the return instruction
         loop {
@@ -335,7 +335,7 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    if let Ok(closure) = callable.try_into() as Result<&Closure, ValueError> {
+                    if let Ok(closure) = callable.try_into() as stack::ValueResult<&Closure> {
                         match closure.function_id {
                             ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
@@ -346,10 +346,10 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Ok(step) = callable.try_into() as Result<Rc<Step>, ValueError> {
+                    } else if let Ok(step) = callable.try_into() as stack::ValueResult<Rc<Step>> {
                         self.call_step(step)?;
                     } else {
-                        return Err(ValueError::Type);
+                        return Err(stack::ValueError::Type);
                     }
                 }
                 EncodedInstruction::Return => {
@@ -455,7 +455,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: StaticFunctionId,
         arity: u8,
         closure_values: &[stack::StackValue],
-    ) -> Result<(), ValueError> {
+    ) -> stack::ValueResult<()> {
         let static_function = &self
             .dynamic_context
             .static_context
@@ -469,9 +469,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_closure(&mut self, function_id: FunctionId, arity: u8) -> Result<(), ValueError> {
+    fn call_closure(&mut self, function_id: FunctionId, arity: u8) -> stack::ValueResult<()> {
         if self.frames.len() >= self.frames.capacity() {
-            return Err(ValueError::StackOverflow);
+            return Err(stack::ValueError::StackOverflow);
         }
         self.frames.push(Frame {
             function: function_id,
@@ -481,7 +481,7 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_step(&mut self, step: Rc<Step>) -> Result<(), ValueError> {
+    fn call_step(&mut self, step: Rc<Step>) -> stack::ValueResult<()> {
         // take one argument from the stack
         let node = self.stack.pop().unwrap().try_into()?;
         // pop off the callable too
@@ -491,41 +491,41 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn pop_atomic(&mut self) -> Result<stack::Atomic, ValueError> {
+    fn pop_atomic(&mut self) -> stack::ValueResult<stack::Atomic> {
         let atomic = self.stack.pop().unwrap();
         atomic.context_try_into(self.dynamic_context)
     }
 
-    fn pop_atomic2(&mut self) -> Result<(stack::Atomic, stack::Atomic), ValueError> {
+    fn pop_atomic2(&mut self) -> stack::ValueResult<(stack::Atomic, stack::Atomic)> {
         let b = self.pop_atomic()?;
         let a = self.pop_atomic()?;
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> Result<stack::StackSequence, ValueError> {
+    fn pop_seq(&mut self) -> stack::ValueResult<stack::StackSequence> {
         let sequence = self.stack.pop().unwrap();
         sequence.try_into()
     }
 
-    fn pop_seq2(&mut self) -> Result<(stack::StackSequence, stack::StackSequence), ValueError> {
+    fn pop_seq2(&mut self) -> stack::ValueResult<(stack::StackSequence, stack::StackSequence)> {
         let b = self.pop_seq()?;
         let a = self.pop_seq()?;
         Ok((a, b))
     }
 
-    fn pop_atomized2(&mut self) -> Result<(Vec<stack::Atomic>, Vec<stack::Atomic>), ValueError> {
+    fn pop_atomized2(&mut self) -> stack::ValueResult<(Vec<stack::Atomic>, Vec<stack::Atomic>)> {
         let (sequence_a, sequence_b) = self.pop_seq2()?;
         let atomized_a = sequence_a.context_into(self.dynamic_context);
         let atomized_b = sequence_b.context_into(self.dynamic_context);
         Ok((atomized_a, atomized_b))
     }
 
-    fn pop_effective_boolean(&mut self) -> Result<bool, ValueError> {
+    fn pop_effective_boolean(&mut self) -> stack::ValueResult<bool> {
         let a = self.stack.pop().unwrap();
         a.effective_boolean_value()
     }
 
-    fn err(&self, value_error: ValueError) -> Error {
+    fn err(&self, value_error: stack::ValueError) -> Error {
         Error::from_value_error(self.program, self.current_span(), value_error)
     }
 
@@ -578,7 +578,7 @@ mod tests {
     use crate::interpreter::instruction::{decode_instructions, Instruction};
 
     #[test]
-    fn test_interpreter() -> Result<(), ValueError> {
+    fn test_interpreter() -> stack::ValueResult<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -647,7 +647,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_true() -> Result<(), ValueError> {
+    fn test_condition_true() -> stack::ValueResult<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -697,7 +697,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_false() -> Result<(), ValueError> {
+    fn test_condition_false() -> stack::ValueResult<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);

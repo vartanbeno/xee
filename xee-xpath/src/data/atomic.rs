@@ -5,10 +5,7 @@ use std::rc::Rc;
 
 use crate::comparison;
 
-use super::error::ValueError;
-use crate::stack::Atomic;
-
-type Result<T> = std::result::Result<T, ValueError>;
+use crate::stack;
 
 #[derive(Debug, Clone)]
 pub enum OutputAtomic {
@@ -26,24 +23,24 @@ pub enum OutputAtomic {
     Absent,
 }
 
-impl From<OutputAtomic> for Atomic {
+impl From<OutputAtomic> for stack::Atomic {
     fn from(a: OutputAtomic) -> Self {
         (&a).into()
     }
 }
 
-impl From<&OutputAtomic> for Atomic {
+impl From<&OutputAtomic> for stack::Atomic {
     fn from(a: &OutputAtomic) -> Self {
         match a {
-            OutputAtomic::Boolean(b) => Atomic::Boolean(*b),
-            OutputAtomic::Integer(i) => Atomic::Integer(*i),
-            OutputAtomic::Float(f) => Atomic::Float(OrderedFloat(*f)),
-            OutputAtomic::Double(d) => Atomic::Double(OrderedFloat(*d)),
-            OutputAtomic::Decimal(d) => Atomic::Decimal(*d),
-            OutputAtomic::String(s) => Atomic::String(Rc::new(s.clone())),
-            OutputAtomic::Untyped(s) => Atomic::Untyped(Rc::new(s.clone())),
-            OutputAtomic::Empty => Atomic::Empty,
-            OutputAtomic::Absent => Atomic::Absent,
+            OutputAtomic::Boolean(b) => stack::Atomic::Boolean(*b),
+            OutputAtomic::Integer(i) => stack::Atomic::Integer(*i),
+            OutputAtomic::Float(f) => stack::Atomic::Float(OrderedFloat(*f)),
+            OutputAtomic::Double(d) => stack::Atomic::Double(OrderedFloat(*d)),
+            OutputAtomic::Decimal(d) => stack::Atomic::Decimal(*d),
+            OutputAtomic::String(s) => stack::Atomic::String(Rc::new(s.clone())),
+            OutputAtomic::Untyped(s) => stack::Atomic::Untyped(Rc::new(s.clone())),
+            OutputAtomic::Empty => stack::Atomic::Empty,
+            OutputAtomic::Absent => stack::Atomic::Absent,
         }
     }
 }
@@ -65,41 +62,45 @@ impl Display for OutputAtomic {
 }
 
 impl OutputAtomic {
-    pub(crate) fn to_integer(&self) -> Result<i64> {
+    pub(crate) fn to_integer(&self) -> stack::ValueResult<i64> {
         match self {
             OutputAtomic::Integer(i) => Ok(*i),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn to_decimal(&self) -> Result<Decimal> {
+    pub(crate) fn to_decimal(&self) -> stack::ValueResult<Decimal> {
         match self {
             OutputAtomic::Decimal(d) => Ok(*d),
             OutputAtomic::Integer(i) => Ok(Decimal::from(*i)),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn to_float(&self) -> Result<f32> {
+    pub(crate) fn to_float(&self) -> stack::ValueResult<f32> {
         match self {
             OutputAtomic::Float(f) => Ok(*f),
-            OutputAtomic::Decimal(d) => Ok(d.to_f32().ok_or(ValueError::Type)?),
-            OutputAtomic::Integer(_) => Ok(self.to_decimal()?.to_f32().ok_or(ValueError::Type)?),
-            _ => Err(ValueError::Type),
+            OutputAtomic::Decimal(d) => Ok(d.to_f32().ok_or(stack::ValueError::Type)?),
+            OutputAtomic::Integer(_) => {
+                Ok(self.to_decimal()?.to_f32().ok_or(stack::ValueError::Type)?)
+            }
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn to_double(&self) -> Result<f64> {
+    pub(crate) fn to_double(&self) -> stack::ValueResult<f64> {
         match self {
             OutputAtomic::Double(d) => Ok(*d),
             OutputAtomic::Float(f) => Ok(*f as f64),
-            OutputAtomic::Decimal(d) => Ok(d.to_f64().ok_or(ValueError::Type)?),
-            OutputAtomic::Integer(_) => Ok(self.to_decimal()?.to_f64().ok_or(ValueError::Type)?),
-            _ => Err(ValueError::Type),
+            OutputAtomic::Decimal(d) => Ok(d.to_f64().ok_or(stack::ValueError::Type)?),
+            OutputAtomic::Integer(_) => {
+                Ok(self.to_decimal()?.to_f64().ok_or(stack::ValueError::Type)?)
+            }
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn to_bool(&self) -> Result<bool> {
+    pub(crate) fn to_bool(&self) -> stack::ValueResult<bool> {
         match self {
             OutputAtomic::Integer(i) => Ok(*i != 0),
             OutputAtomic::Decimal(d) => Ok(!d.is_zero()),
@@ -109,24 +110,24 @@ impl OutputAtomic {
             OutputAtomic::String(s) => Ok(!s.is_empty()),
             OutputAtomic::Untyped(s) => Ok(!s.is_empty()),
             OutputAtomic::Empty => Ok(false),
-            OutputAtomic::Absent => Err(ValueError::Absent),
+            OutputAtomic::Absent => Err(stack::ValueError::Absent),
         }
     }
 
     // XXX is this named right? It's consistent with  to_double, to_bool, etc,
     // but inconsistent with the to_string Rust convention
-    pub fn to_str(&self) -> Result<&str> {
+    pub fn to_str(&self) -> stack::ValueResult<&str> {
         match self {
             OutputAtomic::String(s) => Ok(s),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub fn to_string(&self) -> Result<String> {
+    pub fn to_string(&self) -> stack::ValueResult<String> {
         Ok(self.to_str()?.to_string())
     }
 
-    pub fn string_value(&self) -> Result<String> {
+    pub fn string_value(&self) -> stack::ValueResult<String> {
         Ok(match self {
             OutputAtomic::String(s) => s.to_string(),
             OutputAtomic::Untyped(s) => s.to_string(),
@@ -136,7 +137,7 @@ impl OutputAtomic {
             OutputAtomic::Double(d) => d.to_string(),
             OutputAtomic::Decimal(d) => d.to_string(),
             OutputAtomic::Empty => "".to_string(),
-            OutputAtomic::Absent => Err(ValueError::Absent)?,
+            OutputAtomic::Absent => Err(stack::ValueError::Absent)?,
         })
     }
 }

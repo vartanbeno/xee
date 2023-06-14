@@ -1,19 +1,14 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::Atomic;
-use super::StackValue;
-
 use crate::data::Closure;
 use crate::data::Node;
 use crate::data::OutputItem;
-use crate::data::ValueError;
-
-type Result<T> = std::result::Result<T, ValueError>;
+use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackItem {
-    Atomic(Atomic),
+    Atomic(stack::Atomic),
     // XXX what about static function references?
     Function(Rc<Closure>),
     Node(Node),
@@ -28,38 +23,38 @@ impl StackItem {
         }
     }
 
-    pub(crate) fn to_atomic(&self) -> Result<&Atomic> {
+    pub(crate) fn to_atomic(&self) -> stack::ValueResult<&stack::Atomic> {
         match self {
             StackItem::Atomic(a) => Ok(a),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
-    pub(crate) fn to_node(&self) -> Result<Node> {
+    pub(crate) fn to_node(&self) -> stack::ValueResult<Node> {
         match self {
             StackItem::Node(n) => Ok(*n),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
-    pub(crate) fn to_bool(&self) -> Result<bool> {
+    pub(crate) fn to_bool(&self) -> stack::ValueResult<bool> {
         match self {
             StackItem::Atomic(a) => a.to_bool(),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> Result<String> {
+    pub(crate) fn string_value(&self, xot: &Xot) -> stack::ValueResult<String> {
         match self {
             StackItem::Atomic(a) => Ok(a.string_value()?),
             StackItem::Node(n) => Ok(n.string_value(xot)),
-            _ => Err(ValueError::Type),
+            _ => Err(stack::ValueError::Type),
         }
     }
 
-    pub(crate) fn into_stack_value(self) -> StackValue {
+    pub(crate) fn into_stack_value(self) -> stack::StackValue {
         match self {
-            StackItem::Atomic(a) => StackValue::Atomic(a),
-            StackItem::Node(n) => StackValue::Node(n),
-            StackItem::Function(f) => StackValue::Closure(f),
+            StackItem::Atomic(a) => stack::StackValue::Atomic(a),
+            StackItem::Node(n) => stack::StackValue::Node(n),
+            StackItem::Function(f) => stack::StackValue::Closure(f),
         }
     }
 }

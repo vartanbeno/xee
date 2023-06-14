@@ -6,10 +6,7 @@ use xee_xpath_macros::xpath_fn;
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::stack;
 use crate::wrap_xpath_fn;
-use crate::{
-    data::{ContextTryInto, ValueError, ValueResult},
-    DynamicContext, Error, Node,
-};
+use crate::{data::ContextTryInto, DynamicContext, Error, Node};
 
 #[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
 fn my_function(a: i64, b: i64) -> i64 {
@@ -19,9 +16,9 @@ fn my_function(a: i64, b: i64) -> i64 {
 fn bound_position(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
+) -> stack::ValueResult<stack::StackValue> {
     if arguments[0] == stack::StackValue::Atomic(stack::Atomic::Absent) {
-        return Err(ValueError::Absent);
+        return Err(stack::ValueError::Absent);
     }
     // position should be the context value
     Ok(arguments[0].clone())
@@ -30,9 +27,9 @@ fn bound_position(
 fn bound_last(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
+) -> stack::ValueResult<stack::StackValue> {
     if arguments[0] == stack::StackValue::Atomic(stack::Atomic::Absent) {
-        return Err(ValueError::Absent);
+        return Err(stack::ValueError::Absent);
     }
     // size should be the context value
     Ok(arguments[0].clone())
@@ -80,7 +77,7 @@ fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> ValueResult<String> {
+fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> stack::ValueResult<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -94,26 +91,26 @@ fn exists(arg: &[stack::StackItem]) -> bool {
 }
 
 // #[xpath_fn]
-// fn exactly_one(context: &DynamicContext, a: &[Item]) -> Result<Item, ValueError> {
+// fn exactly_one(context: &DynamicContext, a: &[Item]) -> Result<Item, stack::ValueError> {
 //     if a.len() == 1 {
 //         Ok(a[0])
 //     } else {
 //         // XXX should really be a FORG0005 error
-//         Err(ValueError::Type)
+//         Err(stack::ValueError::Type)
 //     }
 // }
 
 fn exactly_one(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
+) -> Result<stack::StackValue, stack::ValueError> {
     let a: stack::StackSequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(stack::StackValue::from_item(a.items[0].clone()))
     } else {
         // XXX should really be a FORG0005 error
-        Err(ValueError::Type)
+        Err(stack::ValueError::Type)
     }
 }
 
@@ -125,7 +122,7 @@ fn empty(arg: &[stack::StackItem]) -> bool {
 fn not(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
+) -> Result<stack::StackValue, stack::ValueError> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
     Ok(stack::StackValue::Atomic(stack::Atomic::Boolean(!b)))
@@ -145,7 +142,7 @@ fn generate_id(context: &DynamicContext, arg: Option<Node>) -> String {
 fn untyped_atomic(
     context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
+) -> Result<stack::StackValue, stack::ValueError> {
     let a = &arguments[0];
     let a: stack::Atomic = a.context_try_into(context)?;
     let s = a.try_into()?;
@@ -157,8 +154,8 @@ fn untyped_atomic(
 fn error(
     _context: &DynamicContext,
     _arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, ValueError> {
-    Err(ValueError::Error(Error::FOER0000))
+) -> Result<stack::StackValue, stack::ValueError> {
+    Err(stack::ValueError::Error(Error::FOER0000))
 }
 
 #[xpath_fn("fn:true() as xs:boolean")]
@@ -184,7 +181,7 @@ fn false_() -> bool {
 // }
 
 // Experimental exploration of wrapping with converters
-// fn wrap_math_exp(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+// fn wrap_math_exp(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
 //     let a = &arguments[0];
 //     let a = a.context_try_into(context)?;
 //     Ok(real_math_exp(a).into())
@@ -194,7 +191,7 @@ fn false_() -> bool {
 //     d.map(|d| d.exp())
 // }
 
-// fn wrap_local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+// fn wrap_local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
 //     let a = (&arguments[0]).try_into()?;
 //     Ok(real_local_name(context, a).into())
 // }
@@ -204,7 +201,7 @@ fn false_() -> bool {
 //     a.local_name(context.xot)
 // }
 
-// fn wrap_extract_one(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+// fn wrap_extract_one(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
 //     let a = &arguments[0];
 //     let a: Sequence = a.try_into()?;
 //     let a = a.borrow();
@@ -213,12 +210,12 @@ fn false_() -> bool {
 // }
 
 // // #[xpath_fn]
-// fn real_exactly_one(a: &[Item]) -> Result<Item, ValueError> {
+// fn real_exactly_one(a: &[Item]) -> Result<Item, stack::ValueError> {
 //     if a.len() == 1 {
 //         Ok(a[0].clone())
 //     } else {
 //         // XXX should really be a FORG0005 error
-//         Err(ValueError::Type)
+//         Err(stack::ValueError::Type)
 //     }
 // }
 
