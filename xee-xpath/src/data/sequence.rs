@@ -11,7 +11,7 @@ use super::atomic::Atomic;
 use super::error::ValueError;
 use super::item::{Item, OutputItem};
 use super::node::Node;
-use super::value::Value;
+use super::value::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -136,12 +136,12 @@ impl InnerSequence {
         }
     }
 
-    pub(crate) fn push_value(&mut self, value: Value) {
+    pub(crate) fn push_value(&mut self, value: StackValue) {
         match value {
-            Value::Atomic(a) => self.items.push(Item::Atomic(a)),
-            Value::Closure(c) => self.items.push(Item::Function(c)),
-            Value::Sequence(s) => self.extend(s),
-            Value::Node(n) => self.items.push(Item::Node(n)),
+            StackValue::Atomic(a) => self.items.push(Item::Atomic(a)),
+            StackValue::Closure(c) => self.items.push(Item::Function(c)),
+            StackValue::Sequence(s) => self.extend(s),
+            StackValue::Node(n) => self.items.push(Item::Node(n)),
             _ => panic!("unexpected value: {:?}", value),
         }
     }

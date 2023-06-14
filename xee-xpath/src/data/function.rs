@@ -5,7 +5,7 @@ use xee_xpath_ast::ast;
 use crate::ir;
 
 use super::error::ValueError;
-use super::value::Value;
+use super::value::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -31,7 +31,7 @@ impl StaticFunctionId {
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
-    pub(crate) constants: Vec<Value>,
+    pub(crate) constants: Vec<StackValue>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
@@ -46,7 +46,7 @@ pub(crate) enum ClosureFunctionId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<Value>,
+    pub(crate) values: Vec<StackValue>,
 }
 
 impl Closure {

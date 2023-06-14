@@ -2,7 +2,7 @@ use miette::SourceSpan;
 use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
-use crate::data::{Atomic, Sequence, StaticFunctionId, Value};
+use crate::data::{Atomic, Sequence, StackValue, StaticFunctionId};
 use crate::error::{Error, Result};
 use crate::ir;
 
@@ -47,12 +47,12 @@ impl<'a> InterpreterCompiler<'a> {
         match &atom.value {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
-                    ir::Const::Integer(i) => Value::Atomic(Atomic::Integer(*i)),
-                    ir::Const::String(s) => Value::Atomic(Atomic::String(Rc::new(s.clone()))),
-                    ir::Const::Double(d) => Value::Atomic(Atomic::Double(*d)),
-                    ir::Const::Decimal(d) => Value::Atomic(Atomic::Decimal(*d)),
-                    ir::Const::EmptySequence => Value::Sequence(Sequence::empty()),
-                    ir::Const::Step(step) => Value::Step(step.clone()),
+                    ir::Const::Integer(i) => StackValue::Atomic(Atomic::Integer(*i)),
+                    ir::Const::String(s) => StackValue::Atomic(Atomic::String(Rc::new(s.clone()))),
+                    ir::Const::Double(d) => StackValue::Atomic(Atomic::Double(*d)),
+                    ir::Const::Decimal(d) => StackValue::Atomic(Atomic::Decimal(*d)),
+                    ir::Const::EmptySequence => StackValue::Sequence(Sequence::empty()),
+                    ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value, atom.span);
                 Ok(())
@@ -194,11 +194,11 @@ impl<'a> InterpreterCompiler<'a> {
                 // pop the second item on the stack
                 self.builder.emit(Instruction::Pop, span);
                 self.builder
-                    .emit_constant(Value::Atomic(Atomic::Boolean(false)), span);
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(false)), span);
                 let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
                 self.builder.patch_jump(second_true);
                 self.builder
-                    .emit_constant(Value::Atomic(Atomic::Boolean(true)), span);
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(true)), span);
                 self.builder.patch_jump(end);
             }
             ir::BinaryOperator::Or => {
@@ -207,12 +207,12 @@ impl<'a> InterpreterCompiler<'a> {
                 let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
                 // neither first nor second were true, so we return false
                 self.builder
-                    .emit_constant(Value::Atomic(Atomic::Boolean(false)), span);
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(false)), span);
                 let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
                 self.builder.patch_jump(first_true);
                 self.builder.patch_jump(second_true);
                 self.builder
-                    .emit_constant(Value::Atomic(Atomic::Boolean(true)), span);
+                    .emit_constant(StackValue::Atomic(Atomic::Boolean(true)), span);
                 self.builder.patch_jump(end);
             }
             _ => todo!("operator not supported yet: {:?}", binary.op),
@@ -431,8 +431,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         let reached_end_value = match quantified.quantifier {
-            ir::Quantifier::Some => Value::Atomic(Atomic::Boolean(false)),
-            ir::Quantifier::Every => Value::Atomic(Atomic::Boolean(true)),
+            ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(false)),
+            ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(true)),
         };
         self.builder.emit_constant(reached_end_value, span);
         let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
@@ -444,8 +444,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         let jumped_out_value = match quantified.quantifier {
-            ir::Quantifier::Some => Value::Atomic(Atomic::Boolean(true)),
-            ir::Quantifier::Every => Value::Atomic(Atomic::Boolean(false)),
+            ir::Quantifier::Some => StackValue::Atomic(Atomic::Boolean(true)),
+            ir::Quantifier::Every => StackValue::Atomic(Atomic::Boolean(false)),
         };
         // if we jumped out, we set satisfies to true
         self.builder.emit_constant(jumped_out_value, span);
@@ -470,7 +470,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         // place index on stack
         self.builder
-            .emit_constant(Value::Atomic(Atomic::Integer(1)), span);
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)), span);
         self.scopes.push_name(&context_names.position);
 
         let loop_start_ref = self.builder.loop_start();
@@ -507,7 +507,7 @@ impl<'a> InterpreterCompiler<'a> {
         // update index with 1
         self.compile_variable(&context_names.position, span)?;
         self.builder
-            .emit_constant(Value::Atomic(Atomic::Integer(1)), span);
+            .emit_constant(StackValue::Atomic(Atomic::Integer(1)), span);
         self.builder.emit(Instruction::Add, span);
         self.compile_variable_set(&context_names.position, span)?;
         self.builder
@@ -540,7 +540,7 @@ mod tests {
         document::{Document, Documents, Uri},
     };
 
-    fn as_sequence(value: &Value) -> Sequence {
+    fn as_sequence(value: &StackValue) -> Sequence {
         value.try_into().unwrap()
     }
 
@@ -552,7 +552,7 @@ mod tests {
         )
     }
 
-    fn run(s: &str) -> Result<Value> {
+    fn run(s: &str) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);
@@ -561,7 +561,10 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<OutputItem>)]) -> Result<Value> {
+    fn run_with_variables(
+        s: &str,
+        variables: &[(ast::Name, Vec<OutputItem>)],
+    ) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let variable_names = variables
@@ -574,7 +577,7 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_debug(s: &str) -> Result<Value> {
+    fn run_debug(s: &str) -> Result<StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
         let static_context = StaticContext::new(&namespaces);

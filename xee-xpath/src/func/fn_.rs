@@ -7,7 +7,7 @@ use crate::wrap_xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
-    data::{Atomic, ContextTryInto, Item, Sequence, Value, ValueError, ValueResult},
+    data::{Atomic, ContextTryInto, Item, Sequence, StackValue, ValueError, ValueResult},
     DynamicContext, Error, Node,
 };
 
@@ -16,16 +16,22 @@ fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }
 
-fn bound_position(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    if arguments[0] == Value::Atomic(Atomic::Absent) {
+fn bound_position(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
         return Err(ValueError::Absent);
     }
     // position should be the context value
     Ok(arguments[0].clone())
 }
 
-fn bound_last(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
-    if arguments[0] == Value::Atomic(Atomic::Absent) {
+fn bound_last(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
+    if arguments[0] == StackValue::Atomic(Atomic::Absent) {
         return Err(ValueError::Absent);
     }
     // size should be the context value
@@ -97,11 +103,14 @@ fn exists(arg: &[Item]) -> bool {
 //     }
 // }
 
-fn exactly_one(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+fn exactly_one(
+    _context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     let a: Sequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
-        Ok(Value::from_item(a.items[0].clone()))
+        Ok(StackValue::from_item(a.items[0].clone()))
     } else {
         // XXX should really be a FORG0005 error
         Err(ValueError::Type)
@@ -113,10 +122,10 @@ fn empty(arg: &[Item]) -> bool {
     arg.is_empty()
 }
 
-fn not(_context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+fn not(_context: &DynamicContext, arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
-    Ok(Value::Atomic(Atomic::Boolean(!b)))
+    Ok(StackValue::Atomic(Atomic::Boolean(!b)))
 }
 
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
@@ -130,14 +139,17 @@ fn generate_id(context: &DynamicContext, arg: Option<Node>) -> String {
     }
 }
 
-fn untyped_atomic(context: &DynamicContext, arguments: &[Value]) -> Result<Value, ValueError> {
+fn untyped_atomic(
+    context: &DynamicContext,
+    arguments: &[StackValue],
+) -> Result<StackValue, ValueError> {
     let a = &arguments[0];
     let a: Atomic = a.context_try_into(context)?;
     let s = a.try_into()?;
-    Ok(Value::Atomic(Atomic::Untyped(Rc::new(s))))
+    Ok(StackValue::Atomic(Atomic::Untyped(Rc::new(s))))
 }
 
-fn error(_context: &DynamicContext, _arguments: &[Value]) -> Result<Value, ValueError> {
+fn error(_context: &DynamicContext, _arguments: &[StackValue]) -> Result<StackValue, ValueError> {
     Err(ValueError::Error(Error::FOER0000))
 }
 

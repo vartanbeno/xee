@@ -5,7 +5,7 @@ use super::atomic::{Atomic, OutputAtomic};
 use super::error::ValueError;
 use super::function::{Closure, OutputClosure};
 use super::node::Node;
-use super::value::Value;
+use super::value::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -76,11 +76,11 @@ impl Item {
         }
     }
 
-    pub(crate) fn into_stack_value(self) -> Value {
+    pub(crate) fn into_stack_value(self) -> StackValue {
         match self {
-            Item::Atomic(a) => Value::Atomic(a),
-            Item::Node(n) => Value::Node(n),
-            Item::Function(f) => Value::Closure(f),
+            Item::Atomic(a) => StackValue::Atomic(a),
+            Item::Node(n) => StackValue::Node(n),
+            Item::Function(f) => StackValue::Closure(f),
         }
     }
 }

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use crate::data::{Atomic, Value};
+    use crate::data::{Atomic, StackValue};
     use crate::{DynamicContext, Namespaces, StaticContext};
     use std::rc::Rc;
     use xee_xpath_macros::xpath_fn;
@@ -24,7 +24,9 @@ mod test {
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
             foo::WRAPPER(&context, &[]),
-            Ok(Value::Atomic(Atomic::String(Rc::new("foo".to_string()))))
+            Ok(StackValue::Atomic(Atomic::String(Rc::new(
+                "foo".to_string()
+            ))))
         );
     }
 
@@ -35,8 +37,10 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         assert_eq!(
-            int_to_string::WRAPPER(&context, &[Value::Atomic(Atomic::Integer(42))]),
-            Ok(Value::Atomic(Atomic::String(Rc::new("42".to_string()))))
+            int_to_string::WRAPPER(&context, &[StackValue::Atomic(Atomic::Integer(42))]),
+            Ok(StackValue::Atomic(Atomic::String(Rc::new(
+                "42".to_string()
+            ))))
         );
     }
 }

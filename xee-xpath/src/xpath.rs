@@ -1,7 +1,9 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, Sequence, Value};
+use crate::data::{
+    Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, Sequence, StackValue,
+};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
@@ -42,7 +44,7 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         context_item: Option<&Item>,
-    ) -> Result<Value> {
+    ) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
         interpreter.start(self.main, context_item, &arguments);
@@ -59,11 +61,11 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            Value::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
+            StackValue::Atomic(Atomic::Absent) => Err(Error::XPDY0002 {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            Value::Atomic(Atomic::Empty) => Ok(Value::Sequence(Sequence::empty())),
+            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Sequence(Sequence::empty())),
             _ => Ok(value),
         }
     }

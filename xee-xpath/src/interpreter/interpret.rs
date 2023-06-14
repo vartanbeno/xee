@@ -7,7 +7,7 @@ use crate::comparison;
 use crate::context::DynamicContext;
 use crate::data::{
     Atomic, Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId, Item,
-    Sequence, StaticFunctionId, Step, Value, ValueError,
+    Sequence, StackValue, StaticFunctionId, Step, ValueError,
 };
 use crate::error::Error;
 use crate::op;
@@ -29,7 +29,7 @@ struct Frame {
 pub(crate) struct Interpreter<'a> {
     program: &'a Program,
     dynamic_context: &'a DynamicContext<'a>,
-    stack: Vec<Value>,
+    stack: Vec<StackValue>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
 }
 
@@ -43,7 +43,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn stack(&self) -> &[Value] {
+    pub(crate) fn stack(&self) -> &[StackValue] {
         &self.stack
     }
 
@@ -60,19 +60,19 @@ impl<'a> Interpreter<'a> {
         });
         if let Some(context_item) = context_item {
             // the context item
-            self.stack.push(Value::from_item(context_item.clone()));
+            self.stack.push(StackValue::from_item(context_item.clone()));
             // position & size
-            self.stack.push(Value::Atomic(Atomic::Integer(1)));
-            self.stack.push(Value::Atomic(Atomic::Integer(1)));
+            self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
+            self.stack.push(StackValue::Atomic(Atomic::Integer(1)));
         } else {
             // absent context, position and size
-            self.stack.push(Value::Atomic(Atomic::Absent));
-            self.stack.push(Value::Atomic(Atomic::Absent));
-            self.stack.push(Value::Atomic(Atomic::Absent));
+            self.stack.push(StackValue::Atomic(Atomic::Absent));
+            self.stack.push(StackValue::Atomic(Atomic::Absent));
+            self.stack.push(StackValue::Atomic(Atomic::Absent));
         }
         // and any arguments
         for arg in arguments {
-            self.stack.push(Value::from_items(arg));
+            self.stack.push(StackValue::from_items(arg));
         }
     }
 
@@ -101,30 +101,33 @@ impl<'a> Interpreter<'a> {
             match instruction {
                 EncodedInstruction::Add => {
                     let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(Value::Atomic(op::numeric_add(&a, &b)?));
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_add(&a, &b)?));
                 }
                 EncodedInstruction::Sub => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(op::numeric_substract(&a, &b)?));
+                        .push(StackValue::Atomic(op::numeric_substract(&a, &b)?));
                 }
                 EncodedInstruction::Mul => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(op::numeric_multiply(&a, &b)?));
+                        .push(StackValue::Atomic(op::numeric_multiply(&a, &b)?));
                 }
                 EncodedInstruction::Div => {
                     let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(Value::Atomic(op::numeric_divide(&a, &b)?));
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_divide(&a, &b)?));
                 }
                 EncodedInstruction::IntDiv => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(op::numeric_integer_divide(&a, &b)?));
+                        .push(StackValue::Atomic(op::numeric_integer_divide(&a, &b)?));
                 }
                 EncodedInstruction::Mod => {
                     let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(Value::Atomic(op::numeric_mod(&a, &b)?));
+                    self.stack
+                        .push(StackValue::Atomic(op::numeric_mod(&a, &b)?));
                 }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
@@ -132,7 +135,7 @@ impl<'a> Interpreter<'a> {
                     let b: &str = (&b).try_into()?;
                     let result = a.to_owned() + b;
                     self.stack
-                        .push(Value::Atomic(Atomic::String(Rc::new(result))));
+                        .push(StackValue::Atomic(Atomic::String(Rc::new(result))));
                 }
                 EncodedInstruction::Const => {
                     let index = self.read_u16();
@@ -146,7 +149,7 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..closure_function.closure_names.len() {
                         values.push(self.stack.pop().unwrap());
                     }
-                    self.stack.push(Value::Closure(Rc::new(Closure {
+                    self.stack.push(StackValue::Closure(Rc::new(Closure {
                         function_id: ClosureFunctionId::Dynamic(FunctionId(function_id as usize)),
                         values,
                     })));
@@ -167,7 +170,7 @@ impl<'a> Interpreter<'a> {
                             vec![]
                         }
                     };
-                    self.stack.push(Value::Closure(Rc::new(Closure {
+                    self.stack.push(StackValue::Closure(Rc::new(Closure {
                         function_id: ClosureFunctionId::Static(StaticFunctionId(
                             static_function_id as usize,
                         )),
@@ -193,7 +196,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Comma => {
                     let (a, b) = self.pop_seq2()?;
-                    self.stack.push(Value::Sequence(Sequence::new(
+                    self.stack.push(StackValue::Sequence(Sequence::new(
                         a.borrow().concat(&b.borrow()),
                     )));
                 }
@@ -220,71 +223,71 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Eq => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_eq(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_eq(&a, &b)?));
                 }
                 EncodedInstruction::Ne => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_ne(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_ne(&a, &b)?));
                 }
                 EncodedInstruction::Lt => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_lt(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_lt(&a, &b)?));
                 }
                 EncodedInstruction::Le => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_le(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_le(&a, &b)?));
                 }
                 EncodedInstruction::Gt => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_gt(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_gt(&a, &b)?));
                 }
                 EncodedInstruction::Ge => {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack
-                        .push(Value::Atomic(comparison::value_ge(&a, &b)?));
+                        .push(StackValue::Atomic(comparison::value_ge(&a, &b)?));
                 }
                 EncodedInstruction::GenEq => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_eq(
+                    self.stack.push(StackValue::Atomic(comparison::general_eq(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenNe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_ne(
+                    self.stack.push(StackValue::Atomic(comparison::general_ne(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenLt => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_lt(
+                    self.stack.push(StackValue::Atomic(comparison::general_lt(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenLe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_le(
+                    self.stack.push(StackValue::Atomic(comparison::general_le(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenGt => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_gt(
+                    self.stack.push(StackValue::Atomic(comparison::general_gt(
                         &atomized_a,
                         &atomized_b,
                     )?));
                 }
                 EncodedInstruction::GenGe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(Value::Atomic(comparison::general_ge(
+                    self.stack.push(StackValue::Atomic(comparison::general_ge(
                         &atomized_a,
                         &atomized_b,
                     )?));
@@ -294,7 +297,8 @@ impl<'a> Interpreter<'a> {
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(Value::Sequence(Sequence::new(combined)));
+                    self.stack
+                        .push(StackValue::Sequence(Sequence::new(combined)));
                 }
                 EncodedInstruction::Dup => {
                     let value = self.stack.pop().unwrap();
@@ -362,25 +366,28 @@ impl<'a> Interpreter<'a> {
                     let a: i64 = a.try_into()?;
                     let b: i64 = b.try_into()?;
                     match a.cmp(&b) {
-                        Ordering::Greater => self.stack.push(Value::Sequence(Sequence::empty())),
-                        Ordering::Equal => self.stack.push(Value::Atomic(Atomic::Integer(a))),
+                        Ordering::Greater => {
+                            self.stack.push(StackValue::Sequence(Sequence::empty()))
+                        }
+                        Ordering::Equal => self.stack.push(StackValue::Atomic(Atomic::Integer(a))),
                         Ordering::Less => {
                             let sequence = Sequence::from_vec(
                                 (a..=b)
                                     .map(|i| Item::Atomic(Atomic::Integer(i)))
                                     .collect::<Vec<Item>>(),
                             );
-                            self.stack.push(Value::Sequence(sequence));
+                            self.stack.push(StackValue::Sequence(sequence));
                         }
                     }
                 }
                 EncodedInstruction::SequenceNew => {
-                    self.stack.push(Value::Sequence(Sequence::empty()));
+                    self.stack.push(StackValue::Sequence(Sequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
                     let sequence = self.pop_seq()?;
                     let len = sequence.borrow().items.len();
-                    self.stack.push(Value::Atomic(Atomic::Integer(len as i64)));
+                    self.stack
+                        .push(StackValue::Atomic(Atomic::Integer(len as i64)));
                 }
                 EncodedInstruction::SequenceGet => {
                     let sequence = self.pop_seq()?;
@@ -401,7 +408,8 @@ impl<'a> Interpreter<'a> {
                     // uses effectively the same check
                     let atomic = self.pop_atomic()?;
                     let is_numeric = atomic.is_numeric();
-                    self.stack.push(Value::Atomic(Atomic::Boolean(is_numeric)));
+                    self.stack
+                        .push(StackValue::Atomic(Atomic::Boolean(is_numeric)));
                 }
                 EncodedInstruction::PrintTop => {
                     let top = self.stack.last().unwrap();
@@ -419,7 +427,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: StaticFunctionId,
         arity: u8,
-        closure_values: &[Value],
+        closure_values: &[StackValue],
     ) -> Result<(), ValueError> {
         let static_function = &self
             .dynamic_context
@@ -452,7 +460,7 @@ impl<'a> Interpreter<'a> {
         // pop off the callable too
         self.stack.pop();
         let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);
-        self.stack.push(Value::Sequence(sequence));
+        self.stack.push(StackValue::Sequence(sequence));
         Ok(())
     }
 
@@ -548,8 +556,8 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(Value::Atomic(Atomic::Integer(1)), empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
         builder.emit(Instruction::Add, empty_span);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -562,7 +570,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![Value::Atomic(Atomic::Integer(3))]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::Atomic(Atomic::Integer(3))]
+        );
         Ok(())
     }
 
@@ -573,9 +584,9 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
         let jump = builder.emit_jump_forward(JumpCondition::Always, empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(3)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
         builder.patch_jump(jump);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(4)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
         let instructions = decode_instructions(&function.chunk);
@@ -598,14 +609,14 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(Value::Atomic(Atomic::Integer(1)), empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
         builder.emit(Instruction::Lt, empty_span);
         let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(3)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
         let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(4)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -619,7 +630,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![Value::Atomic(Atomic::Integer(3))]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::Atomic(Atomic::Integer(3))]
+        );
         Ok(())
     }
 
@@ -629,14 +643,14 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(Value::Atomic(Atomic::Integer(2)), empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(1)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(2)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(1)), empty_span);
         builder.emit(Instruction::Lt, empty_span);
         let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(3)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(3)), empty_span);
         let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(Value::Atomic(Atomic::Integer(4)), empty_span);
+        builder.emit_constant(StackValue::Atomic(Atomic::Integer(4)), empty_span);
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -649,7 +663,10 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![Value::Atomic(Atomic::Integer(4))]);
+        assert_eq!(
+            interpreter.stack,
+            vec![StackValue::Atomic(Atomic::Integer(4))]
+        );
         Ok(())
     }
 }

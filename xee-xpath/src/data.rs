@@ -17,4 +17,4 @@ pub use item::OutputItem;
 pub use node::Node;
 pub use sequence::OutputSequence;
 pub(crate) use sequence::{InnerSequence, Sequence};
-pub(crate) use value::Value;
+pub(crate) use value::StackValue;
