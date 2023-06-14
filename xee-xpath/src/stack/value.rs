@@ -1,11 +1,10 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data::Node;
 use crate::data::OutputSequence;
 use crate::data::{Closure, Step};
-
 use crate::stack;
+use crate::xml;
 
 // TODO: the use in the macro needs to keep this public, needs to be investigated
 // further.
@@ -16,7 +15,7 @@ pub(crate) enum StackValue {
     Closure(Rc<Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<Step>),
-    Node(Node),
+    Node(xml::Node),
 }
 
 impl StackValue {

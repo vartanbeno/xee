@@ -321,7 +321,8 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
-    use crate::data::{Node, OutputAtomic as Atomic};
+    use crate::data::OutputAtomic as Atomic;
+    use crate::xml;
 
     #[test]
     fn test_one_query() {
@@ -382,11 +383,11 @@ mod tests {
 
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &Item::Node(Node::Xot(root)))?;
+        let r = result_query.execute(&session, &Item::Node(xml::Node::Xot(root)))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &Item::Node(Node::Xot(root2)))?;
+        let r = result_query.execute(&session, &Item::Node(xml::Node::Xot(root2)))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }

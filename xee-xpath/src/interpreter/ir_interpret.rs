@@ -537,20 +537,19 @@ impl<'a> InterpreterCompiler<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     use insta::assert_debug_snapshot;
-    use xot::Xot;
-
     use xee_xpath_ast::{ast, Namespaces};
+    use xot::Xot;
 
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
     use crate::run::evaluate;
     use crate::stack;
+    use crate::xml;
     use crate::xpath::XPath;
     use crate::{
-        data::{Node, OutputAtomic, OutputItem, OutputSequence},
+        data::{OutputAtomic, OutputItem, OutputSequence},
         document::{Document, Documents, Uri},
     };
 
@@ -561,7 +560,7 @@ mod tests {
     fn xot_nodes_to_items(node: &[xot::Node]) -> OutputSequence {
         OutputSequence::new(
             node.iter()
-                .map(|&node| OutputItem::Node(Node::Xot(node)))
+                .map(|&node| OutputItem::Node(xml::Node::Xot(node)))
                 .collect(),
         )
     }

@@ -20,16 +20,18 @@ mod span;
 mod stack;
 mod step;
 mod types;
+mod xml;
 mod xpath;
 
 pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::Namespaces;
 
 pub use crate::context::{DynamicContext, StaticContext};
-pub use crate::data::{Node, OutputAtomic, OutputItem, OutputSequence};
+pub use crate::data::{OutputAtomic, OutputItem, OutputSequence};
 pub use crate::error::Error;
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
+pub use crate::xml::Node;
 pub use crate::xpath::XPath;

@@ -2,16 +2,16 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::data::Closure;
-use crate::data::Node;
 use crate::data::OutputItem;
 use crate::stack;
+use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackItem {
     Atomic(stack::Atomic),
     // XXX what about static function references?
     Function(Rc<Closure>),
-    Node(Node),
+    Node(xml::Node),
 }
 
 impl StackItem {
@@ -29,7 +29,7 @@ impl StackItem {
             _ => Err(stack::ValueError::Type),
         }
     }
-    pub(crate) fn to_node(&self) -> stack::ValueResult<Node> {
+    pub(crate) fn to_node(&self) -> stack::ValueResult<xml::Node> {
         match self {
             StackItem::Node(n) => Ok(*n),
             _ => Err(stack::ValueError::Type),

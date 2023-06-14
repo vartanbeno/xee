@@ -1,12 +1,13 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{FunctionId, Node, OutputItem, OutputSequence};
+use crate::data::{FunctionId, OutputItem, OutputSequence};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
 use crate::stack;
+use crate::xml;
 
 #[derive(Debug)]
 pub struct XPath {
@@ -76,7 +77,10 @@ impl XPath {
         dynamic_context: &DynamicContext,
         node: xot::Node,
     ) -> Result<OutputSequence> {
-        self.many(dynamic_context, Some(&OutputItem::Node(Node::Xot(node))))
+        self.many(
+            dynamic_context,
+            Some(&OutputItem::Node(xml::Node::Xot(node))),
+        )
     }
 
     pub fn many(

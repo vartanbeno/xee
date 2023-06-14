@@ -6,9 +6,9 @@ use xot::Xot;
 
 use crate::annotation::Annotations;
 use crate::context::DynamicContext;
-use crate::data::Node;
 use crate::data::OutputSequence;
 use crate::stack;
+use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StackSequence(Rc<RefCell<StackInnerSequence>>);
@@ -23,7 +23,7 @@ impl StackSequence {
     pub(crate) fn from_atomic(atomic: &stack::Atomic) -> Self {
         Self::new(StackInnerSequence::from_atomic(atomic.clone()))
     }
-    pub(crate) fn from_node(node: Node) -> Self {
+    pub(crate) fn from_node(node: xml::Node) -> Self {
         Self::new(StackInnerSequence::from_node(node))
     }
     pub(crate) fn from_vec(items: Vec<stack::StackItem>) -> Self {
@@ -115,7 +115,7 @@ impl StackInnerSequence {
         }
     }
 
-    pub(crate) fn from_node(node: Node) -> Self {
+    pub(crate) fn from_node(node: xml::Node) -> Self {
         Self {
             items: vec![stack::StackItem::Node(node)],
         }

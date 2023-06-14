@@ -2,10 +2,11 @@ use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
-use crate::data::{Node, Step};
+use crate::data::Step;
 use crate::stack;
+use crate::xml;
 
-pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> stack::StackSequence {
+pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::StackSequence {
     let mut new_sequence = stack::StackInnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
@@ -18,8 +19,8 @@ pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> stack::StackSe
 fn node_take_axis<'a>(
     axis: &ast::Axis,
     xot: &'a Xot,
-    node: Node,
-) -> Box<dyn Iterator<Item = Node> + 'a> {
+    node: xml::Node,
+) -> Box<dyn Iterator<Item = xml::Node> + 'a> {
     match axis {
         ast::Axis::Child => node.xot_iterator(|n| xot.children(n)),
         ast::Axis::Descendant => node.xot_iterator(|n| {
@@ -61,23 +62,23 @@ fn node_take_axis<'a>(
             todo!("preceding not supported yet");
         }
         ast::Axis::Attribute => match node {
-            Node::Xot(node) => {
+            xml::Node::Xot(node) => {
                 let element = xot.element(node);
                 if let Some(element) = element {
                     Box::new(
                         element
                             .attributes()
                             .keys()
-                            .map(move |name| Node::Attribute(node, *name)),
+                            .map(move |name| xml::Node::Attribute(node, *name)),
                     )
                 } else {
                     Box::new(std::iter::empty())
                 }
             }
-            Node::Attribute(..) | Node::Namespace(..) => Box::new(std::iter::empty()),
+            xml::Node::Attribute(..) | xml::Node::Namespace(..) => Box::new(std::iter::empty()),
         },
         ast::Axis::Namespace => {
-            // namespaces aren't Node in Xot either
+            // namespaces aren't xml::Node in Xot either
             todo!("namespaces not supported yet");
         }
         ast::Axis::Self_ => {
@@ -89,19 +90,19 @@ fn node_take_axis<'a>(
     }
 }
 
-fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node) -> bool {
+fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::Node) -> bool {
     match node_test {
         ast::NodeTest::KindTest(kind_test) => match kind_test {
             ast::KindTest::Any => true,
             ast::KindTest::Text => {
-                if let Node::Xot(node) = node {
+                if let xml::Node::Xot(node) = node {
                     xot.value_type(node) == ValueType::Text
                 } else {
                     false
                 }
             }
             ast::KindTest::Comment => {
-                if let Node::Xot(node) = node {
+                if let xml::Node::Xot(node) = node {
                     xot.value_type(node) == ValueType::Comment
                 } else {
                     false
@@ -122,15 +123,15 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                     // false
                     if let Some(name_id) = name_id {
                         match node {
-                            Node::Xot(node) => {
+                            xml::Node::Xot(node) => {
                                 if let Some(element) = xot.element(node) {
                                     element.name() == name_id
                                 } else {
                                     false
                                 }
                             }
-                            Node::Attribute(_, attr_name) => attr_name == name_id,
-                            Node::Namespace(..) => false,
+                            xml::Node::Attribute(_, attr_name) => attr_name == name_id,
+                            xml::Node::Namespace(..) => false,
                         }
                     } else {
                         false
@@ -138,7 +139,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                 }
                 ast::NameTest::Star => true,
                 ast::NameTest::LocalName(local_name) => match node {
-                    Node::Xot(node) => {
+                    xml::Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
                             let (_, name_str) = xot.name_ns_str(name_id);
@@ -147,14 +148,14 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                             false
                         }
                     }
-                    Node::Attribute(_, attr_name) => {
+                    xml::Node::Attribute(_, attr_name) => {
                         let (_, name_str) = xot.name_ns_str(attr_name);
                         name_str == local_name
                     }
-                    Node::Namespace(..) => false,
+                    xml::Node::Namespace(..) => false,
                 },
                 ast::NameTest::Namespace(uri) => match node {
-                    Node::Xot(node) => {
+                    xml::Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
                             let (namespace_str, _) = xot.name_ns_str(name_id);
@@ -163,11 +164,11 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: Node)
                             false
                         }
                     }
-                    Node::Attribute(_, attr_name) => {
+                    xml::Node::Attribute(_, attr_name) => {
                         let (namespace_str, _) = xot.name_ns_str(attr_name);
                         namespace_str == uri
                     }
-                    Node::Namespace(..) => false,
+                    xml::Node::Namespace(..) => false,
                 },
             }
         }
@@ -192,9 +193,9 @@ enum NodeKind {
     Comment,
 }
 
-fn node_kind(xot: &Xot, node: Node) -> NodeKind {
+fn node_kind(xot: &Xot, node: xml::Node) -> NodeKind {
     match node {
-        Node::Xot(node) => {
+        xml::Node::Xot(node) => {
             let node = xot.value_type(node);
             match node {
                 ValueType::Element => NodeKind::Element,
@@ -204,8 +205,8 @@ fn node_kind(xot: &Xot, node: Node) -> NodeKind {
                 ValueType::Root => NodeKind::Document,
             }
         }
-        Node::Attribute(..) => NodeKind::Attribute,
-        Node::Namespace(..) => NodeKind::Namespace,
+        xml::Node::Attribute(..) => NodeKind::Attribute,
+        xml::Node::Namespace(..) => NodeKind::Namespace,
     }
 }
 
@@ -225,7 +226,7 @@ mod tests {
         stack::StackSequence::new(stack::StackInnerSequence {
             items: node
                 .iter()
-                .map(|&node| stack::StackItem::Node(Node::Xot(node)))
+                .map(|&node| stack::StackItem::Node(xml::Node::Xot(node)))
                 .collect(),
         })
     }
@@ -242,7 +243,7 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Star),
         };
-        let sequence = resolve_step(&step, Node::Xot(doc_el), &xot);
+        let sequence = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a, b]));
         Ok(())
     }
@@ -258,7 +259,7 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Name(ast::Name::without_ns("a"))),
         };
-        let sequence = resolve_step(&step, Node::Xot(doc_el), &xot);
+        let sequence = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
         assert_eq!(sequence, xot_nodes_to_sequence(&[a]));
         Ok(())
     }

@@ -2,8 +2,8 @@ use xot::Xot;
 
 use super::atomic::OutputAtomic;
 use super::function::OutputClosure;
-use super::node::Node;
 use crate::stack;
+use crate::xml;
 
 type Result<T> = std::result::Result<T, stack::ValueError>;
 
@@ -11,7 +11,7 @@ type Result<T> = std::result::Result<T, stack::ValueError>;
 pub enum OutputItem {
     Atomic(OutputAtomic),
     Function(OutputClosure),
-    Node(Node),
+    Node(xml::Node),
 }
 
 impl From<&OutputItem> for stack::StackItem {
@@ -37,7 +37,7 @@ impl OutputItem {
             _ => Err(stack::ValueError::Type),
         }
     }
-    pub fn to_node(&self) -> Result<Node> {
+    pub fn to_node(&self) -> Result<xml::Node> {
         match self {
             OutputItem::Node(n) => Ok(*n),
             _ => Err(stack::ValueError::Type),

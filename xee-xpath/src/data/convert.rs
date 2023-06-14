@@ -6,8 +6,9 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::{Closure, Node, Step};
+use super::{Closure, Step};
 use crate::stack;
+use crate::xml;
 
 // wrapper should generate:
 // Value -> i64
@@ -94,7 +95,7 @@ where
     }
 }
 
-impl ContextTryFrom<&stack::StackValue> for Node {
+impl ContextTryFrom<&stack::StackValue> for xml::Node {
     fn context_try_from(
         value: &stack::StackValue,
         _context: &DynamicContext,
@@ -150,18 +151,18 @@ impl TryFrom<&stack::StackValue> for Rc<Step> {
     }
 }
 
-impl TryFrom<stack::StackValue> for Node {
+impl TryFrom<stack::StackValue> for xml::Node {
     type Error = stack::ValueError;
 
-    fn try_from(value: stack::StackValue) -> stack::ValueResult<Node> {
+    fn try_from(value: stack::StackValue) -> stack::ValueResult<xml::Node> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&stack::StackValue> for Node {
+impl TryFrom<&stack::StackValue> for xml::Node {
     type Error = stack::ValueError;
 
-    fn try_from(value: &stack::StackValue) -> stack::ValueResult<Node> {
+    fn try_from(value: &stack::StackValue) -> stack::ValueResult<xml::Node> {
         match value {
             stack::StackValue::Node(n) => Ok(*n),
             stack::StackValue::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
@@ -176,7 +177,7 @@ impl TryFrom<&stack::StackValue> for Node {
 //     fn try_from(value: &Value) -> stack::ValueResult<Item> {
 //         match value {
 //             Value::stack::Atomic(a) => Ok(Item::stack::Atomic(a.clone())),
-//             Value::Node(n) => Ok(Item::Node(*n)),
+//             Value::xml::Node(n) => Ok(Item::xml::Node(*n)),
 //             Value::Sequence(s) => s.borrow().singleton(),
 //             Value::Closure(c) => Ok(Item::Closure(Rc::clone(c))),
 //         }
@@ -229,7 +230,7 @@ impl TryFrom<stack::StackItem> for f64 {
 //     }
 // }
 
-impl TryFrom<stack::StackItem> for Node {
+impl TryFrom<stack::StackItem> for xml::Node {
     type Error = stack::ValueError;
 
     fn try_from(item: stack::StackItem) -> stack::ValueResult<Self> {
@@ -359,8 +360,8 @@ impl From<bool> for stack::StackValue {
     }
 }
 
-impl From<Node> for stack::StackValue {
-    fn from(n: Node) -> stack::StackValue {
+impl From<xml::Node> for stack::StackValue {
+    fn from(n: xml::Node) -> stack::StackValue {
         stack::StackValue::Node(n)
     }
 }

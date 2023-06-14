@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use xot::Xot;
 
 use crate::annotation::Annotations;
-use crate::data::Node;
+use crate::xml;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) struct Uri(pub(crate) String);
@@ -42,7 +42,7 @@ impl Documents {
                 root,
             },
         );
-        self.annotations.add(xot, Node::Xot(root));
+        self.annotations.add(xot, xml::Node::Xot(root));
     }
 
     pub(crate) fn get(&self, uri: &Uri) -> Option<&Document> {
