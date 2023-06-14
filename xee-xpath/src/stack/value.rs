@@ -1,12 +1,12 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use super::atomic::Atomic;
-use super::error::ValueError;
-use super::function::{Closure, Step};
-use super::item::StackItem;
-use super::node::Node;
-use super::sequence::{OutputSequence, StackSequence};
+use crate::data::Atomic;
+use crate::data::Node;
+use crate::data::StackItem;
+use crate::data::ValueError;
+use crate::data::{Closure, Step};
+use crate::data::{OutputSequence, StackSequence};
 
 type Result<T> = std::result::Result<T, ValueError>;
 

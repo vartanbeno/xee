@@ -11,7 +11,7 @@ use super::atomic::Atomic;
 use super::error::ValueError;
 use super::item::{OutputItem, StackItem};
 use super::node::Node;
-use super::value::StackValue;
+use crate::stack::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

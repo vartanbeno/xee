@@ -5,7 +5,7 @@ use super::atomic::{Atomic, OutputAtomic};
 use super::error::ValueError;
 use super::function::{Closure, OutputClosure};
 use super::node::Node;
-use super::value::StackValue;
+use crate::stack::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 

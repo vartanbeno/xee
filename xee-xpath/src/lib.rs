@@ -17,6 +17,7 @@ mod op;
 mod query;
 mod run;
 mod span;
+mod stack;
 mod step;
 mod types;
 mod xpath;

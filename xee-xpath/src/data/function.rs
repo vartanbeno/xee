@@ -5,7 +5,7 @@ use xee_xpath_ast::ast;
 use crate::ir;
 
 use super::error::ValueError;
-use super::value::StackValue;
+use crate::stack::StackValue;
 
 type Result<T> = std::result::Result<T, ValueError>;
 
