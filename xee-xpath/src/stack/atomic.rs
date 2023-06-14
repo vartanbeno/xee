@@ -33,8 +33,12 @@ impl Atomic {
             Atomic::Decimal(d) => output::Atomic::Decimal(*d),
             Atomic::String(s) => output::Atomic::String(s.to_string()),
             Atomic::Untyped(s) => output::Atomic::Untyped(s.to_string()),
-            Atomic::Empty => output::Atomic::Empty,
-            Atomic::Absent => output::Atomic::Absent,
+            Atomic::Empty => {
+                unreachable!("Atomic::Empty should not be converted to output::Atomic")
+            }
+            Atomic::Absent => {
+                unreachable!("Atomic::Absent should not be converted to output::Atomic")
+            }
         }
     }
 

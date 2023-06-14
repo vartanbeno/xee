@@ -15,11 +15,6 @@ pub enum Atomic {
     Decimal(Decimal),
     String(String),
     Untyped(String),
-    // a special marker to note empty sequences after atomization
-    // This should be treated as an emtpy sequence.
-    Empty,
-    // a special marker to indicate an absent context item
-    Absent,
 }
 
 impl From<Atomic> for stack::Atomic {
@@ -38,8 +33,6 @@ impl From<&Atomic> for stack::Atomic {
             Atomic::Decimal(d) => stack::Atomic::Decimal(*d),
             Atomic::String(s) => stack::Atomic::String(Rc::new(s.clone())),
             Atomic::Untyped(s) => stack::Atomic::Untyped(Rc::new(s.clone())),
-            Atomic::Empty => stack::Atomic::Empty,
-            Atomic::Absent => stack::Atomic::Absent,
         }
     }
 }
@@ -54,8 +47,6 @@ impl Display for Atomic {
             Atomic::Decimal(d) => write!(f, "{}", d),
             Atomic::String(s) => write!(f, "{}", s),
             Atomic::Untyped(s) => write!(f, "{}", s),
-            Atomic::Empty => write!(f, "()"),
-            Atomic::Absent => write!(f, "absent"),
         }
     }
 }
@@ -104,8 +95,6 @@ impl Atomic {
             Atomic::Boolean(b) => Ok(*b),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
-            Atomic::Empty => Ok(false),
-            Atomic::Absent => Err(stack::Error::Absent),
         }
     }
 
@@ -131,8 +120,6 @@ impl Atomic {
             Atomic::Float(f) => f.to_string(),
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
-            Atomic::Empty => "".to_string(),
-            Atomic::Absent => Err(stack::Error::Absent)?,
         })
     }
 }
