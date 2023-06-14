@@ -2,7 +2,7 @@ use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::data::{
-    Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, Sequence, StackValue,
+    Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, StackSequence, StackValue,
 };
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
@@ -65,7 +65,7 @@ impl XPath {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Sequence(Sequence::empty())),
+            StackValue::Atomic(Atomic::Empty) => Ok(StackValue::Sequence(StackSequence::empty())),
             _ => Ok(value),
         }
     }

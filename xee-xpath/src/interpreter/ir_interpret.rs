@@ -2,7 +2,7 @@ use miette::SourceSpan;
 use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
-use crate::data::{Atomic, Sequence, StackValue, StaticFunctionId};
+use crate::data::{Atomic, StackSequence, StackValue, StaticFunctionId};
 use crate::error::{Error, Result};
 use crate::ir;
 
@@ -51,7 +51,7 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::String(s) => StackValue::Atomic(Atomic::String(Rc::new(s.clone()))),
                     ir::Const::Double(d) => StackValue::Atomic(Atomic::Double(*d)),
                     ir::Const::Decimal(d) => StackValue::Atomic(Atomic::Decimal(*d)),
-                    ir::Const::EmptySequence => StackValue::Sequence(Sequence::empty()),
+                    ir::Const::EmptySequence => StackValue::Sequence(StackSequence::empty()),
                     ir::Const::Step(step) => StackValue::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value, atom.span);
@@ -540,7 +540,7 @@ mod tests {
         document::{Document, Documents, Uri},
     };
 
-    fn as_sequence(value: &StackValue) -> Sequence {
+    fn as_sequence(value: &StackValue) -> StackSequence {
         value.try_into().unwrap()
     }
 

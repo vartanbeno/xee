@@ -4,9 +4,9 @@ expression: "run(\"for $i in (10, 20), $j in ($i + 1, $i + 2) return $i + $j\")"
 ---
 Ok(
     Sequence(
-        Sequence(
+        StackSequence(
             RefCell {
-                value: InnerSequence {
+                value: StackInnerSequence {
                     items: [
                         Atomic(
                             Integer(

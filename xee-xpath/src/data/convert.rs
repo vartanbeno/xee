@@ -6,7 +6,7 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::{Atomic, Closure, Item, Node, Sequence, StackValue, Step, ValueError};
+use super::{Atomic, Closure, Item, Node, StackSequence, StackValue, Step, ValueError};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -292,7 +292,7 @@ impl TryFrom<Atomic> for String {
     }
 }
 
-impl TryFrom<StackValue> for Sequence {
+impl TryFrom<StackValue> for StackSequence {
     type Error = ValueError;
 
     fn try_from(value: StackValue) -> Result<Self> {
@@ -300,21 +300,21 @@ impl TryFrom<StackValue> for Sequence {
     }
 }
 
-impl TryFrom<&StackValue> for Sequence {
+impl TryFrom<&StackValue> for StackSequence {
     type Error = ValueError;
 
     fn try_from(value: &StackValue) -> Result<Self> {
         match value {
             StackValue::Sequence(s) => Ok(s.clone()),
-            StackValue::Atomic(a) => Ok(Sequence::from_atomic(a)),
-            StackValue::Node(n) => Ok(Sequence::from_node(*n)),
+            StackValue::Atomic(a) => Ok(StackSequence::from_atomic(a)),
+            StackValue::Node(n) => Ok(StackSequence::from_node(*n)),
             _ => Err(ValueError::Type),
         }
     }
 }
 
-impl ContextFrom<Sequence> for Vec<Atomic> {
-    fn context_from(sequence: Sequence, context: &DynamicContext) -> Self {
+impl ContextFrom<StackSequence> for Vec<Atomic> {
+    fn context_from(sequence: StackSequence, context: &DynamicContext) -> Self {
         sequence.borrow().to_atoms(context.xot)
     }
 }

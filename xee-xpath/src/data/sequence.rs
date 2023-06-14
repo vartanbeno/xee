@@ -16,36 +16,36 @@ use super::value::StackValue;
 type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Sequence(Rc<RefCell<InnerSequence>>);
+pub(crate) struct StackSequence(Rc<RefCell<StackInnerSequence>>);
 
-impl Sequence {
-    pub(crate) fn new(sequence: InnerSequence) -> Self {
+impl StackSequence {
+    pub(crate) fn new(sequence: StackInnerSequence) -> Self {
         Self(Rc::new(RefCell::new(sequence)))
     }
     pub(crate) fn empty() -> Self {
-        Self::new(InnerSequence::new())
+        Self::new(StackInnerSequence::new())
     }
     pub(crate) fn from_atomic(atomic: &Atomic) -> Self {
-        Self::new(InnerSequence::from_atomic(atomic.clone()))
+        Self::new(StackInnerSequence::from_atomic(atomic.clone()))
     }
     pub(crate) fn from_node(node: Node) -> Self {
-        Self::new(InnerSequence::from_node(node))
+        Self::new(StackInnerSequence::from_node(node))
     }
     pub(crate) fn from_vec(items: Vec<Item>) -> Self {
-        Self::new(InnerSequence::from_vec(items))
+        Self::new(StackInnerSequence::from_vec(items))
     }
     pub(crate) fn from_items(items: &[Item]) -> Self {
-        Self::new(InnerSequence::from_items(items))
+        Self::new(StackInnerSequence::from_items(items))
     }
 
     pub(crate) fn from_item(item: Item) -> Self {
-        Self::new(InnerSequence::from_item(item))
+        Self::new(StackInnerSequence::from_item(item))
     }
 
-    pub fn borrow(&self) -> std::cell::Ref<InnerSequence> {
+    pub fn borrow(&self) -> std::cell::Ref<StackInnerSequence> {
         self.0.borrow()
     }
-    pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
+    pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<StackInnerSequence> {
         self.0.borrow_mut()
     }
 
@@ -78,11 +78,11 @@ impl Sequence {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct InnerSequence {
+pub(crate) struct StackInnerSequence {
     pub(crate) items: Vec<Item>,
 }
 
-impl InnerSequence {
+impl StackInnerSequence {
     pub(crate) fn new() -> Self {
         Self { items: Vec::new() }
     }
@@ -150,13 +150,13 @@ impl InnerSequence {
         self.items.push(item.clone());
     }
 
-    pub(crate) fn extend(&mut self, other: Sequence) {
+    pub(crate) fn extend(&mut self, other: StackSequence) {
         for item in &other.borrow().items {
             self.push(item);
         }
     }
 
-    pub(crate) fn atomize(&self, xot: &Xot) -> InnerSequence {
+    pub(crate) fn atomize(&self, xot: &Xot) -> StackInnerSequence {
         let mut items = Vec::new();
         for item in &self.items {
             match item {
@@ -170,7 +170,7 @@ impl InnerSequence {
                 Item::Function(..) => panic!("cannot atomize a function"),
             }
         }
-        InnerSequence { items }
+        StackInnerSequence { items }
     }
 
     pub(crate) fn to_atomic(&self, context: &DynamicContext) -> Result<Atomic> {
@@ -209,17 +209,17 @@ impl InnerSequence {
         atoms
     }
 
-    pub(crate) fn concat(&self, other: &InnerSequence) -> InnerSequence {
+    pub(crate) fn concat(&self, other: &StackInnerSequence) -> StackInnerSequence {
         let mut items = self.items.clone();
         items.extend(other.items.clone());
-        InnerSequence { items }
+        StackInnerSequence { items }
     }
 
     pub(crate) fn union(
         &self,
-        other: &InnerSequence,
+        other: &StackInnerSequence,
         annotations: &Annotations,
-    ) -> Result<InnerSequence> {
+    ) -> Result<StackInnerSequence> {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
@@ -243,7 +243,7 @@ impl InnerSequence {
         nodes.sort_by_key(|n| annotations.document_order(*n));
 
         let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
-        Ok(InnerSequence { items })
+        Ok(StackInnerSequence { items })
     }
 }
 

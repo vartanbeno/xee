@@ -7,7 +7,7 @@ use crate::wrap_xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
-    data::{Atomic, ContextTryInto, Item, Sequence, StackValue, ValueError, ValueResult},
+    data::{Atomic, ContextTryInto, Item, StackSequence, StackValue, ValueError, ValueResult},
     DynamicContext, Error, Node,
 };
 
@@ -107,7 +107,7 @@ fn exactly_one(
     _context: &DynamicContext,
     arguments: &[StackValue],
 ) -> Result<StackValue, ValueError> {
-    let a: Sequence = (&arguments[0]).try_into()?;
+    let a: StackSequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(StackValue::from_item(a.items[0].clone()))

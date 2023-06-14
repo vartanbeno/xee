@@ -6,7 +6,7 @@ use super::error::ValueError;
 use super::function::{Closure, Step};
 use super::item::Item;
 use super::node::Node;
-use super::sequence::{OutputSequence, Sequence};
+use super::sequence::{OutputSequence, StackSequence};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -15,7 +15,7 @@ type Result<T> = std::result::Result<T, ValueError>;
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StackValue {
     Atomic(Atomic),
-    Sequence(Sequence),
+    Sequence(StackSequence),
     Closure(Rc<Closure>),
     // StaticFunction(StaticFunctionId),
     Step(Rc<Step>),
@@ -37,7 +37,7 @@ impl StackValue {
         } else if items.len() == 1 {
             StackValue::from_item(items[0].clone())
         } else {
-            StackValue::Sequence(Sequence::from_items(items))
+            StackValue::Sequence(StackSequence::from_items(items))
         }
     }
 
@@ -64,16 +64,16 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn to_many(&self) -> Sequence {
+    pub(crate) fn to_many(&self) -> StackSequence {
         match self {
-            StackValue::Atomic(a) => Sequence::from_atomic(a),
+            StackValue::Atomic(a) => StackSequence::from_atomic(a),
             StackValue::Sequence(s) => s.clone(),
-            StackValue::Node(n) => Sequence::from_node(*n),
+            StackValue::Node(n) => StackSequence::from_node(*n),
             // TODO: we need to handle the function case here, but
             // we don't handle it yet
             _ => {
                 dbg!("unhandled to_many value {:?}", self);
-                Sequence::empty()
+                StackSequence::empty()
             }
         }
     }
