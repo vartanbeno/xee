@@ -38,7 +38,7 @@ impl FunctionKind {
 pub(crate) type StaticFunctionType = fn(
     context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> stack::ValueResult<stack::StackValue>;
+) -> stack::Result<stack::StackValue>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
@@ -164,7 +164,7 @@ pub(crate) struct StaticFunction {
     func: fn(
         context: &DynamicContext,
         arguments: &[stack::StackValue],
-    ) -> stack::ValueResult<stack::StackValue>,
+    ) -> stack::Result<stack::StackValue>,
 }
 
 impl Debug for StaticFunction {
@@ -183,9 +183,9 @@ impl StaticFunction {
         context: &DynamicContext,
         arguments: &[stack::StackValue],
         closure_values: &[stack::StackValue],
-    ) -> stack::ValueResult<stack::StackValue> {
+    ) -> stack::Result<stack::StackValue> {
         if arguments.len() != self.arity {
-            return Err(stack::ValueError::Type);
+            return Err(stack::Error::Type);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {

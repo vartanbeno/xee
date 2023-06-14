@@ -649,25 +649,25 @@ impl Error {
     pub(crate) fn from_value_error(
         program: &Program,
         span: SourceSpan,
-        value_error: stack::ValueError,
+        value_error: stack::Error,
     ) -> Self {
         match value_error {
-            stack::ValueError::XPTY0004 => Error::XPTY0004 {
+            stack::Error::XPTY0004 => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
-            stack::ValueError::Type => Error::XPTY0004 {
+            stack::Error::Type => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
-            stack::ValueError::Overflow => Error::FOAR0002,
-            stack::ValueError::StackOverflow => Error::XPDY0130,
-            stack::ValueError::DivisionByZero => Error::FOAR0001,
-            stack::ValueError::Absent => Error::XPDY0002 {
+            stack::Error::Overflow => Error::FOAR0002,
+            stack::Error::StackOverflow => Error::XPDY0130,
+            stack::Error::DivisionByZero => Error::FOAR0001,
+            stack::Error::Absent => Error::XPDY0002 {
                 src: program.src.to_string(),
                 span,
             },
-            stack::ValueError::Error(e) => e,
+            stack::Error::Error(e) => e,
         }
     }
 }

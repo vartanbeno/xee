@@ -8,7 +8,7 @@ mod value;
 
 pub(crate) use atomic::Atomic;
 pub(crate) use convert::{ContextInto, ContextTryInto};
-pub(crate) use error::{ValueError, ValueResult};
+pub(crate) use error::{Error, Result};
 // XXX should not have any public things in here
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};

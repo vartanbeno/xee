@@ -1,10 +1,10 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::error::Error;
+use crate::error::Error as XeeError;
 
 #[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
-pub enum ValueError {
+pub enum Error {
     #[error("Type error")]
     XPTY0004,
     #[error("Type error")]
@@ -19,7 +19,7 @@ pub enum ValueError {
     Absent,
     // Explicit error raised with Error
     #[error("Error")]
-    Error(Error),
+    Error(XeeError),
 }
 
-pub type ValueResult<T> = std::result::Result<T, ValueError>;
+pub type Result<T> = std::result::Result<T, Error>;

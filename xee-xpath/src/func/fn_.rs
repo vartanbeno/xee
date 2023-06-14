@@ -18,9 +18,9 @@ fn my_function(a: i64, b: i64) -> i64 {
 fn bound_position(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> stack::ValueResult<stack::StackValue> {
+) -> stack::Result<stack::StackValue> {
     if arguments[0] == stack::StackValue::Atomic(stack::Atomic::Absent) {
-        return Err(stack::ValueError::Absent);
+        return Err(stack::Error::Absent);
     }
     // position should be the context value
     Ok(arguments[0].clone())
@@ -29,9 +29,9 @@ fn bound_position(
 fn bound_last(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> stack::ValueResult<stack::StackValue> {
+) -> stack::Result<stack::StackValue> {
     if arguments[0] == stack::StackValue::Atomic(stack::Atomic::Absent) {
-        return Err(stack::ValueError::Absent);
+        return Err(stack::Error::Absent);
     }
     // size should be the context value
     Ok(arguments[0].clone())
@@ -79,7 +79,7 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> stack::ValueResult<String> {
+fn string(context: &DynamicContext, arg: &Option<stack::StackItem>) -> stack::Result<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -105,14 +105,14 @@ fn exists(arg: &[stack::StackItem]) -> bool {
 fn exactly_one(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, stack::ValueError> {
+) -> Result<stack::StackValue, stack::Error> {
     let a: stack::StackSequence = (&arguments[0]).try_into()?;
     let a = a.borrow();
     if a.items.len() == 1 {
         Ok(stack::StackValue::from_item(a.items[0].clone()))
     } else {
         // XXX should really be a FORG0005 error
-        Err(stack::ValueError::Type)
+        Err(stack::Error::Type)
     }
 }
 
@@ -124,7 +124,7 @@ fn empty(arg: &[stack::StackItem]) -> bool {
 fn not(
     _context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, stack::ValueError> {
+) -> Result<stack::StackValue, stack::Error> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
     Ok(stack::StackValue::Atomic(stack::Atomic::Boolean(!b)))
@@ -144,7 +144,7 @@ fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 fn untyped_atomic(
     context: &DynamicContext,
     arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, stack::ValueError> {
+) -> Result<stack::StackValue, stack::Error> {
     let a = &arguments[0];
     let a: stack::Atomic = a.context_try_into(context)?;
     let s = a.try_into()?;
@@ -156,8 +156,8 @@ fn untyped_atomic(
 fn error(
     _context: &DynamicContext,
     _arguments: &[stack::StackValue],
-) -> Result<stack::StackValue, stack::ValueError> {
-    Err(stack::ValueError::Error(Error::FOER0000))
+) -> Result<stack::StackValue, stack::Error> {
+    Err(stack::Error::Error(Error::FOER0000))
 }
 
 #[xpath_fn("fn:true() as xs:boolean")]

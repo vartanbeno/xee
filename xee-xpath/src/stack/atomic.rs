@@ -38,45 +38,45 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn to_integer(&self) -> stack::ValueResult<i64> {
+    pub(crate) fn to_integer(&self) -> stack::Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_decimal(&self) -> stack::ValueResult<Decimal> {
+    pub(crate) fn to_decimal(&self) -> stack::Result<Decimal> {
         match self {
             Atomic::Decimal(d) => Ok(*d),
             Atomic::Integer(i) => Ok(Decimal::from(*i)),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_float(&self) -> stack::ValueResult<OrderedFloat<f32>> {
+    pub(crate) fn to_float(&self) -> stack::Result<OrderedFloat<f32>> {
         match self {
             Atomic::Float(f) => Ok(*f),
-            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(stack::ValueError::Type)?)),
+            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(stack::Error::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.to_decimal()?.to_f32().ok_or(stack::ValueError::Type)?,
+                self.to_decimal()?.to_f32().ok_or(stack::Error::Type)?,
             )),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_double(&self) -> stack::ValueResult<OrderedFloat<f64>> {
+    pub(crate) fn to_double(&self) -> stack::Result<OrderedFloat<f64>> {
         match self {
             Atomic::Double(d) => Ok(*d),
             Atomic::Float(OrderedFloat(f)) => Ok(OrderedFloat(*f as f64)),
-            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(stack::ValueError::Type)?)),
+            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(stack::Error::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.to_decimal()?.to_f64().ok_or(stack::ValueError::Type)?,
+                self.to_decimal()?.to_f64().ok_or(stack::Error::Type)?,
             )),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_bool(&self) -> stack::ValueResult<bool> {
+    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
@@ -86,24 +86,24 @@ impl Atomic {
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
             Atomic::Empty => Ok(false),
-            Atomic::Absent => Err(stack::ValueError::Absent),
+            Atomic::Absent => Err(stack::Error::Absent),
         }
     }
 
     // XXX is this named right? It's consistent with  to_double, to_bool, etc,
     // but inconsistent with the to_string Rust convention
-    pub fn to_str(&self) -> stack::ValueResult<&str> {
+    pub fn to_str(&self) -> stack::Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub fn to_string(&self) -> stack::ValueResult<String> {
+    pub fn to_string(&self) -> stack::Result<String> {
         Ok(self.to_str()?.to_string())
     }
 
-    pub fn string_value(&self) -> stack::ValueResult<String> {
+    pub fn string_value(&self) -> stack::Result<String> {
         Ok(match self {
             Atomic::String(s) => s.to_string(),
             Atomic::Untyped(s) => s.to_string(),
@@ -113,7 +113,7 @@ impl Atomic {
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
             Atomic::Empty => "".to_string(),
-            Atomic::Absent => Err(stack::ValueError::Absent)?,
+            Atomic::Absent => Err(stack::Error::Absent)?,
         })
     }
 
@@ -150,7 +150,7 @@ impl Atomic {
         )
     }
 
-    pub(crate) fn general_comparison_cast(&self, v: &str) -> stack::ValueResult<Atomic> {
+    pub(crate) fn general_comparison_cast(&self, v: &str) -> stack::Result<Atomic> {
         match self {
             // i. If T is a numeric type or is derived from a numeric type, then V
             // is cast to xs:double.
@@ -158,7 +158,7 @@ impl Atomic {
                 // cast string to double
                 // Need to unify the parsing code with literal parser in parse_ast
                 Ok(Atomic::Double(OrderedFloat(
-                    v.parse::<f64>().map_err(|_| stack::ValueError::Overflow)?,
+                    v.parse::<f64>().map_err(|_| stack::Error::Overflow)?,
                 )))
             }
             // don't handle ii and iii for now
@@ -168,12 +168,12 @@ impl Atomic {
                 // XXX casting rules are way more complex, see 19.2 in the
                 // XPath and Functions spec
                 Ok(Atomic::Boolean(
-                    v.parse::<bool>().map_err(|_| stack::ValueError::Type)?,
+                    v.parse::<bool>().map_err(|_| stack::Error::Type)?,
                 ))
             }
             Atomic::Untyped(_) => unreachable!(),
             Atomic::Empty => unreachable!(),
-            Atomic::Absent => Err(stack::ValueError::Type),
+            Atomic::Absent => Err(stack::Error::Type),
         }
     }
 }

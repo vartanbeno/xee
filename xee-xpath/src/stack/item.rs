@@ -22,30 +22,30 @@ impl StackItem {
         }
     }
 
-    pub(crate) fn to_atomic(&self) -> stack::ValueResult<&stack::Atomic> {
+    pub(crate) fn to_atomic(&self) -> stack::Result<&stack::Atomic> {
         match self {
             StackItem::Atomic(a) => Ok(a),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
-    pub(crate) fn to_node(&self) -> stack::ValueResult<xml::Node> {
+    pub(crate) fn to_node(&self) -> stack::Result<xml::Node> {
         match self {
             StackItem::Node(n) => Ok(*n),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
-    pub(crate) fn to_bool(&self) -> stack::ValueResult<bool> {
+    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
         match self {
             StackItem::Atomic(a) => a.to_bool(),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> stack::ValueResult<String> {
+    pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         match self {
             StackItem::Atomic(a) => Ok(a.string_value()?),
             StackItem::Node(n) => Ok(n.string_value(xot)),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 

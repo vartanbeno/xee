@@ -36,7 +36,7 @@ pub trait ConvertRecurse<V>: Fn(&Session, &Item) -> std::result::Result<V, Conve
 #[derive(Debug, thiserror::Error)]
 pub enum ConvertError {
     #[error("Value error")]
-    ValueError(#[from] stack::ValueError),
+    ValueError(#[from] stack::Error),
     #[error("Error")]
     Error(#[from] Error),
 }

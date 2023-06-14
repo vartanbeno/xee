@@ -41,21 +41,21 @@ impl StackValue {
         seq.to_output()
     }
 
-    pub(crate) fn to_one(&self) -> stack::ValueResult<stack::StackItem> {
+    pub(crate) fn to_one(&self) -> stack::Result<stack::StackItem> {
         match self {
             StackValue::Atomic(a) => Ok(stack::StackItem::Atomic(a.clone())),
             StackValue::Sequence(s) => s.to_one(),
             StackValue::Node(n) => Ok(stack::StackItem::Node(*n)),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_option(&self) -> stack::ValueResult<Option<stack::StackItem>> {
+    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::StackItem>> {
         match self {
             StackValue::Atomic(a) => Ok(Some(stack::StackItem::Atomic(a.clone()))),
             StackValue::Sequence(s) => s.to_option(),
             StackValue::Node(n) => Ok(Some(stack::StackItem::Node(*n))),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 
@@ -73,7 +73,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn effective_boolean_value(&self) -> stack::ValueResult<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
             StackValue::Atomic(a) => a.to_bool(),
             StackValue::Sequence(s) => {
@@ -97,8 +97,8 @@ impl StackValue {
             // XXX the type error that the effective boolean wants is
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
-            StackValue::Closure(_) => Err(stack::ValueError::Type),
-            StackValue::Step(_) => Err(stack::ValueError::Type),
+            StackValue::Closure(_) => Err(stack::Error::Type),
+            StackValue::Step(_) => Err(stack::Error::Type),
         }
     }
 
@@ -110,7 +110,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> stack::ValueResult<String> {
+    pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
             StackValue::Atomic(atomic) => atomic.string_value()?,
             StackValue::Sequence(sequence) => {
@@ -119,12 +119,12 @@ impl StackValue {
                 match len {
                     0 => "".to_string(),
                     1 => StackValue::from_item(sequence.items[0].clone()).string_value(xot)?,
-                    _ => Err(stack::ValueError::Type)?,
+                    _ => Err(stack::Error::Type)?,
                 }
             }
             StackValue::Node(node) => node.string_value(xot),
-            StackValue::Closure(_) => Err(stack::ValueError::Type)?,
-            StackValue::Step(_) => Err(stack::ValueError::Type)?,
+            StackValue::Closure(_) => Err(stack::Error::Type)?,
+            StackValue::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
     }

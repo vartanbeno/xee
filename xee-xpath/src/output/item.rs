@@ -29,29 +29,29 @@ impl From<Item> for stack::StackItem {
 
 impl Item {
     // TODO these should not return ValueResult as they're in the public API
-    pub fn to_atomic(&self) -> stack::ValueResult<&output::Atomic> {
+    pub fn to_atomic(&self) -> stack::Result<&output::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
-    pub fn to_node(&self) -> stack::ValueResult<xml::Node> {
+    pub fn to_node(&self) -> stack::Result<xml::Node> {
         match self {
             Item::Node(n) => Ok(*n),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
-    pub fn to_bool(&self) -> stack::ValueResult<bool> {
+    pub fn to_bool(&self) -> stack::Result<bool> {
         match self {
             Item::Atomic(a) => a.to_bool(),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
-    pub fn string_value(&self, xot: &Xot) -> stack::ValueResult<String> {
+    pub fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         match self {
             Item::Atomic(a) => Ok(a.string_value()?),
             Item::Node(n) => Ok(n.string_value(xot)),
-            _ => Err(stack::ValueError::Type),
+            _ => Err(stack::Error::Type),
         }
     }
 }

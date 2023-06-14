@@ -48,23 +48,23 @@ impl StackSequence {
         output::Sequence::new(s.items.iter().map(|i| i.to_output()).collect())
     }
 
-    pub(crate) fn to_one(&self) -> stack::ValueResult<stack::StackItem> {
+    pub(crate) fn to_one(&self) -> stack::Result<stack::StackItem> {
         let s = self.0.borrow();
         if s.len() == 1 {
             Ok(s.items[0].clone())
         } else {
-            Err(stack::ValueError::Type)
+            Err(stack::Error::Type)
         }
     }
 
-    pub(crate) fn to_option(&self) -> stack::ValueResult<Option<stack::StackItem>> {
+    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::StackItem>> {
         let s = self.0.borrow();
         if s.len() == 1 {
             Ok(Some(s.items[0].clone()))
         } else if s.is_empty() {
             Ok(None)
         } else {
-            Err(stack::ValueError::Type)
+            Err(stack::Error::Type)
         }
     }
 }
@@ -120,11 +120,11 @@ impl StackInnerSequence {
         }
     }
 
-    pub(crate) fn singleton(&self) -> stack::ValueResult<&stack::StackItem> {
+    pub(crate) fn singleton(&self) -> stack::Result<&stack::StackItem> {
         if self.items.len() == 1 {
             Ok(&self.items[0])
         } else {
-            Err(stack::ValueError::Type)
+            Err(stack::Error::Type)
         }
     }
 
@@ -165,7 +165,7 @@ impl StackInnerSequence {
         StackInnerSequence { items }
     }
 
-    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> stack::ValueResult<stack::Atomic> {
+    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> stack::Result<stack::Atomic> {
         // we avoid using atomize as an optimization, so we don't
         // have to atomize all entries just to get the first item
         match self.len() {
@@ -177,7 +177,7 @@ impl StackInnerSequence {
                     stack::StackItem::Node(n) => {
                         let mut t = n.typed_value(context.xot);
                         if t.len() != 1 {
-                            return Err(stack::ValueError::XPTY0004);
+                            return Err(stack::Error::XPTY0004);
                         }
                         Ok(t.remove(0))
                     }
@@ -185,7 +185,7 @@ impl StackInnerSequence {
                     stack::StackItem::Function(..) => panic!("cannot atomize a function"),
                 }
             }
-            _ => Err(stack::ValueError::XPTY0004),
+            _ => Err(stack::Error::XPTY0004),
         }
     }
 
@@ -211,21 +211,21 @@ impl StackInnerSequence {
         &self,
         other: &StackInnerSequence,
         annotations: &xml::Annotations,
-    ) -> stack::ValueResult<StackInnerSequence> {
+    ) -> stack::Result<StackInnerSequence> {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
                 stack::StackItem::Node(node) => *node,
-                stack::StackItem::Atomic(..) => return Err(stack::ValueError::Type),
-                stack::StackItem::Function(..) => return Err(stack::ValueError::Type),
+                stack::StackItem::Atomic(..) => return Err(stack::Error::Type),
+                stack::StackItem::Function(..) => return Err(stack::Error::Type),
             };
             s.insert(node);
         }
         for item in &other.items {
             let node = match item {
                 stack::StackItem::Node(node) => *node,
-                stack::StackItem::Atomic(..) => return Err(stack::ValueError::Type),
-                stack::StackItem::Function(..) => return Err(stack::ValueError::Type),
+                stack::StackItem::Atomic(..) => return Err(stack::Error::Type),
+                stack::StackItem::Function(..) => return Err(stack::Error::Type),
             };
             s.insert(node);
         }

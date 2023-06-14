@@ -80,7 +80,7 @@ fn make_wrapper(
         });
     }
 
-    let body = if is_value_result(ast) {
+    let body = if is_result(ast) {
         quote!(#(#conversions)*;
         let value = #name(#(#conversion_names),*);
         value.map(|v| v.into()))
@@ -91,7 +91,7 @@ fn make_wrapper(
     };
 
     Ok(
-        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::stack::StackValue]) -> Result<crate::stack::StackValue, crate::stack::ValueError> {
+        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::stack::StackValue]) -> Result<crate::stack::StackValue, crate::stack::Error> {
             #body
         }),
     )
@@ -120,7 +120,7 @@ fn get_context_ident(ast: &ItemFn) -> syn::Result<Option<Ident>> {
     }
 }
 
-fn is_value_result(ast: &ItemFn) -> bool {
+fn is_result(ast: &ItemFn) -> bool {
     let return_type = &ast.sig.output;
     match return_type {
         syn::ReturnType::Default => false,
@@ -135,7 +135,7 @@ fn is_value_result(ast: &ItemFn) -> bool {
                         .ident
                         .to_string()
                         .as_str(),
-                    "ValueResult"
+                    "Result"
                 )
             }
             _ => false,
