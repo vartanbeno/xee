@@ -4,11 +4,10 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::context::DynamicContext;
+use crate::context::{ContextInto, ContextTryInto, DynamicContext};
 use crate::error::Error;
 use crate::op;
 use crate::stack;
-use crate::stack::{ContextInto, ContextTryInto};
 use crate::xml;
 
 use super::builder::Program;

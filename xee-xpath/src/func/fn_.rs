@@ -3,9 +3,8 @@ use std::rc::Rc;
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::{FunctionKind, StaticFunctionDescription};
+use crate::context::{ContextTryInto, FunctionKind, StaticFunctionDescription};
 use crate::stack;
-use crate::stack::ContextTryInto;
 use crate::wrap_xpath_fn;
 use crate::xml;
 use crate::{DynamicContext, Error};
