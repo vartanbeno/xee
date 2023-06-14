@@ -7,7 +7,7 @@ use crate::xml;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
     Atomic(output::Atomic),
-    Function(output::OutputClosure),
+    Function(output::Closure),
     Node(xml::Node),
 }
 

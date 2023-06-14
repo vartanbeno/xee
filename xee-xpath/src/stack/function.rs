@@ -45,8 +45,8 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub(crate) fn to_output(&self) -> output::OutputClosure {
-        output::OutputClosure {
+    pub(crate) fn to_output(&self) -> output::Closure {
+        output::Closure {
             function_id: self.function_id,
             // values: self.values.iter().map(|v| v.to_output()).collect(),
         }

@@ -4,6 +4,6 @@ mod item;
 mod sequence;
 
 pub use atomic::Atomic;
-pub use function::OutputClosure;
+pub use function::Closure;
 pub use item::Item;
 pub use sequence::Sequence;
