@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use xot::Xot;
 
+use crate::data::Closure;
 use crate::data::OutputSequence;
-use crate::data::{Closure, Step};
 use crate::stack;
 use crate::xml;
 
@@ -14,7 +14,7 @@ pub(crate) enum StackValue {
     Sequence(stack::StackSequence),
     Closure(Rc<Closure>),
     // StaticFunction(StaticFunctionId),
-    Step(Rc<Step>),
+    Step(Rc<xml::Step>),
     Node(xml::Node),
 }
 

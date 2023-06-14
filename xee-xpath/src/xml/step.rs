@@ -2,9 +2,14 @@ use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
-use crate::data::Step;
 use crate::stack;
 use crate::xml;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Step {
+    pub(crate) axis: ast::Axis,
+    pub(crate) node_test: ast::NodeTest,
+}
 
 pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::StackSequence {
     let mut new_sequence = stack::StackInnerSequence::new();

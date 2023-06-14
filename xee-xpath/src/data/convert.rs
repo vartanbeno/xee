@@ -6,7 +6,7 @@ use std::vec::Vec;
 
 use crate::context::DynamicContext;
 
-use super::{Closure, Step};
+use super::Closure;
 use crate::stack;
 use crate::xml;
 
@@ -140,10 +140,10 @@ impl<'a> TryFrom<&'a stack::StackValue> for &'a Closure {
     }
 }
 
-impl TryFrom<&stack::StackValue> for Rc<Step> {
+impl TryFrom<&stack::StackValue> for Rc<xml::Step> {
     type Error = stack::ValueError;
 
-    fn try_from(value: &stack::StackValue) -> stack::ValueResult<Rc<Step>> {
+    fn try_from(value: &stack::StackValue) -> stack::ValueResult<Rc<xml::Step>> {
         match value {
             stack::StackValue::Step(s) => Ok(Rc::clone(s)),
             _ => Err(stack::ValueError::Type),

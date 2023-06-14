@@ -8,7 +8,8 @@ use std::rc::Rc;
 pub use xee_xpath_ast::ast::BinaryOperator;
 use xee_xpath_ast::span::Spanned;
 
-use crate::data::{StaticFunctionId, Step};
+use crate::data::StaticFunctionId;
+use crate::xml;
 
 pub(crate) type AtomS = Spanned<Atom>;
 pub(crate) type ExprS = Spanned<Expr>;
@@ -44,7 +45,7 @@ pub(crate) enum Const {
     EmptySequence,
     // step is treated as a special function which takes the context node as
     // its argument
-    Step(Rc<Step>),
+    Step(Rc<xml::Step>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

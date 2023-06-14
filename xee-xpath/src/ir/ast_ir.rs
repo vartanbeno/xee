@@ -7,8 +7,8 @@ use xee_xpath_ast::{ast, span::Spanned, Namespaces, FN_NAMESPACE};
 
 use crate::context::StaticContext;
 use crate::data::StaticFunctionId;
-use crate::data::Step;
 use crate::error::{Error, Result};
+use crate::xml;
 
 use super::ir_core as ir;
 
@@ -377,7 +377,7 @@ impl<'a> IrConverter<'a> {
         let mut current_context_bindings = self.context_item(span)?;
 
         // create a step atom
-        let step = Rc::new(Step {
+        let step = Rc::new(xml::Step {
             axis: ast.axis.clone(),
             node_test: ast.node_test.clone(),
         });

@@ -6,13 +6,12 @@ use std::rc::Rc;
 use crate::comparison;
 use crate::context::DynamicContext;
 use crate::data::{
-    Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId,
-    StaticFunctionId, Step,
+    Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId, StaticFunctionId,
 };
 use crate::error::Error;
 use crate::op;
 use crate::stack;
-use crate::step::resolve_step;
+use crate::xml;
 
 use super::builder::Program;
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
@@ -346,7 +345,9 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Ok(step) = callable.try_into() as stack::ValueResult<Rc<Step>> {
+                    } else if let Ok(step) =
+                        callable.try_into() as stack::ValueResult<Rc<xml::Step>>
+                    {
                         self.call_step(step)?;
                     } else {
                         return Err(stack::ValueError::Type);
@@ -481,12 +482,12 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_step(&mut self, step: Rc<Step>) -> stack::ValueResult<()> {
+    fn call_step(&mut self, step: Rc<xml::Step>) -> stack::ValueResult<()> {
         // take one argument from the stack
         let node = self.stack.pop().unwrap().try_into()?;
         // pop off the callable too
         self.stack.pop();
-        let sequence = resolve_step(step.as_ref(), node, self.dynamic_context.xot);
+        let sequence = xml::resolve_step(step.as_ref(), node, self.dynamic_context.xot);
         self.stack.push(stack::StackValue::Sequence(sequence));
         Ok(())
     }

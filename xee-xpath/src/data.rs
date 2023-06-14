@@ -7,6 +7,6 @@ mod sequence;
 pub use atomic::OutputAtomic;
 pub(crate) use convert::{ContextInto, ContextTryInto};
 pub use function::Closure;
-pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId, Step};
+pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};
 pub use item::OutputItem;
 pub use sequence::OutputSequence;
