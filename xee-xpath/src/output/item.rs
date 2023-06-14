@@ -1,13 +1,13 @@
 use xot::Xot;
 
-use crate::data;
+use crate::output;
 use crate::stack;
 use crate::xml;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum OutputItem {
-    Atomic(data::OutputAtomic),
-    Function(data::OutputClosure),
+    Atomic(output::OutputAtomic),
+    Function(output::OutputClosure),
     Node(xml::Node),
 }
 
@@ -29,7 +29,7 @@ impl From<OutputItem> for stack::StackItem {
 
 impl OutputItem {
     // TODO these should not return ValueResult as they're in the public API
-    pub fn to_atomic(&self) -> stack::ValueResult<&data::OutputAtomic> {
+    pub fn to_atomic(&self) -> stack::ValueResult<&output::OutputAtomic> {
         match self {
             OutputItem::Atomic(a) => Ok(a),
             _ => Err(stack::ValueError::Type),

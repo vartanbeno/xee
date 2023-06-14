@@ -5,7 +5,7 @@ use std::vec;
 use xot::Xot;
 
 use crate::context::DynamicContext;
-use crate::data::OutputSequence;
+use crate::output::OutputSequence;
 use crate::stack;
 use crate::xml;
 

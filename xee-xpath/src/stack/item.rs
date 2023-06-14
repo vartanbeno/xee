@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data;
+use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -14,11 +14,11 @@ pub(crate) enum StackItem {
 }
 
 impl StackItem {
-    pub(crate) fn to_output(&self) -> data::OutputItem {
+    pub(crate) fn to_output(&self) -> output::OutputItem {
         match self {
-            StackItem::Atomic(a) => data::OutputItem::Atomic(a.to_output()),
-            StackItem::Function(f) => data::OutputItem::Function(f.to_output()),
-            StackItem::Node(n) => data::OutputItem::Node(*n),
+            StackItem::Atomic(a) => output::OutputItem::Atomic(a.to_output()),
+            StackItem::Function(f) => output::OutputItem::Function(f.to_output()),
+            StackItem::Node(n) => output::OutputItem::Node(*n),
         }
     }
 

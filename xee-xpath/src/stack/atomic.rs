@@ -3,7 +3,7 @@ use rust_decimal::prelude::*;
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::data::OutputAtomic;
+use crate::output::OutputAtomic;
 use crate::stack;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types

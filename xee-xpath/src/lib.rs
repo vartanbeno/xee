@@ -6,12 +6,12 @@ extern crate num_derive;
 
 mod comparison;
 mod context;
-mod data;
 mod error;
 mod func;
 mod interpreter;
 mod ir;
 mod op;
+mod output;
 mod query;
 mod run;
 mod span;
@@ -24,8 +24,8 @@ pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::Namespaces;
 
 pub use crate::context::{DynamicContext, StaticContext};
-pub use crate::data::{OutputAtomic, OutputItem, OutputSequence};
 pub use crate::error::Error;
+pub use crate::output::{OutputAtomic, OutputItem, OutputSequence};
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };

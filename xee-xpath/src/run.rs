@@ -3,8 +3,8 @@ use xot::Xot;
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::OutputSequence;
 use crate::error::Result;
+use crate::output::OutputSequence;
 use crate::xml;
 use crate::xpath::XPath;
 

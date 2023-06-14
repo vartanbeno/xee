@@ -1,11 +1,11 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data;
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
+use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -76,18 +76,18 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
-    ) -> Result<data::OutputSequence> {
+    ) -> Result<output::OutputSequence> {
         self.many(
             dynamic_context,
-            Some(&data::OutputItem::Node(xml::Node::Xot(node))),
+            Some(&output::OutputItem::Node(xml::Node::Xot(node))),
         )
     }
 
     pub fn many(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&data::OutputItem>,
-    ) -> Result<data::OutputSequence> {
+        item: Option<&output::OutputItem>,
+    ) -> Result<output::OutputSequence> {
         let context_item: Option<stack::StackItem> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
@@ -96,8 +96,8 @@ impl XPath {
     pub fn one(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&data::OutputItem>,
-    ) -> Result<data::OutputItem> {
+        item: Option<&output::OutputItem>,
+    ) -> Result<output::OutputItem> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
         Ok(if items.len() == 1 {
@@ -113,8 +113,8 @@ impl XPath {
     pub fn option(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&data::OutputItem>,
-    ) -> Result<Option<data::OutputItem>> {
+        item: Option<&output::OutputItem>,
+    ) -> Result<Option<output::OutputItem>> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
 

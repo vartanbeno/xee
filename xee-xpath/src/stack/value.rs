@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::data;
+use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -36,7 +36,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn into_output_sequence(self) -> data::OutputSequence {
+    pub(crate) fn into_output_sequence(self) -> output::OutputSequence {
         let seq = self.to_many();
         seq.to_output()
     }

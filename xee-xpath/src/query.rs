@@ -1,7 +1,7 @@
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::OutputItem as Item;
 use crate::error::Error;
 use crate::error::Result;
+use crate::output::OutputItem as Item;
 use crate::stack;
 use crate::xpath::XPath;
 
@@ -321,7 +321,7 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
-    use crate::data::OutputAtomic as Atomic;
+    use crate::output::OutputAtomic as Atomic;
     use crate::xml;
 
     #[test]

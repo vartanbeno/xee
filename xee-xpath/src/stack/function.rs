@@ -1,7 +1,7 @@
 use miette::SourceSpan;
 
-use crate::data;
 use crate::ir;
+use crate::output;
 use crate::stack;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -45,8 +45,8 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub(crate) fn to_output(&self) -> data::OutputClosure {
-        data::OutputClosure {
+    pub(crate) fn to_output(&self) -> output::OutputClosure {
+        output::OutputClosure {
             function_id: self.function_id,
             // values: self.values.iter().map(|v| v.to_output()).collect(),
         }

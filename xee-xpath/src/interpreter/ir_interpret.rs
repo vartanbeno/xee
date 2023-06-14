@@ -542,8 +542,8 @@ mod tests {
     use xot::Xot;
 
     use crate::context::{DynamicContext, StaticContext};
-    use crate::data::{OutputAtomic, OutputItem, OutputSequence};
     use crate::error::Result;
+    use crate::output::{OutputAtomic, OutputItem, OutputSequence};
     use crate::run::evaluate;
     use crate::stack;
     use crate::xml;
