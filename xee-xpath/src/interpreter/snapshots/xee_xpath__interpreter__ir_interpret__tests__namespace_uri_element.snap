@@ -3,26 +3,28 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc xmlns=\"http://example.com/\" xmlns:e=\"http://example.com/e\"><a/><b><e:c/></b></doc>\"#,\n    \"descendant::* / fn:namespace-uri()\")"
 ---
 Ok(
-    [
-        Atomic(
-            String(
-                "http://example.com/",
+    OutputSequence {
+        items: [
+            Atomic(
+                String(
+                    "http://example.com/",
+                ),
             ),
-        ),
-        Atomic(
-            String(
-                "http://example.com/",
+            Atomic(
+                String(
+                    "http://example.com/",
+                ),
             ),
-        ),
-        Atomic(
-            String(
-                "http://example.com/",
+            Atomic(
+                String(
+                    "http://example.com/",
+                ),
             ),
-        ),
-        Atomic(
-            String(
-                "http://example.com/e",
+            Atomic(
+                String(
+                    "http://example.com/e",
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )

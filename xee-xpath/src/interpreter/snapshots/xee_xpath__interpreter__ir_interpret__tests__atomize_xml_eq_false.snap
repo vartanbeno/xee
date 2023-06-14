@@ -3,11 +3,13 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a>A</a><b>B</b></doc>\"#, \"doc/a eq doc/b\")"
 ---
 Ok(
-    [
-        Atomic(
-            Boolean(
-                false,
+    OutputSequence {
+        items: [
+            Atomic(
+                Boolean(
+                    false,
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )

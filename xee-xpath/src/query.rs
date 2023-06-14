@@ -258,7 +258,8 @@ where
 {
     pub fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let items = xpath.many(session.dynamic_context, Some(item))?;
+        let sequence = xpath.many(session.dynamic_context, Some(item))?;
+        let items = sequence.items();
         let mut values = Vec::with_capacity(items.len());
         for item in items {
             match (self.convert)(session, &item) {
@@ -292,9 +293,10 @@ impl ManyRecurseQuery {
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.many(session.dynamic_context, Some(item))?;
-        let mut values = Vec::with_capacity(item.len());
-        for item in item {
+        let sequence = xpath.many(session.dynamic_context, Some(item))?;
+        let items = sequence.items();
+        let mut values = Vec::with_capacity(items.len());
+        for item in items {
             values.push(recurse.execute(session, &item)?);
         }
         Ok(values)

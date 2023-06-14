@@ -1,10 +1,11 @@
 use miette::{miette, Result};
-use xee_xpath::{Node, OutputItem as Item};
+use xee_xpath::{Node, OutputItem as Item, OutputSequence as Sequence};
 use xot::Xot;
 
 // represent items as XML, if possible, wrapped
 // in a sequence tag
-pub(crate) fn serialize(xot: &Xot, items: &[Item]) -> Result<String> {
+pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> Result<String> {
+    let items = sequence.items();
     let mut xmls = Vec::with_capacity(items.len());
     for item in items {
         if let Item::Node(Node::Xot(node)) = item {

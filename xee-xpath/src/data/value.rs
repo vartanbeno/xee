@@ -4,9 +4,9 @@ use xot::Xot;
 use super::atomic::Atomic;
 use super::error::ValueError;
 use super::function::{Closure, Step};
-use super::item::{Item, OutputItem};
+use super::item::Item;
 use super::node::Node;
-use super::sequence::Sequence;
+use super::sequence::{OutputSequence, Sequence};
 
 type Result<T> = std::result::Result<T, ValueError>;
 
@@ -41,7 +41,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn into_output_items(self) -> Vec<OutputItem> {
+    pub(crate) fn into_output_sequence(self) -> OutputSequence {
         let seq = self.to_many();
         seq.to_output()
     }

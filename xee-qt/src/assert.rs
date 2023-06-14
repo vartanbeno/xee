@@ -4,7 +4,7 @@ use std::fmt;
 
 use xee_xpath::{
     DynamicContext, Error, Name, Namespaces, OutputAtomic as Atomic, OutputItem as Item,
-    StaticContext, XPath,
+    OutputSequence as Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -92,14 +92,14 @@ impl TestOutcome {
 }
 
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
         match result {
-            Ok(items) => self.assert_value(xot, items),
+            Ok(sequence) => self.assert_value(xot, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome;
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -112,7 +112,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -127,7 +127,7 @@ impl Assertable for AssertAnyOf {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -142,7 +142,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -153,7 +153,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -209,15 +209,15 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
-        let expected_items = run_xpath(&self.0);
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0);
 
-        match expected_items {
-            Ok(expected_items) => {
-                if expected_items == items {
+        match expected_sequence {
+            Ok(expected_sequence) => {
+                if &expected_sequence == sequence {
                     TestOutcome::Passed
                 } else {
-                    TestOutcome::Failed(Failure::Eq(self.clone(), items.to_vec()))
+                    TestOutcome::Failed(Failure::Eq(self.clone(), sequence.clone()))
                 }
             }
             Err(error) => TestOutcome::UnsupportedExpression(error),
@@ -235,7 +235,8 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let items = sequence.items();
         let found_len = items.len();
         if found_len == self.0 {
             TestOutcome::Passed
@@ -264,15 +265,15 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome {
-        let xml = serialize(xot, items);
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let xml = serialize(xot, sequence);
 
         let xml = if let Ok(xml) = xml {
             xml
         } else {
             return TestOutcome::Failed(Failure::Xml(
                 self.clone(),
-                AssertXmlFailure::WrongValue(items.to_vec()),
+                AssertXmlFailure::WrongValue(sequence.clone()),
             ));
         };
         // also wrap expected XML in a sequence element
@@ -319,11 +320,12 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let items = sequence.items();
         if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(true))) {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::True(self.clone(), items.to_vec()))
+            TestOutcome::Failed(Failure::True(self.clone(), sequence.clone()))
         }
     }
 }
@@ -338,11 +340,12 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(&self, _xot: &mut Xot, items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let items = sequence.items();
         if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(false))) {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::False(self.clone(), items.to_vec()))
+            TestOutcome::Failed(Failure::False(self.clone(), sequence.clone()))
         }
     }
 }
@@ -357,7 +360,8 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(&self, xot: &mut Xot, items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        let items = sequence.items();
         let strings = items
             .iter()
             .map(|item| item.string_value(xot))
@@ -394,9 +398,9 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<Vec<Item>, Error>) -> TestOutcome {
+    fn assert_result(&self, _xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
         match result {
-            Ok(items) => TestOutcome::Failed(Failure::Error(self.clone(), items.to_vec())),
+            Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
             Err(error) => {
                 // all errors are officially a pass, but we check whether the error
                 // code matches too
@@ -416,7 +420,7 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _items: &[Item]) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -499,7 +503,7 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         xot: &mut Xot,
-        result: &Result<Vec<Item>, Error>,
+        result: &Result<Sequence, Error>,
     ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),
@@ -534,20 +538,20 @@ pub enum AssertStringValueFailure {
 #[derive(Debug, PartialEq)]
 pub enum AssertXmlFailure {
     WrongXml(String),
-    WrongValue(Vec<Item>),
+    WrongValue(Sequence),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Failure {
     AnyOf(AssertAnyOf, Vec<TestOutcome>),
     Not(AssertNot, Box<TestOutcome>),
-    Eq(AssertEq, Vec<Item>),
-    True(AssertTrue, Vec<Item>),
-    False(AssertFalse, Vec<Item>),
+    Eq(AssertEq, Sequence),
+    True(AssertTrue, Sequence),
+    False(AssertFalse, Sequence),
     Count(AssertCount, AssertCountFailure),
     StringValue(AssertStringValue, AssertStringValueFailure),
     Xml(AssertXml, AssertXmlFailure),
-    Error(AssertError, Vec<Item>),
+    Error(AssertError, Sequence),
 }
 
 impl<'a> fmt::Display for Failure {
@@ -618,7 +622,7 @@ impl<'a> fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr) -> Result<Vec<Item>, Error> {
+fn run_xpath(expr: &qt::XPathExpr) -> Result<Sequence, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
@@ -627,12 +631,12 @@ fn run_xpath(expr: &qt::XPathExpr) -> Result<Vec<Item>, Error> {
     xpath.many(&dynamic_context, None)
 }
 
-fn run_xpath_with_result(expr: &qt::XPathExpr, items: &[Item]) -> Result<Vec<Item>, Error> {
+fn run_xpath_with_result(expr: &qt::XPathExpr, sequence: &Sequence) -> Result<Sequence, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
     let xot = Xot::new();
-    let variables = vec![(Name::without_ns("result"), items.to_vec())];
+    let variables = vec![(Name::without_ns("result"), sequence.items().to_vec())];
     let dynamic_context = DynamicContext::with_variables(&xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }

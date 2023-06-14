@@ -50,7 +50,7 @@ fn main() -> Result<()> {
                 .into_diagnostic()
                 .wrap_err("Cannot parse XML")?;
             let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
-            for item in result {
+            for item in result.items() {
                 display_item(&xot, item)
                     .into_diagnostic()
                     .wrap_err("Could not display item")?;
@@ -60,12 +60,12 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn display_item(xot: &Xot, item: Item) -> Result<(), xot::Error> {
+fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
     match item {
         Item::Node(node) => {
-            println!("node: \n{}", display_node(xot, node)?);
+            println!("node: \n{}", display_node(xot, *node)?);
         }
-        Item::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
+        Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
         Item::Function(function) => println!("{:?}", function),
     }
     Ok(())

@@ -3,11 +3,13 @@ source: xee-xpath/tests/arithmetic.rs
 expression: "evaluate_without_focus(\"12 * 15\")"
 ---
 Ok(
-    [
-        Atomic(
-            Integer(
-                180,
+    OutputSequence {
+        items: [
+            Atomic(
+                Integer(
+                    180,
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )

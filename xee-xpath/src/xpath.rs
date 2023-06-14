@@ -1,7 +1,7 @@
 use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, Sequence, Value};
+use crate::data::{Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, Sequence, Value};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
@@ -72,7 +72,7 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
-    ) -> Result<Vec<OutputItem>> {
+    ) -> Result<OutputSequence> {
         self.many(dynamic_context, Some(&OutputItem::Node(Node::Xot(node))))
     }
 
@@ -80,10 +80,10 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         item: Option<&OutputItem>,
-    ) -> Result<Vec<OutputItem>> {
+    ) -> Result<OutputSequence> {
         let context_item: Option<Item> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        Ok(value.into_output_items())
+        Ok(value.into_output_sequence())
     }
 
     pub fn one(
@@ -91,9 +91,10 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&OutputItem>,
     ) -> Result<OutputItem> {
-        let mut items = self.many(dynamic_context, item)?;
+        let sequence = self.many(dynamic_context, item)?;
+        let items = sequence.items();
         Ok(if items.len() == 1 {
-            items.pop().unwrap()
+            items[0].clone()
         } else {
             return Err(Error::XPTY0004 {
                 src: self.program.src.clone(),
@@ -107,12 +108,13 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&OutputItem>,
     ) -> Result<Option<OutputItem>> {
-        let mut items = self.many(dynamic_context, item)?;
+        let sequence = self.many(dynamic_context, item)?;
+        let items = sequence.items();
 
         Ok(if items.is_empty() {
             None
         } else if items.len() == 1 {
-            Some(items.pop().unwrap())
+            Some(items[0].clone())
         } else {
             return Err(Error::XPTY0004 {
                 src: self.program.src.clone(),

@@ -536,7 +536,7 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
-        data::{Item, Node, OutputAtomic, OutputItem},
+        data::{Item, Node, OutputAtomic, OutputItem, OutputSequence},
         document::{Document, Documents, Uri},
     };
 
@@ -544,10 +544,12 @@ mod tests {
         value.try_into().unwrap()
     }
 
-    fn xot_nodes_to_items(node: &[xot::Node]) -> Vec<OutputItem> {
-        node.iter()
-            .map(|&node| OutputItem::Node(Node::Xot(node)))
-            .collect()
+    fn xot_nodes_to_items(node: &[xot::Node]) -> OutputSequence {
+        OutputSequence::new(
+            node.iter()
+                .map(|&node| OutputItem::Node(Node::Xot(node)))
+                .collect(),
+        )
     }
 
     fn run(s: &str) -> Result<Value> {
@@ -582,11 +584,11 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_xml(xml: &str, xpath: &str) -> Result<Vec<OutputItem>> {
+    fn run_xml(xml: &str, xpath: &str) -> Result<OutputSequence> {
         evaluate(xml, xpath, None)
     }
 
-    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<Vec<OutputItem>> {
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<OutputSequence> {
         evaluate(xml, xpath, Some(ns))
     }
 

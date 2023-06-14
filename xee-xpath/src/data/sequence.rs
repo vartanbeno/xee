@@ -49,9 +49,11 @@ impl Sequence {
         self.0.borrow_mut()
     }
 
-    pub(crate) fn to_output(&self) -> Vec<OutputItem> {
+    pub(crate) fn to_output(&self) -> OutputSequence {
         let s = self.0.borrow();
-        s.items.iter().map(|i| i.to_output()).collect()
+        OutputSequence {
+            items: s.items.iter().map(|i| i.to_output()).collect(),
+        }
     }
 
     pub(crate) fn to_one(&self) -> Result<Item> {
@@ -242,5 +244,20 @@ impl InnerSequence {
 
         let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
         Ok(InnerSequence { items })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OutputSequence {
+    items: Vec<OutputItem>,
+}
+
+impl OutputSequence {
+    pub fn new(items: Vec<OutputItem>) -> Self {
+        Self { items }
+    }
+
+    pub fn items(&self) -> &[OutputItem] {
+        &self.items
     }
 }

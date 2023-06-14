@@ -3,11 +3,11 @@ mod tests {
     use insta::assert_debug_snapshot;
     use miette::SourceSpan;
 
-    use crate::data::OutputItem;
+    use crate::data::OutputSequence;
     use crate::ir::convert_xpath;
     use crate::{evaluate_without_focus, Error};
 
-    fn span(result: Result<Vec<OutputItem>, Error>) -> Option<SourceSpan> {
+    fn span(result: Result<OutputSequence, Error>) -> Option<SourceSpan> {
         match result.err().unwrap() {
             Error::XPTY0004 { span, .. } => Some(span),
             _ => None,

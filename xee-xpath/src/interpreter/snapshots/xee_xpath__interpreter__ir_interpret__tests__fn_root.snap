@@ -3,11 +3,13 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#,\n    \"doc/a / fn:root() / doc / fn:local-name()\")"
 ---
 Ok(
-    [
-        Atomic(
-            String(
-                "doc",
+    OutputSequence {
+        items: [
+            Atomic(
+                String(
+                    "doc",
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )

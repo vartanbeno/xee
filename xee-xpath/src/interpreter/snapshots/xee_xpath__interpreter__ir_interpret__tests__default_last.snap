@@ -3,11 +3,13 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml(\"<doc/>\", \"fn:last()\")"
 ---
 Ok(
-    [
-        Atomic(
-            Integer(
-                1,
+    OutputSequence {
+        items: [
+            Atomic(
+                Integer(
+                    1,
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )

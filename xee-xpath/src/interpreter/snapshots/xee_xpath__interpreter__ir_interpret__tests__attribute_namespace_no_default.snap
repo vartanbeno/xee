@@ -3,11 +3,13 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run_xml_default_ns(r#\"<doc xmlns=\"http://example.com\" a=\"hello\"/>\"#,\n    \"doc / @a / local-name()\", \"http://example.com\")"
 ---
 Ok(
-    [
-        Atomic(
-            String(
-                "a",
+    OutputSequence {
+        items: [
+            Atomic(
+                String(
+                    "a",
+                ),
             ),
-        ),
-    ],
+        ],
+    },
 )
