@@ -1,5 +1,5 @@
 use miette::{miette, Result};
-use xee_xpath::{Node, OutputItem as Item, OutputSequence as Sequence};
+use xee_xpath::{Item, Node, Sequence};
 use xot::Xot;
 
 // represent items as XML, if possible, wrapped

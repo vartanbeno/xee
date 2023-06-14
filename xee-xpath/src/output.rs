@@ -3,7 +3,7 @@ mod function;
 mod item;
 mod sequence;
 
-pub use atomic::OutputAtomic;
+pub use atomic::Atomic;
 pub use function::OutputClosure;
-pub use item::OutputItem;
-pub use sequence::OutputSequence;
+pub use item::Item;
+pub use sequence::Sequence;

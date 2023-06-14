@@ -543,7 +543,7 @@ mod tests {
 
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
-    use crate::output::{OutputAtomic, OutputItem, OutputSequence};
+    use crate::output;
     use crate::run::evaluate;
     use crate::stack;
     use crate::xml;
@@ -553,10 +553,10 @@ mod tests {
         value.try_into().unwrap()
     }
 
-    fn xot_nodes_to_items(node: &[xot::Node]) -> OutputSequence {
-        OutputSequence::new(
+    fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
+        output::Sequence::new(
             node.iter()
-                .map(|&node| OutputItem::Node(xml::Node::Xot(node)))
+                .map(|&node| output::Item::Node(xml::Node::Xot(node)))
                 .collect(),
         )
     }
@@ -572,7 +572,7 @@ mod tests {
 
     fn run_with_variables(
         s: &str,
-        variables: &[(ast::Name, Vec<OutputItem>)],
+        variables: &[(ast::Name, Vec<output::Item>)],
     ) -> Result<stack::StackValue> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
@@ -596,11 +596,11 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_xml(xml: &str, xpath: &str) -> Result<OutputSequence> {
+    fn run_xml(xml: &str, xpath: &str) -> Result<output::Sequence> {
         evaluate(xml, xpath, None)
     }
 
-    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<OutputSequence> {
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<output::Sequence> {
         evaluate(xml, xpath, Some(ns))
     }
 
@@ -1309,7 +1309,9 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                vec![OutputItem::Atomic(OutputAtomic::String("FOO".to_string()))]
+                vec![output::Item::Atomic(output::Atomic::String(
+                    "FOO".to_string()
+                ))]
             )],
         ))
     }
@@ -1321,11 +1323,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![OutputItem::Atomic(OutputAtomic::Integer(1))]
+                    vec![output::Item::Atomic(output::Atomic::Integer(1))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![OutputItem::Atomic(OutputAtomic::Integer(2))]
+                    vec![output::Item::Atomic(output::Atomic::Integer(2))]
                 )
             ]
         ))

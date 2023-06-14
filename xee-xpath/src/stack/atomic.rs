@@ -24,17 +24,17 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn to_output(&self) -> output::OutputAtomic {
+    pub(crate) fn to_output(&self) -> output::Atomic {
         match self {
-            Atomic::Boolean(b) => output::OutputAtomic::Boolean(*b),
-            Atomic::Integer(i) => output::OutputAtomic::Integer(*i),
-            Atomic::Float(n) => output::OutputAtomic::Float(**n),
-            Atomic::Double(d) => output::OutputAtomic::Double(**d),
-            Atomic::Decimal(d) => output::OutputAtomic::Decimal(*d),
-            Atomic::String(s) => output::OutputAtomic::String(s.to_string()),
-            Atomic::Untyped(s) => output::OutputAtomic::Untyped(s.to_string()),
-            Atomic::Empty => output::OutputAtomic::Empty,
-            Atomic::Absent => output::OutputAtomic::Absent,
+            Atomic::Boolean(b) => output::Atomic::Boolean(*b),
+            Atomic::Integer(i) => output::Atomic::Integer(*i),
+            Atomic::Float(n) => output::Atomic::Float(**n),
+            Atomic::Double(d) => output::Atomic::Double(**d),
+            Atomic::Decimal(d) => output::Atomic::Decimal(*d),
+            Atomic::String(s) => output::Atomic::String(s.to_string()),
+            Atomic::Untyped(s) => output::Atomic::Untyped(s.to_string()),
+            Atomic::Empty => output::Atomic::Empty,
+            Atomic::Absent => output::Atomic::Absent,
         }
     }
 

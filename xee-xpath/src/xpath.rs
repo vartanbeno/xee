@@ -76,18 +76,18 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
-    ) -> Result<output::OutputSequence> {
+    ) -> Result<output::Sequence> {
         self.many(
             dynamic_context,
-            Some(&output::OutputItem::Node(xml::Node::Xot(node))),
+            Some(&output::Item::Node(xml::Node::Xot(node))),
         )
     }
 
     pub fn many(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&output::OutputItem>,
-    ) -> Result<output::OutputSequence> {
+        item: Option<&output::Item>,
+    ) -> Result<output::Sequence> {
         let context_item: Option<stack::StackItem> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
@@ -96,8 +96,8 @@ impl XPath {
     pub fn one(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&output::OutputItem>,
-    ) -> Result<output::OutputItem> {
+        item: Option<&output::Item>,
+    ) -> Result<output::Item> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
         Ok(if items.len() == 1 {
@@ -113,8 +113,8 @@ impl XPath {
     pub fn option(
         &self,
         dynamic_context: &DynamicContext,
-        item: Option<&output::OutputItem>,
-    ) -> Result<Option<output::OutputItem>> {
+        item: Option<&output::Item>,
+    ) -> Result<Option<output::Item>> {
         let sequence = self.many(dynamic_context, item)?;
         let items = sequence.items();
 

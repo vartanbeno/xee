@@ -6,8 +6,7 @@ use std::path::PathBuf;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{
-    ConvertError, DynamicContext, Namespaces, Node, OutputItem as Item, Queries, Query,
-    StaticContext,
+    ConvertError, DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext,
 };
 use xot::Xot;
 

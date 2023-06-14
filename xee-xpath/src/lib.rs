@@ -25,7 +25,7 @@ pub use xee_xpath_ast::Namespaces;
 
 pub use crate::context::{DynamicContext, StaticContext};
 pub use crate::error::Error;
-pub use crate::output::{OutputAtomic, OutputItem, OutputSequence};
+pub use crate::output::{Atomic, Item, Sequence};
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };

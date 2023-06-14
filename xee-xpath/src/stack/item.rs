@@ -14,11 +14,11 @@ pub(crate) enum StackItem {
 }
 
 impl StackItem {
-    pub(crate) fn to_output(&self) -> output::OutputItem {
+    pub(crate) fn to_output(&self) -> output::Item {
         match self {
-            StackItem::Atomic(a) => output::OutputItem::Atomic(a.to_output()),
-            StackItem::Function(f) => output::OutputItem::Function(f.to_output()),
-            StackItem::Node(n) => output::OutputItem::Node(*n),
+            StackItem::Atomic(a) => output::Item::Atomic(a.to_output()),
+            StackItem::Function(f) => output::Item::Function(f.to_output()),
+            StackItem::Node(n) => output::Item::Node(*n),
         }
     }
 

@@ -36,7 +36,7 @@ impl StackValue {
         }
     }
 
-    pub(crate) fn into_output_sequence(self) -> output::OutputSequence {
+    pub(crate) fn into_output_sequence(self) -> output::Sequence {
         let seq = self.to_many();
         seq.to_output()
     }

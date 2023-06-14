@@ -1,6 +1,6 @@
 use derive_builder::Builder;
 use std::path::Path;
-use xee_xpath::{DynamicContext, Name, Namespaces, OutputItem as Item, StaticContext, XPath};
+use xee_xpath::{DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
@@ -209,7 +209,7 @@ mod tests {
     use std::path::PathBuf;
     use tempfile::tempdir;
 
-    use xee_xpath::{Error, OutputAtomic as Atomic, OutputSequence as Sequence};
+    use xee_xpath::{Atomic, Error, Sequence};
 
     use crate::assert;
     use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};

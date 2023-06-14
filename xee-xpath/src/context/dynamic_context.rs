@@ -55,7 +55,7 @@ impl<'a> DynamicContext<'a> {
     pub fn with_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: &[(ast::Name, Vec<output::OutputItem>)],
+        variables: &[(ast::Name, Vec<output::Item>)],
     ) -> Self {
         Self {
             xot,

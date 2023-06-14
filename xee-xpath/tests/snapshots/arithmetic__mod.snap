@@ -3,7 +3,7 @@ source: xee-xpath/tests/arithmetic.rs
 expression: "evaluate_without_focus(\"12 mod 5\")"
 ---
 Ok(
-    OutputSequence {
+    Sequence {
         items: [
             Atomic(
                 Integer(

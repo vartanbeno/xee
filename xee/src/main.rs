@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::{evaluate_root, Node};
-use xee_xpath::{OutputAtomic as Atomic, OutputItem as Item};
+use xee_xpath::{Atomic, Item};
 use xot::Xot;
 
 #[derive(Parser)]

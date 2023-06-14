@@ -3,8 +3,7 @@ use miette::Diagnostic;
 use std::fmt;
 
 use xee_xpath::{
-    DynamicContext, Error, Name, Namespaces, OutputAtomic as Atomic, OutputItem as Item,
-    OutputSequence as Sequence, StaticContext, XPath,
+    Atomic, DynamicContext, Error, Item, Name, Namespaces, Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 

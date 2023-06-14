@@ -4,7 +4,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Name;
-use xee_xpath::{Node, OutputItem as Item};
+use xee_xpath::{Item, Node};
 use xot::Xot;
 
 use crate::collection::FxIndexMap;

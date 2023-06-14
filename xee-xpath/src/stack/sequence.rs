@@ -43,9 +43,9 @@ impl StackSequence {
         self.0.borrow_mut()
     }
 
-    pub(crate) fn to_output(&self) -> output::OutputSequence {
+    pub(crate) fn to_output(&self) -> output::Sequence {
         let s = self.0.borrow();
-        output::OutputSequence::new(s.items.iter().map(|i| i.to_output()).collect())
+        output::Sequence::new(s.items.iter().map(|i| i.to_output()).collect())
     }
 
     pub(crate) fn to_one(&self) -> stack::ValueResult<stack::StackItem> {

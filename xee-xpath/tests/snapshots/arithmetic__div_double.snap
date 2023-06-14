@@ -3,7 +3,7 @@ source: xee-xpath/tests/arithmetic.rs
 expression: "evaluate_without_focus(\"12 div 3.0e0\")"
 ---
 Ok(
-    OutputSequence {
+    Sequence {
         items: [
             Atomic(
                 Double(
