@@ -4,7 +4,6 @@ use std::fmt::{self, Display, Formatter};
 use std::rc::Rc;
 
 use crate::comparison;
-
 use crate::stack;
 
 #[derive(Debug, Clone)]

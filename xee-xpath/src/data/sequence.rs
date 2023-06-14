@@ -1,16 +1,16 @@
-use super::item::OutputItem;
+use crate::data;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct OutputSequence {
-    items: Vec<OutputItem>,
+    items: Vec<data::OutputItem>,
 }
 
 impl OutputSequence {
-    pub fn new(items: Vec<OutputItem>) -> Self {
+    pub fn new(items: Vec<data::OutputItem>) -> Self {
         Self { items }
     }
 
-    pub fn items(&self) -> &[OutputItem] {
+    pub fn items(&self) -> &[data::OutputItem] {
         &self.items
     }
 
@@ -20,7 +20,7 @@ impl OutputSequence {
         if self.items.is_empty() {
             return Ok(false);
         }
-        if matches!(self.items[0], OutputItem::Node(_)) {
+        if matches!(self.items[0], data::OutputItem::Node(_)) {
             return Ok(true);
         }
         if self.items.len() != 1 {

@@ -61,7 +61,7 @@ impl ConvertCode for ItemType {
             ItemType::AtomicOrUnionType(_name) => Ok(match occurrence {
                 // XXX no type checking for one version option takes place
                 Occurrence::One | Occurrence::Option => ConvertedCode::new(quote!(
-                    crate::data::ContextTryInto::context_try_into(#arg, context)
+                    crate::stack::ContextTryInto::context_try_into(#arg, context)
                 )),
                 Occurrence::Many => {
                     let converted = ConvertedCode::new(quote!(Ok(tmp3.as_slice())));
@@ -87,7 +87,7 @@ impl ConvertCode for KindTest {
             KindTest::Any => match occurrence {
                 // XXX no type checking for option for one
                 Occurrence::One | Occurrence::Option => Ok(ConvertedCode::new(
-                    quote!(crate::data::ContextTryInto::context_try_into(#arg, context)),
+                    quote!(crate::stack::ContextTryInto::context_try_into(#arg, context)),
                 )),
                 _ => {
                     panic!("Unsupported occurrence for Any");

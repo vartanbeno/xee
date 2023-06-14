@@ -5,8 +5,10 @@ use xee_xpath_macros::xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::stack;
+use crate::stack::ContextTryInto;
 use crate::wrap_xpath_fn;
-use crate::{data::ContextTryInto, DynamicContext, Error, Node};
+use crate::xml;
+use crate::{DynamicContext, Error};
 
 #[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
 fn my_function(a: i64, b: i64) -> i64 {
@@ -36,7 +38,7 @@ fn bound_last(
 }
 
 #[xpath_fn("fn:local-name($arg as node()?) as xs:string", context_first)]
-fn local_name(context: &DynamicContext, arg: Option<Node>) -> String {
+fn local_name(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     if let Some(arg) = arg {
         arg.local_name(context.xot)
     } else {
@@ -45,7 +47,7 @@ fn local_name(context: &DynamicContext, arg: Option<Node>) -> String {
 }
 
 #[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI", context_first)]
-fn namespace_uri(context: &DynamicContext, arg: Option<Node>) -> String {
+fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     if let Some(arg) = arg {
         arg.namespace_uri(context.xot)
     } else {
@@ -59,18 +61,18 @@ fn count(arg: &[stack::StackItem]) -> i64 {
 }
 
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
-fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
+fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
     if let Some(arg) = arg {
         let xot_node = match arg {
-            Node::Xot(node) => node,
-            Node::Attribute(node, _) => node,
-            Node::Namespace(node, _) => node,
+            xml::Node::Xot(node) => node,
+            xml::Node::Attribute(node, _) => node,
+            xml::Node::Namespace(node, _) => node,
         };
         // XXX there should be a xot.root() to obtain this in one step
         let top = context.xot.top_element(xot_node);
         let root = context.xot.parent(top).unwrap();
 
-        Some(Node::Xot(root))
+        Some(xml::Node::Xot(root))
     } else {
         None
     }
@@ -129,7 +131,7 @@ fn not(
 }
 
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
-fn generate_id(context: &DynamicContext, arg: Option<Node>) -> String {
+fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     if let Some(arg) = arg {
         let annotations = &context.documents.annotations;
         let annotation = annotations.get(arg).unwrap();
@@ -197,7 +199,7 @@ fn false_() -> bool {
 // }
 
 // // #[xpath_fn]
-// fn real_local_name(context: &DynamicContext, a: Node) -> String {
+// fn real_local_name(context: &DynamicContext, a: xml::Node) -> String {
 //     a.local_name(context.xot)
 // }
 

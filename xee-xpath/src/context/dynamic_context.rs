@@ -5,7 +5,7 @@ use xot::Xot;
 
 use xee_xpath_ast::ast;
 
-use crate::data::OutputItem;
+use crate::data;
 use crate::error::Error;
 use crate::stack;
 use crate::xml;
@@ -55,7 +55,7 @@ impl<'a> DynamicContext<'a> {
     pub fn with_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: &[(ast::Name, Vec<OutputItem>)],
+        variables: &[(ast::Name, Vec<data::OutputItem>)],
     ) -> Self {
         Self {
             xot,

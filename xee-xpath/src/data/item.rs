@@ -1,15 +1,12 @@
 use xot::Xot;
 
-use super::atomic::OutputAtomic;
 use crate::data;
 use crate::stack;
 use crate::xml;
 
-type Result<T> = std::result::Result<T, stack::ValueError>;
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum OutputItem {
-    Atomic(OutputAtomic),
+    Atomic(data::OutputAtomic),
     Function(data::OutputClosure),
     Node(xml::Node),
 }
@@ -31,25 +28,26 @@ impl From<OutputItem> for stack::StackItem {
 }
 
 impl OutputItem {
-    pub fn to_atomic(&self) -> Result<&OutputAtomic> {
+    // TODO these should not return ValueResult as they're in the public API
+    pub fn to_atomic(&self) -> stack::ValueResult<&data::OutputAtomic> {
         match self {
             OutputItem::Atomic(a) => Ok(a),
             _ => Err(stack::ValueError::Type),
         }
     }
-    pub fn to_node(&self) -> Result<xml::Node> {
+    pub fn to_node(&self) -> stack::ValueResult<xml::Node> {
         match self {
             OutputItem::Node(n) => Ok(*n),
             _ => Err(stack::ValueError::Type),
         }
     }
-    pub fn to_bool(&self) -> Result<bool> {
+    pub fn to_bool(&self) -> stack::ValueResult<bool> {
         match self {
             OutputItem::Atomic(a) => a.to_bool(),
             _ => Err(stack::ValueError::Type),
         }
     }
-    pub fn string_value(&self, xot: &Xot) -> Result<String> {
+    pub fn string_value(&self, xot: &Xot) -> stack::ValueResult<String> {
         match self {
             OutputItem::Atomic(a) => Ok(a.string_value()?),
             OutputItem::Node(n) => Ok(n.string_value(xot)),

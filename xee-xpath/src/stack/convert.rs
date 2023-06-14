@@ -5,7 +5,6 @@ use std::rc::Rc;
 use std::vec::Vec;
 
 use crate::context::DynamicContext;
-
 use crate::stack;
 use crate::xml;
 

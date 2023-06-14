@@ -1,4 +1,5 @@
 mod atomic;
+mod convert;
 mod error;
 mod function;
 mod item;
@@ -6,7 +7,9 @@ mod sequence;
 mod value;
 
 pub(crate) use atomic::Atomic;
+pub(crate) use convert::{ContextInto, ContextTryInto};
 pub(crate) use error::{ValueError, ValueResult};
+// XXX should not have any public things in here
 pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};
 pub(crate) use item::StackItem;
