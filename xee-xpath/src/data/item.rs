@@ -10,7 +10,7 @@ use super::value::StackValue;
 type Result<T> = std::result::Result<T, ValueError>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Item {
+pub(crate) enum StackItem {
     Atomic(Atomic),
     // XXX what about static function references?
     Function(Rc<Closure>),
@@ -24,63 +24,63 @@ pub enum OutputItem {
     Node(Node),
 }
 
-impl From<&OutputItem> for Item {
+impl From<&OutputItem> for StackItem {
     fn from(item: &OutputItem) -> Self {
         match item {
-            OutputItem::Atomic(a) => Item::Atomic(a.into()),
+            OutputItem::Atomic(a) => StackItem::Atomic(a.into()),
             OutputItem::Function(_f) => todo!("Cannot turn output functions into functions yet"),
-            OutputItem::Node(n) => Item::Node(*n),
+            OutputItem::Node(n) => StackItem::Node(*n),
         }
     }
 }
 
-impl From<OutputItem> for Item {
+impl From<OutputItem> for StackItem {
     fn from(item: OutputItem) -> Self {
         (&item).into()
     }
 }
 
-impl Item {
+impl StackItem {
     pub(crate) fn to_output(&self) -> OutputItem {
         match self {
-            Item::Atomic(a) => OutputItem::Atomic(a.to_output()),
-            Item::Function(f) => OutputItem::Function(f.to_output()),
-            Item::Node(n) => OutputItem::Node(*n),
+            StackItem::Atomic(a) => OutputItem::Atomic(a.to_output()),
+            StackItem::Function(f) => OutputItem::Function(f.to_output()),
+            StackItem::Node(n) => OutputItem::Node(*n),
         }
     }
 
     pub(crate) fn to_atomic(&self) -> Result<&Atomic> {
         match self {
-            Item::Atomic(a) => Ok(a),
+            StackItem::Atomic(a) => Ok(a),
             _ => Err(ValueError::Type),
         }
     }
     pub(crate) fn to_node(&self) -> Result<Node> {
         match self {
-            Item::Node(n) => Ok(*n),
+            StackItem::Node(n) => Ok(*n),
             _ => Err(ValueError::Type),
         }
     }
     pub(crate) fn to_bool(&self) -> Result<bool> {
         match self {
-            Item::Atomic(a) => a.to_bool(),
+            StackItem::Atomic(a) => a.to_bool(),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> Result<String> {
         match self {
-            Item::Atomic(a) => Ok(a.string_value()?),
-            Item::Node(n) => Ok(n.string_value(xot)),
+            StackItem::Atomic(a) => Ok(a.string_value()?),
+            StackItem::Node(n) => Ok(n.string_value(xot)),
             _ => Err(ValueError::Type),
         }
     }
 
     pub(crate) fn into_stack_value(self) -> StackValue {
         match self {
-            Item::Atomic(a) => StackValue::Atomic(a),
-            Item::Node(n) => StackValue::Node(n),
-            Item::Function(f) => StackValue::Closure(f),
+            StackItem::Atomic(a) => StackValue::Atomic(a),
+            StackItem::Node(n) => StackValue::Node(n),
+            StackItem::Function(f) => StackValue::Closure(f),
         }
     }
 }

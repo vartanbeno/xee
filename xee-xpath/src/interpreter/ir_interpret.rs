@@ -536,7 +536,7 @@ mod tests {
     use crate::run::evaluate;
     use crate::xpath::XPath;
     use crate::{
-        data::{Item, Node, OutputAtomic, OutputItem, OutputSequence},
+        data::{Node, OutputAtomic, OutputItem, OutputSequence, StackItem},
         document::{Document, Documents, Uri},
     };
 

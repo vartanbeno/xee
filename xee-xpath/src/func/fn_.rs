@@ -7,7 +7,7 @@ use crate::wrap_xpath_fn;
 
 use crate::context::{FunctionKind, StaticFunctionDescription};
 use crate::{
-    data::{Atomic, ContextTryInto, Item, StackSequence, StackValue, ValueError, ValueResult},
+    data::{Atomic, ContextTryInto, StackItem, StackSequence, StackValue, ValueError, ValueResult},
     DynamicContext, Error, Node,
 };
 
@@ -57,7 +57,7 @@ fn namespace_uri(context: &DynamicContext, arg: Option<Node>) -> String {
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[Item]) -> i64 {
+fn count(arg: &[StackItem]) -> i64 {
     arg.len() as i64
 }
 
@@ -80,7 +80,7 @@ fn root(context: &DynamicContext, arg: Option<Node>) -> Option<Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: &Option<Item>) -> ValueResult<String> {
+fn string(context: &DynamicContext, arg: &Option<StackItem>) -> ValueResult<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -89,7 +89,7 @@ fn string(context: &DynamicContext, arg: &Option<Item>) -> ValueResult<String> {
 }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[Item]) -> bool {
+fn exists(arg: &[StackItem]) -> bool {
     !arg.is_empty()
 }
 
@@ -118,7 +118,7 @@ fn exactly_one(
 }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[Item]) -> bool {
+fn empty(arg: &[StackItem]) -> bool {
     arg.is_empty()
 }
 

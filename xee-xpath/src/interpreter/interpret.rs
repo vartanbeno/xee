@@ -6,8 +6,8 @@ use std::rc::Rc;
 use crate::comparison;
 use crate::context::DynamicContext;
 use crate::data::{
-    Atomic, Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId, Item,
-    StackSequence, StackValue, StaticFunctionId, Step, ValueError,
+    Atomic, Closure, ClosureFunctionId, ContextInto, ContextTryInto, Function, FunctionId,
+    StackItem, StackSequence, StackValue, StaticFunctionId, Step, ValueError,
 };
 use crate::error::Error;
 use crate::op;
@@ -50,8 +50,8 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn start(
         &mut self,
         function_id: FunctionId,
-        context_item: Option<&Item>,
-        arguments: &[Vec<Item>],
+        context_item: Option<&StackItem>,
+        arguments: &[Vec<StackItem>],
     ) {
         self.frames.push(Frame {
             function: function_id,
@@ -373,8 +373,8 @@ impl<'a> Interpreter<'a> {
                         Ordering::Less => {
                             let sequence = StackSequence::from_vec(
                                 (a..=b)
-                                    .map(|i| Item::Atomic(Atomic::Integer(i)))
-                                    .collect::<Vec<Item>>(),
+                                    .map(|i| StackItem::Atomic(Atomic::Integer(i)))
+                                    .collect::<Vec<StackItem>>(),
                             );
                             self.stack.push(StackValue::Sequence(sequence));
                         }
@@ -569,7 +569,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
+        interpreter.start(main_id, Some(&StackItem::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -629,7 +629,7 @@ mod tests {
         let context = DynamicContext::new(&xot, &static_context);
 
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
+        interpreter.start(main_id, Some(&StackItem::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,
@@ -662,7 +662,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let mut interpreter = Interpreter::new(&program, &context);
-        interpreter.start(main_id, Some(&Item::Atomic(Atomic::Integer(0))), &[]);
+        interpreter.start(main_id, Some(&StackItem::Atomic(Atomic::Integer(0))), &[]);
         interpreter.run_actual()?;
         assert_eq!(
             interpreter.stack,

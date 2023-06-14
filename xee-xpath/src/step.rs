@@ -2,13 +2,13 @@ use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
-use crate::data::{Item, Node, StackInnerSequence, StackSequence, Step};
+use crate::data::{Node, StackInnerSequence, StackItem, StackSequence, Step};
 
 pub(crate) fn resolve_step(step: &Step, node: Node, xot: &Xot) -> StackSequence {
     let mut new_sequence = StackInnerSequence::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
-            new_sequence.push(&Item::Node(axis_node));
+            new_sequence.push(&StackItem::Node(axis_node));
         }
     }
     StackSequence::new(new_sequence)
@@ -224,7 +224,7 @@ mod tests {
         StackSequence::new(StackInnerSequence {
             items: node
                 .iter()
-                .map(|&node| Item::Node(Node::Xot(node)))
+                .map(|&node| StackItem::Node(Node::Xot(node)))
                 .collect(),
         })
     }

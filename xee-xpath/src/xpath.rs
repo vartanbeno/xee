@@ -2,7 +2,7 @@ use xee_xpath_ast::ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::data::{
-    Atomic, FunctionId, Item, Node, OutputItem, OutputSequence, StackSequence, StackValue,
+    Atomic, FunctionId, Node, OutputItem, OutputSequence, StackItem, StackSequence, StackValue,
 };
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
@@ -43,7 +43,7 @@ impl XPath {
     pub(crate) fn run_value(
         &self,
         dynamic_context: &DynamicContext,
-        context_item: Option<&Item>,
+        context_item: Option<&StackItem>,
     ) -> Result<StackValue> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
@@ -83,7 +83,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&OutputItem>,
     ) -> Result<OutputSequence> {
-        let context_item: Option<Item> = item.map(|item| item.clone().into());
+        let context_item: Option<StackItem> = item.map(|item| item.clone().into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output_sequence())
     }

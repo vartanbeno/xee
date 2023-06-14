@@ -4,7 +4,7 @@ use xot::Xot;
 use super::atomic::Atomic;
 use super::error::ValueError;
 use super::function::{Closure, Step};
-use super::item::Item;
+use super::item::StackItem;
 use super::node::Node;
 use super::sequence::{OutputSequence, StackSequence};
 
@@ -23,15 +23,15 @@ pub(crate) enum StackValue {
 }
 
 impl StackValue {
-    pub(crate) fn from_item(item: Item) -> Self {
+    pub(crate) fn from_item(item: StackItem) -> Self {
         match item {
-            Item::Atomic(a) => StackValue::Atomic(a),
-            Item::Node(n) => StackValue::Node(n),
-            Item::Function(f) => StackValue::Closure(f),
+            StackItem::Atomic(a) => StackValue::Atomic(a),
+            StackItem::Node(n) => StackValue::Node(n),
+            StackItem::Function(f) => StackValue::Closure(f),
         }
     }
 
-    pub(crate) fn from_items(items: &[Item]) -> Self {
+    pub(crate) fn from_items(items: &[StackItem]) -> Self {
         if items.is_empty() {
             StackValue::Atomic(Atomic::Empty)
         } else if items.len() == 1 {
@@ -46,20 +46,20 @@ impl StackValue {
         seq.to_output()
     }
 
-    pub(crate) fn to_one(&self) -> Result<Item> {
+    pub(crate) fn to_one(&self) -> Result<StackItem> {
         match self {
-            StackValue::Atomic(a) => Ok(Item::Atomic(a.clone())),
+            StackValue::Atomic(a) => Ok(StackItem::Atomic(a.clone())),
             StackValue::Sequence(s) => s.to_one(),
-            StackValue::Node(n) => Ok(Item::Node(*n)),
+            StackValue::Node(n) => Ok(StackItem::Node(*n)),
             _ => Err(ValueError::Type),
         }
     }
 
-    pub(crate) fn to_option(&self) -> Result<Option<Item>> {
+    pub(crate) fn to_option(&self) -> Result<Option<StackItem>> {
         match self {
-            StackValue::Atomic(a) => Ok(Some(Item::Atomic(a.clone()))),
+            StackValue::Atomic(a) => Ok(Some(StackItem::Atomic(a.clone()))),
             StackValue::Sequence(s) => s.to_option(),
-            StackValue::Node(n) => Ok(Some(Item::Node(*n))),
+            StackValue::Node(n) => Ok(Some(StackItem::Node(*n))),
             _ => Err(ValueError::Type),
         }
     }
@@ -88,7 +88,7 @@ impl StackValue {
                     return Ok(false);
                 }
                 // If its operand is a sequence whose first item is a node, fn:boolean returns true.
-                if matches!(s.items[0], Item::Node(_)) {
+                if matches!(s.items[0], StackItem::Node(_)) {
                     return Ok(true);
                 }
                 // If its operand is a singleton value
