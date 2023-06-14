@@ -69,7 +69,12 @@ impl Value {
             Value::Atomic(a) => Sequence::from_atomic(a),
             Value::Sequence(s) => s.clone(),
             Value::Node(n) => Sequence::from_node(*n),
-            _ => panic!("Not handled yet"),
+            // TODO: we need to handle the function case here, but
+            // we don't handle it yet
+            _ => {
+                dbg!("unhandled to_many value {:?}", self);
+                Sequence::empty()
+            }
         }
     }
 

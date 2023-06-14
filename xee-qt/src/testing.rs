@@ -45,9 +45,8 @@ impl Tests {
         self
     }
 
-    pub fn bug(mut self, exclude: &str) -> Self {
-        self.exclude.push(exclude.to_string());
-        self
+    pub fn bug(self, exclude: &str) -> Self {
+        self.exclude(exclude)
     }
 
     pub fn tolerate_wrong_error(mut self) -> Self {

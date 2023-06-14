@@ -37,3 +37,17 @@ fn test_let_clause() {
         .exclude("LetExpr004 LetExpr005 LetExpr006 LetExpr013")
         .run()
 }
+
+#[test]
+fn test_inline_function_expr() {
+    Tests::all("prod/InlineFunctionExpr")
+        // unexpected parse errors. Is this because of `-` in the
+        // function name?
+        .bug("inline-fn-011 inline-fn-021 inline-fn-022 inline-fn-025")
+        // treat functions as objects
+        .bug("inline-fn-028 inline-fn-029 inline-fn-030 inline-fn-031 inline-fn-036")
+        .exclude(
+            "inline-fn-004 inline-fn-11 inline-fn-012a inline-fn-013 inline-fn-032 inline-fn-033",
+        )
+        .run()
+}
