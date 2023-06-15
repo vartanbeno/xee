@@ -3,22 +3,19 @@ use xot::Xot;
 use crate::stack;
 use crate::xml;
 
-struct Atomized<'a> {
-    xot: &'a Xot,
-    value: stack::Value,
+pub(crate) enum AtomizedIter<'a> {
+    Atomic(AtomizedAtomicIter),
+    Node(AtomizedNodeIter),
+    Sequence(AtomizedSequenceIter<'a>),
 }
 
-impl<'a> Atomized<'a> {
-    fn new(value: stack::Value, xot: &'a Xot) -> Self {
-        Self { value, xot }
-    }
-
-    fn into_iter(self) -> AtomizedIter<'a> {
-        match self.value {
+impl<'a> AtomizedIter<'a> {
+    pub(crate) fn new(value: stack::Value, xot: &'a Xot) -> AtomizedIter<'a> {
+        match value {
             stack::Value::Atomic(atomic) => AtomizedIter::Atomic(AtomizedAtomicIter::new(atomic)),
-            stack::Value::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, self.xot)),
+            stack::Value::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, xot)),
             stack::Value::Sequence(sequence) => {
-                AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, self.xot))
+                AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
             stack::Value::Closure(_) => {
                 // TODO array case?
@@ -29,12 +26,6 @@ impl<'a> Atomized<'a> {
             }
         }
     }
-}
-
-enum AtomizedIter<'a> {
-    Atomic(AtomizedAtomicIter),
-    Node(AtomizedNodeIter),
-    Sequence(AtomizedSequenceIter<'a>),
 }
 
 impl Iterator for AtomizedIter<'_> {
@@ -49,7 +40,7 @@ impl Iterator for AtomizedIter<'_> {
     }
 }
 
-struct AtomizedAtomicIter {
+pub struct AtomizedAtomicIter {
     atomic: stack::Atomic,
     done: bool,
 }
@@ -79,7 +70,7 @@ impl Iterator for AtomizedAtomicIter {
     }
 }
 
-struct AtomizedNodeIter {
+pub struct AtomizedNodeIter {
     typed_value: Vec<stack::Atomic>,
     typed_value_index: usize,
 }
@@ -107,7 +98,7 @@ impl Iterator for AtomizedNodeIter {
     }
 }
 
-struct AtomizedSequenceIter<'a> {
+pub struct AtomizedSequenceIter<'a> {
     xot: &'a Xot,
     sequence: stack::Sequence,
     index: usize,
@@ -172,8 +163,7 @@ mod tests {
         let atomic = stack::Atomic::Integer(3);
         let value = stack::Value::Atomic(atomic.clone());
 
-        let atomized = Atomized::new(value, &xot);
-        let mut iter = atomized.into_iter();
+        let mut iter = AtomizedIter::new(value, &xot);
         assert_eq!(iter.next(), Some(atomic));
         assert_eq!(iter.next(), None);
     }
@@ -186,8 +176,7 @@ mod tests {
         let node = xml::Node::Xot(xot_node);
         let value = stack::Value::Node(node);
 
-        let atomized = Atomized::new(value, &xot);
-        let mut iter = atomized.into_iter();
+        let mut iter = AtomizedIter::new(value, &xot);
 
         assert_eq!(
             iter.next(),
@@ -208,8 +197,7 @@ mod tests {
             stack::Item::Atomic(stack::Atomic::Integer(4)),
         ]));
 
-        let atomized = Atomized::new(value, &xot);
-        let mut iter = atomized.into_iter();
+        let mut iter = AtomizedIter::new(value, &xot);
 
         assert_eq!(iter.next(), Some(stack::Atomic::Integer(3)));
         assert_eq!(

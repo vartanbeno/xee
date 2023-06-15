@@ -1,3 +1,5 @@
+use xot::Xot;
+
 use crate::error;
 use crate::output;
 use crate::output::item::{StackItem, StackValue};
@@ -110,6 +112,13 @@ impl Sequence {
             Err(_) => Err(crate::Error::FORG0006),
         }
     }
+
+    pub fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
+        AtomizedIter {
+            atomized_iter: self.stack_value.atomized(xot),
+            xot,
+        }
+    }
 }
 
 pub struct SequenceIter {
@@ -146,6 +155,22 @@ impl Iterator for SequenceIter {
                     None
                 }
             }
+        }
+    }
+}
+
+pub struct AtomizedIter<'a> {
+    atomized_iter: stack::AtomizedIter<'a>,
+    xot: &'a Xot,
+}
+
+impl<'a> Iterator for AtomizedIter<'a> {
+    type Item = output::Atomic;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.atomized_iter.next() {
+            Some(value) => Some(output::Atomic::new(value)),
+            None => None,
         }
     }
 }

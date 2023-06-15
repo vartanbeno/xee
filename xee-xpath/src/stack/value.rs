@@ -134,6 +134,10 @@ impl Value {
         };
         Ok(value)
     }
+
+    pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
+        stack::AtomizedIter::new(self.clone(), xot)
+    }
 }
 
 impl PartialEq for Value {
