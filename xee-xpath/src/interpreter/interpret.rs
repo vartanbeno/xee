@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::context::{ContextInto, ContextTryInto, DynamicContext};
+use crate::context::{ContextTryInto, DynamicContext};
 use crate::error::Error;
 use crate::op;
 use crate::stack;
@@ -495,9 +495,10 @@ impl<'a> Interpreter<'a> {
     }
 
     fn pop_atomized2(&mut self) -> stack::Result<(Vec<stack::Atomic>, Vec<stack::Atomic>)> {
-        let (sequence_a, sequence_b) = self.pop_seq2()?;
-        let atomized_a = sequence_a.context_into(self.dynamic_context);
-        let atomized_b = sequence_b.context_into(self.dynamic_context);
+        let value_b = self.stack.pop().unwrap();
+        let value_a = self.stack.pop().unwrap();
+        let atomized_a = value_a.atomized(self.dynamic_context.xot).collect();
+        let atomized_b = value_b.atomized(self.dynamic_context.xot).collect();
         Ok((atomized_a, atomized_b))
     }
 

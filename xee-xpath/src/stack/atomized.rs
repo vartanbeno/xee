@@ -128,6 +128,7 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
                 } else {
                     self.index += 1;
                     self.node_iter = None;
+                    continue;
                 }
             }
 

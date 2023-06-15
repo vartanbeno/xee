@@ -2,9 +2,8 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use std::convert::TryFrom;
 use std::rc::Rc;
-use std::vec::Vec;
 
-use crate::context::{ContextFrom, ContextTryFrom, ContextTryInto, DynamicContext};
+use crate::context::{ContextTryFrom, ContextTryInto, DynamicContext};
 use crate::stack;
 use crate::xml;
 
@@ -22,12 +21,16 @@ impl ContextTryFrom<&stack::Value> for stack::Atomic {
     type Error = stack::Error;
 
     fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
-        match value {
-            stack::Value::Atomic(a) => Ok(a.clone()),
-            stack::Value::Sequence(s) => s.borrow().to_atomic(context),
-            _ => {
-                todo!("don't know how to atomize this yet")
+        let mut atomized = value.atomized(context.xot);
+        let value = atomized.next();
+        if let Some(value) = value {
+            if atomized.next().is_none() {
+                Ok(value)
+            } else {
+                Err(stack::Error::Type)
             }
+        } else {
+            Ok(stack::Atomic::Empty)
         }
     }
 }
@@ -279,12 +282,6 @@ impl TryFrom<&stack::Value> for stack::Sequence {
             stack::Value::Node(n) => Ok(stack::Sequence::from_node(*n)),
             _ => Err(stack::Error::Type),
         }
-    }
-}
-
-impl ContextFrom<stack::Sequence> for Vec<stack::Atomic> {
-    fn context_from(sequence: stack::Sequence, context: &DynamicContext) -> Self {
-        sequence.borrow().to_atoms(context.xot)
     }
 }
 

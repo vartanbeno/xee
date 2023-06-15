@@ -365,9 +365,7 @@ mod tests {
 
         let any_of_recurse = queries.option_recurse("any-of")?;
         let value_query = queries
-            .option("value/string()", |_, item| {
-                Ok(item.to_atomic()?.to_string()?)
-            })
+            .option("value/string()", |_, item| item.to_atomic()?.to_string())
             .unwrap();
 
         let result_query =

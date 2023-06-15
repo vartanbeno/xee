@@ -1,5 +1,3 @@
-use crate::stack;
-
 use super::DynamicContext;
 
 pub(crate) trait ContextFrom<T>: Sized {

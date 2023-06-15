@@ -2,9 +2,7 @@ use ahash::{HashSet, HashSetExt};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::vec;
-use xot::Xot;
 
-use crate::context::DynamicContext;
 use crate::stack;
 use crate::xml;
 
@@ -147,59 +145,6 @@ impl InnerSequence {
         for item in &other.borrow().items {
             self.push(item);
         }
-    }
-
-    fn atomize(&self, xot: &Xot) -> InnerSequence {
-        let mut items = Vec::new();
-        for item in &self.items {
-            match item {
-                stack::Item::Atomic(a) => items.push(stack::Item::Atomic(a.clone())),
-                stack::Item::Node(n) => {
-                    for typed_value in n.typed_value(xot) {
-                        items.push(stack::Item::Atomic(typed_value));
-                    }
-                }
-                // XXX need code to handle array case
-                stack::Item::Function(..) => panic!("cannot atomize a function"),
-            }
-        }
-        InnerSequence { items }
-    }
-
-    pub(crate) fn to_atomic(&self, context: &DynamicContext) -> stack::Result<stack::Atomic> {
-        // we avoid using atomize as an optimization, so we don't
-        // have to atomize all entries just to get the first item
-        match self.len() {
-            0 => Ok(stack::Atomic::Empty),
-            1 => {
-                let item = &self.items[0];
-                match item {
-                    stack::Item::Atomic(a) => Ok(a.clone()),
-                    stack::Item::Node(n) => {
-                        let mut t = n.typed_value(context.xot);
-                        if t.len() != 1 {
-                            return Err(stack::Error::XPTY0004);
-                        }
-                        Ok(t.remove(0))
-                    }
-                    // XXX need code to handle array case
-                    stack::Item::Function(..) => panic!("cannot atomize a function"),
-                }
-            }
-            _ => Err(stack::Error::XPTY0004),
-        }
-    }
-
-    pub(crate) fn to_atoms(&self, xot: &Xot) -> Vec<stack::Atomic> {
-        let mut atoms = Vec::new();
-        let atomized = self.atomize(xot);
-        for item in atomized.items {
-            match item {
-                stack::Item::Atomic(a) => atoms.push(a),
-                _ => unreachable!("atomize returned a non-atomic item"),
-            }
-        }
-        atoms
     }
 
     pub(crate) fn concat(&self, other: &InnerSequence) -> InnerSequence {
