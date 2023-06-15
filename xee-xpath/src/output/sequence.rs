@@ -168,9 +168,6 @@ impl<'a> Iterator for AtomizedIter<'a> {
     type Item = output::Atomic;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.atomized_iter.next() {
-            Some(value) => Some(output::Atomic::new(value)),
-            None => None,
-        }
+        self.atomized_iter.next().map(output::Atomic::new)
     }
 }
