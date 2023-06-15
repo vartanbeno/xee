@@ -257,45 +257,33 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::GenEq => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_eq(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_eq(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::GenNe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_ne(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_ne(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::GenLt => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_lt(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_lt(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::GenLe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_le(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_le(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::GenGt => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_gt(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_gt(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::GenGe => {
                     let (atomized_a, atomized_b) = self.pop_atomized2()?;
-                    self.stack.push(stack::Value::Atomic(comparison::general_ge(
-                        &atomized_a,
-                        &atomized_b,
-                    )?));
+                    let r = stack::Value::Atomic(comparison::general_ge(atomized_a, atomized_b)?);
+                    self.stack.push(r);
                 }
                 EncodedInstruction::Union => {
                     let (a, b) = self.pop_seq2()?;
@@ -494,11 +482,16 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_atomized2(&mut self) -> stack::Result<(Vec<stack::Atomic>, Vec<stack::Atomic>)> {
+    fn pop_atomized2(
+        &mut self,
+    ) -> stack::Result<(
+        impl Iterator<Item = stack::Atomic> + '_,
+        impl Iterator<Item = stack::Atomic> + '_ + std::clone::Clone,
+    )> {
         let value_b = self.stack.pop().unwrap();
         let value_a = self.stack.pop().unwrap();
-        let atomized_a = value_a.atomized(self.dynamic_context.xot).collect();
-        let atomized_b = value_b.atomized(self.dynamic_context.xot).collect();
+        let atomized_a = value_a.atomized(self.dynamic_context.xot);
+        let atomized_b = value_b.atomized(self.dynamic_context.xot);
         Ok((atomized_a, atomized_b))
     }
 

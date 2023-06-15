@@ -3,6 +3,7 @@ use xot::Xot;
 use crate::stack;
 use crate::xml;
 
+#[derive(Clone)]
 pub(crate) enum AtomizedIter<'a> {
     Atomic(AtomizedAtomicIter),
     Node(AtomizedNodeIter),
@@ -40,6 +41,7 @@ impl Iterator for AtomizedIter<'_> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct AtomizedAtomicIter {
     atomic: stack::Atomic,
     done: bool,
@@ -70,6 +72,7 @@ impl Iterator for AtomizedAtomicIter {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct AtomizedNodeIter {
     typed_value: Vec<stack::Atomic>,
     typed_value_index: usize,
@@ -98,6 +101,7 @@ impl Iterator for AtomizedNodeIter {
     }
 }
 
+#[derive(Clone)]
 pub struct AtomizedSequenceIter<'a> {
     xot: &'a Xot,
     sequence: stack::Sequence,

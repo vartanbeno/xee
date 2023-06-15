@@ -147,58 +147,58 @@ fn cast_untyped(
 }
 
 pub(crate) fn general_eq(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_eq)
 }
 
 pub(crate) fn general_ne(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_ne)
 }
 
 pub(crate) fn general_lt(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_lt)
 }
 
 pub(crate) fn general_le(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_le)
 }
 
 pub(crate) fn general_gt(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_gt)
 }
 
 pub(crate) fn general_ge(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
 ) -> stack::Result<stack::Atomic> {
     generic_general_compare(a_atoms, b_atoms, value_ge)
 }
 
 fn generic_general_compare<F>(
-    a_atoms: &[stack::Atomic],
-    b_atoms: &[stack::Atomic],
+    a_atoms: impl Iterator<Item = stack::Atomic>,
+    b_atoms: impl Iterator<Item = stack::Atomic> + std::clone::Clone,
     compare: F,
 ) -> stack::Result<stack::Atomic>
 where
     F: Fn(&stack::Atomic, &stack::Atomic) -> stack::Result<stack::Atomic>,
 {
     for a in a_atoms {
-        for b in b_atoms {
-            if compare(a, b)?.is_true() {
+        for b in b_atoms.clone() {
+            if compare(&a, &b)?.is_true() {
                 return Ok(stack::Atomic::Boolean(true));
             }
         }
