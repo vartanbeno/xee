@@ -108,16 +108,6 @@ impl XPath {
                 span: (0, self.program.src.len()).into(),
             }),
         }
-        // let sequence = self.many(dynamic_context, item)?;
-        // let items = sequence.items();
-        // Ok(if items.len() == 1 {
-        //     items[0].clone()
-        // } else {
-        //     return Err(Error::XPTY0004 {
-        //         src: self.program.src.clone(),
-        //         span: (0, 0).into(),
-        //     });
-        // })
     }
 
     pub fn option(
