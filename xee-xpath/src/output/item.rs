@@ -21,28 +21,6 @@ pub struct StackValue(pub(crate) stack::Value);
 #[derive(Debug, Clone, PartialEq)]
 pub struct StackItem(pub(crate) stack::Item);
 
-// pub enum Item {
-//     Atomic(output::Atomic),
-//     Function(output::Closure),
-//     Node(xml::Node),
-// }
-
-// impl From<&Item> for stack::Item {
-//     fn from(item: &Item) -> Self {
-//         match item {
-//             Item::Atomic(a) => stack::Item::Atomic(a.into()),
-//             Item::Function(_f) => todo!("Cannot turn output functions into functions yet"),
-//             Item::Node(n) => stack::Item::Node(*n),
-//         }
-//     }
-// }
-
-// impl From<Item> for stack::Item {
-//     fn from(item: Item) -> Self {
-//         (&item).into()
-//     }
-// }
-
 impl Item {
     pub(crate) fn from_stack_item(stack_item: stack::Item) -> Self {
         Item::StackItem(StackItem(stack_item))
@@ -106,14 +84,6 @@ impl Item {
         match self {
             Item::StackValue(StackValue(v)) => v.to_node(),
             Item::StackItem(StackItem(i)) => i.to_node(),
-        }
-    }
-
-    // TODO rename to effective_boolean_value
-    pub fn to_bool(&self) -> stack::Result<bool> {
-        match self {
-            Item::StackValue(StackValue(v)) => v.to_bool(),
-            Item::StackItem(StackItem(i)) => i.to_bool(),
         }
     }
 

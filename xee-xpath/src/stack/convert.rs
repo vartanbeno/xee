@@ -231,7 +231,8 @@ impl TryFrom<stack::Atomic> for bool {
     type Error = stack::Error;
 
     fn try_from(atomic: stack::Atomic) -> stack::Result<Self> {
-        atomic.to_bool()
+        // TODO: is this correct? or should we use a to_bool instead?
+        atomic.effective_boolean_value()
     }
 }
 

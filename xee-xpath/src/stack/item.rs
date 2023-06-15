@@ -25,9 +25,9 @@ impl Item {
             _ => Err(stack::Error::Type),
         }
     }
-    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
-            Item::Atomic(a) => a.to_bool(),
+            Item::Atomic(a) => a.effective_boolean_value(),
             _ => Err(stack::Error::Type),
         }
     }

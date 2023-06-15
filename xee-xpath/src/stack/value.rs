@@ -55,10 +55,6 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
-        self.to_atomic()?.to_bool()
-    }
-
     pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
         match self {
             Value::Atomic(a) => Ok(stack::Item::Atomic(a.clone())),
@@ -93,7 +89,7 @@ impl Value {
 
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
-            Value::Atomic(a) => a.to_bool(),
+            Value::Atomic(a) => a.effective_boolean_value(),
             Value::Sequence(s) => {
                 let s = s.borrow();
                 // If its operand is an empty sequence, fn:boolean returns false.
@@ -106,7 +102,7 @@ impl Value {
                 }
                 // If its operand is a singleton value
                 let singleton = s.singleton()?;
-                singleton.to_bool()
+                singleton.effective_boolean_value()
             }
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
             // this is the case when a single node is on the stack, just like if it

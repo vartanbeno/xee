@@ -66,11 +66,6 @@ impl Atomic {
         }
     }
 
-    // TODO this is the effective boolean value, perhaps rename it to that
-    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
-        self.stack_atomic.to_bool()
-    }
-
     pub fn to_str(&self) -> stack::Result<&str> {
         self.stack_atomic.to_str()
     }

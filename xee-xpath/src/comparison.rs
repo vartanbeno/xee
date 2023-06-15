@@ -198,7 +198,7 @@ where
 {
     for a in a_atoms {
         for b in b_atoms {
-            if compare(a, b)?.to_bool()? {
+            if compare(a, b)?.is_true() {
                 return Ok(stack::Atomic::Boolean(true));
             }
         }

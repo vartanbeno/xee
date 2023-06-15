@@ -3,7 +3,6 @@ use rust_decimal::prelude::*;
 use std::rc::Rc;
 
 use crate::comparison;
-// use crate::output2 as output;
 use crate::stack;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -24,10 +23,6 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    // pub(crate) fn to_output(&self) -> output::Atomic {
-    //     output::Atomic::new(self)
-    // }
-
     pub(crate) fn to_integer(&self) -> stack::Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
@@ -66,7 +61,7 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(*i != 0),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
@@ -140,6 +135,14 @@ impl Atomic {
         )
     }
 
+    pub(crate) fn is_true(&self) -> bool {
+        if let Atomic::Boolean(b) = self {
+            *b
+        } else {
+            false
+        }
+    }
+
     pub(crate) fn general_comparison_cast(&self, v: &str) -> stack::Result<Atomic> {
         match self {
             // i. If T is a numeric type or is derived from a numeric type, then V
@@ -171,7 +174,7 @@ impl Atomic {
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
         match comparison::value_eq(self, other) {
-            Ok(b) => b.to_bool().unwrap(),
+            Ok(b) => b.is_true(),
             Err(_) => false,
         }
     }
