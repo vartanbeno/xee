@@ -1,6 +1,7 @@
-use miette::{miette, Result};
 use xee_xpath::{Node, Sequence};
 use xot::Xot;
+
+use crate::error::{Error, Result};
 
 // represent items as XML, if possible, wrapped
 // in a sequence tag
@@ -12,10 +13,10 @@ pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> Result<String> {
             if let Ok(xml_value) = xml_value {
                 xmls.push(xml_value);
             } else {
-                return Err(miette!("cannot be represented as XML"));
+                return Err(Error::CannotRepresentAsXml);
             }
         } else {
-            return Err(miette!("cannot be represented as XML"));
+            return Err(Error::CannotRepresentAsXml);
         }
     }
     Ok(format!("<sequence>{}</sequence>", xmls.join("")))

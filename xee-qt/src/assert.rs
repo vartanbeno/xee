@@ -1,7 +1,6 @@
 use crossterm::style::Stylize;
 use miette::Diagnostic;
 use std::fmt;
-
 use xee_xpath::{
     AtomicValue, DynamicContext, Error, Name, Namespaces, Sequence, StaticContext, XPath,
 };

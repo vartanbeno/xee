@@ -14,6 +14,8 @@ pub enum Error {
     FileNotFoundInCatalog(PathBuf),
     #[error("Unknown environment reference")]
     UnknownEnvironmentReference(qt::EnvironmentRef),
+    #[error("Cannot represent as XML")]
+    CannotRepresentAsXml,
     #[error("Xee XPath error")]
     XeeXPath(#[from] xee_xpath::Error),
     #[error("Xot error")]
