@@ -11,7 +11,6 @@ mod func;
 mod interpreter;
 mod ir;
 mod op;
-mod output;
 mod output2;
 mod query;
 mod run;
