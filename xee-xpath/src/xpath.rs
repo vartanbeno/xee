@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
-use crate::output;
+use crate::output2 as output;
 use crate::stack;
 use crate::xml;
 
@@ -77,10 +77,10 @@ impl XPath {
         dynamic_context: &DynamicContext,
         node: xot::Node,
     ) -> Result<output::Sequence> {
-        self.many(
-            dynamic_context,
-            Some(&output::Item::Node(xml::Node::Xot(node))),
-        )
+        let node = xml::Node::Xot(node);
+        let item = stack::Item::Node(node);
+        let output_item = output::Item::from_stack_item(item);
+        self.many(dynamic_context, Some(&output_item))
     }
 
     pub fn many(
@@ -88,9 +88,9 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<output::Sequence> {
-        let context_item: Option<stack::Item> = item.map(|item| item.clone().into());
+        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        Ok(value.into_output_sequence())
+        Ok(value.into_output())
     }
 
     pub fn one(
@@ -98,16 +98,26 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<output::Item> {
-        let sequence = self.many(dynamic_context, item)?;
-        let items = sequence.items();
-        Ok(if items.len() == 1 {
-            items[0].clone()
-        } else {
-            return Err(Error::XPTY0004 {
+        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
+        let value = self.run_value(dynamic_context, context_item.as_ref())?;
+        match value.into_output().one() {
+            Ok(item) => Ok(item),
+            // TODO this error conversion isn't correct yet
+            Err(e) => Err(Error::XPTY0004 {
                 src: self.program.src.clone(),
-                span: (0, 0).into(),
-            });
-        })
+                span: (0, self.program.src.len()).into(),
+            }),
+        }
+        // let sequence = self.many(dynamic_context, item)?;
+        // let items = sequence.items();
+        // Ok(if items.len() == 1 {
+        //     items[0].clone()
+        // } else {
+        //     return Err(Error::XPTY0004 {
+        //         src: self.program.src.clone(),
+        //         span: (0, 0).into(),
+        //     });
+        // })
     }
 
     pub fn option(
@@ -115,19 +125,16 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<Option<output::Item>> {
-        let sequence = self.many(dynamic_context, item)?;
-        let items = sequence.items();
-
-        Ok(if items.is_empty() {
-            None
-        } else if items.len() == 1 {
-            Some(items[0].clone())
-        } else {
-            return Err(Error::XPTY0004 {
+        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
+        let value = self.run_value(dynamic_context, context_item.as_ref())?;
+        match value.into_output().option() {
+            Ok(item) => Ok(item),
+            // TODO this error conversion isn't correct yet
+            Err(e) => Err(Error::XPTY0004 {
                 src: self.program.src.clone(),
-                span: (0, 0).into(),
-            });
-        })
+                span: (0, self.program.src.len()).into(),
+            }),
+        }
     }
 }
 

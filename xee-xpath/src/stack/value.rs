@@ -1,13 +1,13 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::output;
+use crate::output2 as output;
 use crate::stack;
 use crate::xml;
 
 // TODO: the use in the macro needs to keep this public, needs to be investigated
 // further.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub(crate) enum Value {
     Atomic(stack::Atomic),
     Sequence(stack::Sequence),
@@ -36,9 +36,27 @@ impl Value {
         }
     }
 
-    pub(crate) fn into_output_sequence(self) -> output::Sequence {
-        let seq = self.to_many();
-        seq.to_output()
+    pub(crate) fn into_output(self) -> output::Sequence {
+        output::Sequence::new(self)
+    }
+
+    // TODO: how is this related to try_into
+    pub(crate) fn to_atomic(&self) -> stack::Result<stack::Atomic> {
+        match self {
+            Value::Atomic(a) => Ok(a.clone()),
+            _ => Err(stack::Error::Type),
+        }
+    }
+
+    pub(crate) fn to_node(&self) -> stack::Result<xml::Node> {
+        match self {
+            Value::Node(n) => Ok(*n),
+            _ => Err(stack::Error::Type),
+        }
+    }
+
+    pub(crate) fn to_bool(&self) -> stack::Result<bool> {
+        self.to_atomic()?.to_bool()
     }
 
     pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
@@ -127,6 +145,29 @@ impl Value {
             Value::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Value) -> bool {
+        // comparisons between values are tricky, as a value
+        // may be a single item or a sequence of items.
+        // If they are single items, the comparison is easy,
+        // if one half is a sequence (or an empty atomic) and
+        // the other half is not, then we convert the value into a sequence first
+        // before comparing
+        match (self, other) {
+            (Value::Atomic(a), Value::Atomic(b)) => a == b,
+            (Value::Sequence(a), Value::Sequence(b)) => a == b,
+            (Value::Atomic(stack::Atomic::Empty), Value::Sequence(b)) => b.is_empty(),
+            (Value::Sequence(a), Value::Atomic(stack::Atomic::Empty)) => a.is_empty(),
+            (Value::Closure(a), Value::Closure(b)) => a == b,
+            (Value::Step(a), Value::Step(b)) => a == b,
+            (Value::Node(a), Value::Node(b)) => a == b,
+            (_, Value::Sequence(b)) => (&self.to_many()) == b,
+            (Value::Sequence(a), _) => a == &other.to_many(),
+            _ => false,
+        }
     }
 }
 

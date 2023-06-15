@@ -6,7 +6,7 @@ use xot::Xot;
 use xee_xpath_ast::ast;
 
 use crate::error::Error;
-use crate::output;
+use crate::output2 as output;
 use crate::stack;
 use crate::xml;
 
@@ -63,7 +63,12 @@ impl<'a> DynamicContext<'a> {
             documents: Cow::Owned(xml::Documents::new()),
             variables: variables
                 .iter()
-                .map(|(name, items)| (name.clone(), items.iter().map(|item| item.into()).collect()))
+                .map(|(name, items)| {
+                    (
+                        name.clone(),
+                        items.iter().map(|item| item.to_stack_item()).collect(),
+                    )
+                })
                 .collect(),
         }
     }

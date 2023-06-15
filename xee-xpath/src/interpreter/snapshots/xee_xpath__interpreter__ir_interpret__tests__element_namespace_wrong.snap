@@ -4,6 +4,14 @@ expression: "run_xml(r#\"<doc xmlns=\"http://example.com\"><a/></doc>\"#, \"doc 
 ---
 Ok(
     Sequence {
-        items: [],
+        stack_value: Sequence(
+            Sequence(
+                RefCell {
+                    value: InnerSequence {
+                        items: [],
+                    },
+                },
+            ),
+        ),
     },
 )

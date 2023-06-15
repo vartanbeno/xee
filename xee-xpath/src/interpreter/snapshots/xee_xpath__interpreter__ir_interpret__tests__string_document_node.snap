@@ -4,12 +4,10 @@ expression: "run_xml(r#\"<doc><a>A</a><b>B</b></doc>\"#, \"string(doc)\")"
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                String(
-                    "AB",
-                ),
+        stack_value: Atomic(
+            String(
+                "AB",
             ),
-        ],
+        ),
     },
 )

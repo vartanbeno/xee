@@ -4,27 +4,35 @@ expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"descendant::* / fn:loc
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                String(
-                    "doc",
-                ),
+        stack_value: Sequence(
+            Sequence(
+                RefCell {
+                    value: InnerSequence {
+                        items: [
+                            Atomic(
+                                String(
+                                    "doc",
+                                ),
+                            ),
+                            Atomic(
+                                String(
+                                    "a",
+                                ),
+                            ),
+                            Atomic(
+                                String(
+                                    "b",
+                                ),
+                            ),
+                            Atomic(
+                                String(
+                                    "c",
+                                ),
+                            ),
+                        ],
+                    },
+                },
             ),
-            Atomic(
-                String(
-                    "a",
-                ),
-            ),
-            Atomic(
-                String(
-                    "b",
-                ),
-            ),
-            Atomic(
-                String(
-                    "c",
-                ),
-            ),
-        ],
+        ),
     },
 )

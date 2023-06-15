@@ -3,7 +3,7 @@ use rust_decimal::prelude::*;
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::output;
+// use crate::output2 as output;
 use crate::stack;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -24,23 +24,9 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn to_output(&self) -> output::Atomic {
-        match self {
-            Atomic::Boolean(b) => output::Atomic::Boolean(*b),
-            Atomic::Integer(i) => output::Atomic::Integer(*i),
-            Atomic::Float(n) => output::Atomic::Float(**n),
-            Atomic::Double(d) => output::Atomic::Double(**d),
-            Atomic::Decimal(d) => output::Atomic::Decimal(*d),
-            Atomic::String(s) => output::Atomic::String(s.to_string()),
-            Atomic::Untyped(s) => output::Atomic::Untyped(s.to_string()),
-            Atomic::Empty => {
-                unreachable!("Atomic::Empty should not be converted to output::Atomic")
-            }
-            Atomic::Absent => {
-                unreachable!("Atomic::Absent should not be converted to output::Atomic")
-            }
-        }
-    }
+    // pub(crate) fn to_output(&self) -> output::Atomic {
+    //     output::Atomic::new(self)
+    // }
 
     pub(crate) fn to_integer(&self) -> stack::Result<i64> {
         match self {

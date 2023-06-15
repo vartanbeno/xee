@@ -4,12 +4,12 @@ expression: "evaluate_without_focus(\"12 div 3.0e0\")"
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                Double(
+        stack_value: Atomic(
+            Double(
+                OrderedFloat(
                     4.0,
                 ),
             ),
-        ],
+        ),
     },
 )

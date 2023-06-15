@@ -12,6 +12,7 @@ mod interpreter;
 mod ir;
 mod op;
 mod output;
+mod output2;
 mod query;
 mod run;
 mod span;
@@ -25,7 +26,7 @@ pub use xee_xpath_ast::Namespaces;
 
 pub use crate::context::{DynamicContext, StaticContext};
 pub use crate::error::Error;
-pub use crate::output::{Atomic, Item, Sequence};
+pub use crate::output2::{Atomic, AtomicValue, Item, ItemValue, Sequence};
 pub use crate::query::{
     Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };

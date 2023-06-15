@@ -4,12 +4,10 @@ expression: "run_xml(r#\"<doc><a/><b/><c/></doc>\"#, \"generate-id(doc/a)\")"
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                String(
-                    "id_0_2",
-                ),
+        stack_value: Atomic(
+            String(
+                "id_0_2",
             ),
-        ],
+        ),
     },
 )

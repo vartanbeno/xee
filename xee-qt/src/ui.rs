@@ -2,11 +2,11 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use miette::{miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
-use crate::assert::{TestOutcome, UnexpectedError};
+use crate::assert::TestOutcome;
+use crate::error::{Error, Result};
 use crate::qt;
 use crate::run::RunContext;
 
@@ -26,13 +26,11 @@ pub(crate) fn run_path(mut run_context: RunContext, path: &Path) -> Result<()> {
 
 fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdout) -> Result<()> {
     if !run_context.catalog.file_paths.contains(path) {
-        miette!("File not found in catalog: {:?}", path);
+        return Err(Error::FileNotFoundInCatalog(path.to_path_buf()));
     }
     let verbose = run_context.verbose;
     let full_path = run_context.catalog.base_dir().join(path);
-    let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)
-        .into_diagnostic()
-        .wrap_err("Could not load test set")?;
+    let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
         run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())?;
     } else {
@@ -71,25 +69,17 @@ fn run_test_set<R: Renderer>(
     stdout: &mut Stdout,
     renderer: R,
 ) -> Result<()> {
-    renderer
-        .render_test_set(stdout, test_set, &run_context.catalog)
-        .into_diagnostic()?;
+    renderer.render_test_set(stdout, test_set, &run_context.catalog)?;
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
         if !test_case.is_supported(&run_context.known_dependencies) {
             continue;
         }
-        renderer
-            .render_test_case(stdout, test_case)
-            .into_diagnostic()?;
+        renderer.render_test_case(stdout, test_case)?;
         let outcome = test_case.run(run_context, test_set);
-        renderer
-            .render_test_outcome(stdout, &outcome)
-            .into_diagnostic()?;
+        renderer.render_test_outcome(stdout, &outcome)?;
     }
-    renderer
-        .render_test_set_summary(stdout, test_set)
-        .into_diagnostic()?;
+    renderer.render_test_set_summary(stdout, test_set)?;
     Ok(())
 }
 

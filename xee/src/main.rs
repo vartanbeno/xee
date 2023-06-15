@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::{evaluate_root, Node};
-use xee_xpath::{Atomic, Item};
+use xee_xpath::{Atomic, Item, ItemValue};
 use xot::Xot;
 
 #[derive(Parser)]
@@ -50,8 +50,8 @@ fn main() -> Result<()> {
                 .into_diagnostic()
                 .wrap_err("Cannot parse XML")?;
             let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
-            for item in result.items() {
-                display_item(&xot, item)
+            for item in result.iter() {
+                display_item(&xot, &item)
                     .into_diagnostic()
                     .wrap_err("Could not display item")?;
             }
@@ -61,12 +61,12 @@ fn main() -> Result<()> {
 }
 
 fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
-    match item {
-        Item::Node(node) => {
-            println!("node: \n{}", display_node(xot, *node)?);
+    match item.value() {
+        ItemValue::Node(node) => {
+            println!("node: \n{}", display_node(xot, node)?);
         }
-        Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
-        Item::Function(function) => println!("{:?}", function),
+        ItemValue::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
+        ItemValue::Function(function) => println!("{:?}", function),
     }
     Ok(())
 }

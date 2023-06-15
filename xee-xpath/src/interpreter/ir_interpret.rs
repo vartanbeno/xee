@@ -533,7 +533,7 @@ mod tests {
 
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
-    use crate::output;
+    use crate::output2 as output;
     use crate::run::evaluate;
     use crate::stack;
     use crate::xml;
@@ -544,10 +544,11 @@ mod tests {
     }
 
     fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
-        output::Sequence::new(
-            node.iter()
-                .map(|&node| output::Item::Node(xml::Node::Xot(node)))
-                .collect(),
+        output::Sequence::from_items(
+            &node
+                .iter()
+                .map(|&node| output::Item::from_node(xml::Node::Xot(node)))
+                .collect::<Vec<_>>(),
         )
     }
 
@@ -1299,8 +1300,8 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                vec![output::Item::Atomic(output::Atomic::String(
-                    "FOO".to_string()
+                vec![output::Item::from_atomic(output::Atomic::from_value(
+                    output::AtomicValue::String("FOO".to_string())
                 ))]
             )],
         ))
@@ -1313,11 +1314,15 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![output::Item::Atomic(output::Atomic::Integer(1))]
+                    vec![output::Item::from_atomic(output::Atomic::from_value(
+                        output::AtomicValue::Integer(1)
+                    ))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![output::Item::Atomic(output::Atomic::Integer(2))]
+                    vec![output::Item::from_atomic(output::Atomic::from_value(
+                        output::AtomicValue::Integer(2)
+                    ))]
                 )
             ]
         ))

@@ -4,12 +4,10 @@ expression: "run_xml(r#\"<doc><a f=\"FOO\"/></doc>\"#, \"doc/a/@f eq 'FOO'\")"
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                Boolean(
-                    true,
-                ),
+        stack_value: Atomic(
+            Boolean(
+                true,
             ),
-        ],
+        ),
     },
 )

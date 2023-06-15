@@ -3,7 +3,7 @@ use miette::Diagnostic;
 use std::fmt;
 
 use xee_xpath::{
-    Atomic, DynamicContext, Error, Item, Name, Namespaces, Sequence, StaticContext, XPath,
+    AtomicValue, DynamicContext, Error, Name, Namespaces, Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -238,8 +238,7 @@ impl AssertCount {
 
 impl Assertable for AssertCount {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let items = sequence.items();
-        let found_len = items.len();
+        let found_len = sequence.len();
         if found_len == self.0 {
             TestOutcome::Passed
         } else {
@@ -311,8 +310,7 @@ impl AssertEmpty {
 
 impl Assertable for AssertEmpty {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let items = sequence.items();
-        if items.is_empty() {
+        if sequence.is_empty() {
             TestOutcome::Passed
         } else {
             TestOutcome::Failed(Failure::Empty(self.clone(), sequence.clone()))
@@ -340,12 +338,14 @@ impl AssertTrue {
 
 impl Assertable for AssertTrue {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let items = sequence.items();
-        if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(true))) {
-            TestOutcome::Passed
-        } else {
-            TestOutcome::Failed(Failure::True(self.clone(), sequence.clone()))
+        if let Ok(item) = sequence.one() {
+            if let Ok(atomic) = item.to_atomic() {
+                if matches!(atomic.value(), AtomicValue::Boolean(true)) {
+                    return TestOutcome::Passed;
+                }
+            }
         }
+        TestOutcome::Failed(Failure::True(self.clone(), sequence.clone()))
     }
 }
 
@@ -360,12 +360,14 @@ impl AssertFalse {
 
 impl Assertable for AssertFalse {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let items = sequence.items();
-        if items.len() == 1 && matches!(items[0], Item::Atomic(Atomic::Boolean(false))) {
-            TestOutcome::Passed
-        } else {
-            TestOutcome::Failed(Failure::False(self.clone(), sequence.clone()))
+        if let Ok(item) = sequence.one() {
+            if let Ok(atomic) = item.to_atomic() {
+                if matches!(atomic.value(), AtomicValue::Boolean(false)) {
+                    return TestOutcome::Passed;
+                }
+            }
         }
+        TestOutcome::Failed(Failure::False(self.clone(), sequence.clone()))
     }
 }
 
@@ -380,8 +382,7 @@ impl AssertStringValue {
 
 impl Assertable for AssertStringValue {
     fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        let items = sequence.items();
-        let strings = items
+        let strings = sequence
             .iter()
             .map(|item| item.string_value(xot))
             .collect::<Result<Vec<_>, _>>();
@@ -401,7 +402,7 @@ impl Assertable for AssertStringValue {
             // we weren't able to produce a string value
             Err(_) => TestOutcome::Failed(Failure::StringValue(
                 self.clone(),
-                AssertStringValueFailure::WrongValue(items.to_vec()),
+                AssertStringValueFailure::WrongValue(sequence.clone()),
             )),
         }
     }
@@ -547,13 +548,13 @@ impl TestCaseResult {
 #[derive(Debug, PartialEq)]
 pub enum AssertCountFailure {
     WrongCount(usize),
-    WrongValue(Vec<Item>),
+    WrongValue(Sequence),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum AssertStringValueFailure {
     WrongStringValue(String),
-    WrongValue(Vec<Item>),
+    WrongValue(Sequence),
 }
 
 #[derive(Debug, PartialEq)]
@@ -673,7 +674,7 @@ fn run_xpath_with_result(
     let names = vec![name.clone()];
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let variables = vec![(name, sequence.items().to_vec())];
+    let variables = vec![(name, sequence.iter().collect())];
     let dynamic_context = DynamicContext::with_variables(&xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }

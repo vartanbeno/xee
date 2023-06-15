@@ -4,12 +4,20 @@ expression: "run_xml(r#\"<doc><p>Hello world!</p></doc>\"#, \"/doc/p/string()\")
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                String(
-                    "Hello world!",
-                ),
+        stack_value: Sequence(
+            Sequence(
+                RefCell {
+                    value: InnerSequence {
+                        items: [
+                            Atomic(
+                                String(
+                                    "Hello world!",
+                                ),
+                            ),
+                        ],
+                    },
+                },
             ),
-        ],
+        ),
     },
 )

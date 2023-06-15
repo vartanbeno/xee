@@ -4,6 +4,14 @@ expression: "run_xml(r#\"<doc><a/></doc>\"#, \"doc/a/@f eq 'FOO'\")"
 ---
 Ok(
     Sequence {
-        items: [],
+        stack_value: Sequence(
+            Sequence(
+                RefCell {
+                    value: InnerSequence {
+                        items: [],
+                    },
+                },
+            ),
+        ),
     },
 )

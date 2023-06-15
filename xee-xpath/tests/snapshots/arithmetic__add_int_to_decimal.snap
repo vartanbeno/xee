@@ -4,12 +4,10 @@ expression: "evaluate_without_focus(\"12 + 15.4\")"
 ---
 Ok(
     Sequence {
-        items: [
-            Atomic(
-                Decimal(
-                    27.4,
-                ),
+        stack_value: Atomic(
+            Decimal(
+                27.4,
             ),
-        ],
+        ),
     },
 )

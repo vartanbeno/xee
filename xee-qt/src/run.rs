@@ -209,7 +209,7 @@ mod tests {
     use std::path::PathBuf;
     use tempfile::tempdir;
 
-    use xee_xpath::{Atomic, Error, Sequence};
+    use xee_xpath::{Atomic, AtomicValue, Error, Sequence};
 
     use crate::assert;
     use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};
@@ -278,7 +278,9 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::True(
                 assert::AssertTrue,
-                Sequence::new(vec![Item::Atomic(Atomic::Boolean(false))])
+                Sequence::from_items(&[Item::from_atomic(Atomic::from_value(
+                    AtomicValue::Boolean(false)
+                ))])
             ))
         );
     }
@@ -503,7 +505,9 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
                 assert::AssertEq::new(qt::XPathExpr("6".to_string())),
-                Sequence::new(vec![Item::Atomic(Atomic::Integer(5))])
+                Sequence::from_items(&[Item::from_atomic(Atomic::from_value(
+                    AtomicValue::Integer(5)
+                ))])
             ))
         );
     }

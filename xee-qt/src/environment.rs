@@ -22,7 +22,7 @@ impl EnvironmentSpec {
         for source in &self.sources {
             if let qt::SourceRole::Context = source.role {
                 let node = source.node(xot, &self.base_dir, source_cache)?;
-                return Ok(Some(Item::Node(node)));
+                return Ok(Some(Item::from_node(node)));
             }
         }
         Ok(None)
@@ -38,7 +38,7 @@ impl EnvironmentSpec {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, source_cache)?;
-                variables.push((Name::without_ns(name), vec![Item::Node(node)]));
+                variables.push((Name::without_ns(name), vec![Item::from_node(node)]));
             }
         }
         Ok(variables)

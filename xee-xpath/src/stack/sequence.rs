@@ -5,7 +5,6 @@ use std::vec;
 use xot::Xot;
 
 use crate::context::DynamicContext;
-use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -31,9 +30,16 @@ impl Sequence {
     pub(crate) fn from_items(items: &[stack::Item]) -> Self {
         Self::new(InnerSequence::from_items(items))
     }
-
     pub(crate) fn from_item(item: stack::Item) -> Self {
         Self::new(InnerSequence::from_item(item))
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.borrow().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.borrow().is_empty()
     }
 
     pub fn borrow(&self) -> std::cell::Ref<InnerSequence> {
@@ -41,11 +47,6 @@ impl Sequence {
     }
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
-    }
-
-    pub(crate) fn to_output(&self) -> output::Sequence {
-        let s = self.0.borrow();
-        output::Sequence::new(s.items.iter().map(|i| i.to_output()).collect())
     }
 
     pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {

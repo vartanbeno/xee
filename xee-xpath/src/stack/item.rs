@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -14,17 +13,9 @@ pub(crate) enum Item {
 }
 
 impl Item {
-    pub(crate) fn to_output(&self) -> output::Item {
+    pub(crate) fn to_atomic(&self) -> stack::Result<stack::Atomic> {
         match self {
-            Item::Atomic(a) => output::Item::Atomic(a.to_output()),
-            Item::Function(f) => output::Item::Function(f.to_output()),
-            Item::Node(n) => output::Item::Node(*n),
-        }
-    }
-
-    pub(crate) fn to_atomic(&self) -> stack::Result<&stack::Atomic> {
-        match self {
-            Item::Atomic(a) => Ok(a),
+            Item::Atomic(a) => Ok(a.clone()),
             _ => Err(stack::Error::Type),
         }
     }
