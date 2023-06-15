@@ -24,10 +24,10 @@ pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::Namespaces;
 
 pub use crate::context::{DynamicContext, StaticContext};
-pub use crate::error::Error;
+pub use crate::error::{Error, Result};
 pub use crate::output::{Atomic, AtomicValue, Item, ItemValue, Sequence};
 pub use crate::query::{
-    Convert, ConvertError, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
+    Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
 pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
 pub use crate::xml::Node;

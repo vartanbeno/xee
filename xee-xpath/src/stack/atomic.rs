@@ -77,18 +77,18 @@ impl Atomic {
 
     // XXX is this named right? It's consistent with  to_double, to_bool, etc,
     // but inconsistent with the to_string Rust convention
-    pub fn to_str(&self) -> stack::Result<&str> {
+    pub(crate) fn to_str(&self) -> stack::Result<&str> {
         match self {
             Atomic::String(s) => Ok(s),
             _ => Err(stack::Error::Type),
         }
     }
 
-    pub fn to_string(&self) -> stack::Result<String> {
+    pub(crate) fn to_string(&self) -> stack::Result<String> {
         Ok(self.to_str()?.to_string())
     }
 
-    pub fn string_value(&self) -> stack::Result<String> {
+    pub(crate) fn string_value(&self) -> stack::Result<String> {
         Ok(match self {
             Atomic::String(s) => s.to_string(),
             Atomic::Untyped(s) => s.to_string(),

@@ -54,6 +54,9 @@ pub enum Error {
         #[label("Type error")]
         span: SourceSpan,
     },
+    #[error("Type error")]
+    #[diagnostic(code(XPTY0004))]
+    XPTY0004A,
     /// Empty Sequence type error.
     ///
     /// During the analysis phase, it is a static error if the static type
@@ -639,6 +642,20 @@ impl From<xee_xpath_ast::Error> for Error {
     fn from(e: xee_xpath_ast::Error) -> Self {
         match e {
             xee_xpath_ast::Error::ParseError { src, span } => Error::XPST0003 { src, span },
+        }
+    }
+}
+
+impl From<stack::Error> for Error {
+    fn from(e: stack::Error) -> Self {
+        match e {
+            stack::Error::XPTY0004 => Error::XPTY0004A,
+            stack::Error::Type => Error::XPTY0004A,
+            stack::Error::Overflow => Error::FOAR0002,
+            stack::Error::StackOverflow => Error::XPDY0130,
+            stack::Error::DivisionByZero => Error::FOAR0001,
+            stack::Error::Absent => Error::XPDY0002A,
+            stack::Error::Error(e) => e,
         }
     }
 }

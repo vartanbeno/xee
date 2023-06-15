@@ -2,6 +2,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use std::fmt::{self, Display, Formatter};
 
+use crate::error;
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -66,15 +67,15 @@ impl Atomic {
         }
     }
 
-    pub fn to_str(&self) -> stack::Result<&str> {
-        self.stack_atomic.to_str()
+    pub fn to_str(&self) -> error::Result<&str> {
+        Ok(self.stack_atomic.to_str()?)
     }
 
-    pub fn to_string(&self) -> stack::Result<String> {
+    pub fn to_string(&self) -> error::Result<String> {
         Ok(self.to_str()?.to_string())
     }
 
-    pub fn string_value(&self) -> stack::Result<String> {
-        self.stack_atomic.string_value()
+    pub fn string_value(&self) -> error::Result<String> {
+        Ok(self.stack_atomic.string_value()?)
     }
 }

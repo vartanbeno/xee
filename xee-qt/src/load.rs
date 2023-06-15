@@ -5,9 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
-use xee_xpath::{
-    ConvertError, DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext,
-};
+use xee_xpath::{DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
 use xot::Xot;
 
 use crate::assert;
@@ -105,7 +103,7 @@ fn test_set_query<'a>(
     Ok((queries, test_set_query))
 }
 
-fn convert_string(_: &Session, item: &Item) -> std::result::Result<String, ConvertError> {
+fn convert_string(_: &Session, item: &Item) -> xee_xpath::Result<String> {
     Ok(item.to_atomic()?.to_string()?)
 }
 

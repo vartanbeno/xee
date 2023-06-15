@@ -1,3 +1,4 @@
+use crate::error;
 use crate::output;
 use crate::output::item::{StackItem, StackValue};
 use crate::stack;
@@ -58,9 +59,9 @@ impl Sequence {
         }
     }
 
-    pub fn one(&self) -> stack::Result<output::Item> {
+    pub fn one(&self) -> error::Result<output::Item> {
         match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Empty) => Err(stack::Error::Type),
+            stack::Value::Atomic(stack::Atomic::Empty) => Err(error::Error::XPTY0004A),
             stack::Value::Atomic(_)
             | stack::Value::Node(_)
             | stack::Value::Closure(_)
@@ -70,7 +71,7 @@ impl Sequence {
             stack::Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 if sequence.len() != 1 {
-                    return Err(stack::Error::Type);
+                    return Err(error::Error::XPTY0004A);
                 }
                 Ok(output::Item::StackItem(StackItem(
                     (sequence.as_slice()[0]).clone(),
@@ -79,7 +80,7 @@ impl Sequence {
         }
     }
 
-    pub fn option(&self) -> stack::Result<Option<output::Item>> {
+    pub fn option(&self) -> error::Result<Option<output::Item>> {
         match &self.stack_value {
             stack::Value::Atomic(stack::Atomic::Empty) => Ok(None),
             stack::Value::Atomic(_)
@@ -94,7 +95,7 @@ impl Sequence {
                     return Ok(None);
                 }
                 if sequence.len() > 1 {
-                    return Err(stack::Error::Type);
+                    return Err(error::Error::XPTY0004A);
                 }
                 Ok(Some(output::Item::StackItem(StackItem(
                     (sequence.as_slice()[0]).clone(),
@@ -102,39 +103,13 @@ impl Sequence {
             }
         }
     }
-    pub fn effective_boolean_value(&self) -> std::result::Result<bool, crate::error::Error> {
+    pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self.stack_value.effective_boolean_value() {
             Ok(b) => Ok(b),
             // TODO should handle errors better here
             Err(_) => Err(crate::Error::FORG0006),
         }
     }
-
-    // pub fn items(&self) -> &[output::Item] {
-    //     match self.stack_value {
-    //         stack::Value::Atomic(stack::Atomic::Empty) => &[],
-    //         stack::Value::Sequence(sequence) => sequence.borrow().as_slice(),
-    //         _ => unreachable!("Not a sequence"),
-    //     }
-    // }
-
-    // XXX unfortunate duplication with effective_boolean_value
-    // on Value
-    // pub fn effective_boolean_value(&self) -> std::result::Result<bool, crate::error::Error> {
-    //     if self.items.is_empty() {
-    //         return Ok(false);
-    //     }
-    //     if matches!(self.items[0], output::Item::Node(_)) {
-    //         return Ok(true);
-    //     }
-    //     if self.items.len() != 1 {
-    //         return Err(crate::Error::FORG0006);
-    //     }
-    //     match self.items[0].to_bool() {
-    //         Ok(b) => Ok(b),
-    //         Err(_) => Err(crate::Error::FORG0006),
-    //     }
-    // }
 }
 
 pub struct SequenceIter {

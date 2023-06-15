@@ -1,15 +1,11 @@
 use crate::context::{DynamicContext, StaticContext};
-use crate::error::Error;
-use crate::error::Result;
+use crate::error;
 use crate::output;
 use crate::stack;
 use crate::xpath::XPath;
 
-pub trait Convert<V>: Fn(&Session, &output::Item) -> std::result::Result<V, ConvertError> {}
-impl<V, T> Convert<V> for T where
-    T: Fn(&Session, &output::Item) -> std::result::Result<V, ConvertError>
-{
-}
+pub trait Convert<V>: Fn(&Session, &output::Item) -> error::Result<V> {}
+impl<V, T> Convert<V> for T where T: Fn(&Session, &output::Item) -> error::Result<V> {}
 
 // Recursion was very hard to get right. The trick is to use an intermediate
 // struct.
@@ -18,7 +14,7 @@ impl<V, T> Convert<V> for T where
 // The dyn and dereference are unavoidable, as closures are not allowed
 // to refer to themselves:
 // https://github.com/rust-lang/rust/issues/46062
-type RecurseFn<'s, V> = &'s dyn Fn(&Session, &output::Item, &Recurse<'s, V>) -> Result<V>;
+type RecurseFn<'s, V> = &'s dyn Fn(&Session, &output::Item, &Recurse<'s, V>) -> error::Result<V>;
 
 pub struct Recurse<'s, V> {
     f: RecurseFn<'s, V>,
@@ -28,24 +24,21 @@ impl<'s, V> Recurse<'s, V> {
     pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
-    pub fn execute(&self, session: &Session, item: &output::Item) -> Result<V> {
+    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
         (self.f)(session, item, self)
     }
 }
 
-pub trait ConvertRecurse<V>:
-    Fn(&Session, &output::Item) -> std::result::Result<V, ConvertError>
-{
-}
-/// Convert functions may return either a ValueError, or do queries of their
-/// own, which can result in a Error. We want to handle them both.
-#[derive(Debug, thiserror::Error)]
-pub enum ConvertError {
-    #[error("Value error")]
-    ValueError(#[from] stack::Error),
-    #[error("Error")]
-    Error(#[from] Error),
-}
+pub trait ConvertRecurse<V>: Fn(&Session, &output::Item) -> error::Result<V> {}
+// /// Convert functions may return either an Error, or do queries of their
+// /// own, which can result in a Error. We want to handle them both.
+// #[derive(Debug, thiserror::Error)]
+// pub enum ConvertError {
+//     #[error("Value error")]
+//     ValueError(#[from] stack::Error),
+//     #[error("Error")]
+//     Error(#[from] Error),
+// }
 
 #[derive(Debug)]
 pub struct Queries<'s> {
@@ -65,14 +58,14 @@ impl<'s> Queries<'s> {
         Session::new(dynamic_context, self)
     }
 
-    fn register(&mut self, s: &str) -> Result<usize> {
+    fn register(&mut self, s: &str) -> error::Result<usize> {
         let xpath = XPath::new(self.static_context, s)?;
         let id = self.queries.len();
         self.queries.push(xpath);
         Ok(id)
     }
 
-    pub fn one<V, F>(&mut self, s: &str, convert: F) -> Result<OneQuery<V, F>>
+    pub fn one<V, F>(&mut self, s: &str, convert: F) -> error::Result<OneQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -84,12 +77,12 @@ impl<'s> Queries<'s> {
         })
     }
 
-    pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
+    pub fn one_recurse(&mut self, s: &str) -> error::Result<OneRecurseQuery> {
         let id = self.register(s)?;
         Ok(OneRecurseQuery { id })
     }
 
-    pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
+    pub fn option<V, F>(&mut self, s: &str, convert: F) -> error::Result<OptionQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -101,12 +94,12 @@ impl<'s> Queries<'s> {
         })
     }
 
-    pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
+    pub fn option_recurse(&mut self, s: &str) -> error::Result<OptionRecurseQuery> {
         let id = self.register(s)?;
         Ok(OptionRecurseQuery { id })
     }
 
-    pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
+    pub fn many<V, F>(&mut self, s: &str, convert: F) -> error::Result<ManyQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -118,7 +111,7 @@ impl<'s> Queries<'s> {
         })
     }
 
-    pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
+    pub fn many_recurse(&mut self, s: &str) -> error::Result<ManyRecurseQuery> {
         let id = self.register(s)?;
         Ok(ManyRecurseQuery { id })
     }
@@ -144,7 +137,7 @@ impl<'s> Session<'s> {
 }
 
 pub trait Query<V> {
-    fn execute(&self, session: &Session, item: &output::Item) -> Result<V>;
+    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V>;
 }
 
 #[derive(Debug, Clone)]
@@ -161,10 +154,10 @@ impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> Result<V> {
+    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.one(session.dynamic_context, Some(item))?;
-        (self.convert)(session, &item).map_err(|query_error| error(xpath, query_error))
+        (self.convert)(session, &item)
     }
 }
 
@@ -172,7 +165,7 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> Result<V> {
+    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
         Self::execute(self, session, item)
     }
 }
@@ -188,7 +181,7 @@ impl OneRecurseQuery {
         session: &Session,
         item: &output::Item,
         recurse: &Recurse<V>,
-    ) -> Result<V> {
+    ) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.one(session.dynamic_context, Some(item))?;
         recurse.execute(session, &item)
@@ -209,13 +202,13 @@ impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> Result<Option<V>> {
+    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.option(session.dynamic_context, Some(item))?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
-                Err(query_error) => Err(error(xpath, query_error)),
+                Err(query_error) => Err(query_error),
             }
         } else {
             Ok(None)
@@ -227,7 +220,7 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> Result<Option<V>> {
+    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Option<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -243,7 +236,7 @@ impl OptionRecurseQuery {
         session: &Session,
         item: &output::Item,
         recurse: &Recurse<V>,
-    ) -> Result<Option<V>> {
+    ) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.option(session.dynamic_context, Some(item))?;
         if let Some(item) = item {
@@ -268,14 +261,14 @@ impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> Result<Vec<V>> {
+    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
         let sequence = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.iter() {
             match (self.convert)(session, &item) {
                 Ok(value) => values.push(value),
-                Err(query_error) => return Err(error(xpath, query_error)),
+                Err(query_error) => return Err(query_error),
             }
         }
         Ok(values)
@@ -286,7 +279,7 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> Result<Vec<V>> {
+    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Vec<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -302,7 +295,7 @@ impl ManyRecurseQuery {
         session: &Session,
         item: &output::Item,
         recurse: &Recurse<V>,
-    ) -> Result<Vec<V>> {
+    ) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
         let sequence = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
@@ -313,14 +306,14 @@ impl ManyRecurseQuery {
     }
 }
 
-fn error(xpath: &XPath, convert_error: ConvertError) -> Error {
-    match convert_error {
-        ConvertError::ValueError(value_error) => {
-            Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
-        }
-        ConvertError::Error(error) => error,
-    }
-}
+// fn error(xpath: &XPath, convert_error: ConvertError) -> Error {
+//     match convert_error {
+//         ConvertError::ValueError(value_error) => {
+//             Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
+//         }
+//         ConvertError::Error(error) => error,
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -341,7 +334,7 @@ mod tests {
         let q = queries
             .one("1 + 2", |_, item| match item.to_atomic()?.value() {
                 output::AtomicValue::Integer(i) => Ok(i),
-                _ => Err(ConvertError::ValueError(stack::Error::Type)),
+                _ => Err(error::Error::XPTY0004A),
             })
             .unwrap();
 
@@ -360,7 +353,7 @@ mod tests {
     }
 
     #[test]
-    fn test_one_query_recurse() -> Result<()> {
+    fn test_one_query_recurse() -> error::Result<()> {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
@@ -391,7 +384,7 @@ mod tests {
                     Ok(Expr::Empty)
                 };
                 let recurse = Recurse::new(&f);
-                Ok(recurse.execute(session, item)?)
+                recurse.execute(session, item)
             })?;
 
         let mut xot = Xot::new();

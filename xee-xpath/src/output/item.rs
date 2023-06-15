@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::error;
 use crate::output;
 use crate::stack;
 use crate::xml;
@@ -72,25 +73,24 @@ impl Item {
         }
     }
 
-    // TODO these should not return ValueResult as they're in the public API
-    pub fn to_atomic(&self) -> stack::Result<output::Atomic> {
+    pub fn to_atomic(&self) -> error::Result<output::Atomic> {
         Ok(match self {
             Item::StackValue(StackValue(v)) => output::Atomic::new((v).to_atomic()?),
             Item::StackItem(StackItem(i)) => output::Atomic::new(i.to_atomic()?),
         })
     }
 
-    pub fn to_node(&self) -> stack::Result<xml::Node> {
-        match self {
+    pub fn to_node(&self) -> error::Result<xml::Node> {
+        Ok(match self {
             Item::StackValue(StackValue(v)) => v.to_node(),
             Item::StackItem(StackItem(i)) => i.to_node(),
-        }
+        }?)
     }
 
-    pub fn string_value(&self, xot: &Xot) -> stack::Result<String> {
-        match self {
+    pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
+        Ok(match self {
             Item::StackValue(StackValue(v)) => v.string_value(xot),
             Item::StackItem(StackItem(i)) => i.string_value(xot),
-        }
+        }?)
     }
 }
