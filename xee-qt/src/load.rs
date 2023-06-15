@@ -104,7 +104,7 @@ fn test_set_query<'a>(
 }
 
 fn convert_string(_: &Session, item: &Item) -> xee_xpath::Result<String> {
-    Ok(item.to_atomic()?.to_string()?)
+    item.to_atomic()?.to_string()
 }
 
 fn metadata_query<'a>(
@@ -289,7 +289,7 @@ fn test_cases_query<'a>(
             Ok(r)
         };
         let recurse = Recurse::new(&f);
-        Ok(recurse.execute(session, item)?)
+        recurse.execute(session, item)
     })?;
 
     let test_query = queries.many("test-case", move |session, item| {

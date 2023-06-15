@@ -39,9 +39,9 @@ impl Item {
         match self {
             Item::StackValue(StackValue(v)) => match v {
                 stack::Value::Atomic(a) => ItemValue::Atomic(output::Atomic::new(a.clone())),
-                stack::Value::Sequence(s) => unreachable!("item can never be sequence"),
+                stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
                 stack::Value::Closure(f) => ItemValue::Function(f.to_output()),
-                stack::Value::Step(s) => unreachable!(),
+                stack::Value::Step(_) => unreachable!(),
                 stack::Value::Node(n) => ItemValue::Node(*n),
             },
             Item::StackItem(StackItem(i)) => match i {
@@ -63,9 +63,9 @@ impl Item {
         match self {
             Item::StackValue(StackValue(v)) => match v {
                 stack::Value::Atomic(a) => stack::Item::Atomic(a.clone()),
-                stack::Value::Sequence(s) => unreachable!("item can never be sequence"),
+                stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
                 stack::Value::Closure(f) => stack::Item::Function(f.clone()),
-                stack::Value::Step(s) => unreachable!(),
+                stack::Value::Step(_) => unreachable!(),
                 stack::Value::Node(n) => stack::Item::Node(*n),
             },
 

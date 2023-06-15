@@ -1,7 +1,6 @@
 use crate::context::{DynamicContext, StaticContext};
 use crate::error;
 use crate::output;
-use crate::stack;
 use crate::xpath::XPath;
 
 pub trait Convert<V>: Fn(&Session, &output::Item) -> error::Result<V> {}

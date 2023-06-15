@@ -100,14 +100,7 @@ impl XPath {
     ) -> Result<output::Item> {
         let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        match value.into_output().one() {
-            Ok(item) => Ok(item),
-            // TODO this error conversion isn't correct yet
-            Err(e) => Err(Error::XPTY0004 {
-                src: self.program.src.clone(),
-                span: (0, self.program.src.len()).into(),
-            }),
-        }
+        value.into_output().one()
     }
 
     pub fn option(
@@ -117,14 +110,7 @@ impl XPath {
     ) -> Result<Option<output::Item>> {
         let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        match value.into_output().option() {
-            Ok(item) => Ok(item),
-            // TODO this error conversion isn't correct yet
-            Err(e) => Err(Error::XPTY0004 {
-                src: self.program.src.clone(),
-                span: (0, self.program.src.len()).into(),
-            }),
-        }
+        value.into_output().option()
     }
 }
 

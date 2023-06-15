@@ -439,7 +439,7 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &mut Xot, _: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -580,7 +580,7 @@ pub enum Failure {
 impl fmt::Display for Failure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Failure::AnyOf(a, outcomes) => {
+            Failure::AnyOf(_, outcomes) => {
                 writeln!(f, "any of:")?;
                 for outcome in outcomes {
                     match outcome {
@@ -659,7 +659,7 @@ fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence, Error> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let dynamic_context = DynamicContext::new(&xot, &static_context);
+    let dynamic_context = DynamicContext::new(xot, &static_context);
     xpath.many(&dynamic_context, None)
 }
 
@@ -674,6 +674,6 @@ fn run_xpath_with_result(
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
     let variables = vec![(name, sequence.iter().collect())];
-    let dynamic_context = DynamicContext::with_variables(&xot, &static_context, &variables);
+    let dynamic_context = DynamicContext::with_variables(xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }
