@@ -6,7 +6,7 @@ use xot::Xot;
 use xee_xpath_ast::ast;
 
 use crate::error::Error;
-use crate::output2 as output;
+use crate::output;
 use crate::stack;
 use crate::xml;
 

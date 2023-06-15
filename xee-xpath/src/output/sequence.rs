@@ -1,5 +1,5 @@
-use crate::output2 as output;
-use crate::output2::item::{StackItem, StackValue};
+use crate::output;
+use crate::output::item::{StackItem, StackValue};
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]

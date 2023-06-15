@@ -1,7 +1,7 @@
 use miette::SourceSpan;
 
 use crate::ir;
-use crate::output2 as output;
+use crate::output;
 use crate::stack;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]

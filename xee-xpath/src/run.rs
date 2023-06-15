@@ -4,7 +4,7 @@ use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::Result;
-use crate::output2 as output;
+use crate::output;
 use crate::xml;
 use crate::xpath::XPath;
 

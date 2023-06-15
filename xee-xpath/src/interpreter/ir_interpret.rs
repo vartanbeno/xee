@@ -533,7 +533,7 @@ mod tests {
 
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
-    use crate::output2 as output;
+    use crate::output;
     use crate::run::evaluate;
     use crate::stack;
     use crate::xml;

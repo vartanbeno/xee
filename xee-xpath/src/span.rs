@@ -4,7 +4,7 @@ mod tests {
     use miette::SourceSpan;
 
     use crate::ir::convert_xpath;
-    use crate::output2 as output;
+    use crate::output;
     use crate::{evaluate_without_focus, Error};
 
     fn span(result: Result<output::Sequence, Error>) -> Option<SourceSpan> {

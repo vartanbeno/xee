@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
-use crate::output2 as output;
+use crate::output;
 use crate::stack;
 use crate::xml;
 
