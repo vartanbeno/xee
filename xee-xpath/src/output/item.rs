@@ -75,8 +75,13 @@ impl Item {
 
     pub fn to_atomic(&self) -> error::Result<output::Atomic> {
         Ok(match self {
-            Item::StackValue(StackValue(v)) => output::Atomic::new((v).to_atomic()?),
+            // at this point we *either* refer to a single value, or a stack
+            // item. The stack value can never be multiple values
+            Item::StackValue(StackValue(stack::Value::Atomic(atomic))) => {
+                output::Atomic::new(atomic.clone())
+            }
             Item::StackItem(StackItem(i)) => output::Atomic::new(i.to_atomic()?),
+            _ => return Err(error::Error::XPTY0004A),
         })
     }
 

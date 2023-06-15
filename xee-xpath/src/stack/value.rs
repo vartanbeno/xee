@@ -40,14 +40,6 @@ impl Value {
         output::Sequence::new(self)
     }
 
-    // TODO: how is this related to try_into
-    pub(crate) fn to_atomic(&self) -> stack::Result<stack::Atomic> {
-        match self {
-            Value::Atomic(a) => Ok(a.clone()),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
     pub(crate) fn to_node(&self) -> stack::Result<xml::Node> {
         match self {
             Value::Node(n) => Ok(*n),

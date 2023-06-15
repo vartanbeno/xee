@@ -149,7 +149,7 @@ impl InnerSequence {
         }
     }
 
-    pub(crate) fn atomize(&self, xot: &Xot) -> InnerSequence {
+    fn atomize(&self, xot: &Xot) -> InnerSequence {
         let mut items = Vec::new();
         for item in &self.items {
             match item {

@@ -7,7 +7,9 @@ pub(crate) trait ContextFrom<T>: Sized {
 }
 
 pub(crate) trait ContextTryFrom<T>: Sized {
-    fn context_try_from(value: T, context: &DynamicContext) -> stack::Result<Self>;
+    type Error;
+
+    fn context_try_from(value: T, context: &DynamicContext) -> Result<Self, Self::Error>;
 }
 
 pub(crate) trait ContextInto<T>: Sized {
@@ -15,7 +17,9 @@ pub(crate) trait ContextInto<T>: Sized {
 }
 
 pub(crate) trait ContextTryInto<T>: Sized {
-    fn context_try_into(self, context: &DynamicContext) -> stack::Result<T>;
+    type Error;
+
+    fn context_try_into(self, context: &DynamicContext) -> Result<T, Self::Error>;
 }
 
 impl<T, U> ContextInto<U> for T
@@ -31,7 +35,9 @@ impl<T, U> ContextTryInto<U> for T
 where
     U: ContextTryFrom<T>,
 {
-    fn context_try_into(self, context: &DynamicContext) -> stack::Result<U> {
+    type Error = U::Error;
+
+    fn context_try_into(self, context: &DynamicContext) -> Result<U, Self::Error> {
         U::context_try_from(self, context)
     }
 }

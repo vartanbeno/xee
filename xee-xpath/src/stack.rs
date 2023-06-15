@@ -1,4 +1,5 @@
 mod atomic;
+mod atomized;
 mod convert;
 mod error;
 mod function;
