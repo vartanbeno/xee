@@ -7,4 +7,4 @@ mod sequence;
 pub use atomic::{Atomic, AtomicValue};
 pub use function::Closure;
 pub use item::{Item, ItemValue};
-pub use sequence::Sequence;
+pub use sequence::{AtomizedIter, GeneralizedAtomicIter, Sequence};

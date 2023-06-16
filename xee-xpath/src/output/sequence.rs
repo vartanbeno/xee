@@ -113,11 +113,62 @@ impl Sequence {
         }
     }
 
+    // pub fn atomized<'a>(&self, xot: &'a Xot) -> impl Iterator<Item = output::Atomic> + 'a {
+    //     AtomizedIter {
+    //         atomized_iter: self.stack_value.atomized(xot),
+    //         xot,
+    //     }
+    // }
     pub fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
         AtomizedIter {
             atomized_iter: self.stack_value.atomized(xot),
             xot,
         }
+    }
+
+    pub fn generalized_atomic<'a, T>(
+        &self,
+        xot: &'a Xot,
+        extract: impl Fn(&output::Atomic) -> Option<T>,
+    ) -> GeneralizedAtomicIter<'a, impl Fn(&output::Atomic) -> Option<T>> {
+        GeneralizedAtomicIter {
+            atomized_iter: self.atomized(xot),
+            extract,
+        }
+    }
+
+    pub fn one_atom(&self, xot: &Xot) -> error::Result<output::Atomic> {
+        let mut atomized = self.atomized(xot);
+        if let Some(one) = atomized.next() {
+            if atomized.next().is_none() {
+                Ok(one)
+            } else {
+                Err(error::Error::XPTY0004A)
+            }
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
+    pub fn option_atom(&self, xot: &Xot) -> error::Result<Option<output::Atomic>> {
+        let mut atomized = self.atomized(xot);
+        if let Some(one) = atomized.next() {
+            if atomized.next().is_none() {
+                Ok(Some(one))
+            } else {
+                Err(error::Error::XPTY0004A)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn one_generalized_atomic<T, F>(&self, xot: &Xot, extract: F) -> error::Result<T>
+    where
+        F: Fn(&output::Atomic) -> error::Result<T>,
+    {
+        let atom = self.one_atom(xot)?;
+        extract(&atom)
     }
 }
 
@@ -169,5 +220,25 @@ impl<'a> Iterator for AtomizedIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.atomized_iter.next().map(output::Atomic::new)
+    }
+}
+
+pub struct GeneralizedAtomicIter<'a, F> {
+    atomized_iter: output::AtomizedIter<'a>,
+    extract: F,
+}
+
+impl<'a, T, F> Iterator for GeneralizedAtomicIter<'a, F>
+where
+    F: Fn(&output::Atomic) -> Option<T>,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(atomic) = self.atomized_iter.next() {
+            (self.extract)(&atomic)
+        } else {
+            None
+        }
     }
 }

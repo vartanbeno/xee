@@ -75,7 +75,21 @@ impl Atomic {
         Ok(self.to_str()?.to_string())
     }
 
+    pub fn to_bool(&self) -> error::Result<bool> {
+        if let stack::Atomic::Boolean(b) = self.stack_atomic {
+            Ok(b)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
     pub fn string_value(&self) -> error::Result<String> {
         Ok(self.stack_atomic.string_value()?)
+    }
+}
+
+impl From<bool> for Atomic {
+    fn from(b: bool) -> Self {
+        Self::new(stack::Atomic::Boolean(b))
     }
 }

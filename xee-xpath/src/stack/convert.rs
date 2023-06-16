@@ -9,7 +9,7 @@ use crate::xml;
 
 // Conversions from Value
 
-impl ContextTryFrom<stack::Value> for stack::Atomic {
+impl<'a> ContextTryFrom<'a, stack::Value> for stack::Atomic {
     type Error = stack::Error;
 
     fn context_try_from(value: stack::Value, context: &DynamicContext) -> stack::Result<Self> {
@@ -17,7 +17,7 @@ impl ContextTryFrom<stack::Value> for stack::Atomic {
     }
 }
 
-impl ContextTryFrom<&stack::Value> for stack::Atomic {
+impl<'a> ContextTryFrom<'a, &stack::Value> for stack::Atomic {
     type Error = stack::Error;
 
     fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
@@ -42,7 +42,7 @@ impl ContextTryFrom<&stack::Value> for stack::Atomic {
 //     }
 // }
 
-impl<T> ContextTryFrom<&stack::Value> for T
+impl<'a, T> ContextTryFrom<'a, &stack::Value> for T
 where
     T: TryFrom<stack::Atomic, Error = stack::Error>,
 {
@@ -54,7 +54,7 @@ where
     }
 }
 
-impl ContextTryFrom<&stack::Value> for xml::Node {
+impl<'a> ContextTryFrom<'a, &stack::Value> for xml::Node {
     type Error = stack::Error;
 
     fn context_try_from(value: &stack::Value, _context: &DynamicContext) -> stack::Result<Self> {
@@ -72,7 +72,7 @@ impl ContextTryFrom<&stack::Value> for xml::Node {
 //     }
 // }
 
-impl<T> ContextTryFrom<&stack::Value> for Option<T>
+impl<'a, T> ContextTryFrom<'a, &stack::Value> for Option<T>
 where
     T: TryFrom<stack::Item, Error = stack::Error>,
 {
