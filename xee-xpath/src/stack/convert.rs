@@ -25,7 +25,7 @@ impl<'a> ContextTryFrom<'a, &stack::Value> for stack::Atomic {
         let value = atomized.next();
         if let Some(value) = value {
             if atomized.next().is_none() {
-                Ok(value)
+                value
             } else {
                 Err(stack::Error::Type)
             }

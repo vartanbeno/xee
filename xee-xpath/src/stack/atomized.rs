@@ -8,6 +8,7 @@ pub(crate) enum AtomizedIter<'a> {
     Atomic(AtomizedAtomicIter),
     Node(AtomizedNodeIter),
     Sequence(AtomizedSequenceIter<'a>),
+    Erroring(ErroringAtomizedIter),
 }
 
 impl<'a> AtomizedIter<'a> {
@@ -18,25 +19,21 @@ impl<'a> AtomizedIter<'a> {
             stack::Value::Sequence(sequence) => {
                 AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
-            stack::Value::Closure(_) => {
-                // TODO array case?
-                panic!("need to handle atomizing a function");
-            }
-            stack::Value::Step(_) => {
-                panic!("cannot atomized step");
-            }
+            stack::Value::Closure(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
+            stack::Value::Step(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
         }
     }
 }
 
 impl Iterator for AtomizedIter<'_> {
-    type Item = stack::Atomic;
+    type Item = stack::Result<stack::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            AtomizedIter::Atomic(iter) => iter.next(),
-            AtomizedIter::Node(iter) => iter.next(),
+            AtomizedIter::Atomic(iter) => iter.next().map(|a| Ok(a)),
+            AtomizedIter::Node(iter) => iter.next().map(|a| Ok(a)),
             AtomizedIter::Sequence(iter) => iter.next(),
+            AtomizedIter::Erroring(iter) => iter.next(),
         }
     }
 }
@@ -121,14 +118,14 @@ impl<'a> AtomizedSequenceIter<'a> {
 }
 
 impl<'a> Iterator for AtomizedSequenceIter<'a> {
-    type Item = stack::Atomic;
+    type Item = stack::Result<stack::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.index < self.sequence.len() {
             // if there are any more atomized nodes to iterate, do that
             if let Some(node_iter) = &mut self.node_iter {
                 if let Some(item) = node_iter.next() {
-                    return Some(item);
+                    return Some(Ok(item));
                 } else {
                     self.index += 1;
                     self.node_iter = None;
@@ -140,17 +137,28 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
             match item {
                 stack::Item::Atomic(a) => {
                     self.index += 1;
-                    return Some(a.clone());
+                    return Some(Ok(a.clone()));
                 }
                 stack::Item::Node(n) => {
                     self.node_iter = Some(AtomizedNodeIter::new(*n, self.xot));
                     continue;
                 }
                 // TODO: needs to handle the array case
-                stack::Item::Function(..) => panic!("cannot atomize a function yet"),
+                stack::Item::Function(..) => return Some(Err(stack::Error::Type)),
             }
         }
         None
+    }
+}
+
+#[derive(Clone)]
+pub struct ErroringAtomizedIter;
+
+impl Iterator for ErroringAtomizedIter {
+    type Item = stack::Result<stack::Atomic>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(Err(stack::Error::Type))
     }
 }
 
@@ -169,7 +177,7 @@ mod tests {
         let value = stack::Value::Atomic(atomic.clone());
 
         let mut iter = AtomizedIter::new(value, &xot);
-        assert_eq!(iter.next(), Some(atomic));
+        assert_eq!(iter.next(), Some(Ok(atomic)));
         assert_eq!(iter.next(), None);
     }
 
@@ -185,7 +193,7 @@ mod tests {
 
         assert_eq!(
             iter.next(),
-            Some(stack::Atomic::String(Rc::new("Hello".to_string())))
+            Some(Ok(stack::Atomic::String(Rc::new("Hello".to_string()))))
         );
         assert_eq!(iter.next(), None);
     }
@@ -204,12 +212,12 @@ mod tests {
 
         let mut iter = AtomizedIter::new(value, &xot);
 
-        assert_eq!(iter.next(), Some(stack::Atomic::Integer(3)));
+        assert_eq!(iter.next(), Some(Ok(stack::Atomic::Integer(3))));
         assert_eq!(
             iter.next(),
-            Some(stack::Atomic::String(Rc::new("Hello".to_string())))
+            Some(Ok(stack::Atomic::String(Rc::new("Hello".to_string()))))
         );
-        assert_eq!(iter.next(), Some(stack::Atomic::Integer(4)));
+        assert_eq!(iter.next(), Some(Ok(stack::Atomic::Integer(4))));
         assert_eq!(iter.next(), None);
     }
 }

@@ -126,13 +126,16 @@ impl Sequence {
         }
     }
 
-    pub fn atomized_sequence(&self, xot: &Xot) -> Sequence {
+    pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
         // TODO: conceivably we don't consume the iterator here
         let items = self
             .atomized(xot)
-            .map(output::Item::from_atomic)
-            .collect::<Vec<_>>();
-        Sequence::from_items(&items)
+            .map(|a| {
+                a.map(output::Item::from_atomic)
+                    .map_err(|e| error::Error::XPTY0004A)
+            })
+            .collect::<error::Result<Vec<_>>>()?;
+        Ok(Sequence::from_items(&items))
     }
 
     pub fn generalized_atomic<'a, T>(
@@ -150,7 +153,7 @@ impl Sequence {
         let mut atomized = self.atomized(xot);
         if let Some(one) = atomized.next() {
             if atomized.next().is_none() {
-                Ok(one)
+                Ok(one?)
             } else {
                 Err(error::Error::XPTY0004A)
             }
@@ -163,7 +166,7 @@ impl Sequence {
         let mut atomized = self.atomized(xot);
         if let Some(one) = atomized.next() {
             if atomized.next().is_none() {
-                Ok(Some(one))
+                Ok(Some(one?))
             } else {
                 Err(error::Error::XPTY0004A)
             }
@@ -172,11 +175,14 @@ impl Sequence {
         }
     }
 
+    pub fn many_atom(&self, xot: &Xot) -> error::Result<Vec<output::Atomic>> {
+        self.atomized(xot).collect::<Result<Vec<_>, _>>()
+    }
+
     pub fn one_generalized_atomic<T, F>(&self, xot: &Xot, extract: F) -> error::Result<T>
     where
         F: Fn(&output::Atomic) -> error::Result<T>,
     {
-        // TODO can be rewritten in terms of generalized_atomic iterator
         let atom = self.one_atom(xot)?;
         extract(&atom)
     }
@@ -226,10 +232,13 @@ pub struct AtomizedIter<'a> {
 }
 
 impl<'a> Iterator for AtomizedIter<'a> {
-    type Item = output::Atomic;
+    type Item = error::Result<output::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.atomized_iter.next().map(output::Atomic::new)
+        self.atomized_iter.next().map(|a| {
+            a.map(output::Atomic::new)
+                .map_err(|e| error::Error::XPTY0004A)
+        })
     }
 }
 
@@ -238,17 +247,17 @@ pub struct GeneralizedAtomicIter<'a, F> {
     extract: F,
 }
 
-impl<'a, T, F> Iterator for GeneralizedAtomicIter<'a, F>
-where
-    F: Fn(&output::Atomic) -> Option<T>,
-{
-    type Item = T;
+// impl<'a, T, F> Iterator for GeneralizedAtomicIter<'a, F>
+// where
+//     F: Fn(&output::Atomic) -> Option<T>,
+// {
+//     type Item = T;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(atomic) = self.atomized_iter.next() {
-            (self.extract)(&atomic)
-        } else {
-            None
-        }
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         if let Some(atomic) = self.atomized_iter.next() {
+//             (self.extract)(&atomic)
+//         } else {
+//             None
+//         }
+//     }
+// }

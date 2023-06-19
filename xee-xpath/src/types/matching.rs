@@ -35,7 +35,7 @@ impl output::Sequence {
         xot: &Xot,
     ) -> error::Result<Cow<output::Sequence>> {
         let sequence = if occurrence_item.item_type.is_generalized_atomic_type() {
-            Cow::Owned(self.atomized_sequence(xot))
+            Cow::Owned(self.atomized_sequence(xot)?)
         } else {
             Cow::Borrowed(self)
         };
@@ -231,6 +231,31 @@ mod tests {
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004A));
+        let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
+        assert!(is_owned(right_empty_result));
+    }
+
+    #[test]
+    fn test_many_integer() {
+        let namespaces = Namespaces::default();
+        let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
+
+        let right_sequence =
+            output::Sequence::from_items(&[output::Item::from_atomic(output::Atomic::from(1))]);
+        let right_multi_sequence = output::Sequence::from_items(&[
+            output::Item::from_atomic(output::Atomic::from(1)),
+            output::Item::from_atomic(output::Atomic::from(2)),
+        ]);
+        let right_empty_sequence = output::Sequence::from_items(&[]);
+        let xot = Xot::new();
+
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
+        assert!(is_owned(right_result));
+        let right_multi_result = right_multi_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_multi_result, Ok(Cow::Borrowed(&right_multi_sequence)));
+        assert!(is_owned(right_multi_result));
         let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
         assert!(is_owned(right_empty_result));
