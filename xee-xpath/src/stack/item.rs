@@ -47,4 +47,8 @@ impl Item {
             Item::Function(f) => stack::Value::Closure(f),
         }
     }
+
+    pub(crate) fn to_stack_value(&self) -> stack::Value {
+        self.clone().into_stack_value()
+    }
 }

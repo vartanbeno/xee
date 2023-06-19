@@ -56,8 +56,7 @@ impl Sequence {
 
     pub fn iter(&self) -> SequenceIter {
         SequenceIter {
-            stack_value: self.stack_value.clone(),
-            index: 0,
+            value_iter: stack::ValueIter::new(self.stack_value.clone()),
         }
     }
 
@@ -210,40 +209,16 @@ impl Sequence {
 }
 
 pub struct SequenceIter {
-    stack_value: stack::Value,
-    index: usize,
+    value_iter: stack::ValueIter,
 }
 
 impl Iterator for SequenceIter {
     type Item = output::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Empty) => None,
-            stack::Value::Atomic(_)
-            | stack::Value::Node(_)
-            | stack::Value::Closure(_)
-            | stack::Value::Step(_) => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some(output::Item::StackValue(StackValue(
-                        self.stack_value.clone(),
-                    )))
-                } else {
-                    None
-                }
-            }
-            stack::Value::Sequence(sequence) => {
-                let sequence = sequence.borrow();
-                if self.index < sequence.len() {
-                    let item = sequence.items[self.index].clone();
-                    self.index += 1;
-                    Some(output::Item::StackItem(StackItem(item)))
-                } else {
-                    None
-                }
-            }
-        }
+        self.value_iter
+            .next()
+            .map(|v| output::Item::StackItem(StackItem(v)))
     }
 }
 

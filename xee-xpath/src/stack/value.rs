@@ -225,6 +225,67 @@ impl PartialEq for Value {
     }
 }
 
+pub(crate) struct ValueIter {
+    stack_value: Value,
+    index: usize,
+}
+
+impl ValueIter {
+    pub(crate) fn new(stack_value: Value) -> Self {
+        Self {
+            stack_value,
+            index: 0,
+        }
+    }
+}
+
+impl Iterator for ValueIter {
+    type Item = stack::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match &self.stack_value {
+            stack::Value::Atomic(stack::Atomic::Empty) => None,
+            stack::Value::Atomic(a) => {
+                if self.index == 0 {
+                    self.index += 1;
+                    Some(stack::Item::Atomic(a.clone()))
+                } else {
+                    None
+                }
+            }
+            stack::Value::Node(node) => {
+                if self.index == 0 {
+                    self.index += 1;
+                    Some(stack::Item::Node(*node))
+                } else {
+                    None
+                }
+            }
+            stack::Value::Closure(closure) => {
+                if self.index == 0 {
+                    self.index += 1;
+                    Some(stack::Item::Function(closure.clone()))
+                } else {
+                    None
+                }
+            }
+            stack::Value::Step(_) => {
+                panic!("Unsupported")
+            }
+            stack::Value::Sequence(sequence) => {
+                let sequence = sequence.borrow();
+                if self.index < sequence.len() {
+                    let item = sequence.items[self.index].clone();
+                    self.index += 1;
+                    Some(item)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

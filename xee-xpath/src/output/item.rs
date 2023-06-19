@@ -5,7 +5,7 @@ use crate::output;
 use crate::stack;
 use crate::xml;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Item {
     StackValue(StackValue),
     StackItem(StackItem),
@@ -97,5 +97,20 @@ impl Item {
             Item::StackValue(StackValue(v)) => v.string_value(xot),
             Item::StackItem(StackItem(i)) => i.string_value(xot),
         }?)
+    }
+}
+
+impl PartialEq for Item {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Item::StackValue(StackValue(v1)), Item::StackValue(StackValue(v2))) => v1 == v2,
+            (Item::StackItem(StackItem(i1)), Item::StackItem(StackItem(i2))) => i1 == i2,
+            (Item::StackValue(StackValue(v1)), Item::StackItem(StackItem(i2))) => {
+                v1 == &i2.to_stack_value()
+            }
+            (Item::StackItem(StackItem(i1)), Item::StackValue(StackValue(v2))) => {
+                i1.to_stack_value() == *v2
+            }
+        }
     }
 }
