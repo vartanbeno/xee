@@ -167,6 +167,7 @@ impl Sequence {
     where
         F: Fn(&output::Atomic) -> error::Result<T>,
     {
+        // TODO can be rewritten in terms of generalized_atomic iterator
         let atom = self.one_atom(xot)?;
         extract(&atom)
     }
