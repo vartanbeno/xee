@@ -1,5 +1,4 @@
 mod atomic;
-mod convert;
 mod function;
 mod item;
 mod sequence;
@@ -7,4 +6,4 @@ mod sequence;
 pub use atomic::{Atomic, AtomicValue};
 pub use function::Closure;
 pub use item::{Item, ItemValue};
-pub use sequence::{AtomizedIter, GeneralizedAtomicIter, Sequence};
+pub use sequence::{AtomizedIter, Occurrence, Sequence, UnboxedAtomizedIter};

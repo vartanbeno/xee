@@ -7,6 +7,7 @@ use xot::Xot;
 
 use crate::error;
 use crate::output;
+use crate::output::Occurrence;
 
 impl output::Sequence {
     fn sequence_type_matching(
@@ -41,12 +42,12 @@ impl output::Sequence {
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
-                let one = sequence.one()?;
+                let one = sequence.iter().one()?;
                 one.item_type_matching(&occurrence_item.item_type)?;
                 Ok(sequence)
             }
             ast::Occurrence::Option => {
-                let option = sequence.option()?;
+                let option = sequence.iter().option()?;
                 if let Some(item) = option {
                     item.item_type_matching(&occurrence_item.item_type)?;
                     Ok(sequence)

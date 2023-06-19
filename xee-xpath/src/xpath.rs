@@ -6,6 +6,7 @@ use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Prog
 use crate::ir;
 use crate::ir::IrConverter;
 use crate::output;
+use crate::output::Occurrence;
 use crate::stack;
 use crate::xml;
 
@@ -100,7 +101,7 @@ impl XPath {
     ) -> Result<output::Item> {
         let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        value.into_output().one()
+        value.into_output().iter().one()
     }
 
     pub fn option(
@@ -110,7 +111,7 @@ impl XPath {
     ) -> Result<Option<output::Item>> {
         let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        value.into_output().option()
+        value.into_output().iter().option()
     }
 }
 
