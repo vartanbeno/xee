@@ -6,8 +6,8 @@ use xee_xpath_ast::{ast, XS_NAMESPACE};
 use xot::Xot;
 
 use crate::error;
+use crate::occurrence::Occurrence;
 use crate::output;
-use crate::output::Occurrence;
 
 impl output::Sequence {
     fn sequence_type_matching(

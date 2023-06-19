@@ -1,6 +1,7 @@
 use xot::Xot;
 
 use crate::error;
+use crate::occurrence;
 use crate::output;
 use crate::output::item::{StackItem, StackValue};
 use crate::stack;
@@ -254,15 +255,7 @@ where
     }
 }
 
-pub trait Occurrence {
-    type Item;
-
-    fn one(&mut self) -> error::Result<Self::Item>;
-    fn option(&mut self) -> error::Result<Option<Self::Item>>;
-    fn many(&mut self) -> error::Result<Vec<Self::Item>>;
-}
-
-impl Occurrence for SequenceIter {
+impl occurrence::Occurrence for SequenceIter {
     type Item = output::Item;
 
     fn one(&mut self) -> error::Result<Self::Item> {
@@ -294,7 +287,7 @@ impl Occurrence for SequenceIter {
     }
 }
 
-impl<V, U> Occurrence for U
+impl<V, U> occurrence::Occurrence for U
 where
     U: Iterator<Item = error::Result<V>>,
 {
@@ -332,6 +325,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::occurrence::Occurrence;
 
     #[test]
     fn test_one() {
