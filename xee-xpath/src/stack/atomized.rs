@@ -30,8 +30,8 @@ impl Iterator for AtomizedIter<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            AtomizedIter::Atomic(iter) => iter.next().map(|a| Ok(a)),
-            AtomizedIter::Node(iter) => iter.next().map(|a| Ok(a)),
+            AtomizedIter::Atomic(iter) => iter.next().map(Ok),
+            AtomizedIter::Node(iter) => iter.next().map(Ok),
             AtomizedIter::Sequence(iter) => iter.next(),
             AtomizedIter::Erroring(iter) => iter.next(),
         }

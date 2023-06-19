@@ -132,7 +132,7 @@ impl Sequence {
             .atomized(xot)
             .map(|a| {
                 a.map(output::Item::from_atomic)
-                    .map_err(|e| error::Error::XPTY0004A)
+                    .map_err(|_| error::Error::XPTY0004A)
             })
             .collect::<error::Result<Vec<_>>>()?;
         Ok(Sequence::from_items(&items))
@@ -237,7 +237,7 @@ impl<'a> Iterator for AtomizedIter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.atomized_iter.next().map(|a| {
             a.map(output::Atomic::new)
-                .map_err(|e| error::Error::XPTY0004A)
+                .map_err(|_| error::Error::XPTY0004A)
         })
     }
 }
