@@ -257,6 +257,7 @@ where
 
 impl occurrence::Occurrence for SequenceIter {
     type Item = output::Item;
+    type Error = error::Error;
 
     fn one(&mut self) -> error::Result<Self::Item> {
         if let Some(one) = self.next() {
@@ -292,6 +293,7 @@ where
     U: Iterator<Item = error::Result<V>>,
 {
     type Item = V;
+    type Error = error::Error;
 
     fn one(&mut self) -> error::Result<V> {
         if let Some(one) = self.next() {

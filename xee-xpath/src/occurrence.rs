@@ -1,9 +1,10 @@
-use crate::error;
+use std::result::Result;
 
 pub trait Occurrence {
     type Item;
+    type Error;
 
-    fn one(&mut self) -> error::Result<Self::Item>;
-    fn option(&mut self) -> error::Result<Option<Self::Item>>;
-    fn many(&mut self) -> error::Result<Vec<Self::Item>>;
+    fn one(&mut self) -> Result<Self::Item, Self::Error>;
+    fn option(&mut self) -> Result<Option<Self::Item>, Self::Error>;
+    fn many(&mut self) -> Result<Vec<Self::Item>, Self::Error>;
 }
