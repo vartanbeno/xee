@@ -47,23 +47,32 @@ impl Sequence {
         self.0.borrow_mut()
     }
 
-    pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
+    pub(crate) fn to_one(&self) -> Option<stack::Item> {
         let s = self.0.borrow();
         if s.len() == 1 {
-            Ok(s.items[0].clone())
+            Some(s.items[0].clone())
         } else {
-            Err(stack::Error::Type)
+            None
         }
     }
 
-    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::Item>> {
+    pub(crate) fn to_option(&self) -> Option<Option<stack::Item>> {
         let s = self.0.borrow();
         if s.len() == 1 {
-            Ok(Some(s.items[0].clone()))
+            Some(Some(s.items[0].clone()))
         } else if s.is_empty() {
-            Ok(None)
+            Some(None)
         } else {
-            Err(stack::Error::Type)
+            None
+        }
+    }
+
+    pub(crate) fn to_non_empty(&self) -> Option<stack::Sequence> {
+        let s = self.0.borrow();
+        if s.is_empty() {
+            None
+        } else {
+            Some(self.clone())
         }
     }
 }

@@ -58,7 +58,9 @@ impl<'a> ContextTryFrom<'a, &stack::Value> for xml::Node {
     type Error = stack::Error;
 
     fn context_try_from(value: &stack::Value, _context: &DynamicContext) -> stack::Result<Self> {
-        match value.to_one()? {
+        let item = value.to_one2().ok_or(stack::Error::Type)?;
+
+        match item {
             stack::Item::Node(n) => Ok(n),
             _ => Err(stack::Error::Type),
         }
@@ -78,9 +80,11 @@ where
 {
     type Error = stack::Error;
     fn context_try_from(value: &stack::Value, _context: &DynamicContext) -> stack::Result<Self> {
-        match value.to_option()? {
-            Some(v) => Ok(Some(v.try_into()?)),
-            None => Ok(None),
+        let item = value.to_option2().ok_or(stack::Error::Type)?;
+        if let Some(item) = item {
+            Ok(Some(item.try_into()?))
+        } else {
+            Ok(None)
         }
     }
 }

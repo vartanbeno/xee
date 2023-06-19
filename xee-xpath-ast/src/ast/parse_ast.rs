@@ -1280,6 +1280,29 @@ pub fn parse_signature(input: &str, namespaces: &Namespaces) -> Result<ast::Sign
     }
 }
 
+pub fn parse_sequence_type(
+    input: &str,
+    namespaces: &Namespaces,
+) -> Result<ast::SequenceType, Error> {
+    let ast_parser = AstParser::new(namespaces);
+    let result = parse_rule_start_end(Rule::OuterSequenceType, input, |p| {
+        ast_parser.sequence_type(p)
+    });
+
+    match result {
+        Ok(sequence_type) => Ok(sequence_type),
+        Err(e) => {
+            let src = input.to_string();
+            let location = e.location;
+            let span: SourceSpan = match location {
+                InputLocation::Pos(pos) => (pos, 0).into(),
+                InputLocation::Span((start, end)) => (start, end).into(),
+            };
+            Err(Error::ParseError { src, span })
+        }
+    }
+}
+
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
     Spanned::new(value, (span.start(), span.end() - span.start()).into())
 }

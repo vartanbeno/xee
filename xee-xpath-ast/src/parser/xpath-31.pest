@@ -8,6 +8,8 @@ OuterExprSingle = { SOI ~ ExprSingle ~ EOI }
 
 OuterSignature = { SOI ~ Signature ~ EOI }
 
+OuterSequenceType = { SOI ~ SequenceType ~ EOI }
+
 // ParamList
 // ::= Param ("," Param)*
 ParamList = { Param ~ ("," ~ Param)* }

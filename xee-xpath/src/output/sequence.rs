@@ -126,6 +126,15 @@ impl Sequence {
         }
     }
 
+    pub fn atomized_sequence(&self, xot: &Xot) -> Sequence {
+        // TODO: conceivably we don't consume the iterator here
+        let items = self
+            .atomized(xot)
+            .map(output::Item::from_atomic)
+            .collect::<Vec<_>>();
+        Sequence::from_items(&items)
+    }
+
     pub fn generalized_atomic<'a, T>(
         &self,
         xot: &'a Xot,

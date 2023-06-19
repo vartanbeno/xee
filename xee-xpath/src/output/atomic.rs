@@ -86,10 +86,43 @@ impl Atomic {
     pub fn string_value(&self) -> error::Result<String> {
         Ok(self.stack_atomic.string_value()?)
     }
+
+    pub fn is_boolean(&self) -> bool {
+        matches!(self.stack_atomic, stack::Atomic::Boolean(_))
+    }
+
+    pub fn is_integer(&self) -> bool {
+        matches!(self.stack_atomic, stack::Atomic::Integer(_))
+    }
+
+    pub fn is_float(&self) -> bool {
+        matches!(self.stack_atomic, stack::Atomic::Float(_))
+    }
+
+    pub fn is_double(&self) -> bool {
+        matches!(self.stack_atomic, stack::Atomic::Double(_))
+    }
+
+    pub fn is_decimal(&self) -> bool {
+        matches!(
+            self.stack_atomic,
+            stack::Atomic::Decimal(_) | stack::Atomic::Integer(_)
+        )
+    }
+
+    pub fn is_string(&self) -> bool {
+        matches!(self.stack_atomic, stack::Atomic::String(_))
+    }
 }
 
 impl From<bool> for Atomic {
     fn from(b: bool) -> Self {
         Self::new(stack::Atomic::Boolean(b))
+    }
+}
+
+impl From<i64> for Atomic {
+    fn from(i: i64) -> Self {
+        Self::new(stack::Atomic::Integer(i))
     }
 }

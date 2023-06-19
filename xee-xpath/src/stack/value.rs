@@ -50,7 +50,7 @@ impl Value {
     pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
         match self {
             Value::Atomic(a) => Ok(stack::Item::Atomic(a.clone())),
-            Value::Sequence(s) => s.to_one(),
+            Value::Sequence(s) => s.to_one().ok_or(stack::Error::Type),
             Value::Node(n) => Ok(stack::Item::Node(*n)),
             _ => Err(stack::Error::Type),
         }
@@ -59,9 +59,29 @@ impl Value {
     pub(crate) fn to_option(&self) -> stack::Result<Option<stack::Item>> {
         match self {
             Value::Atomic(a) => Ok(Some(stack::Item::Atomic(a.clone()))),
-            Value::Sequence(s) => s.to_option(),
+            Value::Sequence(s) => s.to_option().ok_or(stack::Error::Type),
             Value::Node(n) => Ok(Some(stack::Item::Node(*n))),
             _ => Err(stack::Error::Type),
+        }
+    }
+
+    pub(crate) fn to_one2(&self) -> Option<stack::Item> {
+        match self {
+            Value::Atomic(stack::Atomic::Empty) => None,
+            Value::Atomic(a) => Some(stack::Item::Atomic(a.clone())),
+            Value::Sequence(s) => s.to_one(),
+            Value::Node(n) => Some(stack::Item::Node(*n)),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn to_option2(&self) -> Option<Option<stack::Item>> {
+        match self {
+            Value::Atomic(stack::Atomic::Empty) => Some(None),
+            Value::Atomic(a) => Some(Some(stack::Item::Atomic(a.clone()))),
+            Value::Sequence(s) => s.to_option(),
+            Value::Node(n) => Some(Some(stack::Item::Node(*n))),
+            _ => None,
         }
     }
 
@@ -75,6 +95,19 @@ impl Value {
             _ => {
                 dbg!("unhandled to_many value {:?}", self);
                 stack::Sequence::empty()
+            }
+        }
+    }
+
+    pub(crate) fn to_non_empty(&self) -> Option<stack::Sequence> {
+        match self {
+            Value::Atomic(stack::Atomic::Empty) => None,
+            Value::Atomic(a) => Some(stack::Sequence::from_atomic(a)),
+            Value::Sequence(s) => s.to_non_empty(),
+            Value::Node(n) => Some(stack::Sequence::from_node(*n)),
+            _ => {
+                dbg!("unhandled to_non_empty value {:?}", self);
+                None
             }
         }
     }
@@ -110,11 +143,39 @@ impl Value {
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
-            Value::Sequence(s) => s.borrow().is_empty(),
+            Value::Sequence(s) => s.is_empty(),
             Value::Atomic(stack::Atomic::Empty) => true,
             _ => false,
         }
     }
+
+    // pub(crate) fn is_one(&self) -> bool {
+    //     match self {
+    //         Value::Sequence(s) => s.len() == 1,
+    //         Value::Atomic(stack::Atomic::Empty) => false,
+    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
+    //     }
+    // }
+
+    // pub(crate) fn is_option(&self) -> bool {
+    //     match self {
+    //         Value::Sequence(s) => s.is_empty() || s.len() == 1,
+    //         Value::Atomic(stack::Atomic::Empty) => true,
+    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
+    //     }
+    // }
+
+    // pub(crate) fn is_many(&self) -> bool {
+    //     true
+    // }
+
+    // pub(crate) fn is_non_empty(&self) -> bool {
+    //     match self {
+    //         Value::Sequence(s) => !s.is_empty(),
+    //         Value::Atomic(stack::Atomic::Empty) => false,
+    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
+    //     }
+    // }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
@@ -149,6 +210,7 @@ impl PartialEq for Value {
         // the other half is not, then we convert the value into a sequence first
         // before comparing
         match (self, other) {
+            (Value::Atomic(stack::Atomic::Empty), Value::Atomic(stack::Atomic::Empty)) => true,
             (Value::Atomic(a), Value::Atomic(b)) => a == b,
             (Value::Sequence(a), Value::Sequence(b)) => a == b,
             (Value::Atomic(stack::Atomic::Empty), Value::Sequence(b)) => b.is_empty(),

@@ -65,6 +65,10 @@ impl Name {
         }
     }
 
+    pub fn namespace(&self) -> Option<&str> {
+        self.namespace.as_deref()
+    }
+
     pub fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         if let Some(namespace) = &self.namespace {
             let namespace_id = xot.namespace(namespace);
@@ -359,6 +363,12 @@ pub enum ItemType {
     FunctionTest(Box<FunctionTest>),
     MapTest(Box<MapTest>),
     ArrayTest(Box<ArrayTest>),
+}
+
+impl ItemType {
+    pub fn is_generalized_atomic_type(&self) -> bool {
+        matches!(self, ItemType::AtomicOrUnionType(_))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
