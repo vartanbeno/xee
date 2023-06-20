@@ -190,7 +190,7 @@ where
 }
 
 pub struct ItemIter {
-    value_iter: stack::ValueIter,
+    value_iter: stack::ItemIter,
 }
 
 impl Iterator for ItemIter {
@@ -202,7 +202,7 @@ impl Iterator for ItemIter {
 }
 
 pub struct NodeIter {
-    value_iter: stack::ValueIter,
+    value_iter: stack::ItemIter,
 }
 
 impl Iterator for NodeIter {

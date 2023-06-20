@@ -14,4 +14,4 @@ pub use function::Closure;
 pub(crate) use function::{ClosureFunctionId, Function, FunctionId, StaticFunctionId};
 pub(crate) use item::Item;
 pub(crate) use sequence::{InnerSequence, Sequence};
-pub(crate) use value::{Value, ValueIter};
+pub(crate) use value::{ItemIter, Value};
