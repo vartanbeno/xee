@@ -3,56 +3,11 @@ use rust_decimal::Decimal;
 use std::convert::TryFrom;
 use std::rc::Rc;
 
-use crate::context::{ContextTryFrom, ContextTryInto, DynamicContext};
+use crate::context::{ContextTryFrom, DynamicContext};
 use crate::stack;
 use crate::xml;
 
 // Conversions from Value
-
-impl<'a> ContextTryFrom<'a, stack::Value> for stack::Atomic {
-    type Error = stack::Error;
-
-    fn context_try_from(value: stack::Value, context: &DynamicContext) -> stack::Result<Self> {
-        ContextTryFrom::context_try_from(&value, context)
-    }
-}
-
-impl<'a> ContextTryFrom<'a, &stack::Value> for stack::Atomic {
-    type Error = stack::Error;
-
-    fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
-        let mut atomized = value.atomized(context.xot);
-        let value = atomized.next();
-        if let Some(value) = value {
-            if atomized.next().is_none() {
-                value
-            } else {
-                Err(stack::Error::Type)
-            }
-        } else {
-            Ok(stack::Atomic::Empty)
-        }
-    }
-}
-
-// impl ContextTryFrom<&Value> for f64 {
-//     fn context_try_from(value: &Value, context: &DynamicContext) -> Result<Self> {
-//         let atomic: stack::Atomic = value.context_try_into(context)?;
-//         atomic.try_into()
-//     }
-// }
-
-impl<'a, T> ContextTryFrom<'a, &stack::Value> for T
-where
-    T: TryFrom<stack::Atomic, Error = stack::Error>,
-{
-    type Error = stack::Error;
-
-    fn context_try_from(value: &stack::Value, context: &DynamicContext) -> stack::Result<Self> {
-        let atomic: stack::Atomic = value.context_try_into(context)?;
-        atomic.try_into()
-    }
-}
 
 impl<'a> ContextTryFrom<'a, &stack::Value> for xml::Node {
     type Error = stack::Error;

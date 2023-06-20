@@ -4,8 +4,9 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::comparison;
-use crate::context::{ContextTryInto, DynamicContext};
+use crate::context::DynamicContext;
 use crate::error::Error;
+use crate::occurrence::ResultOccurrence;
 use crate::op;
 use crate::stack;
 use crate::xml;
@@ -461,8 +462,13 @@ impl<'a> Interpreter<'a> {
     }
 
     fn pop_atomic(&mut self) -> stack::Result<stack::Atomic> {
-        let atomic = self.stack.pop().unwrap();
-        atomic.context_try_into(self.dynamic_context)
+        let value = self.stack.pop().unwrap();
+        let mut atomized = value.atomized(self.dynamic_context.xot);
+        Ok(if let Some(value) = atomized.option()? {
+            value
+        } else {
+            stack::Atomic::Empty
+        })
     }
 
     fn pop_atomic2(&mut self) -> stack::Result<(stack::Atomic, stack::Atomic)> {

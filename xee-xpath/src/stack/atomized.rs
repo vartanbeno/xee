@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::occurrence;
 use crate::stack;
 use crate::xml;
 
@@ -35,6 +36,12 @@ impl Iterator for AtomizedIter<'_> {
             AtomizedIter::Sequence(iter) => iter.next(),
             AtomizedIter::Erroring(iter) => iter.next(),
         }
+    }
+}
+
+impl occurrence::ResultOccurrence<stack::Atomic, stack::Error> for AtomizedIter<'_> {
+    fn error(&self) -> stack::Error {
+        stack::Error::Type
     }
 }
 
