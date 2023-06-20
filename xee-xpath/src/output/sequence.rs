@@ -49,7 +49,9 @@ impl Sequence {
     }
 
     pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
-        // TODO: conceivably we don't consume the iterator here
+        // TODO: conceivably we don't consume the iterator here,
+        // but this would require the Sequence to be aware of an atomized
+        // iterator.
         let items = self
             .atomized(xot)
             .map(|a| {
@@ -63,8 +65,8 @@ impl Sequence {
     pub fn unboxed_atomized<'a, T>(
         &self,
         xot: &'a Xot,
-        extract: impl Fn(&output::Atomic) -> Option<T>,
-    ) -> UnboxedAtomizedIter<'a, impl Fn(&output::Atomic) -> Option<T>> {
+        extract: impl Fn(&output::Atomic) -> error::Result<T>,
+    ) -> UnboxedAtomizedIter<'a, impl Fn(&output::Atomic) -> error::Result<T>> {
         UnboxedAtomizedIter {
             atomized_iter: self.atomized(xot),
             extract,
