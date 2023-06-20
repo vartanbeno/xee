@@ -3,7 +3,6 @@ use xot::Xot;
 use crate::error;
 use crate::occurrence;
 use crate::output;
-use crate::output::item::StackItem;
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -118,9 +117,7 @@ impl Iterator for ItemIter {
     type Item = output::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter
-            .next()
-            .map(|v| output::Item::StackItem(StackItem(v)))
+        self.value_iter.next().map(|v| output::Item::from(v))
     }
 }
 
