@@ -1,30 +1,8 @@
 use ordered_float::OrderedFloat;
-use std::convert::TryFrom;
 use std::rc::Rc;
 
 use crate::stack;
 use crate::xml;
-
-impl TryFrom<stack::Value> for stack::Sequence {
-    type Error = stack::Error;
-
-    fn try_from(value: stack::Value) -> stack::Result<Self> {
-        TryFrom::try_from(&value)
-    }
-}
-
-impl TryFrom<&stack::Value> for stack::Sequence {
-    type Error = stack::Error;
-
-    fn try_from(value: &stack::Value) -> stack::Result<Self> {
-        match value {
-            stack::Value::Sequence(s) => Ok(s.clone()),
-            stack::Value::Atomic(a) => Ok(stack::Sequence::from_atomic(a)),
-            stack::Value::Node(n) => Ok(stack::Sequence::from_node(*n)),
-            _ => Err(stack::Error::Type),
-        }
-    }
-}
 
 // Conversions from Rust values into Value
 
