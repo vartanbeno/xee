@@ -202,6 +202,49 @@ impl Value {
     }
 }
 
+impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
+    type Error = stack::Error;
+
+    fn try_from(value: &'a stack::Value) -> stack::Result<&'a stack::Closure> {
+        match value {
+            stack::Value::Closure(c) => Ok(c),
+            // TODO what about a sequence with a single closure?
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
+impl TryFrom<&stack::Value> for Rc<xml::Step> {
+    type Error = stack::Error;
+
+    fn try_from(value: &stack::Value) -> stack::Result<Rc<xml::Step>> {
+        match value {
+            stack::Value::Step(s) => Ok(Rc::clone(s)),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
+impl TryFrom<stack::Value> for xml::Node {
+    type Error = stack::Error;
+
+    fn try_from(value: stack::Value) -> stack::Result<xml::Node> {
+        TryFrom::try_from(&value)
+    }
+}
+
+impl TryFrom<&stack::Value> for xml::Node {
+    type Error = stack::Error;
+
+    fn try_from(value: &stack::Value) -> stack::Result<xml::Node> {
+        match value {
+            stack::Value::Node(n) => Ok(*n),
+            stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl PartialEq for Value {
     fn eq(&self, other: &Value) -> bool {
         // comparisons between values are tricky, as a value
