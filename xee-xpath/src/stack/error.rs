@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::error::Error as XeeError;
 
 #[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("Type error")]
     XPTY0004,
     #[error("Type error")]
