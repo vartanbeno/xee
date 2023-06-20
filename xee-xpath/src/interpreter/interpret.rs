@@ -49,7 +49,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         function_id: stack::FunctionId,
         context_item: Option<&stack::Item>,
-        arguments: &[Vec<stack::Item>],
+        arguments: Vec<Vec<stack::Item>>,
     ) {
         self.frames.push(Frame {
             function: function_id,
@@ -73,7 +73,7 @@ impl<'a> Interpreter<'a> {
         }
         // and any arguments
         for arg in arguments {
-            self.stack.push(stack::Value::from_items(arg));
+            self.stack.push(stack::Value::from(arg));
         }
     }
 
@@ -579,7 +579,7 @@ mod tests {
         interpreter.start(
             main_id,
             Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
-            &[],
+            vec![],
         );
         interpreter.run_actual()?;
         assert_eq!(
@@ -643,7 +643,7 @@ mod tests {
         interpreter.start(
             main_id,
             Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
-            &[],
+            vec![],
         );
         interpreter.run_actual()?;
         assert_eq!(
@@ -680,7 +680,7 @@ mod tests {
         interpreter.start(
             main_id,
             Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
-            &[],
+            vec![],
         );
         interpreter.run_actual()?;
         assert_eq!(

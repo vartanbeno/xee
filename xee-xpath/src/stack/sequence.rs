@@ -43,6 +43,7 @@ impl Sequence {
     pub fn borrow(&self) -> std::cell::Ref<InnerSequence> {
         self.0.borrow()
     }
+
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
     }

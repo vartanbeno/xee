@@ -27,16 +27,6 @@ impl Value {
         }
     }
 
-    pub(crate) fn from_items(items: &[stack::Item]) -> Self {
-        if items.is_empty() {
-            Value::Atomic(stack::Atomic::Empty)
-        } else if items.len() == 1 {
-            Value::from_item(items[0].clone())
-        } else {
-            Value::Sequence(stack::Sequence::from_items(items))
-        }
-    }
-
     pub(crate) fn into_output(self) -> output::Sequence {
         output::Sequence::new(self)
     }
@@ -114,6 +104,18 @@ impl Value {
             Value::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
+    }
+}
+
+impl From<Vec<stack::Item>> for Value {
+    fn from(items: Vec<stack::Item>) -> Self {
+        if items.is_empty() {
+            Value::Atomic(stack::Atomic::Empty)
+        } else if items.len() == 1 {
+            Value::from_item(items[0].clone())
+        } else {
+            Value::Sequence(stack::Sequence::from_items(&items))
+        }
     }
 }
 

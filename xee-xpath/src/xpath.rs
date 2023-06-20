@@ -48,7 +48,7 @@ impl XPath {
     ) -> Result<stack::Value> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
-        interpreter.start(self.main, context_item, &arguments);
+        interpreter.start(self.main, context_item, arguments);
         interpreter.run()?;
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because
