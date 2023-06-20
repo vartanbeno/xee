@@ -67,14 +67,6 @@ impl Atomic {
         }
     }
 
-    pub fn to_str(&self) -> error::Result<&str> {
-        Ok(self.stack_atomic.to_str()?)
-    }
-
-    pub fn to_string(&self) -> error::Result<String> {
-        Ok(self.to_str()?.to_string())
-    }
-
     pub fn to_bool(&self) -> error::Result<bool> {
         if let stack::Atomic::Boolean(b) = self.stack_atomic {
             Ok(b)
@@ -83,8 +75,44 @@ impl Atomic {
         }
     }
 
-    pub fn string_value(&self) -> error::Result<String> {
-        Ok(self.stack_atomic.string_value()?)
+    pub fn to_integer(&self) -> error::Result<i64> {
+        if let stack::Atomic::Integer(i) = self.stack_atomic {
+            Ok(i)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
+    pub fn to_float(&self) -> error::Result<f32> {
+        if let stack::Atomic::Float(OrderedFloat(n)) = self.stack_atomic {
+            Ok(n)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
+    pub fn to_double(&self) -> error::Result<f64> {
+        if let stack::Atomic::Double(OrderedFloat(d)) = self.stack_atomic {
+            Ok(d)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
+    pub fn to_decimal(&self) -> error::Result<Decimal> {
+        if let stack::Atomic::Decimal(d) = self.stack_atomic {
+            Ok(d)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
+    pub fn to_str(&self) -> error::Result<&str> {
+        Ok(self.stack_atomic.to_str()?)
+    }
+
+    pub fn to_string(&self) -> error::Result<String> {
+        Ok(self.to_str()?.to_string())
     }
 
     pub fn is_boolean(&self) -> bool {
@@ -112,6 +140,10 @@ impl Atomic {
 
     pub fn is_string(&self) -> bool {
         matches!(self.stack_atomic, stack::Atomic::String(_))
+    }
+
+    pub fn string_value(&self) -> error::Result<String> {
+        Ok(self.stack_atomic.string_value()?)
     }
 }
 
