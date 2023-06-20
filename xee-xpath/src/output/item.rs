@@ -40,20 +40,6 @@ impl Item {
         }
     }
 
-    // pub(crate) fn to_stack_item(&self) -> stack::Item {
-    //     match self {
-    //         Item::StackValue(StackValue(v)) => match v {
-    //             stack::Value::Atomic(a) => stack::Item::Atomic(a.clone()),
-    //             stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
-    //             stack::Value::Closure(f) => stack::Item::Function(f.clone()),
-    //             stack::Value::Step(_) => unreachable!(),
-    //             stack::Value::Node(n) => stack::Item::Node(*n),
-    //         },
-
-    //         Item::StackItem(StackItem(i)) => i.clone(),
-    //     }
-    // }
-
     pub fn to_atomic(&self) -> error::Result<output::Atomic> {
         Ok(match self {
             // at this point we *either* refer to a single value, or a stack
@@ -144,3 +130,12 @@ impl From<&output::Item> for stack::Item {
         item.clone().into()
     }
 }
+
+impl TryFrom<&output::Item> for output::Atomic {
+    type Error = error::Error;
+
+    fn try_from(item: &output::Item) -> error::Result<Self> {
+        item.to_atomic()
+    }
+}
+
