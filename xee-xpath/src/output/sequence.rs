@@ -71,50 +71,6 @@ impl Sequence {
         }
     }
 
-    // pub fn one(&self) -> error::Result<output::Item> {
-    //     match &self.stack_value {
-    //         stack::Value::Atomic(stack::Atomic::Empty) => Err(error::Error::XPTY0004A),
-    //         stack::Value::Atomic(_)
-    //         | stack::Value::Node(_)
-    //         | stack::Value::Closure(_)
-    //         | stack::Value::Step(_) => Ok(output::Item::StackValue(StackValue(
-    //             self.stack_value.clone(),
-    //         ))),
-    //         stack::Value::Sequence(sequence) => {
-    //             let sequence = sequence.borrow();
-    //             if sequence.len() != 1 {
-    //                 return Err(error::Error::XPTY0004A);
-    //             }
-    //             Ok(output::Item::StackItem(StackItem(
-    //                 (sequence.as_slice()[0]).clone(),
-    //             )))
-    //         }
-    //     }
-    // }
-
-    // pub fn option(&self) -> error::Result<Option<output::Item>> {
-    //     match &self.stack_value {
-    //         stack::Value::Atomic(stack::Atomic::Empty) => Ok(None),
-    //         stack::Value::Atomic(_)
-    //         | stack::Value::Node(_)
-    //         | stack::Value::Closure(_)
-    //         | stack::Value::Step(_) => Ok(Some(output::Item::StackValue(StackValue(
-    //             self.stack_value.clone(),
-    //         )))),
-    //         stack::Value::Sequence(sequence) => {
-    //             let sequence = sequence.borrow();
-    //             if sequence.is_empty() {
-    //                 return Ok(None);
-    //             }
-    //             if sequence.len() > 1 {
-    //                 return Err(error::Error::XPTY0004A);
-    //             }
-    //             Ok(Some(output::Item::StackItem(StackItem(
-    //                 (sequence.as_slice()[0]).clone(),
-    //             ))))
-    //         }
-    //     }
-    // }
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self.stack_value.effective_boolean_value() {
             Ok(b) => Ok(b),
@@ -122,72 +78,6 @@ impl Sequence {
             Err(_) => Err(crate::Error::FORG0006),
         }
     }
-
-    // pub fn atomized<'a>(&self, xot: &'a Xot) -> impl Iterator<Item = output::Atomic> + 'a {
-    //     AtomizedIter {
-    //         atomized_iter: self.stack_value.atomized(xot),
-    //         xot,
-    //     }
-    // }
-
-    // pub fn one_atom(&self, xot: &Xot) -> error::Result<output::Atomic> {
-    //     let mut atomized = self.atomized(xot);
-    //     if let Some(one) = atomized.next() {
-    //         if atomized.next().is_none() {
-    //             Ok(one?)
-    //         } else {
-    //             Err(error::Error::XPTY0004A)
-    //         }
-    //     } else {
-    //         Err(error::Error::XPTY0004A)
-    //     }
-    // }
-
-    // pub fn option_atom(&self, xot: &Xot) -> error::Result<Option<output::Atomic>> {
-    //     let mut atomized = self.atomized(xot);
-    //     if let Some(one) = atomized.next() {
-    //         if atomized.next().is_none() {
-    //             Ok(Some(one?))
-    //         } else {
-    //             Err(error::Error::XPTY0004A)
-    //         }
-    //     } else {
-    //         Ok(None)
-    //     }
-    // }
-
-    // pub fn many_atom(&self, xot: &Xot) -> error::Result<Vec<output::Atomic>> {
-    //     self.atomized(xot).collect::<Result<Vec<_>, _>>()
-    // }
-
-    // pub fn one_unboxed_atomic<T, F>(&self, xot: &Xot, extract: F) -> error::Result<T>
-    // where
-    //     F: Fn(&output::Atomic) -> error::Result<T>,
-    // {
-    //     let atom = self.one_atom(xot)?;
-    //     extract(&atom)
-    // }
-
-    // pub fn option_unboxed_atomic<T, F>(&self, xot: &Xot, extract: F) -> error::Result<Option<T>>
-    // where
-    //     F: Fn(&output::Atomic) -> error::Result<T>,
-    // {
-    //     let atom = self.option_atom(xot)?;
-    //     match atom {
-    //         Some(atom) => Ok(Some(extract(&atom)?)),
-    //         None => Ok(None),
-    //     }
-    // }
-
-    // pub fn many_unboxed_atomic<T, F>(&self, xot: &Xot, extract: F) -> error::Result<Vec<T>>
-    // where
-    //     F: Fn(&output::Atomic) -> error::Result<T>,
-    // {
-    //     self.many_atom(xot)?
-    //         .into_iter()
-    //         .map(|a| extract(&a))
-    //         .collect::<Result<Vec<_>, _>>()
-    // }
 }
 
 impl From<stack::Value> for Sequence {
