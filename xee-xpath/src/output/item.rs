@@ -23,18 +23,6 @@ pub struct StackValue(pub(crate) stack::Value);
 pub struct StackItem(pub(crate) stack::Item);
 
 impl Item {
-    pub(crate) fn from_stack_item(stack_item: stack::Item) -> Self {
-        Item::StackItem(StackItem(stack_item))
-    }
-
-    pub fn from_node(node: xml::Node) -> Self {
-        Item::StackValue(StackValue(stack::Value::Node(node)))
-    }
-
-    pub fn from_atomic(atomic: output::Atomic) -> Self {
-        Item::StackValue(StackValue(stack::Value::Atomic(atomic.stack_atomic)))
-    }
-
     pub fn value(&self) -> ItemValue {
         match self {
             Item::StackValue(StackValue(v)) => match v {
@@ -112,5 +100,23 @@ impl PartialEq for Item {
                 i1.to_stack_value() == *v2
             }
         }
+    }
+}
+
+impl From<stack::Item> for output::Item {
+    fn from(stack_item: stack::Item) -> Self {
+        Item::StackItem(StackItem(stack_item))
+    }
+}
+
+impl From<xml::Node> for output::Item {
+    fn from(node: xml::Node) -> Self {
+        Item::StackValue(StackValue(stack::Value::Node(node)))
+    }
+}
+
+impl From<output::Atomic> for output::Item {
+    fn from(atomic: output::Atomic) -> Self {
+        Item::StackValue(StackValue(stack::Value::Atomic(atomic.stack_atomic)))
     }
 }

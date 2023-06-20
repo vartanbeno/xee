@@ -131,7 +131,7 @@ impl Sequence {
         let items = self
             .atomized(xot)
             .map(|a| {
-                a.map(output::Item::from_atomic)
+                a.map(output::Item::from)
                     .map_err(|_| error::Error::XPTY0004A)
             })
             .collect::<error::Result<Vec<_>>>()?;
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let item = output::Item::from_atomic(output::Atomic::from(true));
+        let item = output::Item::from(output::Atomic::from(true));
         let sequence = output::Sequence::from_items(&[item.clone()]);
         assert_eq!(sequence.iter().one().unwrap(), item);
     }

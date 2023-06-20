@@ -41,17 +41,17 @@ impl Atomic {
         Self { stack_atomic }
     }
 
-    pub fn from_value(value: AtomicValue) -> Self {
-        match value {
-            AtomicValue::Boolean(b) => Self::new(stack::Atomic::Boolean(b)),
-            AtomicValue::Integer(i) => Self::new(stack::Atomic::Integer(i)),
-            AtomicValue::Float(n) => Self::new(stack::Atomic::Float(OrderedFloat(n))),
-            AtomicValue::Double(d) => Self::new(stack::Atomic::Double(OrderedFloat(d))),
-            AtomicValue::Decimal(d) => Self::new(stack::Atomic::Decimal(d)),
-            AtomicValue::String(s) => Self::new(stack::Atomic::String(s.into())),
-            AtomicValue::Untyped(s) => Self::new(stack::Atomic::Untyped(s.into())),
-        }
-    }
+    // pub fn from_value(value: AtomicValue) -> Self {
+    //     match value {
+    //         AtomicValue::Boolean(b) => Self::new(stack::Atomic::Boolean(b)),
+    //         AtomicValue::Integer(i) => Self::new(stack::Atomic::Integer(i)),
+    //         AtomicValue::Float(n) => Self::new(stack::Atomic::Float(OrderedFloat(n))),
+    //         AtomicValue::Double(d) => Self::new(stack::Atomic::Double(OrderedFloat(d))),
+    //         AtomicValue::Decimal(d) => Self::new(stack::Atomic::Decimal(d)),
+    //         AtomicValue::String(s) => Self::new(stack::Atomic::String(s.into())),
+    //         AtomicValue::Untyped(s) => Self::new(stack::Atomic::Untyped(s.into())),
+    //     }
+    // }
 
     pub fn value(&self) -> AtomicValue {
         match &self.stack_atomic {
@@ -147,14 +147,86 @@ impl Atomic {
     }
 }
 
+impl TryFrom<Atomic> for bool {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_bool()
+    }
+}
+
 impl From<bool> for Atomic {
     fn from(b: bool) -> Self {
         Self::new(stack::Atomic::Boolean(b))
     }
 }
 
+impl TryFrom<Atomic> for i64 {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_integer()
+    }
+}
+
 impl From<i64> for Atomic {
     fn from(i: i64) -> Self {
         Self::new(stack::Atomic::Integer(i))
+    }
+}
+
+impl TryFrom<Atomic> for f32 {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_float()
+    }
+}
+
+impl From<f32> for Atomic {
+    fn from(n: f32) -> Self {
+        Self::new(stack::Atomic::Float(OrderedFloat(n)))
+    }
+}
+
+impl TryFrom<Atomic> for f64 {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_double()
+    }
+}
+
+impl From<f64> for Atomic {
+    fn from(d: f64) -> Self {
+        Self::new(stack::Atomic::Double(OrderedFloat(d)))
+    }
+}
+
+impl TryFrom<Atomic> for Decimal {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_decimal()
+    }
+}
+
+impl From<Decimal> for Atomic {
+    fn from(d: Decimal) -> Self {
+        Self::new(stack::Atomic::Decimal(d))
+    }
+}
+
+impl TryFrom<Atomic> for String {
+    type Error = error::Error;
+    fn try_from(a: Atomic) -> error::Result<Self> {
+        a.to_string()
+    }
+}
+
+impl From<String> for Atomic {
+    fn from(s: String) -> Self {
+        Self::new(stack::Atomic::String(s.into()))
+    }
+}
+
+impl From<&str> for Atomic {
+    fn from(s: &str) -> Self {
+        Self::new(stack::Atomic::String(s.to_string().into()))
     }
 }

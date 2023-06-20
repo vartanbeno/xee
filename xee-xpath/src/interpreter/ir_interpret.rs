@@ -547,7 +547,7 @@ mod tests {
         output::Sequence::from_items(
             &node
                 .iter()
-                .map(|&node| output::Item::from_node(xml::Node::Xot(node)))
+                .map(|&node| output::Item::from(xml::Node::Xot(node)))
                 .collect::<Vec<_>>(),
         )
     }
@@ -1300,9 +1300,7 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                vec![output::Item::from_atomic(output::Atomic::from_value(
-                    output::AtomicValue::String("FOO".to_string())
-                ))]
+                vec![output::Item::from(output::Atomic::from("FOO"))]
             )],
         ))
     }
@@ -1314,15 +1312,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![output::Item::from_atomic(output::Atomic::from_value(
-                        output::AtomicValue::Integer(1)
-                    ))]
+                    vec![output::Item::from(output::Atomic::from(1))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![output::Item::from_atomic(output::Atomic::from_value(
-                        output::AtomicValue::Integer(2)
-                    ))]
+                    vec![output::Item::from(output::Atomic::from(2))]
                 )
             ]
         ))

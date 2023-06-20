@@ -39,7 +39,7 @@ impl qt::TestSet {
             let session = queries.session(&dynamic_context);
             // the query has a lifetime for the dynamic context, and a lifetime
             // for the static context
-            query.execute(&session, &Item::from_node(root))?
+            query.execute(&session, &Item::from(root))?
         };
         xot.remove(xot_root).unwrap();
         Ok(r)
@@ -70,7 +70,7 @@ impl qt::Catalog {
 
             let dynamic_context = DynamicContext::new(xot, &static_context);
             let session = queries.session(&dynamic_context);
-            query.execute(&session, &Item::from_node(root))?
+            query.execute(&session, &Item::from(root))?
         };
         xot.remove(xot_root).unwrap();
         Ok(r)

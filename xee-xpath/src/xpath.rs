@@ -80,7 +80,7 @@ impl XPath {
     ) -> Result<output::Sequence> {
         let node = xml::Node::Xot(node);
         let item = stack::Item::Node(node);
-        let output_item = output::Item::from_stack_item(item);
+        let output_item = output::Item::from(item);
         self.many(dynamic_context, Some(&output_item))
     }
 

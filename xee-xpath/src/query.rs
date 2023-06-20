@@ -341,12 +341,7 @@ mod tests {
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = q
-            .execute(
-                &session,
-                &output::Item::from_atomic(output::Atomic::from_value(
-                    output::AtomicValue::Integer(1),
-                )),
-            )
+            .execute(&session, &output::Item::from(output::Atomic::from(1)))
             .unwrap();
         assert_eq!(r, 3);
     }
@@ -392,11 +387,11 @@ mod tests {
 
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &output::Item::from_node(xml::Node::Xot(root)))?;
+        let r = result_query.execute(&session, &output::Item::from(xml::Node::Xot(root)))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &output::Item::from_node(xml::Node::Xot(root2)))?;
+        let r = result_query.execute(&session, &output::Item::from(xml::Node::Xot(root2)))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }
