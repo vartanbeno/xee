@@ -4,6 +4,7 @@ use crate::error;
 use crate::occurrence;
 use crate::output;
 use crate::stack;
+use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sequence {
@@ -13,6 +14,12 @@ pub struct Sequence {
 impl Sequence {
     pub(crate) fn new(stack_value: stack::Value) -> Self {
         Self { stack_value }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            stack_value: stack::Value::Atomic(stack::Atomic::Empty),
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -34,6 +41,13 @@ impl Sequence {
         }
     }
 
+    pub fn is_absent(&self) -> bool {
+        match &self.stack_value {
+            stack::Value::Atomic(stack::Atomic::Absent) => true,
+            _ => false,
+        }
+    }
+
     pub fn ensure_empty(&self) -> error::Result<&Self> {
         if self.is_empty() {
             Ok(self)
@@ -44,6 +58,12 @@ impl Sequence {
 
     pub fn items(&self) -> ItemIter {
         ItemIter {
+            value_iter: stack::ValueIter::new(self.stack_value.clone()),
+        }
+    }
+
+    pub fn nodes(&self) -> NodeIter {
+        NodeIter {
             value_iter: stack::ValueIter::new(self.stack_value.clone()),
         }
     }
@@ -66,7 +86,7 @@ impl Sequence {
                     .map_err(|_| error::Error::XPTY0004A)
             })
             .collect::<error::Result<Vec<_>>>()?;
-        Ok(Sequence::from(&items))
+        Ok(Sequence::from(items))
     }
 
     pub fn unboxed_atomized<'a, T>(
@@ -94,12 +114,14 @@ impl From<stack::Value> for Sequence {
     }
 }
 
-impl<T> From<T> for Sequence
-where
-    T: AsRef<[output::Item]>,
-{
-    fn from(items: T) -> Self {
-        let items = items.as_ref();
+impl From<&stack::Value> for Sequence {
+    fn from(stack_value: &stack::Value) -> Self {
+        stack_value.clone().into()
+    }
+}
+
+impl From<Vec<output::Item>> for Sequence {
+    fn from(items: Vec<output::Item>) -> Self {
         if items.is_empty() {
             return Self {
                 stack_value: stack::Value::Atomic(stack::Atomic::Empty),
@@ -117,6 +139,56 @@ where
     }
 }
 
+impl From<Vec<xml::Node>> for Sequence {
+    fn from(items: Vec<xml::Node>) -> Self {
+        let items = items
+            .into_iter()
+            .map(|i| output::Item::from(i))
+            .collect::<Vec<_>>();
+        Self::from(items)
+    }
+}
+
+impl<T> From<Option<T>> for Sequence
+where
+    T: Into<output::Item>,
+{
+    fn from(item: Option<T>) -> Self {
+        match item {
+            Some(item) => Self::from(vec![item.into()]),
+            None => Sequence::empty(),
+        }
+    }
+}
+
+impl From<output::Sequence> for stack::Value {
+    fn from(sequence: output::Sequence) -> Self {
+        sequence.stack_value
+    }
+}
+
+impl<T> From<Vec<T>> for Sequence
+where
+    T: Into<output::Atomic>,
+{
+    fn from(items: Vec<T>) -> Self {
+        let items = items
+            .into_iter()
+            .map(|i| output::Item::from(i.into()))
+            .collect::<Vec<_>>();
+        Self::from(items)
+    }
+}
+
+impl<T> From<T> for Sequence
+where
+    T: Into<output::Atomic>,
+{
+    fn from(item: T) -> Self {
+        Self::from(vec![output::Item::from(item.into())])
+    }
+}
+
 pub struct ItemIter {
     value_iter: stack::ValueIter,
 }
@@ -126,6 +198,20 @@ impl Iterator for ItemIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.value_iter.next().map(|v| output::Item::from(v))
+    }
+}
+
+pub struct NodeIter {
+    value_iter: stack::ValueIter,
+}
+
+impl Iterator for NodeIter {
+    type Item = error::Result<xml::Node>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.value_iter
+            .next()
+            .map(|v| v.to_node().map_err(|e| error::Error::from(e)))
     }
 }
 
@@ -184,7 +270,7 @@ mod tests {
     #[test]
     fn test_one() {
         let item = output::Item::from(output::Atomic::from(true));
-        let sequence = output::Sequence::from(&[item.clone()]);
+        let sequence = output::Sequence::from(vec![item.clone()]);
         assert_eq!(sequence.items().one().unwrap(), item);
     }
 }

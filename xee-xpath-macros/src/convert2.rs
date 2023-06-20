@@ -9,21 +9,22 @@ use xee_xpath_ast::XS_NAMESPACE;
 
 pub(crate) fn convert_sequence_type(
     sequence_type: &ast::SequenceType,
+    name: TokenStream,
     arg: TokenStream,
 ) -> syn::Result<TokenStream> {
     match sequence_type {
         ast::SequenceType::Empty => Ok(quote!(
-            let #arg = #arg.ensure_empty()?;
+            let #name = #arg.ensure_empty()?;
         )),
-        ast::SequenceType::Item(item) => convert_item(item, arg),
+        ast::SequenceType::Item(item) => convert_item(item, name, arg),
         _ => {
             panic!("Unsupported");
         }
     }
 }
 
-fn convert_item(item: &ast::Item, arg: TokenStream) -> syn::Result<TokenStream> {
-    let (iterator, want_result_occurrence) = convert_item_type(&item.item_type, arg.clone())?;
+fn convert_item(item: &ast::Item, name: TokenStream, arg: TokenStream) -> syn::Result<TokenStream> {
+    let (iterator, want_result_occurrence) = convert_item_type(&item.item_type, arg)?;
     let occurrence = if want_result_occurrence {
         quote!(crate::ResultOccurrence)
     } else {
@@ -31,16 +32,22 @@ fn convert_item(item: &ast::Item, arg: TokenStream) -> syn::Result<TokenStream> 
     };
     Ok(match &item.occurrence {
         ast::Occurrence::One => quote!(
-            let #arg = #occurrence::one(#iterator)?;
+            let #name = #occurrence::one(&mut #iterator)?;
         ),
         ast::Occurrence::Option => quote!(
-            let #arg = #occurrence::option(#iterator)?;
+            let #name = #occurrence::option(&mut #iterator)?;
         ),
         ast::Occurrence::Many => {
-            let arg_temp = syn::Ident::new(&format!("tmp_{}", arg), proc_macro2::Span::call_site());
+            let name_temp =
+                syn::Ident::new(&format!("tmp_{}", name), proc_macro2::Span::call_site());
+            let many = if want_result_occurrence {
+                quote!(#occurrence::many(&mut #iterator)?)
+            } else {
+                quote!(#occurrence::many(&mut #iterator))
+            };
             quote!(
-                let #arg_temp = #occurrence::many(#iterator)?;
-                let #arg = #arg_temp.as_slice();
+                let #name_temp = #many;
+                let #name = #name_temp.as_slice();
             )
         }
         ast::Occurrence::NonEmpty => todo!("NonEmpty not yet supported"),
@@ -53,6 +60,7 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
         ast::ItemType::AtomicOrUnionType(name) => {
             Ok((convert_atomic_or_union_type(name, arg)?, true))
         }
+        ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, true)),
         _ => {
             todo!("Not yet")
         }
@@ -64,23 +72,33 @@ fn convert_atomic_or_union_type(name: &ast::Name, arg: TokenStream) -> syn::Resu
     assert_eq!(name.namespace(), Some(XS_NAMESPACE));
 
     let local_name = name.as_str();
-    if local_name == "xs:anyAtomicType" {
-        return Ok(quote!(#arg.atomized()));
+    if local_name == "anyAtomicType" {
+        return Ok(quote!(#arg.atomized(context.xot)));
     }
 
     let convert = match local_name {
         "boolean" => quote!(atomic.to_boolean()),
         "integer" => quote!(atomic.to_integer()),
+        "int" => quote!(atomic.to_integer()),
         "float" => quote!(atomic.to_float()),
         "double" => quote!(atomic.to_double()),
         "decimal" => quote!(atomic.to_decimal()),
         "string" => quote!(atomic.to_str()),
         _ => {
-            todo!("Not yet")
+            todo!("Not yet {}", local_name)
         }
     };
 
-    Ok(quote!(#arg.unboxed_atomized(|atomic| #convert)))
+    Ok(quote!(#arg.unboxed_atomized(context.xot, |atomic| #convert)))
+}
+
+fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result<TokenStream> {
+    match kind_test {
+        ast::KindTest::Any => Ok(quote!(#arg.nodes())),
+        _ => {
+            todo!("Not yet")
+        }
+    }
 }
 
 #[cfg(test)]
@@ -92,8 +110,9 @@ mod tests {
     fn convert(s: &str) -> String {
         let namespaces = Namespaces::default();
         let sequence_type = ast::parse_sequence_type(s, &namespaces).unwrap();
-        let arg = quote!(a);
-        convert_sequence_type(&sequence_type, arg)
+        let name = quote!(a);
+        let arg = quote!(arguments[0]);
+        convert_sequence_type(&sequence_type, name, arg)
             .unwrap()
             .to_string()
     }
@@ -126,5 +145,10 @@ mod tests {
     #[test]
     fn test_convert_any_atomic_type() {
         assert_debug_snapshot!(convert("xs:anyAtomicType"));
+    }
+
+    #[test]
+    fn test_convert_node() {
+        assert_debug_snapshot!(convert("node()"));
     }
 }

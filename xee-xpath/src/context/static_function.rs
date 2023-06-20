@@ -37,10 +37,9 @@ impl FunctionKind {
     }
 }
 
+// pub(crate) type StaticFunctionType =
+//     fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
 pub(crate) type StaticFunctionType =
-    fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
-
-pub(crate) type StaticFunctionType2 =
     fn(context: &DynamicContext, arguments: &[output::Sequence]) -> error::Result<output::Sequence>;
 
 // pub(crate) type StaticFunctionType2 =
@@ -167,7 +166,7 @@ pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
     pub(crate) context_rule: Option<ContextRule>,
-    func: fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>,
+    func: StaticFunctionType,
 }
 
 impl Debug for StaticFunction {
@@ -186,27 +185,34 @@ impl StaticFunction {
         context: &DynamicContext,
         arguments: &[stack::Value],
         closure_values: &[stack::Value],
-    ) -> stack::Result<stack::Value> {
+    ) -> error::Result<output::Sequence> {
         if arguments.len() != self.arity {
-            return Err(stack::Error::Type);
+            return Err(error::Error::XPTY0004A);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {
                 ContextRule::ItemFirst | ContextRule::PositionFirst | ContextRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
                     new_arguments.extend_from_slice(arguments);
+                    let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
                 ContextRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
+                    let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
             }
         } else {
-            (self.func)(context, arguments)
+            let arguments = into_sequences(arguments);
+            (self.func)(context, &arguments)
         }
     }
+}
+
+fn into_sequences(values: &[stack::Value]) -> Vec<output::Sequence> {
+    values.iter().map(|v| v.into()).collect()
 }
 
 #[derive(Debug)]

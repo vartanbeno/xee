@@ -19,7 +19,7 @@ pub enum Error {
     Absent,
     // Explicit error raised with Error
     #[error("Error")]
-    Error(XeeError),
+    Error(#[from] XeeError),
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;

@@ -1,0 +1,5 @@
+---
+source: xee-xpath-macros/src/convert2.rs
+expression: "convert(\"node()\")"
+---
+"let a = crate :: ResultOccurrence :: one (& mut arguments [0] . nodes ()) ? ;"

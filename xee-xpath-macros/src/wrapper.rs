@@ -1,11 +1,11 @@
 use proc_macro2::{Ident, Span};
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::spanned::Spanned;
 use syn::{ItemFn, LitStr, Type};
 
 use xee_xpath_ast::ast::Signature;
 
-use crate::convert::convert_code;
+use crate::convert2::convert_sequence_type;
 use crate::parse::XPathFnOptions;
 
 pub(crate) fn xpath_fn_wrapper(
@@ -70,14 +70,12 @@ fn make_wrapper(
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
-        let arg = quote!(&arguments[#i]);
-        let converted = convert_code(&param.type_, arg)?;
-        let prepare = converted.prepare;
-        let assign = converted.assign;
-        conversions.push(quote! {
-            #prepare
-            let #name = #assign?;
-        });
+        let arg = quote!((&arguments[#i]));
+        conversions.push(convert_sequence_type(
+            &param.type_,
+            name.to_token_stream(),
+            arg,
+        )?);
     }
 
     let body = if is_result(ast) {
@@ -91,7 +89,7 @@ fn make_wrapper(
     };
 
     Ok(
-        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::stack::Value]) -> Result<crate::stack::Value, crate::stack::Error> {
+        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Sequence]) -> Result<crate::Sequence, crate::error::Error> {
             #body
         }),
     )

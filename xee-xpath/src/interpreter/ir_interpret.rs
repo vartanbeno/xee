@@ -545,8 +545,7 @@ mod tests {
 
     fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
         output::Sequence::from(
-            &node
-                .iter()
+            node.iter()
                 .map(|&node| output::Item::from(xml::Node::Xot(node)))
                 .collect::<Vec<_>>(),
         )

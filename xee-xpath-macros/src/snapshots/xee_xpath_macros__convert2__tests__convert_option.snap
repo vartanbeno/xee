@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert2.rs
 expression: "convert(\"xs:integer?\")"
 ---
-"let a = crate :: ResultOccurrence :: option (a . unboxed_atomized (| atomic | atomic . to_integer ())) ? ;"
+"let a = crate :: ResultOccurrence :: option (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | atomic . to_integer ())) ? ;"

@@ -1,13 +1,12 @@
-use std::rc::Rc;
-
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::{ContextTryInto, FunctionKind, StaticFunctionDescription};
-use crate::stack;
+use crate::context::{DynamicContext, FunctionKind, StaticFunctionDescription};
+use crate::error;
+use crate::occurrence::ResultOccurrence;
+use crate::output;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::{DynamicContext, Error};
 
 #[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
 fn my_function(a: i64, b: i64) -> i64 {
@@ -16,10 +15,10 @@ fn my_function(a: i64, b: i64) -> i64 {
 
 fn bound_position(
     _context: &DynamicContext,
-    arguments: &[stack::Value],
-) -> stack::Result<stack::Value> {
-    if arguments[0] == stack::Value::Atomic(stack::Atomic::Absent) {
-        return Err(stack::Error::Absent);
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
+    if arguments[0].is_absent() {
+        return Err(error::Error::XPDY0002A);
     }
     // position should be the context value
     Ok(arguments[0].clone())
@@ -27,10 +26,10 @@ fn bound_position(
 
 fn bound_last(
     _context: &DynamicContext,
-    arguments: &[stack::Value],
-) -> stack::Result<stack::Value> {
-    if arguments[0] == stack::Value::Atomic(stack::Atomic::Absent) {
-        return Err(stack::Error::Absent);
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
+    if arguments[0].is_absent() {
+        return Err(error::Error::XPDY0002A);
     }
     // size should be the context value
     Ok(arguments[0].clone())
@@ -55,7 +54,7 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[stack::Item]) -> i64 {
+fn count(arg: &[output::Item]) -> i64 {
     arg.len() as i64
 }
 
@@ -78,7 +77,7 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: &Option<stack::Item>) -> stack::Result<String> {
+fn string(context: &DynamicContext, arg: Option<output::Item>) -> error::Result<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -87,7 +86,7 @@ fn string(context: &DynamicContext, arg: &Option<stack::Item>) -> stack::Result<
 }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[stack::Item]) -> bool {
+fn exists(arg: &[output::Item]) -> bool {
     !arg.is_empty()
 }
 
@@ -103,30 +102,30 @@ fn exists(arg: &[stack::Item]) -> bool {
 
 fn exactly_one(
     _context: &DynamicContext,
-    arguments: &[stack::Value],
-) -> Result<stack::Value, stack::Error> {
-    let a: stack::Sequence = (&arguments[0]).try_into()?;
-    let a = a.borrow();
-    if a.items.len() == 1 {
-        Ok(stack::Value::from_item(a.items[0].clone()))
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
+    let a = &arguments[0];
+    if a.len() == 1 {
+        Ok(a.clone())
     } else {
-        // XXX should really be a FORG0005 error
-        Err(stack::Error::Type)
+        Err(error::Error::FORG0005)
     }
 }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[stack::Item]) -> bool {
+fn empty(arg: &[output::Item]) -> bool {
     arg.is_empty()
 }
 
 fn not(
     _context: &DynamicContext,
-    arguments: &[stack::Value],
-) -> Result<stack::Value, stack::Error> {
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
-    Ok(stack::Value::Atomic(stack::Atomic::Boolean(!b)))
+    Ok(output::Sequence::from(vec![output::Item::from(
+        output::Atomic::from(!b),
+    )]))
 }
 
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
@@ -142,19 +141,23 @@ fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 
 fn untyped_atomic(
     context: &DynamicContext,
-    arguments: &[stack::Value],
-) -> Result<stack::Value, stack::Error> {
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
     let a = &arguments[0];
-    let a: stack::Atomic = a.context_try_into(context)?;
-    let s = a.try_into()?;
-    Ok(stack::Value::Atomic(stack::Atomic::Untyped(Rc::new(s))))
+    let value = a.atomized(context.xot).one()?;
+    // TODO: this needs more work to implement:
+    // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
+    let s: String = value.try_into()?;
+    Ok(output::Sequence::from(vec![output::Item::from(
+        output::Atomic::from(s),
+    )]))
 }
 
 fn error(
     _context: &DynamicContext,
-    _arguments: &[stack::Value],
-) -> Result<stack::Value, stack::Error> {
-    Err(stack::Error::Error(Error::FOER0000))
+    _arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
+    Err(error::Error::FOER0000)
 }
 
 #[xpath_fn("fn:true() as xs:boolean")]

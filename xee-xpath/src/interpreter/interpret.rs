@@ -434,7 +434,7 @@ impl<'a> Interpreter<'a> {
         let result = static_function.invoke(self.dynamic_context, arguments, closure_values)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
-        self.stack.push(result);
+        self.stack.push(result.into());
         Ok(())
     }
 

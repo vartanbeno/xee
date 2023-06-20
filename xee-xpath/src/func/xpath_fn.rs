@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod test {
-    use std::rc::Rc;
+
     use xee_xpath_macros::xpath_fn;
     use xot::Xot;
 
+    use crate::output;
     use crate::stack;
     use crate::{DynamicContext, Namespaces, StaticContext};
 
@@ -23,12 +24,9 @@ mod test {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
-        assert_eq!(
-            foo::WRAPPER(&context, &[]),
-            Ok(stack::Value::Atomic(stack::Atomic::String(Rc::new(
-                "foo".to_string()
-            ))))
-        );
+        let expected =
+            output::Sequence::from(vec![output::Item::from(output::Atomic::from("foo"))]);
+        assert_eq!(foo::WRAPPER(&context, &[]), Ok(expected));
     }
 
     #[test]
@@ -37,14 +35,15 @@ mod test {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
+        let expected = output::Sequence::from(vec![output::Item::from(output::Atomic::from("42"))]);
         assert_eq!(
             int_to_string::WRAPPER(
                 &context,
-                &[stack::Value::Atomic(stack::Atomic::Integer(42))]
+                &[output::Sequence::from(vec![output::Item::from(
+                    output::Atomic::from(42)
+                )])]
             ),
-            Ok(stack::Value::Atomic(stack::Atomic::String(Rc::new(
-                "42".to_string()
-            ))))
+            Ok(expected)
         );
     }
 }
