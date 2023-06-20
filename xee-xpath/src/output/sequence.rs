@@ -143,7 +143,7 @@ impl From<Vec<xml::Node>> for Sequence {
     fn from(items: Vec<xml::Node>) -> Self {
         let items = items
             .into_iter()
-            .map(|i| output::Item::from(i))
+            .map(output::Item::from)
             .collect::<Vec<_>>();
         Self::from(items)
     }

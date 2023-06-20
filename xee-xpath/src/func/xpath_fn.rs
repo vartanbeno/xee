@@ -5,7 +5,6 @@ mod test {
     use xot::Xot;
 
     use crate::output;
-    use crate::stack;
     use crate::{DynamicContext, Namespaces, StaticContext};
 
     #[xpath_fn("fn:foo() as xs:string")]
