@@ -58,13 +58,13 @@ impl Sequence {
 
     pub fn items(&self) -> ItemIter {
         ItemIter {
-            value_iter: stack::ValueIter::new(self.stack_value.clone()),
+            value_iter: self.stack_value.items(),
         }
     }
 
     pub fn nodes(&self) -> NodeIter {
         NodeIter {
-            value_iter: stack::ValueIter::new(self.stack_value.clone()),
+            value_iter: self.stack_value.items(),
         }
     }
 

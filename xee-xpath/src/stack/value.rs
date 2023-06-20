@@ -48,69 +48,16 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_one(&self) -> stack::Result<stack::Item> {
-        match self {
-            Value::Atomic(a) => Ok(stack::Item::Atomic(a.clone())),
-            Value::Sequence(s) => s.to_one().ok_or(stack::Error::Type),
-            Value::Node(n) => Ok(stack::Item::Node(*n)),
-            _ => Err(stack::Error::Type),
-        }
+    pub(crate) fn to_sequence(&self) -> stack::Sequence {
+        stack::Sequence::from_items(&self.items().collect::<Vec<_>>())
     }
 
-    pub(crate) fn to_option(&self) -> stack::Result<Option<stack::Item>> {
-        match self {
-            Value::Atomic(a) => Ok(Some(stack::Item::Atomic(a.clone()))),
-            Value::Sequence(s) => s.to_option().ok_or(stack::Error::Type),
-            Value::Node(n) => Ok(Some(stack::Item::Node(*n))),
-            _ => Err(stack::Error::Type),
-        }
+    pub(crate) fn items(&self) -> ValueIter {
+        ValueIter::new(self.clone())
     }
 
-    pub(crate) fn to_one2(&self) -> Option<stack::Item> {
-        match self {
-            Value::Atomic(stack::Atomic::Empty) => None,
-            Value::Atomic(a) => Some(stack::Item::Atomic(a.clone())),
-            Value::Sequence(s) => s.to_one(),
-            Value::Node(n) => Some(stack::Item::Node(*n)),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn to_option2(&self) -> Option<Option<stack::Item>> {
-        match self {
-            Value::Atomic(stack::Atomic::Empty) => Some(None),
-            Value::Atomic(a) => Some(Some(stack::Item::Atomic(a.clone()))),
-            Value::Sequence(s) => s.to_option(),
-            Value::Node(n) => Some(Some(stack::Item::Node(*n))),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn to_many(&self) -> stack::Sequence {
-        match self {
-            Value::Atomic(a) => stack::Sequence::from_atomic(a),
-            Value::Sequence(s) => s.clone(),
-            Value::Node(n) => stack::Sequence::from_node(*n),
-            // TODO: we need to handle the function case here, but
-            // we don't handle it yet
-            _ => {
-                dbg!("unhandled to_many value {:?}", self);
-                stack::Sequence::empty()
-            }
-        }
-    }
-
-    pub(crate) fn to_non_empty(&self) -> Option<stack::Sequence> {
-        match self {
-            Value::Atomic(stack::Atomic::Empty) => None,
-            Value::Atomic(a) => Some(stack::Sequence::from_atomic(a)),
-            Value::Sequence(s) => s.to_non_empty(),
-            Value::Node(n) => Some(stack::Sequence::from_node(*n)),
-            _ => {
-                dbg!("unhandled to_non_empty value {:?}", self);
-                None
-            }
-        }
+    pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
+        stack::AtomizedIter::new(self.clone(), xot)
     }
 
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
@@ -150,34 +97,6 @@ impl Value {
         }
     }
 
-    // pub(crate) fn is_one(&self) -> bool {
-    //     match self {
-    //         Value::Sequence(s) => s.len() == 1,
-    //         Value::Atomic(stack::Atomic::Empty) => false,
-    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
-    //     }
-    // }
-
-    // pub(crate) fn is_option(&self) -> bool {
-    //     match self {
-    //         Value::Sequence(s) => s.is_empty() || s.len() == 1,
-    //         Value::Atomic(stack::Atomic::Empty) => true,
-    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
-    //     }
-    // }
-
-    // pub(crate) fn is_many(&self) -> bool {
-    //     true
-    // }
-
-    // pub(crate) fn is_non_empty(&self) -> bool {
-    //     match self {
-    //         Value::Sequence(s) => !s.is_empty(),
-    //         Value::Atomic(stack::Atomic::Empty) => false,
-    //         Value::Atomic(_) | Value::Closure(_) | Value::Step(_) | Value::Node(_) => true,
-    //     }
-    // }
-
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
             Value::Atomic(atomic) => atomic.string_value()?,
@@ -195,10 +114,6 @@ impl Value {
             Value::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
-    }
-
-    pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
-        stack::AtomizedIter::new(self.clone(), xot)
     }
 }
 
@@ -262,8 +177,8 @@ impl PartialEq for Value {
             (Value::Closure(a), Value::Closure(b)) => a == b,
             (Value::Step(a), Value::Step(b)) => a == b,
             (Value::Node(a), Value::Node(b)) => a == b,
-            (_, Value::Sequence(b)) => (&self.to_many()) == b,
-            (Value::Sequence(a), _) => a == &other.to_many(),
+            (_, Value::Sequence(b)) => (&self.to_sequence()) == b,
+            (Value::Sequence(a), _) => a == &other.to_sequence(),
             _ => false,
         }
     }
@@ -275,7 +190,7 @@ pub(crate) struct ValueIter {
 }
 
 impl ValueIter {
-    pub(crate) fn new(stack_value: Value) -> Self {
+    fn new(stack_value: Value) -> Self {
         Self {
             stack_value,
             index: 0,
