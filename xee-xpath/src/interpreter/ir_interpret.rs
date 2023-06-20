@@ -571,7 +571,7 @@ mod tests {
             .map(|(name, _)| name.clone())
             .collect::<Vec<_>>();
         let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
-        let context = DynamicContext::with_variables(&xot, &static_context, &variables);
+        let context = DynamicContext::with_variables(&xot, &static_context, variables);
         let xpath = XPath::new(context.static_context, s)?;
         xpath.run_value(&context, None)
     }
