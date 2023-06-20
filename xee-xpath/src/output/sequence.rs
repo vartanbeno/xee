@@ -27,10 +27,7 @@ impl Sequence {
                 stack_value: items[0].clone().into(),
             };
         }
-        let stack_items = items
-            .iter()
-            .map(|item| item.to_stack_item())
-            .collect::<Vec<_>>();
+        let stack_items = items.iter().map(|item| item.into()).collect::<Vec<_>>();
         Self {
             stack_value: stack::Value::Sequence(stack::Sequence::from_items(&stack_items)),
         }

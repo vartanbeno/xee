@@ -89,7 +89,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<output::Sequence> {
-        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
+        let context_item: Option<stack::Item> = item.map(|item| item.into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         Ok(value.into_output())
     }
@@ -99,7 +99,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<output::Item> {
-        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
+        let context_item: Option<stack::Item> = item.map(|item| item.into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         value.into_output().iter().one()
     }
@@ -109,7 +109,7 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&output::Item>,
     ) -> Result<Option<output::Item>> {
-        let context_item: Option<stack::Item> = item.map(|item| item.to_stack_item());
+        let context_item: Option<stack::Item> = item.map(|item| item.into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
         value.into_output().iter().option()
     }

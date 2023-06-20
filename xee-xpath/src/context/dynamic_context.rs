@@ -63,12 +63,7 @@ impl<'a> DynamicContext<'a> {
             documents: Cow::Owned(xml::Documents::new()),
             variables: variables
                 .iter()
-                .map(|(name, items)| {
-                    (
-                        name.clone(),
-                        items.iter().map(|item| item.to_stack_item()).collect(),
-                    )
-                })
+                .map(|(name, items)| (name.clone(), items.iter().map(|item| item.into()).collect()))
                 .collect(),
         }
     }

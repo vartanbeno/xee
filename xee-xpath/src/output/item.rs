@@ -40,19 +40,19 @@ impl Item {
         }
     }
 
-    pub(crate) fn to_stack_item(&self) -> stack::Item {
-        match self {
-            Item::StackValue(StackValue(v)) => match v {
-                stack::Value::Atomic(a) => stack::Item::Atomic(a.clone()),
-                stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
-                stack::Value::Closure(f) => stack::Item::Function(f.clone()),
-                stack::Value::Step(_) => unreachable!(),
-                stack::Value::Node(n) => stack::Item::Node(*n),
-            },
+    // pub(crate) fn to_stack_item(&self) -> stack::Item {
+    //     match self {
+    //         Item::StackValue(StackValue(v)) => match v {
+    //             stack::Value::Atomic(a) => stack::Item::Atomic(a.clone()),
+    //             stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
+    //             stack::Value::Closure(f) => stack::Item::Function(f.clone()),
+    //             stack::Value::Step(_) => unreachable!(),
+    //             stack::Value::Node(n) => stack::Item::Node(*n),
+    //         },
 
-            Item::StackItem(StackItem(i)) => i.clone(),
-        }
-    }
+    //         Item::StackItem(StackItem(i)) => i.clone(),
+    //     }
+    // }
 
     pub fn to_atomic(&self) -> error::Result<output::Atomic> {
         Ok(match self {
@@ -120,5 +120,27 @@ impl From<output::Item> for stack::Value {
             Item::StackValue(StackValue(stack_value)) => stack_value,
             Item::StackItem(StackItem(stack_item)) => stack_item.into_stack_value(),
         }
+    }
+}
+
+impl From<output::Item> for stack::Item {
+    fn from(item: output::Item) -> Self {
+        match item {
+            Item::StackValue(StackValue(v)) => match v {
+                stack::Value::Atomic(a) => stack::Item::Atomic(a),
+                stack::Value::Sequence(_) => unreachable!("item can never be sequence"),
+                stack::Value::Closure(f) => stack::Item::Function(f),
+                stack::Value::Step(_) => unreachable!(),
+                stack::Value::Node(n) => stack::Item::Node(n),
+            },
+
+            Item::StackItem(StackItem(i)) => i,
+        }
+    }
+}
+
+impl From<&output::Item> for stack::Item {
+    fn from(item: &output::Item) -> Self {
+        item.clone().into()
     }
 }
