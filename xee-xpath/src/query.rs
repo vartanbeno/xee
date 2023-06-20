@@ -331,10 +331,7 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
         let q = queries
-            .one("1 + 2", |_, item| match item.to_atomic()?.value() {
-                output::AtomicValue::Integer(i) => Ok(i),
-                _ => Err(error::Error::XPTY0004A),
-            })
+            .one("1 + 2", |_, item| item.to_atomic()?.to_integer())
             .unwrap();
 
         let xot = Xot::new();

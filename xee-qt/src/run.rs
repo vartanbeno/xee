@@ -209,7 +209,7 @@ mod tests {
     use std::path::PathBuf;
     use tempfile::tempdir;
 
-    use xee_xpath::{Atomic, AtomicValue, Error, Sequence};
+    use xee_xpath::{Atomic, Error, Sequence};
 
     use crate::assert;
     use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};

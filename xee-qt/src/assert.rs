@@ -2,8 +2,7 @@ use crossterm::style::Stylize;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    AtomicValue, DynamicContext, Error, Name, Namespaces, Occurrence, Sequence, StaticContext,
-    XPath,
+    DynamicContext, Error, Name, Namespaces, Occurrence, Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -340,8 +339,11 @@ impl Assertable for AssertTrue {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.iter().one() {
             if let Ok(atomic) = item.to_atomic() {
-                if matches!(atomic.value(), AtomicValue::Boolean(true)) {
-                    return TestOutcome::Passed;
+                let b = atomic.to_bool();
+                if let Ok(b) = b {
+                    if b {
+                        return TestOutcome::Passed;
+                    }
                 }
             }
         }
@@ -362,8 +364,11 @@ impl Assertable for AssertFalse {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.iter().one() {
             if let Ok(atomic) = item.to_atomic() {
-                if matches!(atomic.value(), AtomicValue::Boolean(false)) {
-                    return TestOutcome::Passed;
+                let b = atomic.to_bool();
+                if let Ok(b) = b {
+                    if !b {
+                        return TestOutcome::Passed;
+                    }
                 }
             }
         }
