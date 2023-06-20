@@ -99,7 +99,7 @@ impl Iterator for AtomizedNodeIter {
 }
 
 #[derive(Clone)]
-pub struct AtomizedSequenceIter<'a> {
+pub(crate) struct AtomizedSequenceIter<'a> {
     xot: &'a Xot,
     sequence: stack::Sequence,
     index: usize,
@@ -152,7 +152,7 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
 }
 
 #[derive(Clone)]
-pub struct ErroringAtomizedIter;
+pub(crate) struct ErroringAtomizedIter;
 
 impl Iterator for ErroringAtomizedIter {
     type Item = stack::Result<stack::Atomic>;
