@@ -278,7 +278,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::True(
                 assert::AssertTrue,
-                Sequence::from_items(&[Item::from(Atomic::from(false))])
+                Sequence::from(&[Item::from(Atomic::from(false))])
             ))
         );
     }
@@ -503,7 +503,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
                 assert::AssertEq::new(qt::XPathExpr("6".to_string())),
-                Sequence::from_items(&[Item::from(Atomic::from(5))])
+                Sequence::from(&[Item::from(Atomic::from(5))])
             ))
         );
     }

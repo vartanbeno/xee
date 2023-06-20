@@ -16,23 +16,6 @@ impl Sequence {
         Self { stack_value }
     }
 
-    pub fn from_items(items: &[output::Item]) -> Self {
-        if items.is_empty() {
-            return Self {
-                stack_value: stack::Value::Atomic(stack::Atomic::Empty),
-            };
-        }
-        if items.len() == 1 {
-            return Self {
-                stack_value: items[0].clone().into(),
-            };
-        }
-        let stack_items = items.iter().map(|item| item.into()).collect::<Vec<_>>();
-        Self {
-            stack_value: stack::Value::Sequence(stack::Sequence::from_items(&stack_items)),
-        }
-    }
-
     pub fn is_empty(&self) -> bool {
         match &self.stack_value {
             stack::Value::Atomic(stack::Atomic::Empty) => true,
@@ -52,9 +35,39 @@ impl Sequence {
         }
     }
 
-    pub fn iter(&self) -> SequenceIter {
-        SequenceIter {
+    pub fn items(&self) -> ItemIter {
+        ItemIter {
             value_iter: stack::ValueIter::new(self.stack_value.clone()),
+        }
+    }
+
+    pub fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
+        AtomizedIter {
+            atomized_iter: self.stack_value.atomized(xot),
+            xot,
+        }
+    }
+
+    pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
+        // TODO: conceivably we don't consume the iterator here
+        let items = self
+            .atomized(xot)
+            .map(|a| {
+                a.map(output::Item::from)
+                    .map_err(|_| error::Error::XPTY0004A)
+            })
+            .collect::<error::Result<Vec<_>>>()?;
+        Ok(Sequence::from(&items))
+    }
+
+    pub fn unboxed_atomized<'a, T>(
+        &self,
+        xot: &'a Xot,
+        extract: impl Fn(&output::Atomic) -> Option<T>,
+    ) -> UnboxedAtomizedIter<'a, impl Fn(&output::Atomic) -> Option<T>> {
+        UnboxedAtomizedIter {
+            atomized_iter: self.atomized(xot),
+            extract,
         }
     }
 
@@ -116,35 +129,6 @@ impl Sequence {
     //         xot,
     //     }
     // }
-    pub fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
-        AtomizedIter {
-            atomized_iter: self.stack_value.atomized(xot),
-            xot,
-        }
-    }
-
-    pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
-        // TODO: conceivably we don't consume the iterator here
-        let items = self
-            .atomized(xot)
-            .map(|a| {
-                a.map(output::Item::from)
-                    .map_err(|_| error::Error::XPTY0004A)
-            })
-            .collect::<error::Result<Vec<_>>>()?;
-        Ok(Sequence::from_items(&items))
-    }
-
-    pub fn unboxed_atomized<'a, T>(
-        &self,
-        xot: &'a Xot,
-        extract: impl Fn(&output::Atomic) -> Option<T>,
-    ) -> UnboxedAtomizedIter<'a, impl Fn(&output::Atomic) -> Option<T>> {
-        UnboxedAtomizedIter {
-            atomized_iter: self.atomized(xot),
-            extract,
-        }
-    }
 
     // pub fn one_atom(&self, xot: &Xot) -> error::Result<output::Atomic> {
     //     let mut atomized = self.atomized(xot);
@@ -206,11 +190,40 @@ impl Sequence {
     // }
 }
 
-pub struct SequenceIter {
+impl From<stack::Value> for Sequence {
+    fn from(stack_value: stack::Value) -> Self {
+        Self { stack_value }
+    }
+}
+
+impl<T> From<T> for Sequence
+where
+    T: AsRef<[output::Item]>,
+{
+    fn from(items: T) -> Self {
+        let items = items.as_ref();
+        if items.is_empty() {
+            return Self {
+                stack_value: stack::Value::Atomic(stack::Atomic::Empty),
+            };
+        }
+        if items.len() == 1 {
+            return Self {
+                stack_value: items[0].clone().into(),
+            };
+        }
+        let stack_items = items.iter().map(|item| item.into()).collect::<Vec<_>>();
+        Self {
+            stack_value: stack::Value::Sequence(stack::Sequence::from_items(&stack_items)),
+        }
+    }
+}
+
+pub struct ItemIter {
     value_iter: stack::ValueIter,
 }
 
-impl Iterator for SequenceIter {
+impl Iterator for ItemIter {
     type Item = output::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -252,7 +265,7 @@ where
     }
 }
 
-impl occurrence::Occurrence<output::Item, error::Error> for SequenceIter {
+impl occurrence::Occurrence<output::Item, error::Error> for ItemIter {
     fn error(&self) -> error::Error {
         error::Error::XPTY0004A
     }
@@ -275,7 +288,7 @@ mod tests {
     #[test]
     fn test_one() {
         let item = output::Item::from(output::Atomic::from(true));
-        let sequence = output::Sequence::from_items(&[item.clone()]);
-        assert_eq!(sequence.iter().one().unwrap(), item);
+        let sequence = output::Sequence::from(&[item.clone()]);
+        assert_eq!(sequence.items().one().unwrap(), item);
     }
 }

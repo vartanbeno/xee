@@ -101,7 +101,7 @@ impl XPath {
     ) -> Result<output::Item> {
         let context_item: Option<stack::Item> = item.map(|item| item.into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        value.into_output().iter().one()
+        value.into_output().items().one()
     }
 
     pub fn option(
@@ -111,7 +111,7 @@ impl XPath {
     ) -> Result<Option<output::Item>> {
         let context_item: Option<stack::Item> = item.map(|item| item.into());
         let value = self.run_value(dynamic_context, context_item.as_ref())?;
-        value.into_output().iter().option()
+        value.into_output().items().option()
     }
 }
 

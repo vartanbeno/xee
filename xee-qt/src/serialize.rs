@@ -7,7 +7,7 @@ use crate::error::{Error, Result};
 // in a sequence tag
 pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> Result<String> {
     let mut xmls = Vec::with_capacity(sequence.len());
-    for item in sequence.iter() {
+    for item in sequence.items() {
         if let Ok(Node::Xot(node)) = item.to_node() {
             let xml_value = xot.to_string(node);
             if let Ok(xml_value) = xml_value {

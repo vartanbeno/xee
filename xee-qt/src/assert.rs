@@ -337,7 +337,7 @@ impl AssertTrue {
 
 impl Assertable for AssertTrue {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        if let Ok(item) = sequence.iter().one() {
+        if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b = atomic.to_bool();
                 if let Ok(b) = b {
@@ -362,7 +362,7 @@ impl AssertFalse {
 
 impl Assertable for AssertFalse {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
-        if let Ok(item) = sequence.iter().one() {
+        if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b = atomic.to_bool();
                 if let Ok(b) = b {
@@ -388,7 +388,7 @@ impl AssertStringValue {
 impl Assertable for AssertStringValue {
     fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         let strings = sequence
-            .iter()
+            .items()
             .map(|item| item.string_value(xot))
             .collect::<Result<Vec<_>, _>>();
         match strings {
@@ -679,7 +679,7 @@ fn run_xpath_with_result(
     let names = vec![name.clone()];
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let variables = vec![(name, sequence.iter().collect())];
+    let variables = vec![(name, sequence.items().collect())];
     let dynamic_context = DynamicContext::with_variables(xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }

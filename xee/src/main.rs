@@ -50,7 +50,7 @@ fn main() -> Result<()> {
                 .into_diagnostic()
                 .wrap_err("Cannot parse XML")?;
             let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
-            for item in result.iter() {
+            for item in result.items() {
                 display_item(&xot, &item)
                     .into_diagnostic()
                     .wrap_err("Could not display item")?;
