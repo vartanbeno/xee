@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use xot::Xot;
 
+use crate::occurrence;
 use crate::output;
 use crate::stack;
 use crate::xml;
@@ -283,6 +284,12 @@ impl Iterator for ValueIter {
                 }
             }
         }
+    }
+}
+
+impl occurrence::Occurrence<stack::Item, stack::Error> for ValueIter {
+    fn error(&self) -> stack::Error {
+        stack::Error::Type
     }
 }
 

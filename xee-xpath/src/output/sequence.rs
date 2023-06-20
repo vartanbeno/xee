@@ -3,7 +3,7 @@ use xot::Xot;
 use crate::error;
 use crate::occurrence;
 use crate::output;
-use crate::output::item::{StackItem, StackValue};
+use crate::output::item::StackItem;
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -255,72 +255,18 @@ where
     }
 }
 
-impl occurrence::Occurrence for SequenceIter {
-    type Item = output::Item;
-    type Error = error::Error;
-
-    fn one(&mut self) -> error::Result<Self::Item> {
-        if let Some(one) = self.next() {
-            if self.next().is_none() {
-                Ok(one)
-            } else {
-                Err(error::Error::XPTY0004A)
-            }
-        } else {
-            Err(error::Error::XPTY0004A)
-        }
-    }
-
-    fn option(&mut self) -> error::Result<Option<Self::Item>> {
-        if let Some(one) = self.next() {
-            if self.next().is_none() {
-                Ok(Some(one))
-            } else {
-                Err(error::Error::XPTY0004A)
-            }
-        } else {
-            Ok(None)
-        }
-    }
-
-    fn many(&mut self) -> error::Result<Vec<Self::Item>> {
-        Ok(self.collect::<Vec<_>>())
+impl occurrence::Occurrence<output::Item, error::Error> for SequenceIter {
+    fn error(&self) -> error::Error {
+        error::Error::XPTY0004A
     }
 }
 
-impl<V, U> occurrence::Occurrence for U
+impl<V, U> occurrence::ResultOccurrence<V, error::Error> for U
 where
     U: Iterator<Item = error::Result<V>>,
 {
-    type Item = V;
-    type Error = error::Error;
-
-    fn one(&mut self) -> error::Result<V> {
-        if let Some(one) = self.next() {
-            if self.next().is_none() {
-                Ok(one?)
-            } else {
-                Err(error::Error::XPTY0004A)
-            }
-        } else {
-            Err(error::Error::XPTY0004A)
-        }
-    }
-
-    fn option(&mut self) -> error::Result<Option<V>> {
-        if let Some(one) = self.next() {
-            if self.next().is_none() {
-                Ok(Some(one?))
-            } else {
-                Err(error::Error::XPTY0004A)
-            }
-        } else {
-            Ok(None)
-        }
-    }
-
-    fn many(&mut self) -> error::Result<Vec<V>> {
-        self.collect::<Result<Vec<_>, _>>()
+    fn error(&self) -> error::Error {
+        error::Error::XPTY0004A
     }
 }
 
