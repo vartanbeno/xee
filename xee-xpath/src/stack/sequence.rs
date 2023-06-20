@@ -46,35 +46,6 @@ impl Sequence {
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
     }
-
-    pub(crate) fn to_one(&self) -> Option<stack::Item> {
-        let s = self.0.borrow();
-        if s.len() == 1 {
-            Some(s.items[0].clone())
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn to_option(&self) -> Option<Option<stack::Item>> {
-        let s = self.0.borrow();
-        if s.len() == 1 {
-            Some(Some(s.items[0].clone()))
-        } else if s.is_empty() {
-            Some(None)
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn to_non_empty(&self) -> Option<stack::Sequence> {
-        let s = self.0.borrow();
-        if s.is_empty() {
-            None
-        } else {
-            Some(self.clone())
-        }
-    }
 }
 
 impl TryFrom<stack::Value> for stack::Sequence {
