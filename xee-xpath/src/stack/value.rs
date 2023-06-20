@@ -19,14 +19,6 @@ pub(crate) enum Value {
 }
 
 impl Value {
-    pub(crate) fn from_item(item: stack::Item) -> Self {
-        match item {
-            stack::Item::Atomic(a) => Value::Atomic(a),
-            stack::Item::Node(n) => Value::Node(n),
-            stack::Item::Function(f) => Value::Closure(f),
-        }
-    }
-
     pub(crate) fn into_output(self) -> output::Sequence {
         output::Sequence::new(self)
     }
@@ -88,7 +80,7 @@ impl Value {
                 let len = sequence.len();
                 match len {
                     0 => "".to_string(),
-                    1 => Value::from_item(sequence.items[0].clone()).string_value(xot)?,
+                    1 => Value::from(sequence.items[0].clone()).string_value(xot)?,
                     _ => Err(stack::Error::Type)?,
                 }
             }
@@ -100,12 +92,22 @@ impl Value {
     }
 }
 
+impl From<stack::Item> for Value {
+    fn from(item: stack::Item) -> Self {
+        match item {
+            stack::Item::Atomic(a) => Value::Atomic(a),
+            stack::Item::Node(n) => Value::Node(n),
+            stack::Item::Function(f) => Value::Closure(f),
+        }
+    }
+}
+
 impl From<Vec<stack::Item>> for Value {
     fn from(items: Vec<stack::Item>) -> Self {
         if items.is_empty() {
             Value::Atomic(stack::Atomic::Empty)
         } else if items.len() == 1 {
-            Value::from_item(items[0].clone())
+            Value::from(items[0].clone())
         } else {
             Value::Sequence(stack::Sequence::from_items(&items))
         }

@@ -58,8 +58,7 @@ impl<'a> Interpreter<'a> {
         });
         if let Some(context_item) = context_item {
             // the context item
-            self.stack
-                .push(stack::Value::from_item(context_item.clone()));
+            self.stack.push(stack::Value::from(context_item.clone()));
             // position & size
             self.stack
                 .push(stack::Value::Atomic(stack::Atomic::Integer(1)));
