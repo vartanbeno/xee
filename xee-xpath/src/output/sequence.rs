@@ -42,10 +42,10 @@ impl Sequence {
     }
 
     pub fn is_absent(&self) -> bool {
-        match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Absent) => true,
-            _ => false,
-        }
+        matches!(
+            &self.stack_value,
+            stack::Value::Atomic(stack::Atomic::Absent)
+        )
     }
 
     pub fn ensure_empty(&self) -> error::Result<&Self> {
