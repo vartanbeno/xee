@@ -72,11 +72,10 @@ impl Sequence {
     }
 
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
-        match self.stack_value.effective_boolean_value() {
-            Ok(b) => Ok(b),
-            // TODO should handle errors better here
-            Err(_) => Err(crate::Error::FORG0006),
-        }
+        // TODO: error conversion is a bit blunt
+        self.stack_value
+            .effective_boolean_value()
+            .map_err(|_| error::Error::FORG0006)
     }
 }
 
