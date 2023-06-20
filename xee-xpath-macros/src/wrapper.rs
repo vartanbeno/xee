@@ -5,7 +5,7 @@ use syn::{ItemFn, LitStr, Type};
 
 use xee_xpath_ast::ast::Signature;
 
-use crate::convert2::convert_sequence_type;
+use crate::convert::convert_sequence_type;
 use crate::parse::XPathFnOptions;
 
 pub(crate) fn xpath_fn_wrapper(

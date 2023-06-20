@@ -1,5 +1,5 @@
 ---
-source: xee-xpath-macros/src/convert2.rs
+source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"xs:anyAtomicType\")"
 ---
 "let a = crate :: ResultOccurrence :: one (& mut arguments [0] . atomized (context . xot)) ? ;"

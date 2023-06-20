@@ -1,5 +1,5 @@
 ---
-source: xee-xpath-macros/src/convert2.rs
+source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"xs:integer*\")"
 ---
 "let tmp_a = crate :: ResultOccurrence :: many (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | atomic . to_integer ())) ? ; let a = tmp_a . as_slice () ;"
