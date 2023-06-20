@@ -31,13 +31,6 @@ impl Value {
         output::Sequence::new(self)
     }
 
-    pub(crate) fn to_node(&self) -> stack::Result<xml::Node> {
-        match self {
-            Value::Node(n) => Ok(*n),
-            _ => Err(stack::Error::Type),
-        }
-    }
-
     pub(crate) fn to_sequence(&self) -> stack::Sequence {
         stack::Sequence::from_items(&self.items().collect::<Vec<_>>())
     }
