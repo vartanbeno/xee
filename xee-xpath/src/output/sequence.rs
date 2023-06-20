@@ -34,6 +34,14 @@ impl Sequence {
         }
     }
 
+    pub fn ensure_empty(&self) -> error::Result<&Self> {
+        if self.is_empty() {
+            Ok(self)
+        } else {
+            Err(error::Error::XPTY0004A)
+        }
+    }
+
     pub fn items(&self) -> ItemIter {
         ItemIter {
             value_iter: stack::ValueIter::new(self.stack_value.clone()),

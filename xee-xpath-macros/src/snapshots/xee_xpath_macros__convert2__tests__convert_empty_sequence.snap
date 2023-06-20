@@ -1,0 +1,5 @@
+---
+source: xee-xpath-macros/src/convert2.rs
+expression: "convert(\"empty-sequence()\")"
+---
+"let a = a . ensure_empty () ? ;"
