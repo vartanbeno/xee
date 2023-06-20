@@ -40,13 +40,6 @@ impl Item {
         }
     }
 
-    pub(crate) fn into_stack_value(self) -> stack::Value {
-        match self {
-            Item::StackValue(StackValue(stack_value)) => stack_value,
-            Item::StackItem(StackItem(stack_item)) => stack_item.into_stack_value(),
-        }
-    }
-
     pub(crate) fn to_stack_item(&self) -> stack::Item {
         match self {
             Item::StackValue(StackValue(v)) => match v {
@@ -118,5 +111,14 @@ impl From<xml::Node> for output::Item {
 impl From<output::Atomic> for output::Item {
     fn from(atomic: output::Atomic) -> Self {
         Item::StackValue(StackValue(stack::Value::Atomic(atomic.stack_atomic)))
+    }
+}
+
+impl From<output::Item> for stack::Value {
+    fn from(item: output::Item) -> Self {
+        match item {
+            Item::StackValue(StackValue(stack_value)) => stack_value,
+            Item::StackItem(StackItem(stack_item)) => stack_item.into_stack_value(),
+        }
     }
 }

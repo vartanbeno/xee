@@ -24,7 +24,7 @@ impl Sequence {
         }
         if items.len() == 1 {
             return Self {
-                stack_value: items[0].clone().into_stack_value(),
+                stack_value: items[0].clone().into(),
             };
         }
         let stack_items = items
