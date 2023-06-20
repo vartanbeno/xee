@@ -132,8 +132,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
-                    let a: &str = (&a).try_into()?;
-                    let b: &str = (&b).try_into()?;
+                    let a = a.to_str()?;
+                    let b = b.to_str()?;
                     let result = a.to_owned() + b;
                     self.stack
                         .push(stack::Value::Atomic(stack::Atomic::String(Rc::new(result))));
@@ -357,8 +357,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Range => {
                     let (a, b) = self.pop_atomic2()?;
-                    let a: i64 = a.try_into()?;
-                    let b: i64 = b.try_into()?;
+                    let a = a.to_integer()?;
+                    let b = b.to_integer()?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -389,7 +389,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::SequenceGet => {
                     let sequence = self.pop_seq()?;
                     let index = self.pop_atomic()?;
-                    let index: i64 = index.try_into()?;
+                    let index = index.to_integer()?;
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index as usize - 1].clone();
                     self.stack.push(item.into_stack_value())
