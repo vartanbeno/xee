@@ -1,7 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::vec;
 
 use crate::stack;
 use crate::xml;
@@ -72,25 +71,6 @@ impl InnerSequence {
 
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
-    }
-
-    pub(crate) fn from_item(item: stack::Item) -> Self {
-        Self { items: vec![item] }
-    }
-
-    pub(crate) fn from_atomic(atomic: stack::Atomic) -> Self {
-        if matches!(atomic, stack::Atomic::Empty) {
-            return Self::empty();
-        }
-        Self {
-            items: vec![stack::Item::Atomic(atomic)],
-        }
-    }
-
-    pub(crate) fn from_node(node: xml::Node) -> Self {
-        Self {
-            items: vec![stack::Item::Node(node)],
-        }
     }
 
     pub(crate) fn singleton(&self) -> stack::Result<&stack::Item> {
