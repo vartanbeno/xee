@@ -17,10 +17,6 @@ impl Sequence {
         Self::new(InnerSequence::new())
     }
 
-    pub(crate) fn from_item(item: stack::Item) -> Self {
-        Self::new(InnerSequence::from_item(item))
-    }
-
     pub fn len(&self) -> usize {
         self.0.borrow().len()
     }
@@ -72,10 +68,6 @@ impl InnerSequence {
 
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
-    }
-
-    pub fn as_slice(&self) -> &[stack::Item] {
-        &self.items
     }
 
     pub(crate) fn from_items(items: &[stack::Item]) -> Self {
