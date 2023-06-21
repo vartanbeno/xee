@@ -24,7 +24,10 @@ impl Value {
     }
 
     pub(crate) fn to_sequence(&self) -> stack::Sequence {
-        stack::Sequence::from_items(&self.items().collect::<Vec<_>>())
+        match self {
+            Value::Sequence(s) => s.clone(),
+            _ => stack::Sequence::from_items(&self.items().collect::<Vec<_>>()),
+        }
     }
 
     pub(crate) fn items(&self) -> ItemIter {

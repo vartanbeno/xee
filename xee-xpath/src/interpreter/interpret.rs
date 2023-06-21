@@ -200,7 +200,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 EncodedInstruction::Comma => {
-                    let (a, b) = self.pop_seq2()?;
+                    let (a, b) = self.pop_seq2();
                     self.stack.push(stack::Value::Sequence(stack::Sequence::new(
                         a.borrow().concat(&b.borrow()),
                     )));
@@ -286,7 +286,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(r);
                 }
                 EncodedInstruction::Union => {
-                    let (a, b) = self.pop_seq2()?;
+                    let (a, b) = self.pop_seq2();
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
@@ -380,13 +380,13 @@ impl<'a> Interpreter<'a> {
                         .push(stack::Value::Sequence(stack::Sequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
-                    let sequence = self.pop_seq()?;
+                    let sequence = self.pop_seq();
                     let len = sequence.borrow().items.len();
                     self.stack
                         .push(stack::Value::Atomic(stack::Atomic::Integer(len as i64)));
                 }
                 EncodedInstruction::SequenceGet => {
-                    let sequence = self.pop_seq()?;
+                    let sequence = self.pop_seq();
                     let index = self.pop_atomic()?;
                     let index = index.to_integer()?;
                     // substract 1 as Xpath is 1-indexed
@@ -394,7 +394,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(item.into_stack_value())
                 }
                 EncodedInstruction::SequencePush => {
-                    let sequence = self.pop_seq()?;
+                    let sequence = self.pop_seq();
                     let stack_value = self.stack.pop().unwrap();
                     sequence.borrow_mut().push_value(stack_value);
                 }
@@ -476,15 +476,15 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> stack::Result<stack::Sequence> {
-        let sequence = self.stack.pop().unwrap();
-        sequence.try_into()
+    fn pop_seq(&mut self) -> stack::Sequence {
+        let value = self.stack.pop().unwrap();
+        value.to_sequence()
     }
 
-    fn pop_seq2(&mut self) -> stack::Result<(stack::Sequence, stack::Sequence)> {
-        let b = self.pop_seq()?;
-        let a = self.pop_seq()?;
-        Ok((a, b))
+    fn pop_seq2(&mut self) -> (stack::Sequence, stack::Sequence) {
+        let b = self.pop_seq();
+        let a = self.pop_seq();
+        (a, b)
     }
 
     fn pop_atomized2(
