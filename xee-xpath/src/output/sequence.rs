@@ -117,6 +117,14 @@ impl From<&stack::Value> for Sequence {
     }
 }
 
+impl From<output::Item> for Sequence {
+    fn from(item: output::Item) -> Self {
+        Self {
+            stack_value: item.into(),
+        }
+    }
+}
+
 impl From<Vec<output::Item>> for Sequence {
     fn from(items: Vec<output::Item>) -> Self {
         if items.is_empty() {

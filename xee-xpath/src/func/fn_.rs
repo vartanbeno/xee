@@ -90,6 +90,14 @@ fn exists(arg: &[output::Item]) -> bool {
     !arg.is_empty()
 }
 
+#[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
+fn exactly_one(arg: &[output::Item]) -> error::Result<output::Item> {
+    if arg.len() == 1 {
+        Ok(arg[0].clone())
+    } else {
+        Err(error::Error::FORG0005)
+    }
+}
 // #[xpath_fn]
 // fn exactly_one(context: &DynamicContext, a: &[Item]) -> Result<Item, stack::ValueError> {
 //     if a.len() == 1 {
@@ -100,17 +108,17 @@ fn exists(arg: &[output::Item]) -> bool {
 //     }
 // }
 
-fn exactly_one(
-    _context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
-    let a = &arguments[0];
-    if a.len() == 1 {
-        Ok(a.clone())
-    } else {
-        Err(error::Error::FORG0005)
-    }
-}
+// fn exactly_one(
+//     _context: &DynamicContext,
+//     arguments: &[output::Sequence],
+// ) -> error::Result<output::Sequence> {
+//     let a = &arguments[0];
+//     if a.len() == 1 {
+//         Ok(a.clone())
+//     } else {
+//         Err(error::Error::FORG0005)
+//     }
+// }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
 fn empty(arg: &[output::Item]) -> bool {
@@ -242,12 +250,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(string),
         wrap_xpath_fn!(exists),
-        StaticFunctionDescription {
-            name: ast::Name::new("exactly-one".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_kind: None,
-            func: exactly_one,
-        },
+        wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(empty),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
