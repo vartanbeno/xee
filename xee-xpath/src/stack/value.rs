@@ -6,8 +6,6 @@ use crate::output;
 use crate::stack;
 use crate::xml;
 
-// TODO: the use in the macro needs to keep this public, needs to be investigated
-// further.
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
     Atomic(stack::Atomic),
