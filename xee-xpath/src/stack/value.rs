@@ -147,9 +147,22 @@ impl PartialEq for Value {
             (Value::Sequence(a), Value::Sequence(b)) => a == b,
             (Value::Empty, Value::Sequence(b)) => b.is_empty(),
             (Value::Sequence(a), Value::Empty) => a.is_empty(),
-            (_, Value::Sequence(b)) => (&self.to_sequence()) == b,
-            (Value::Sequence(a), _) => a == &other.to_sequence(),
-            _ => false,
+            (Value::Item(a), Value::Sequence(b)) => {
+                if b.len() != 1 {
+                    return false;
+                }
+                let a: stack::Sequence = a.clone().into();
+                &a == b
+            }
+            (Value::Sequence(a), Value::Item(b)) => {
+                if a.len() != 1 {
+                    return false;
+                }
+                let b: stack::Sequence = b.clone().into();
+                a == &b
+            }
+            (Value::Empty, Value::Item(_)) => false,
+            (Value::Item(_), Value::Empty) => false,
         }
     }
 }

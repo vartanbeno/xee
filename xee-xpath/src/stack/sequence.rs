@@ -55,6 +55,12 @@ impl From<Vec<stack::Item>> for stack::Sequence {
     }
 }
 
+impl From<stack::Item> for stack::Sequence {
+    fn from(item: stack::Item) -> Self {
+        Self::new(InnerSequence::new(vec![item]))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct InnerSequence {
     pub(crate) items: Vec<stack::Item>,
