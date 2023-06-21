@@ -134,7 +134,7 @@ impl From<Vec<output::Item>> for Sequence {
         }
         let stack_items = items.iter().map(|item| item.into()).collect::<Vec<_>>();
         Self {
-            stack_value: stack::Value::Sequence(stack::Sequence::from_items(&stack_items)),
+            stack_value: stack::Value::Sequence(stack::Sequence::from(stack_items)),
         }
     }
 }

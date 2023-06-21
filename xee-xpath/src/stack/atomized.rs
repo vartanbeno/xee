@@ -211,7 +211,7 @@ mod tests {
         let root = xot.parse("<doc>Hello</doc>").unwrap();
         let xot_node = xot.document_element(root).unwrap();
         let node = xml::Node::Xot(xot_node);
-        let value = stack::Value::Sequence(stack::Sequence::from_items(&[
+        let value = stack::Value::Sequence(stack::Sequence::from(vec![
             stack::Item::Atomic(stack::Atomic::Integer(3)),
             stack::Item::Node(node),
             stack::Item::Atomic(stack::Atomic::Integer(4)),

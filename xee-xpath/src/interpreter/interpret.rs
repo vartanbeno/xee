@@ -366,7 +366,7 @@ impl<'a> Interpreter<'a> {
                             .stack
                             .push(stack::Value::Atomic(stack::Atomic::Integer(a))),
                         Ordering::Less => {
-                            let sequence = stack::Sequence::from_vec(
+                            let sequence = stack::Sequence::from(
                                 (a..=b)
                                     .map(|i| stack::Item::Atomic(stack::Atomic::Integer(i)))
                                     .collect::<Vec<stack::Item>>(),

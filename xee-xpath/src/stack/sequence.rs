@@ -16,18 +16,7 @@ impl Sequence {
     pub(crate) fn empty() -> Self {
         Self::new(InnerSequence::new())
     }
-    pub(crate) fn from_atomic(atomic: &stack::Atomic) -> Self {
-        Self::new(InnerSequence::from_atomic(atomic.clone()))
-    }
-    pub(crate) fn from_node(node: xml::Node) -> Self {
-        Self::new(InnerSequence::from_node(node))
-    }
-    pub(crate) fn from_vec(items: Vec<stack::Item>) -> Self {
-        Self::new(InnerSequence::from_vec(items))
-    }
-    pub(crate) fn from_items(items: &[stack::Item]) -> Self {
-        Self::new(InnerSequence::from_items(items))
-    }
+
     pub(crate) fn from_item(item: stack::Item) -> Self {
         Self::new(InnerSequence::from_item(item))
     }
@@ -52,13 +41,18 @@ impl Sequence {
 impl From<stack::Value> for stack::Sequence {
     fn from(value: stack::Value) -> Self {
         value.to_sequence()
-        // stack::Sequence::new(InnerSequence::from(value))
     }
 }
 
 impl From<&stack::Value> for stack::Sequence {
     fn from(value: &stack::Value) -> Self {
         value.to_sequence()
+    }
+}
+
+impl From<Vec<stack::Item>> for stack::Sequence {
+    fn from(items: Vec<stack::Item>) -> Self {
+        Self::new(InnerSequence::from_vec(items))
     }
 }
 

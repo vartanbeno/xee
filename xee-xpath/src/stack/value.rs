@@ -26,7 +26,7 @@ impl Value {
     pub(crate) fn to_sequence(&self) -> stack::Sequence {
         match self {
             Value::Sequence(s) => s.clone(),
-            _ => stack::Sequence::from_items(&self.items().collect::<Vec<_>>()),
+            _ => stack::Sequence::from(self.items().collect::<Vec<_>>()),
         }
     }
 
@@ -112,7 +112,7 @@ impl From<Vec<stack::Item>> for Value {
         } else if items.len() == 1 {
             Value::from(items[0].clone())
         } else {
-            Value::Sequence(stack::Sequence::from_items(&items))
+            Value::Sequence(stack::Sequence::from(items))
         }
     }
 }
