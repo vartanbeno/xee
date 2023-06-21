@@ -35,8 +35,15 @@ impl Item {
 
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
-            Item::Atomic(a) => a.effective_boolean_value(),
-            _ => Err(stack::Error::Type),
+            stack::Item::Atomic(a) => a.effective_boolean_value(),
+            // If its operand is a sequence whose first item is a node, fn:boolean returns true;
+            // this is the case when a single node is on the stack, just like if it
+            // were in a sequence.
+            stack::Item::Node(_) => Ok(true),
+            // XXX the type error that the effective boolean wants is
+            // NOT the normal type error, but err:FORG0006. We don't
+            // make that distinction yet
+            stack::Item::Function(_) => Err(stack::Error::Type),
         }
     }
 
