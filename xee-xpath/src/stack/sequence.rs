@@ -87,7 +87,6 @@ impl InnerSequence {
             stack::Value::Closure(c) => self.items.push(stack::Item::Function(c)),
             stack::Value::Sequence(s) => self.extend(s),
             stack::Value::Node(n) => self.items.push(stack::Item::Node(n)),
-            _ => panic!("unexpected value: {:?}", value),
         }
     }
 

@@ -21,7 +21,6 @@ impl<'a> AtomizedIter<'a> {
                 AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
             stack::Value::Closure(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
-            stack::Value::Step(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
         }
     }
 }

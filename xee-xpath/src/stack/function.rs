@@ -3,6 +3,7 @@ use miette::SourceSpan;
 use crate::ir;
 use crate::output;
 use crate::stack;
+use crate::xml;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub(crate) struct FunctionId(pub(crate) usize);
@@ -27,6 +28,7 @@ pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<stack::Value>,
+    pub(crate) steps: Vec<xml::Step>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,

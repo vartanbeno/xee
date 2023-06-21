@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use ahash::{HashMap, HashMapExt};
 use miette::SourceSpan;
 
@@ -376,18 +374,15 @@ impl<'a> IrConverter<'a> {
         // get the current context
         let mut current_context_bindings = self.context_item(span)?;
 
-        // create a step atom
-        let step = Rc::new(xml::Step {
+        let step = xml::Step {
             axis: ast.axis.clone(),
             node_test: ast.node_test.clone(),
-        });
-
-        let atom = Spanned::new(ir::Atom::Const(ir::Const::Step(step)), span);
+        };
 
         // given the current context item, apply the step
-        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
-            atom,
-            args: vec![current_context_bindings.atom()],
+        let expr = ir::Expr::Step(ir::Step {
+            step,
+            context: current_context_bindings.atom(),
         });
 
         // create a new binding for the step

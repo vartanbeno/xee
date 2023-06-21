@@ -36,6 +36,7 @@ pub(crate) enum Instruction {
     JumpIfTrue(i16),
     JumpIfFalse(i16),
     Call(u8),
+    Step(u16),
     Return,
     Dup,
     Pop,
@@ -86,6 +87,7 @@ pub(crate) enum EncodedInstruction {
     JumpIfTrue,
     JumpIfFalse,
     Call,
+    Step,
     Return,
     Dup,
     Pop,
@@ -166,6 +168,10 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Call => {
             let arity = bytes[1];
             (Instruction::Call(arity), 2)
+        }
+        EncodedInstruction::Step => {
+            let step = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Step(step), 3)
         }
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
@@ -258,6 +264,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(EncodedInstruction::Call.to_u8().unwrap());
             bytes.push(arity);
         }
+        Instruction::Step(step_id) => {
+            bytes.push(EncodedInstruction::Step.to_u8().unwrap());
+            bytes.extend_from_slice(&step_id.to_le_bytes());
+        }
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
         Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::Pop => bytes.push(EncodedInstruction::Pop.to_u8().unwrap()),
@@ -326,6 +336,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::ClosureVar(_)
         | Instruction::Jump(_)
         | Instruction::JumpIfTrue(_)
+    | Instruction::Step(_)
         | Instruction::JumpIfFalse(_) => 3,
     }
 }

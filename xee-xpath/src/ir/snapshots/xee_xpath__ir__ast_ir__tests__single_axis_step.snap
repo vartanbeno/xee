@@ -24,22 +24,23 @@ Ok(
                     ),
                 ],
                 body: Spanned {
-                    value: FunctionCall(
-                        FunctionCall {
-                            atom: Spanned {
-                                value: Const(
-                                    Step(
-                                        Step {
-                                            axis: Child,
-                                            node_test: NameTest(
-                                                Name(
-                                                    Name {
-                                                        name: "a",
-                                                        namespace: None,
-                                                    },
-                                                ),
-                                            ),
+                    value: Step(
+                        Step {
+                            step: Step {
+                                axis: Child,
+                                node_test: NameTest(
+                                    Name(
+                                        Name {
+                                            name: "a",
+                                            namespace: None,
                                         },
+                                    ),
+                                ),
+                            },
+                            context: Spanned {
+                                value: Variable(
+                                    Name(
+                                        "v0",
                                     ),
                                 ),
                                 span: SourceSpan {
@@ -47,27 +48,10 @@ Ok(
                                         0,
                                     ),
                                     length: SourceOffset(
-                                        8,
+                                        0,
                                     ),
                                 },
                             },
-                            args: [
-                                Spanned {
-                                    value: Variable(
-                                        Name(
-                                            "v0",
-                                        ),
-                                    ),
-                                    span: SourceSpan {
-                                        offset: SourceOffset(
-                                            0,
-                                        ),
-                                        length: SourceOffset(
-                                            0,
-                                        ),
-                                    },
-                                },
-                            ],
                         },
                     ),
                     span: SourceSpan {

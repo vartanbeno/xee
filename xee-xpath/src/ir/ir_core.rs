@@ -3,7 +3,6 @@
 // (without function arguments), as XPath doesn't.
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
-use std::rc::Rc;
 
 pub use xee_xpath_ast::ast::BinaryOperator;
 use xee_xpath_ast::span::Spanned;
@@ -23,6 +22,7 @@ pub(crate) enum Expr {
     FunctionDefinition(FunctionDefinition),
     StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
     FunctionCall(FunctionCall),
+    Step(Step),
     Map(Map),
     Filter(Filter),
     Quantified(Quantified),
@@ -43,9 +43,6 @@ pub(crate) enum Const {
     Decimal(Decimal),
     // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
-    // step is treated as a special function which takes the context node as
-    // its argument
-    Step(Rc<xml::Step>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -92,6 +89,12 @@ pub(crate) struct Param(pub(crate) Name);
 pub(crate) struct FunctionCall {
     pub(crate) atom: AtomS,
     pub(crate) args: Vec<AtomS>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Step {
+    pub(crate) step: xml::Step,
+    pub(crate) context: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

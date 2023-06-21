@@ -14,7 +14,6 @@ pub(crate) enum Value {
     Closure(Rc<stack::Closure>),
     Node(xml::Node),
     Sequence(stack::Sequence),
-    Step(Rc<xml::Step>),
 }
 
 impl Value {
@@ -62,7 +61,6 @@ impl Value {
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
             Value::Closure(_) => Err(stack::Error::Type),
-            Value::Step(_) => Err(stack::Error::Type),
         }
     }
 
@@ -88,7 +86,6 @@ impl Value {
             }
             Value::Node(node) => node.string_value(xot),
             Value::Closure(_) => Err(stack::Error::Type)?,
-            Value::Step(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
     }
@@ -123,17 +120,6 @@ impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
         match value {
             stack::Value::Closure(c) => Ok(c),
             // TODO what about a sequence with a single closure?
-            _ => Err(stack::Error::Type),
-        }
-    }
-}
-
-impl TryFrom<&stack::Value> for Rc<xml::Step> {
-    type Error = stack::Error;
-
-    fn try_from(value: &stack::Value) -> stack::Result<Rc<xml::Step>> {
-        match value {
-            stack::Value::Step(s) => Ok(Rc::clone(s)),
             _ => Err(stack::Error::Type),
         }
     }
@@ -174,7 +160,6 @@ impl PartialEq for Value {
             (Value::Atomic(stack::Atomic::Empty), Value::Sequence(b)) => b.is_empty(),
             (Value::Sequence(a), Value::Atomic(stack::Atomic::Empty)) => a.is_empty(),
             (Value::Closure(a), Value::Closure(b)) => a == b,
-            (Value::Step(a), Value::Step(b)) => a == b,
             (Value::Node(a), Value::Node(b)) => a == b,
             (_, Value::Sequence(b)) => (&self.to_sequence()) == b,
             (Value::Sequence(a), _) => a == &other.to_sequence(),
@@ -226,9 +211,6 @@ impl Iterator for ItemIter {
                 } else {
                     None
                 }
-            }
-            stack::Value::Step(_) => {
-                panic!("Unsupported")
             }
             stack::Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();

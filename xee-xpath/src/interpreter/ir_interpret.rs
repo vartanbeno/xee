@@ -36,6 +36,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call, span)
             }
+            ir::Expr::Step(step) => self.compile_step(step, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
@@ -54,7 +55,6 @@ impl<'a> InterpreterCompiler<'a> {
                     ir::Const::Double(d) => stack::Value::Atomic(stack::Atomic::Double(*d)),
                     ir::Const::Decimal(d) => stack::Value::Atomic(stack::Atomic::Decimal(*d)),
                     ir::Const::EmptySequence => stack::Value::Sequence(stack::Sequence::empty()),
-                    ir::Const::Step(step) => stack::Value::Step(step.clone()),
                 };
                 self.builder.emit_constant(stack_value, atom.span);
                 Ok(())
@@ -313,6 +313,13 @@ impl<'a> InterpreterCompiler<'a> {
         }
         self.builder
             .emit(Instruction::Call(function_call.args.len() as u8), span);
+        Ok(())
+    }
+
+    fn compile_step(&mut self, step: &ir::Step, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&step.context)?;
+        let step_id = self.builder.add_step(step.step.clone());
+        self.builder.emit(Instruction::Step(step_id as u16), span);
         Ok(())
     }
 

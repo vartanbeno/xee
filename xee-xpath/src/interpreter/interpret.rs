@@ -319,11 +319,16 @@ impl<'a> Interpreter<'a> {
                                 self.call_static(static_function_id, arity, closure_values)?;
                             }
                         }
-                    } else if let Ok(step) = callable.try_into() as stack::Result<Rc<xml::Step>> {
-                        self.call_step(step)?;
                     } else {
                         return Err(stack::Error::Type);
                     }
+                }
+                EncodedInstruction::Step => {
+                    let step_id = self.read_u16();
+                    let node = self.stack.pop().unwrap().try_into()?;
+                    let step = &(self.function().steps[step_id as usize]);
+                    let sequence = xml::resolve_step(step, node, self.dynamic_context.xot);
+                    self.stack.push(stack::Value::Sequence(sequence));
                 }
                 EncodedInstruction::Return => {
                     let return_value = self.stack.pop().unwrap();
@@ -447,16 +452,6 @@ impl<'a> Interpreter<'a> {
             ip: 0,
             base: self.stack.len() - (arity as usize),
         });
-        Ok(())
-    }
-
-    fn call_step(&mut self, step: Rc<xml::Step>) -> stack::Result<()> {
-        // take one argument from the stack
-        let node = self.stack.pop().unwrap().try_into()?;
-        // pop off the callable too
-        self.stack.pop();
-        let sequence = xml::resolve_step(step.as_ref(), node, self.dynamic_context.xot);
-        self.stack.push(stack::Value::Sequence(sequence));
         Ok(())
     }
 

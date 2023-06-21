@@ -37,7 +37,6 @@ impl Sequence {
             stack::Value::Sequence(sequence) => sequence.borrow().len(),
             stack::Value::Node(_) => 1,
             stack::Value::Closure(_) => 1,
-            stack::Value::Step(_) => 1,
         }
     }
 
@@ -197,7 +196,7 @@ impl Iterator for ItemIter {
     type Item = output::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter.next().map(|v| output::Item::from(v))
+        self.value_iter.next().map(output::Item::from)
     }
 }
 
@@ -211,7 +210,7 @@ impl Iterator for NodeIter {
     fn next(&mut self) -> Option<Self::Item> {
         self.value_iter
             .next()
-            .map(|v| v.to_node().map_err(|e| error::Error::from(e)))
+            .map(|v| v.to_node().map_err(error::Error::from))
     }
 }
 
