@@ -3,9 +3,11 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"my_function#2(5, 2)\")"
 ---
 Ok(
-    Atomic(
-        Integer(
-            7,
+    Item(
+        Atomic(
+            Integer(
+                7,
+            ),
         ),
     ),
 )

@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use xot::Xot;
 
 use crate::occurrence;
@@ -9,9 +8,7 @@ use crate::xml;
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
     Empty,
-    Atomic(stack::Atomic),
-    Closure(Rc<stack::Closure>),
-    Node(xml::Node),
+    Item(stack::Item),
     Sequence(stack::Sequence),
 }
 
@@ -38,7 +35,19 @@ impl Value {
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
             Value::Empty => Ok(false),
-            Value::Atomic(a) => a.effective_boolean_value(),
+            Value::Item(item) => {
+                match item {
+                    stack::Item::Atomic(a) => a.effective_boolean_value(),
+                    // If its operand is a sequence whose first item is a node, fn:boolean returns true;
+                    // this is the case when a single node is on the stack, just like if it
+                    // were in a sequence.
+                    stack::Item::Node(_) => Ok(true),
+                    // XXX the type error that the effective boolean wants is
+                    // NOT the normal type error, but err:FORG0006. We don't
+                    // make that distinction yet
+                    stack::Item::Function(_) => Err(stack::Error::Type),
+                }
+            }
             Value::Sequence(s) => {
                 let s = s.borrow();
                 // If its operand is an empty sequence, fn:boolean returns false.
@@ -53,14 +62,6 @@ impl Value {
                 let singleton = s.singleton()?;
                 singleton.effective_boolean_value()
             }
-            // If its operand is a sequence whose first item is a node, fn:boolean returns true;
-            // this is the case when a single node is on the stack, just like if it
-            // were in a sequence.
-            Value::Node(_) => Ok(true),
-            // XXX the type error that the effective boolean wants is
-            // NOT the normal type error, but err:FORG0006. We don't
-            // make that distinction yet
-            Value::Closure(_) => Err(stack::Error::Type),
         }
     }
 
@@ -75,7 +76,11 @@ impl Value {
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
             Value::Empty => "".to_string(),
-            Value::Atomic(atomic) => atomic.string_value()?,
+            Value::Item(item) => match item {
+                stack::Item::Atomic(atomic) => atomic.string_value()?,
+                stack::Item::Node(node) => node.string_value(xot),
+                stack::Item::Function(_) => Err(stack::Error::Type)?,
+            },
             Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 let len = sequence.len();
@@ -85,20 +90,17 @@ impl Value {
                     _ => Err(stack::Error::Type)?,
                 }
             }
-            Value::Node(node) => node.string_value(xot),
-            Value::Closure(_) => Err(stack::Error::Type)?,
         };
         Ok(value)
     }
 }
 
-impl From<stack::Item> for Value {
-    fn from(item: stack::Item) -> Self {
-        match item {
-            stack::Item::Atomic(a) => Value::Atomic(a),
-            stack::Item::Node(n) => Value::Node(n),
-            stack::Item::Function(f) => Value::Closure(f),
-        }
+impl<T> From<T> for Value
+where
+    T: Into<stack::Item>,
+{
+    fn from(item: T) -> Self {
+        Value::Item(item.into())
     }
 }
 
@@ -119,8 +121,9 @@ impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
 
     fn try_from(value: &'a stack::Value) -> stack::Result<&'a stack::Closure> {
         match value {
-            stack::Value::Closure(c) => Ok(c),
-            // TODO what about a sequence with a single closure?
+            stack::Value::Item(stack::Item::Function(c)) => Ok(c),
+            // TODO: not handling this correctly yet
+            // stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_function()),
             _ => Err(stack::Error::Type),
         }
     }
@@ -139,7 +142,7 @@ impl TryFrom<&stack::Value> for xml::Node {
 
     fn try_from(value: &stack::Value) -> stack::Result<xml::Node> {
         match value {
-            stack::Value::Node(n) => Ok(*n),
+            stack::Value::Item(stack::Item::Node(n)) => Ok(*n),
             stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(stack::Error::Type),
         }
@@ -156,12 +159,10 @@ impl PartialEq for Value {
         // before comparing
         match (self, other) {
             (Value::Empty, Value::Empty) => true,
-            (Value::Atomic(a), Value::Atomic(b)) => a == b,
+            (Value::Item(a), Value::Item(b)) => a == b,
             (Value::Sequence(a), Value::Sequence(b)) => a == b,
             (Value::Empty, Value::Sequence(b)) => b.is_empty(),
             (Value::Sequence(a), Value::Empty) => a.is_empty(),
-            (Value::Closure(a), Value::Closure(b)) => a == b,
-            (Value::Node(a), Value::Node(b)) => a == b,
             (_, Value::Sequence(b)) => (&self.to_sequence()) == b,
             (Value::Sequence(a), _) => a == &other.to_sequence(),
             _ => false,
@@ -189,30 +190,32 @@ impl Iterator for ItemIter {
     fn next(&mut self) -> Option<Self::Item> {
         match &self.stack_value {
             stack::Value::Empty => None,
-            stack::Value::Atomic(a) => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some(stack::Item::Atomic(a.clone()))
-                } else {
-                    None
+            stack::Value::Item(item) => match item {
+                stack::Item::Atomic(a) => {
+                    if self.index == 0 {
+                        self.index += 1;
+                        Some(stack::Item::Atomic(a.clone()))
+                    } else {
+                        None
+                    }
                 }
-            }
-            stack::Value::Node(node) => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some(stack::Item::Node(*node))
-                } else {
-                    None
+                stack::Item::Node(node) => {
+                    if self.index == 0 {
+                        self.index += 1;
+                        Some(stack::Item::Node(*node))
+                    } else {
+                        None
+                    }
                 }
-            }
-            stack::Value::Closure(closure) => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some(stack::Item::Function(closure.clone()))
-                } else {
-                    None
+                stack::Item::Function(closure) => {
+                    if self.index == 0 {
+                        self.index += 1;
+                        Some(stack::Item::Function(closure.clone()))
+                    } else {
+                        None
+                    }
                 }
-            }
+            },
             stack::Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 if self.index < sequence.len() {

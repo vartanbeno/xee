@@ -3,9 +3,11 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"'hello' eq 'world'\")"
 ---
 Ok(
-    Atomic(
-        Boolean(
-            false,
+    Item(
+        Atomic(
+            Boolean(
+                false,
+            ),
         ),
     ),
 )

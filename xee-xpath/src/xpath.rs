@@ -62,10 +62,12 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            stack::Value::Atomic(stack::Atomic::Absent) => Err(Error::XPDY0002 {
-                src: self.program.src.clone(),
-                span: (0, self.program.src.len()).into(),
-            }),
+            stack::Value::Item(stack::Item::Atomic(stack::Atomic::Absent)) => {
+                Err(Error::XPDY0002 {
+                    src: self.program.src.clone(),
+                    span: (0, self.program.src.len()).into(),
+                })
+            }
             _ => Ok(value),
         }
     }

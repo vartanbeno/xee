@@ -33,17 +33,15 @@ impl Sequence {
     pub fn len(&self) -> usize {
         match &self.stack_value {
             stack::Value::Empty => 0,
-            stack::Value::Atomic(_) => 1,
+            stack::Value::Item(_) => 1,
             stack::Value::Sequence(sequence) => sequence.borrow().len(),
-            stack::Value::Node(_) => 1,
-            stack::Value::Closure(_) => 1,
         }
     }
 
     pub fn is_absent(&self) -> bool {
         matches!(
             &self.stack_value,
-            stack::Value::Atomic(stack::Atomic::Absent)
+            stack::Value::Item(stack::Item::Atomic(stack::Atomic::Absent))
         )
     }
 

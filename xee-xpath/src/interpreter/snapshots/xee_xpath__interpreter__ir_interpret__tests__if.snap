@@ -3,9 +3,11 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"if (1) then 2 else 3\")"
 ---
 Ok(
-    Atomic(
-        Integer(
-            2,
+    Item(
+        Atomic(
+            Integer(
+                2,
+            ),
         ),
     ),
 )

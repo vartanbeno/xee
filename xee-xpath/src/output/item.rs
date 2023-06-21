@@ -65,11 +65,6 @@ impl From<output::Atomic> for output::Item {
     }
 }
 
-impl From<output::Item> for stack::Value {
-    fn from(item: output::Item) -> Self {
-        item.stack_item.into_stack_value()
-    }
-}
 
 impl From<output::Item> for stack::Item {
     fn from(item: output::Item) -> Self {

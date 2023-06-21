@@ -25,6 +25,14 @@ impl Item {
             _ => Err(stack::Error::Type),
         }
     }
+
+    pub(crate) fn to_function(&self) -> stack::Result<&stack::Closure> {
+        match self {
+            Item::Function(f) => Ok(f.as_ref()),
+            _ => Err(stack::Error::Type),
+        }
+    }
+
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
             Item::Atomic(a) => a.effective_boolean_value(),
@@ -39,16 +47,25 @@ impl Item {
             _ => Err(stack::Error::Type),
         }
     }
+}
 
-    pub(crate) fn into_stack_value(self) -> stack::Value {
-        match self {
-            Item::Atomic(a) => stack::Value::Atomic(a),
-            Item::Node(n) => stack::Value::Node(n),
-            Item::Function(f) => stack::Value::Closure(f),
-        }
+impl<T> From<T> for Item
+where
+    T: Into<stack::Atomic>,
+{
+    fn from(a: T) -> Self {
+        Self::Atomic(a.into())
     }
+}
 
-    pub(crate) fn to_stack_value(&self) -> stack::Value {
-        self.clone().into_stack_value()
+impl From<xml::Node> for Item {
+    fn from(node: xml::Node) -> Self {
+        Self::Node(node)
+    }
+}
+
+impl From<stack::Closure> for Item {
+    fn from(f: stack::Closure) -> Self {
+        Self::Function(Rc::new(f))
     }
 }

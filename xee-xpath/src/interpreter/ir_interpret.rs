@@ -1,5 +1,4 @@
 use miette::SourceSpan;
-use std::rc::Rc;
 
 use crate::context::{ContextRule, StaticContext};
 use crate::error::{Error, Result};
@@ -48,13 +47,12 @@ impl<'a> InterpreterCompiler<'a> {
         match &atom.value {
             ir::Atom::Const(c) => {
                 let stack_value = match c {
-                    ir::Const::Integer(i) => stack::Value::Atomic(stack::Atomic::Integer(*i)),
-                    ir::Const::String(s) => {
-                        stack::Value::Atomic(stack::Atomic::String(Rc::new(s.clone())))
-                    }
-                    ir::Const::Double(d) => stack::Value::Atomic(stack::Atomic::Double(*d)),
-                    ir::Const::Decimal(d) => stack::Value::Atomic(stack::Atomic::Decimal(*d)),
-                    ir::Const::EmptySequence => stack::Value::Sequence(stack::Sequence::empty()),
+                    ir::Const::Integer(i) => (*i).into(),
+                    ir::Const::String(s) => s.into(),
+                    // TODO: implement ir::Const::Float
+                    ir::Const::Double(d) => (*d).into(),
+                    ir::Const::Decimal(d) => (*d).into(),
+                    ir::Const::EmptySequence => stack::Value::Empty,
                 };
                 self.builder.emit_constant(stack_value, atom.span);
                 Ok(())
@@ -195,12 +193,10 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(first_false);
                 // pop the second item on the stack
                 self.builder.emit(Instruction::Pop, span);
-                self.builder
-                    .emit_constant(stack::Value::Atomic(stack::Atomic::Boolean(false)), span);
+                self.builder.emit_constant(false.into(), span);
                 let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
                 self.builder.patch_jump(second_true);
-                self.builder
-                    .emit_constant(stack::Value::Atomic(stack::Atomic::Boolean(true)), span);
+                self.builder.emit_constant(true.into(), span);
                 self.builder.patch_jump(end);
             }
             ir::BinaryOperator::Or => {
@@ -208,13 +204,11 @@ impl<'a> InterpreterCompiler<'a> {
                 let first_true = self.builder.emit_jump_forward(JumpCondition::True, span);
                 let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
                 // neither first nor second were true, so we return false
-                self.builder
-                    .emit_constant(stack::Value::Atomic(stack::Atomic::Boolean(false)), span);
+                self.builder.emit_constant(false.into(), span);
                 let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
                 self.builder.patch_jump(first_true);
                 self.builder.patch_jump(second_true);
-                self.builder
-                    .emit_constant(stack::Value::Atomic(stack::Atomic::Boolean(true)), span);
+                self.builder.emit_constant(true.into(), span);
                 self.builder.patch_jump(end);
             }
             _ => todo!("operator not supported yet: {:?}", binary.op),
@@ -440,8 +434,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         let reached_end_value = match quantified.quantifier {
-            ir::Quantifier::Some => stack::Value::Atomic(stack::Atomic::Boolean(false)),
-            ir::Quantifier::Every => stack::Value::Atomic(stack::Atomic::Boolean(true)),
+            ir::Quantifier::Some => false.into(),
+            ir::Quantifier::Every => true.into(),
         };
         self.builder.emit_constant(reached_end_value, span);
         let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
@@ -453,8 +447,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         let jumped_out_value = match quantified.quantifier {
-            ir::Quantifier::Some => stack::Value::Atomic(stack::Atomic::Boolean(true)),
-            ir::Quantifier::Every => stack::Value::Atomic(stack::Atomic::Boolean(false)),
+            ir::Quantifier::Some => true.into(),
+            ir::Quantifier::Every => false.into(),
         };
         // if we jumped out, we set satisfies to true
         self.builder.emit_constant(jumped_out_value, span);
@@ -478,8 +472,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::SequenceLen, span);
 
         // place index on stack
-        self.builder
-            .emit_constant(stack::Value::Atomic(stack::Atomic::Integer(1)), span);
+        self.builder.emit_constant(1.into(), span);
         self.scopes.push_name(&context_names.position);
 
         let loop_start_ref = self.builder.loop_start();
@@ -515,8 +508,7 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> Result<()> {
         // update index with 1
         self.compile_variable(&context_names.position, span)?;
-        self.builder
-            .emit_constant(stack::Value::Atomic(stack::Atomic::Integer(1)), span);
+        self.builder.emit_constant(1.into(), span);
         self.builder.emit(Instruction::Add, span);
         self.compile_variable_set(&context_names.position, span)?;
         self.builder

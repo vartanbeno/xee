@@ -3,9 +3,11 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"fn:string(1)\")"
 ---
 Ok(
-    Atomic(
-        String(
-            "1",
+    Item(
+        Atomic(
+            String(
+                "1",
+            ),
         ),
     ),
 )

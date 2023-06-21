@@ -4,9 +4,11 @@ expression: "run_xml(\"<doc/>\", \"fn:position()\")"
 ---
 Ok(
     Sequence {
-        stack_value: Atomic(
-            Integer(
-                1,
+        stack_value: Item(
+            Atomic(
+                Integer(
+                    1,
+                ),
             ),
         ),
     },

@@ -4,9 +4,11 @@ expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#, \"fn:count(descendant::*
 ---
 Ok(
     Sequence {
-        stack_value: Atomic(
-            Integer(
-                4,
+        stack_value: Item(
+            Atomic(
+                Integer(
+                    4,
+                ),
             ),
         ),
     },

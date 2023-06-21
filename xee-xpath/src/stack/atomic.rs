@@ -173,3 +173,63 @@ impl PartialEq for Atomic {
         }
     }
 }
+
+impl From<bool> for Atomic {
+    fn from(b: bool) -> Self {
+        Atomic::Boolean(b)
+    }
+}
+
+impl From<f32> for Atomic {
+    fn from(f: f32) -> Self {
+        Atomic::Float(OrderedFloat(f))
+    }
+}
+
+impl From<OrderedFloat<f32>> for Atomic {
+    fn from(f: OrderedFloat<f32>) -> Self {
+        Atomic::Float(f)
+    }
+}
+
+impl From<f64> for Atomic {
+    fn from(f: f64) -> Self {
+        Atomic::Double(OrderedFloat(f))
+    }
+}
+
+impl From<OrderedFloat<f64>> for Atomic {
+    fn from(f: OrderedFloat<f64>) -> Self {
+        Atomic::Double(f)
+    }
+}
+
+impl From<i64> for Atomic {
+    fn from(i: i64) -> Self {
+        Atomic::Integer(i)
+    }
+}
+
+impl From<Decimal> for Atomic {
+    fn from(d: Decimal) -> Self {
+        Atomic::Decimal(d)
+    }
+}
+
+impl From<String> for Atomic {
+    fn from(s: String) -> Self {
+        Atomic::String(Rc::new(s))
+    }
+}
+
+impl From<&str> for Atomic {
+    fn from(s: &str) -> Self {
+        Atomic::String(Rc::new(s.to_string()))
+    }
+}
+
+impl From<&String> for Atomic {
+    fn from(s: &String) -> Self {
+        Atomic::String(Rc::new(s.clone()))
+    }
+}

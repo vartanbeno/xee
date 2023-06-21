@@ -17,12 +17,16 @@ impl<'a> AtomizedIter<'a> {
     pub(crate) fn new(value: stack::Value, xot: &'a Xot) -> AtomizedIter<'a> {
         match value {
             stack::Value::Empty => AtomizedIter::Empty,
-            stack::Value::Atomic(atomic) => AtomizedIter::Atomic(AtomizedAtomicIter::new(atomic)),
-            stack::Value::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, xot)),
+            stack::Value::Item(item) => match item {
+                stack::Item::Atomic(atomic) => {
+                    AtomizedIter::Atomic(AtomizedAtomicIter::new(atomic))
+                }
+                stack::Item::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, xot)),
+                stack::Item::Function(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
+            },
             stack::Value::Sequence(sequence) => {
                 AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
-            stack::Value::Closure(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
         }
     }
 }
@@ -180,7 +184,7 @@ mod tests {
     fn test_atomize_atomic() {
         let xot = Xot::new();
         let atomic = stack::Atomic::Integer(3);
-        let value = stack::Value::Atomic(atomic.clone());
+        let value = 3.into();
 
         let mut iter = AtomizedIter::new(value, &xot);
         assert_eq!(iter.next(), Some(Ok(atomic)));
@@ -193,7 +197,7 @@ mod tests {
         let root = xot.parse("<doc>Hello</doc>").unwrap();
         let xot_node = xot.document_element(root).unwrap();
         let node = xml::Node::Xot(xot_node);
-        let value = stack::Value::Node(node);
+        let value = node.into();
 
         let mut iter = AtomizedIter::new(value, &xot);
 

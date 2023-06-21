@@ -4,9 +4,11 @@ expression: "run_xml(\"<doc/>\", \"fn:last()\")"
 ---
 Ok(
     Sequence {
-        stack_value: Atomic(
-            Integer(
-                1,
+        stack_value: Item(
+            Atomic(
+                Integer(
+                    1,
+                ),
             ),
         ),
     },
