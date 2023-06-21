@@ -7,6 +7,7 @@ use crate::xml;
 #[derive(Clone)]
 pub(crate) enum AtomizedIter<'a> {
     Empty,
+    // TODO: introduce AtomizedItemIter
     Atomic(AtomizedAtomicIter),
     Node(AtomizedNodeIter),
     Sequence(AtomizedSequenceIter<'a>),
