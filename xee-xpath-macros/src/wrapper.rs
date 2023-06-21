@@ -70,7 +70,7 @@ fn make_wrapper(
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
-        let arg = quote!((&arguments[#i]));
+        let arg = quote!(arguments[#i]);
         conversions.push(convert_sequence_type(
             &param.type_,
             name.to_token_stream(),

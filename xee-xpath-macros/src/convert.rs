@@ -83,7 +83,7 @@ fn convert_atomic_or_union_type(name: &ast::Name, arg: TokenStream) -> syn::Resu
         "float" => quote!(atomic.to_float()),
         "double" => quote!(atomic.to_double()),
         "decimal" => quote!(atomic.to_decimal()),
-        "string" => quote!(atomic.to_str()),
+        "string" => quote!(&atomic.to_string()),
         _ => {
             todo!("Not yet {}", local_name)
         }
