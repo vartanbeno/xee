@@ -11,11 +11,10 @@ use crate::xml;
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
     Atomic(stack::Atomic),
-    Sequence(stack::Sequence),
     Closure(Rc<stack::Closure>),
-    // StaticFunction(StaticFunctionId),
-    Step(Rc<xml::Step>),
     Node(xml::Node),
+    Sequence(stack::Sequence),
+    Step(Rc<xml::Step>),
 }
 
 impl Value {
