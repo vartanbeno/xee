@@ -64,11 +64,7 @@ impl Value {
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
             Value::Empty => "".to_string(),
-            Value::Item(item) => match item {
-                stack::Item::Atomic(atomic) => atomic.string_value()?,
-                stack::Item::Node(node) => node.string_value(xot),
-                stack::Item::Function(_) => Err(stack::Error::Type)?,
-            },
+            Value::Item(item) => item.string_value(xot)?,
             Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
                 let len = sequence.len();

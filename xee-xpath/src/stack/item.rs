@@ -49,9 +49,9 @@ impl Item {
 
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         match self {
-            Item::Atomic(a) => Ok(a.string_value()?),
-            Item::Node(n) => Ok(n.string_value(xot)),
-            _ => Err(stack::Error::Type),
+            stack::Item::Atomic(atomic) => atomic.string_value(),
+            stack::Item::Node(node) => Ok(node.string_value(xot)),
+            stack::Item::Function(_) => Err(stack::Error::Type),
         }
     }
 }
