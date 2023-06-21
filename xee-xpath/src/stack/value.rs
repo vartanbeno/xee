@@ -135,12 +135,11 @@ impl TryFrom<&stack::Value> for xml::Node {
 
 impl PartialEq for Value {
     fn eq(&self, other: &Value) -> bool {
-        // comparisons between values are tricky, as a value
-        // may be a single item or a sequence of items.
-        // If they are single items, the comparison is easy,
-        // if one half is a sequence (or an empty atomic) and
-        // the other half is not, then we convert the value into a sequence first
-        // before comparing
+        // comparisons between values are tricky, as a value may be a single
+        // item or a sequence of items. If they are single items, the
+        // comparison is easy, if one half is a sequence and the other half is
+        // not, then we convert the value into a sequence first before
+        // comparing
         match (self, other) {
             (Value::Empty, Value::Empty) => true,
             (Value::Item(a), Value::Item(b)) => a == b,
