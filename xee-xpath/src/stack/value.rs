@@ -8,6 +8,7 @@ use crate::xml;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
+    Empty,
     Atomic(stack::Atomic),
     Closure(Rc<stack::Closure>),
     Node(xml::Node),
@@ -36,6 +37,7 @@ impl Value {
 
     pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
         match self {
+            Value::Empty => Ok(false),
             Value::Atomic(a) => a.effective_boolean_value(),
             Value::Sequence(s) => {
                 let s = s.borrow();
@@ -64,14 +66,15 @@ impl Value {
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
+            Value::Empty => true,
             Value::Sequence(s) => s.is_empty(),
-            Value::Atomic(stack::Atomic::Empty) => true,
             _ => false,
         }
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
         let value = match self {
+            Value::Empty => "".to_string(),
             Value::Atomic(atomic) => atomic.string_value()?,
             Value::Sequence(sequence) => {
                 let sequence = sequence.borrow();
@@ -102,7 +105,7 @@ impl From<stack::Item> for Value {
 impl From<Vec<stack::Item>> for Value {
     fn from(items: Vec<stack::Item>) -> Self {
         if items.is_empty() {
-            Value::Atomic(stack::Atomic::Empty)
+            Value::Empty
         } else if items.len() == 1 {
             Value::from(items[0].clone())
         } else {
@@ -152,11 +155,11 @@ impl PartialEq for Value {
         // the other half is not, then we convert the value into a sequence first
         // before comparing
         match (self, other) {
-            (Value::Atomic(stack::Atomic::Empty), Value::Atomic(stack::Atomic::Empty)) => true,
+            (Value::Empty, Value::Empty) => true,
             (Value::Atomic(a), Value::Atomic(b)) => a == b,
             (Value::Sequence(a), Value::Sequence(b)) => a == b,
-            (Value::Atomic(stack::Atomic::Empty), Value::Sequence(b)) => b.is_empty(),
-            (Value::Sequence(a), Value::Atomic(stack::Atomic::Empty)) => a.is_empty(),
+            (Value::Empty, Value::Sequence(b)) => b.is_empty(),
+            (Value::Sequence(a), Value::Empty) => a.is_empty(),
             (Value::Closure(a), Value::Closure(b)) => a == b,
             (Value::Node(a), Value::Node(b)) => a == b,
             (_, Value::Sequence(b)) => (&self.to_sequence()) == b,
@@ -185,7 +188,7 @@ impl Iterator for ItemIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Empty) => None,
+            stack::Value::Empty => None,
             stack::Value::Atomic(a) => {
                 if self.index == 0 {
                     self.index += 1;

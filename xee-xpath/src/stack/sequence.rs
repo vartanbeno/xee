@@ -83,6 +83,7 @@ impl InnerSequence {
 
     pub(crate) fn push_value(&mut self, value: stack::Value) {
         match value {
+            stack::Value::Empty => {}
             stack::Value::Atomic(a) => self.items.push(stack::Item::Atomic(a)),
             stack::Value::Closure(c) => self.items.push(stack::Item::Function(c)),
             stack::Value::Sequence(s) => self.extend(s),

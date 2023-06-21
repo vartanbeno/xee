@@ -226,34 +226,22 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::Eq => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_eq(&a, &b)?));
+                    self.value_compare(comparison::value_eq)?;
                 }
                 EncodedInstruction::Ne => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_ne(&a, &b)?));
+                    self.value_compare(comparison::value_ne)?;
                 }
                 EncodedInstruction::Lt => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_lt(&a, &b)?));
+                    self.value_compare(comparison::value_lt)?;
                 }
                 EncodedInstruction::Le => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_le(&a, &b)?));
+                    self.value_compare(comparison::value_le)?;
                 }
                 EncodedInstruction::Gt => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_gt(&a, &b)?));
+                    self.value_compare(comparison::value_gt)?;
                 }
                 EncodedInstruction::Ge => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack
-                        .push(stack::Value::Atomic(comparison::value_ge(&a, &b)?));
+                    self.value_compare(comparison::value_ge)?;
                 }
                 EncodedInstruction::GenEq => {
                     let (atomized_a, atomized_b) = self.pop_atomized2();
@@ -392,10 +380,9 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::SequenceGet => {
                     let sequence = self.pop_seq();
-                    let index = self.pop_atomic()?;
-                    let index = index.to_integer()?;
+                    let index = self.pop_index();
                     // substract 1 as Xpath is 1-indexed
-                    let item = sequence.borrow().items[index as usize - 1].clone();
+                    let item = sequence.borrow().items[index - 1].clone();
                     self.stack.push(item.into_stack_value())
                 }
                 EncodedInstruction::SequencePush => {
@@ -404,11 +391,7 @@ impl<'a> Interpreter<'a> {
                     sequence.borrow_mut().push_value(stack_value);
                 }
                 EncodedInstruction::IsNumeric => {
-                    // This may fail. This is fine, as the only check later on
-                    // in Filter is to check for effective boolean value, which
-                    // uses effectively the same check
-                    let atomic = self.pop_atomic()?;
-                    let is_numeric = atomic.is_numeric();
+                    let is_numeric = self.pop_is_numeric();
                     self.stack
                         .push(stack::Value::Atomic(stack::Atomic::Boolean(is_numeric)));
                 }
@@ -455,14 +438,59 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
+    fn value_compare<F>(&mut self, compare: F) -> stack::Result<()>
+    where
+        F: Fn(&stack::Atomic, &stack::Atomic) -> stack::Result<stack::Atomic>,
+    {
+        let b = self.stack.pop().unwrap();
+        let a = self.stack.pop().unwrap();
+        // https://www.w3.org/TR/xpath-31/#id-value-comparisons
+        // If an operand is the empty sequence, the result is the empty sequence
+        if a.is_empty_sequence() || b.is_empty_sequence() {
+            self.stack.push(stack::Value::Empty);
+            return Ok(());
+        }
+        let mut atomized_a = a.atomized(self.dynamic_context.xot);
+        let mut atomized_b = b.atomized(self.dynamic_context.xot);
+        let a = atomized_a.one()?;
+        let b = atomized_b.one()?;
+        let result = compare(&a, &b)?;
+        self.stack.push(stack::Value::Atomic(result));
+        Ok(())
+    }
+
+    fn pop_index(&mut self) -> usize {
+        let value = self.stack.pop().unwrap();
+        match value {
+            stack::Value::Atomic(a) => {
+                let index = a.to_integer().unwrap();
+                index as usize
+            }
+            _ => unreachable!("Expected atomic value"),
+        }
+    }
+
+    fn pop_is_numeric(&mut self) -> bool {
+        let value = self.stack.pop().unwrap();
+        let mut atomized = value.atomized(self.dynamic_context.xot);
+        if let Some(a) = atomized.next() {
+            if atomized.next().is_none() {
+                match a {
+                    Ok(a) => a.is_numeric(),
+                    Err(_) => false,
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
     fn pop_atomic(&mut self) -> stack::Result<stack::Atomic> {
         let value = self.stack.pop().unwrap();
         let mut atomized = value.atomized(self.dynamic_context.xot);
-        Ok(if let Some(value) = atomized.option()? {
-            value
-        } else {
-            stack::Atomic::Empty
-        })
+        atomized.one()
     }
 
     fn pop_atomic2(&mut self) -> stack::Result<(stack::Atomic, stack::Atomic)> {

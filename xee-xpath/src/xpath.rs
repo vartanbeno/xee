@@ -66,9 +66,6 @@ impl XPath {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),
-            stack::Value::Atomic(stack::Atomic::Empty) => {
-                Ok(stack::Value::Sequence(stack::Sequence::empty()))
-            }
             _ => Ok(value),
         }
     }

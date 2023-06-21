@@ -6,6 +6,7 @@ use crate::xml;
 
 #[derive(Clone)]
 pub(crate) enum AtomizedIter<'a> {
+    Empty,
     Atomic(AtomizedAtomicIter),
     Node(AtomizedNodeIter),
     Sequence(AtomizedSequenceIter<'a>),
@@ -15,6 +16,7 @@ pub(crate) enum AtomizedIter<'a> {
 impl<'a> AtomizedIter<'a> {
     pub(crate) fn new(value: stack::Value, xot: &'a Xot) -> AtomizedIter<'a> {
         match value {
+            stack::Value::Empty => AtomizedIter::Empty,
             stack::Value::Atomic(atomic) => AtomizedIter::Atomic(AtomizedAtomicIter::new(atomic)),
             stack::Value::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, xot)),
             stack::Value::Sequence(sequence) => {
@@ -30,6 +32,7 @@ impl Iterator for AtomizedIter<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
+            AtomizedIter::Empty => None,
             AtomizedIter::Atomic(iter) => iter.next().map(Ok),
             AtomizedIter::Node(iter) => iter.next().map(Ok),
             AtomizedIter::Sequence(iter) => iter.next(),
@@ -63,9 +66,6 @@ impl Iterator for AtomizedAtomicIter {
     type Item = stack::Atomic;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if matches!(self.atomic, stack::Atomic::Empty) {
-            return None;
-        }
         if self.done {
             None
         } else {

@@ -15,9 +15,6 @@ pub enum Atomic {
     Decimal(Decimal),
     String(Rc<String>),
     Untyped(Rc<String>),
-    // a special marker to note empty sequences after atomization
-    // This should be treated as an emtpy sequence.
-    Empty,
     // a special marker to indicate an absent context item
     Absent,
 }
@@ -70,7 +67,6 @@ impl Atomic {
             Atomic::Boolean(b) => Ok(*b),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
-            Atomic::Empty => Ok(false),
             Atomic::Absent => Err(stack::Error::Absent),
         }
     }
@@ -97,7 +93,6 @@ impl Atomic {
             Atomic::Float(f) => f.to_string(),
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
-            Atomic::Empty => "".to_string(),
             Atomic::Absent => Err(stack::Error::Absent)?,
         })
     }
@@ -165,7 +160,6 @@ impl Atomic {
                 ))
             }
             Atomic::Untyped(_) => unreachable!(),
-            Atomic::Empty => unreachable!(),
             Atomic::Absent => Err(stack::Error::Type),
         }
     }

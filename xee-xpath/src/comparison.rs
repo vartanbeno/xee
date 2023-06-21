@@ -94,11 +94,6 @@ where
     StringOp: FnOnce(&stack::Atomic, &stack::Atomic) -> stack::Result<bool>,
     BooleanOp: FnOnce(&stack::Atomic, &stack::Atomic) -> stack::Result<bool>,
 {
-    // If an atomized operand is an empty sequence, the result of the value
-    // comparison is an empty sequence
-    if matches!(a, stack::Atomic::Empty) || matches!(b, stack::Atomic::Empty) {
-        return Ok(stack::Atomic::Empty);
-    }
     let (a, b) = cast_untyped(a, b)?;
     let r = match (&a, &b) {
         (

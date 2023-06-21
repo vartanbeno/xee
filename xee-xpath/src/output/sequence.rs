@@ -18,13 +18,13 @@ impl Sequence {
 
     pub fn empty() -> Self {
         Self {
-            stack_value: stack::Value::Atomic(stack::Atomic::Empty),
+            stack_value: stack::Value::Empty,
         }
     }
 
     pub fn is_empty(&self) -> bool {
         match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Empty) => true,
+            stack::Value::Empty => true,
             stack::Value::Sequence(sequence) => sequence.borrow().is_empty(),
             _ => false,
         }
@@ -32,7 +32,7 @@ impl Sequence {
 
     pub fn len(&self) -> usize {
         match &self.stack_value {
-            stack::Value::Atomic(stack::Atomic::Empty) => 0,
+            stack::Value::Empty => 0,
             stack::Value::Atomic(_) => 1,
             stack::Value::Sequence(sequence) => sequence.borrow().len(),
             stack::Value::Node(_) => 1,
@@ -123,7 +123,7 @@ impl From<Vec<output::Item>> for Sequence {
     fn from(items: Vec<output::Item>) -> Self {
         if items.is_empty() {
             return Self {
-                stack_value: stack::Value::Atomic(stack::Atomic::Empty),
+                stack_value: stack::Value::Empty,
             };
         }
         if items.len() == 1 {

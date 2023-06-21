@@ -986,7 +986,7 @@ mod tests {
 
     #[test]
     fn test_sequence_predicate_sequence_empty() {
-        // the empty sequence is asn effective boolean of false, so we should
+        // the empty sequence is an effective boolean of false, so we should
         // get the result of the empty sequence
         assert_debug_snapshot!(run("(1, 2, 3)[()]"));
     }
