@@ -154,16 +154,18 @@ impl PartialEq for Value {
     }
 }
 
-pub(crate) struct ValueIter {
-    stack_value: Value,
-    index: usize,
+pub(crate) enum ValueIter {
+    Empty,
+    ItemIter(stack::ItemIter),
+    SequenceIter(stack::SequenceIter),
 }
 
 impl ValueIter {
-    fn new(stack_value: Value) -> Self {
-        Self {
-            stack_value,
-            index: 0,
+    fn new(value: Value) -> Self {
+        match value {
+            Value::Empty => ValueIter::Empty,
+            Value::Item(item) => ValueIter::ItemIter(item.items()),
+            Value::Sequence(sequence) => ValueIter::SequenceIter(sequence.items()),
         }
     }
 }
@@ -172,44 +174,10 @@ impl Iterator for ValueIter {
     type Item = stack::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match &self.stack_value {
-            stack::Value::Empty => None,
-            stack::Value::Item(item) => match item {
-                stack::Item::Atomic(a) => {
-                    if self.index == 0 {
-                        self.index += 1;
-                        Some(stack::Item::Atomic(a.clone()))
-                    } else {
-                        None
-                    }
-                }
-                stack::Item::Node(node) => {
-                    if self.index == 0 {
-                        self.index += 1;
-                        Some(stack::Item::Node(*node))
-                    } else {
-                        None
-                    }
-                }
-                stack::Item::Function(closure) => {
-                    if self.index == 0 {
-                        self.index += 1;
-                        Some(stack::Item::Function(closure.clone()))
-                    } else {
-                        None
-                    }
-                }
-            },
-            stack::Value::Sequence(sequence) => {
-                let sequence = sequence.borrow();
-                if self.index < sequence.len() {
-                    let item = sequence.items[self.index].clone();
-                    self.index += 1;
-                    Some(item)
-                } else {
-                    None
-                }
-            }
+        match self {
+            ValueIter::Empty => None,
+            ValueIter::ItemIter(iter) => iter.next(),
+            ValueIter::SequenceIter(iter) => iter.next(),
         }
     }
 }

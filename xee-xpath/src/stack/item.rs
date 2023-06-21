@@ -13,6 +13,10 @@ pub(crate) enum Item {
 }
 
 impl Item {
+    pub(crate) fn items(&self) -> ItemIter {
+        ItemIter::new(self.clone())
+    }
+
     pub(crate) fn to_atomic(&self) -> stack::Result<stack::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
@@ -74,5 +78,28 @@ impl From<xml::Node> for Item {
 impl From<stack::Closure> for Item {
     fn from(f: stack::Closure) -> Self {
         Self::Function(Rc::new(f))
+    }
+}
+
+pub(crate) struct ItemIter {
+    item: Item,
+    done: bool,
+}
+
+impl ItemIter {
+    pub(crate) fn new(item: Item) -> Self {
+        Self { item, done: false }
+    }
+}
+
+impl<'a> Iterator for ItemIter {
+    type Item = Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+        self.done = true;
+        Some(self.item.clone())
     }
 }

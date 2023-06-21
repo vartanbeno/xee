@@ -31,6 +31,10 @@ impl Sequence {
     pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<InnerSequence> {
         self.0.borrow_mut()
     }
+
+    pub(crate) fn items(&self) -> SequenceIter {
+        SequenceIter::new(self.clone())
+    }
 }
 
 impl From<stack::Value> for stack::Sequence {
@@ -134,5 +138,31 @@ impl InnerSequence {
 
         let items = nodes.into_iter().map(stack::Item::Node).collect::<Vec<_>>();
         Ok(InnerSequence { items })
+    }
+}
+
+pub(crate) struct SequenceIter {
+    sequence: Sequence,
+    index: usize,
+}
+
+impl SequenceIter {
+    pub(crate) fn new(sequence: Sequence) -> Self {
+        Self { sequence, index: 0 }
+    }
+}
+
+impl Iterator for SequenceIter {
+    type Item = stack::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let inner_sequence = self.sequence.borrow();
+        if self.index < inner_sequence.len() {
+            let item = inner_sequence.items[self.index].clone();
+            self.index += 1;
+            Some(item)
+        } else {
+            None
+        }
     }
 }
