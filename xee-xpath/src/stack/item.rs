@@ -7,7 +7,6 @@ use crate::xml;
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
     Atomic(stack::Atomic),
-    // XXX what about static function references?
     Function(Rc<stack::Closure>),
     Node(xml::Node),
 }
