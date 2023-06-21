@@ -91,7 +91,7 @@ impl ItemIter {
     }
 }
 
-impl<'a> Iterator for ItemIter {
+impl Iterator for ItemIter {
     type Item = Item;
 
     fn next(&mut self) -> Option<Self::Item> {
