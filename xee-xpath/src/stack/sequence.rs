@@ -14,7 +14,7 @@ impl Sequence {
         Self(Rc::new(RefCell::new(sequence)))
     }
     pub(crate) fn empty() -> Self {
-        Self::new(InnerSequence::new())
+        Self::new(InnerSequence::empty())
     }
 
     pub fn len(&self) -> usize {
@@ -48,7 +48,7 @@ impl From<&stack::Value> for stack::Sequence {
 
 impl From<Vec<stack::Item>> for stack::Sequence {
     fn from(items: Vec<stack::Item>) -> Self {
-        Self::new(InnerSequence::from_vec(items))
+        Self::new(InnerSequence::new(items))
     }
 }
 
@@ -58,7 +58,11 @@ pub(crate) struct InnerSequence {
 }
 
 impl InnerSequence {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(items: Vec<stack::Item>) -> Self {
+        Self { items }
+    }
+
+    pub(crate) fn empty() -> Self {
         Self { items: Vec::new() }
     }
 
@@ -70,23 +74,13 @@ impl InnerSequence {
         self.items.is_empty()
     }
 
-    pub(crate) fn from_items(items: &[stack::Item]) -> Self {
-        Self {
-            items: items.to_vec(),
-        }
-    }
-
-    pub(crate) fn from_vec(items: Vec<stack::Item>) -> Self {
-        Self { items }
-    }
-
     pub(crate) fn from_item(item: stack::Item) -> Self {
         Self { items: vec![item] }
     }
 
     pub(crate) fn from_atomic(atomic: stack::Atomic) -> Self {
         if matches!(atomic, stack::Atomic::Empty) {
-            return Self::new();
+            return Self::empty();
         }
         Self {
             items: vec![stack::Item::Atomic(atomic)],

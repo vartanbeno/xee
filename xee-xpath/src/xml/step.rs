@@ -12,7 +12,7 @@ pub struct Step {
 }
 
 pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Sequence {
-    let mut new_sequence = stack::InnerSequence::new();
+    let mut new_sequence = stack::InnerSequence::empty();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
             new_sequence.push(&stack::Item::Node(axis_node));
