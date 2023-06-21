@@ -98,27 +98,6 @@ fn exactly_one(arg: &[output::Item]) -> error::Result<output::Item> {
         Err(error::Error::FORG0005)
     }
 }
-// #[xpath_fn]
-// fn exactly_one(context: &DynamicContext, a: &[Item]) -> Result<Item, stack::ValueError> {
-//     if a.len() == 1 {
-//         Ok(a[0])
-//     } else {
-//         // XXX should really be a FORG0005 error
-//         Err(stack::ValueError::Type)
-//     }
-// }
-
-// fn exactly_one(
-//     _context: &DynamicContext,
-//     arguments: &[output::Sequence],
-// ) -> error::Result<output::Sequence> {
-//     let a = &arguments[0];
-//     if a.len() == 1 {
-//         Ok(a.clone())
-//     } else {
-//         Err(error::Error::FORG0005)
-//     }
-// }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
 fn empty(arg: &[output::Item]) -> bool {
