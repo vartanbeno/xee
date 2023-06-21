@@ -24,8 +24,8 @@ impl Value {
         }
     }
 
-    pub(crate) fn items(&self) -> ItemIter {
-        ItemIter::new(self.clone())
+    pub(crate) fn items(&self) -> ValueIter {
+        ValueIter::new(self.clone())
     }
 
     pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
@@ -154,12 +154,12 @@ impl PartialEq for Value {
     }
 }
 
-pub(crate) struct ItemIter {
+pub(crate) struct ValueIter {
     stack_value: Value,
     index: usize,
 }
 
-impl ItemIter {
+impl ValueIter {
     fn new(stack_value: Value) -> Self {
         Self {
             stack_value,
@@ -168,7 +168,7 @@ impl ItemIter {
     }
 }
 
-impl Iterator for ItemIter {
+impl Iterator for ValueIter {
     type Item = stack::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -214,7 +214,7 @@ impl Iterator for ItemIter {
     }
 }
 
-impl occurrence::Occurrence<stack::Item, stack::Error> for ItemIter {
+impl occurrence::Occurrence<stack::Item, stack::Error> for ValueIter {
     fn error(&self) -> stack::Error {
         stack::Error::Type
     }
