@@ -20,7 +20,7 @@ pub(crate) enum Expr {
     If(If),
     Binary(Binary),
     FunctionDefinition(FunctionDefinition),
-    StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
+    // StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
     FunctionCall(FunctionCall),
     Step(Step),
     Map(Map),
@@ -41,6 +41,7 @@ pub(crate) enum Const {
     String(String),
     Double(OrderedFloat<f64>),
     Decimal(Decimal),
+    StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
     // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
 }

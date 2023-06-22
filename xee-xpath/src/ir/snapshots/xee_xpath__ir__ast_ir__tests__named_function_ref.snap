@@ -4,11 +4,25 @@ expression: "convert_expr_single(\"my_function#2\")"
 ---
 Ok(
     Spanned {
-        value: StaticFunctionReference(
-            StaticFunctionId(
-                0,
-            ),
-            None,
+        value: Atom(
+            Spanned {
+                value: Const(
+                    StaticFunctionReference(
+                        StaticFunctionId(
+                            0,
+                        ),
+                        None,
+                    ),
+                ),
+                span: SourceSpan {
+                    offset: SourceOffset(
+                        0,
+                    ),
+                    length: SourceOffset(
+                        13,
+                    ),
+                },
+            },
         ),
         span: SourceSpan {
             offset: SourceOffset(

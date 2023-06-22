@@ -26,12 +26,12 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::FunctionDefinition(function_definition) => {
                 self.compile_function_definition(function_definition, span)
             }
-            ir::Expr::StaticFunctionReference(static_function_id, context_names) => self
-                .compile_static_function_reference(
-                    *static_function_id,
-                    context_names.as_ref(),
-                    span,
-                ),
+            // ir::Expr::StaticFunctionReference(static_function_id, context_names) => self
+            //     .compile_static_function_reference(
+            //         *static_function_id,
+            //         context_names.as_ref(),
+            //         span,
+            //     ),
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call, span)
             }
@@ -46,15 +46,30 @@ impl<'a> InterpreterCompiler<'a> {
     fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
         match &atom.value {
             ir::Atom::Const(c) => {
-                let stack_value = match c {
-                    ir::Const::Integer(i) => (*i).into(),
-                    ir::Const::String(s) => s.into(),
-                    // TODO: implement ir::Const::Float
-                    ir::Const::Double(d) => (*d).into(),
-                    ir::Const::Decimal(d) => (*d).into(),
-                    ir::Const::EmptySequence => stack::Value::Empty,
+                match c {
+                    ir::Const::Integer(i) => {
+                        self.builder.emit_constant((*i).into(), atom.span);
+                    }
+                    ir::Const::String(s) => {
+                        self.builder.emit_constant((s).into(), atom.span);
+                    }
+                    ir::Const::Double(d) => {
+                        self.builder.emit_constant((*d).into(), atom.span);
+                    }
+                    ir::Const::Decimal(d) => {
+                        self.builder.emit_constant((*d).into(), atom.span);
+                    }
+                    ir::Const::EmptySequence => {
+                        self.builder.emit_constant(stack::Value::Empty, atom.span)
+                    }
+                    ir::Const::StaticFunctionReference(static_function_id, context_names) => {
+                        self.compile_static_function_reference(
+                            *static_function_id,
+                            context_names.as_ref(),
+                            atom.span,
+                        )?;
+                    }
                 };
-                self.builder.emit_constant(stack_value, atom.span);
                 Ok(())
             }
             ir::Atom::Variable(name) => self.compile_variable(name, atom.span),
@@ -1374,6 +1389,10 @@ mod tests {
         assert_debug_snapshot!(run("let $x := $x return $x"));
     }
 
+    #[test]
+    fn test_static_function_call_nested() {
+        assert_debug_snapshot!(run(r#"fn:string-join(("A"),xs:string("A"))"#));
+    }
     // #[test]
     // fn test_run_debug() {
     //     assert_debug_snapshot!(run_debug("xs:string('B')"));

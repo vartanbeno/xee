@@ -24,23 +24,37 @@ Ok(
                     ),
                 ],
                 body: Spanned {
-                    value: StaticFunctionReference(
-                        StaticFunctionId(
-                            0,
-                        ),
-                        Some(
-                            ContextNames {
-                                item: Name(
-                                    "v0",
+                    value: Atom(
+                        Spanned {
+                            value: Const(
+                                StaticFunctionReference(
+                                    StaticFunctionId(
+                                        0,
+                                    ),
+                                    Some(
+                                        ContextNames {
+                                            item: Name(
+                                                "v0",
+                                            ),
+                                            position: Name(
+                                                "v1",
+                                            ),
+                                            last: Name(
+                                                "v2",
+                                            ),
+                                        },
+                                    ),
                                 ),
-                                position: Name(
-                                    "v1",
+                            ),
+                            span: SourceSpan {
+                                offset: SourceOffset(
+                                    0,
                                 ),
-                                last: Name(
-                                    "v2",
+                                length: SourceOffset(
+                                    13,
                                 ),
                             },
-                        ),
+                        },
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(

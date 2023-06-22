@@ -4,17 +4,16 @@ expression: "convert_expr_single(\"my_function(5, 2)\")"
 ---
 Ok(
     Spanned {
-        value: Let(
-            Let {
-                name: Name(
-                    "v0",
-                ),
-                var_expr: Spanned {
-                    value: StaticFunctionReference(
-                        StaticFunctionId(
-                            0,
+        value: FunctionCall(
+            FunctionCall {
+                atom: Spanned {
+                    value: Const(
+                        StaticFunctionReference(
+                            StaticFunctionId(
+                                0,
+                            ),
+                            None,
                         ),
-                        None,
                     ),
                     span: SourceSpan {
                         offset: SourceOffset(
@@ -25,67 +24,38 @@ Ok(
                         ),
                     },
                 },
-                return_expr: Spanned {
-                    value: FunctionCall(
-                        FunctionCall {
-                            atom: Spanned {
-                                value: Variable(
-                                    Name(
-                                        "v0",
-                                    ),
-                                ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        0,
-                                    ),
-                                    length: SourceOffset(
-                                        0,
-                                    ),
-                                },
-                            },
-                            args: [
-                                Spanned {
-                                    value: Const(
-                                        Integer(
-                                            5,
-                                        ),
-                                    ),
-                                    span: SourceSpan {
-                                        offset: SourceOffset(
-                                            12,
-                                        ),
-                                        length: SourceOffset(
-                                            1,
-                                        ),
-                                    },
-                                },
-                                Spanned {
-                                    value: Const(
-                                        Integer(
-                                            2,
-                                        ),
-                                    ),
-                                    span: SourceSpan {
-                                        offset: SourceOffset(
-                                            15,
-                                        ),
-                                        length: SourceOffset(
-                                            1,
-                                        ),
-                                    },
-                                },
-                            ],
+                args: [
+                    Spanned {
+                        value: Const(
+                            Integer(
+                                5,
+                            ),
+                        ),
+                        span: SourceSpan {
+                            offset: SourceOffset(
+                                12,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
                         },
-                    ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            17,
-                        ),
                     },
-                },
+                    Spanned {
+                        value: Const(
+                            Integer(
+                                2,
+                            ),
+                        ),
+                        span: SourceSpan {
+                            offset: SourceOffset(
+                                15,
+                            ),
+                            length: SourceOffset(
+                                1,
+                            ),
+                        },
+                    },
+                ],
             },
         ),
         span: SourceSpan {

@@ -651,8 +651,11 @@ impl<'a> IrConverter<'a> {
         static_function_id: stack::StaticFunctionId,
         span: SourceSpan,
     ) -> Bindings {
-        let expr =
-            ir::Expr::StaticFunctionReference(static_function_id, self.current_context_names());
+        let atom = ir::Atom::Const(ir::Const::StaticFunctionReference(
+            static_function_id,
+            self.current_context_names(),
+        ));
+        let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
         Bindings::from_vec(vec![binding])
     }
