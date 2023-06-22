@@ -86,7 +86,23 @@ fn test_concat() {
     Tests::new("fn/concat").include("fn-concatint2args*").run()
 }
 
+#[test]
+fn test_unary_minus() {
+    Tests::all("op/numeric-unary-minus")
+        // these depend on constructor functions
+        .exclude("op-numeric-unary-minus*args*")
+        // this depends on fn:floor
+        .exclude("K-NumericUnaryMinus-15")
+        // these depend on constructor functions
+        .exclude("K2-NumericUnaryMinus*")
+        .run()
+}
+
 // #[test]
 // fn test_boolean() {
-//     Tests::all("fn/boolean").run()
+//     Tests::all("fn/boolean")
+//         // these depend on constructor functions
+//         .exclude("fn-booleannnpi1args-*")
+//         .exclude("fn-boolean")
+//         .run()
 // }
