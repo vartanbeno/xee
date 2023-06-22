@@ -53,7 +53,7 @@ impl occurrence::ResultOccurrence<stack::Atomic, stack::Error> for AtomizedIter<
 }
 
 #[derive(Debug, Clone)]
-pub struct AtomizedAtomicIter {
+pub(crate) struct AtomizedAtomicIter {
     atomic: stack::Atomic,
     done: bool,
 }
@@ -81,7 +81,7 @@ impl Iterator for AtomizedAtomicIter {
 }
 
 #[derive(Debug, Clone)]
-pub struct AtomizedNodeIter {
+pub(crate) struct AtomizedNodeIter {
     typed_value: Vec<stack::Atomic>,
     typed_value_index: usize,
 }

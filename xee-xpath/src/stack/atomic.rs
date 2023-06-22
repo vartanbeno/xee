@@ -9,7 +9,7 @@ use super::Integer;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
-pub enum Atomic {
+pub(crate) enum Atomic {
     Boolean(bool),
     Integer(i64), // TODO should be Decimal
     Float(OrderedFloat<f32>),
