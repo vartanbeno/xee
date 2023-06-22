@@ -9,12 +9,20 @@ use crate::stack;
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
     Boolean(bool),
-    Integer(i64),
+    Integer(i64), // TODO should be Decimal
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
     Decimal(Decimal),
     String(Rc<String>),
     Untyped(Rc<String>),
+    Long(i64),
+    Int(i32),
+    Short(i16),
+    Byte(i8),
+    UnsignedLong(u64),
+    UnsignedInt(u32),
+    UnsignedShort(u16),
+    UnsignedByte(u8),
     // a special marker to indicate an absent context item
     Absent,
 }
@@ -65,6 +73,14 @@ impl Atomic {
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
+            Atomic::Long(i) => Ok(*i != 0),
+            Atomic::Int(i) => Ok(*i != 0),
+            Atomic::Short(i) => Ok(*i != 0),
+            Atomic::Byte(i) => Ok(*i != 0),
+            Atomic::UnsignedLong(i) => Ok(*i != 0),
+            Atomic::UnsignedInt(i) => Ok(*i != 0),
+            Atomic::UnsignedShort(i) => Ok(*i != 0),
+            Atomic::UnsignedByte(i) => Ok(*i != 0),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
             Atomic::Absent => Err(stack::Error::Absent),
@@ -93,6 +109,14 @@ impl Atomic {
             Atomic::Float(f) => f.to_string(),
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
+            Atomic::Long(i) => i.to_string(),
+            Atomic::Int(i) => i.to_string(),
+            Atomic::Short(i) => i.to_string(),
+            Atomic::Byte(i) => i.to_string(),
+            Atomic::UnsignedLong(i) => i.to_string(),
+            Atomic::UnsignedInt(i) => i.to_string(),
+            Atomic::UnsignedShort(i) => i.to_string(),
+            Atomic::UnsignedByte(i) => i.to_string(),
             Atomic::Absent => Err(stack::Error::Absent)?,
         })
     }
@@ -142,7 +166,18 @@ impl Atomic {
         match self {
             // i. If T is a numeric type or is derived from a numeric type, then V
             // is cast to xs:double.
-            Atomic::Integer(_) | Atomic::Decimal(_) | Atomic::Float(_) | Atomic::Double(_) => {
+            Atomic::Integer(_)
+            | Atomic::Decimal(_)
+            | Atomic::Float(_)
+            | Atomic::Double(_)
+            | Atomic::Long(_)
+            | Atomic::Int(_)
+            | Atomic::Short(_)
+            | Atomic::Byte(_)
+            | Atomic::UnsignedLong(_)
+            | Atomic::UnsignedInt(_)
+            | Atomic::UnsignedShort(_)
+            | Atomic::UnsignedByte(_) => {
                 // cast string to double
                 // Need to unify the parsing code with literal parser in parse_ast
                 Ok(Atomic::Double(OrderedFloat(
