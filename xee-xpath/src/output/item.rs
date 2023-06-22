@@ -57,14 +57,16 @@ impl From<xml::Node> for output::Item {
     }
 }
 
-impl From<output::Atomic> for output::Item {
-    fn from(atomic: output::Atomic) -> Self {
+impl<T> From<T> for output::Item
+where
+    T: Into<output::Atomic>,
+{
+    fn from(atomic: T) -> Self {
         Self {
-            stack_item: stack::Item::Atomic(atomic.stack_atomic),
+            stack_item: stack::Item::Atomic(atomic.into().stack_atomic),
         }
     }
 }
-
 
 impl From<output::Item> for stack::Item {
     fn from(item: output::Item) -> Self {

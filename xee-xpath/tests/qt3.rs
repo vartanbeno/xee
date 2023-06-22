@@ -77,3 +77,11 @@ fn test_string_length() {
         .exclude("K-StringLengthFunc-3 K-StringLengthFunc-6")
         .run()
 }
+
+#[test]
+fn test_concat() {
+    // only run a few of the concat tests for now,
+    // as a lot of tests depend on constructor functions we
+    // don't have yet
+    Tests::new("fn/concat").include("fn-concatint2args*").run()
+}
