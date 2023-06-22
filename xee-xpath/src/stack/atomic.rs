@@ -10,13 +10,15 @@ use super::Integer;
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub(crate) enum Atomic {
-    Boolean(bool),
-    Integer(i64), // TODO should be Decimal
-    Float(OrderedFloat<f32>),
-    Double(OrderedFloat<f64>),
-    Decimal(Decimal),
+    // strings
     String(Rc<String>),
     Untyped(Rc<String>),
+    // boolean
+    Boolean(bool),
+    // decimal based
+    Decimal(Decimal),
+    Integer(i64), // TODO should be Decimal
+    // machine integers
     Long(i64),
     Int(i32),
     Short(i16),
@@ -25,6 +27,9 @@ pub(crate) enum Atomic {
     UnsignedInt(u32),
     UnsignedShort(u16),
     UnsignedByte(u8),
+    // floats
+    Float(OrderedFloat<f32>),
+    Double(OrderedFloat<f64>),
     // a special marker to indicate an absent context item
     Absent,
 }
