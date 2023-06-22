@@ -117,9 +117,12 @@ impl TryFrom<Atomic> for bool {
     }
 }
 
-impl From<bool> for Atomic {
-    fn from(b: bool) -> Self {
-        Self::new(stack::Atomic::Boolean(b))
+impl<T> From<T> for Atomic
+where
+    T: Into<stack::Atomic>,
+{
+    fn from(t: T) -> Self {
+        Self::new(t.into())
     }
 }
 
@@ -130,22 +133,10 @@ impl TryFrom<Atomic> for i64 {
     }
 }
 
-impl From<i64> for Atomic {
-    fn from(i: i64) -> Self {
-        Self::new(stack::Atomic::Integer(i))
-    }
-}
-
 impl TryFrom<Atomic> for f32 {
     type Error = error::Error;
     fn try_from(a: Atomic) -> error::Result<Self> {
         a.to_float()
-    }
-}
-
-impl From<f32> for Atomic {
-    fn from(n: f32) -> Self {
-        Self::new(stack::Atomic::Float(OrderedFloat(n)))
     }
 }
 
@@ -156,12 +147,6 @@ impl TryFrom<Atomic> for f64 {
     }
 }
 
-impl From<f64> for Atomic {
-    fn from(d: f64) -> Self {
-        Self::new(stack::Atomic::Double(OrderedFloat(d)))
-    }
-}
-
 impl TryFrom<Atomic> for Decimal {
     type Error = error::Error;
     fn try_from(a: Atomic) -> error::Result<Self> {
@@ -169,27 +154,9 @@ impl TryFrom<Atomic> for Decimal {
     }
 }
 
-impl From<Decimal> for Atomic {
-    fn from(d: Decimal) -> Self {
-        Self::new(stack::Atomic::Decimal(d))
-    }
-}
-
 impl TryFrom<Atomic> for String {
     type Error = error::Error;
     fn try_from(a: Atomic) -> error::Result<Self> {
         a.to_string()
-    }
-}
-
-impl From<String> for Atomic {
-    fn from(s: String) -> Self {
-        Self::new(stack::Atomic::String(s.into()))
-    }
-}
-
-impl From<&str> for Atomic {
-    fn from(s: &str) -> Self {
-        Self::new(stack::Atomic::String(s.to_string().into()))
     }
 }
