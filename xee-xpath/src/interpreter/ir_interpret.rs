@@ -495,7 +495,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::SequenceLen, span);
 
         // place index on stack
-        self.builder.emit_constant(1.into(), span);
+        self.builder.emit_constant(1i64.into(), span);
         self.scopes.push_name(&context_names.position);
 
         let loop_start_ref = self.builder.loop_start();
@@ -531,7 +531,7 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> Result<()> {
         // update index with 1
         self.compile_variable(&context_names.position, span)?;
-        self.builder.emit_constant(1.into(), span);
+        self.builder.emit_constant(1i64.into(), span);
         self.builder.emit(Instruction::Add, span);
         self.compile_variable_set(&context_names.position, span)?;
         self.builder
@@ -1333,11 +1333,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![output::Item::from(output::Atomic::from(1))]
+                    vec![output::Item::from(output::Atomic::from(1i64))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![output::Item::from(output::Atomic::from(2))]
+                    vec![output::Item::from(output::Atomic::from(2i64))]
                 )
             ]
         ))

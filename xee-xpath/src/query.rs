@@ -338,7 +338,7 @@ mod tests {
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = q
-            .execute(&session, &output::Item::from(output::Atomic::from(1)))
+            .execute(&session, &output::Item::from(output::Atomic::from(1i64)))
             .unwrap();
         assert_eq!(r, 3);
     }

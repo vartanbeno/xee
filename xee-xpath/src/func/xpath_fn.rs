@@ -39,7 +39,7 @@ mod test {
             int_to_string::WRAPPER(
                 &context,
                 &[output::Sequence::from(vec![output::Item::from(
-                    output::Atomic::from(42)
+                    output::Atomic::from(42i64)
                 )])]
             ),
             Ok(expected)

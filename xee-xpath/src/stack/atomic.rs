@@ -280,53 +280,49 @@ impl From<i64> for Atomic {
 
 // machine integers
 
-// impl From<i64> for Atomic {
-//     fn from(i: i64) -> Self {
-//         Atomic::Long(i)
-//     }
-// }
+// xs:long is xs:integer
 
-// impl From<i32> for Atomic {
-//     fn from(i: i32) -> Self {
-//         Atomic::Int(i)
-//     }
-// }
+impl From<i32> for Atomic {
+    fn from(i: i32) -> Self {
+        Atomic::Int(i)
+    }
+}
 
-// impl From<i16> for Atomic {
-//     fn from(i: i16) -> Self {
-//         Atomic::Short(i)
-//     }
-// }
+impl From<i16> for Atomic {
+    fn from(i: i16) -> Self {
+        Atomic::Short(i)
+    }
+}
 
-// impl From<i8> for Atomic {
-//     fn from(i: i8) -> Self {
-//         Atomic::Byte(i)
-//     }
-// }
+impl From<i8> for Atomic {
+    fn from(i: i8) -> Self {
+        Atomic::Byte(i)
+    }
+}
 
-// impl From<u64> for Atomic {
-//     fn from(i: u64) -> Self {
-//         Atomic::UnsignedLong(i)
-//     }
-// }
+impl From<u64> for Atomic {
+    fn from(i: u64) -> Self {
+        Atomic::UnsignedLong(i)
+    }
+}
 
-// impl From<u32> for Atomic {
-//     fn from(i: u32) -> Self {
-//         Atomic::UnsignedInt(i)
-//     }
-// }
+impl From<u32> for Atomic {
+    fn from(i: u32) -> Self {
+        Atomic::UnsignedInt(i)
+    }
+}
 
-// impl From<u16> for Atomic {
-//     fn from(i: u16) -> Self {
-//         Atomic::UnsignedShort(i)
-//     }
-// }
+impl From<u16> for Atomic {
+    fn from(i: u16) -> Self {
+        Atomic::UnsignedShort(i)
+    }
+}
 
-// impl From<u8> for Atomic {
-//     fn from(i: u8) -> Self {
-//         Atomic::UnsignedByte(i)
-//     }
-// }
+impl From<u8> for Atomic {
+    fn from(i: u8) -> Self {
+        Atomic::UnsignedByte(i)
+    }
+}
 
 // floats
 

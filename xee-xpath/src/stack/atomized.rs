@@ -185,7 +185,7 @@ mod tests {
     fn test_atomize_atomic() {
         let xot = Xot::new();
         let atomic = stack::Atomic::Integer(3);
-        let value = 3.into();
+        let value = 3i64.into();
 
         let mut iter = AtomizedIter::new(value, &xot);
         assert_eq!(iter.next(), Some(Ok(atomic)));

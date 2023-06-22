@@ -59,8 +59,8 @@ impl<'a> Interpreter<'a> {
             // the context item
             self.stack.push(stack::Value::from(context_item.clone()));
             // position & size
-            self.stack.push(1.into());
-            self.stack.push(1.into());
+            self.stack.push(1i64.into());
+            self.stack.push(1i64.into());
         } else {
             // absent context, position and size
             self.stack.push(stack::Atomic::Absent.into());
@@ -360,9 +360,7 @@ impl<'a> Interpreter<'a> {
                         Ordering::Equal => self.stack.push(a.into()),
                         Ordering::Less => {
                             let sequence = stack::Sequence::from(
-                                (a..=b)
-                                    .map(|i| stack::Item::Atomic(stack::Atomic::Integer(i)))
-                                    .collect::<Vec<stack::Item>>(),
+                                (a..=b).map(|i| i.into()).collect::<Vec<stack::Item>>(),
                             );
                             self.stack.push(stack::Value::Sequence(sequence));
                         }
@@ -584,8 +582,8 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(1.into(), empty_span);
-        builder.emit_constant(2.into(), empty_span);
+        builder.emit_constant(1i64.into(), empty_span);
+        builder.emit_constant(2i64.into(), empty_span);
         builder.emit(Instruction::Add, empty_span);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -602,7 +600,7 @@ mod tests {
             vec![],
         );
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![3.into()]);
+        assert_eq!(interpreter.stack, vec![3i64.into()]);
         Ok(())
     }
 
@@ -613,9 +611,9 @@ mod tests {
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
         let jump = builder.emit_jump_forward(JumpCondition::Always, empty_span);
-        builder.emit_constant(3.into(), empty_span);
+        builder.emit_constant(3i64.into(), empty_span);
         builder.patch_jump(jump);
-        builder.emit_constant(4.into(), empty_span);
+        builder.emit_constant(4i64.into(), empty_span);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
         let instructions = decode_instructions(&function.chunk);
@@ -638,14 +636,14 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(1.into(), empty_span);
-        builder.emit_constant(2.into(), empty_span);
+        builder.emit_constant(1i64.into(), empty_span);
+        builder.emit_constant(2i64.into(), empty_span);
         builder.emit(Instruction::Lt, empty_span);
         let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
-        builder.emit_constant(3.into(), empty_span);
+        builder.emit_constant(3i64.into(), empty_span);
         let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(4.into(), empty_span);
+        builder.emit_constant(4i64.into(), empty_span);
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -663,7 +661,7 @@ mod tests {
             vec![],
         );
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![3.into()]);
+        assert_eq!(interpreter.stack, vec![3i64.into()]);
         Ok(())
     }
 
@@ -673,14 +671,14 @@ mod tests {
 
         let mut builder = FunctionBuilder::new(&mut program);
         let empty_span = (0, 0).into();
-        builder.emit_constant(2.into(), empty_span);
-        builder.emit_constant(1.into(), empty_span);
+        builder.emit_constant(2i64.into(), empty_span);
+        builder.emit_constant(1i64.into(), empty_span);
         builder.emit(Instruction::Lt, empty_span);
         let lt_false = builder.emit_jump_forward(JumpCondition::False, empty_span);
-        builder.emit_constant(3.into(), empty_span);
+        builder.emit_constant(3i64.into(), empty_span);
         let end = builder.emit_jump_forward(JumpCondition::Always, empty_span);
         builder.patch_jump(lt_false);
-        builder.emit_constant(4.into(), empty_span);
+        builder.emit_constant(4i64.into(), empty_span);
         builder.patch_jump(end);
         let function = builder.finish("main".to_string(), 0, empty_span);
 
@@ -697,7 +695,7 @@ mod tests {
             vec![],
         );
         interpreter.run_actual()?;
-        assert_eq!(interpreter.stack, vec![4.into()]);
+        assert_eq!(interpreter.stack, vec![4i64.into()]);
         Ok(())
     }
 }

@@ -503,7 +503,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
                 assert::AssertEq::new(qt::XPathExpr("6".to_string())),
-                Sequence::from(vec![Item::from(Atomic::from(5))])
+                Sequence::from(vec![Item::from(Atomic::from(5i64))])
             ))
         );
     }
