@@ -20,7 +20,7 @@ impl Display for Atomic {
             stack::Atomic::Decimal(d) => write!(f, "{}", d),
             stack::Atomic::String(s) => write!(f, "{}", s),
             stack::Atomic::Untyped(s) => write!(f, "{}", s),
-            _ => unreachable!("Cannot exists in output space"),
+            _ => unreachable!("Cannot exist in output space"),
         }
     }
 }

@@ -21,7 +21,7 @@ num = "0.4.0"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
 ordered-float = "3.6.0"
-rust_decimal = "1.29.1"
+rust_decimal = "1.30.0"
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast"}

@@ -5,6 +5,8 @@ use std::rc::Rc;
 use crate::comparison;
 use crate::stack;
 
+use super::Integer;
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
@@ -142,7 +144,15 @@ impl Atomic {
             Atomic::Float(f) => f.is_zero(),
             Atomic::Double(d) => d.is_zero(),
             Atomic::Decimal(d) => d.is_zero(),
-            Atomic::Integer(i) => *i == 0,
+            Atomic::Integer(i) => i.is_zero(),
+            Atomic::Long(i) => i.is_zero(),
+            Atomic::Int(i) => i.is_zero(),
+            Atomic::Short(i) => i.is_zero(),
+            Atomic::Byte(i) => i.is_zero(),
+            Atomic::UnsignedLong(i) => i.is_zero(),
+            Atomic::UnsignedInt(i) => i.is_zero(),
+            Atomic::UnsignedShort(i) => i.is_zero(),
+            Atomic::UnsignedByte(i) => i.is_zero(),
             _ => false,
         }
     }
@@ -150,7 +160,18 @@ impl Atomic {
     pub(crate) fn is_numeric(&self) -> bool {
         matches!(
             self,
-            Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_)
+            Atomic::Float(_)
+                | Atomic::Double(_)
+                | Atomic::Decimal(_)
+                | Atomic::Integer(_)
+                | Atomic::Long(_)
+                | Atomic::Int(_)
+                | Atomic::Short(_)
+                | Atomic::Byte(_)
+                | Atomic::UnsignedLong(_)
+                | Atomic::UnsignedInt(_)
+                | Atomic::UnsignedShort(_)
+                | Atomic::UnsignedByte(_)
         )
     }
 
