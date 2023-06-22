@@ -490,6 +490,18 @@ impl<'a> IrConverter<'a> {
                     Ok(path_bindings.bind(binding))
                 })
             }
+            ast::ApplyOperator::Unary(ops) => {
+                let bindings = self.path_expr(&ast.path_expr);
+                ops.iter().rev().fold(bindings, |acc, op| {
+                    let mut bindings = acc?;
+                    let expr = ir::Expr::Unary(ir::Unary {
+                        op: op.clone(),
+                        atom: bindings.atom(),
+                    });
+                    let binding = self.new_binding(expr, span);
+                    Ok(bindings.bind(binding))
+                })
+            }
             _ => {
                 todo!("ApplyOperator: {:?}", ast.operator)
             }
@@ -879,5 +891,20 @@ mod tests {
     #[test]
     fn test_unknown_named_function_ref() {
         assert_debug_snapshot!(convert_expr_single("unknown_function#2"));
+    }
+
+    #[test]
+    fn test_unary() {
+        assert_debug_snapshot!(convert_expr_single("-1"));
+    }
+
+    #[test]
+    fn test_unary_plus() {
+        assert_debug_snapshot!(convert_expr_single("+1"));
+    }
+
+    #[test]
+    fn test_unary_combo() {
+        assert_debug_snapshot!(convert_expr_single("-+1"));
     }
 }

@@ -1797,4 +1797,9 @@ mod tests {
             &namespaces
         ));
     }
+
+    #[test]
+    fn test_unary_multiple() {
+        assert_debug_snapshot!(parse_expr_single("+-1"));
+    }
 }

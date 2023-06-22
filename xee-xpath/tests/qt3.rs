@@ -85,3 +85,8 @@ fn test_concat() {
     // don't have yet
     Tests::new("fn/concat").include("fn-concatint2args*").run()
 }
+
+// #[test]
+// fn test_boolean() {
+//     Tests::all("fn/boolean").run()
+// }

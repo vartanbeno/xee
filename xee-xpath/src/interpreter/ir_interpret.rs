@@ -23,15 +23,10 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
             ir::Expr::Let(let_) => self.compile_let(let_, span),
             ir::Expr::Binary(binary) => self.compile_binary(binary, span),
+            ir::Expr::Unary(_unary) => todo!("not yet"),
             ir::Expr::FunctionDefinition(function_definition) => {
                 self.compile_function_definition(function_definition, span)
             }
-            // ir::Expr::StaticFunctionReference(static_function_id, context_names) => self
-            //     .compile_static_function_reference(
-            //         *static_function_id,
-            //         context_names.as_ref(),
-            //         span,
-            //     ),
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call, span)
             }

@@ -4,7 +4,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
-pub use xee_xpath_ast::ast::BinaryOperator;
+pub use xee_xpath_ast::ast::{BinaryOperator, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
 use crate::stack::StaticFunctionId;
@@ -19,8 +19,8 @@ pub(crate) enum Expr {
     Let(Let),
     If(If),
     Binary(Binary),
+    Unary(Unary),
     FunctionDefinition(FunctionDefinition),
-    // StaticFunctionReference(StaticFunctionId, Option<ContextNames>),
     FunctionCall(FunctionCall),
     Step(Step),
     Map(Map),
@@ -75,6 +75,12 @@ pub(crate) struct Binary {
     pub(crate) left: AtomS,
     pub(crate) op: BinaryOperator,
     pub(crate) right: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Unary {
+    pub(crate) op: UnaryOperator,
+    pub(crate) atom: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
