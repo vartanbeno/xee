@@ -5,8 +5,6 @@ use std::rc::Rc;
 use crate::comparison;
 use crate::stack;
 
-use super::Integer;
-
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub(crate) enum Atomic {
@@ -17,9 +15,13 @@ pub(crate) enum Atomic {
     Boolean(bool),
     // decimal based
     Decimal(Decimal),
-    Integer(i64), // TODO should be Decimal
+    // We use i64 for xs:integer. According to the spec, xs:integer is
+    // derived from xs:decimal. A conforming specification must support
+    // 18 digit decimals. Since i64 can hold 19 digits, we are safe to
+    // use it and still be conforming.
+    // xs:long is aliased to this.
+    Integer(i64),
     // machine integers
-    Long(i64),
     Int(i32),
     Short(i16),
     Byte(i8),
@@ -84,7 +86,6 @@ impl Atomic {
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
-            Atomic::Long(i) => Ok(*i != 0),
             Atomic::Int(i) => Ok(*i != 0),
             Atomic::Short(i) => Ok(*i != 0),
             Atomic::Byte(i) => Ok(*i != 0),
@@ -120,7 +121,6 @@ impl Atomic {
             Atomic::Float(f) => f.to_string(),
             Atomic::Double(d) => d.to_string(),
             Atomic::Decimal(d) => d.to_string(),
-            Atomic::Long(i) => i.to_string(),
             Atomic::Int(i) => i.to_string(),
             Atomic::Short(i) => i.to_string(),
             Atomic::Byte(i) => i.to_string(),
@@ -154,7 +154,6 @@ impl Atomic {
             Atomic::Double(d) => d.is_zero(),
             Atomic::Decimal(d) => d.is_zero(),
             Atomic::Integer(i) => i.is_zero(),
-            Atomic::Long(i) => i.is_zero(),
             Atomic::Int(i) => i.is_zero(),
             Atomic::Short(i) => i.is_zero(),
             Atomic::Byte(i) => i.is_zero(),
@@ -173,7 +172,6 @@ impl Atomic {
                 | Atomic::Double(_)
                 | Atomic::Decimal(_)
                 | Atomic::Integer(_)
-                | Atomic::Long(_)
                 | Atomic::Int(_)
                 | Atomic::Short(_)
                 | Atomic::Byte(_)
@@ -200,7 +198,6 @@ impl Atomic {
             | Atomic::Decimal(_)
             | Atomic::Float(_)
             | Atomic::Double(_)
-            | Atomic::Long(_)
             | Atomic::Int(_)
             | Atomic::Short(_)
             | Atomic::Byte(_)
