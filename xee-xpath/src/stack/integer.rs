@@ -14,10 +14,6 @@ impl Integer {
         self.0.is_zero()
     }
 
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-
     pub fn to_decimal(&self) -> Decimal {
         self.0
     }
