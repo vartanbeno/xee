@@ -8,6 +8,10 @@ use crate::output;
 use crate::wrap_xpath_fn;
 use crate::xml;
 
+// we don't accept concat() invocations with an arity
+// of greater than this
+const MAX_CONCAT_ARITY: usize = 32;
+
 #[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
 fn my_function(a: i64, b: i64) -> i64 {
     a + b
@@ -104,9 +108,12 @@ fn empty(arg: &[output::Item]) -> bool {
     arg.is_empty()
 }
 
-// TODO: this one is hard to use with the macro, as it's most convenient
-// to operate on a output::Sequence whereas we will get a slice
-// &[output::Item]
+#[xpath_fn("fn:boolean($arg as item()*) as xs:boolean")]
+fn boolean(arg: &output::Sequence) -> error::Result<bool> {
+    arg.effective_boolean_value()
+}
+
+// TODO: we can now use a Sequence argument
 fn not(
     _context: &DynamicContext,
     arguments: &[output::Sequence],
@@ -187,8 +194,43 @@ fn string_join_sep(arg1: &[output::Atomic], arg2: &str) -> error::Result<String>
     Ok(arg1.join(arg2))
 }
 
+#[xpath_fn("fn:string-length($arg as xs:string?) as xs:integer", context_first)]
+fn string_length(arg: Option<&str>) -> i64 {
+    if let Some(arg) = arg {
+        // TODO: what about overflow? not a very realistic situation
+        arg.chars().count() as i64
+    } else {
+        0
+    }
+}
+
+// concat cannot be written using the macro system, as it
+// takes an arbitrary amount of arguments. This is the only
+// function that does this. We're going to define a general
+// concat function and then register it for a sufficient amount
+// of arities
+fn concat(
+    context: &DynamicContext,
+    arguments: &[output::Sequence],
+) -> error::Result<output::Sequence> {
+    debug_assert!(arguments.len() >= 2);
+
+    let strings = arguments
+        .iter()
+        .map(|argument| {
+            let atomic = argument.atomized(context.xot).option()?;
+            if let Some(atomic) = atomic {
+                atomic.string_value()
+            } else {
+                Ok("".to_string())
+            }
+        })
+        .collect::<error::Result<Vec<String>>>()?;
+    Ok(strings.concat().into())
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
-    vec![
+    let mut r = vec![
         wrap_xpath_fn!(my_function),
         StaticFunctionDescription {
             name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
@@ -210,10 +252,12 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(exists),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(empty),
+        wrap_xpath_fn!(boolean),
         wrap_xpath_fn!(generate_id),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
         wrap_xpath_fn!(xs_string),
+        wrap_xpath_fn!(string_length),
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,
@@ -234,5 +278,17 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         },
         wrap_xpath_fn!(true_),
         wrap_xpath_fn!(false_),
-    ]
+    ];
+    // register concat for a variety of arities
+    // it's stupid that we have to do this, but it's in the
+    // spec https://www.w3.org/TR/xpath-functions-31/#func-concat
+    for arity in 2..MAX_CONCAT_ARITY {
+        r.push(StaticFunctionDescription {
+            name: ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string())),
+            arity,
+            function_kind: None,
+            func: concat,
+        });
+    }
+    r
 }

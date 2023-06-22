@@ -9,6 +9,7 @@ use xee_xpath_ast::XS_NAMESPACE;
 
 pub(crate) fn convert_sequence_type(
     sequence_type: &ast::SequenceType,
+    fn_arg: &syn::FnArg,
     name: TokenStream,
     arg: TokenStream,
 ) -> syn::Result<TokenStream> {
@@ -16,21 +17,26 @@ pub(crate) fn convert_sequence_type(
         ast::SequenceType::Empty => Ok(quote!(
             let #name = #arg.ensure_empty()?;
         )),
-        ast::SequenceType::Item(item) => convert_item(item, name, arg),
+        ast::SequenceType::Item(item) => convert_item(item, fn_arg, name, arg),
         _ => {
             panic!("Unsupported");
         }
     }
 }
 
-fn convert_item(item: &ast::Item, name: TokenStream, arg: TokenStream) -> syn::Result<TokenStream> {
-    let (iterator, want_result_occurrence, borrow) = convert_item_type(&item.item_type, arg)?;
+fn convert_item(
+    item: &ast::Item,
+    fn_arg: &syn::FnArg,
+    name: TokenStream,
+    arg: TokenStream,
+) -> syn::Result<TokenStream> {
+    let (iterator, want_result_occurrence, borrow) =
+        convert_item_type(&item.item_type, arg.clone())?;
     let occurrence = if want_result_occurrence {
         quote!(crate::ResultOccurrence)
     } else {
         quote!(crate::Occurrence)
     };
-
     Ok(match &item.occurrence {
         ast::Occurrence::One => {
             let as_ref = if borrow {
@@ -45,7 +51,7 @@ fn convert_item(item: &ast::Item, name: TokenStream, arg: TokenStream) -> syn::R
         }
         ast::Occurrence::Option => {
             let as_ref = if borrow {
-                quote!(let #name = #name.as_ref())
+                quote!(let #name = #name.as_deref())
             } else {
                 quote!()
             };
@@ -55,6 +61,11 @@ fn convert_item(item: &ast::Item, name: TokenStream, arg: TokenStream) -> syn::R
             )
         }
         ast::Occurrence::Many => {
+            if is_sequence_arg(fn_arg) {
+                // we already have a reference argument, so
+                // we don't need to do anything to it
+                return Ok(quote!(let #name = &(#arg);));
+            }
             let name_temp =
                 syn::Ident::new(&format!("tmp_{}", name), proc_macro2::Span::call_site());
             let as_ref = if borrow {
@@ -134,6 +145,28 @@ fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result
     }
 }
 
+fn is_sequence_arg(fn_arg: &syn::FnArg) -> bool {
+    match fn_arg {
+        syn::FnArg::Receiver(_) => false,
+        syn::FnArg::Typed(type_) => match type_.ty.as_ref() {
+            syn::Type::Reference(type_) => match type_.elem.as_ref() {
+                syn::Type::Path(type_) => {
+                    let segment = type_.path.segments.iter().last();
+                    match segment {
+                        Some(syn::PathSegment {
+                            ident,
+                            arguments: _arguments,
+                        }) => ident == "Sequence",
+                        _ => false,
+                    }
+                }
+                _ => false,
+            },
+            _ => false,
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,11 +174,17 @@ mod tests {
     use xee_xpath_ast::Namespaces;
 
     fn convert(s: &str) -> String {
+        // dummy fixed fn arg here
+        convert_fn_arg(s, &syn::parse_str("a: &str").unwrap())
+    }
+
+    fn convert_fn_arg(s: &str, fn_arg: &syn::FnArg) -> String {
         let namespaces = Namespaces::default();
         let sequence_type = ast::parse_sequence_type(s, &namespaces).unwrap();
         let name = quote!(a);
         let arg = quote!(arguments[0]);
-        convert_sequence_type(&sequence_type, name, arg)
+
+        convert_sequence_type(&sequence_type, fn_arg, name, arg)
             .unwrap()
             .to_string()
     }
@@ -198,5 +237,13 @@ mod tests {
     #[test]
     fn test_convert_string_many() {
         assert_debug_snapshot!(convert("xs:string*"));
+    }
+
+    #[test]
+    fn test_convert_sequence_arg() {
+        assert_debug_snapshot!(convert_fn_arg(
+            "item()*",
+            &syn::parse_str("a: &crate::Sequence").unwrap()
+        ));
     }
 }

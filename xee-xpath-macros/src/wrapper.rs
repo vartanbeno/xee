@@ -71,8 +71,10 @@ fn make_wrapper(
         let name = Ident::new(param.name.as_str(), Span::call_site());
         conversion_names.push(name.clone());
         let arg = quote!(arguments[#i]);
+        let fn_arg = &ast.sig.inputs[i];
         conversions.push(convert_sequence_type(
             &param.type_,
+            fn_arg,
             name.to_token_stream(),
             arg,
         )?);
@@ -155,6 +157,20 @@ mod tests {
             r#"
             fn foo(x: &i64) -> String {
                 format!("{}", x)
+            }"#,
+        )
+        .unwrap();
+        assert_debug_snapshot!(xpath_fn_wrapper(&ast, &options).unwrap().to_string());
+    }
+
+    #[test]
+    fn test_wrapper_items_sequence_arg() {
+        let options =
+            parse_str::<XPathFnOptions>(r#""fn:foo($x as item()*) as xs:string""#).unwrap();
+        let ast = parse_str::<ItemFn>(
+            r#"
+            fn foo(x: &crate::Sequence) -> String {
+                "foo".to_string()
             }"#,
         )
         .unwrap();

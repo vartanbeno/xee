@@ -56,3 +56,24 @@ fn test_inline_function_expr() {
 fn test_string_join() {
     Tests::all("fn/string-join").run()
 }
+
+#[test]
+fn test_string_length() {
+    // tolerate errors
+    // really: X
+    // XPDY0002 for fn-string-length-18
+    // FOTY00313 for fn-string-length-21
+
+    Tests::all("fn/string-length")
+        .tolerate_wrong_error()
+        // we get an unexpected type error here; apparently
+        // the context item is first cast to a string,
+        // whereas an explicit argument is not. I
+        // need to understand the rule behind this still.
+        // https://www.w3.org/TR/xpath-functions-31/#func-string-length
+        .bug("fn-string-length-24")
+        // K-StringLengthFunc-3 and K-StringLengthFunc-6 need "instance of"
+        // support
+        .exclude("K-StringLengthFunc-3 K-StringLengthFunc-6")
+        .run()
+}
