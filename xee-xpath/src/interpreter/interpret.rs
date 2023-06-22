@@ -120,6 +120,14 @@ impl<'a> Interpreter<'a> {
                     let (a, b) = self.pop_atomic2()?;
                     self.stack.push(op::numeric_mod(&a, &b)?.into());
                 }
+                EncodedInstruction::Plus => {
+                    let a = self.pop_atomic()?;
+                    self.stack.push(op::numeric_unary_plus(&a)?.into());
+                }
+                EncodedInstruction::Minus => {
+                    let a = self.pop_atomic()?;
+                    self.stack.push(op::numeric_unary_minus(&a)?.into());
+                }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
                     let a = a.to_str()?;

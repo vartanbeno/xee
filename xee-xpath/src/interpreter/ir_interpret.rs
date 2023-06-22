@@ -23,7 +23,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
             ir::Expr::Let(let_) => self.compile_let(let_, span),
             ir::Expr::Binary(binary) => self.compile_binary(binary, span),
-            ir::Expr::Unary(_unary) => todo!("not yet"),
+            ir::Expr::Unary(unary) => self.compile_unary(unary, span),
             ir::Expr::FunctionDefinition(function_definition) => {
                 self.compile_function_definition(function_definition, span)
             }
@@ -222,6 +222,19 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.patch_jump(end);
             }
             _ => todo!("operator not supported yet: {:?}", binary.op),
+        }
+        Ok(())
+    }
+
+    fn compile_unary(&mut self, unary: &ir::Unary, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&unary.atom)?;
+        match unary.op {
+            ir::UnaryOperator::Plus => {
+                self.builder.emit(Instruction::Plus, span);
+            }
+            ir::UnaryOperator::Minus => {
+                self.builder.emit(Instruction::Minus, span);
+            }
         }
         Ok(())
     }
@@ -1388,8 +1401,9 @@ mod tests {
     fn test_static_function_call_nested() {
         assert_debug_snapshot!(run(r#"fn:string-join(("A"),xs:string("A"))"#));
     }
-    // #[test]
-    // fn test_run_debug() {
-    //     assert_debug_snapshot!(run_debug("xs:string('B')"));
-    // }
+
+    #[test]
+    fn test_run_unary_minus() {
+        assert_debug_snapshot!(run("-1"));
+    }
 }

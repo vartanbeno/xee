@@ -9,8 +9,10 @@ pub(crate) enum Instruction {
     Div,
     IntDiv,
     Mod,
-    // UnaryPlus,
-    // UnaryMinus,
+    // unary operators
+    Plus,
+    Minus,
+    //
     Concat,
     Const(u16),
     Closure(u16),
@@ -60,8 +62,8 @@ pub(crate) enum EncodedInstruction {
     Div,
     IntDiv,
     Mod,
-    // UnaryPlus,
-    // UnaryMinus,
+    Plus,
+    Minus,
     Concat,
     Const,
     Closure,
@@ -112,8 +114,8 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Div => (Instruction::Div, 1),
         EncodedInstruction::IntDiv => (Instruction::IntDiv, 1),
         EncodedInstruction::Mod => (Instruction::Mod, 1),
-        // EncodedInstruction::UnaryPlus => (Instruction::UnaryPlus, 1),
-        // EncodedInstruction::UnaryMinus => (Instruction::UnaryMinus, 1),
+        EncodedInstruction::Plus => (Instruction::Plus, 1),
+        EncodedInstruction::Minus => (Instruction::Minus, 1),
         EncodedInstruction::Concat => (Instruction::Concat, 1),
         EncodedInstruction::Const => {
             let constant = u16::from_le_bytes([bytes[1], bytes[2]]);
@@ -207,8 +209,8 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Div => bytes.push(EncodedInstruction::Div.to_u8().unwrap()),
         Instruction::IntDiv => bytes.push(EncodedInstruction::IntDiv.to_u8().unwrap()),
         Instruction::Mod => bytes.push(EncodedInstruction::Mod.to_u8().unwrap()),
-        // Instruction::UnaryPlus => bytes.push(EncodedInstruction::UnaryPlus.to_u8().unwrap()),
-        // Instruction::UnaryMinus => bytes.push(EncodedInstruction::UnaryMinus.to_u8().unwrap()),
+        Instruction::Plus => bytes.push(EncodedInstruction::Plus.to_u8().unwrap()),
+        Instruction::Minus => bytes.push(EncodedInstruction::Minus.to_u8().unwrap()),
         Instruction::Concat => bytes.push(EncodedInstruction::Concat.to_u8().unwrap()),
         Instruction::Const(constant) => {
             bytes.push(EncodedInstruction::Const.to_u8().unwrap());
@@ -298,8 +300,8 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Div
         | Instruction::IntDiv
         | Instruction::Mod
-        // | Instruction::UnaryPlus
-        // | Instruction::UnaryMinus
+        | Instruction::Plus
+        | Instruction::Minus
         | Instruction::Concat
         | Instruction::Comma
         | Instruction::Eq
@@ -336,7 +338,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::ClosureVar(_)
         | Instruction::Jump(_)
         | Instruction::JumpIfTrue(_)
-    | Instruction::Step(_)
+        | Instruction::Step(_)
         | Instruction::JumpIfFalse(_) => 3,
     }
 }
