@@ -51,3 +51,10 @@ fn test_inline_function_expr() {
         )
         .run()
 }
+
+// #[test]
+// fn test_string_join() {
+//     Tests::new("fn/string-join")
+//         .include("fn-string-join-14")
+//         .run()
+// }

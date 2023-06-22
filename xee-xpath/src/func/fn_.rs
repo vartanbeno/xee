@@ -104,6 +104,9 @@ fn empty(arg: &[output::Item]) -> bool {
     arg.is_empty()
 }
 
+// TODO: this one is hard to use with the macro, as it's most convenient
+// to operate on a output::Sequence whereas we will get a slice
+// &[output::Item]
 fn not(
     _context: &DynamicContext,
     arguments: &[output::Sequence],
@@ -157,56 +160,32 @@ fn false_() -> bool {
     false
 }
 
-// #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
-// fn string_join(arg1: &[Atomic], arg2: &str) -> String {
-//     let mut s = String::new();
-//     for (i, a) in arg1.iter().enumerate() {
-//         if i > 0 {
-//             s.push_str(arg2);
-//         }
-//         s.push_str(&a.to_string());
-//     }
-//     s
-// }
+#[xpath_fn("xs:string($arg as xs:anyAtomicType?) as xs:string")]
+fn xs_string(arg: Option<output::Atomic>) -> error::Result<String> {
+    if let Some(arg) = arg {
+        arg.string_value()
+    } else {
+        Ok("".to_string())
+    }
+}
 
-// Experimental exploration of wrapping with converters
-// fn wrap_math_exp(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
-//     let a = &arguments[0];
-//     let a = a.context_try_into(context)?;
-//     Ok(real_math_exp(a).into())
-// }
+#[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*) as xs:string")]
+fn string_join(arg1: &[output::Atomic]) -> error::Result<String> {
+    let arg1 = arg1
+        .iter()
+        .map(|a| a.string_value())
+        .collect::<error::Result<Vec<String>>>()?;
+    Ok(arg1.concat())
+}
 
-// fn real_math_exp(d: Option<f64>) -> Option<f64> {
-//     d.map(|d| d.exp())
-// }
-
-// fn wrap_local_name(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
-//     let a = (&arguments[0]).try_into()?;
-//     Ok(real_local_name(context, a).into())
-// }
-
-// // #[xpath_fn]
-// fn real_local_name(context: &DynamicContext, a: xml::Node) -> String {
-//     a.local_name(context.xot)
-// }
-
-// fn wrap_extract_one(context: &DynamicContext, arguments: &[Value]) -> Result<Value, stack::ValueError> {
-//     let a = &arguments[0];
-//     let a: Sequence = a.try_into()?;
-//     let a = a.borrow();
-//     let s = a.as_slice();
-//     Ok(real_exactly_one(s)?.into())
-// }
-
-// // #[xpath_fn]
-// fn real_exactly_one(a: &[Item]) -> Result<Item, stack::ValueError> {
-//     if a.len() == 1 {
-//         Ok(a[0].clone())
-//     } else {
-//         // XXX should really be a FORG0005 error
-//         Err(stack::ValueError::Type)
-//     }
-// }
+#[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
+fn string_join_sep(arg1: &[output::Atomic], arg2: &str) -> error::Result<String> {
+    let arg1 = arg1
+        .iter()
+        .map(|a| a.string_value())
+        .collect::<error::Result<Vec<String>>>()?;
+    Ok(arg1.join(arg2))
+}
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
@@ -232,6 +211,9 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(empty),
         wrap_xpath_fn!(generate_id),
+        wrap_xpath_fn!(string_join),
+        wrap_xpath_fn!(string_join_sep),
+        wrap_xpath_fn!(xs_string),
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
             arity: 1,

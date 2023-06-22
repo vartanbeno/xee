@@ -1,0 +1,5 @@
+---
+source: xee-xpath-macros/src/convert.rs
+expression: "convert(\"xs:string*\")"
+---
+"let tmp_a = crate :: ResultOccurrence :: many (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | atomic . to_string ())) ? ; let tmp_a = tmp_a . iter () . map (| s | s . as_ref ()) . collect :: < Vec < _ >> () ; let a = tmp_a . as_slice () ;"

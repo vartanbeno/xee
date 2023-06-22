@@ -1,0 +1,5 @@
+---
+source: xee-xpath-macros/src/convert.rs
+expression: "convert(\"xs:string?\")"
+---
+"let a = crate :: ResultOccurrence :: option (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | atomic . to_string ())) ? ; let a = a . as_ref ()"

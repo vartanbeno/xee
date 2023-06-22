@@ -1373,4 +1373,9 @@ mod tests {
     fn test_let_uses_own_variable() {
         assert_debug_snapshot!(run("let $x := $x return $x"));
     }
+
+    // #[test]
+    // fn test_run_debug() {
+    //     assert_debug_snapshot!(run_debug("xs:string('B')"));
+    // }
 }
