@@ -30,14 +30,14 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn to_integer(&self) -> stack::Result<i64> {
+    pub(crate) fn convert_to_integer(&self) -> stack::Result<i64> {
         match self {
             Atomic::Integer(i) => Ok(*i),
             _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_decimal(&self) -> stack::Result<Decimal> {
+    pub(crate) fn convert_to_decimal(&self) -> stack::Result<Decimal> {
         match self {
             Atomic::Decimal(d) => Ok(*d),
             Atomic::Integer(i) => Ok(Decimal::from(*i)),
@@ -45,24 +45,28 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn to_float(&self) -> stack::Result<OrderedFloat<f32>> {
+    pub(crate) fn convert_to_float(&self) -> stack::Result<OrderedFloat<f32>> {
         match self {
             Atomic::Float(f) => Ok(*f),
             Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(stack::Error::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.to_decimal()?.to_f32().ok_or(stack::Error::Type)?,
+                self.convert_to_decimal()?
+                    .to_f32()
+                    .ok_or(stack::Error::Type)?,
             )),
             _ => Err(stack::Error::Type),
         }
     }
 
-    pub(crate) fn to_double(&self) -> stack::Result<OrderedFloat<f64>> {
+    pub(crate) fn convert_to_double(&self) -> stack::Result<OrderedFloat<f64>> {
         match self {
             Atomic::Double(d) => Ok(*d),
             Atomic::Float(OrderedFloat(f)) => Ok(OrderedFloat(*f as f64)),
             Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(stack::Error::Type)?)),
             Atomic::Integer(_) => Ok(OrderedFloat(
-                self.to_decimal()?.to_f64().ok_or(stack::Error::Type)?,
+                self.convert_to_decimal()?
+                    .to_f64()
+                    .ok_or(stack::Error::Type)?,
             )),
             _ => Err(stack::Error::Type),
         }

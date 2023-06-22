@@ -351,8 +351,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Range => {
                     let (a, b) = self.pop_atomic2()?;
-                    let a = a.to_integer()?;
-                    let b = b.to_integer()?;
+                    let a = a.convert_to_integer()?;
+                    let b = b.convert_to_integer()?;
                     match a.cmp(&b) {
                         Ordering::Greater => self
                             .stack
@@ -461,7 +461,7 @@ impl<'a> Interpreter<'a> {
         let value = self.stack.pop().unwrap();
         match value {
             stack::Value::Item(stack::Item::Atomic(a)) => {
-                let index = a.to_integer().unwrap();
+                let index = a.convert_to_integer().unwrap();
                 index as usize
             }
             _ => unreachable!("Expected atomic value"),

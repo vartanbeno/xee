@@ -59,8 +59,8 @@ pub(crate) fn numeric_divide(
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
         (stack::Atomic::Integer(_), stack::Atomic::Integer(_)) => numeric_divide(
-            &stack::Atomic::Decimal(atomic_a.to_decimal().unwrap()),
-            &stack::Atomic::Decimal(atomic_b.to_decimal().unwrap()),
+            &stack::Atomic::Decimal(atomic_a.convert_to_decimal().unwrap()),
+            &stack::Atomic::Decimal(atomic_b.convert_to_decimal().unwrap()),
         ),
         _ => {
             arithmetic_op(
@@ -477,55 +477,91 @@ where
         (stack::Atomic::Decimal(_), stack::Atomic::Decimal(_)) => op(atomic_a, atomic_b),
         (stack::Atomic::Integer(_), stack::Atomic::Decimal(_)) => {
             // integer S decimal
-            op(&stack::Atomic::Decimal(atomic_a.to_decimal()?), atomic_b)
+            op(
+                &stack::Atomic::Decimal(atomic_a.convert_to_decimal()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Decimal(_), stack::Atomic::Integer(_)) => {
             // integer S decimal
-            op(atomic_a, &stack::Atomic::Decimal(atomic_b.to_decimal()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Decimal(atomic_b.convert_to_decimal()?),
+            )
         }
         // -> float
         (stack::Atomic::Float(_), stack::Atomic::Float(_)) => op(atomic_a, atomic_b),
         (stack::Atomic::Decimal(_), stack::Atomic::Float(_)) => {
             // decimal P float
-            op(&stack::Atomic::Float(atomic_a.to_float()?), atomic_b)
+            op(
+                &stack::Atomic::Float(atomic_a.convert_to_float()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Integer(_), stack::Atomic::Float(_)) => {
             // integer S decimal P float
-            op(&stack::Atomic::Float(atomic_a.to_float()?), atomic_b)
+            op(
+                &stack::Atomic::Float(atomic_a.convert_to_float()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Float(_), stack::Atomic::Decimal(_)) => {
             // decimal P float
-            op(atomic_a, &stack::Atomic::Float(atomic_b.to_float()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Float(atomic_b.convert_to_float()?),
+            )
         }
         (stack::Atomic::Float(_), stack::Atomic::Integer(_)) => {
             // integer S decimal P float
-            op(atomic_a, &stack::Atomic::Float(atomic_b.to_float()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Float(atomic_b.convert_to_float()?),
+            )
         }
         // -> double
         (stack::Atomic::Double(_), stack::Atomic::Double(_)) => op(atomic_a, atomic_b),
         (stack::Atomic::Decimal(_), stack::Atomic::Double(_)) => {
             // decimal P double
-            op(&stack::Atomic::Double(atomic_a.to_double()?), atomic_b)
+            op(
+                &stack::Atomic::Double(atomic_a.convert_to_double()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Integer(_), stack::Atomic::Double(_)) => {
             // integer S decimal P double
-            op(&stack::Atomic::Double(atomic_a.to_double()?), atomic_b)
+            op(
+                &stack::Atomic::Double(atomic_a.convert_to_double()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Double(_), stack::Atomic::Decimal(_)) => {
             // decimal P double
-            op(atomic_a, &stack::Atomic::Double(atomic_b.to_double()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Double(atomic_b.convert_to_double()?),
+            )
         }
         (stack::Atomic::Double(_), stack::Atomic::Integer(_)) => {
             // integer S decimal P double
-            op(atomic_a, &stack::Atomic::Double(atomic_b.to_double()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Double(atomic_b.convert_to_double()?),
+            )
         }
         (stack::Atomic::Float(_), stack::Atomic::Double(_)) => {
             // float P double
-            op(&stack::Atomic::Double(atomic_a.to_double()?), atomic_b)
+            op(
+                &stack::Atomic::Double(atomic_a.convert_to_double()?),
+                atomic_b,
+            )
         }
         (stack::Atomic::Double(_), stack::Atomic::Float(_)) => {
             // float P double
-            op(atomic_a, &stack::Atomic::Double(atomic_b.to_double()?))
+            op(
+                atomic_a,
+                &stack::Atomic::Double(atomic_b.convert_to_double()?),
+            )
         }
         _ => Err(stack::Error::Type),
     }
