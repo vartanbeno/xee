@@ -5,8 +5,6 @@ use crate::interpreter::Program;
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
-    #[error("Overflow/underflow")]
-    Overflow,
     #[error("Stack overflow")]
     StackOverflow,
     #[error("Absent")]
@@ -227,7 +225,7 @@ pub enum Error {
     /// This error is raised whenever numeric operations result in an overflow or underflow.
     #[error("Numeric operation overflow/underflow")]
     #[diagnostic(code(FOAR0002))]
-    FOAR0002,
+    Overflow,
     /// Array index out of bounds.
     ///
     /// This error is raised when an integer used to select a member of an array is outside the range of values for that array.
