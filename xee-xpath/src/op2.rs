@@ -86,21 +86,21 @@ trait ArithmeticOp {
     where
         I: PrimInt + Into<stack::Atomic> + Into<Decimal>,
     {
-        let v = <Self as ArithmeticOp>::integer(a, b);
-        v.map(|v| v.into()).map_err(|e| e.into())
+        let v = <Self as ArithmeticOp>::integer(a, b)?;
+        Ok(v.into())
     }
 
     fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<stack::Atomic> {
-        let v = <Self as ArithmeticOp>::decimal(a, b);
-        v.map(|v| v.into()).map_err(|e| e.into())
+        let v = <Self as ArithmeticOp>::decimal(a, b)?;
+        Ok(v.into())
     }
 
     fn float_atomic<F>(a: F, b: F) -> stack::Result<stack::Atomic>
     where
         F: Float + Into<stack::Atomic>,
     {
-        let v = <Self as ArithmeticOp>::float(a, b);
-        v.map(|v| v.into()).map_err(|e| e.into())
+        let v = <Self as ArithmeticOp>::float(a, b)?;
+        Ok(v.into())
     }
 }
 
