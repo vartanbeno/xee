@@ -205,13 +205,13 @@ impl<'a> IrConverter<'a> {
                 }
                 // we can detect statically that the context is absent if it's in
                 // a function definition
-                ContextItem::Absent => Err(Error::XPDY0002 {
+                ContextItem::Absent => Err(Error::SpannedComponentAbsentInDynamicContext {
                     src: self.src.to_string(),
                     span,
                 }),
             }
         } else {
-            Err(Error::XPDY0002 {
+            Err(Error::SpannedComponentAbsentInDynamicContext {
                 src: self.src.to_string(),
                 span,
             })

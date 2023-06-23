@@ -71,7 +71,10 @@ impl<'a> DynamicContext<'a> {
     pub(crate) fn arguments(&self) -> Result<Vec<Vec<stack::Item>>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.variables {
-            let items = self.variables.get(variable_name).ok_or(Error::XPDY0002A)?;
+            let items = self
+                .variables
+                .get(variable_name)
+                .ok_or(Error::ComponentAbsentInDynamicContext)?;
             arguments.push(items.clone());
         }
         Ok(arguments)

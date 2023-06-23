@@ -64,7 +64,7 @@ impl XPath {
         let value = interpreter.stack().last().unwrap().clone();
         match value {
             stack::Value::Item(stack::Item::Atomic(atomic::Atomic::Absent)) => {
-                Err(Error::XPDY0002 {
+                Err(Error::SpannedComponentAbsentInDynamicContext {
                     src: self.program.src.clone(),
                     span: (0, self.program.src.len()).into(),
                 })

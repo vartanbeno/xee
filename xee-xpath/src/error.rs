@@ -1,9 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::error;
 use crate::interpreter::Program;
-use crate::stack;
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
@@ -27,14 +25,14 @@ pub enum Error {
     /// part of the dynamic context that is absent.
     #[error("Component absent in dynamic context")]
     #[diagnostic(code(XPDY0002))]
-    XPDY0002 {
+    SpannedComponentAbsentInDynamicContext {
         #[source_code]
         src: String,
         #[label("Context absent")]
         span: SourceSpan,
     },
     #[error("Component absent in dynamic context")]
-    XPDY0002A,
+    ComponentAbsentInDynamicContext,
     /// Parse error.
     ///
     /// It is a static error if an expression is not a valid instance of the
@@ -56,7 +54,7 @@ pub enum Error {
     /// by the matching rules in 2.5.5 SequenceType Matching.
     #[error("Type error")]
     #[diagnostic(code(XPTY0004))]
-    XPTY0004 {
+    SpannedType {
         #[source_code]
         src: String,
         #[label("Type error")]
@@ -654,13 +652,12 @@ impl From<xee_xpath_ast::Error> for Error {
 impl Error {
     pub(crate) fn with_span(self, program: &Program, span: SourceSpan) -> Self {
         match self {
-            Error::Type => Error::XPTY0004 {
+            // TODO: can we introduce a SpannedError that's a wrapper around Error?
+            Error::Type => Error::SpannedType {
                 src: program.src.to_string(),
                 span,
             },
-            Error::Overflow => Error::FOAR0002,
-            Error::StackOverflow => Error::XPDY0130,
-            Error::Absent => Error::XPDY0002 {
+            Error::Absent => Error::SpannedComponentAbsentInDynamicContext {
                 src: program.src.to_string(),
                 span,
             },
@@ -670,43 +667,3 @@ impl Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-// impl From<error::Error> for Error {
-//     fn from(e: error::Error) -> Self {
-//         match e {
-//             error::Error::XPTY0004 => Error::XPTY0004A,
-//             error::Error::Type => Error::XPTY0004A,
-//             error::Error::Overflow => Error::FOAR0002,
-//             error::Error::StackOverflow => Error::XPDY0130,
-//             error::Error::DivisionByZero => Error::FOAR0001,
-//             error::Error::Absent => Error::XPDY0002A,
-//             error::Error::Error(e) => e,
-//         }
-//     }
-// }
-
-// impl Error {
-//     pub(crate) fn from_value_error(
-//         program: &Program,
-//         span: SourceSpan,
-//         value_error: error::Error,
-//     ) -> Self {
-//         match value_error {
-//             error::Error::XPTY0004 => Error::XPTY0004 {
-//                 src: program.src.to_string(),
-//                 span,
-//             },
-//             error::Error::Type => Error::XPTY0004 {
-//                 src: program.src.to_string(),
-//                 span,
-//             },
-//             error::Error::Overflow => Error::FOAR0002,
-//             error::Error::StackOverflow => Error::XPDY0130,
-//             error::Error::DivisionByZero => Error::FOAR0001,
-//             error::Error::Absent => Error::XPDY0002 {
-//                 src: program.src.to_string(),
-//                 span,
-//             },
-//             error::Error::Error(e) => e,
-//         }
-//     }
-// }

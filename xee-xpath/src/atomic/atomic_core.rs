@@ -5,7 +5,6 @@ use std::rc::Rc;
 
 use crate::comparison;
 use crate::error;
-use crate::stack;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]

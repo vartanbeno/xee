@@ -1,7 +1,6 @@
 use crate::atomic;
 use crate::error;
 use crate::op;
-use crate::stack;
 
 pub(crate) fn value_eq(a: &atomic::Atomic, b: &atomic::Atomic) -> error::Result<atomic::Atomic> {
     generic_value_compare(

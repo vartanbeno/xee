@@ -23,7 +23,7 @@ fn bound_position(
     arguments: &[output::Sequence],
 ) -> error::Result<output::Sequence> {
     if arguments[0].is_absent() {
-        return Err(error::Error::XPDY0002A);
+        return Err(error::Error::ComponentAbsentInDynamicContext);
     }
     // position should be the context value
     Ok(arguments[0].clone())
@@ -34,7 +34,7 @@ fn bound_last(
     arguments: &[output::Sequence],
 ) -> error::Result<output::Sequence> {
     if arguments[0].is_absent() {
-        return Err(error::Error::XPDY0002A);
+        return Err(error::Error::ComponentAbsentInDynamicContext);
     }
     // size should be the context value
     Ok(arguments[0].clone())

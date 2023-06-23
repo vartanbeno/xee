@@ -32,15 +32,15 @@ impl Item {
     }
 
     pub fn to_atomic(&self) -> error::Result<atomic::Atomic> {
-        Ok(self.stack_item.to_atomic()?)
+        self.stack_item.to_atomic()
     }
 
     pub fn to_node(&self) -> error::Result<xml::Node> {
-        Ok(self.stack_item.to_node()?)
+        self.stack_item.to_node()
     }
 
     pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
-        Ok(self.stack_item.string_value(xot)?)
+        self.stack_item.string_value(xot)
     }
 }
 
