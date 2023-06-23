@@ -12,6 +12,7 @@ mod interpreter;
 mod ir;
 mod occurrence;
 mod op;
+mod op2;
 mod output;
 mod query;
 mod run;
