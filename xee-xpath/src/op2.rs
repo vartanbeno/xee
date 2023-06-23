@@ -30,7 +30,7 @@ use crate::stack;
 // if untypedAtomic, passed through typecheck and cast to double happens
 // now do type promotion, conforming the arguments to each other
 
-fn numeric_op<O>(a: stack::Atomic, b: stack::Atomic) -> stack::Result<stack::Atomic>
+fn numeric_arithmetic_op<O>(a: stack::Atomic, b: stack::Atomic) -> stack::Result<stack::Atomic>
 where
     O: ArithmeticOp,
 {
@@ -277,9 +277,37 @@ impl ArithmeticOp for ModOp {
     }
 }
 
-// fn numeric_unary_plus(atomic: stack::Atomic) -> error::Result<output::Sequence> {
+fn numeric_unary_plus(atomic: stack::Atomic) -> stack::Result<stack::Atomic> {
+    if atomic.is_numeric() {
+        Ok(atomic)
+    } else {
+        Err(stack::Error::Type)
+    }
+}
 
-// }
+fn numeric_unary_minus(atomic: stack::Atomic) -> stack::Result<stack::Atomic> {
+    if atomic.is_numeric() {
+        match atomic {
+            stack::Atomic::Decimal(v) => Ok(stack::Atomic::Decimal(-v)),
+            stack::Atomic::Integer(v) => Ok(stack::Atomic::Integer(-v)),
+            stack::Atomic::Int(v) => Ok(stack::Atomic::Int(-v)),
+            stack::Atomic::Short(v) => Ok(stack::Atomic::Short(-v)),
+            stack::Atomic::Byte(v) => Ok(stack::Atomic::Byte(-v)),
+            stack::Atomic::Float(v) => Ok(stack::Atomic::Float(-v)),
+            stack::Atomic::Double(v) => Ok(stack::Atomic::Double(-v)),
+            // what is the correct behavior for unsigned types? We could return
+            // a signed integer of the same type with overflow behavior if
+            // that's not possible, but for now we just refuse to do it.
+            stack::Atomic::UnsignedLong(_) => Err(stack::Error::Type),
+            stack::Atomic::UnsignedInt(_) => Err(stack::Error::Type),
+            stack::Atomic::UnsignedShort(_) => Err(stack::Error::Type),
+            stack::Atomic::UnsignedByte(_) => Err(stack::Error::Type),
+            _ => unreachable!(),
+        }
+    } else {
+        Err(stack::Error::Type)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -291,7 +319,7 @@ mod tests {
     fn test_add_ints() {
         let a = 1i64.into();
         let b = 2i64.into();
-        let result = numeric_op::<AddOp>(a, b).unwrap();
+        let result = numeric_arithmetic_op::<AddOp>(a, b).unwrap();
         assert_eq!(result, 3i64.into());
     }
 
@@ -299,7 +327,7 @@ mod tests {
     fn test_integer_division_returns_decimal() {
         let a = 5i64.into();
         let b = 2i64.into();
-        let result = numeric_op::<DivideOp>(a, b).unwrap();
+        let result = numeric_arithmetic_op::<DivideOp>(a, b).unwrap();
         assert_eq!(result, dec!(2.5).into());
     }
 
@@ -307,7 +335,7 @@ mod tests {
     fn test_numeric_integer_divide() {
         let a = 5i64.into();
         let b = 2i64.into();
-        let result = numeric_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = numeric_arithmetic_op::<NumericIntegerDivideOp>(a, b).unwrap();
         assert_eq!(result, 2i64.into());
     }
 
@@ -315,7 +343,7 @@ mod tests {
     fn test_numeric_integer_divide_float() {
         let a = 5f64.into();
         let b = 2f64.into();
-        let result = numeric_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = numeric_arithmetic_op::<NumericIntegerDivideOp>(a, b).unwrap();
         assert_eq!(result, 2i64.into());
     }
 }
