@@ -109,7 +109,7 @@ fn convert_atomic_or_union_type(
     name: &ast::Name,
     arg: TokenStream,
 ) -> syn::Result<(TokenStream, bool)> {
-    // TODO: we don't handle anything but xs: yes
+    // TODO: we don't handle anything but xs: yet
     assert_eq!(name.namespace(), Some(XS_NAMESPACE));
 
     let local_name = name.as_str();
@@ -117,23 +117,35 @@ fn convert_atomic_or_union_type(
         return Ok((quote!(#arg.atomized(context.xot)), false));
     }
 
-    let (convert, borrow) = match local_name {
-        "boolean" => (quote!(atomic.to_boolean()), false),
-        "integer" => (quote!(atomic.to_integer()), false),
-        "int" => (quote!(atomic.to_integer()), false),
-        "float" => (quote!(atomic.to_float()), false),
-        "double" => (quote!(atomic.to_double()), false),
-        "decimal" => (quote!(atomic.to_decimal()), false),
-        "string" => (quote!(atomic.to_string()), true),
-        _ => {
-            todo!("Not yet {}", local_name)
-        }
-    };
+    let type_name = syn::parse_str::<syn::Type>(&rust_type_name(local_name))?;
+    let convert = quote!(std::convert::TryInto::<#type_name>::try_into(atomic));
 
+    let borrow = local_name == "string";
     Ok((
         quote!(#arg.unboxed_atomized(context.xot, |atomic| #convert)),
         borrow,
     ))
+}
+
+fn rust_type_name(local_name: &str) -> String {
+    match local_name {
+        "string" => "String".to_string(),
+        "boolean" => "bool".to_string(),
+        "decimal" => "rust_decimal::Decimal".to_string(),
+        "integer" => "i64".to_string(),
+        "int" => "i32".to_string(),
+        "short" => "i16".to_string(),
+        "byte" => "i8".to_string(),
+        "unsignedLong" => "u64".to_string(),
+        "unsignedInt" => "u32".to_string(),
+        "unsignedShort" => "u16".to_string(),
+        "unsignedByte" => "u8".to_string(),
+        "float" => "f32".to_string(),
+        "double" => "f64".to_string(),
+        _ => {
+            panic!("Cannot get type name for {}", local_name);
+        }
+    }
 }
 
 fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result<TokenStream> {

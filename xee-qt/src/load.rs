@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
-use xee_xpath::{DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
+use xee_xpath::{Atomic, DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
 use xot::Xot;
 
 use crate::assert;
@@ -104,7 +104,7 @@ fn test_set_query<'a>(
 }
 
 fn convert_string(_: &Session, item: &Item) -> xee_xpath::Result<String> {
-    item.to_atomic()?.to_string()
+    item.to_atomic()?.try_into()
 }
 
 fn metadata_query<'a>(
@@ -212,7 +212,7 @@ fn test_cases_query<'a>(
         )))
     })?;
     let assert_count_query = queries.one("string()", |_, item| {
-        let count = item.to_atomic()?.to_string()?;
+        let count: String = item.to_atomic()?.try_into()?;
         // XXX unwrap is a hack
         let count = count.parse::<usize>().unwrap();
         Ok(qt::TestCaseResult::AssertCount(assert::AssertCount::new(
@@ -221,26 +221,26 @@ fn test_cases_query<'a>(
     })?;
 
     let assert_xml_query = queries.one("string()", |_, item| {
-        let xml = item.to_atomic()?.to_string()?;
+        let xml: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::AssertXml(assert::AssertXml::new(xml)))
     })?;
 
     let assert_eq_query = queries.one("string()", |_, item| {
-        let eq = item.to_atomic()?.to_string()?;
+        let eq: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::AssertEq(assert::AssertEq::new(
             qt::XPathExpr(eq),
         )))
     })?;
 
     let assert_string_value_query = queries.one("string()", |_, item| {
-        let string_value = item.to_atomic()?.to_string()?;
+        let string_value: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::AssertStringValue(
             assert::AssertStringValue::new(string_value),
         ))
     })?;
 
     let assert_query = queries.one("string()", |_, item| {
-        let xpath = item.to_atomic()?.to_string()?;
+        let xpath: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::Assert(assert::Assert::new(
             qt::XPathExpr(xpath),
         )))

@@ -322,6 +322,7 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
+    use crate::error::Result;
     use crate::output;
     use crate::xml;
 
@@ -331,7 +332,10 @@ mod tests {
         let static_context = StaticContext::new(&namespaces);
         let mut queries = Queries::new(&static_context);
         let q = queries
-            .one("1 + 2", |_, item| item.to_atomic()?.to_integer())
+            .one("1 + 2", |_, item| {
+                let v: Result<i64> = item.to_atomic()?.try_into();
+                v
+            })
             .unwrap();
 
         let xot = Xot::new();

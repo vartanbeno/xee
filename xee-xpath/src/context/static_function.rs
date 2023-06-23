@@ -187,7 +187,7 @@ impl StaticFunction {
         closure_values: &[stack::Value],
     ) -> error::Result<output::Sequence> {
         if arguments.len() != self.arity {
-            return Err(error::Error::XPTY0004A);
+            return Err(error::Error::Type);
         }
         if let Some(context_rule) = &self.context_rule {
             match context_rule {

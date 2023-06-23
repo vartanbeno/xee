@@ -24,14 +24,14 @@ pub struct StackItem(pub(crate) stack::Item);
 impl Item {
     pub fn value(&self) -> ItemValue {
         match &self.stack_item {
-            stack::Item::Atomic(a) => ItemValue::Atomic(output::Atomic::new(a.clone())),
+            stack::Item::Atomic(a) => ItemValue::Atomic(a.clone()),
             stack::Item::Function(f) => ItemValue::Function(f.to_output()),
             stack::Item::Node(n) => ItemValue::Node(*n),
         }
     }
 
     pub fn to_atomic(&self) -> error::Result<output::Atomic> {
-        Ok(output::Atomic::new(self.stack_item.to_atomic()?))
+        Ok(self.stack_item.to_atomic()?)
     }
 
     pub fn to_node(&self) -> error::Result<xml::Node> {
@@ -63,7 +63,7 @@ where
 {
     fn from(atomic: T) -> Self {
         Self {
-            stack_item: stack::Item::Atomic(atomic.into().stack_atomic),
+            stack_item: stack::Item::Atomic(atomic.into()),
         }
     }
 }

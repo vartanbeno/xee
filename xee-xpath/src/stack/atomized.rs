@@ -47,11 +47,11 @@ impl Iterator for AtomizedIter<'_> {
     }
 }
 
-impl occurrence::ResultOccurrence<atomic::Atomic, stack::Error> for AtomizedIter<'_> {
-    fn error(&self) -> stack::Error {
-        stack::Error::Type
-    }
-}
+// impl occurrence::ResultOccurrence<atomic::Atomic, stack::Error> for AtomizedIter<'_> {
+//     fn error(&self) -> stack::Error {
+//         stack::Error::Type
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub(crate) struct AtomizedAtomicIter {

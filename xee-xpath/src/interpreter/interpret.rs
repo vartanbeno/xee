@@ -526,7 +526,7 @@ impl<'a> Interpreter<'a> {
     }
 
     fn err(&self, value_error: stack::Error) -> Error {
-        Error::from_value_error(self.program, self.current_span(), value_error)
+        value_error.with_span(self.program, self.current_span())
     }
 
     fn current_span(&self) -> SourceSpan {

@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use std::fmt;
 use std::rc::Rc;
 
 use crate::comparison;
@@ -15,11 +16,12 @@ pub enum Atomic {
     Boolean(bool),
     // decimal based
     Decimal(Decimal),
-    // We use i64 for xs:integer. According to the spec, xs:integer is
-    // derived from xs:decimal. A conforming specification must support
-    // 18 digit decimals. Since i64 can hold 19 digits, we are safe to
-    // use it and still be conforming.
-    // xs:long is aliased to this.
+    // We use i64 for xs:integer. According to the XML Schema 1.0 spec,
+    // xs:integer is derived from xs:decimal. A conforming specification must
+    // support 18 digit decimals. Since i64 can hold 19 digits, we are safe to
+    // use it and still be conforming. xs:long is aliased to this.
+    // The XML Schema 1.1 approaches this differently, but are still within
+    // bounds of these restrictions.
     Integer(i64),
     // machine integers
     Int(i32),
@@ -76,6 +78,22 @@ impl Atomic {
                     .ok_or(stack::Error::Type)?,
             )),
             _ => Err(stack::Error::Type),
+        }
+    }
+
+    pub(crate) fn match_type_name(&self, name: &str) -> bool {
+        if name == "anyAtomicType" {
+            return true;
+        }
+        match self {
+            Atomic::Boolean(_) => name == "boolean",
+            Atomic::Integer(_) => name == "integer",
+            Atomic::Float(_) => name == "float",
+            Atomic::Double(_) => name == "double",
+            Atomic::Decimal(_) => name == "decimal",
+            Atomic::String(_) => name == "string",
+            // TODO: handle all cases instead of this fallback
+            _ => false,
         }
     }
 
@@ -236,6 +254,21 @@ impl PartialEq for Atomic {
     }
 }
 
+impl fmt::Display for Atomic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            Atomic::Boolean(b) => write!(f, "{}", b),
+            Atomic::Integer(i) => write!(f, "{}", i),
+            Atomic::Float(n) => write!(f, "{}", n),
+            Atomic::Double(d) => write!(f, "{}", d),
+            Atomic::Decimal(d) => write!(f, "{}", d),
+            Atomic::String(s) => write!(f, "{}", s),
+            Atomic::Untyped(s) => write!(f, "{}", s),
+            _ => unreachable!("Cannot exist in output space"),
+        }
+    }
+}
+
 // strings
 
 impl From<String> for Atomic {
@@ -256,11 +289,33 @@ impl From<&String> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for String {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::String(s) => Ok(s.as_ref().clone()),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 // bool
 
 impl From<bool> for Atomic {
     fn from(b: bool) -> Self {
         Atomic::Boolean(b)
+    }
+}
+
+impl TryFrom<Atomic> for bool {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Boolean(b) => Ok(b),
+            _ => Err(stack::Error::Type),
+        }
     }
 }
 
@@ -272,9 +327,31 @@ impl From<Decimal> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for Decimal {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Decimal(d) => Ok(d),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<i64> for Atomic {
     fn from(i: i64) -> Self {
         Atomic::Integer(i)
+    }
+}
+
+impl TryFrom<Atomic> for i64 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Integer(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
     }
 }
 
@@ -288,9 +365,31 @@ impl From<i32> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for i32 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Int(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<i16> for Atomic {
     fn from(i: i16) -> Self {
         Atomic::Short(i)
+    }
+}
+
+impl TryFrom<Atomic> for i16 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Short(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
     }
 }
 
@@ -300,9 +399,31 @@ impl From<i8> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for i8 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Byte(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<u64> for Atomic {
     fn from(i: u64) -> Self {
         Atomic::UnsignedLong(i)
+    }
+}
+
+impl TryFrom<Atomic> for u64 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::UnsignedLong(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
     }
 }
 
@@ -312,15 +433,48 @@ impl From<u32> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for u32 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::UnsignedInt(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<u16> for Atomic {
     fn from(i: u16) -> Self {
         Atomic::UnsignedShort(i)
     }
 }
 
+impl TryFrom<Atomic> for u16 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::UnsignedShort(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<u8> for Atomic {
     fn from(i: u8) -> Self {
         Atomic::UnsignedByte(i)
+    }
+}
+
+impl TryFrom<Atomic> for u8 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::UnsignedByte(i) => Ok(i),
+            _ => Err(stack::Error::Type),
+        }
     }
 }
 
@@ -338,6 +492,17 @@ impl From<OrderedFloat<f32>> for Atomic {
     }
 }
 
+impl TryFrom<Atomic> for f32 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Float(f) => Ok(f.into_inner()),
+            _ => Err(stack::Error::Type),
+        }
+    }
+}
+
 impl From<f64> for Atomic {
     fn from(f: f64) -> Self {
         Atomic::Double(OrderedFloat(f))
@@ -347,5 +512,16 @@ impl From<f64> for Atomic {
 impl From<OrderedFloat<f64>> for Atomic {
     fn from(f: OrderedFloat<f64>) -> Self {
         Atomic::Double(f)
+    }
+}
+
+impl TryFrom<Atomic> for f64 {
+    type Error = stack::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Double(f) => Ok(f.into_inner()),
+            _ => Err(stack::Error::Type),
+        }
     }
 }

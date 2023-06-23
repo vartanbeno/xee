@@ -2,7 +2,7 @@ use crossterm::style::Stylize;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    DynamicContext, Error, Name, Namespaces, Occurrence, Sequence, StaticContext, XPath,
+    DynamicContext, Error, Name, Namespaces, Occurrence, Result, Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -90,7 +90,7 @@ impl TestOutcome {
 }
 
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
         match result {
             Ok(sequence) => self.assert_value(xot, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
@@ -110,7 +110,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -140,7 +140,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
+    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -339,7 +339,7 @@ impl Assertable for AssertTrue {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
-                let b = atomic.to_bool();
+                let b: Result<bool> = atomic.try_into();
                 if let Ok(b) = b {
                     if b {
                         return TestOutcome::Passed;
@@ -364,7 +364,7 @@ impl Assertable for AssertFalse {
     fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
-                let b = atomic.to_bool();
+                let b: Result<bool> = atomic.try_into();
                 if let Ok(b) = b {
                     if !b {
                         return TestOutcome::Passed;
@@ -390,7 +390,7 @@ impl Assertable for AssertStringValue {
         let strings = sequence
             .items()
             .map(|item| item.string_value(xot))
-            .collect::<Result<Vec<_>, _>>();
+            .collect::<Result<Vec<_>>>();
         match strings {
             Ok(strings) => {
                 let joined = strings.join(" ");
@@ -423,7 +423,7 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<Sequence, Error>) -> TestOutcome {
+    fn assert_result(&self, _xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
         match result {
             Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
             Err(error) => {
@@ -525,11 +525,7 @@ pub(crate) enum TestCaseResult {
 }
 
 impl TestCaseResult {
-    pub(crate) fn assert_result(
-        &self,
-        xot: &mut Xot,
-        result: &Result<Sequence, Error>,
-    ) -> TestOutcome {
+    pub(crate) fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),
             TestCaseResult::AllOf(a) => a.assert_result(xot, result),
@@ -661,7 +657,7 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence, Error> {
+fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
@@ -669,11 +665,7 @@ fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence, Error> {
     xpath.many(&dynamic_context, None)
 }
 
-fn run_xpath_with_result(
-    expr: &qt::XPathExpr,
-    sequence: &Sequence,
-    xot: &Xot,
-) -> Result<Sequence, Error> {
+fn run_xpath_with_result(expr: &qt::XPathExpr, sequence: &Sequence, xot: &Xot) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let name = Name::without_ns("result");
     let names = vec![name.clone()];

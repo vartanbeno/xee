@@ -12,7 +12,7 @@ use crate::xml;
 // of greater than this
 const MAX_CONCAT_ARITY: usize = 32;
 
-#[xpath_fn("my_function($a as xs:int, $b as xs:int) as xs:int")]
+#[xpath_fn("my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
 fn my_function(a: i64, b: i64) -> i64 {
     a + b
 }

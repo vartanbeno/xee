@@ -20,7 +20,7 @@ impl output::Sequence {
                 if self.is_empty() {
                     Ok(Cow::Borrowed(self))
                 } else {
-                    Err(error::Error::XPTY0004A)
+                    Err(error::Error::Type)
                 }
             }
             ast::SequenceType::Item(occurrence_item) => {
@@ -89,22 +89,10 @@ impl output::Atomic {
             }
         }
 
-        // TODO: some preparation of the type during AST contruction instead of
-        // direct string comparisons would be good
-        let is_match = match name.as_str() {
-            "anyAtomicType" => true,
-            "boolean" => self.is_boolean(),
-            "integer" => self.is_integer(),
-            "float" => self.is_float(),
-            "double" => self.is_double(),
-            "decimal" => self.is_decimal(),
-            "string" => self.is_string(),
-            _ => false,
-        };
-        if is_match {
+        if self.match_type_name(name.as_str()) {
             Ok(())
         } else {
-            Err(error::Error::XPTY0004A)
+            Err(error::Error::Type)
         }
     }
 }
@@ -153,9 +141,9 @@ mod tests {
         assert!(is_owned(right_result));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004A));
+        assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let wrong_type_result = wrong_type_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(wrong_type_result, Err(error::Error::XPTY0004A));
+        assert_eq!(wrong_type_result, Err(error::Error::Type));
     }
 
     #[test]
@@ -178,7 +166,7 @@ mod tests {
         assert!(is_owned(right_result));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004A));
+        assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_type_result2 = right_type_sequence2.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_type_result2, Ok(Cow::Borrowed(&right_type_sequence2)));
         assert!(is_owned(right_type_result2));
@@ -206,7 +194,7 @@ mod tests {
 
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004A));
+        assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_type_result2 = right_type_sequence2.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_type_result2, Ok(Cow::Borrowed(&right_type_sequence2)));
         assert!(is_borrowed(right_type_result2));
@@ -231,7 +219,7 @@ mod tests {
         assert!(is_owned(right_result));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004A));
+        assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
         assert!(is_owned(right_empty_result));

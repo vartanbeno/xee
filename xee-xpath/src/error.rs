@@ -6,6 +6,13 @@ use crate::stack;
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
+    #[error("Overflow/underflow")]
+    Overflow,
+    #[error("Stack overflow")]
+    StackOverflow,
+    #[error("Absent")]
+    Absent,
+
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.
     ///  
@@ -56,7 +63,7 @@ pub enum Error {
     },
     #[error("Type error")]
     #[diagnostic(code(XPTY0004))]
-    XPTY0004A,
+    Type,
     /// Empty Sequence type error.
     ///
     /// During the analysis phase, it is a static error if the static type
@@ -215,7 +222,7 @@ pub enum Error {
     /// This error is raised whenever an attempt is made to divide by zero.
     #[error("Division by zero")]
     #[diagnostic(code(FOAR0001))]
-    FOAR0001,
+    DivisionByZero,
     /// Numeric operation overflow/underflow.
     ///
     /// This error is raised whenever numeric operations result in an overflow or underflow.
@@ -633,9 +640,6 @@ pub enum Error {
     /// cannot handle such characters.
     #[error("XSLT output contains non-accepted characters")]
     FOXT0006,
-
-    #[error("type error")]
-    TypeError,
 }
 
 impl From<xee_xpath_ast::Error> for Error {
@@ -646,45 +650,62 @@ impl From<xee_xpath_ast::Error> for Error {
     }
 }
 
-impl From<stack::Error> for Error {
-    fn from(e: stack::Error) -> Self {
-        match e {
-            stack::Error::XPTY0004 => Error::XPTY0004A,
-            stack::Error::Type => Error::XPTY0004A,
-            stack::Error::Overflow => Error::FOAR0002,
-            stack::Error::StackOverflow => Error::XPDY0130,
-            stack::Error::DivisionByZero => Error::FOAR0001,
-            stack::Error::Absent => Error::XPDY0002A,
-            stack::Error::Error(e) => e,
-        }
-    }
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
-
 impl Error {
-    pub(crate) fn from_value_error(
-        program: &Program,
-        span: SourceSpan,
-        value_error: stack::Error,
-    ) -> Self {
-        match value_error {
-            stack::Error::XPTY0004 => Error::XPTY0004 {
-                src: program.src.to_string(),
-                span,
-            },
+    pub(crate) fn with_span(self, program: &Program, span: SourceSpan) -> Self {
+        match self {
             stack::Error::Type => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
             stack::Error::Overflow => Error::FOAR0002,
             stack::Error::StackOverflow => Error::XPDY0130,
-            stack::Error::DivisionByZero => Error::FOAR0001,
             stack::Error::Absent => Error::XPDY0002 {
                 src: program.src.to_string(),
                 span,
             },
-            stack::Error::Error(e) => e,
+            _ => self,
         }
     }
 }
+
+pub type Result<T> = std::result::Result<T, Error>;
+// impl From<stack::Error> for Error {
+//     fn from(e: stack::Error) -> Self {
+//         match e {
+//             stack::Error::XPTY0004 => Error::XPTY0004A,
+//             stack::Error::Type => Error::XPTY0004A,
+//             stack::Error::Overflow => Error::FOAR0002,
+//             stack::Error::StackOverflow => Error::XPDY0130,
+//             stack::Error::DivisionByZero => Error::FOAR0001,
+//             stack::Error::Absent => Error::XPDY0002A,
+//             stack::Error::Error(e) => e,
+//         }
+//     }
+// }
+
+// impl Error {
+//     pub(crate) fn from_value_error(
+//         program: &Program,
+//         span: SourceSpan,
+//         value_error: stack::Error,
+//     ) -> Self {
+//         match value_error {
+//             stack::Error::XPTY0004 => Error::XPTY0004 {
+//                 src: program.src.to_string(),
+//                 span,
+//             },
+//             stack::Error::Type => Error::XPTY0004 {
+//                 src: program.src.to_string(),
+//                 span,
+//             },
+//             stack::Error::Overflow => Error::FOAR0002,
+//             stack::Error::StackOverflow => Error::XPDY0130,
+//             stack::Error::DivisionByZero => Error::FOAR0001,
+//             stack::Error::Absent => Error::XPDY0002 {
+//                 src: program.src.to_string(),
+//                 span,
+//             },
+//             stack::Error::Error(e) => e,
+//         }
+//     }
+// }

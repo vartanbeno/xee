@@ -50,7 +50,7 @@ impl Sequence {
         if self.is_empty() {
             Ok(self)
         } else {
-            Err(error::Error::XPTY0004A)
+            Err(error::Error::Type)
         }
     }
 
@@ -79,10 +79,7 @@ impl Sequence {
         // iterator.
         let items = self
             .atomized(xot)
-            .map(|a| {
-                a.map(output::Item::from)
-                    .map_err(|_| error::Error::XPTY0004A)
-            })
+            .map(|a| a.map(output::Item::from).map_err(|_| error::Error::Type))
             .collect::<error::Result<Vec<_>>>()?;
         Ok(Sequence::from(items))
     }
@@ -90,8 +87,8 @@ impl Sequence {
     pub fn unboxed_atomized<'a, T>(
         &self,
         xot: &'a Xot,
-        extract: impl Fn(&output::Atomic) -> error::Result<T>,
-    ) -> UnboxedAtomizedIter<'a, impl Fn(&output::Atomic) -> error::Result<T>> {
+        extract: impl Fn(output::Atomic) -> error::Result<T>,
+    ) -> UnboxedAtomizedIter<'a, impl Fn(output::Atomic) -> error::Result<T>> {
         UnboxedAtomizedIter {
             atomized_iter: self.atomized(xot),
             extract,
@@ -230,10 +227,9 @@ impl<'a> Iterator for AtomizedIter<'a> {
     type Item = error::Result<output::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.atomized_iter.next().map(|a| {
-            a.map(output::Atomic::new)
-                .map_err(|_| error::Error::XPTY0004A)
-        })
+        self.atomized_iter
+            .next()
+            .map(|a| a.map_err(|_| error::Error::Type))
     }
 }
 
@@ -244,18 +240,18 @@ pub struct UnboxedAtomizedIter<'a, F> {
 
 impl<'a, T, F> Iterator for UnboxedAtomizedIter<'a, F>
 where
-    F: Fn(&output::Atomic) -> error::Result<T>,
+    F: Fn(output::Atomic) -> error::Result<T>,
 {
     type Item = error::Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.atomized_iter.next().map(|a| (self.extract)(&(a?)))
+        self.atomized_iter.next().map(|a| (self.extract)(a?))
     }
 }
 
 impl occurrence::Occurrence<output::Item, error::Error> for ItemIter {
     fn error(&self) -> error::Error {
-        error::Error::XPTY0004A
+        error::Error::Type
     }
 }
 
@@ -264,7 +260,7 @@ where
     U: Iterator<Item = error::Result<V>>,
 {
     fn error(&self) -> error::Error {
-        error::Error::XPTY0004A
+        error::Error::Type
     }
 }
 
