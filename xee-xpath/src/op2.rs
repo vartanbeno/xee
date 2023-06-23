@@ -89,7 +89,7 @@ trait ArithmeticOp {
 
     fn integer_atomic<I>(a: I, b: I) -> error::Result<output::Atomic>
     where
-        I: PrimInt + Into<output::Atomic>,
+        I: PrimInt + Into<output::Atomic> + Into<Decimal>,
     {
         let v = <Self as ArithmeticOp>::integer(a, b);
         v.map(|v| v.into()).map_err(|e| e.into())
@@ -131,9 +131,95 @@ impl ArithmeticOp for AddOp {
     }
 }
 
+struct SubtractOp;
+
+impl ArithmeticOp for SubtractOp {
+    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    where
+        I: PrimInt,
+    {
+        a.checked_sub(&b).ok_or(stack::Error::Overflow)
+    }
+
+    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
+        a.checked_sub(b).ok_or(stack::Error::Overflow)
+    }
+
+    fn float<F>(a: F, b: F) -> stack::Result<F>
+    where
+        F: Float,
+    {
+        Ok(a - b)
+    }
+}
+
+struct MultiplyOp;
+
+impl ArithmeticOp for MultiplyOp {
+    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    where
+        I: PrimInt,
+    {
+        a.checked_mul(&b).ok_or(stack::Error::Overflow)
+    }
+
+    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
+        a.checked_mul(b).ok_or(stack::Error::Overflow)
+    }
+
+    fn float<F>(a: F, b: F) -> stack::Result<F>
+    where
+        F: Float,
+    {
+        Ok(a * b)
+    }
+}
+
+struct DivideOp;
+
+impl ArithmeticOp for DivideOp {
+    fn integer_atomic<I>(a: I, b: I) -> error::Result<output::Atomic>
+    where
+        I: PrimInt + Into<output::Atomic> + Into<Decimal>,
+    {
+        // As a special case, if the types of both $arg1 and $arg2 are
+        // xs:integer, then the return type is xs:decimal.
+        let a: Decimal = a.into();
+        let b: Decimal = b.into();
+        let v = <Self as ArithmeticOp>::decimal(a, b);
+        v.map(|v| v.into()).map_err(|e| e.into())
+    }
+
+    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    where
+        I: PrimInt,
+    {
+        if b.is_zero() {
+            return Err(stack::Error::DivisionByZero);
+        }
+        a.checked_div(&b).ok_or(stack::Error::Overflow)
+    }
+
+    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
+        if b.is_zero() {
+            return Err(stack::Error::DivisionByZero);
+        }
+        a.checked_div(b).ok_or(stack::Error::Overflow)
+    }
+
+    fn float<F>(a: F, b: F) -> stack::Result<F>
+    where
+        F: Float,
+    {
+        Ok(a / b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use rust_decimal_macros::dec;
 
     #[test]
     fn test_add_ints() {
@@ -142,5 +228,14 @@ mod tests {
         let result = numeric_op::<AddOp>(a, b).unwrap();
         let result = result.items().next().unwrap();
         assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_integer_division_returns_decimal() {
+        let a = 5i64.into();
+        let b = 2i64.into();
+        let result = numeric_op::<DivideOp>(a, b).unwrap();
+        let result = result.items().next().unwrap();
+        assert_eq!(result, dec!(2.5).into());
     }
 }
