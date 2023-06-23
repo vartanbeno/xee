@@ -498,7 +498,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] `//` at beginning
 
-- [ ] treat as in `/` and `//` (but only needed for static typing)
+- [ ] `treat as` in `/` and `//` (but only needed for static typing)
 
 ### 3.3.1 Relative Path Expressions
 
