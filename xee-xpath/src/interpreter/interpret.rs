@@ -2,6 +2,7 @@ use arrayvec::ArrayVec;
 use miette::SourceSpan;
 use std::cmp::Ordering;
 
+use crate::atomic;
 use crate::comparison;
 use crate::context::DynamicContext;
 use crate::error::Error;
@@ -63,9 +64,9 @@ impl<'a> Interpreter<'a> {
             self.stack.push(1i64.into());
         } else {
             // absent context, position and size
-            self.stack.push(stack::Atomic::Absent.into());
-            self.stack.push(stack::Atomic::Absent.into());
-            self.stack.push(stack::Atomic::Absent.into());
+            self.stack.push(atomic::Atomic::Absent.into());
+            self.stack.push(atomic::Atomic::Absent.into());
+            self.stack.push(atomic::Atomic::Absent.into());
         }
         // and any arguments
         for arg in arguments {
@@ -436,7 +437,7 @@ impl<'a> Interpreter<'a> {
 
     fn value_compare<F>(&mut self, compare: F) -> stack::Result<()>
     where
-        F: Fn(&stack::Atomic, &stack::Atomic) -> stack::Result<stack::Atomic>,
+        F: Fn(&atomic::Atomic, &atomic::Atomic) -> stack::Result<atomic::Atomic>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -483,13 +484,13 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn pop_atomic(&mut self) -> stack::Result<stack::Atomic> {
+    fn pop_atomic(&mut self) -> stack::Result<atomic::Atomic> {
         let value = self.stack.pop().unwrap();
         let mut atomized = value.atomized(self.dynamic_context.xot);
         atomized.one()
     }
 
-    fn pop_atomic2(&mut self) -> stack::Result<(stack::Atomic, stack::Atomic)> {
+    fn pop_atomic2(&mut self) -> stack::Result<(atomic::Atomic, atomic::Atomic)> {
         let b = self.pop_atomic()?;
         let a = self.pop_atomic()?;
         Ok((a, b))
@@ -509,8 +510,8 @@ impl<'a> Interpreter<'a> {
     fn pop_atomized2(
         &mut self,
     ) -> (
-        impl Iterator<Item = stack::Result<stack::Atomic>> + '_,
-        impl Iterator<Item = stack::Result<stack::Atomic>> + '_ + std::clone::Clone,
+        impl Iterator<Item = stack::Result<atomic::Atomic>> + '_,
+        impl Iterator<Item = stack::Result<atomic::Atomic>> + '_ + std::clone::Clone,
     ) {
         let value_b = self.stack.pop().unwrap();
         let value_a = self.stack.pop().unwrap();
@@ -596,7 +597,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -657,7 +658,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -691,7 +692,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(stack::Atomic::Integer(0))),
+            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;

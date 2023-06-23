@@ -7,7 +7,7 @@ use crate::stack;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
-pub(crate) enum Atomic {
+pub enum Atomic {
     // strings
     String(Rc<String>),
     Untyped(Rc<String>),

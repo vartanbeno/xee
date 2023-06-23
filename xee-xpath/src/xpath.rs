@@ -1,5 +1,6 @@
 use xee_xpath_ast::ast::parse_xpath;
 
+use crate::atomic;
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
@@ -62,7 +63,7 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            stack::Value::Item(stack::Item::Atomic(stack::Atomic::Absent)) => {
+            stack::Value::Item(stack::Item::Atomic(atomic::Atomic::Absent)) => {
                 Err(Error::XPDY0002 {
                     src: self.program.src.clone(),
                     span: (0, self.program.src.len()).into(),

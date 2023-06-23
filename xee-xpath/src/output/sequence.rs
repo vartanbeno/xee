@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::atomic;
 use crate::error;
 use crate::occurrence;
 use crate::output;
@@ -41,7 +42,7 @@ impl Sequence {
     pub fn is_absent(&self) -> bool {
         matches!(
             &self.stack_value,
-            stack::Value::Item(stack::Item::Atomic(stack::Atomic::Absent))
+            stack::Value::Item(stack::Item::Atomic(atomic::Atomic::Absent))
         )
     }
 

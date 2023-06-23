@@ -202,13 +202,14 @@ impl occurrence::Occurrence<stack::Item, stack::Error> for ValueIter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal::Decimal;
+
+    use crate::atomic;
 
     #[test]
     fn test_integer_compares_with_decimal() {
-        let a = stack::Atomic::Integer(1);
-        let b = stack::Atomic::Decimal(Decimal::from(1));
+        let a = atomic::Atomic::Integer(1);
+        let b = atomic::Atomic::Decimal(Decimal::from(1));
         assert_eq!(a, b);
     }
 }

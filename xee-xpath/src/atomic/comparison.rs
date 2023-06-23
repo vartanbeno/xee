@@ -2,48 +2,51 @@ use num_traits::{Float, PrimInt};
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+use crate::atomic;
 use crate::stack;
 
-fn comparison_op<O>(a: stack::Atomic, b: stack::Atomic) -> stack::Result<stack::Atomic>
+fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> stack::Result<atomic::Atomic>
 where
     O: ComparisonOp,
 {
     Ok(match (a, b) {
-        (stack::Atomic::String(a), stack::Atomic::String(b)) => {
+        (atomic::Atomic::String(a), atomic::Atomic::String(b)) => {
             <O as ComparisonOp>::string_atomic(&a, &b)
         }
-        (stack::Atomic::Boolean(a), stack::Atomic::Boolean(b)) => {
+        (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => {
             <O as ComparisonOp>::boolean_atomic(a, b)
         }
-        (stack::Atomic::Decimal(a), stack::Atomic::Decimal(b)) => {
+        (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
             <O as ComparisonOp>::decimal_atomic(a, b)
         }
-        (stack::Atomic::Integer(a), stack::Atomic::Integer(b)) => {
+        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::Int(a), stack::Atomic::Int(b)) => <O as ComparisonOp>::integer_atomic(a, b),
-        (stack::Atomic::Short(a), stack::Atomic::Short(b)) => {
+        (atomic::Atomic::Int(a), atomic::Atomic::Int(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::Byte(a), stack::Atomic::Byte(b)) => {
+        (atomic::Atomic::Short(a), atomic::Atomic::Short(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::UnsignedLong(a), stack::Atomic::UnsignedLong(b)) => {
+        (atomic::Atomic::Byte(a), atomic::Atomic::Byte(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::UnsignedInt(a), stack::Atomic::UnsignedInt(b)) => {
+        (atomic::Atomic::UnsignedLong(a), atomic::Atomic::UnsignedLong(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::UnsignedShort(a), stack::Atomic::UnsignedShort(b)) => {
+        (atomic::Atomic::UnsignedInt(a), atomic::Atomic::UnsignedInt(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::UnsignedByte(a), stack::Atomic::UnsignedByte(b)) => {
+        (atomic::Atomic::UnsignedShort(a), atomic::Atomic::UnsignedShort(b)) => {
             <O as ComparisonOp>::integer_atomic(a, b)
         }
-        (stack::Atomic::Float(OrderedFloat(a)), stack::Atomic::Float(OrderedFloat(b))) => {
+        (atomic::Atomic::UnsignedByte(a), atomic::Atomic::UnsignedByte(b)) => {
+            <O as ComparisonOp>::integer_atomic(a, b)
+        }
+        (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
             <O as ComparisonOp>::float_atomic(a, b)
         }
-        (stack::Atomic::Double(OrderedFloat(a)), stack::Atomic::Double(OrderedFloat(b))) => {
+        (atomic::Atomic::Double(OrderedFloat(a)), atomic::Atomic::Double(OrderedFloat(b))) => {
             <O as ComparisonOp>::float_atomic(a, b)
         }
         _ => unreachable!("Both the atomics are not the same type or types aren't handled"),
@@ -61,33 +64,33 @@ trait ComparisonOp {
     fn string(a: &str, b: &str) -> bool;
     fn boolean(a: bool, b: bool) -> bool;
 
-    fn integer_atomic<I>(a: I, b: I) -> stack::Atomic
+    fn integer_atomic<I>(a: I, b: I) -> atomic::Atomic
     where
-        I: PrimInt + Into<stack::Atomic> + Into<Decimal>,
+        I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
     {
         let v = <Self as ComparisonOp>::integer(a, b);
         v.into()
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Atomic {
+    fn decimal_atomic(a: Decimal, b: Decimal) -> atomic::Atomic {
         let v = <Self as ComparisonOp>::decimal(a, b);
         v.into()
     }
 
-    fn float_atomic<F>(a: F, b: F) -> stack::Atomic
+    fn float_atomic<F>(a: F, b: F) -> atomic::Atomic
     where
-        F: Float + Into<stack::Atomic>,
+        F: Float + Into<atomic::Atomic>,
     {
         let v = <Self as ComparisonOp>::float(a, b);
         v.into()
     }
 
-    fn string_atomic(a: &str, b: &str) -> stack::Atomic {
+    fn string_atomic(a: &str, b: &str) -> atomic::Atomic {
         let v = <Self as ComparisonOp>::string(a, b);
         v.into()
     }
 
-    fn boolean_atomic(a: bool, b: bool) -> stack::Atomic {
+    fn boolean_atomic(a: bool, b: bool) -> atomic::Atomic {
         let v = <Self as ComparisonOp>::boolean(a, b);
         v.into()
     }

@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::atomic;
 use crate::occurrence;
 use crate::stack;
 use crate::xml;
@@ -33,7 +34,7 @@ impl<'a> AtomizedIter<'a> {
 }
 
 impl Iterator for AtomizedIter<'_> {
-    type Item = stack::Result<stack::Atomic>;
+    type Item = stack::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -46,7 +47,7 @@ impl Iterator for AtomizedIter<'_> {
     }
 }
 
-impl occurrence::ResultOccurrence<stack::Atomic, stack::Error> for AtomizedIter<'_> {
+impl occurrence::ResultOccurrence<atomic::Atomic, stack::Error> for AtomizedIter<'_> {
     fn error(&self) -> stack::Error {
         stack::Error::Type
     }
@@ -54,12 +55,12 @@ impl occurrence::ResultOccurrence<stack::Atomic, stack::Error> for AtomizedIter<
 
 #[derive(Debug, Clone)]
 pub(crate) struct AtomizedAtomicIter {
-    atomic: stack::Atomic,
+    atomic: atomic::Atomic,
     done: bool,
 }
 
 impl AtomizedAtomicIter {
-    fn new(atomic: stack::Atomic) -> Self {
+    fn new(atomic: atomic::Atomic) -> Self {
         Self {
             atomic,
             done: false,
@@ -68,7 +69,7 @@ impl AtomizedAtomicIter {
 }
 
 impl Iterator for AtomizedAtomicIter {
-    type Item = stack::Atomic;
+    type Item = atomic::Atomic;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
@@ -82,7 +83,7 @@ impl Iterator for AtomizedAtomicIter {
 
 #[derive(Debug, Clone)]
 pub(crate) struct AtomizedNodeIter {
-    typed_value: Vec<stack::Atomic>,
+    typed_value: Vec<atomic::Atomic>,
     typed_value_index: usize,
 }
 
@@ -96,7 +97,7 @@ impl AtomizedNodeIter {
 }
 
 impl Iterator for AtomizedNodeIter {
-    type Item = stack::Atomic;
+    type Item = atomic::Atomic;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.typed_value_index < self.typed_value.len() {
@@ -129,7 +130,7 @@ impl<'a> AtomizedSequenceIter<'a> {
 }
 
 impl<'a> Iterator for AtomizedSequenceIter<'a> {
-    type Item = stack::Result<stack::Atomic>;
+    type Item = stack::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.index < self.sequence.len() {
@@ -166,7 +167,7 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
 pub(crate) struct ErroringAtomizedIter;
 
 impl Iterator for ErroringAtomizedIter {
-    type Item = stack::Result<stack::Atomic>;
+    type Item = stack::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(Err(stack::Error::Type))
@@ -184,7 +185,7 @@ mod tests {
     #[test]
     fn test_atomize_atomic() {
         let xot = Xot::new();
-        let atomic = stack::Atomic::Integer(3);
+        let atomic = atomic::Atomic::Integer(3);
         let value = 3i64.into();
 
         let mut iter = AtomizedIter::new(value, &xot);
@@ -204,7 +205,7 @@ mod tests {
 
         assert_eq!(
             iter.next(),
-            Some(Ok(stack::Atomic::String(Rc::new("Hello".to_string()))))
+            Some(Ok(atomic::Atomic::String(Rc::new("Hello".to_string()))))
         );
         assert_eq!(iter.next(), None);
     }
@@ -216,19 +217,19 @@ mod tests {
         let xot_node = xot.document_element(root).unwrap();
         let node = xml::Node::Xot(xot_node);
         let value = stack::Value::Sequence(stack::Sequence::from(vec![
-            stack::Item::Atomic(stack::Atomic::Integer(3)),
+            stack::Item::Atomic(atomic::Atomic::Integer(3)),
             stack::Item::Node(node),
-            stack::Item::Atomic(stack::Atomic::Integer(4)),
+            stack::Item::Atomic(atomic::Atomic::Integer(4)),
         ]));
 
         let mut iter = AtomizedIter::new(value, &xot);
 
-        assert_eq!(iter.next(), Some(Ok(stack::Atomic::Integer(3))));
+        assert_eq!(iter.next(), Some(Ok(atomic::Atomic::Integer(3))));
         assert_eq!(
             iter.next(),
-            Some(Ok(stack::Atomic::String(Rc::new("Hello".to_string()))))
+            Some(Ok(atomic::Atomic::String(Rc::new("Hello".to_string()))))
         );
-        assert_eq!(iter.next(), Some(Ok(stack::Atomic::Integer(4))));
+        assert_eq!(iter.next(), Some(Ok(atomic::Atomic::Integer(4))));
         assert_eq!(iter.next(), None);
     }
 }

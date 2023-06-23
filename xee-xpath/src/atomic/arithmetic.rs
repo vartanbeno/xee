@@ -21,6 +21,7 @@ use num_traits::{Float, PrimInt};
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+use crate::atomic;
 use crate::stack;
 
 // type check to see whether it conforms to signature, get out atomized,
@@ -30,43 +31,43 @@ use crate::stack;
 // if untypedAtomic, passed through typecheck and cast to double happens
 // now do type promotion, conforming the arguments to each other
 
-fn numeric_arithmetic_op<O>(a: stack::Atomic, b: stack::Atomic) -> stack::Result<stack::Atomic>
+fn numeric_arithmetic_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> stack::Result<atomic::Atomic>
 where
     O: ArithmeticOp,
 {
     // we need to extract the values and pass them along now
     match (a, b) {
-        (stack::Atomic::Decimal(a), stack::Atomic::Decimal(b)) => {
+        (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
             <O as ArithmeticOp>::decimal_atomic(a, b)
         }
-        (stack::Atomic::Integer(a), stack::Atomic::Integer(b)) => {
+        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
             <O as ArithmeticOp>::integer_atomic::<i64>(a, b)
         }
-        (stack::Atomic::Int(a), stack::Atomic::Int(b)) => {
+        (atomic::Atomic::Int(a), atomic::Atomic::Int(b)) => {
             <O as ArithmeticOp>::integer_atomic::<i32>(a, b)
         }
-        (stack::Atomic::Short(a), stack::Atomic::Short(b)) => {
+        (atomic::Atomic::Short(a), atomic::Atomic::Short(b)) => {
             <O as ArithmeticOp>::integer_atomic::<i16>(a, b)
         }
-        (stack::Atomic::Byte(a), stack::Atomic::Byte(b)) => {
+        (atomic::Atomic::Byte(a), atomic::Atomic::Byte(b)) => {
             <O as ArithmeticOp>::integer_atomic::<i8>(a, b)
         }
-        (stack::Atomic::UnsignedLong(a), stack::Atomic::UnsignedLong(b)) => {
+        (atomic::Atomic::UnsignedLong(a), atomic::Atomic::UnsignedLong(b)) => {
             <O as ArithmeticOp>::integer_atomic::<u64>(a, b)
         }
-        (stack::Atomic::UnsignedInt(a), stack::Atomic::UnsignedInt(b)) => {
+        (atomic::Atomic::UnsignedInt(a), atomic::Atomic::UnsignedInt(b)) => {
             <O as ArithmeticOp>::integer_atomic::<u32>(a, b)
         }
-        (stack::Atomic::UnsignedShort(a), stack::Atomic::UnsignedShort(b)) => {
+        (atomic::Atomic::UnsignedShort(a), atomic::Atomic::UnsignedShort(b)) => {
             <O as ArithmeticOp>::integer_atomic::<u16>(a, b)
         }
-        (stack::Atomic::UnsignedByte(a), stack::Atomic::UnsignedByte(b)) => {
+        (atomic::Atomic::UnsignedByte(a), atomic::Atomic::UnsignedByte(b)) => {
             <O as ArithmeticOp>::integer_atomic::<u8>(a, b)
         }
-        (stack::Atomic::Float(OrderedFloat(a)), stack::Atomic::Float(OrderedFloat(b))) => {
+        (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
             <O as ArithmeticOp>::float_atomic::<f32>(a, b)
         }
-        (stack::Atomic::Double(OrderedFloat(a)), stack::Atomic::Double(OrderedFloat(b))) => {
+        (atomic::Atomic::Double(OrderedFloat(a)), atomic::Atomic::Double(OrderedFloat(b))) => {
             <O as ArithmeticOp>::float_atomic::<f64>(a, b)
         }
         _ => unreachable!("Both the atomics not the same type"),
@@ -82,22 +83,22 @@ trait ArithmeticOp {
     where
         F: Float;
 
-    fn integer_atomic<I>(a: I, b: I) -> stack::Result<stack::Atomic>
+    fn integer_atomic<I>(a: I, b: I) -> stack::Result<atomic::Atomic>
     where
-        I: PrimInt + Into<stack::Atomic> + Into<Decimal>,
+        I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
     {
         let v = <Self as ArithmeticOp>::integer(a, b)?;
         Ok(v.into())
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<stack::Atomic> {
+    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<atomic::Atomic> {
         let v = <Self as ArithmeticOp>::decimal(a, b)?;
         Ok(v.into())
     }
 
-    fn float_atomic<F>(a: F, b: F) -> stack::Result<stack::Atomic>
+    fn float_atomic<F>(a: F, b: F) -> stack::Result<atomic::Atomic>
     where
-        F: Float + Into<stack::Atomic>,
+        F: Float + Into<atomic::Atomic>,
     {
         let v = <Self as ArithmeticOp>::float(a, b)?;
         Ok(v.into())
@@ -173,9 +174,9 @@ impl ArithmeticOp for MultiplyOp {
 struct DivideOp;
 
 impl ArithmeticOp for DivideOp {
-    fn integer_atomic<I>(a: I, b: I) -> stack::Result<stack::Atomic>
+    fn integer_atomic<I>(a: I, b: I) -> stack::Result<atomic::Atomic>
     where
-        I: PrimInt + Into<stack::Atomic> + Into<Decimal>,
+        I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
     {
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
@@ -223,7 +224,7 @@ impl ArithmeticOp for NumericIntegerDivideOp {
         a.checked_div(&b).ok_or(stack::Error::Overflow)
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<stack::Atomic> {
+    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<atomic::Atomic> {
         let v = <DivideOp as ArithmeticOp>::decimal(a, b)?;
 
         Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
@@ -233,9 +234,9 @@ impl ArithmeticOp for NumericIntegerDivideOp {
         unreachable!();
     }
 
-    fn float_atomic<F>(a: F, b: F) -> stack::Result<stack::Atomic>
+    fn float_atomic<F>(a: F, b: F) -> stack::Result<atomic::Atomic>
     where
-        F: Float + Into<stack::Atomic>,
+        F: Float + Into<atomic::Atomic>,
     {
         let v = <DivideOp as ArithmeticOp>::float(a, b)?;
         Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
@@ -277,7 +278,7 @@ impl ArithmeticOp for ModOp {
     }
 }
 
-fn numeric_unary_plus(atomic: stack::Atomic) -> stack::Result<stack::Atomic> {
+fn numeric_unary_plus(atomic: atomic::Atomic) -> stack::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         Ok(atomic)
     } else {
@@ -285,23 +286,23 @@ fn numeric_unary_plus(atomic: stack::Atomic) -> stack::Result<stack::Atomic> {
     }
 }
 
-fn numeric_unary_minus(atomic: stack::Atomic) -> stack::Result<stack::Atomic> {
+fn numeric_unary_minus(atomic: atomic::Atomic) -> stack::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         match atomic {
-            stack::Atomic::Decimal(v) => Ok(stack::Atomic::Decimal(-v)),
-            stack::Atomic::Integer(v) => Ok(stack::Atomic::Integer(-v)),
-            stack::Atomic::Int(v) => Ok(stack::Atomic::Int(-v)),
-            stack::Atomic::Short(v) => Ok(stack::Atomic::Short(-v)),
-            stack::Atomic::Byte(v) => Ok(stack::Atomic::Byte(-v)),
-            stack::Atomic::Float(v) => Ok(stack::Atomic::Float(-v)),
-            stack::Atomic::Double(v) => Ok(stack::Atomic::Double(-v)),
+            atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),
+            atomic::Atomic::Integer(v) => Ok(atomic::Atomic::Integer(-v)),
+            atomic::Atomic::Int(v) => Ok(atomic::Atomic::Int(-v)),
+            atomic::Atomic::Short(v) => Ok(atomic::Atomic::Short(-v)),
+            atomic::Atomic::Byte(v) => Ok(atomic::Atomic::Byte(-v)),
+            atomic::Atomic::Float(v) => Ok(atomic::Atomic::Float(-v)),
+            atomic::Atomic::Double(v) => Ok(atomic::Atomic::Double(-v)),
             // what is the correct behavior for unsigned types? We could return
             // a signed integer of the same type with overflow behavior if
             // that's not possible, but for now we just refuse to do it.
-            stack::Atomic::UnsignedLong(_) => Err(stack::Error::Type),
-            stack::Atomic::UnsignedInt(_) => Err(stack::Error::Type),
-            stack::Atomic::UnsignedShort(_) => Err(stack::Error::Type),
-            stack::Atomic::UnsignedByte(_) => Err(stack::Error::Type),
+            atomic::Atomic::UnsignedLong(_) => Err(stack::Error::Type),
+            atomic::Atomic::UnsignedInt(_) => Err(stack::Error::Type),
+            atomic::Atomic::UnsignedShort(_) => Err(stack::Error::Type),
+            atomic::Atomic::UnsignedByte(_) => Err(stack::Error::Type),
             _ => unreachable!(),
         }
     } else {

@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::vec;
 use xot::Xot;
 
-use crate::stack::Atomic;
+use crate::atomic;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Node {
@@ -77,10 +77,10 @@ impl Node {
         }
     }
 
-    pub(crate) fn typed_value(&self, xot: &Xot) -> Vec<Atomic> {
+    pub(crate) fn typed_value(&self, xot: &Xot) -> Vec<atomic::Atomic> {
         // for now we don't know any types of nodes yet
         let s = self.string_value(xot);
-        vec![Atomic::Untyped(Rc::new(s))]
+        vec![atomic::Atomic::Untyped(Rc::new(s))]
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> String {

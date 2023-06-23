@@ -1,12 +1,13 @@
 use std::rc::Rc;
 use xot::Xot;
 
+use crate::atomic;
 use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
-    Atomic(stack::Atomic),
+    Atomic(atomic::Atomic),
     Function(Rc<stack::Closure>),
     Node(xml::Node),
 }
@@ -16,7 +17,7 @@ impl Item {
         ItemIter::new(self.clone())
     }
 
-    pub(crate) fn to_atomic(&self) -> stack::Result<stack::Atomic> {
+    pub(crate) fn to_atomic(&self) -> stack::Result<atomic::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
             _ => Err(stack::Error::Type),
@@ -61,7 +62,7 @@ impl Item {
 
 impl<T> From<T> for Item
 where
-    T: Into<stack::Atomic>,
+    T: Into<atomic::Atomic>,
 {
     fn from(a: T) -> Self {
         Self::Atomic(a.into())
