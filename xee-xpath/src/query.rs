@@ -29,15 +29,6 @@ impl<'s, V> Recurse<'s, V> {
 }
 
 pub trait ConvertRecurse<V>: Fn(&Session, &output::Item) -> error::Result<V> {}
-// /// Convert functions may return either an Error, or do queries of their
-// /// own, which can result in a Error. We want to handle them both.
-// #[derive(Debug, thiserror::Error)]
-// pub enum ConvertError {
-//     #[error("Value error")]
-//     ValueError(#[from] stack::Error),
-//     #[error("Error")]
-//     Error(#[from] Error),
-// }
 
 #[derive(Debug)]
 pub struct Queries<'s> {
