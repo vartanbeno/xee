@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
-use xee_xpath::{Atomic, DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
+use xee_xpath::{DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
 use xot::Xot;
 
 use crate::assert;

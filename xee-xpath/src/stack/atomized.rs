@@ -1,7 +1,6 @@
 use xot::Xot;
 
 use crate::atomic;
-use crate::occurrence;
 use crate::stack;
 use crate::xml;
 

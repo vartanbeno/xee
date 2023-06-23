@@ -553,6 +553,7 @@ mod tests {
     use xee_xpath_ast::{ast, Namespaces};
     use xot::Xot;
 
+    use crate::atomic;
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
     use crate::output;
@@ -1321,7 +1322,7 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                vec![output::Item::from(output::Atomic::from("FOO"))]
+                vec![output::Item::from(atomic::Atomic::from("FOO"))]
             )],
         ))
     }
@@ -1333,11 +1334,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![output::Item::from(output::Atomic::from(1i64))]
+                    vec![output::Item::from(atomic::Atomic::from(1i64))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![output::Item::from(output::Atomic::from(2i64))]
+                    vec![output::Item::from(atomic::Atomic::from(2i64))]
                 )
             ]
         ))

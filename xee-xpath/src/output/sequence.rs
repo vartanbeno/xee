@@ -87,8 +87,8 @@ impl Sequence {
     pub fn unboxed_atomized<'a, T>(
         &self,
         xot: &'a Xot,
-        extract: impl Fn(output::Atomic) -> error::Result<T>,
-    ) -> UnboxedAtomizedIter<'a, impl Fn(output::Atomic) -> error::Result<T>> {
+        extract: impl Fn(atomic::Atomic) -> error::Result<T>,
+    ) -> UnboxedAtomizedIter<'a, impl Fn(atomic::Atomic) -> error::Result<T>> {
         UnboxedAtomizedIter {
             atomized_iter: self.atomized(xot),
             extract,
@@ -172,7 +172,7 @@ impl From<output::Sequence> for stack::Value {
 
 impl<T> From<Vec<T>> for Sequence
 where
-    T: Into<output::Atomic>,
+    T: Into<atomic::Atomic>,
 {
     fn from(items: Vec<T>) -> Self {
         let items = items
@@ -185,7 +185,7 @@ where
 
 impl<T> From<T> for Sequence
 where
-    T: Into<output::Atomic>,
+    T: Into<atomic::Atomic>,
 {
     fn from(item: T) -> Self {
         Self::from(vec![output::Item::from(item.into())])
@@ -224,7 +224,7 @@ pub struct AtomizedIter<'a> {
 }
 
 impl<'a> Iterator for AtomizedIter<'a> {
-    type Item = error::Result<output::Atomic>;
+    type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.atomized_iter
@@ -240,7 +240,7 @@ pub struct UnboxedAtomizedIter<'a, F> {
 
 impl<'a, T, F> Iterator for UnboxedAtomizedIter<'a, F>
 where
-    F: Fn(output::Atomic) -> error::Result<T>,
+    F: Fn(atomic::Atomic) -> error::Result<T>,
 {
     type Item = error::Result<T>;
 
@@ -271,7 +271,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let item = output::Item::from(output::Atomic::from(true));
+        let item = output::Item::from(atomic::Atomic::from(true));
         let sequence = output::Sequence::from(vec![item.clone()]);
         assert_eq!(sequence.items().one().unwrap(), item);
     }

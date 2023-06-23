@@ -313,6 +313,7 @@ mod tests {
 
     use xee_xpath_ast::Namespaces;
 
+    use crate::atomic;
     use crate::error::Result;
     use crate::output;
     use crate::xml;
@@ -333,7 +334,7 @@ mod tests {
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = q
-            .execute(&session, &output::Item::from(output::Atomic::from(1i64)))
+            .execute(&session, &output::Item::from(atomic::Atomic::from(1i64)))
             .unwrap();
         assert_eq!(r, 3);
     }

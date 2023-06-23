@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::atomic;
 use crate::error;
 use crate::output;
 use crate::stack;
@@ -11,7 +12,7 @@ pub struct Item {
 }
 
 pub enum ItemValue {
-    Atomic(output::Atomic),
+    Atomic(atomic::Atomic),
     Function(output::Closure),
     Node(xml::Node),
 }
@@ -30,7 +31,7 @@ impl Item {
         }
     }
 
-    pub fn to_atomic(&self) -> error::Result<output::Atomic> {
+    pub fn to_atomic(&self) -> error::Result<atomic::Atomic> {
         Ok(self.stack_item.to_atomic()?)
     }
 
@@ -59,7 +60,7 @@ impl From<xml::Node> for output::Item {
 
 impl<T> From<T> for output::Item
 where
-    T: Into<output::Atomic>,
+    T: Into<atomic::Atomic>,
 {
     fn from(atomic: T) -> Self {
         Self {
@@ -80,7 +81,7 @@ impl From<&output::Item> for stack::Item {
     }
 }
 
-impl TryFrom<&output::Item> for output::Atomic {
+impl TryFrom<&output::Item> for atomic::Atomic {
     type Error = error::Error;
 
     fn try_from(item: &output::Item) -> error::Result<Self> {

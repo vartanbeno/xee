@@ -1,6 +1,7 @@
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic;
 use crate::context::{DynamicContext, FunctionKind, StaticFunctionDescription};
 use crate::error;
 use crate::occurrence::ResultOccurrence;
@@ -121,7 +122,7 @@ fn not(
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
     Ok(output::Sequence::from(vec![output::Item::from(
-        output::Atomic::from(!b),
+        atomic::Atomic::from(!b),
     )]))
 }
 
@@ -146,7 +147,7 @@ fn untyped_atomic(
     // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
     let s: String = value.try_into()?;
     Ok(output::Sequence::from(vec![output::Item::from(
-        output::Atomic::from(s),
+        atomic::Atomic::from(s),
     )]))
 }
 
@@ -168,7 +169,7 @@ fn false_() -> bool {
 }
 
 #[xpath_fn("xs:string($arg as xs:anyAtomicType?) as xs:string")]
-fn xs_string(arg: Option<output::Atomic>) -> error::Result<String> {
+fn xs_string(arg: Option<atomic::Atomic>) -> error::Result<String> {
     if let Some(arg) = arg {
         arg.string_value()
     } else {
@@ -177,7 +178,7 @@ fn xs_string(arg: Option<output::Atomic>) -> error::Result<String> {
 }
 
 #[xpath_fn("xs:int($arg as xs:anyAtomicType?) as xs:int?")]
-fn xs_int(arg: Option<output::Atomic>) -> error::Result<Option<i64>> {
+fn xs_int(arg: Option<atomic::Atomic>) -> error::Result<Option<i64>> {
     if let Some(arg) = arg {
         // TODO: only handle the string case for now
         Ok(Some(
@@ -191,7 +192,7 @@ fn xs_int(arg: Option<output::Atomic>) -> error::Result<Option<i64>> {
 }
 
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*) as xs:string")]
-fn string_join(arg1: &[output::Atomic]) -> error::Result<String> {
+fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
     let arg1 = arg1
         .iter()
         .map(|a| a.string_value())
@@ -200,7 +201,7 @@ fn string_join(arg1: &[output::Atomic]) -> error::Result<String> {
 }
 
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
-fn string_join_sep(arg1: &[output::Atomic], arg2: &str) -> error::Result<String> {
+fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String> {
     let arg1 = arg1
         .iter()
         .map(|a| a.string_value())
