@@ -169,10 +169,13 @@ impl<'a> IrConverter<'a> {
     }
 
     fn var_ref(&mut self, name: &ast::Name, span: SourceSpan) -> Result<Bindings> {
-        let ir_name = self.variables.get(name).ok_or_else(|| Error::XPST0008 {
-            src: self.src.to_string(),
-            span,
-        })?;
+        let ir_name = self
+            .variables
+            .get(name)
+            .ok_or_else(|| Error::UndefinedName {
+                src: self.src.to_string(),
+                span,
+            })?;
         Ok(Bindings::from_vec(vec![Binding {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
@@ -622,7 +625,7 @@ impl<'a> IrConverter<'a> {
             .static_context
             .functions
             .get_by_name(&ast.name, arity as u8)
-            .ok_or_else(|| Error::XPST0017 {
+            .ok_or_else(|| Error::IncorrectFunctionNameOrWrongNumberOfArguments {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
                 src: self.src.to_string(),
                 span
@@ -650,7 +653,7 @@ impl<'a> IrConverter<'a> {
             .static_context
             .functions
             .get_by_name(&ast.name, ast.arity)
-            .ok_or_else(|| Error::XPST0017 {
+            .ok_or_else(|| Error::IncorrectFunctionNameOrWrongNumberOfArguments {
                 advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, ast.arity),
                 src: self.src.to_string(),
                 span

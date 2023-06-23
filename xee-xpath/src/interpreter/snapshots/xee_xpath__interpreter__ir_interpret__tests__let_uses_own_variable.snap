@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"let $x := $x return $x\")"
 ---
 Err(
-    XPST0008 {
+    UndefinedName {
         src: "let $x := $x return $x",
         span: SourceSpan {
             offset: SourceOffset(

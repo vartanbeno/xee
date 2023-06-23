@@ -35,7 +35,7 @@ pub enum Error {
     /// grammar defined in A.1 EBNF.
     #[error("Parse error")]
     #[diagnostic(code(XPST0003), help("Invalid XPath expression"))]
-    XPST0003 {
+    Parse {
         #[source_code]
         src: String,
         #[label("Could not parse beyond this")]
@@ -74,7 +74,7 @@ pub enum Error {
     /// an ElementTest or an AttributeName in an AttributeTest.
     #[error("Name not defined")]
     #[diagnostic(code(XPST0008))]
-    XPST0008 {
+    UndefinedName {
         #[source_code]
         src: String,
         #[label("Name not defined")]
@@ -94,7 +94,7 @@ pub enum Error {
     /// signature in the static context.
     #[error("Type error: incorrect function name or number of arguments")]
     #[diagnostic(code(XPST0017))]
-    XPST0017 {
+    IncorrectFunctionNameOrWrongNumberOfArguments {
         #[help]
         advice: String,
         #[source_code]
@@ -640,7 +640,7 @@ pub enum Error {
 impl From<xee_xpath_ast::Error> for Error {
     fn from(e: xee_xpath_ast::Error) -> Self {
         match e {
-            xee_xpath_ast::Error::ParseError { src, span } => Error::XPST0003 { src, span },
+            xee_xpath_ast::Error::ParseError { src, span } => Error::Parse { src, span },
         }
     }
 }

@@ -403,7 +403,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             run(xot, &test_set),
-            TestOutcome::CompilationError(Error::XPST0003 {
+            TestOutcome::CompilationError(Error::Parse {
                 src: "1 @#!".to_string(),
                 span: (1, 0).into()
             })
