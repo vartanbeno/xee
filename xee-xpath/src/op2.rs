@@ -19,7 +19,7 @@
 
 use num_traits::{Float, PrimInt};
 use ordered_float::OrderedFloat;
-use rust_decimal::Decimal;
+use rust_decimal::prelude::*;
 
 use crate::error;
 use crate::output;
@@ -215,6 +215,45 @@ impl ArithmeticOp for DivideOp {
     }
 }
 
+struct NumericIntegerDivideOp;
+
+impl ArithmeticOp for NumericIntegerDivideOp {
+    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    where
+        I: PrimInt,
+    {
+        if b.is_zero() {
+            return Err(stack::Error::DivisionByZero);
+        }
+        a.checked_div(&b).ok_or(stack::Error::Overflow)
+    }
+
+    fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<output::Atomic> {
+        let v = <DivideOp as ArithmeticOp>::decimal(a, b)?;
+
+        Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
+    }
+
+    fn decimal(_a: Decimal, _b: Decimal) -> stack::Result<Decimal> {
+        unreachable!();
+    }
+
+    fn float_atomic<F>(a: F, b: F) -> error::Result<output::Atomic>
+    where
+        F: Float + Into<output::Atomic>,
+    {
+        let v = <DivideOp as ArithmeticOp>::float(a, b)?;
+        Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
+    }
+
+    fn float<F>(_a: F, _b: F) -> stack::Result<F>
+    where
+        F: Float,
+    {
+        unreachable!();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -237,5 +276,23 @@ mod tests {
         let result = numeric_op::<DivideOp>(a, b).unwrap();
         let result = result.items().next().unwrap();
         assert_eq!(result, dec!(2.5).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide() {
+        let a = 5i64.into();
+        let b = 2i64.into();
+        let result = numeric_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = result.items().next().unwrap();
+        assert_eq!(result, 2i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_float() {
+        let a = 5f64.into();
+        let b = 2f64.into();
+        let result = numeric_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = result.items().next().unwrap();
+        assert_eq!(result, 2i64.into());
     }
 }
