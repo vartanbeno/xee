@@ -5,6 +5,9 @@ use std::fmt::{self, Display, Formatter};
 use crate::error;
 use crate::stack;
 
+// TODO: output::Atomic isn't pulling its weight and could simply be
+// the same as Atomic
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Atomic {
     pub(crate) stack_atomic: stack::Atomic,
