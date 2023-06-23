@@ -2,6 +2,7 @@ use ahash::{HashSet, HashSetExt};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::error;
 use crate::stack;
 use crate::xml;
 
@@ -83,11 +84,11 @@ impl InnerSequence {
         self.items.is_empty()
     }
 
-    pub(crate) fn singleton(&self) -> stack::Result<&stack::Item> {
+    pub(crate) fn singleton(&self) -> error::Result<&stack::Item> {
         if self.items.len() == 1 {
             Ok(&self.items[0])
         } else {
-            Err(stack::Error::Type)
+            Err(error::Error::Type)
         }
     }
 
@@ -119,21 +120,21 @@ impl InnerSequence {
         &self,
         other: &InnerSequence,
         annotations: &xml::Annotations,
-    ) -> stack::Result<InnerSequence> {
+    ) -> error::Result<InnerSequence> {
         let mut s = HashSet::new();
         for item in &self.items {
             let node = match item {
                 stack::Item::Node(node) => *node,
-                stack::Item::Atomic(..) => return Err(stack::Error::Type),
-                stack::Item::Function(..) => return Err(stack::Error::Type),
+                stack::Item::Atomic(..) => return Err(error::Error::Type),
+                stack::Item::Function(..) => return Err(error::Error::Type),
             };
             s.insert(node);
         }
         for item in &other.items {
             let node = match item {
                 stack::Item::Node(node) => *node,
-                stack::Item::Atomic(..) => return Err(stack::Error::Type),
-                stack::Item::Function(..) => return Err(stack::Error::Type),
+                stack::Item::Atomic(..) => return Err(error::Error::Type),
+                stack::Item::Function(..) => return Err(error::Error::Type),
             };
             s.insert(node);
         }

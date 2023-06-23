@@ -2,6 +2,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::error;
 use crate::stack;
 use crate::xml;
 
@@ -17,27 +18,27 @@ impl Item {
         ItemIter::new(self.clone())
     }
 
-    pub(crate) fn to_atomic(&self) -> stack::Result<atomic::Atomic> {
+    pub(crate) fn to_atomic(&self) -> error::Result<atomic::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
-            _ => Err(stack::Error::Type),
+            _ => Err(error::Error::Type),
         }
     }
-    pub(crate) fn to_node(&self) -> stack::Result<xml::Node> {
+    pub(crate) fn to_node(&self) -> error::Result<xml::Node> {
         match self {
             Item::Node(n) => Ok(*n),
-            _ => Err(stack::Error::Type),
+            _ => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn to_function(&self) -> stack::Result<&stack::Closure> {
+    pub(crate) fn to_function(&self) -> error::Result<&stack::Closure> {
         match self {
             Item::Function(f) => Ok(f.as_ref()),
-            _ => Err(stack::Error::Type),
+            _ => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             stack::Item::Atomic(a) => a.effective_boolean_value(),
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
@@ -47,15 +48,15 @@ impl Item {
             // XXX the type error that the effective boolean wants is
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
-            stack::Item::Function(_) => Err(stack::Error::Type),
+            stack::Item::Function(_) => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
+    pub(crate) fn string_value(&self, xot: &Xot) -> error::Result<String> {
         match self {
             stack::Item::Atomic(atomic) => atomic.string_value(),
             stack::Item::Node(node) => Ok(node.string_value(xot)),
-            stack::Item::Function(_) => Err(stack::Error::Type),
+            stack::Item::Function(_) => Err(error::Error::Type),
         }
     }
 }

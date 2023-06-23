@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use crate::atomic;
 use crate::comparison;
 use crate::context::DynamicContext;
+use crate::error;
 use crate::error::Error;
 use crate::occurrence::ResultOccurrence;
 use crate::op;
@@ -91,7 +92,7 @@ impl<'a> Interpreter<'a> {
         &self.program.functions[self.frame().function.0]
     }
 
-    pub(crate) fn run_actual(&mut self) -> stack::Result<()> {
+    pub(crate) fn run_actual(&mut self) -> error::Result<()> {
         // we can make this an infinite loop as all functions end
         // with the return instruction
         loop {
@@ -299,7 +300,7 @@ impl<'a> Interpreter<'a> {
                     // get callable from stack, by peeking back
                     let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-                    if let Ok(closure) = callable.try_into() as stack::Result<&stack::Closure> {
+                    if let Ok(closure) = callable.try_into() as error::Result<&stack::Closure> {
                         match closure.function_id {
                             stack::ClosureFunctionId::Dynamic(function_id) => {
                                 self.call_closure(function_id, arity)?;
@@ -311,7 +312,7 @@ impl<'a> Interpreter<'a> {
                             }
                         }
                     } else {
-                        return Err(stack::Error::Type);
+                        return Err(error::Error::Type);
                     }
                 }
                 EncodedInstruction::Step => {
@@ -409,7 +410,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: stack::StaticFunctionId,
         arity: u8,
         closure_values: &[stack::Value],
-    ) -> stack::Result<()> {
+    ) -> error::Result<()> {
         let static_function = &self
             .dynamic_context
             .static_context
@@ -423,9 +424,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_closure(&mut self, function_id: stack::FunctionId, arity: u8) -> stack::Result<()> {
+    fn call_closure(&mut self, function_id: stack::FunctionId, arity: u8) -> error::Result<()> {
         if self.frames.len() >= self.frames.capacity() {
-            return Err(stack::Error::StackOverflow);
+            return Err(error::Error::StackOverflow);
         }
         self.frames.push(Frame {
             function: function_id,
@@ -435,9 +436,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn value_compare<F>(&mut self, compare: F) -> stack::Result<()>
+    fn value_compare<F>(&mut self, compare: F) -> error::Result<()>
     where
-        F: Fn(&atomic::Atomic, &atomic::Atomic) -> stack::Result<atomic::Atomic>,
+        F: Fn(&atomic::Atomic, &atomic::Atomic) -> error::Result<atomic::Atomic>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -484,13 +485,13 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn pop_atomic(&mut self) -> stack::Result<atomic::Atomic> {
+    fn pop_atomic(&mut self) -> error::Result<atomic::Atomic> {
         let value = self.stack.pop().unwrap();
         let mut atomized = value.atomized(self.dynamic_context.xot);
         atomized.one()
     }
 
-    fn pop_atomic2(&mut self) -> stack::Result<(atomic::Atomic, atomic::Atomic)> {
+    fn pop_atomic2(&mut self) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
         let b = self.pop_atomic()?;
         let a = self.pop_atomic()?;
         Ok((a, b))
@@ -510,8 +511,8 @@ impl<'a> Interpreter<'a> {
     fn pop_atomized2(
         &mut self,
     ) -> (
-        impl Iterator<Item = stack::Result<atomic::Atomic>> + '_,
-        impl Iterator<Item = stack::Result<atomic::Atomic>> + '_ + std::clone::Clone,
+        impl Iterator<Item = error::Result<atomic::Atomic>> + '_,
+        impl Iterator<Item = error::Result<atomic::Atomic>> + '_ + std::clone::Clone,
     ) {
         let value_b = self.stack.pop().unwrap();
         let value_a = self.stack.pop().unwrap();
@@ -520,12 +521,12 @@ impl<'a> Interpreter<'a> {
         (atomized_a, atomized_b)
     }
 
-    fn pop_effective_boolean(&mut self) -> stack::Result<bool> {
+    fn pop_effective_boolean(&mut self) -> error::Result<bool> {
         let a = self.stack.pop().unwrap();
         a.effective_boolean_value()
     }
 
-    fn err(&self, value_error: stack::Error) -> Error {
+    fn err(&self, value_error: error::Error) -> Error {
         value_error.with_span(self.program, self.current_span())
     }
 
@@ -578,7 +579,7 @@ mod tests {
     use crate::interpreter::instruction::{decode_instructions, Instruction};
 
     #[test]
-    fn test_interpreter() -> stack::Result<()> {
+    fn test_interpreter() -> error::Result<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -632,7 +633,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_true() -> stack::Result<()> {
+    fn test_condition_true() -> error::Result<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);
@@ -667,7 +668,7 @@ mod tests {
     }
 
     #[test]
-    fn test_condition_false() -> stack::Result<()> {
+    fn test_condition_false() -> error::Result<()> {
         let mut program = Program::new("".to_string());
 
         let mut builder = FunctionBuilder::new(&mut program);

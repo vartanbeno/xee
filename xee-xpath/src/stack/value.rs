@@ -1,5 +1,6 @@
 use xot::Xot;
 
+use crate::error;
 use crate::occurrence;
 use crate::output;
 use crate::stack;
@@ -32,7 +33,7 @@ impl Value {
         stack::AtomizedIter::new(self.clone(), xot)
     }
 
-    pub(crate) fn effective_boolean_value(&self) -> stack::Result<bool> {
+    pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Value::Empty => Ok(false),
             Value::Item(item) => item.effective_boolean_value(),
@@ -61,7 +62,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> stack::Result<String> {
+    pub(crate) fn string_value(&self, xot: &Xot) -> error::Result<String> {
         let value = match self {
             Value::Empty => "".to_string(),
             Value::Item(item) => item.string_value(xot)?,
@@ -71,7 +72,7 @@ impl Value {
                 match len {
                     0 => "".to_string(),
                     1 => Value::from(sequence.items[0].clone()).string_value(xot)?,
-                    _ => Err(stack::Error::Type)?,
+                    _ => Err(error::Error::Type)?,
                 }
             }
         };
@@ -101,34 +102,34 @@ impl From<Vec<stack::Item>> for Value {
 }
 
 impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
-    type Error = stack::Error;
+    type Error = error::Error;
 
-    fn try_from(value: &'a stack::Value) -> stack::Result<&'a stack::Closure> {
+    fn try_from(value: &'a stack::Value) -> error::Result<&'a stack::Closure> {
         match value {
             stack::Value::Item(stack::Item::Function(c)) => Ok(c),
             // TODO: not handling this correctly yet
             // stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_function()),
-            _ => Err(stack::Error::Type),
+            _ => Err(error::Error::Type),
         }
     }
 }
 
 impl TryFrom<stack::Value> for xml::Node {
-    type Error = stack::Error;
+    type Error = error::Error;
 
-    fn try_from(value: stack::Value) -> stack::Result<xml::Node> {
+    fn try_from(value: stack::Value) -> error::Result<xml::Node> {
         TryFrom::try_from(&value)
     }
 }
 
 impl TryFrom<&stack::Value> for xml::Node {
-    type Error = stack::Error;
+    type Error = error::Error;
 
-    fn try_from(value: &stack::Value) -> stack::Result<xml::Node> {
+    fn try_from(value: &stack::Value) -> error::Result<xml::Node> {
         match value {
             stack::Value::Item(stack::Item::Node(n)) => Ok(*n),
             stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
-            _ => Err(stack::Error::Type),
+            _ => Err(error::Error::Type),
         }
     }
 }
@@ -194,9 +195,9 @@ impl Iterator for ValueIter {
     }
 }
 
-impl occurrence::Occurrence<stack::Item, stack::Error> for ValueIter {
-    fn error(&self) -> stack::Error {
-        stack::Error::Type
+impl occurrence::Occurrence<stack::Item, error::Error> for ValueIter {
+    fn error(&self) -> error::Error {
+        error::Error::Type
     }
 }
 

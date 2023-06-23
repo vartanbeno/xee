@@ -1,11 +1,9 @@
 mod atomized;
-mod error;
 mod function;
 mod item;
 mod sequence;
 mod value;
 
-pub(crate) use error::{Error, Result};
 // XXX should not have any public things in here
 pub(crate) use atomized::AtomizedIter;
 pub use function::Closure;

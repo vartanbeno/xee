@@ -2,18 +2,18 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
 use crate::atomic;
-use crate::stack;
+use crate::error;
 
 pub(crate) fn numeric_add(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     arithmetic_op(
         atomic_a,
         atomic_b,
         ArithmeticOps {
-            integer_op: |a, b| a.checked_add(b).ok_or(stack::Error::Overflow),
-            decimal_op: |a, b| a.checked_add(b).ok_or(stack::Error::Overflow),
+            integer_op: |a, b| a.checked_add(b).ok_or(error::Error::Overflow),
+            decimal_op: |a, b| a.checked_add(b).ok_or(error::Error::Overflow),
             float_op: |a, b| a + b,
             double_op: |a, b| a + b,
         },
@@ -23,13 +23,13 @@ pub(crate) fn numeric_add(
 pub(crate) fn numeric_substract(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     arithmetic_op(
         atomic_a,
         atomic_b,
         ArithmeticOps {
-            integer_op: |a, b| a.checked_sub(b).ok_or(stack::Error::Overflow),
-            decimal_op: |a, b| a.checked_sub(b).ok_or(stack::Error::Overflow),
+            integer_op: |a, b| a.checked_sub(b).ok_or(error::Error::Overflow),
+            decimal_op: |a, b| a.checked_sub(b).ok_or(error::Error::Overflow),
             float_op: |a, b| a - b,
             double_op: |a, b| a - b,
         },
@@ -39,13 +39,13 @@ pub(crate) fn numeric_substract(
 pub(crate) fn numeric_multiply(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     arithmetic_op(
         atomic_a,
         atomic_b,
         ArithmeticOps {
-            integer_op: |a, b| a.checked_mul(b).ok_or(stack::Error::Overflow),
-            decimal_op: |a, b| a.checked_mul(b).ok_or(stack::Error::Overflow),
+            integer_op: |a, b| a.checked_mul(b).ok_or(error::Error::Overflow),
+            decimal_op: |a, b| a.checked_mul(b).ok_or(error::Error::Overflow),
             float_op: |a, b| a * b,
             double_op: |a, b| a * b,
         },
@@ -55,7 +55,7 @@ pub(crate) fn numeric_multiply(
 pub(crate) fn numeric_divide(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     match (atomic_a, atomic_b) {
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
@@ -70,14 +70,14 @@ pub(crate) fn numeric_divide(
                 ArithmeticOps {
                     integer_op: |a, b| {
                         if b == 0 {
-                            Err(stack::Error::DivisionByZero)
+                            Err(error::Error::DivisionByZero)
                         } else {
                             Ok(a / b)
                         }
                     },
                     decimal_op: |a, b| {
                         if b.is_zero() {
-                            Err(stack::Error::DivisionByZero)
+                            Err(error::Error::DivisionByZero)
                         } else {
                             Ok(a / b)
                         }
@@ -96,14 +96,14 @@ pub(crate) fn numeric_divide(
 pub(crate) fn numeric_integer_divide(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     // A dynamic error is raised [err:FOAR0001] if the divisor is (positive or negative) zero.
     if atomic_b.is_zero() {
-        return Err(stack::Error::DivisionByZero);
+        return Err(error::Error::DivisionByZero);
     }
     // A dynamic error is raised [err:FOAR0002] if either operand is NaN or if $arg1 is INF or -INF.
     if atomic_a.is_nan() || atomic_b.is_nan() || atomic_a.is_infinite() {
-        return Err(stack::Error::Overflow);
+        return Err(error::Error::Overflow);
     }
     match numeric_divide(atomic_a, atomic_b)? {
         atomic::Atomic::Integer(i) => Ok(atomic::Atomic::Integer(i)),
@@ -117,21 +117,21 @@ pub(crate) fn numeric_integer_divide(
 pub(crate) fn numeric_mod(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<atomic::Atomic> {
+) -> error::Result<atomic::Atomic> {
     arithmetic_op(
         atomic_a,
         atomic_b,
         ArithmeticOps {
             integer_op: |a, b| {
                 if b == 0 {
-                    Err(stack::Error::DivisionByZero)
+                    Err(error::Error::DivisionByZero)
                 } else {
                     Ok(a % b)
                 }
             },
             decimal_op: |a, b| {
                 if b.is_zero() {
-                    Err(stack::Error::DivisionByZero)
+                    Err(error::Error::DivisionByZero)
                 } else {
                     Ok(a % b)
                 }
@@ -142,32 +142,32 @@ pub(crate) fn numeric_mod(
     )
 }
 
-pub(crate) fn numeric_unary_plus(atomic: &atomic::Atomic) -> stack::Result<atomic::Atomic> {
+pub(crate) fn numeric_unary_plus(atomic: &atomic::Atomic) -> error::Result<atomic::Atomic> {
     match atomic {
         atomic::Atomic::Integer(_) => Ok(atomic.clone()),
         atomic::Atomic::Decimal(_) => Ok(atomic.clone()),
         atomic::Atomic::Float(_) => Ok(atomic.clone()),
         atomic::Atomic::Double(_) => Ok(atomic.clone()),
         // XXX function conversion rules?
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
-pub(crate) fn numeric_unary_minus(atomic: &atomic::Atomic) -> stack::Result<atomic::Atomic> {
+pub(crate) fn numeric_unary_minus(atomic: &atomic::Atomic) -> error::Result<atomic::Atomic> {
     match atomic {
         atomic::Atomic::Integer(i) => Ok(atomic::Atomic::Integer(-i)),
         atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(-d)),
         atomic::Atomic::Float(f) => Ok(atomic::Atomic::Float(-f)),
         atomic::Atomic::Double(d) => Ok(atomic::Atomic::Double(-d)),
         // XXX function conversion rules?
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn numeric_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -182,7 +182,7 @@ pub(crate) fn numeric_equal(
 pub(crate) fn numeric_not_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -198,7 +198,7 @@ pub(crate) fn numeric_not_equal(
 pub(crate) fn numeric_less_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -214,7 +214,7 @@ pub(crate) fn numeric_less_than(
 pub(crate) fn numeric_less_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -230,7 +230,7 @@ pub(crate) fn numeric_less_than_or_equal(
 pub(crate) fn numeric_greater_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -246,7 +246,7 @@ pub(crate) fn numeric_greater_than(
 pub(crate) fn numeric_greater_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     numeric_comparison_op(
         atomic_a,
         atomic_b,
@@ -262,127 +262,127 @@ pub(crate) fn numeric_greater_than_or_equal(
 pub(crate) fn string_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a == b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn string_not_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a != b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn string_less_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a < b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn string_less_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a <= b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn string_greater_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a > b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn string_greater_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => Ok(a >= b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a == b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_not_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a != b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_less_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a < b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_less_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a <= b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_greater_than(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a > b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn boolean_greater_than_or_equal(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
-) -> stack::Result<bool> {
+) -> error::Result<bool> {
     match (atomic_a, atomic_b) {
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => Ok(a >= b),
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
 struct ArithmeticOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>
 where
-    IntegerOp: FnOnce(i64, i64) -> stack::Result<i64>,
-    DecimalOp: FnOnce(Decimal, Decimal) -> stack::Result<Decimal>,
+    IntegerOp: FnOnce(i64, i64) -> error::Result<i64>,
+    DecimalOp: FnOnce(Decimal, Decimal) -> error::Result<Decimal>,
     FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
     DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
 {
@@ -396,10 +396,10 @@ fn arithmetic_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
     ops: ArithmeticOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>,
-) -> stack::Result<atomic::Atomic>
+) -> error::Result<atomic::Atomic>
 where
-    IntegerOp: FnOnce(i64, i64) -> stack::Result<i64>,
-    DecimalOp: FnOnce(Decimal, Decimal) -> stack::Result<Decimal>,
+    IntegerOp: FnOnce(i64, i64) -> error::Result<i64>,
+    DecimalOp: FnOnce(Decimal, Decimal) -> error::Result<Decimal>,
     FloatOp: FnOnce(OrderedFloat<f32>, OrderedFloat<f32>) -> OrderedFloat<f32>,
     DoubleOp: FnOnce(OrderedFloat<f64>, OrderedFloat<f64>) -> OrderedFloat<f64>,
 {
@@ -439,7 +439,7 @@ fn numeric_comparison_op<IntegerOp, DecimalOp, FloatOp, DoubleOp>(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
     ops: ComparisonOps<IntegerOp, DecimalOp, FloatOp, DoubleOp>,
-) -> stack::Result<bool>
+) -> error::Result<bool>
 where
     IntegerOp: FnOnce(i64, i64) -> bool,
     DecimalOp: FnOnce(Decimal, Decimal) -> bool,
@@ -465,9 +465,9 @@ fn numeric_general_op<F, V>(
     atomic_a: &atomic::Atomic,
     atomic_b: &atomic::Atomic,
     op: F,
-) -> stack::Result<V>
+) -> error::Result<V>
 where
-    F: FnOnce(&atomic::Atomic, &atomic::Atomic) -> stack::Result<V>,
+    F: FnOnce(&atomic::Atomic, &atomic::Atomic) -> error::Result<V>,
 {
     // S - type substition due to type hierarchy
     //     https://www.w3.org/TR/xpath-datamodel-31/#types-hierarchy
@@ -568,7 +568,7 @@ where
                 &atomic::Atomic::Double(atomic_b.convert_to_double()?),
             )
         }
-        _ => Err(stack::Error::Type),
+        _ => Err(error::Error::Type),
     }
 }
 
@@ -592,7 +592,7 @@ mod tests {
                 &atomic::Atomic::Integer(i64::MAX),
                 &atomic::Atomic::Integer(2)
             ),
-            Err(stack::Error::Overflow)
+            Err(error::Error::Overflow)
         );
     }
 
@@ -615,7 +615,7 @@ mod tests {
                 &atomic::Atomic::Decimal(Decimal::MAX),
                 &atomic::Atomic::Decimal(dec!(2.7))
             ),
-            Err(stack::Error::Overflow)
+            Err(error::Error::Overflow)
         );
     }
 
@@ -739,7 +739,7 @@ mod tests {
     fn test_numeric_integer_divide_3_by_0() {
         assert_eq!(
             numeric_integer_divide(&atomic::Atomic::Integer(3), &atomic::Atomic::Integer(0)),
-            Err(stack::Error::DivisionByZero)
+            Err(error::Error::DivisionByZero)
         );
     }
 
@@ -750,7 +750,7 @@ mod tests {
                 &atomic::Atomic::Double(OrderedFloat(3.0)),
                 &atomic::Atomic::Integer(0)
             ),
-            Err(stack::Error::DivisionByZero)
+            Err(error::Error::DivisionByZero)
         );
     }
 

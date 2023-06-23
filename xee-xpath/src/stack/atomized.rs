@@ -1,6 +1,7 @@
 use xot::Xot;
 
 use crate::atomic;
+use crate::error;
 use crate::stack;
 use crate::xml;
 
@@ -33,7 +34,7 @@ impl<'a> AtomizedIter<'a> {
 }
 
 impl Iterator for AtomizedIter<'_> {
-    type Item = stack::Result<atomic::Atomic>;
+    type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -129,7 +130,7 @@ impl<'a> AtomizedSequenceIter<'a> {
 }
 
 impl<'a> Iterator for AtomizedSequenceIter<'a> {
-    type Item = stack::Result<atomic::Atomic>;
+    type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.index < self.sequence.len() {
@@ -155,7 +156,7 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
                     continue;
                 }
                 // TODO: needs to handle the array case
-                stack::Item::Function(..) => return Some(Err(stack::Error::Type)),
+                stack::Item::Function(..) => return Some(Err(error::Error::Type)),
             }
         }
         None
@@ -166,10 +167,10 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
 pub(crate) struct ErroringAtomizedIter;
 
 impl Iterator for ErroringAtomizedIter {
-    type Item = stack::Result<atomic::Atomic>;
+    type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(Err(stack::Error::Type))
+        Some(Err(error::Error::Type))
     }
 }
 

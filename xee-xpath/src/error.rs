@@ -1,6 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
+use crate::error;
 use crate::interpreter::Program;
 use crate::stack;
 
@@ -653,13 +654,13 @@ impl From<xee_xpath_ast::Error> for Error {
 impl Error {
     pub(crate) fn with_span(self, program: &Program, span: SourceSpan) -> Self {
         match self {
-            stack::Error::Type => Error::XPTY0004 {
+            Error::Type => Error::XPTY0004 {
                 src: program.src.to_string(),
                 span,
             },
-            stack::Error::Overflow => Error::FOAR0002,
-            stack::Error::StackOverflow => Error::XPDY0130,
-            stack::Error::Absent => Error::XPDY0002 {
+            Error::Overflow => Error::FOAR0002,
+            Error::StackOverflow => Error::XPDY0130,
+            Error::Absent => Error::XPDY0002 {
                 src: program.src.to_string(),
                 span,
             },
@@ -669,16 +670,16 @@ impl Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-// impl From<stack::Error> for Error {
-//     fn from(e: stack::Error) -> Self {
+// impl From<error::Error> for Error {
+//     fn from(e: error::Error) -> Self {
 //         match e {
-//             stack::Error::XPTY0004 => Error::XPTY0004A,
-//             stack::Error::Type => Error::XPTY0004A,
-//             stack::Error::Overflow => Error::FOAR0002,
-//             stack::Error::StackOverflow => Error::XPDY0130,
-//             stack::Error::DivisionByZero => Error::FOAR0001,
-//             stack::Error::Absent => Error::XPDY0002A,
-//             stack::Error::Error(e) => e,
+//             error::Error::XPTY0004 => Error::XPTY0004A,
+//             error::Error::Type => Error::XPTY0004A,
+//             error::Error::Overflow => Error::FOAR0002,
+//             error::Error::StackOverflow => Error::XPDY0130,
+//             error::Error::DivisionByZero => Error::FOAR0001,
+//             error::Error::Absent => Error::XPDY0002A,
+//             error::Error::Error(e) => e,
 //         }
 //     }
 // }
@@ -687,25 +688,25 @@ pub type Result<T> = std::result::Result<T, Error>;
 //     pub(crate) fn from_value_error(
 //         program: &Program,
 //         span: SourceSpan,
-//         value_error: stack::Error,
+//         value_error: error::Error,
 //     ) -> Self {
 //         match value_error {
-//             stack::Error::XPTY0004 => Error::XPTY0004 {
+//             error::Error::XPTY0004 => Error::XPTY0004 {
 //                 src: program.src.to_string(),
 //                 span,
 //             },
-//             stack::Error::Type => Error::XPTY0004 {
+//             error::Error::Type => Error::XPTY0004 {
 //                 src: program.src.to_string(),
 //                 span,
 //             },
-//             stack::Error::Overflow => Error::FOAR0002,
-//             stack::Error::StackOverflow => Error::XPDY0130,
-//             stack::Error::DivisionByZero => Error::FOAR0001,
-//             stack::Error::Absent => Error::XPDY0002 {
+//             error::Error::Overflow => Error::FOAR0002,
+//             error::Error::StackOverflow => Error::XPDY0130,
+//             error::Error::DivisionByZero => Error::FOAR0001,
+//             error::Error::Absent => Error::XPDY0002 {
 //                 src: program.src.to_string(),
 //                 span,
 //             },
-//             stack::Error::Error(e) => e,
+//             error::Error::Error(e) => e,
 //         }
 //     }
 // }

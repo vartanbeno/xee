@@ -22,7 +22,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
 use crate::atomic;
-use crate::stack;
+use crate::error;
 
 // type check to see whether it conforms to signature, get out atomized,
 // like in the function signature. This takes care of subtype
@@ -31,7 +31,7 @@ use crate::stack;
 // if untypedAtomic, passed through typecheck and cast to double happens
 // now do type promotion, conforming the arguments to each other
 
-fn numeric_arithmetic_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> stack::Result<atomic::Atomic>
+fn numeric_arithmetic_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic>
 where
     O: ArithmeticOp,
 {
@@ -75,15 +75,15 @@ where
 }
 
 trait ArithmeticOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt;
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal>;
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal>;
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float;
 
-    fn integer_atomic<I>(a: I, b: I) -> stack::Result<atomic::Atomic>
+    fn integer_atomic<I>(a: I, b: I) -> error::Result<atomic::Atomic>
     where
         I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
     {
@@ -91,12 +91,12 @@ trait ArithmeticOp {
         Ok(v.into())
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<atomic::Atomic> {
+    fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
         let v = <Self as ArithmeticOp>::decimal(a, b)?;
         Ok(v.into())
     }
 
-    fn float_atomic<F>(a: F, b: F) -> stack::Result<atomic::Atomic>
+    fn float_atomic<F>(a: F, b: F) -> error::Result<atomic::Atomic>
     where
         F: Float + Into<atomic::Atomic>,
     {
@@ -108,18 +108,18 @@ trait ArithmeticOp {
 struct AddOp;
 
 impl ArithmeticOp for AddOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
-        a.checked_add(&b).ok_or(stack::Error::Overflow)
+        a.checked_add(&b).ok_or(error::Error::Overflow)
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
-        a.checked_add(b).ok_or(stack::Error::Overflow)
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
+        a.checked_add(b).ok_or(error::Error::Overflow)
     }
 
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -130,18 +130,18 @@ impl ArithmeticOp for AddOp {
 struct SubtractOp;
 
 impl ArithmeticOp for SubtractOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
-        a.checked_sub(&b).ok_or(stack::Error::Overflow)
+        a.checked_sub(&b).ok_or(error::Error::Overflow)
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
-        a.checked_sub(b).ok_or(stack::Error::Overflow)
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
+        a.checked_sub(b).ok_or(error::Error::Overflow)
     }
 
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -152,18 +152,18 @@ impl ArithmeticOp for SubtractOp {
 struct MultiplyOp;
 
 impl ArithmeticOp for MultiplyOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
-        a.checked_mul(&b).ok_or(stack::Error::Overflow)
+        a.checked_mul(&b).ok_or(error::Error::Overflow)
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
-        a.checked_mul(b).ok_or(stack::Error::Overflow)
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
+        a.checked_mul(b).ok_or(error::Error::Overflow)
     }
 
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -174,7 +174,7 @@ impl ArithmeticOp for MultiplyOp {
 struct DivideOp;
 
 impl ArithmeticOp for DivideOp {
-    fn integer_atomic<I>(a: I, b: I) -> stack::Result<atomic::Atomic>
+    fn integer_atomic<I>(a: I, b: I) -> error::Result<atomic::Atomic>
     where
         I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
     {
@@ -186,24 +186,24 @@ impl ArithmeticOp for DivideOp {
         Ok(v.into())
     }
 
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
         if b.is_zero() {
-            return Err(stack::Error::DivisionByZero);
+            return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(&b).ok_or(stack::Error::Overflow)
+        a.checked_div(&b).ok_or(error::Error::Overflow)
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
         if b.is_zero() {
-            return Err(stack::Error::DivisionByZero);
+            return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(b).ok_or(stack::Error::Overflow)
+        a.checked_div(b).ok_or(error::Error::Overflow)
     }
 
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -214,35 +214,35 @@ impl ArithmeticOp for DivideOp {
 struct NumericIntegerDivideOp;
 
 impl ArithmeticOp for NumericIntegerDivideOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
         if b.is_zero() {
-            return Err(stack::Error::DivisionByZero);
+            return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(&b).ok_or(stack::Error::Overflow)
+        a.checked_div(&b).ok_or(error::Error::Overflow)
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> stack::Result<atomic::Atomic> {
+    fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
         let v = <DivideOp as ArithmeticOp>::decimal(a, b)?;
 
-        Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
+        Ok(v.trunc().to_i64().ok_or(error::Error::Overflow)?.into())
     }
 
-    fn decimal(_a: Decimal, _b: Decimal) -> stack::Result<Decimal> {
+    fn decimal(_a: Decimal, _b: Decimal) -> error::Result<Decimal> {
         unreachable!();
     }
 
-    fn float_atomic<F>(a: F, b: F) -> stack::Result<atomic::Atomic>
+    fn float_atomic<F>(a: F, b: F) -> error::Result<atomic::Atomic>
     where
         F: Float + Into<atomic::Atomic>,
     {
         let v = <DivideOp as ArithmeticOp>::float(a, b)?;
-        Ok(v.trunc().to_i64().ok_or(stack::Error::Overflow)?.into())
+        Ok(v.trunc().to_i64().ok_or(error::Error::Overflow)?.into())
     }
 
-    fn float<F>(_a: F, _b: F) -> stack::Result<F>
+    fn float<F>(_a: F, _b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -253,24 +253,24 @@ impl ArithmeticOp for NumericIntegerDivideOp {
 struct ModOp;
 
 impl ArithmeticOp for ModOp {
-    fn integer<I>(a: I, b: I) -> stack::Result<I>
+    fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
     {
         if b.is_zero() {
-            return Err(stack::Error::DivisionByZero);
+            return Err(error::Error::DivisionByZero);
         }
         Ok(a % b)
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> stack::Result<Decimal> {
+    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
         if b.is_zero() {
-            return Err(stack::Error::DivisionByZero);
+            return Err(error::Error::DivisionByZero);
         }
         Ok(a % b)
     }
 
-    fn float<F>(a: F, b: F) -> stack::Result<F>
+    fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float,
     {
@@ -278,15 +278,15 @@ impl ArithmeticOp for ModOp {
     }
 }
 
-fn numeric_unary_plus(atomic: atomic::Atomic) -> stack::Result<atomic::Atomic> {
+fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         Ok(atomic)
     } else {
-        Err(stack::Error::Type)
+        Err(error::Error::Type)
     }
 }
 
-fn numeric_unary_minus(atomic: atomic::Atomic) -> stack::Result<atomic::Atomic> {
+fn numeric_unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         match atomic {
             atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),
@@ -299,14 +299,14 @@ fn numeric_unary_minus(atomic: atomic::Atomic) -> stack::Result<atomic::Atomic> 
             // what is the correct behavior for unsigned types? We could return
             // a signed integer of the same type with overflow behavior if
             // that's not possible, but for now we just refuse to do it.
-            atomic::Atomic::UnsignedLong(_) => Err(stack::Error::Type),
-            atomic::Atomic::UnsignedInt(_) => Err(stack::Error::Type),
-            atomic::Atomic::UnsignedShort(_) => Err(stack::Error::Type),
-            atomic::Atomic::UnsignedByte(_) => Err(stack::Error::Type),
+            atomic::Atomic::UnsignedLong(_) => Err(error::Error::Type),
+            atomic::Atomic::UnsignedInt(_) => Err(error::Error::Type),
+            atomic::Atomic::UnsignedShort(_) => Err(error::Error::Type),
+            atomic::Atomic::UnsignedByte(_) => Err(error::Error::Type),
             _ => unreachable!(),
         }
     } else {
-        Err(stack::Error::Type)
+        Err(error::Error::Type)
     }
 }
 

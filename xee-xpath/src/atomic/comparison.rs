@@ -3,9 +3,9 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
 use crate::atomic;
-use crate::stack;
+use crate::error;
 
-fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> stack::Result<atomic::Atomic>
+fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic>
 where
     O: ComparisonOp,
 {
