@@ -7,8 +7,6 @@ use crate::interpreter::Program;
 pub enum Error {
     #[error("Stack overflow")]
     StackOverflow,
-    #[error("Absent")]
-    Absent,
 
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.
@@ -655,10 +653,12 @@ impl Error {
                 src: program.src.to_string(),
                 span,
             },
-            Error::Absent => Error::SpannedComponentAbsentInDynamicContext {
-                src: program.src.to_string(),
-                span,
-            },
+            Error::ComponentAbsentInDynamicContext => {
+                Error::SpannedComponentAbsentInDynamicContext {
+                    src: program.src.to_string(),
+                    span,
+                }
+            }
             _ => self,
         }
     }
