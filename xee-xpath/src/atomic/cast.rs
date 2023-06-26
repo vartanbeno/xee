@@ -6,6 +6,16 @@ use crate::atomic;
 use crate::error;
 
 impl atomic::Atomic {
+    pub(crate) fn parse_decimal(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: parse decimal, but reject any string with _ in it as invalid
+        todo!();
+    }
+
+    // from an atomic type to a canonical representation as a string
+    pub(crate) fn canonical_representation(&self) -> error::Result<String> {
+        todo!();
+    }
+
     pub(crate) fn cast_to_xs_string(&self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::String(_) => Ok(self.clone()),
@@ -78,5 +88,23 @@ impl atomic::Atomic {
                 todo!();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use rust_decimal::prelude::*;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn test_decimal_string_parse() {
+        let d: Decimal = "1.0".parse().unwrap();
+        assert_eq!(d, dec!(1.0));
+
+        let d2: Decimal = "100_000".parse().unwrap();
+        assert_eq!(d2, dec!(100_000));
+        assert_eq!(d2.to_string(), "100000");
     }
 }
