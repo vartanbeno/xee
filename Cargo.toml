@@ -4,7 +4,8 @@ members = [
   "xee-xpath",
   "xee-qt",
   "xee-xpath-ast",
-  "xee-xpath-macros"
+  "xee-xpath-macros",
+  "xee-schematype",
 ]
 # even if all crates are set to edition 2021, we still need to force the
 # resolver to 2

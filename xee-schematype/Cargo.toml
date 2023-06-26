@@ -1,0 +1,18 @@
+[package]
+name = "xee-schematype"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XML Schema type information"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath-types"
+homepage = "https://github.com/Paligo/xee-xpath"
+
+[dependencies]
+ahash = "0.8.3"
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }

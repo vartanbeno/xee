@@ -2031,6 +2031,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-schematype"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.3",
+ "insta",
+]
+
+[[package]]
 name = "xee-xpath"
 version = "0.1.0"
 dependencies = [
