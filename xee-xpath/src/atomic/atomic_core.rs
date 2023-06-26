@@ -22,6 +22,7 @@ pub enum Atomic {
     // use it and still be conforming. xs:long is aliased to this.
     // The XML Schema 1.1 approaches this differently, but are still within
     // bounds of these restrictions.
+    // That said, not all UnsignedLong fit in a i64, so that may lead to trouble
     Integer(i64),
     // machine integers
     Int(i32),
