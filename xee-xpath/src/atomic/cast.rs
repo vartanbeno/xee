@@ -86,7 +86,7 @@ impl atomic::Atomic {
     }
 
     // from an atomic type to a canonical representation as a string
-    pub(crate) fn canonical_representation(&self) -> String {
+    pub(crate) fn to_canonical(&self) -> String {
         match self {
             atomic::Atomic::String(s) => s.as_ref().clone(),
             atomic::Atomic::Untyped(s) => s.as_ref().clone(),
@@ -284,41 +284,26 @@ mod tests {
 
     #[test]
     fn test_canonical_decimal_is_integer() {
-        assert_eq!(
-            atomic::Atomic::Decimal(dec!(1.0)).canonical_representation(),
-            "1"
-        );
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.0)).to_canonical(), "1");
     }
 
     #[test]
     fn test_canonical_decimal_is_decimal() {
-        assert_eq!(
-            atomic::Atomic::Decimal(dec!(1.5)).canonical_representation(),
-            "1.5"
-        );
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.5)).to_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_no_trailing_zeroes() {
-        assert_eq!(
-            atomic::Atomic::Decimal(dec!(1.50)).canonical_representation(),
-            "1.5"
-        );
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.50)).to_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_no_leading_zeroes() {
-        assert_eq!(
-            atomic::Atomic::Decimal(dec!(01.50)).canonical_representation(),
-            "1.5"
-        );
+        assert_eq!(atomic::Atomic::Decimal(dec!(01.50)).to_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_single_leading_zero() {
-        assert_eq!(
-            atomic::Atomic::Decimal(dec!(0.50)).canonical_representation(),
-            "0.5"
-        );
+        assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).to_canonical(), "0.5");
     }
 }
