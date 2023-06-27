@@ -86,8 +86,31 @@ impl atomic::Atomic {
     }
 
     // from an atomic type to a canonical representation as a string
-    pub(crate) fn canonical_representation(&self) -> error::Result<String> {
-        todo!();
+    pub(crate) fn canonical_representation(&self) -> String {
+        match self {
+            atomic::Atomic::String(s) => s.as_ref().clone(),
+            atomic::Atomic::Untyped(s) => s.as_ref().clone(),
+            atomic::Atomic::Boolean(b) => {
+                if *b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
+            atomic::Atomic::Decimal(d) => {
+                if d.is_integer() {
+                    // TODO: this could fail if the decimal is too big. Instead
+                    // we should relent and use bigint for xs:integer
+                    let i: i64 = (*d).try_into().unwrap();
+                    i.to_string()
+                } else {
+                    d.normalize().to_string()
+                }
+            }
+            _ => {
+                todo!()
+            }
+        }
     }
 
     pub(crate) fn cast_to_xs_string(&self) -> error::Result<atomic::Atomic> {
@@ -220,6 +243,14 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_double_exponent_capital() {
+        assert_eq!(
+            atomic::Atomic::parse_double("1.0E10").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(1.0e10))
+        );
+    }
+
+    #[test]
     fn test_parse_double_inf() {
         assert_eq!(
             atomic::Atomic::parse_double("INF").unwrap(),
@@ -248,6 +279,46 @@ mod tests {
         assert_eq!(
             atomic::Atomic::parse_double("NAN"),
             Err(error::Error::FORG0001)
+        );
+    }
+
+    #[test]
+    fn test_canonical_decimal_is_integer() {
+        assert_eq!(
+            atomic::Atomic::Decimal(dec!(1.0)).canonical_representation(),
+            "1"
+        );
+    }
+
+    #[test]
+    fn test_canonical_decimal_is_decimal() {
+        assert_eq!(
+            atomic::Atomic::Decimal(dec!(1.5)).canonical_representation(),
+            "1.5"
+        );
+    }
+
+    #[test]
+    fn test_canonical_decimal_no_trailing_zeroes() {
+        assert_eq!(
+            atomic::Atomic::Decimal(dec!(1.50)).canonical_representation(),
+            "1.5"
+        );
+    }
+
+    #[test]
+    fn test_canonical_decimal_no_leading_zeroes() {
+        assert_eq!(
+            atomic::Atomic::Decimal(dec!(01.50)).canonical_representation(),
+            "1.5"
+        );
+    }
+
+    #[test]
+    fn test_canonical_decimal_single_leading_zero() {
+        assert_eq!(
+            atomic::Atomic::Decimal(dec!(0.50)).canonical_representation(),
+            "0.5"
         );
     }
 }
