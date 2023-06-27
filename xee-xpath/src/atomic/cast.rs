@@ -24,39 +24,11 @@ impl atomic::Atomic {
         s.parse::<Decimal>().map_err(|_| error::Error::FORG0001)
     }
 
-    pub(crate) fn parse_integer(s: &str) -> error::Result<i64> {
-        if s.contains('_') {
-            return Err(error::Error::FORG0001);
-        }
-        lexical::parse::<i64, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_int(s: &str) -> error::Result<i32> {
-        lexical::parse::<i32, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_short(s: &str) -> error::Result<i16> {
-        lexical::parse::<i16, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_byte(s: &str) -> error::Result<i8> {
-        lexical::parse::<i8, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_unsigned_long(s: &str) -> error::Result<u64> {
-        lexical::parse::<u64, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_unsigned_int(s: &str) -> error::Result<u32> {
-        lexical::parse::<u32, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_unsigned_short(s: &str) -> error::Result<u16> {
-        lexical::parse::<u16, _>(s).map_err(|_| error::Error::FORG0001)
-    }
-
-    pub(crate) fn parse_unsigned_byte(s: &str) -> error::Result<u8> {
-        lexical::parse::<u8, _>(s).map_err(|_| error::Error::FORG0001)
+    pub(crate) fn parse_integer_number<V>(s: &str) -> error::Result<V>
+    where
+        V: lexical::FromLexical,
+    {
+        lexical::parse::<V, _>(s).map_err(|_| error::Error::FORG0001)
     }
 
     pub(crate) fn parse_boolean(s: &str) -> error::Result<bool> {
@@ -387,7 +359,7 @@ impl FromStr for Parsed<i64> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_integer(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -395,7 +367,7 @@ impl FromStr for Parsed<i32> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_int(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -403,7 +375,7 @@ impl FromStr for Parsed<i16> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_short(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -411,7 +383,7 @@ impl FromStr for Parsed<i8> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_byte(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -419,7 +391,7 @@ impl FromStr for Parsed<u64> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_unsigned_long(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -427,7 +399,7 @@ impl FromStr for Parsed<u32> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_unsigned_int(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -435,7 +407,7 @@ impl FromStr for Parsed<u16> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_unsigned_short(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
@@ -443,7 +415,7 @@ impl FromStr for Parsed<u8> {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Parsed(atomic::Atomic::parse_unsigned_byte(s)?))
+        Ok(Parsed(atomic::Atomic::parse_integer_number(s)?))
     }
 }
 
