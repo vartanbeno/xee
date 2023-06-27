@@ -12,6 +12,9 @@ impl atomic::Atomic {
         Parsed<V>: FromStr,
         V: Into<atomic::Atomic>,
     {
+        // TODO: re-establish error. I am not sure what error is returned
+        // from the FromStr trait; it should be error::Error but evidently it's
+        // not
         s.parse::<Parsed<V>>()
             .map(|p| p.into_inner().into())
             .map_err(|_| error::Error::FORG0001)
