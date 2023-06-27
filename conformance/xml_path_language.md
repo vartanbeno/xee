@@ -502,7 +502,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 #### 3.3.2.1
 
-- [x] ``child`
+- [x] `child`
 
 - [x] `descendant`
 
