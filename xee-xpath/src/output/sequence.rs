@@ -253,6 +253,7 @@ where
 
 impl<V, U> occurrence::ResultOccurrence<V, error::Error> for U
 where
+    V: std::fmt::Debug,
     U: Iterator<Item = error::Result<V>>,
 {
     fn error(&self) -> error::Error {

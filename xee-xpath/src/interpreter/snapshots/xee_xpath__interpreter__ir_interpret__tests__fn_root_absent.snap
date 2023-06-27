@@ -1,0 +1,17 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"fn:root()\")"
+---
+Err(
+    SpannedComponentAbsentInDynamicContext {
+        src: "fn:root()",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                9,
+            ),
+        },
+    },
+)

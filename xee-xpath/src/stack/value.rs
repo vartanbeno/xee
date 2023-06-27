@@ -175,7 +175,7 @@ impl PartialEq for Value {
 
 pub(crate) enum ValueIter {
     Empty,
-    Absent,
+    AbsentIter(AbsentIter),
     ItemIter(stack::ItemIter),
     SequenceIter(stack::SequenceIter),
 }
@@ -186,7 +186,7 @@ impl ValueIter {
             Value::Empty => ValueIter::Empty,
             Value::Item(item) => ValueIter::ItemIter(item.items()),
             Value::Sequence(sequence) => ValueIter::SequenceIter(sequence.items()),
-            Value::Absent => ValueIter::Absent,
+            Value::Absent => ValueIter::AbsentIter(AbsentIter::new()),
         }
     }
 }
@@ -199,7 +199,30 @@ impl Iterator for ValueIter {
             ValueIter::Empty => None,
             ValueIter::ItemIter(iter) => iter.next().map(Ok),
             ValueIter::SequenceIter(iter) => iter.next().map(Ok),
-            ValueIter::Absent => Some(Err(error::Error::ComponentAbsentInDynamicContext)),
+            ValueIter::AbsentIter(iter) => iter.next(),
+        }
+    }
+}
+
+pub(crate) struct AbsentIter {
+    done: bool,
+}
+
+impl AbsentIter {
+    fn new() -> Self {
+        AbsentIter { done: false }
+    }
+}
+
+impl Iterator for AbsentIter {
+    type Item = error::Result<stack::Item>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            None
+        } else {
+            self.done = true;
+            Some(Err(error::Error::ComponentAbsentInDynamicContext))
         }
     }
 }

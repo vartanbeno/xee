@@ -2,8 +2,7 @@ use xee_qt::Tests;
 
 #[test]
 fn test_root() {
-    Tests::all("fn/root").tolerate_wrong_error().run()
-    // test_all("fn/root")
+    Tests::all("fn/root").run()
 }
 
 #[test]

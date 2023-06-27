@@ -1194,6 +1194,11 @@ mod tests {
     }
 
     #[test]
+    fn test_fn_root_absent() {
+        assert_debug_snapshot!(run("fn:root()"));
+    }
+
+    #[test]
     fn test_fn_root_implicit() {
         assert_debug_snapshot!(run_xml(
             r#"<doc><a/><b><c/></b></doc>"#,

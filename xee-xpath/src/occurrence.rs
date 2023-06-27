@@ -32,7 +32,11 @@ pub trait Occurrence<A, E>: Iterator<Item = A> {
 }
 
 /// An occurrence API for an iterator that returns results.
-pub trait ResultOccurrence<A, E>: Iterator<Item = Result<A, E>> {
+pub trait ResultOccurrence<A, E>: Iterator<Item = Result<A, E>>
+where
+    A: std::fmt::Debug,
+    E: std::fmt::Debug,
+{
     fn one(&mut self) -> Result<A, E> {
         if let Some(one) = self.next() {
             if self.next().is_none() {
