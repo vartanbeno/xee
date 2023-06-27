@@ -563,7 +563,7 @@ mod tests {
     use crate::xpath::XPath;
 
     fn as_sequence(value: &stack::Value) -> stack::Sequence {
-        value.into() // .unwrap()
+        value.try_into().unwrap()
     }
 
     fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {

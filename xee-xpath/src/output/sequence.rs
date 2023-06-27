@@ -36,14 +36,13 @@ impl Sequence {
             stack::Value::Empty => 0,
             stack::Value::Item(_) => 1,
             stack::Value::Sequence(sequence) => sequence.borrow().len(),
+            // TODO: how to handle absent?
+            stack::Value::Absent => panic!("Don't know how to handle absent"),
         }
     }
 
     pub fn is_absent(&self) -> bool {
-        matches!(
-            &self.stack_value,
-            stack::Value::Item(stack::Item::Atomic(atomic::Atomic::Absent))
-        )
+        matches!(&self.stack_value, stack::Value::Absent)
     }
 
     pub fn ensure_empty(&self) -> error::Result<&Self> {
@@ -197,10 +196,10 @@ pub struct ItemIter {
 }
 
 impl Iterator for ItemIter {
-    type Item = output::Item;
+    type Item = error::Result<output::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter.next().map(output::Item::from)
+        self.value_iter.next().map(|r| r.map(output::Item::from))
     }
 }
 
@@ -212,9 +211,12 @@ impl Iterator for NodeIter {
     type Item = error::Result<xml::Node>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter
-            .next()
-            .map(|v| v.to_node().map_err(error::Error::from))
+        let next = self.value_iter.next();
+        match next {
+            None => None,
+            Some(Err(e)) => Some(Err(e)),
+            Some(Ok(v)) => Some(v.to_node()),
+        }
     }
 }
 
@@ -249,12 +251,6 @@ where
     }
 }
 
-impl occurrence::Occurrence<output::Item, error::Error> for ItemIter {
-    fn error(&self) -> error::Error {
-        error::Error::Type
-    }
-}
-
 impl<V, U> occurrence::ResultOccurrence<V, error::Error> for U
 where
     U: Iterator<Item = error::Result<V>>,
@@ -267,7 +263,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::occurrence::Occurrence;
+    use crate::occurrence::ResultOccurrence;
 
     #[test]
     fn test_one() {

@@ -95,9 +95,6 @@ impl atomic::Atomic {
             atomic::Atomic::UnsignedByte(i) => i.to_string(),
             atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(*f),
             atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(*f),
-            _ => {
-                todo!()
-            }
         }
     }
 
@@ -143,9 +140,6 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(s) => Self::parse_atomic::<f32>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(s),
-            _ => {
-                panic!("absent not supported")
-            }
         }
     }
 
@@ -173,9 +167,6 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(s) => Self::parse_atomic::<f64>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(s),
-            _ => {
-                panic!("absent not supported")
-            }
         }
     }
 
@@ -217,9 +208,6 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(s) => Self::parse_atomic::<Decimal>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(s),
-            _ => {
-                panic!("absent not supported")
-            }
         }
     }
 
@@ -313,9 +301,6 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
-            atomic::Atomic::Absent => {
-                panic!("absent not supported")
-            }
         }
     }
 
@@ -335,9 +320,6 @@ impl atomic::Atomic {
             atomic::Atomic::UnsignedByte(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
-            _ => {
-                panic!("absent not supported")
-            }
         }
     }
 }

@@ -7,7 +7,7 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
-use crate::occurrence::Occurrence;
+use crate::occurrence::ResultOccurrence;
 use crate::output;
 
 impl output::Sequence {
@@ -58,7 +58,7 @@ impl output::Sequence {
             }
             ast::Occurrence::Many => {
                 for item in sequence.items() {
-                    item.item_type_matching(&occurrence_item.item_type)?;
+                    item?.item_type_matching(&occurrence_item.item_type)?;
                 }
                 Ok(sequence)
             }

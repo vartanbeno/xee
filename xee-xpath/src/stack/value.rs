@@ -1,7 +1,6 @@
 use xot::Xot;
 
 use crate::error;
-use crate::occurrence;
 use crate::output;
 use crate::stack;
 use crate::xml;
@@ -11,6 +10,7 @@ pub(crate) enum Value {
     Empty,
     Item(stack::Item),
     Sequence(stack::Sequence),
+    Absent,
 }
 
 impl Value {
@@ -18,10 +18,12 @@ impl Value {
         output::Sequence::new(self)
     }
 
-    pub(crate) fn to_sequence(&self) -> stack::Sequence {
+    pub(crate) fn to_sequence(&self) -> error::Result<stack::Sequence> {
         match self {
-            Value::Sequence(s) => s.clone(),
-            _ => stack::Sequence::from(self.items().collect::<Vec<_>>()),
+            Value::Sequence(s) => Ok(s.clone()),
+            _ => Ok(stack::Sequence::from(
+                self.items().collect::<error::Result<Vec<_>>>()?,
+            )),
         }
     }
 
@@ -51,6 +53,7 @@ impl Value {
                 let singleton = s.singleton()?;
                 singleton.effective_boolean_value()
             }
+            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
         }
     }
 
@@ -75,6 +78,7 @@ impl Value {
                     _ => Err(error::Error::Type)?,
                 }
             }
+            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext)?,
         };
         Ok(value)
     }
@@ -163,12 +167,15 @@ impl PartialEq for Value {
             }
             (Value::Empty, Value::Item(_)) => false,
             (Value::Item(_), Value::Empty) => false,
+            (Value::Absent, _) => false,
+            (_, Value::Absent) => false,
         }
     }
 }
 
 pub(crate) enum ValueIter {
     Empty,
+    Absent,
     ItemIter(stack::ItemIter),
     SequenceIter(stack::SequenceIter),
 }
@@ -179,25 +186,21 @@ impl ValueIter {
             Value::Empty => ValueIter::Empty,
             Value::Item(item) => ValueIter::ItemIter(item.items()),
             Value::Sequence(sequence) => ValueIter::SequenceIter(sequence.items()),
+            Value::Absent => ValueIter::Absent,
         }
     }
 }
 
 impl Iterator for ValueIter {
-    type Item = stack::Item;
+    type Item = error::Result<stack::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             ValueIter::Empty => None,
-            ValueIter::ItemIter(iter) => iter.next(),
-            ValueIter::SequenceIter(iter) => iter.next(),
+            ValueIter::ItemIter(iter) => iter.next().map(Ok),
+            ValueIter::SequenceIter(iter) => iter.next().map(Ok),
+            ValueIter::Absent => Some(Err(error::Error::ComponentAbsentInDynamicContext)),
         }
-    }
-}
-
-impl occurrence::Occurrence<stack::Item, error::Error> for ValueIter {
-    fn error(&self) -> error::Error {
-        error::Error::Type
     }
 }
 

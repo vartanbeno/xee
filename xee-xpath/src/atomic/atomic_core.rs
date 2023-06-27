@@ -35,8 +35,6 @@ pub enum Atomic {
     // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
-    // a special marker to indicate an absent context item
-    Absent,
 }
 
 impl Atomic {
@@ -114,7 +112,6 @@ impl Atomic {
             Atomic::UnsignedByte(i) => Ok(*i != 0),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
-            Atomic::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
         }
     }
 
@@ -147,7 +144,6 @@ impl Atomic {
             Atomic::UnsignedInt(i) => i.to_string(),
             Atomic::UnsignedShort(i) => i.to_string(),
             Atomic::UnsignedByte(i) => i.to_string(),
-            Atomic::Absent => Err(error::Error::ComponentAbsentInDynamicContext)?,
         })
     }
 
@@ -241,7 +237,6 @@ impl Atomic {
                 ))
             }
             Atomic::Untyped(_) => unreachable!(),
-            Atomic::Absent => Err(error::Error::Type),
         }
     }
 }

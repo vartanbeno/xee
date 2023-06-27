@@ -65,9 +65,9 @@ impl<'a> Interpreter<'a> {
             self.stack.push(1i64.into());
         } else {
             // absent context, position and size
-            self.stack.push(atomic::Atomic::Absent.into());
-            self.stack.push(atomic::Atomic::Absent.into());
-            self.stack.push(atomic::Atomic::Absent.into());
+            self.stack.push(stack::Value::Absent);
+            self.stack.push(stack::Value::Absent);
+            self.stack.push(stack::Value::Absent);
         }
         // and any arguments
         for arg in arguments {
@@ -204,7 +204,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 EncodedInstruction::Comma => {
-                    let (a, b) = self.pop_seq2();
+                    let (a, b) = self.pop_seq2()?;
                     self.stack.push(stack::Value::Sequence(stack::Sequence::new(
                         a.borrow().concat(&b.borrow()),
                     )));
@@ -278,7 +278,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(r);
                 }
                 EncodedInstruction::Union => {
-                    let (a, b) = self.pop_seq2();
+                    let (a, b) = self.pop_seq2()?;
                     let combined = a
                         .borrow()
                         .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
@@ -373,19 +373,19 @@ impl<'a> Interpreter<'a> {
                         .push(stack::Value::Sequence(stack::Sequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
-                    let sequence = self.pop_seq();
+                    let sequence = self.pop_seq()?;
                     let len = sequence.borrow().items.len();
                     self.stack.push((len as i64).into());
                 }
                 EncodedInstruction::SequenceGet => {
-                    let sequence = self.pop_seq();
+                    let sequence = self.pop_seq()?;
                     let index = self.pop_index();
                     // substract 1 as Xpath is 1-indexed
                     let item = sequence.borrow().items[index - 1].clone();
                     self.stack.push(item.into())
                 }
                 EncodedInstruction::SequencePush => {
-                    let sequence = self.pop_seq();
+                    let sequence = self.pop_seq()?;
                     let stack_value = self.stack.pop().unwrap();
                     sequence.borrow_mut().push_value(stack_value);
                 }
@@ -497,15 +497,15 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> stack::Sequence {
+    fn pop_seq(&mut self) -> error::Result<stack::Sequence> {
         let value = self.stack.pop().unwrap();
         value.to_sequence()
     }
 
-    fn pop_seq2(&mut self) -> (stack::Sequence, stack::Sequence) {
-        let b = self.pop_seq();
-        let a = self.pop_seq();
-        (a, b)
+    fn pop_seq2(&mut self) -> error::Result<(stack::Sequence, stack::Sequence)> {
+        let b = self.pop_seq()?;
+        let a = self.pop_seq()?;
+        Ok((a, b))
     }
 
     fn pop_atomized2(

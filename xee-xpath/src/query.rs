@@ -256,7 +256,7 @@ where
         let sequence = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
-            match (self.convert)(session, &item) {
+            match (self.convert)(session, &item?) {
                 Ok(value) => values.push(value),
                 Err(query_error) => return Err(query_error),
             }
@@ -290,7 +290,7 @@ impl ManyRecurseQuery {
         let sequence = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
-            values.push(recurse.execute(session, &item)?);
+            values.push(recurse.execute(session, &item?)?);
         }
         Ok(values)
     }

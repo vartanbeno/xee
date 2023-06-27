@@ -2,7 +2,8 @@ use crossterm::style::Stylize;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    DynamicContext, Error, Name, Namespaces, Occurrence, Result, Sequence, StaticContext, XPath,
+    DynamicContext, Error, Name, Namespaces, Result, ResultOccurrence, Sequence, StaticContext,
+    XPath,
 };
 use xot::Xot;
 
@@ -389,7 +390,7 @@ impl Assertable for AssertStringValue {
     fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
         let strings = sequence
             .items()
-            .map(|item| item.string_value(xot))
+            .map(|item| item?.string_value(xot))
             .collect::<Result<Vec<_>>>();
         match strings {
             Ok(strings) => {
@@ -671,7 +672,7 @@ fn run_xpath_with_result(expr: &qt::XPathExpr, sequence: &Sequence, xot: &Xot) -
     let names = vec![name.clone()];
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let variables = vec![(name, sequence.items().collect())];
+    let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_variables(xot, &static_context, &variables);
     xpath.many(&dynamic_context, None)
 }

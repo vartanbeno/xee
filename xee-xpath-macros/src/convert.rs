@@ -30,13 +30,9 @@ fn convert_item(
     name: TokenStream,
     arg: TokenStream,
 ) -> syn::Result<TokenStream> {
-    let (iterator, want_result_occurrence, borrow) =
-        convert_item_type(&item.item_type, arg.clone())?;
-    let occurrence = if want_result_occurrence {
-        quote!(crate::ResultOccurrence)
-    } else {
-        quote!(crate::Occurrence)
-    };
+    let (iterator, borrow) = convert_item_type(&item.item_type, arg.clone())?;
+    let occurrence = quote!(crate::ResultOccurrence);
+
     Ok(match &item.occurrence {
         ast::Occurrence::One => {
             let as_ref = if borrow {
@@ -73,11 +69,7 @@ fn convert_item(
             } else {
                 quote!()
             };
-            let many = if want_result_occurrence {
-                quote!(#occurrence::many(&mut #iterator)?)
-            } else {
-                quote!(#occurrence::many(&mut #iterator))
-            };
+            let many = quote!(#occurrence::many(&mut #iterator)?);
             quote!(
                 let #name_temp = #many;
                 #as_ref
@@ -88,17 +80,14 @@ fn convert_item(
     })
 }
 
-fn convert_item_type(
-    item: &ast::ItemType,
-    arg: TokenStream,
-) -> syn::Result<(TokenStream, bool, bool)> {
+fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(TokenStream, bool)> {
     match item {
-        ast::ItemType::Item => Ok((quote!(#arg.items()), false, false)),
+        ast::ItemType::Item => Ok((quote!(#arg.items()), false)),
         ast::ItemType::AtomicOrUnionType(name) => {
             let (token_stream, borrow) = convert_atomic_or_union_type(name, arg)?;
-            Ok((token_stream, true, borrow))
+            Ok((token_stream, borrow))
         }
-        ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, true, false)),
+        ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),
         _ => {
             todo!("Not yet")
         }

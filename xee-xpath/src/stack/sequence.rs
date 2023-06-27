@@ -38,14 +38,18 @@ impl Sequence {
     }
 }
 
-impl From<stack::Value> for stack::Sequence {
-    fn from(value: stack::Value) -> Self {
+impl TryFrom<stack::Value> for stack::Sequence {
+    type Error = error::Error;
+
+    fn try_from(value: stack::Value) -> error::Result<Self> {
         value.to_sequence()
     }
 }
 
-impl From<&stack::Value> for stack::Sequence {
-    fn from(value: &stack::Value) -> Self {
+impl TryFrom<&stack::Value> for stack::Sequence {
+    type Error = error::Error;
+
+    fn try_from(value: &stack::Value) -> error::Result<Self> {
         value.to_sequence()
     }
 }
@@ -97,6 +101,7 @@ impl InnerSequence {
             stack::Value::Empty => {}
             stack::Value::Item(item) => self.items.push(item),
             stack::Value::Sequence(s) => self.extend(s),
+            stack::Value::Absent => panic!("Don't know how to handle absent"),
         }
     }
 

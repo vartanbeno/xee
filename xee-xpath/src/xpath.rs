@@ -1,12 +1,11 @@
 use xee_xpath_ast::ast::parse_xpath;
 
-use crate::atomic;
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
-use crate::occurrence::Occurrence;
+use crate::occurrence::ResultOccurrence;
 use crate::output;
 use crate::stack;
 use crate::xml;
@@ -63,12 +62,10 @@ impl XPath {
         );
         let value = interpreter.stack().last().unwrap().clone();
         match value {
-            stack::Value::Item(stack::Item::Atomic(atomic::Atomic::Absent)) => {
-                Err(Error::SpannedComponentAbsentInDynamicContext {
-                    src: self.program.src.clone(),
-                    span: (0, self.program.src.len()).into(),
-                })
-            }
+            stack::Value::Absent => Err(Error::SpannedComponentAbsentInDynamicContext {
+                src: self.program.src.clone(),
+                span: (0, self.program.src.len()).into(),
+            }),
             _ => Ok(value),
         }
     }

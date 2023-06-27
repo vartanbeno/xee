@@ -13,6 +13,7 @@ pub(crate) enum AtomizedIter<'a> {
     Node(AtomizedNodeIter),
     Sequence(AtomizedSequenceIter<'a>),
     Erroring(ErroringAtomizedIter),
+    Absent,
 }
 
 impl<'a> AtomizedIter<'a> {
@@ -29,6 +30,7 @@ impl<'a> AtomizedIter<'a> {
             stack::Value::Sequence(sequence) => {
                 AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
+            stack::Value::Absent => AtomizedIter::Absent,
         }
     }
 }
@@ -43,15 +45,10 @@ impl Iterator for AtomizedIter<'_> {
             AtomizedIter::Node(iter) => iter.next().map(Ok),
             AtomizedIter::Sequence(iter) => iter.next(),
             AtomizedIter::Erroring(iter) => iter.next(),
+            AtomizedIter::Absent => Some(Err(error::Error::ComponentAbsentInDynamicContext)),
         }
     }
 }
-
-// impl occurrence::ResultOccurrence<atomic::Atomic, stack::Error> for AtomizedIter<'_> {
-//     fn error(&self) -> stack::Error {
-//         stack::Error::Type
-//     }
-// }
 
 #[derive(Debug, Clone)]
 pub(crate) struct AtomizedAtomicIter {
