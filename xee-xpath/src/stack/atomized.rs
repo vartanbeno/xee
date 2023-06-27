@@ -9,11 +9,11 @@ use crate::xml;
 pub(crate) enum AtomizedIter<'a> {
     Empty,
     // TODO: introduce AtomizedItemIter
-    Atomic(AtomizedAtomicIter),
+    Atomic(std::iter::Once<error::Result<atomic::Atomic>>),
     Node(AtomizedNodeIter),
     Sequence(AtomizedSequenceIter<'a>),
-    Erroring(ErroringAtomizedIter),
-    Absent,
+    Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
+    Absent(std::iter::Once<error::Result<atomic::Atomic>>),
 }
 
 impl<'a> AtomizedIter<'a> {
@@ -21,16 +21,18 @@ impl<'a> AtomizedIter<'a> {
         match value {
             stack::Value::Empty => AtomizedIter::Empty,
             stack::Value::Item(item) => match item {
-                stack::Item::Atomic(atomic) => {
-                    AtomizedIter::Atomic(AtomizedAtomicIter::new(atomic))
-                }
+                stack::Item::Atomic(atomic) => AtomizedIter::Atomic(std::iter::once(Ok(atomic))),
                 stack::Item::Node(node) => AtomizedIter::Node(AtomizedNodeIter::new(node, xot)),
-                stack::Item::Function(_) => AtomizedIter::Erroring(ErroringAtomizedIter {}),
+                stack::Item::Function(_) => {
+                    AtomizedIter::Erroring(std::iter::once(Err(error::Error::Type)))
+                }
             },
             stack::Value::Sequence(sequence) => {
                 AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
             }
-            stack::Value::Absent => AtomizedIter::Absent,
+            stack::Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
+                error::Error::ComponentAbsentInDynamicContext,
+            ))),
         }
     }
 }
@@ -41,39 +43,11 @@ impl Iterator for AtomizedIter<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             AtomizedIter::Empty => None,
-            AtomizedIter::Atomic(iter) => iter.next().map(Ok),
+            AtomizedIter::Atomic(iter) => iter.next(),
             AtomizedIter::Node(iter) => iter.next().map(Ok),
             AtomizedIter::Sequence(iter) => iter.next(),
             AtomizedIter::Erroring(iter) => iter.next(),
-            AtomizedIter::Absent => Some(Err(error::Error::ComponentAbsentInDynamicContext)),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct AtomizedAtomicIter {
-    atomic: atomic::Atomic,
-    done: bool,
-}
-
-impl AtomizedAtomicIter {
-    fn new(atomic: atomic::Atomic) -> Self {
-        Self {
-            atomic,
-            done: false,
-        }
-    }
-}
-
-impl Iterator for AtomizedAtomicIter {
-    type Item = atomic::Atomic;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.done {
-            None
-        } else {
-            self.done = true;
-            Some(self.atomic.clone())
+            AtomizedIter::Absent(iter) => iter.next(),
         }
     }
 }
@@ -157,17 +131,6 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
             }
         }
         None
-    }
-}
-
-#[derive(Clone)]
-pub(crate) struct ErroringAtomizedIter;
-
-impl Iterator for ErroringAtomizedIter {
-    type Item = error::Result<atomic::Atomic>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(Err(error::Error::Type))
     }
 }
 
