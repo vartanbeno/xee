@@ -781,4 +781,14 @@ mod tests {
             Err(error::Error::FOCA0001)
         );
     }
+
+    // TODO: this test won't pass yet, as the comparison logic can't handle short yet
+    // We first need to rewrite this to use the casting system
+    // #[test]
+    // fn test_cast_short_to_short() {
+    //     assert_eq!(
+    //         atomic::Atomic::Short(15).cast_to_short().unwrap(),
+    //         atomic::Atomic::Short(15)
+    //     );
+    // }
 }

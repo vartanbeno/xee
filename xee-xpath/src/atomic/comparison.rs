@@ -5,55 +5,58 @@ use rust_decimal::prelude::*;
 use crate::atomic;
 use crate::error;
 
-fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic>
+pub(crate) fn comparison_op<O>(
+    a: &atomic::Atomic,
+    b: &atomic::Atomic,
+) -> error::Result<atomic::Atomic>
 where
     O: ComparisonOp,
 {
     Ok(match (a, b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => {
-            <O as ComparisonOp>::string_atomic(&a, &b)
+            <O as ComparisonOp>::string_atomic(a, b)
         }
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => {
-            <O as ComparisonOp>::boolean_atomic(a, b)
+            <O as ComparisonOp>::boolean_atomic(*a, *b)
         }
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
-            <O as ComparisonOp>::decimal_atomic(a, b)
+            <O as ComparisonOp>::decimal_atomic(*a, *b)
         }
         (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::Int(a), atomic::Atomic::Int(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::Short(a), atomic::Atomic::Short(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::Byte(a), atomic::Atomic::Byte(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::UnsignedLong(a), atomic::Atomic::UnsignedLong(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::UnsignedInt(a), atomic::Atomic::UnsignedInt(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::UnsignedShort(a), atomic::Atomic::UnsignedShort(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::UnsignedByte(a), atomic::Atomic::UnsignedByte(b)) => {
-            <O as ComparisonOp>::integer_atomic(a, b)
+            <O as ComparisonOp>::integer_atomic(*a, *b)
         }
         (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
-            <O as ComparisonOp>::float_atomic(a, b)
+            <O as ComparisonOp>::float_atomic(*a, *b)
         }
         (atomic::Atomic::Double(OrderedFloat(a)), atomic::Atomic::Double(OrderedFloat(b))) => {
-            <O as ComparisonOp>::float_atomic(a, b)
+            <O as ComparisonOp>::float_atomic(*a, *b)
         }
         _ => unreachable!("Both the atomics are not the same type or types aren't handled"),
     })
 }
 
-trait ComparisonOp {
+pub(crate) trait ComparisonOp {
     fn integer<I>(a: I, b: I) -> bool
     where
         I: PrimInt;
@@ -96,7 +99,7 @@ trait ComparisonOp {
     }
 }
 
-struct EqualOp;
+pub(crate) struct EqualOp;
 
 impl ComparisonOp for EqualOp {
     fn integer<I>(a: I, b: I) -> bool
