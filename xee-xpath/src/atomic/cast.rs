@@ -1,14 +1,88 @@
-use std::rc::Rc;
-
 use ordered_float::OrderedFloat;
+use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;
 
 impl atomic::Atomic {
     pub(crate) fn parse_decimal(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: parse decimal, but reject any string with _ in it as invalid
-        todo!();
+        if s.contains('_') {
+            return Err(error::Error::FORG0001);
+        }
+        s.parse::<rust_decimal::Decimal>()
+            .map(atomic::Atomic::Decimal)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_integer(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<i64, _>(s)
+            .map(atomic::Atomic::Integer)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_int(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<i32, _>(s)
+            .map(atomic::Atomic::Int)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_short(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<i16, _>(s)
+            .map(atomic::Atomic::Short)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_byte(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<i8, _>(s)
+            .map(atomic::Atomic::Byte)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_unsigned_long(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<u64, _>(s)
+            .map(atomic::Atomic::UnsignedLong)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_unsigned_int(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<u32, _>(s)
+            .map(atomic::Atomic::UnsignedInt)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_unsigned_short(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<u16, _>(s)
+            .map(atomic::Atomic::UnsignedShort)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_unsigned_byte(s: &str) -> error::Result<atomic::Atomic> {
+        lexical::parse::<u8, _>(s)
+            .map(atomic::Atomic::UnsignedByte)
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    // we can't use lexical::parse_float_options::XML as it doesn't allow INF
+    // which is allowed by the XML Schema spec
+
+    pub(crate) fn parse_float(s: &str) -> error::Result<atomic::Atomic> {
+        let options = lexical::ParseFloatOptionsBuilder::new()
+            .inf_string(Some(b"INF"))
+            .build()
+            .unwrap();
+        lexical::parse_with_options::<f32, _, { lexical::format::XML }>(s, &options)
+            .map(|f| atomic::Atomic::Float(OrderedFloat(f)))
+            .map_err(|_| error::Error::FORG0001)
+    }
+
+    pub(crate) fn parse_double(s: &str) -> error::Result<atomic::Atomic> {
+        let options = lexical::ParseFloatOptionsBuilder::new()
+            .inf_string(Some(b"INF"))
+            .build()
+            .unwrap();
+        lexical::parse_with_options::<f64, _, { lexical::format::XML }>(s, &options)
+            .map(|f| atomic::Atomic::Double(OrderedFloat(f)))
+            .map_err(|_| error::Error::FORG0001)
     }
 
     // from an atomic type to a canonical representation as a string
@@ -95,16 +169,85 @@ impl atomic::Atomic {
 mod tests {
     use super::*;
 
-    use rust_decimal::prelude::*;
     use rust_decimal_macros::dec;
 
     #[test]
-    fn test_decimal_string_parse() {
-        let d: Decimal = "1.0".parse().unwrap();
-        assert_eq!(d, dec!(1.0));
+    fn test_parse_decimal() {
+        assert_eq!(
+            atomic::Atomic::parse_decimal("1.0").unwrap(),
+            atomic::Atomic::Decimal(dec!(1.0))
+        );
+    }
 
-        let d2: Decimal = "100_000".parse().unwrap();
-        assert_eq!(d2, dec!(100_000));
-        assert_eq!(d2.to_string(), "100000");
+    #[test]
+    fn test_parse_decimal_no_underscore() {
+        assert_eq!(
+            atomic::Atomic::parse_decimal("1_000.0"),
+            Err(error::Error::FORG0001)
+        );
+    }
+
+    #[test]
+    fn test_parse_integer() {
+        assert_eq!(
+            atomic::Atomic::parse_integer("1").unwrap(),
+            atomic::Atomic::Integer(1)
+        );
+    }
+
+    #[test]
+    fn test_parse_integer_no_underscore() {
+        assert_eq!(
+            atomic::Atomic::parse_integer("1_000"),
+            Err(error::Error::FORG0001)
+        );
+    }
+
+    #[test]
+    fn test_parse_double() {
+        assert_eq!(
+            atomic::Atomic::parse_double("1.0").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(1.0))
+        );
+    }
+
+    #[test]
+    fn test_parse_double_exponent() {
+        assert_eq!(
+            atomic::Atomic::parse_double("1.0e10").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(1.0e10))
+        );
+    }
+
+    #[test]
+    fn test_parse_double_inf() {
+        assert_eq!(
+            atomic::Atomic::parse_double("INF").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(f64::INFINITY))
+        );
+    }
+
+    #[test]
+    fn test_parse_double_minus_inf() {
+        assert_eq!(
+            atomic::Atomic::parse_double("-INF").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(-f64::INFINITY))
+        );
+    }
+
+    #[test]
+    fn test_parse_double_nan() {
+        assert_eq!(
+            atomic::Atomic::parse_double("NaN").unwrap(),
+            atomic::Atomic::Double(OrderedFloat(f64::NAN))
+        );
+    }
+
+    #[test]
+    fn test_parse_double_invalid_nan() {
+        assert_eq!(
+            atomic::Atomic::parse_double("NAN"),
+            Err(error::Error::FORG0001)
+        );
     }
 }
