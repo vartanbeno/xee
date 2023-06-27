@@ -1,4 +1,5 @@
 use ordered_float::OrderedFloat;
+use rust_decimal::prelude::*;
 use std::rc::Rc;
 
 use crate::atomic;
@@ -107,56 +108,53 @@ impl atomic::Atomic {
                     d.normalize().to_string()
                 }
             }
+            atomic::Atomic::Integer(i) => i.to_string(),
+            atomic::Atomic::Int(i) => i.to_string(),
+            atomic::Atomic::Short(i) => i.to_string(),
+            atomic::Atomic::Byte(i) => i.to_string(),
+            atomic::Atomic::UnsignedLong(i) => i.to_string(),
+            atomic::Atomic::UnsignedInt(i) => i.to_string(),
+            atomic::Atomic::UnsignedShort(i) => i.to_string(),
+            atomic::Atomic::UnsignedByte(i) => i.to_string(),
+            atomic::Atomic::Float(OrderedFloat(f)) => {
+                // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
+                // If SV has an absolute value that is greater than or equal to
+                // 0.000001 (one millionth) and less than 1000000 (one
+                // million), then the value is converted to an xs:decimal and
+                // the resulting xs:decimal is converted to an xs:string
+                let abs_f = f.abs();
+                if (0.000001..1000000f32).contains(&abs_f) {
+                    // TODO: is this the right conversion?
+                    let d: Decimal = (*f).try_into().unwrap();
+                    atomic::Atomic::Decimal(d).to_canonical()
+                } else {
+                    if (*f).is_zero() {
+                        if f.is_negative() {
+                            return "-0".to_string();
+                        } else {
+                            return "0".to_string();
+                        }
+                    }
+                    let options = lexical::WriteFloatOptionsBuilder::new()
+                        .exponent(b'E')
+                        .inf_string(Some(b"INF"))
+                        .build()
+                        .unwrap();
+                    lexical::to_string_with_options::<_, { lexical::format::XML }>(*f, &options)
+                }
+            }
             _ => {
                 todo!()
             }
         }
     }
 
-    pub(crate) fn cast_to_xs_string(&self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::String(_) => Ok(self.clone()),
-            atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(s.clone())),
-            atomic::Atomic::Boolean(b) => {
-                if *b {
-                    Ok(atomic::Atomic::String(Rc::new("true".to_string())))
-                } else {
-                    Ok(atomic::Atomic::String(Rc::new("false".to_string())))
-                }
-            }
-            atomic::Atomic::Decimal(d) => {
-                if d.is_integer() {
-                    let i: i64 = (*d).try_into().map_err(|_| error::Error::FOCA0003)?;
-                    Ok(atomic::Atomic::String(Rc::new(i.to_string())))
-                } else {
-                    // TODO: is this really the caonical lexical representation?
-                    Ok(atomic::Atomic::String(Rc::new(d.to_string())))
-                }
-            }
-            atomic::Atomic::Integer(i) => Ok(atomic::Atomic::String(Rc::new(i.to_string()))),
-            atomic::Atomic::Int(i) => Ok(atomic::Atomic::String(Rc::new(i.to_string()))),
-            atomic::Atomic::Short(s) => Ok(atomic::Atomic::String(Rc::new(s.to_string()))),
-            atomic::Atomic::Byte(b) => Ok(atomic::Atomic::String(Rc::new(b.to_string()))),
-            atomic::Atomic::UnsignedLong(u) => Ok(atomic::Atomic::String(Rc::new(u.to_string()))),
-            atomic::Atomic::UnsignedInt(u) => Ok(atomic::Atomic::String(Rc::new(u.to_string()))),
-            atomic::Atomic::UnsignedShort(u) => Ok(atomic::Atomic::String(Rc::new(u.to_string()))),
-            atomic::Atomic::UnsignedByte(u) => Ok(atomic::Atomic::String(Rc::new(u.to_string()))),
-            atomic::Atomic::Float(f) => Ok(atomic::Atomic::String(Rc::new(f.to_string()))),
-            atomic::Atomic::Double(d) => Ok(atomic::Atomic::String(Rc::new(d.to_string()))),
-            atomic::Atomic::Absent => {
-                // TODO: remove absent from atomic
-                panic!("Absent atomics should not be cast to string")
-            }
-        }
+    pub(crate) fn cast_to_xs_string(&self) -> atomic::Atomic {
+        atomic::Atomic::String(Rc::new(self.to_canonical()))
     }
 
-    pub(crate) fn cast_to_untyped_atomic(&self) -> error::Result<atomic::Atomic> {
-        let s = self.cast_to_xs_string()?;
-        if let atomic::Atomic::String(s) = s {
-            Ok(atomic::Atomic::Untyped(s))
-        } else {
-            unreachable!("cast_to_xs_string should always return a string")
-        }
+    pub(crate) fn cast_to_untyped_atomic(&self) -> atomic::Atomic {
+        atomic::Atomic::Untyped(Rc::new(self.to_canonical()))
     }
 
     pub(crate) fn cast_to_float(&self) -> error::Result<atomic::Atomic> {
@@ -305,5 +303,63 @@ mod tests {
     #[test]
     fn test_canonical_decimal_single_leading_zero() {
         assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).to_canonical(), "0.5");
+    }
+
+    #[test]
+    fn test_canonical_integer() {
+        assert_eq!(atomic::Atomic::Integer(15).to_canonical(), "15");
+    }
+
+    #[test]
+    fn test_canonical_float_formatted_as_integer() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(15.0)).to_canonical(),
+            "15"
+        );
+    }
+
+    #[test]
+    fn test_canonical_float_formatted_as_decimal() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(15.5)).to_canonical(),
+            "15.5"
+        );
+    }
+
+    #[test]
+    fn test_canonical_float_formatted_as_float_big() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(1500000000000000f32)).to_canonical(),
+            "1.5E15"
+        );
+    }
+
+    #[test]
+    fn test_canonical_formatted_as_float_small() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(0.000000000000001f32)).to_canonical(),
+            "1.0E-15"
+        );
+    }
+
+    #[test]
+    fn test_canonical_float_zero() {
+        assert_eq!(atomic::Atomic::Float(OrderedFloat(0.0)).to_canonical(), "0");
+    }
+
+    #[test]
+    fn test_canonical_float_minus_zero() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(-0.0)).to_canonical(),
+            "-0"
+        );
+    }
+
+    #[test]
+    fn test_canonical_float_inf() {
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(f32::INFINITY)).to_canonical(),
+            "INF"
+        );
     }
 }
