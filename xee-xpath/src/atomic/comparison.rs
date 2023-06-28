@@ -129,7 +129,7 @@ impl ComparisonOp for EqualOp {
     }
 }
 
-struct NotEqualOp;
+pub(crate) struct NotEqualOp;
 
 impl ComparisonOp for NotEqualOp {
     fn integer<I>(a: I, b: I) -> bool
@@ -159,7 +159,7 @@ impl ComparisonOp for NotEqualOp {
     }
 }
 
-struct LessThanOp;
+pub(crate) struct LessThanOp;
 
 impl ComparisonOp for LessThanOp {
     fn integer<I>(a: I, b: I) -> bool
@@ -190,7 +190,7 @@ impl ComparisonOp for LessThanOp {
     }
 }
 
-struct LessThanOrEqualOp;
+pub(crate) struct LessThanOrEqualOp;
 
 impl ComparisonOp for LessThanOrEqualOp {
     fn integer<I>(a: I, b: I) -> bool
@@ -221,7 +221,7 @@ impl ComparisonOp for LessThanOrEqualOp {
     }
 }
 
-struct GreaterThanOp;
+pub(crate) struct GreaterThanOp;
 
 impl ComparisonOp for GreaterThanOp {
     fn integer<I>(a: I, b: I) -> bool
@@ -252,7 +252,7 @@ impl ComparisonOp for GreaterThanOp {
     }
 }
 
-struct GreaterThanOrEqualOp;
+pub(crate) struct GreaterThanOrEqualOp;
 
 impl ComparisonOp for GreaterThanOrEqualOp {
     fn integer<I>(a: I, b: I) -> bool
