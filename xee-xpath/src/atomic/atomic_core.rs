@@ -205,6 +205,24 @@ impl Atomic {
         }
     }
 
+    pub(crate) fn has_base_schema_type(&self, s: &str) -> bool {
+        // TODO: still a stub
+        false
+    }
+
+    pub(crate) fn derives_from(&self, other: &Atomic) -> bool {
+        todo!();
+    }
+
+    pub(crate) fn cast_to_schema_type_of(&self, other: &Atomic) -> error::Result<Atomic> {
+        todo!();
+    }
+
+    pub(crate) fn has_same_schema_type(&self, other: &Atomic) -> bool {
+        // TODO: still a stub
+        true
+    }
+
     pub(crate) fn general_comparison_cast(&self, v: &str) -> error::Result<Atomic> {
         match self {
             // i. If T is a numeric type or is derived from a numeric type, then V

@@ -9,8 +9,9 @@ pub(crate) fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::R
 where
     O: ComparisonOp,
 {
-    let (a, b) = cast_untyped(a, b)?;
+    let (a, b) = cast(a, b)?;
 
+    // cast guarantees both atomic types are the same concrete atomic
     Ok(match (a, b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => {
             <O as ComparisonOp>::string(&a, &b)
@@ -49,32 +50,60 @@ where
     })
 }
 
-fn cast_untyped(
-    a: atomic::Atomic,
-    b: atomic::Atomic,
-) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
-    let r = match (&a, &b) {
-        // If both atomic values are instances of xs:untypedAtomic, then the
-        // values are cast to the type xs:string.
-        (atomic::Atomic::Untyped(a), atomic::Atomic::Untyped(b)) => (
-            atomic::Atomic::String(a.clone()),
-            atomic::Atomic::String(b.clone()),
-        ),
-        // If exactly one of the atomic values is an instance of
-        // xs:untypedAtomic, it is cast to a type depending on the other
-        // value's dynamic type T according to the following rules, in which V
-        // denotes the value to be cast:
-        (atomic::Atomic::Untyped(a), _) => {
-            let a = b.general_comparison_cast(a)?;
-            (a, b.clone())
+fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+    // 3.7.1 Value Comparisons
+    // We start in step 4, as the previous steps have been handled
+    // by the caller.
+
+    // 4: If an atomized operand of of type xs:untypedAtomic, it is cast
+    // to xs:string
+    let a = cast_untyped(a);
+    let b = cast_untyped(b);
+
+    match (&a, &b) {
+        // 5a: TODO: xs:string and xs:anyURI
+        // 5b: xs:decimal & xs:float -> cast decimal to float
+        (atomic::Atomic::Decimal(_), atomic::Atomic::Float(_)) => Ok((a.cast_to_float()?, b)),
+        (atomic::Atomic::Float(_), atomic::Atomic::Decimal(_)) => Ok((a, b.cast_to_float()?)),
+        // 5c: xs:decimal & xs:double -> cast decimal to double
+        (atomic::Atomic::Decimal(_), atomic::Atomic::Double(_)) => Ok((a.cast_to_double()?, b)),
+        (atomic::Atomic::Double(_), atomic::Atomic::Decimal(_)) => Ok((a, b.cast_to_double()?)),
+        // 5c: xs:float & xs:double -> cast float to double
+        (atomic::Atomic::Float(_), atomic::Atomic::Double(_)) => Ok((a.cast_to_double()?, b)),
+        (atomic::Atomic::Double(_), atomic::Atomic::Float(_)) => Ok((a, b.cast_to_double()?)),
+
+        _ => {
+            // decimals and all integer types are considered to be the same type
+            // This means some fancy casting
+            if a.has_base_schema_type("xs:decimal") && b.has_base_schema_type("xs:decimal") {
+                if a.derives_from(&b) {
+                    let a = a.cast_to_schema_type_of(&b)?;
+                    Ok((a, b))
+                } else {
+                    let b = b.cast_to_schema_type_of(&a)?;
+                    Ok((a, b))
+                }
+            } else {
+                // if we're the type, we're done
+                if a.has_same_schema_type(&b) {
+                    return Ok((a, b));
+                }
+
+                // We're not handling derived non-atomic data types,
+                // which is okay as atomization has taking place already
+                // 5d otherwise, type error
+                Err(error::Error::Type)
+            }
         }
-        (_, atomic::Atomic::Untyped(b)) => {
-            let b = a.general_comparison_cast(b)?;
-            (a.clone(), b)
-        }
-        _ => (a, b),
-    };
-    Ok(r)
+    }
+}
+
+fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
+    if let atomic::Atomic::Untyped(s) = value {
+        atomic::Atomic::String(s)
+    } else {
+        value
+    }
 }
 
 pub(crate) trait ComparisonOp {
@@ -275,6 +304,8 @@ impl ComparisonOp for GreaterThanOrEqualOp {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -284,5 +315,14 @@ mod tests {
 
         assert!(!comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
         assert!(comparison_op::<NotEqualOp>(a, b).unwrap());
+    }
+
+    #[test]
+    fn test_compare_cast_untyped() {
+        let a: atomic::Atomic = "foo".into();
+        let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::new("foo".to_string()));
+
+        assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
+        assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());
     }
 }
