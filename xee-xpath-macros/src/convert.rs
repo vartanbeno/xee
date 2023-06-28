@@ -31,7 +31,7 @@ fn convert_item(
     arg: TokenStream,
 ) -> syn::Result<TokenStream> {
     let (iterator, borrow) = convert_item_type(&item.item_type, arg.clone())?;
-    let occurrence = quote!(crate::ResultOccurrence);
+    let occurrence = quote!(crate::Occurrence);
 
     Ok(match &item.occurrence {
         ast::Occurrence::One => {

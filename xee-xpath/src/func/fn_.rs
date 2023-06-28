@@ -4,7 +4,7 @@ use xee_xpath_macros::xpath_fn;
 use crate::atomic;
 use crate::context::{DynamicContext, FunctionKind, StaticFunctionDescription};
 use crate::error;
-use crate::occurrence::ResultOccurrence;
+use crate::occurrence::Occurrence;
 use crate::output;
 use crate::wrap_xpath_fn;
 use crate::xml;

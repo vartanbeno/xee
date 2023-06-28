@@ -7,7 +7,7 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
-use crate::occurrence::ResultOccurrence;
+use crate::occurrence::Occurrence;
 use crate::output;
 
 impl output::Sequence {

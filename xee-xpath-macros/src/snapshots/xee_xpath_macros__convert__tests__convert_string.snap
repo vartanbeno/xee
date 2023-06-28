@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"xs:string\")"
 ---
-"let a = crate :: ResultOccurrence :: one (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | std :: convert :: TryInto :: < String > :: try_into (atomic))) ? ; let a = a . as_ref ()"
+"let a = crate :: Occurrence :: one (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | std :: convert :: TryInto :: < String > :: try_into (atomic))) ? ; let a = a . as_ref ()"

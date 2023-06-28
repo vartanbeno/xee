@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
-use crate::occurrence::ResultOccurrence;
+use crate::occurrence::Occurrence;
 use crate::output;
 use crate::stack;
 use crate::xml;

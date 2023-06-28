@@ -251,7 +251,7 @@ where
     }
 }
 
-impl<V, U> occurrence::ResultOccurrence<V, error::Error> for U
+impl<V, U> occurrence::Occurrence<V, error::Error> for U
 where
     V: std::fmt::Debug,
     U: Iterator<Item = error::Result<V>>,
@@ -264,7 +264,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::occurrence::ResultOccurrence;
+    use crate::occurrence::Occurrence;
 
     #[test]
     fn test_one() {

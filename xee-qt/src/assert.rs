@@ -2,8 +2,7 @@ use crossterm::style::Stylize;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    DynamicContext, Error, Name, Namespaces, Result, ResultOccurrence, Sequence, StaticContext,
-    XPath,
+    DynamicContext, Error, Name, Namespaces, Occurrence, Result, Sequence, StaticContext, XPath,
 };
 use xot::Xot;
 

@@ -7,7 +7,7 @@ use crate::comparison;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
-use crate::occurrence::ResultOccurrence;
+use crate::occurrence::Occurrence;
 use crate::op;
 use crate::stack;
 use crate::xml;
