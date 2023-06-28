@@ -2110,7 +2110,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "xee-schematype"
+name = "xee-schema-type"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
