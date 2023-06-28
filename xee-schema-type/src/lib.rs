@@ -1,3 +1,3 @@
-mod schema_type_core;
+mod xs;
 
-pub use schema_type_core::Xs;
+pub use xs::Xs;
