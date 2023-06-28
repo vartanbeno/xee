@@ -1,1 +1,1 @@
-mod schematype_core;
+mod schema_type_core;
