@@ -3,6 +3,8 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
 
+use xee_schema_type::Xs;
+
 use crate::atomic;
 use crate::error;
 
@@ -98,7 +100,41 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_xs_string(&self) -> atomic::Atomic {
+    pub(crate) fn cast_to_schema_type(&self, xs: Xs) -> error::Result<atomic::Atomic> {
+        if !xs.derives_from(Xs::UntypedAtomic) {
+            todo!("We can only cast to atomic types right now")
+        }
+        if self.schema_type() == xs {
+            return Ok(self.clone());
+        }
+        match xs {
+            Xs::String => Ok(self.cast_to_string()),
+            Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
+            Xs::Boolean => self.cast_to_boolean(),
+            Xs::Decimal => self.cast_to_decimal(),
+            Xs::Integer => self.cast_to_integer(),
+            Xs::Long => self.cast_to_long(),
+            Xs::Int => self.cast_to_int(),
+            Xs::Short => self.cast_to_short(),
+            Xs::Byte => self.cast_to_byte(),
+            Xs::UnsignedLong => self.cast_to_unsigned_long(),
+            Xs::UnsignedInt => self.cast_to_unsigned_int(),
+            Xs::UnsignedShort => self.cast_to_unsigned_short(),
+            Xs::UnsignedByte => self.cast_to_unsigned_byte(),
+            Xs::Float => self.cast_to_float(),
+            Xs::Double => self.cast_to_double(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn cast_to_schema_type_of(
+        &self,
+        other: &atomic::Atomic,
+    ) -> error::Result<atomic::Atomic> {
+        self.cast_to_schema_type(other.schema_type())
+    }
+
+    pub(crate) fn cast_to_string(&self) -> atomic::Atomic {
         atomic::Atomic::String(Rc::new(self.to_canonical()))
     }
 
@@ -225,6 +261,26 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_short(&self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Short(self.cast_to_value::<i16>()?))
+    }
+
+    pub(crate) fn cast_to_byte(&self) -> error::Result<atomic::Atomic> {
+        Ok(atomic::Atomic::Byte(self.cast_to_value::<i8>()?))
+    }
+
+    pub(crate) fn cast_to_unsigned_long(&self) -> error::Result<atomic::Atomic> {
+        Ok(atomic::Atomic::UnsignedLong(self.cast_to_value::<u64>()?))
+    }
+
+    pub(crate) fn cast_to_unsigned_int(&self) -> error::Result<atomic::Atomic> {
+        Ok(atomic::Atomic::UnsignedInt(self.cast_to_value::<u32>()?))
+    }
+
+    pub(crate) fn cast_to_unsigned_short(&self) -> error::Result<atomic::Atomic> {
+        Ok(atomic::Atomic::UnsignedShort(self.cast_to_value::<u16>()?))
+    }
+
+    pub(crate) fn cast_to_unsigned_byte(&self) -> error::Result<atomic::Atomic> {
+        Ok(atomic::Atomic::UnsignedByte(self.cast_to_value::<u8>()?))
     }
 
     pub(crate) fn cast_to_value<V>(&self) -> error::Result<V>

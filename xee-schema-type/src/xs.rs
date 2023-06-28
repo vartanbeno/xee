@@ -132,13 +132,13 @@ impl Xs {
             Long => Some(Integer),
             Int => Some(Long),
             Short => Some(Int),
-            Byte => Some(Byte),
+            Byte => Some(Short),
             NonNegativeInteger => Some(Integer),
             PositiveInteger => Some(NonNegativeInteger),
             UnsignedLong => Some(NonNegativeInteger),
             UnsignedInt => Some(UnsignedLong),
             UnsignedShort => Some(UnsignedInt),
-            UnsignedByte => Some(UnsignedByte),
+            UnsignedByte => Some(UnsignedShort),
         }
     }
 
@@ -188,9 +188,11 @@ mod tests {
 
     #[test]
     fn test_derives_from() {
+        assert!(Xs::Integer.derives_from(Xs::Integer));
         assert!(Xs::Integer.derives_from(Xs::Decimal));
         assert!(Xs::Integer.derives_from(Xs::AnyAtomicType));
         assert!(Xs::Integer.derives_from(Xs::AnySimpleType));
         assert!(Xs::Integer.derives_from(Xs::AnyType));
+        assert!(Xs::Byte.derives_from(Xs::UntypedAtomic));
     }
 }

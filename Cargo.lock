@@ -2138,6 +2138,7 @@ dependencies = [
  "test-generator",
  "thiserror",
  "xee-qt",
+ "xee-schema-type",
  "xee-xpath-ast",
  "xee-xpath-macros",
  "xot",

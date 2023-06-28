@@ -149,7 +149,8 @@ pub enum Error {
     /// a SequenceType is not defined in the in-scope schema types as a
     /// generalized atomic type.
     #[error("Undefined type reference")]
-    XPST0051,
+    #[diagnostic(code(XPST0051))]
+    UndefinedTypeReference,
     /// Invalid type named in cast or castable expression.
     ///
     /// The type named in a cast or castable expression must be the name of a

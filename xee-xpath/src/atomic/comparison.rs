@@ -2,6 +2,8 @@ use num_traits::{Float, PrimInt};
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+use xee_schema_type::Xs;
+
 use crate::atomic;
 use crate::error;
 
@@ -75,7 +77,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
         _ => {
             // decimals and all integer types are considered to be the same type
             // This means some fancy casting
-            if a.has_base_schema_type("xs:decimal") && b.has_base_schema_type("xs:decimal") {
+            if a.has_base_schema_type(Xs::Decimal) && b.has_base_schema_type(Xs::Decimal) {
                 if a.derives_from(&b) {
                     let a = a.cast_to_schema_type_of(&b)?;
                     Ok((a, b))
@@ -304,6 +306,7 @@ impl ComparisonOp for GreaterThanOrEqualOp {
 
 #[cfg(test)]
 mod tests {
+    use rust_decimal_macros::dec;
     use std::rc::Rc;
 
     use super::*;
@@ -321,6 +324,24 @@ mod tests {
     fn test_compare_cast_untyped() {
         let a: atomic::Atomic = "foo".into();
         let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::new("foo".to_string()));
+
+        assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
+        assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());
+    }
+
+    #[test]
+    fn test_compare_cast_decimal_to_double() {
+        let a: atomic::Atomic = dec!(1.5).into();
+        let b: atomic::Atomic = 1.5f64.into();
+
+        assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
+        assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());
+    }
+
+    #[test]
+    fn test_compare_byte_and_integer() {
+        let a: atomic::Atomic = 1i8.into();
+        let b: atomic::Atomic = 1i64.into();
 
         assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
         assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());

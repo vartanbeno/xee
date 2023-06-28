@@ -3,6 +3,8 @@ use rust_decimal::prelude::*;
 use std::fmt;
 use std::rc::Rc;
 
+use xee_schema_type::Xs;
+
 use crate::comparison;
 use crate::error;
 
@@ -205,22 +207,35 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn has_base_schema_type(&self, s: &str) -> bool {
-        // TODO: still a stub
-        false
+    pub(crate) fn schema_type(&self) -> Xs {
+        match self {
+            Atomic::String(_) => Xs::String,
+            Atomic::Untyped(_) => Xs::UntypedAtomic,
+            Atomic::Boolean(_) => Xs::Boolean,
+            Atomic::Decimal(_) => Xs::Decimal,
+            Atomic::Integer(_) => Xs::Integer,
+            Atomic::Int(_) => Xs::Int,
+            Atomic::Short(_) => Xs::Short,
+            Atomic::Byte(_) => Xs::Byte,
+            Atomic::UnsignedLong(_) => Xs::UnsignedLong,
+            Atomic::UnsignedInt(_) => Xs::UnsignedInt,
+            Atomic::UnsignedShort(_) => Xs::UnsignedShort,
+            Atomic::UnsignedByte(_) => Xs::UnsignedByte,
+            Atomic::Float(_) => Xs::Float,
+            Atomic::Double(_) => Xs::Double,
+        }
+    }
+
+    pub(crate) fn has_base_schema_type(&self, xs: Xs) -> bool {
+        self.schema_type().derives_from(xs)
     }
 
     pub(crate) fn derives_from(&self, other: &Atomic) -> bool {
-        todo!();
-    }
-
-    pub(crate) fn cast_to_schema_type_of(&self, other: &Atomic) -> error::Result<Atomic> {
-        todo!();
+        self.schema_type().derives_from(other.schema_type())
     }
 
     pub(crate) fn has_same_schema_type(&self, other: &Atomic) -> bool {
-        // TODO: still a stub
-        true
+        self.schema_type() == other.schema_type()
     }
 
     pub(crate) fn general_comparison_cast(&self, v: &str) -> error::Result<Atomic> {
