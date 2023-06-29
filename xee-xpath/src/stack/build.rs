@@ -67,7 +67,7 @@ impl InnerSequence {
     pub(crate) fn push_value(&mut self, value: stack::Value) {
         match value {
             stack::Value::Empty => {}
-            stack::Value::Item(item) => self.items.push(item),
+            stack::Value::One(item) => self.items.push(item),
             stack::Value::Many(items) => self.items.extend(items.as_ref().into_iter().cloned()),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
             stack::Value::Build(_) => unreachable!(),
@@ -82,7 +82,7 @@ impl InnerSequence {
         if self.items.is_empty() {
             stack::Value::Empty
         } else if self.items.len() == 1 {
-            stack::Value::Item(self.items.pop().unwrap())
+            stack::Value::One(self.items.pop().unwrap())
         } else {
             stack::Value::Many(Rc::new(self.items))
         }

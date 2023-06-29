@@ -30,7 +30,7 @@ impl Sequence {
     pub fn len(&self) -> usize {
         match &self.stack_value {
             stack::Value::Empty => 0,
-            stack::Value::Item(_) => 1,
+            stack::Value::One(_) => 1,
             stack::Value::Many(items) => items.len(),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
             stack::Value::Build(_) => unreachable!(),
@@ -201,21 +201,6 @@ impl Iterator for NodeIter {
         }
     }
 }
-
-// pub struct AtomizedIter<'a> {
-//     atomized_iter: stack::AtomizedIter<'a>,
-//     xot: &'a Xot,
-// }
-
-// impl<'a> Iterator for AtomizedIter<'a> {
-//     type Item = error::Result<atomic::Atomic>;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.atomized_iter
-//             .next()
-//             .map(|a| a.map_err(|_| error::Error::Type))
-//     }
-// }
 
 pub struct UnboxedAtomizedIter<'a, F> {
     atomized_iter: stack::AtomizedIter<'a>,

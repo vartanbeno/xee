@@ -485,7 +485,7 @@ impl<'a> Interpreter<'a> {
     fn pop_index(&mut self) -> usize {
         let value = self.stack.pop().unwrap();
         match value {
-            stack::Value::Item(stack::Item::Atomic(a)) => {
+            stack::Value::One(stack::Item::Atomic(a)) => {
                 let index = a.convert_to_integer().unwrap();
                 index as usize
             }
