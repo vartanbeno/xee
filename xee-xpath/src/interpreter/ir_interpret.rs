@@ -562,10 +562,6 @@ mod tests {
     use crate::xml;
     use crate::xpath::XPath;
 
-    fn as_sequence(value: &stack::Value) -> stack::Sequence {
-        value.try_into().unwrap()
-    }
-
     fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
         output::Sequence::from(
             node.iter()

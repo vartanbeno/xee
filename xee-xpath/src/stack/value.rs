@@ -1,3 +1,4 @@
+use ahash::{HashSet, HashSetExt};
 use xot::Xot;
 
 use crate::error;
@@ -9,8 +10,9 @@ use crate::xml;
 pub(crate) enum Value {
     Empty,
     Item(stack::Item),
-    Sequence(stack::Sequence),
+    Many(Vec<stack::Item>),
     Absent,
+    Build(stack::BuildSequence),
 }
 
 impl Value {
@@ -18,15 +20,34 @@ impl Value {
         output::Sequence::new(self)
     }
 
-    pub(crate) fn to_sequence(&self) -> error::Result<stack::Sequence> {
+    pub(crate) fn len(self) -> usize {
         match self {
-            Value::Sequence(s) => Ok(s.clone()),
-            _ => Ok(stack::Sequence::from(
-                self.items().collect::<error::Result<Vec<_>>>()?,
-            )),
+            Value::Empty => 0,
+            Value::Item(_) => 1,
+            Value::Many(items) => items.len(),
+            Value::Absent => panic!("Don't know how to handle absent"),
+            Value::Build(_) => unreachable!(),
         }
     }
 
+    pub(crate) fn index(self, index: usize) -> error::Result<stack::Item> {
+        match self {
+            Value::Empty => Err(error::Error::Type),
+            Value::Item(item) => {
+                if index == 0 {
+                    Ok(item)
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
+            Value::Many(items) => items
+                .get(index)
+                .ok_or(error::Error::Type)
+                .map(|item| item.clone()),
+            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Build(_) => unreachable!(),
+        }
+    }
     pub(crate) fn items(&self) -> ValueIter {
         ValueIter::new(self.clone())
     }
@@ -39,48 +60,78 @@ impl Value {
         match self {
             Value::Empty => Ok(false),
             Value::Item(item) => item.effective_boolean_value(),
-            Value::Sequence(s) => {
-                let s = s.borrow();
-                // If its operand is an empty sequence, fn:boolean returns false.
-                if s.is_empty() {
-                    return Ok(false);
-                }
-                // If its operand is a sequence whose first item is a node, fn:boolean returns true.
-                if matches!(s.items[0], stack::Item::Node(_)) {
-                    return Ok(true);
-                }
-                // If its operand is a singleton value
-                let singleton = s.singleton()?;
-                singleton.effective_boolean_value()
-            }
+            Value::Many(_) => Err(error::Error::Type),
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Build(_) => unreachable!(),
         }
     }
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
         match self {
             Value::Empty => true,
-            Value::Sequence(s) => s.is_empty(),
             _ => false,
         }
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> error::Result<String> {
-        let value = match self {
-            Value::Empty => "".to_string(),
-            Value::Item(item) => item.string_value(xot)?,
-            Value::Sequence(sequence) => {
-                let sequence = sequence.borrow();
-                let len = sequence.len();
-                match len {
-                    0 => "".to_string(),
-                    1 => Value::from(sequence.items[0].clone()).string_value(xot)?,
-                    _ => Err(error::Error::Type)?,
-                }
+        match self {
+            Value::Empty => Ok("".to_string()),
+            Value::Item(item) => item.string_value(xot),
+            Value::Many(_) => Err(error::Error::Type),
+            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Build(_) => unreachable!(),
+        }
+    }
+
+    pub(crate) fn concat(self, other: stack::Value) -> stack::Value {
+        match (self, other) {
+            (Value::Empty, Value::Empty) => Value::Empty,
+            (Value::Empty, Value::Item(item)) => Value::Item(item),
+            (Value::Item(item), Value::Empty) => Value::Item(item),
+            (Value::Empty, Value::Many(items)) => Value::Many(items),
+            (Value::Many(items), Value::Empty) => Value::Many(items),
+            (Value::Item(item1), Value::Item(item2)) => Value::Many(vec![item1, item2]),
+            (Value::Item(item), Value::Many(mut items)) => {
+                items.insert(0, item);
+                Value::Many(items)
             }
-            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext)?,
-        };
-        Ok(value)
+            (Value::Many(mut items), Value::Item(item)) => {
+                items.push(item);
+                Value::Many(items)
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn union(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<stack::Value> {
+        let mut s = HashSet::new();
+        for item in self.items() {
+            let node = match item? {
+                stack::Item::Node(node) => node,
+                stack::Item::Atomic(..) => return Err(error::Error::Type),
+                stack::Item::Function(..) => return Err(error::Error::Type),
+            };
+            s.insert(node);
+        }
+        for item in other.items() {
+            let node = match item? {
+                stack::Item::Node(node) => node,
+                stack::Item::Atomic(..) => return Err(error::Error::Type),
+                stack::Item::Function(..) => return Err(error::Error::Type),
+            };
+            s.insert(node);
+        }
+
+        // sort nodes by document order
+        let mut nodes = s.into_iter().collect::<Vec<_>>();
+        nodes.sort_by_key(|n| annotations.document_order(*n));
+
+        let items = nodes.into_iter().map(stack::Item::Node).collect::<Vec<_>>();
+        Ok(items.into())
     }
 }
 
@@ -94,13 +145,13 @@ where
 }
 
 impl From<Vec<stack::Item>> for Value {
-    fn from(items: Vec<stack::Item>) -> Self {
+    fn from(mut items: Vec<stack::Item>) -> Self {
         if items.is_empty() {
             Value::Empty
         } else if items.len() == 1 {
-            Value::from(items[0].clone())
+            Value::Item(items.pop().unwrap())
         } else {
-            Value::Sequence(stack::Sequence::from(items))
+            Value::Many(items)
         }
     }
 }
@@ -132,7 +183,6 @@ impl TryFrom<&stack::Value> for xml::Node {
     fn try_from(value: &stack::Value) -> error::Result<xml::Node> {
         match value {
             stack::Value::Item(stack::Item::Node(n)) => Ok(*n),
-            stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_node()),
             _ => Err(error::Error::Type),
         }
     }
@@ -140,44 +190,20 @@ impl TryFrom<&stack::Value> for xml::Node {
 
 impl PartialEq for Value {
     fn eq(&self, other: &Value) -> bool {
-        // comparisons between values are tricky, as a value may be a single
-        // item or a sequence of items. If they are single items, the
-        // comparison is easy, if one half is a sequence and the other half is
-        // not, then we convert the value into a sequence first before
-        // comparing
         match (self, other) {
             (Value::Empty, Value::Empty) => true,
             (Value::Item(a), Value::Item(b)) => a == b,
-            (Value::Sequence(a), Value::Sequence(b)) => a == b,
-            (Value::Empty, Value::Sequence(b)) => b.is_empty(),
-            (Value::Sequence(a), Value::Empty) => a.is_empty(),
-            (Value::Item(a), Value::Sequence(b)) => {
-                if b.len() != 1 {
-                    return false;
-                }
-                let a: stack::Sequence = a.clone().into();
-                &a == b
-            }
-            (Value::Sequence(a), Value::Item(b)) => {
-                if a.len() != 1 {
-                    return false;
-                }
-                let b: stack::Sequence = b.clone().into();
-                a == &b
-            }
-            (Value::Empty, Value::Item(_)) => false,
-            (Value::Item(_), Value::Empty) => false,
-            (Value::Absent, _) => false,
-            (_, Value::Absent) => false,
+            (Value::Many(a), Value::Many(b)) => a == b,
+            _ => false,
         }
     }
 }
 
 pub(crate) enum ValueIter {
     Empty,
-    AbsentIter(std::iter::Once<error::Result<stack::Item>>),
     ItemIter(std::iter::Once<stack::Item>),
-    SequenceIter(stack::SequenceIter),
+    ManyIter(std::vec::IntoIter<stack::Item>),
+    AbsentIter(std::iter::Once<error::Result<stack::Item>>),
 }
 
 impl ValueIter {
@@ -185,10 +211,11 @@ impl ValueIter {
         match value {
             Value::Empty => ValueIter::Empty,
             Value::Item(item) => ValueIter::ItemIter(std::iter::once(item)),
-            Value::Sequence(sequence) => ValueIter::SequenceIter(sequence.items()),
+            Value::Many(items) => ValueIter::ManyIter(items.into_iter()),
             Value::Absent => ValueIter::AbsentIter(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),
+            Value::Build(build) => unreachable!(),
         }
     }
 }
@@ -200,7 +227,7 @@ impl Iterator for ValueIter {
         match self {
             ValueIter::Empty => None,
             ValueIter::ItemIter(iter) => iter.next().map(Ok),
-            ValueIter::SequenceIter(iter) => iter.next().map(Ok),
+            ValueIter::ManyIter(iter) => iter.next().map(Ok),
             ValueIter::AbsentIter(iter) => iter.next(),
         }
     }

@@ -195,10 +195,9 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(closure.values[index as usize].clone());
                 }
                 EncodedInstruction::Comma => {
-                    let (a, b) = self.pop_seq2()?;
-                    self.stack.push(stack::Value::Sequence(stack::Sequence::new(
-                        a.borrow().concat(&b.borrow()),
-                    )));
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.concat(b));
                 }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
@@ -269,12 +268,10 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(r);
                 }
                 EncodedInstruction::Union => {
-                    let (a, b) = self.pop_seq2()?;
-                    let combined = a
-                        .borrow()
-                        .union(&b.borrow(), &self.dynamic_context.documents.annotations)?;
-                    self.stack
-                        .push(stack::Value::Sequence(stack::Sequence::new(combined)));
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let combined = a.union(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(combined);
                 }
                 EncodedInstruction::Dup => {
                     let value = self.stack.pop().unwrap();
@@ -310,8 +307,8 @@ impl<'a> Interpreter<'a> {
                     let step_id = self.read_u16();
                     let node = self.stack.pop().unwrap().try_into()?;
                     let step = &(self.function().steps[step_id as usize]);
-                    let sequence = xml::resolve_step(step, node, self.dynamic_context.xot);
-                    self.stack.push(stack::Value::Sequence(sequence));
+                    let value = xml::resolve_step(step, node, self.dynamic_context.xot);
+                    self.stack.push(value);
                 }
                 EncodedInstruction::Return => {
                     let return_value = self.stack.pop().unwrap();
@@ -347,38 +344,33 @@ impl<'a> Interpreter<'a> {
                     let a = a.convert_to_integer()?;
                     let b = b.convert_to_integer()?;
                     match a.cmp(&b) {
-                        Ordering::Greater => self
-                            .stack
-                            .push(stack::Value::Sequence(stack::Sequence::empty())),
+                        Ordering::Greater => self.stack.push(stack::Value::Empty),
                         Ordering::Equal => self.stack.push(a.into()),
                         Ordering::Less => {
-                            let sequence = stack::Sequence::from(
-                                (a..=b).map(|i| i.into()).collect::<Vec<stack::Item>>(),
-                            );
-                            self.stack.push(stack::Value::Sequence(sequence));
+                            let items = (a..=b).map(|i| i.into()).collect::<Vec<stack::Item>>();
+                            self.stack.push(items.into())
                         }
                     }
                 }
                 EncodedInstruction::SequenceNew => {
                     self.stack
-                        .push(stack::Value::Sequence(stack::Sequence::empty()));
+                        .push(stack::Value::Build(stack::BuildSequence::empty()));
                 }
                 EncodedInstruction::SequenceLen => {
-                    let sequence = self.pop_seq()?;
-                    let len = sequence.borrow().items.len();
-                    self.stack.push((len as i64).into());
+                    let value = self.stack.pop().unwrap();
+                    self.stack.push((value.len() as i64).into());
                 }
                 EncodedInstruction::SequenceGet => {
-                    let sequence = self.pop_seq()?;
+                    let value = self.stack.pop().unwrap();
                     let index = self.pop_index();
                     // substract 1 as Xpath is 1-indexed
-                    let item = sequence.borrow().items[index - 1].clone();
+                    let item = value.index(index - 1)?;
                     self.stack.push(item.into())
                 }
                 EncodedInstruction::SequencePush => {
-                    let sequence = self.pop_seq()?;
+                    let build = self.pop_build();
                     let stack_value = self.stack.pop().unwrap();
-                    sequence.borrow_mut().push_value(stack_value);
+                    build.borrow_mut().push_value(stack_value);
                 }
                 EncodedInstruction::IsNumeric => {
                     let is_numeric = self.pop_is_numeric();
@@ -525,15 +517,13 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_seq(&mut self) -> error::Result<stack::Sequence> {
+    fn pop_build(&mut self) -> stack::BuildSequence {
         let value = self.stack.pop().unwrap();
-        value.to_sequence()
-    }
-
-    fn pop_seq2(&mut self) -> error::Result<(stack::Sequence, stack::Sequence)> {
-        let b = self.pop_seq()?;
-        let a = self.pop_seq()?;
-        Ok((a, b))
+        if let stack::Value::Build(build) = value {
+            build
+        } else {
+            unreachable!();
+        }
     }
 
     fn pop_atomized2(

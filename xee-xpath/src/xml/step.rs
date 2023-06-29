@@ -11,14 +11,14 @@ pub struct Step {
     pub(crate) node_test: ast::NodeTest,
 }
 
-pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Sequence {
-    let mut new_sequence = stack::InnerSequence::empty();
+pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Value {
+    let mut new_items = Vec::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
-            new_sequence.push(&stack::Item::Node(axis_node));
+            new_items.push(stack::Item::Node(axis_node));
         }
     }
-    stack::Sequence::new(new_sequence)
+    new_items.into()
 }
 
 fn node_take_axis<'a>(
@@ -227,13 +227,11 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 mod tests {
     use super::*;
 
-    fn xot_nodes_to_sequence(node: &[xot::Node]) -> stack::Sequence {
-        stack::Sequence::new(stack::InnerSequence {
-            items: node
-                .iter()
-                .map(|&node| stack::Item::Node(xml::Node::Xot(node)))
-                .collect(),
-        })
+    fn xot_nodes_to_value(node: &[xot::Node]) -> stack::Value {
+        node.iter()
+            .map(|&node| stack::Item::Node(xml::Node::Xot(node)))
+            .collect::<Vec<_>>()
+            .into()
     }
 
     #[test]
@@ -248,8 +246,8 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Star),
         };
-        let sequence = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
-        assert_eq!(sequence, xot_nodes_to_sequence(&[a, b]));
+        let value = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
+        assert_eq!(value, xot_nodes_to_value(&[a, b]));
         Ok(())
     }
 
@@ -264,8 +262,8 @@ mod tests {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Name(ast::Name::without_ns("a"))),
         };
-        let sequence = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
-        assert_eq!(sequence, xot_nodes_to_sequence(&[a]));
+        let value = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
+        assert_eq!(value, xot_nodes_to_value(&[a]));
         Ok(())
     }
 }

@@ -27,12 +27,13 @@ impl<'a> AtomizedIter<'a> {
                     AtomizedIter::Erroring(std::iter::once(Err(error::Error::Type)))
                 }
             },
-            stack::Value::Sequence(sequence) => {
-                AtomizedIter::Sequence(AtomizedSequenceIter::new(sequence, xot))
+            stack::Value::Many(items) => {
+                AtomizedIter::Sequence(AtomizedSequenceIter::new(items.into_iter(), xot))
             }
             stack::Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),
+            stack::Value::Build(_) => unreachable!(),
         }
     }
 }
@@ -84,17 +85,15 @@ impl Iterator for AtomizedNodeIter {
 #[derive(Clone)]
 pub(crate) struct AtomizedSequenceIter<'a> {
     xot: &'a Xot,
-    sequence: stack::Sequence,
-    index: usize,
+    iter: std::vec::IntoIter<stack::Item>,
     node_iter: Option<AtomizedNodeIter>,
 }
 
 impl<'a> AtomizedSequenceIter<'a> {
-    fn new(sequence: stack::Sequence, xot: &'a Xot) -> Self {
+    fn new(iter: std::vec::IntoIter<stack::Item>, xot: &'a Xot) -> Self {
         Self {
             xot,
-            sequence,
-            index: 0,
+            iter,
             node_iter: None,
         }
     }
@@ -104,33 +103,36 @@ impl<'a> Iterator for AtomizedSequenceIter<'a> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.index < self.sequence.len() {
-            // if there are any more atomized nodes to iterate, do that
+        loop {
+            // if there there are any more atoms in this node,
+            // supply those
             if let Some(node_iter) = &mut self.node_iter {
                 if let Some(item) = node_iter.next() {
                     return Some(Ok(item));
                 } else {
-                    self.index += 1;
                     self.node_iter = None;
-                    continue;
                 }
             }
-
-            let item = &self.sequence.borrow().items[self.index];
-            match item {
-                stack::Item::Atomic(a) => {
-                    self.index += 1;
-                    return Some(Ok(a.clone()));
+            // if not, move on to the next item
+            let item = self.iter.next();
+            if let Some(item) = item {
+                match item {
+                    stack::Item::Atomic(a) => {
+                        return Some(Ok(a));
+                    }
+                    stack::Item::Node(n) => {
+                        // we need to atomize this node
+                        self.node_iter = Some(AtomizedNodeIter::new(n, self.xot));
+                        continue;
+                    }
+                    // TODO: needs to handle the array case
+                    stack::Item::Function(..) => return Some(Err(error::Error::Type)),
                 }
-                stack::Item::Node(n) => {
-                    self.node_iter = Some(AtomizedNodeIter::new(*n, self.xot));
-                    continue;
-                }
-                // TODO: needs to handle the array case
-                stack::Item::Function(..) => return Some(Err(error::Error::Type)),
+            } else {
+                // no more items, we're done
+                return None;
             }
         }
-        None
     }
 }
 
@@ -176,11 +178,12 @@ mod tests {
         let root = xot.parse("<doc>Hello</doc>").unwrap();
         let xot_node = xot.document_element(root).unwrap();
         let node = xml::Node::Xot(xot_node);
-        let value = stack::Value::Sequence(stack::Sequence::from(vec![
+        let value = vec![
             stack::Item::Atomic(atomic::Atomic::Integer(3)),
             stack::Item::Node(node),
             stack::Item::Atomic(atomic::Atomic::Integer(4)),
-        ]));
+        ]
+        .into();
 
         let mut iter = AtomizedIter::new(value, &xot);
 

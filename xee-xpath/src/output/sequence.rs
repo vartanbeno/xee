@@ -26,7 +26,6 @@ impl Sequence {
     pub fn is_empty(&self) -> bool {
         match &self.stack_value {
             stack::Value::Empty => true,
-            stack::Value::Sequence(sequence) => sequence.borrow().is_empty(),
             _ => false,
         }
     }
@@ -35,9 +34,9 @@ impl Sequence {
         match &self.stack_value {
             stack::Value::Empty => 0,
             stack::Value::Item(_) => 1,
-            stack::Value::Sequence(sequence) => sequence.borrow().len(),
-            // TODO: how to handle absent?
+            stack::Value::Many(items) => items.len(),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
+            stack::Value::Build(_) => unreachable!(),
         }
     }
 
@@ -131,11 +130,11 @@ impl From<Vec<output::Item>> for Sequence {
         }
         if items.len() == 1 {
             return Self {
-                stack_value: items[0].clone().into(),
+                stack_value: stack::Value::Item(items[0].clone()),
             };
         }
         Self {
-            stack_value: stack::Value::Sequence(stack::Sequence::from(items)),
+            stack_value: stack::Value::Many(items),
         }
     }
 }
