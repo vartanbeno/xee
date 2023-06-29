@@ -4,8 +4,10 @@ use rust_decimal::prelude::*;
 
 use xee_schema_type::Xs;
 
-use crate::atomic;
 use crate::error;
+
+use super::atomic_core as atomic;
+use super::cast::cast_to_same;
 
 pub(crate) fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>
 where
@@ -78,23 +80,17 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
             // decimals and all integer types are considered to be the same type
             // This means some fancy casting
             if a.has_base_schema_type(Xs::Decimal) && b.has_base_schema_type(Xs::Decimal) {
-                if a.derives_from(&b) {
-                    let a = a.cast_to_schema_type_of(&b)?;
-                    Ok((a, b))
-                } else {
-                    let b = b.cast_to_schema_type_of(&a)?;
-                    Ok((a, b))
-                }
+                cast_to_same(a, b)
             } else {
                 // if we're the type, we're done
                 if a.has_same_schema_type(&b) {
-                    return Ok((a, b));
+                    Ok((a, b))
+                } else {
+                    // We're not handling derived non-atomic data types,
+                    // which is okay as atomization has taking place already
+                    // 5d otherwise, type error
+                    Err(error::Error::Type)
                 }
-
-                // We're not handling derived non-atomic data types,
-                // which is okay as atomization has taking place already
-                // 5d otherwise, type error
-                Err(error::Error::Type)
             }
         }
     }

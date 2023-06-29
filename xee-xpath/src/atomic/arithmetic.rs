@@ -1,40 +1,28 @@
-// atomized the operand
-// if atomized is empty, result is empty
-// if atomized is greater than one, type error
-// if atomized xs:untypedAtomic, cast to xs:double
-// also type substitution, promotion
-
-// so this is like a function that looks ike:
+// This op is like a function with this argument:
 
 // fn:op($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
 
 // with an additional untypedAtomic casting rule
 
-// function conversion rules:
-// atomization
-// xs:untypedAtomic cast to expected type
-// numeric items promoted to expectd atomic type
-// xs:anyURI promoted too
-// also type substitution
-
 use num_traits::{Float, PrimInt};
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+use xee_schema_type::Xs;
+
 use crate::atomic;
 use crate::error;
 
-// type check to see whether it conforms to signature, get out atomized,
-// like in the function signature. This takes care of subtype
-// relations as that's just a check
+use super::cast::cast_to_same;
 
-// if untypedAtomic, passed through typecheck and cast to double happens
-// now do type promotion, conforming the arguments to each other
-
-fn numeric_arithmetic_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic>
+pub(crate) fn arithmetic_op<O>(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+) -> error::Result<atomic::Atomic>
 where
     O: ArithmeticOp,
 {
+    let (a, b) = cast(a, b)?;
     // we need to extract the values and pass them along now
     match (a, b) {
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
@@ -74,7 +62,65 @@ where
     }
 }
 
-trait ArithmeticOp {
+fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+    // 3.5 arithmetic expressions
+    // https://www.w3.org/TR/xpath-31/#id-arithmetic
+
+    // We start in step 4, as the previous steps have been handled
+    // by the caller.
+
+    // 4: If an atomized operand of of type xs:untypedAtomic, it is cast
+    // to xs:double
+    let a = cast_untyped(a)?;
+    let b = cast_untyped(b)?;
+
+    // if the types are the same, we don't need to do anything
+    if a.schema_type() == b.schema_type() {
+        return Ok((a, b));
+    }
+
+    // 1b promote decimal to float or double
+    if a.has_base_schema_type(Xs::Decimal) {
+        if b.schema_type() == Xs::Float {
+            return Ok((a.cast_to_float()?, b));
+        }
+        if b.schema_type() == Xs::Double {
+            return Ok((a.cast_to_double()?, b));
+        }
+    }
+    if b.has_base_schema_type(Xs::Decimal) {
+        if a.schema_type() == Xs::Float {
+            return Ok((a, b.cast_to_float()?));
+        }
+        if a.schema_type() == Xs::Double {
+            return Ok((a, b.cast_to_double()?));
+        }
+    }
+
+    match (&a, &b) {
+        // B.1 Type Promotion
+        // 1 numeric type promotion
+        // 1a a value of float can be promoted to double
+        (atomic::Atomic::Float(_), atomic::Atomic::Double(_)) => Ok((a.cast_to_double()?, b)),
+        (atomic::Atomic::Double(_), atomic::Atomic::Float(_)) => Ok((a, b.cast_to_double()?)),
+        _ => {
+            // we know they're not the same type and not float or double,
+            // so should be safe to cast to the same type
+            // TODO: what about weird stuff like PositiveInteger?
+            cast_to_same(a, b)
+        }
+    }
+}
+
+fn cast_untyped(value: atomic::Atomic) -> error::Result<atomic::Atomic> {
+    if let atomic::Atomic::Untyped(s) = value {
+        atomic::Atomic::parse_atomic::<f64>(&s)
+    } else {
+        Ok(value)
+    }
+}
+
+pub(crate) trait ArithmeticOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt;
@@ -105,7 +151,7 @@ trait ArithmeticOp {
     }
 }
 
-struct AddOp;
+pub(crate) struct AddOp;
 
 impl ArithmeticOp for AddOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
@@ -127,7 +173,7 @@ impl ArithmeticOp for AddOp {
     }
 }
 
-struct SubtractOp;
+pub(crate) struct SubtractOp;
 
 impl ArithmeticOp for SubtractOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
@@ -149,7 +195,7 @@ impl ArithmeticOp for SubtractOp {
     }
 }
 
-struct MultiplyOp;
+pub(crate) struct MultiplyOp;
 
 impl ArithmeticOp for MultiplyOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
@@ -171,7 +217,7 @@ impl ArithmeticOp for MultiplyOp {
     }
 }
 
-struct DivideOp;
+pub(crate) struct DivideOp;
 
 impl ArithmeticOp for DivideOp {
     fn integer_atomic<I>(a: I, b: I) -> error::Result<atomic::Atomic>
@@ -211,9 +257,9 @@ impl ArithmeticOp for DivideOp {
     }
 }
 
-struct NumericIntegerDivideOp;
+pub(crate) struct IntegerDivideOp;
 
-impl ArithmeticOp for NumericIntegerDivideOp {
+impl ArithmeticOp for IntegerDivideOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
@@ -238,6 +284,9 @@ impl ArithmeticOp for NumericIntegerDivideOp {
     where
         F: Float + Into<atomic::Atomic>,
     {
+        if b.is_zero() {
+            return Err(error::Error::DivisionByZero);
+        }
         let v = <DivideOp as ArithmeticOp>::float(a, b)?;
         Ok(v.trunc().to_i64().ok_or(error::Error::Overflow)?.into())
     }
@@ -250,9 +299,9 @@ impl ArithmeticOp for NumericIntegerDivideOp {
     }
 }
 
-struct ModOp;
+pub(crate) struct ModuloOp;
 
-impl ArithmeticOp for ModOp {
+impl ArithmeticOp for ModuloOp {
     fn integer<I>(a: I, b: I) -> error::Result<I>
     where
         I: PrimInt,
@@ -278,7 +327,7 @@ impl ArithmeticOp for ModOp {
     }
 }
 
-fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         Ok(atomic)
     } else {
@@ -286,7 +335,7 @@ fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     }
 }
 
-fn numeric_unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn numeric_unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         match atomic {
             atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),
@@ -320,7 +369,7 @@ mod tests {
     fn test_add_ints() {
         let a = 1i64.into();
         let b = 2i64.into();
-        let result = numeric_arithmetic_op::<AddOp>(a, b).unwrap();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
         assert_eq!(result, 3i64.into());
     }
 
@@ -328,7 +377,7 @@ mod tests {
     fn test_integer_division_returns_decimal() {
         let a = 5i64.into();
         let b = 2i64.into();
-        let result = numeric_arithmetic_op::<DivideOp>(a, b).unwrap();
+        let result = arithmetic_op::<DivideOp>(a, b).unwrap();
         assert_eq!(result, dec!(2.5).into());
     }
 
@@ -336,7 +385,7 @@ mod tests {
     fn test_numeric_integer_divide() {
         let a = 5i64.into();
         let b = 2i64.into();
-        let result = numeric_arithmetic_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
         assert_eq!(result, 2i64.into());
     }
 
@@ -344,7 +393,159 @@ mod tests {
     fn test_numeric_integer_divide_float() {
         let a = 5f64.into();
         let b = 2f64.into();
-        let result = numeric_arithmetic_op::<NumericIntegerDivideOp>(a, b).unwrap();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
         assert_eq!(result, 2i64.into());
+    }
+
+    #[test]
+    fn test_add_integers() {
+        let a = 1i64.into();
+        let b = 2i64.into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_add_integers_overflow() {
+        let a = i64::MAX.into();
+        let b = 2i64.into();
+        let result = arithmetic_op::<AddOp>(a, b);
+        assert_eq!(result, Err(error::Error::Overflow));
+    }
+
+    #[test]
+    fn test_add_decimals() {
+        let a = dec!(1.5).into();
+        let b = dec!(2.7).into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, dec!(4.2).into());
+    }
+
+    #[test]
+    fn test_add_decimals_overflow() {
+        let a = Decimal::MAX.into();
+        let b = dec!(2.7).into();
+        let result = arithmetic_op::<AddOp>(a, b);
+        assert_eq!(result, Err(error::Error::Overflow));
+    }
+
+    #[test]
+    fn test_add_floats() {
+        let a = 1.5f32.into();
+        let b = 2.7f32.into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, 4.2f32.into());
+    }
+
+    #[test]
+    fn test_add_doubles() {
+        let a = 1.5f64.into();
+        let b = 2.7f64.into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, 4.2f64.into());
+    }
+
+    #[test]
+    fn test_add_integer_decimal() {
+        let a = 1i64.into();
+        let b = dec!(2.7).into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, dec!(3.7).into());
+    }
+
+    #[test]
+    fn test_add_double_decimal() {
+        let a = 1.5f64.into();
+        let b = dec!(2.7).into();
+        let result = arithmetic_op::<AddOp>(a, b).unwrap();
+        assert_eq!(result, dec!(4.2).into());
+    }
+
+    #[test]
+    fn test_numeric_divide_both_integer_returns_decimal() {
+        let a = 1i64.into();
+        let b = 2i64.into();
+        let result = arithmetic_op::<DivideOp>(a, b).unwrap();
+        assert_eq!(result, dec!(0.5).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_10_by_3() {
+        let a = 10i64.into();
+        let b = 3i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_minus_2() {
+        let a = 3i64.into();
+        let b = (-2i64).into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, (-1i64).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_2() {
+        let a = (-3i64).into();
+        let b = 2i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, (-1i64).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_minus_2() {
+        let a = (-3i64).into();
+        let b = (-2i64).into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, 1i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_9_point_0_by_3() {
+        let a = 9.0f64.into();
+        let b = 3i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_4() {
+        let a = 3.0f32.into();
+        let b = 4i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, 0i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_0() {
+        let a = 3i64.into();
+        let b = 0i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b);
+        assert_eq!(result, Err(error::Error::DivisionByZero));
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_0() {
+        let a = 3.0f64.into();
+        let b = 0i64.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b);
+        assert_eq!(result, Err(error::Error::DivisionByZero));
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_inf() {
+        let a = 3.0f64.into();
+        let b = f64::INFINITY.into();
+        let result = arithmetic_op::<IntegerDivideOp>(a, b).unwrap();
+        assert_eq!(result, 0i64.into());
+    }
+
+    #[test]
+    fn test_numeric_mod_nan_nan() {
+        let a = f64::NAN.into();
+        let b = f64::NAN.into();
+        let result = arithmetic_op::<ModuloOp>(a, b).unwrap();
+        assert!(result.is_nan());
     }
 }

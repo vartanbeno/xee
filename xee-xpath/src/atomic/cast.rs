@@ -5,8 +5,9 @@ use std::rc::Rc;
 
 use xee_schema_type::Xs;
 
-use crate::atomic;
 use crate::error;
+
+use super::atomic_core as atomic;
 
 impl atomic::Atomic {
     pub(crate) fn parse_atomic<V>(s: &str) -> error::Result<atomic::Atomic>
@@ -377,6 +378,21 @@ impl atomic::Atomic {
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
         }
+    }
+}
+
+pub(crate) fn cast_to_same(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+    if a.derives_from(&b) {
+        let a = a.cast_to_schema_type_of(&b)?;
+        Ok((a, b))
+    } else if b.derives_from(&a) {
+        let b = b.cast_to_schema_type_of(&a)?;
+        Ok((a, b))
+    } else {
+        Err(error::Error::Type)
     }
 }
 

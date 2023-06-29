@@ -8,7 +8,6 @@ use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
 use crate::occurrence::Occurrence;
-use crate::op;
 use crate::stack;
 use crate::xml;
 
@@ -99,36 +98,28 @@ impl<'a> Interpreter<'a> {
             let instruction = self.read_instruction();
             match instruction {
                 EncodedInstruction::Add => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_add(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::AddOp>)?;
                 }
                 EncodedInstruction::Sub => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_substract(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::SubtractOp>)?;
                 }
                 EncodedInstruction::Mul => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_multiply(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::MultiplyOp>)?;
                 }
                 EncodedInstruction::Div => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_divide(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::DivideOp>)?;
                 }
                 EncodedInstruction::IntDiv => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_integer_divide(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::IntegerDivideOp>)?;
                 }
                 EncodedInstruction::Mod => {
-                    let (a, b) = self.pop_atomic2()?;
-                    self.stack.push(op::numeric_mod(&a, &b)?.into());
+                    self.arithmetic(atomic::arithmetic_op::<atomic::ModuloOp>)?;
                 }
                 EncodedInstruction::Plus => {
-                    let a = self.pop_atomic()?;
-                    self.stack.push(op::numeric_unary_plus(&a)?.into());
+                    self.unary_arithmetic(atomic::numeric_unary_plus)?;
                 }
                 EncodedInstruction::Minus => {
-                    let a = self.pop_atomic()?;
-                    self.stack.push(op::numeric_unary_minus(&a)?.into());
+                    self.unary_arithmetic(atomic::numeric_unary_minus)?;
                 }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
@@ -454,6 +445,43 @@ impl<'a> Interpreter<'a> {
         let b = atomized_b.one()?;
         let result = compare(a, b)?;
         self.stack.push(result.into());
+        Ok(())
+    }
+
+    fn arithmetic<F>(&mut self, op: F) -> error::Result<()>
+    where
+        F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<atomic::Atomic>,
+    {
+        let b = self.stack.pop().unwrap();
+        let a = self.stack.pop().unwrap();
+        // https://www.w3.org/TR/xpath-31/#id-arithmetic
+        // 2. If an operand is the empty sequence, the result is the empty sequence
+        if a.is_empty_sequence() || b.is_empty_sequence() {
+            self.stack.push(stack::Value::Empty);
+            return Ok(());
+        }
+        let mut atomized_a = a.atomized(self.dynamic_context.xot);
+        let mut atomized_b = b.atomized(self.dynamic_context.xot);
+        let a = atomized_a.one()?;
+        let b = atomized_b.one()?;
+        let result = op(a, b)?;
+        self.stack.push(result.into());
+        Ok(())
+    }
+
+    fn unary_arithmetic<F>(&mut self, op: F) -> error::Result<()>
+    where
+        F: Fn(atomic::Atomic) -> error::Result<atomic::Atomic>,
+    {
+        let a = self.stack.pop().unwrap();
+        if a.is_empty_sequence() {
+            self.stack.push(stack::Value::Empty);
+            return Ok(());
+        }
+        let mut atomized_a = a.atomized(self.dynamic_context.xot);
+        let a = atomized_a.one()?;
+        let value = op(a)?;
+        self.stack.push(value.into());
         Ok(())
     }
 
