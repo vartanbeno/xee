@@ -346,4 +346,13 @@ mod tests {
         assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
         assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());
     }
+
+    #[test]
+    fn test_compare_integer_and_integer() {
+        let a: atomic::Atomic = 1i64.into();
+        let b: atomic::Atomic = 1i64.into();
+
+        assert!(comparison_op::<EqualOp>(a.clone(), b.clone()).unwrap());
+        assert!(!comparison_op::<NotEqualOp>(a, b).unwrap());
+    }
 }
