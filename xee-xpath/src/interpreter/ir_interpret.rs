@@ -341,9 +341,7 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_map(&mut self, map: &ir::Map, span: SourceSpan) -> Result<()> {
-        // place the resulting sequence on the stack
-        let new_sequence = ir::Name("xee_new_sequence".to_string());
-        self.scopes.push_name(&new_sequence);
+        // create new build sequence on build stack
         self.builder.emit(Instruction::BuildNew, span);
 
         let (loop_start, loop_end) =
@@ -356,8 +354,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_expr(&map.return_expr)?;
         self.scopes.pop_name();
 
-        // push result to new sequence
-        self.compile_variable(&new_sequence, span)?;
+        // push result to build
         self.builder.emit(Instruction::BuildPush, span);
 
         // clean up the var_name item
@@ -369,17 +366,14 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         self.builder.emit(Instruction::BuildComplete, span);
-        // pop new sequence name & sequence length name & index
-        self.scopes.pop_name();
+        // pop sequence length name & index;
         self.scopes.pop_name();
         self.scopes.pop_name();
         Ok(())
     }
 
     fn compile_filter(&mut self, filter: &ir::Filter, span: SourceSpan) -> Result<()> {
-        // place the resulting sequence on the stack
-        let new_sequence = ir::Name("xee_new_sequence".to_string());
-        self.scopes.push_name(&new_sequence);
+        // create new build sequence on build stack
         self.builder.emit(Instruction::BuildNew, span);
 
         let (loop_start, loop_end) =
@@ -414,8 +408,7 @@ impl<'a> InterpreterCompiler<'a> {
         let iterate = self.builder.emit_jump_forward(JumpCondition::Always, span);
 
         self.builder.patch_jump(is_included);
-        // push item to new sequence
-        self.compile_variable(&new_sequence, span)?;
+        // push item to new build
         self.builder.emit(Instruction::BuildPush, span);
 
         self.builder.patch_jump(iterate);
@@ -426,8 +419,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_sequence_loop_end(span);
 
         self.builder.emit(Instruction::BuildComplete, span);
-        // pop new sequence name & sequence length name & index
-        self.scopes.pop_name();
+        // pop new sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
         Ok(())

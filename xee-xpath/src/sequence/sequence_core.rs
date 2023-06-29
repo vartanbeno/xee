@@ -1,3 +1,7 @@
+// This contains a sequence abstraction that is useful
+// in interfacing with external APIs. It's a layer over the
+// stack::Value abstraction.
+
 use xot::Xot;
 
 use crate::atomic;
@@ -33,7 +37,6 @@ impl Sequence {
             stack::Value::One(_) => 1,
             stack::Value::Many(items) => items.len(),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
-            stack::Value::Build(_) => unreachable!(),
         }
     }
 

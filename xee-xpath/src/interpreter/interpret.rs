@@ -29,6 +29,7 @@ pub(crate) struct Interpreter<'a> {
     program: &'a Program,
     dynamic_context: &'a DynamicContext<'a>,
     stack: Vec<stack::Value>,
+    build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
 }
 
@@ -38,6 +39,7 @@ impl<'a> Interpreter<'a> {
             program,
             dynamic_context,
             stack: vec![],
+            build_stack: vec![],
             frames: ArrayVec::new(),
         }
     }
@@ -366,16 +368,15 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(item.into())
                 }
                 EncodedInstruction::BuildNew => {
-                    self.stack
-                        .push(stack::Value::Build(stack::BuildSequence::empty()));
+                    self.build_stack.push(Vec::new());
                 }
                 EncodedInstruction::BuildPush => {
-                    let build = self.pop_build();
-                    let stack_value = self.stack.pop().unwrap();
-                    build.borrow_mut().push_value(stack_value);
+                    let build = &mut self.build_stack.last_mut().unwrap();
+                    let value = self.stack.pop().unwrap();
+                    build_push(build, value)?;
                 }
                 EncodedInstruction::BuildComplete => {
-                    let build = self.pop_build();
+                    let build = self.build_stack.pop().unwrap();
                     self.stack.push(build.into());
                 }
                 EncodedInstruction::IsNumeric => {
@@ -523,15 +524,6 @@ impl<'a> Interpreter<'a> {
         Ok((a, b))
     }
 
-    fn pop_build(&mut self) -> stack::BuildSequence {
-        let value = self.stack.pop().unwrap();
-        if let stack::Value::Build(build) = value {
-            build
-        } else {
-            unreachable!();
-        }
-    }
-
     fn pop_atomized2(
         &mut self,
     ) -> (
@@ -589,6 +581,16 @@ impl<'a> Interpreter<'a> {
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }
+}
+
+fn build_push(build: &mut Vec<sequence::Item>, value: stack::Value) -> error::Result<()> {
+    match value {
+        stack::Value::Empty => {}
+        stack::Value::One(item) => build.push(item),
+        stack::Value::Many(items) => build.extend(items.iter().cloned()),
+        stack::Value::Absent => return Err(error::Error::ComponentAbsentInDynamicContext)?,
+    }
+    Ok(())
 }
 
 #[cfg(test)]

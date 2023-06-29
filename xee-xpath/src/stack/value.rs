@@ -1,3 +1,8 @@
+// the stack::Value abstraction is a sequence partitioned into special cases:
+// empty sequence, sequence with a single item, and sequence with multiple
+// items. This partitioning makes it easier to optimize various common cases
+// and keeps the code cleaner.
+
 use ahash::{HashSet, HashSetExt};
 use std::rc::Rc;
 use xot::Xot;
@@ -14,7 +19,6 @@ pub(crate) enum Value {
     One(sequence::Item),
     Many(Rc<Vec<sequence::Item>>),
     Absent,
-    Build(stack::BuildSequence),
 }
 
 impl Value {
@@ -24,7 +28,6 @@ impl Value {
             Value::One(_) => 1,
             Value::Many(items) => items.len(),
             Value::Absent => panic!("Don't know how to handle absent"),
-            Value::Build(_) => unreachable!(),
         }
     }
 
@@ -43,7 +46,6 @@ impl Value {
                 .ok_or(error::Error::Type)
                 .map(|item| item.clone()),
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
-            Value::Build(_) => unreachable!(),
         }
     }
     pub(crate) fn items(&self) -> ValueIter {
@@ -68,7 +70,6 @@ impl Value {
                 }
             }
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
-            Value::Build(_) => unreachable!(),
         }
     }
 
@@ -82,7 +83,6 @@ impl Value {
             Value::One(item) => item.string_value(xot),
             Value::Many(_) => Err(error::Error::Type),
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
-            Value::Build(_) => unreachable!(),
         }
     }
 
@@ -228,7 +228,6 @@ impl ValueIter {
             Value::Absent => ValueIter::AbsentIter(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),
-            Value::Build(_) => unreachable!(),
         }
     }
 }
@@ -267,7 +266,6 @@ impl<'a> AtomizedIter<'a> {
             Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),
-            Value::Build(_) => unreachable!(),
         }
     }
 }
