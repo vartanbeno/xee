@@ -1,8 +1,6 @@
-use ahash::{HashSet, HashSetExt};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::error;
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,34 +41,6 @@ impl From<BuildSequence> for stack::Value {
         sequence.into_stack_value()
     }
 }
-
-// impl TryFrom<stack::Value> for stack::Sequence {
-//     type Error = error::Error;
-
-//     fn try_from(value: stack::Value) -> error::Result<Self> {
-//         value.to_sequence()
-//     }
-// }
-
-// impl TryFrom<&stack::Value> for stack::Sequence {
-//     type Error = error::Error;
-
-//     fn try_from(value: &stack::Value) -> error::Result<Self> {
-//         value.to_sequence()
-//     }
-// }
-
-// impl From<Vec<stack::Item>> for stack::Sequence {
-//     fn from(items: Vec<stack::Item>) -> Self {
-//         Self::new(InnerSequence::new(items))
-//     }
-// }
-
-// impl From<stack::Item> for stack::Sequence {
-//     fn from(item: stack::Item) -> Self {
-//         Self::new(InnerSequence::new(vec![item]))
-//     }
-// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct InnerSequence {
