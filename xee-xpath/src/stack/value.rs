@@ -2,6 +2,7 @@ use ahash::{HashSet, HashSetExt};
 use std::rc::Rc;
 use xot::Xot;
 
+use crate::atomic;
 use crate::error;
 use crate::output;
 use crate::stack;
@@ -53,8 +54,8 @@ impl Value {
         ValueIter::new(self.clone())
     }
 
-    pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
-        stack::AtomizedIter::new(self.clone(), xot)
+    pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
+        AtomizedIter::new(self.clone(), xot)
     }
 
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
@@ -242,6 +243,90 @@ impl Iterator for ValueIter {
             ValueIter::ItemIter(iter) => iter.next().map(Ok),
             ValueIter::ManyIter(iter) => iter.next().map(Ok),
             ValueIter::AbsentIter(iter) => iter.next(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum AtomizedIter<'a> {
+    Empty,
+    Item(stack::AtomizedItemIter),
+    Many(AtomizedManyIter<'a>),
+    Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
+    Absent(std::iter::Once<error::Result<atomic::Atomic>>),
+}
+
+impl<'a> AtomizedIter<'a> {
+    fn new(value: Value, xot: &'a Xot) -> Self {
+        match value {
+            Value::Empty => AtomizedIter::Empty,
+            Value::Item(item) => AtomizedIter::Item(stack::AtomizedItemIter::new(item, xot)),
+            Value::Many(items) => AtomizedIter::Many(AtomizedManyIter::new(
+                Rc::as_ref(&items).clone().into_iter(),
+                xot,
+            )),
+            Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
+                error::Error::ComponentAbsentInDynamicContext,
+            ))),
+            Value::Build(_) => unreachable!(),
+        }
+    }
+}
+
+impl<'a> Iterator for AtomizedIter<'a> {
+    type Item = error::Result<atomic::Atomic>;
+
+    fn next(&mut self) -> Option<error::Result<atomic::Atomic>> {
+        match self {
+            AtomizedIter::Empty => None,
+            AtomizedIter::Item(iter) => iter.next(),
+            AtomizedIter::Many(iter) => iter.next(),
+            AtomizedIter::Erroring(iter) => iter.next(),
+            AtomizedIter::Absent(iter) => iter.next(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct AtomizedManyIter<'a> {
+    xot: &'a Xot,
+    iter: std::vec::IntoIter<stack::Item>,
+    item_iter: Option<stack::AtomizedItemIter>,
+}
+
+impl<'a> AtomizedManyIter<'a> {
+    fn new(iter: std::vec::IntoIter<stack::Item>, xot: &'a Xot) -> Self {
+        Self {
+            xot,
+            iter,
+            item_iter: None,
+        }
+    }
+}
+
+impl<'a> Iterator for AtomizedManyIter<'a> {
+    type Item = error::Result<atomic::Atomic>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            // if there there are any more atoms in this node,
+            // supply those
+            if let Some(item_iter) = &mut self.item_iter {
+                if let Some(item) = item_iter.next() {
+                    return Some(item);
+                } else {
+                    self.item_iter = None;
+                }
+            }
+            // if not, move on to the next item
+            let item = self.iter.next();
+            if let Some(item) = item {
+                self.item_iter = Some(stack::AtomizedItemIter::new(item, self.xot));
+                continue;
+            } else {
+                // no more items, we're done
+                return None;
+            }
         }
     }
 }

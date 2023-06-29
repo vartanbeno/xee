@@ -24,10 +24,7 @@ impl Sequence {
     }
 
     pub fn is_empty(&self) -> bool {
-        match &self.stack_value {
-            stack::Value::Empty => true,
-            _ => false,
-        }
+        self.stack_value.is_empty_sequence()
     }
 
     pub fn len(&self) -> usize {
@@ -64,11 +61,8 @@ impl Sequence {
         }
     }
 
-    pub fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
-        AtomizedIter {
-            atomized_iter: self.stack_value.atomized(xot),
-            xot,
-        }
+    pub fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
+        self.stack_value.atomized(xot)
     }
 
     pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
@@ -124,7 +118,7 @@ impl From<output::Item> for Sequence {
 impl From<Vec<output::Item>> for Sequence {
     fn from(items: Vec<output::Item>) -> Self {
         Self {
-            stack_value: items.into()
+            stack_value: items.into(),
         }
     }
 }
@@ -208,23 +202,23 @@ impl Iterator for NodeIter {
     }
 }
 
-pub struct AtomizedIter<'a> {
-    atomized_iter: stack::AtomizedIter<'a>,
-    xot: &'a Xot,
-}
+// pub struct AtomizedIter<'a> {
+//     atomized_iter: stack::AtomizedIter<'a>,
+//     xot: &'a Xot,
+// }
 
-impl<'a> Iterator for AtomizedIter<'a> {
-    type Item = error::Result<atomic::Atomic>;
+// impl<'a> Iterator for AtomizedIter<'a> {
+//     type Item = error::Result<atomic::Atomic>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.atomized_iter
-            .next()
-            .map(|a| a.map_err(|_| error::Error::Type))
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.atomized_iter
+//             .next()
+//             .map(|a| a.map_err(|_| error::Error::Type))
+//     }
+// }
 
 pub struct UnboxedAtomizedIter<'a, F> {
-    atomized_iter: output::AtomizedIter<'a>,
+    atomized_iter: stack::AtomizedIter<'a>,
     extract: F,
 }
 
