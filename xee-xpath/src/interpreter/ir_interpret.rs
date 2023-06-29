@@ -560,6 +560,7 @@ mod tests {
     use crate::error::Result;
     use crate::output;
     use crate::run::evaluate;
+    use crate::sequence;
     use crate::stack;
     use crate::xml;
     use crate::xpath::XPath;
@@ -567,7 +568,7 @@ mod tests {
     fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
         output::Sequence::from(
             node.iter()
-                .map(|&node| output::Item::from(xml::Node::Xot(node)))
+                .map(|&node| sequence::Item::from(xml::Node::Xot(node)))
                 .collect::<Vec<_>>(),
         )
     }
@@ -583,7 +584,7 @@ mod tests {
 
     fn run_with_variables(
         s: &str,
-        variables: &[(ast::Name, Vec<output::Item>)],
+        variables: &[(ast::Name, Vec<sequence::Item>)],
     ) -> Result<stack::Value> {
         let xot = Xot::new();
         let namespaces = Namespaces::new(None, None);
@@ -1325,7 +1326,7 @@ mod tests {
             "$foo",
             &[(
                 ast::Name::without_ns("foo"),
-                vec![output::Item::from(atomic::Atomic::from("FOO"))]
+                vec![sequence::Item::from(atomic::Atomic::from("FOO"))]
             )],
         ))
     }
@@ -1337,11 +1338,11 @@ mod tests {
             &[
                 (
                     ast::Name::without_ns("foo"),
-                    vec![output::Item::from(atomic::Atomic::from(1i64))]
+                    vec![sequence::Item::from(atomic::Atomic::from(1i64))]
                 ),
                 (
                     ast::Name::without_ns("bar"),
-                    vec![output::Item::from(atomic::Atomic::from(2i64))]
+                    vec![sequence::Item::from(atomic::Atomic::from(2i64))]
                 )
             ]
         ))

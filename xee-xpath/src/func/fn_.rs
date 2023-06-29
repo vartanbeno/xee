@@ -6,6 +6,7 @@ use crate::context::{DynamicContext, FunctionKind, StaticFunctionDescription};
 use crate::error;
 use crate::occurrence::Occurrence;
 use crate::output;
+use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
 
@@ -59,7 +60,7 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[output::Item]) -> i64 {
+fn count(arg: &[sequence::Item]) -> i64 {
     arg.len() as i64
 }
 
@@ -82,7 +83,7 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: Option<output::Item>) -> error::Result<String> {
+fn string(context: &DynamicContext, arg: Option<sequence::Item>) -> error::Result<String> {
     if let Some(arg) = arg {
         arg.string_value(context.xot)
     } else {
@@ -91,12 +92,12 @@ fn string(context: &DynamicContext, arg: Option<output::Item>) -> error::Result<
 }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[output::Item]) -> bool {
+fn exists(arg: &[sequence::Item]) -> bool {
     !arg.is_empty()
 }
 
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
-fn exactly_one(arg: &[output::Item]) -> error::Result<output::Item> {
+fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
         Ok(arg[0].clone())
     } else {
@@ -105,7 +106,7 @@ fn exactly_one(arg: &[output::Item]) -> error::Result<output::Item> {
 }
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[output::Item]) -> bool {
+fn empty(arg: &[sequence::Item]) -> bool {
     arg.is_empty()
 }
 
@@ -121,7 +122,7 @@ fn not(
 ) -> error::Result<output::Sequence> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
-    Ok(output::Sequence::from(vec![output::Item::from(
+    Ok(output::Sequence::from(vec![sequence::Item::from(
         atomic::Atomic::from(!b),
     )]))
 }
@@ -146,7 +147,7 @@ fn untyped_atomic(
     // TODO: this needs more work to implement:
     // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
     let s: String = value.try_into()?;
-    Ok(output::Sequence::from(vec![output::Item::from(
+    Ok(output::Sequence::from(vec![sequence::Item::from(
         atomic::Atomic::from(s),
     )]))
 }

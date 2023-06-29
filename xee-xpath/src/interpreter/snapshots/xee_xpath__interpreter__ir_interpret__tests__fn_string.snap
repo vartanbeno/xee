@@ -4,7 +4,7 @@ expression: "run_xml(r#\"<doc><p>Hello world!</p></doc>\"#, \"/doc/p/string()\")
 ---
 Ok(
     Sequence {
-        stack_value: Item(
+        stack_value: One(
             Atomic(
                 String(
                     "Hello world!",

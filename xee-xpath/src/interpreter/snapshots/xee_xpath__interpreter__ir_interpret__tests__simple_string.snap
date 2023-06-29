@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"'hello'\")"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             String(
                 "hello",

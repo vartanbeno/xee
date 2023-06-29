@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"1 + (let $x := 2 return $x + 10)\")"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             Integer(
                 13,

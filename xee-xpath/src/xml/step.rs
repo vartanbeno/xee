@@ -2,6 +2,7 @@ use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
+use crate::sequence;
 use crate::stack;
 use crate::xml;
 
@@ -15,7 +16,7 @@ pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Va
     let mut new_items = Vec::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
-            new_items.push(stack::Item::Node(axis_node));
+            new_items.push(sequence::Item::Node(axis_node));
         }
     }
     new_items.into()
@@ -229,7 +230,7 @@ mod tests {
 
     fn xot_nodes_to_value(node: &[xot::Node]) -> stack::Value {
         node.iter()
-            .map(|&node| stack::Item::Node(xml::Node::Xot(node)))
+            .map(|&node| sequence::Item::Node(xml::Node::Xot(node)))
             .collect::<Vec<_>>()
             .into()
     }

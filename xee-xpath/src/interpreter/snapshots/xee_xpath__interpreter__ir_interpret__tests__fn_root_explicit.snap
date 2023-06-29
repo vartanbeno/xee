@@ -4,7 +4,7 @@ expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#,\n    \"fn:root(doc/a) / 
 ---
 Ok(
     Sequence {
-        stack_value: Item(
+        stack_value: One(
             Atomic(
                 String(
                     "b",

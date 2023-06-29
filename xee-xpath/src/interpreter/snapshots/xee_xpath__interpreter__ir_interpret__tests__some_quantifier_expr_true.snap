@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"some $x in (1, 2, 3) satisfies $x eq 2\")"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             Boolean(
                 true,

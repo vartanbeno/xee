@@ -1,10 +1,10 @@
 use crate::context::{DynamicContext, StaticContext};
 use crate::error;
-use crate::output;
+use crate::sequence;
 use crate::xpath::XPath;
 
-pub trait Convert<V>: Fn(&Session, &output::Item) -> error::Result<V> {}
-impl<V, T> Convert<V> for T where T: Fn(&Session, &output::Item) -> error::Result<V> {}
+pub trait Convert<V>: Fn(&Session, &sequence::Item) -> error::Result<V> {}
+impl<V, T> Convert<V> for T where T: Fn(&Session, &sequence::Item) -> error::Result<V> {}
 
 // Recursion was very hard to get right. The trick is to use an intermediate
 // struct.
@@ -13,7 +13,7 @@ impl<V, T> Convert<V> for T where T: Fn(&Session, &output::Item) -> error::Resul
 // The dyn and dereference are unavoidable, as closures are not allowed
 // to refer to themselves:
 // https://github.com/rust-lang/rust/issues/46062
-type RecurseFn<'s, V> = &'s dyn Fn(&Session, &output::Item, &Recurse<'s, V>) -> error::Result<V>;
+type RecurseFn<'s, V> = &'s dyn Fn(&Session, &sequence::Item, &Recurse<'s, V>) -> error::Result<V>;
 
 pub struct Recurse<'s, V> {
     f: RecurseFn<'s, V>,
@@ -23,12 +23,12 @@ impl<'s, V> Recurse<'s, V> {
     pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
-    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
+    pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
         (self.f)(session, item, self)
     }
 }
 
-pub trait ConvertRecurse<V>: Fn(&Session, &output::Item) -> error::Result<V> {}
+pub trait ConvertRecurse<V>: Fn(&Session, &sequence::Item) -> error::Result<V> {}
 
 #[derive(Debug)]
 pub struct Queries<'s> {
@@ -127,7 +127,7 @@ impl<'s> Session<'s> {
 }
 
 pub trait Query<V> {
-    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V>;
+    fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V>;
 }
 
 #[derive(Debug, Clone)]
@@ -144,7 +144,7 @@ impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
+    pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.one(session.dynamic_context, Some(item))?;
         (self.convert)(session, &item)
@@ -155,7 +155,7 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<V> {
+    fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
         Self::execute(self, session, item)
     }
 }
@@ -169,7 +169,7 @@ impl OneRecurseQuery {
     pub fn execute<V>(
         &self,
         session: &Session,
-        item: &output::Item,
+        item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
@@ -192,7 +192,7 @@ impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Option<V>> {
+    pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
         let item = xpath.option(session.dynamic_context, Some(item))?;
         if let Some(item) = item {
@@ -210,7 +210,7 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Option<V>> {
+    fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Option<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -224,7 +224,7 @@ impl OptionRecurseQuery {
     pub fn execute<V>(
         &self,
         session: &Session,
-        item: &output::Item,
+        item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
@@ -251,7 +251,7 @@ impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Vec<V>> {
+    pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
         let sequence = xpath.many(session.dynamic_context, Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
@@ -269,7 +269,7 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &output::Item) -> error::Result<Vec<V>> {
+    fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Vec<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -283,7 +283,7 @@ impl ManyRecurseQuery {
     pub fn execute<V>(
         &self,
         session: &Session,
-        item: &output::Item,
+        item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
@@ -315,7 +315,6 @@ mod tests {
 
     use crate::atomic;
     use crate::error::Result;
-    use crate::output;
     use crate::xml;
 
     #[test]
@@ -334,7 +333,7 @@ mod tests {
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
         let r = q
-            .execute(&session, &output::Item::from(atomic::Atomic::from(1i64)))
+            .execute(&session, &sequence::Item::from(atomic::Atomic::from(1i64)))
             .unwrap();
         assert_eq!(r, 3);
     }
@@ -357,8 +356,8 @@ mod tests {
             .unwrap();
 
         let result_query =
-            queries.one("doc/result", |session: &Session, item: &output::Item| {
-                let f = |session: &Session, item: &output::Item, recurse: &Recurse<Expr>| {
+            queries.one("doc/result", |session: &Session, item: &sequence::Item| {
+                let f = |session: &Session, item: &sequence::Item, recurse: &Recurse<Expr>| {
                     let any_of = any_of_recurse.execute(session, item, recurse)?;
                     if let Some(any_of) = any_of {
                         return Ok(Expr::AnyOf(Box::new(any_of)));
@@ -380,11 +379,11 @@ mod tests {
 
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &output::Item::from(xml::Node::Xot(root)))?;
+        let r = result_query.execute(&session, &sequence::Item::from(xml::Node::Xot(root)))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
         let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &output::Item::from(xml::Node::Xot(root2)))?;
+        let r = result_query.execute(&session, &sequence::Item::from(xml::Node::Xot(root2)))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }

@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"fn:string(1)\")"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             String(
                 "1",

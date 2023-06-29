@@ -8,6 +8,7 @@ use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
 use crate::occurrence::Occurrence;
+use crate::sequence;
 use crate::stack;
 use crate::xml;
 
@@ -48,8 +49,8 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn start(
         &mut self,
         function_id: stack::FunctionId,
-        context_item: Option<&stack::Item>,
-        arguments: Vec<Vec<stack::Item>>,
+        context_item: Option<&sequence::Item>,
+        arguments: Vec<Vec<sequence::Item>>,
     ) {
         self.frames.push(Frame {
             function: function_id,
@@ -347,7 +348,7 @@ impl<'a> Interpreter<'a> {
                         Ordering::Greater => self.stack.push(stack::Value::Empty),
                         Ordering::Equal => self.stack.push(a.into()),
                         Ordering::Less => {
-                            let items = (a..=b).map(|i| i.into()).collect::<Vec<stack::Item>>();
+                            let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
                             self.stack.push(items.into())
                         }
                     }
@@ -485,7 +486,7 @@ impl<'a> Interpreter<'a> {
     fn pop_index(&mut self) -> usize {
         let value = self.stack.pop().unwrap();
         match value {
-            stack::Value::One(stack::Item::Atomic(a)) => {
+            stack::Value::One(sequence::Item::Atomic(a)) => {
                 let index = a.convert_to_integer().unwrap();
                 index as usize
             }
@@ -621,7 +622,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -682,7 +683,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -716,7 +717,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&stack::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
             vec![],
         );
         interpreter.run_actual()?;

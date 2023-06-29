@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::sequence;
 use crate::stack;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,11 +45,11 @@ impl From<BuildSequence> for stack::Value {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct InnerSequence {
-    pub(crate) items: Vec<stack::Item>,
+    pub(crate) items: Vec<sequence::Item>,
 }
 
 impl InnerSequence {
-    pub(crate) fn new(items: Vec<stack::Item>) -> Self {
+    pub(crate) fn new(items: Vec<sequence::Item>) -> Self {
         Self { items }
     }
 
@@ -68,13 +69,13 @@ impl InnerSequence {
         match value {
             stack::Value::Empty => {}
             stack::Value::One(item) => self.items.push(item),
-            stack::Value::Many(items) => self.items.extend(items.as_ref().into_iter().cloned()),
+            stack::Value::Many(items) => self.items.extend(items.as_ref().iter().cloned()),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
             stack::Value::Build(_) => unreachable!(),
         }
     }
 
-    pub(crate) fn push(&mut self, item: &stack::Item) {
+    pub(crate) fn push(&mut self, item: &sequence::Item) {
         self.items.push(item.clone());
     }
 

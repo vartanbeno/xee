@@ -1,9 +1,9 @@
 ---
 source: xee-xpath/src/interpreter/ir_interpret.rs
-expression: "run_with_variables(\"$foo + $bar\",\n    &[(ast::Name::without_ns(\"foo\"),\n                    vec![output :: Item :: from(output :: Atomic :: from(1))]),\n                (ast::Name::without_ns(\"bar\"),\n                    vec![output :: Item :: from(output :: Atomic :: from(2))])])"
+expression: "run_with_variables(\"$foo + $bar\",\n    &[(ast::Name::without_ns(\"foo\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(1i64))]),\n                (ast::Name::without_ns(\"bar\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(2i64))])])"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             Integer(
                 3,

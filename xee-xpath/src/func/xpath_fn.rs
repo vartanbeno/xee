@@ -6,6 +6,7 @@ mod test {
 
     use crate::atomic;
     use crate::output;
+    use crate::sequence;
     use crate::{DynamicContext, Namespaces, StaticContext};
 
     #[xpath_fn("fn:foo() as xs:string")]
@@ -25,7 +26,7 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let expected =
-            output::Sequence::from(vec![output::Item::from(atomic::Atomic::from("foo"))]);
+            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
         assert_eq!(foo::WRAPPER(&context, &[]), Ok(expected));
     }
 
@@ -35,11 +36,12 @@ mod test {
         let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
-        let expected = output::Sequence::from(vec![output::Item::from(atomic::Atomic::from("42"))]);
+        let expected =
+            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
         assert_eq!(
             int_to_string::WRAPPER(
                 &context,
-                &[output::Sequence::from(vec![output::Item::from(
+                &[output::Sequence::from(vec![sequence::Item::from(
                     atomic::Atomic::from(42i64)
                 )])]
             ),

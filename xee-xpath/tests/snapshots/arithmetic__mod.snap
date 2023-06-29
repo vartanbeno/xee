@@ -4,7 +4,7 @@ expression: "evaluate_without_focus(\"12 mod 5\")"
 ---
 Ok(
     Sequence {
-        stack_value: Item(
+        stack_value: One(
             Atomic(
                 Integer(
                     2,

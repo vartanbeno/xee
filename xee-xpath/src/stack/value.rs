@@ -5,14 +5,15 @@ use xot::Xot;
 use crate::atomic;
 use crate::error;
 use crate::output;
+use crate::sequence;
 use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
     Empty,
-    One(stack::Item),
-    Many(Rc<Vec<stack::Item>>),
+    One(sequence::Item),
+    Many(Rc<Vec<sequence::Item>>),
     Absent,
     Build(stack::BuildSequence),
 }
@@ -32,7 +33,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn index(self, index: usize) -> error::Result<stack::Item> {
+    pub(crate) fn index(self, index: usize) -> error::Result<sequence::Item> {
         match self {
             Value::Empty => Err(error::Error::Type),
             Value::One(item) => {
@@ -65,7 +66,7 @@ impl Value {
             Value::Many(items) => {
                 // handle the case where the first item is a node
                 // it has to be a singleton otherwise
-                if matches!(items[0], stack::Item::Node(_)) {
+                if matches!(items[0], sequence::Item::Node(_)) {
                     Ok(true)
                 } else {
                     Err(error::Error::Type)
@@ -125,17 +126,17 @@ impl Value {
         let mut s = HashSet::new();
         for item in self.items() {
             let node = match item? {
-                stack::Item::Node(node) => node,
-                stack::Item::Atomic(..) => return Err(error::Error::Type),
-                stack::Item::Function(..) => return Err(error::Error::Type),
+                sequence::Item::Node(node) => node,
+                sequence::Item::Atomic(..) => return Err(error::Error::Type),
+                sequence::Item::Function(..) => return Err(error::Error::Type),
             };
             s.insert(node);
         }
         for item in other.items() {
             let node = match item? {
-                stack::Item::Node(node) => node,
-                stack::Item::Atomic(..) => return Err(error::Error::Type),
-                stack::Item::Function(..) => return Err(error::Error::Type),
+                sequence::Item::Node(node) => node,
+                sequence::Item::Atomic(..) => return Err(error::Error::Type),
+                sequence::Item::Function(..) => return Err(error::Error::Type),
             };
             s.insert(node);
         }
@@ -144,22 +145,25 @@ impl Value {
         let mut nodes = s.into_iter().collect::<Vec<_>>();
         nodes.sort_by_key(|n| annotations.document_order(*n));
 
-        let items = nodes.into_iter().map(stack::Item::Node).collect::<Vec<_>>();
+        let items = nodes
+            .into_iter()
+            .map(sequence::Item::Node)
+            .collect::<Vec<_>>();
         Ok(items.into())
     }
 }
 
 impl<T> From<T> for Value
 where
-    T: Into<stack::Item>,
+    T: Into<sequence::Item>,
 {
     fn from(item: T) -> Self {
         Value::One(item.into())
     }
 }
 
-impl From<Vec<stack::Item>> for Value {
-    fn from(mut items: Vec<stack::Item>) -> Self {
+impl From<Vec<sequence::Item>> for Value {
+    fn from(mut items: Vec<sequence::Item>) -> Self {
         if items.is_empty() {
             Value::Empty
         } else if items.len() == 1 {
@@ -175,7 +179,7 @@ impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
 
     fn try_from(value: &'a stack::Value) -> error::Result<&'a stack::Closure> {
         match value {
-            stack::Value::One(stack::Item::Function(c)) => Ok(c),
+            stack::Value::One(sequence::Item::Function(c)) => Ok(c),
             // TODO: not handling this correctly yet
             // stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_function()),
             _ => Err(error::Error::Type),
@@ -196,7 +200,7 @@ impl TryFrom<&stack::Value> for xml::Node {
 
     fn try_from(value: &stack::Value) -> error::Result<xml::Node> {
         match value {
-            stack::Value::One(stack::Item::Node(n)) => Ok(*n),
+            stack::Value::One(sequence::Item::Node(n)) => Ok(*n),
             _ => Err(error::Error::Type),
         }
     }
@@ -215,9 +219,9 @@ impl PartialEq for Value {
 
 pub(crate) enum ValueIter {
     Empty,
-    OneIter(std::iter::Once<stack::Item>),
-    ManyIter(std::vec::IntoIter<stack::Item>),
-    AbsentIter(std::iter::Once<error::Result<stack::Item>>),
+    OneIter(std::iter::Once<sequence::Item>),
+    ManyIter(std::vec::IntoIter<sequence::Item>),
+    AbsentIter(std::iter::Once<error::Result<sequence::Item>>),
 }
 
 impl ValueIter {
@@ -235,7 +239,7 @@ impl ValueIter {
 }
 
 impl Iterator for ValueIter {
-    type Item = error::Result<stack::Item>;
+    type Item = error::Result<sequence::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -250,7 +254,7 @@ impl Iterator for ValueIter {
 #[derive(Clone)]
 pub enum AtomizedIter<'a> {
     Empty,
-    One(stack::AtomizedItemIter),
+    One(sequence::AtomizedItemIter),
     Many(AtomizedManyIter<'a>),
     Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
     Absent(std::iter::Once<error::Result<atomic::Atomic>>),
@@ -260,7 +264,7 @@ impl<'a> AtomizedIter<'a> {
     fn new(value: Value, xot: &'a Xot) -> Self {
         match value {
             Value::Empty => AtomizedIter::Empty,
-            Value::One(item) => AtomizedIter::One(stack::AtomizedItemIter::new(item, xot)),
+            Value::One(item) => AtomizedIter::One(sequence::AtomizedItemIter::new(item, xot)),
             Value::Many(items) => AtomizedIter::Many(AtomizedManyIter::new(
                 Rc::as_ref(&items).clone().into_iter(),
                 xot,
@@ -290,12 +294,12 @@ impl<'a> Iterator for AtomizedIter<'a> {
 #[derive(Clone)]
 pub struct AtomizedManyIter<'a> {
     xot: &'a Xot,
-    iter: std::vec::IntoIter<stack::Item>,
-    item_iter: Option<stack::AtomizedItemIter>,
+    iter: std::vec::IntoIter<sequence::Item>,
+    item_iter: Option<sequence::AtomizedItemIter>,
 }
 
 impl<'a> AtomizedManyIter<'a> {
-    fn new(iter: std::vec::IntoIter<stack::Item>, xot: &'a Xot) -> Self {
+    fn new(iter: std::vec::IntoIter<sequence::Item>, xot: &'a Xot) -> Self {
         Self {
             xot,
             iter,
@@ -321,7 +325,7 @@ impl<'a> Iterator for AtomizedManyIter<'a> {
             // if not, move on to the next item
             let item = self.iter.next();
             if let Some(item) = item {
-                self.item_iter = Some(stack::AtomizedItemIter::new(item, self.xot));
+                self.item_iter = Some(sequence::AtomizedItemIter::new(item, self.xot));
                 continue;
             } else {
                 // no more items, we're done

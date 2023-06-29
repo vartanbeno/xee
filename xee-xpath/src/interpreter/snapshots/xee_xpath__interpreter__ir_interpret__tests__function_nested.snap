@@ -3,7 +3,7 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"function($x) { function($y) { $y + 2 }($x + 1) } (5)\")"
 ---
 Ok(
-    Item(
+    One(
         Atomic(
             Integer(
                 8,

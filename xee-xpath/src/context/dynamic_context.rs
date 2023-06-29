@@ -6,8 +6,7 @@ use xot::Xot;
 use xee_xpath_ast::ast;
 
 use crate::error::Error;
-use crate::output;
-use crate::stack;
+use crate::sequence;
 use crate::xml;
 
 use super::static_context::StaticContext;
@@ -16,7 +15,7 @@ pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub(crate) static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
-    pub(crate) variables: HashMap<ast::Name, Vec<stack::Item>>,
+    pub(crate) variables: HashMap<ast::Name, Vec<sequence::Item>>,
 }
 
 impl<'a> Debug for DynamicContext<'a> {
@@ -55,7 +54,7 @@ impl<'a> DynamicContext<'a> {
     pub fn with_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: &[(ast::Name, Vec<output::Item>)],
+        variables: &[(ast::Name, Vec<sequence::Item>)],
     ) -> Self {
         Self {
             xot,
@@ -68,7 +67,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub(crate) fn arguments(&self) -> Result<Vec<Vec<stack::Item>>, Error> {
+    pub(crate) fn arguments(&self) -> Result<Vec<Vec<sequence::Item>>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.variables {
             let items = self
