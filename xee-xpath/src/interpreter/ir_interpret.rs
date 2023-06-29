@@ -344,7 +344,7 @@ impl<'a> InterpreterCompiler<'a> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
-        self.builder.emit(Instruction::SequenceNew, span);
+        self.builder.emit(Instruction::BuildNew, span);
 
         let (loop_start, loop_end) =
             self.compile_sequence_loop_init(&map.var_atom, &map.context_names, span)?;
@@ -358,7 +358,7 @@ impl<'a> InterpreterCompiler<'a> {
 
         // push result to new sequence
         self.compile_variable(&new_sequence, span)?;
-        self.builder.emit(Instruction::SequencePush, span);
+        self.builder.emit(Instruction::BuildPush, span);
 
         // clean up the var_name item
         self.builder.emit(Instruction::Pop, span);
@@ -379,7 +379,7 @@ impl<'a> InterpreterCompiler<'a> {
         // place the resulting sequence on the stack
         let new_sequence = ir::Name("xee_new_sequence".to_string());
         self.scopes.push_name(&new_sequence);
-        self.builder.emit(Instruction::SequenceNew, span);
+        self.builder.emit(Instruction::BuildNew, span);
 
         let (loop_start, loop_end) =
             self.compile_sequence_loop_init(&filter.var_atom, &filter.context_names, span)?;
@@ -415,7 +415,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(is_included);
         // push item to new sequence
         self.compile_variable(&new_sequence, span)?;
-        self.builder.emit(Instruction::SequencePush, span);
+        self.builder.emit(Instruction::BuildPush, span);
 
         self.builder.patch_jump(iterate);
         // no need to clean up the stack, as filter get is pushed onto sequence
