@@ -230,22 +230,22 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::Eq => {
-                    self.value_compare(comparison::value_eq)?;
+                    self.value_compare(atomic::comparison_op::<atomic::EqualOp>)?;
                 }
                 EncodedInstruction::Ne => {
-                    self.value_compare(comparison::value_ne)?;
+                    self.value_compare(atomic::comparison_op::<atomic::NotEqualOp>)?;
                 }
                 EncodedInstruction::Lt => {
-                    self.value_compare(comparison::value_lt)?;
+                    self.value_compare(atomic::comparison_op::<atomic::LessThanOp>)?;
                 }
                 EncodedInstruction::Le => {
-                    self.value_compare(comparison::value_le)?;
+                    self.value_compare(atomic::comparison_op::<atomic::LessThanOrEqualOp>)?;
                 }
                 EncodedInstruction::Gt => {
-                    self.value_compare(comparison::value_gt)?;
+                    self.value_compare(atomic::comparison_op::<atomic::GreaterThanOp>)?;
                 }
                 EncodedInstruction::Ge => {
-                    self.value_compare(comparison::value_ge)?;
+                    self.value_compare(atomic::comparison_op::<atomic::GreaterThanOrEqualOp>)?;
                 }
                 EncodedInstruction::GenEq => {
                     let (atomized_a, atomized_b) = self.pop_atomized2();
@@ -438,7 +438,7 @@ impl<'a> Interpreter<'a> {
 
     fn value_compare<F>(&mut self, compare: F) -> error::Result<()>
     where
-        F: Fn(&atomic::Atomic, &atomic::Atomic) -> error::Result<atomic::Atomic>,
+        F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<bool>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -452,7 +452,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = compare(&a, &b)?;
+        let result = compare(a, b)?;
         self.stack.push(result.into());
         Ok(())
     }

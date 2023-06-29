@@ -5,6 +5,6 @@ mod comparison;
 
 pub use atomic_core::Atomic;
 pub(crate) use comparison::{
-    comparison_op, ComparisonOp, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp,
-    LessThanOrEqualOp, NotEqualOp,
+    comparison_op, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
+    NotEqualOp,
 };
