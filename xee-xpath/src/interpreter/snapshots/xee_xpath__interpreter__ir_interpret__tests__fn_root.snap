@@ -4,19 +4,11 @@ expression: "run_xml(r#\"<doc><a/><b><c/></b></doc>\"#,\n    \"doc/a / fn:root()
 ---
 Ok(
     Sequence {
-        stack_value: Sequence(
-            Sequence(
-                RefCell {
-                    value: InnerSequence {
-                        items: [
-                            Atomic(
-                                String(
-                                    "doc",
-                                ),
-                            ),
-                        ],
-                    },
-                },
+        stack_value: Item(
+            Atomic(
+                String(
+                    "doc",
+                ),
             ),
         ),
     },

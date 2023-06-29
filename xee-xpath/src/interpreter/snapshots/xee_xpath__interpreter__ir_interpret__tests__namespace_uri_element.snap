@@ -4,35 +4,29 @@ expression: "run_xml(r#\"<doc xmlns=\"http://example.com/\" xmlns:e=\"http://exa
 ---
 Ok(
     Sequence {
-        stack_value: Sequence(
-            Sequence(
-                RefCell {
-                    value: InnerSequence {
-                        items: [
-                            Atomic(
-                                String(
-                                    "http://example.com/",
-                                ),
-                            ),
-                            Atomic(
-                                String(
-                                    "http://example.com/",
-                                ),
-                            ),
-                            Atomic(
-                                String(
-                                    "http://example.com/",
-                                ),
-                            ),
-                            Atomic(
-                                String(
-                                    "http://example.com/e",
-                                ),
-                            ),
-                        ],
-                    },
-                },
-            ),
+        stack_value: Many(
+            [
+                Atomic(
+                    String(
+                        "http://example.com/",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "http://example.com/",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "http://example.com/",
+                    ),
+                ),
+                Atomic(
+                    String(
+                        "http://example.com/e",
+                    ),
+                ),
+            ],
         ),
     },
 )

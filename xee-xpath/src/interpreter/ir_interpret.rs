@@ -368,6 +368,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end(span);
 
+        self.builder.emit(Instruction::BuildComplete, span);
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();
@@ -424,6 +425,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(loop_end);
         self.compile_sequence_loop_end(span);
 
+        self.builder.emit(Instruction::BuildComplete, span);
         // pop new sequence name & sequence length name & index
         self.scopes.pop_name();
         self.scopes.pop_name();

@@ -3,24 +3,18 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"(3, 4) ! (let $p := fn:position#0 return $p())\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            Integer(
-                                1,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                2,
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
+    Many(
+        [
+            Atomic(
+                Integer(
+                    1,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    2,
+                ),
+            ),
+        ],
     ),
 )

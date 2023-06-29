@@ -99,6 +99,10 @@ impl Value {
                 items.push(item);
                 Value::Many(items)
             }
+            (Value::Many(mut items1), Value::Many(items2)) => {
+                items1.extend(items2);
+                Value::Many(items1)
+            }
             _ => unreachable!(),
         }
     }

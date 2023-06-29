@@ -3,24 +3,18 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"(1, 2) ! (. + 1) ! (. + 2) ! (. + 3)\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            Integer(
-                                7,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                8,
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
+    Many(
+        [
+            Atomic(
+                Integer(
+                    7,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    8,
+                ),
+            ),
+        ],
     ),
 )

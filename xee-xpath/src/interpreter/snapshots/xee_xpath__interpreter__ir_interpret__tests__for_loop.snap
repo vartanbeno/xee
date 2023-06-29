@@ -3,39 +3,33 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"for $x in 1 to 5 return $x + 2\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            Integer(
-                                3,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                4,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                5,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                6,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                7,
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
+    Many(
+        [
+            Atomic(
+                Integer(
+                    3,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    4,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    5,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    6,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    7,
+                ),
+            ),
+        ],
     ),
 )

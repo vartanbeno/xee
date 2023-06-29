@@ -352,10 +352,7 @@ impl<'a> Interpreter<'a> {
                         }
                     }
                 }
-                EncodedInstruction::SequenceNew => {
-                    self.stack
-                        .push(stack::Value::Build(stack::BuildSequence::empty()));
-                }
+
                 EncodedInstruction::SequenceLen => {
                     let value = self.stack.pop().unwrap();
                     self.stack.push((value.len() as i64).into());
@@ -367,10 +364,18 @@ impl<'a> Interpreter<'a> {
                     let item = value.index(index - 1)?;
                     self.stack.push(item.into())
                 }
-                EncodedInstruction::SequencePush => {
+                EncodedInstruction::BuildNew => {
+                    self.stack
+                        .push(stack::Value::Build(stack::BuildSequence::empty()));
+                }
+                EncodedInstruction::BuildPush => {
                     let build = self.pop_build();
                     let stack_value = self.stack.pop().unwrap();
                     build.borrow_mut().push_value(stack_value);
+                }
+                EncodedInstruction::BuildComplete => {
+                    let build = self.pop_build();
+                    self.stack.push(build.into());
                 }
                 EncodedInstruction::IsNumeric => {
                     let is_numeric = self.pop_is_numeric();

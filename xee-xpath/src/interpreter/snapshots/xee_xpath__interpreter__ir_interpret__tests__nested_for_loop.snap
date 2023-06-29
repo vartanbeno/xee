@@ -3,44 +3,38 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"for $i in (10, 20, 30), $j in (1, 2) return $i + $j\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [
-                        Atomic(
-                            Integer(
-                                11,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                12,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                21,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                22,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                31,
-                            ),
-                        ),
-                        Atomic(
-                            Integer(
-                                32,
-                            ),
-                        ),
-                    ],
-                },
-            },
-        ),
+    Many(
+        [
+            Atomic(
+                Integer(
+                    11,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    12,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    21,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    22,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    31,
+                ),
+            ),
+            Atomic(
+                Integer(
+                    32,
+                ),
+            ),
+        ],
     ),
 )

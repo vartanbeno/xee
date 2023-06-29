@@ -3,13 +3,5 @@ source: xee-xpath/src/interpreter/ir_interpret.rs
 expression: "run(\"() [. ge 1]\")"
 ---
 Ok(
-    Sequence(
-        Sequence(
-            RefCell {
-                value: InnerSequence {
-                    items: [],
-                },
-            },
-        ),
-    ),
+    Empty,
 )

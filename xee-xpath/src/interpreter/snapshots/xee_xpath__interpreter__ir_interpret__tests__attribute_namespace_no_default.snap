@@ -4,19 +4,11 @@ expression: "run_xml_default_ns(r#\"<doc xmlns=\"http://example.com\" a=\"hello\
 ---
 Ok(
     Sequence {
-        stack_value: Sequence(
-            Sequence(
-                RefCell {
-                    value: InnerSequence {
-                        items: [
-                            Atomic(
-                                String(
-                                    "a",
-                                ),
-                            ),
-                        ],
-                    },
-                },
+        stack_value: Item(
+            Atomic(
+                String(
+                    "a",
+                ),
             ),
         ),
     },
