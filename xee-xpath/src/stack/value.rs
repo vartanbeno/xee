@@ -4,7 +4,6 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
-use crate::output;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
@@ -19,10 +18,6 @@ pub(crate) enum Value {
 }
 
 impl Value {
-    pub(crate) fn into_output(self) -> output::Sequence {
-        output::Sequence::new(self)
-    }
-
     pub(crate) fn len(self) -> usize {
         match self {
             Value::Empty => 0,

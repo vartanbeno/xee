@@ -8,15 +8,14 @@ use xot::Xot;
 use crate::atomic;
 use crate::error;
 use crate::occurrence::Occurrence;
-use crate::output;
 use crate::sequence;
 
-impl output::Sequence {
+impl sequence::Sequence {
     fn sequence_type_matching(
         &self,
         t: &ast::SequenceType,
         xot: &Xot,
-    ) -> error::Result<Cow<output::Sequence>> {
+    ) -> error::Result<Cow<sequence::Sequence>> {
         match t {
             ast::SequenceType::Empty => {
                 if self.is_empty() {
@@ -36,7 +35,7 @@ impl output::Sequence {
         &self,
         occurrence_item: &ast::Item,
         xot: &Xot,
-    ) -> error::Result<Cow<output::Sequence>> {
+    ) -> error::Result<Cow<sequence::Sequence>> {
         let sequence = if occurrence_item.item_type.is_generalized_atomic_type() {
             Cow::Owned(self.atomized_sequence(xot)?)
         } else {
@@ -108,7 +107,7 @@ mod tests {
 
     use crate::xml;
 
-    fn is_owned(sequence: error::Result<Cow<output::Sequence>>) -> bool {
+    fn is_owned(sequence: error::Result<Cow<sequence::Sequence>>) -> bool {
         if let Ok(sequence) = sequence {
             match sequence {
                 Cow::Borrowed(_) => false,
@@ -119,7 +118,7 @@ mod tests {
         }
     }
 
-    fn is_borrowed(sequence: error::Result<Cow<output::Sequence>>) -> bool {
+    fn is_borrowed(sequence: error::Result<Cow<sequence::Sequence>>) -> bool {
         !is_owned(sequence)
     }
 
@@ -129,13 +128,13 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
 
         let right_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
-        let wrong_amount_sequence = output::Sequence::from(vec![
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let wrong_amount_sequence = sequence::Sequence::from(vec![
             sequence::Item::from(atomic::Atomic::from(1i64)),
             sequence::Item::from(atomic::Atomic::from(2i64)),
         ]);
         let wrong_type_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
         let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
@@ -154,13 +153,13 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:anyAtomicType", &namespaces).unwrap();
 
         let right_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
-        let wrong_amount_sequence = output::Sequence::from(vec![
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let wrong_amount_sequence = sequence::Sequence::from(vec![
             sequence::Item::from(atomic::Atomic::from(1i64)),
             sequence::Item::from(atomic::Atomic::from(2i64)),
         ]);
         let right_type_sequence2 =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
         let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
@@ -183,12 +182,12 @@ mod tests {
         let node = xot.document_element(root).unwrap();
         let node = xml::Node::Xot(node);
         let right_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
-        let wrong_amount_sequence = output::Sequence::from(vec![
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let wrong_amount_sequence = sequence::Sequence::from(vec![
             sequence::Item::from(atomic::Atomic::from(1i64)),
             sequence::Item::from(atomic::Atomic::from(2i64)),
         ]);
-        let right_type_sequence2 = output::Sequence::from(vec![sequence::Item::from(node)]);
+        let right_type_sequence2 = sequence::Sequence::from(vec![sequence::Item::from(node)]);
 
         let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
@@ -208,12 +207,12 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:integer?", &namespaces).unwrap();
 
         let right_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
-        let wrong_amount_sequence = output::Sequence::from(vec![
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let wrong_amount_sequence = sequence::Sequence::from(vec![
             sequence::Item::from(atomic::Atomic::from(1i64)),
             sequence::Item::from(atomic::Atomic::from(2i64)),
         ]);
-        let right_empty_sequence = output::Sequence::empty();
+        let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();
 
         let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
@@ -233,12 +232,12 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
 
         let right_sequence =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
-        let right_multi_sequence = output::Sequence::from(vec![
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let right_multi_sequence = sequence::Sequence::from(vec![
             sequence::Item::from(atomic::Atomic::from(1i64)),
             sequence::Item::from(atomic::Atomic::from(2i64)),
         ]);
-        let right_empty_sequence = output::Sequence::empty();
+        let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();
 
         let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);

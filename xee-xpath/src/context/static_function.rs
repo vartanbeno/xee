@@ -5,7 +5,7 @@ use xee_xpath_ast::Namespaces;
 
 use crate::error;
 use crate::func::static_function_descriptions;
-use crate::output;
+use crate::sequence;
 use crate::stack;
 
 use super::dynamic_context::DynamicContext;
@@ -39,11 +39,13 @@ impl FunctionKind {
 
 // pub(crate) type StaticFunctionType =
 //     fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
-pub(crate) type StaticFunctionType =
-    fn(context: &DynamicContext, arguments: &[output::Sequence]) -> error::Result<output::Sequence>;
+pub(crate) type StaticFunctionType = fn(
+    context: &DynamicContext,
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence>;
 
 // pub(crate) type StaticFunctionType2 =
-//     fn(context: &DynamicContext, arguments: &[output::Sequence]) -> stack::Result<output::Sequence>;
+//     fn(context: &DynamicContext, arguments: &[sequence::Sequence]) -> stack::Result<sequence::Sequence>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
@@ -185,7 +187,7 @@ impl StaticFunction {
         context: &DynamicContext,
         arguments: &[stack::Value],
         closure_values: &[stack::Value],
-    ) -> error::Result<output::Sequence> {
+    ) -> error::Result<sequence::Sequence> {
         if arguments.len() != self.arity {
             return Err(error::Error::Type);
         }
@@ -211,7 +213,7 @@ impl StaticFunction {
     }
 }
 
-fn into_sequences(values: &[stack::Value]) -> Vec<output::Sequence> {
+fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
     values.iter().map(|v| v.into()).collect()
 }
 

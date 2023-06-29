@@ -558,15 +558,14 @@ mod tests {
     use crate::atomic;
     use crate::context::{DynamicContext, StaticContext};
     use crate::error::Result;
-    use crate::output;
     use crate::run::evaluate;
     use crate::sequence;
     use crate::stack;
     use crate::xml;
     use crate::xpath::XPath;
 
-    fn xot_nodes_to_items(node: &[xot::Node]) -> output::Sequence {
-        output::Sequence::from(
+    fn xot_nodes_to_items(node: &[xot::Node]) -> sequence::Sequence {
+        sequence::Sequence::from(
             node.iter()
                 .map(|&node| sequence::Item::from(xml::Node::Xot(node)))
                 .collect::<Vec<_>>(),
@@ -608,11 +607,11 @@ mod tests {
         xpath.run_value(&context, None)
     }
 
-    fn run_xml(xml: &str, xpath: &str) -> Result<output::Sequence> {
+    fn run_xml(xml: &str, xpath: &str) -> Result<sequence::Sequence> {
         evaluate(xml, xpath, None)
     }
 
-    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<output::Sequence> {
+    fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<sequence::Sequence> {
         evaluate(xml, xpath, Some(ns))
     }
 

@@ -3,7 +3,6 @@ use xot::Xot;
 use crate::atomic;
 use crate::error;
 use crate::occurrence;
-use crate::output;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
@@ -146,8 +145,8 @@ where
     }
 }
 
-impl From<output::Sequence> for stack::Value {
-    fn from(sequence: output::Sequence) -> Self {
+impl From<Sequence> for stack::Value {
+    fn from(sequence: Sequence) -> Self {
         sequence.stack_value
     }
 }
@@ -237,7 +236,7 @@ mod tests {
     #[test]
     fn test_one() {
         let item = sequence::Item::from(atomic::Atomic::from(true));
-        let sequence = output::Sequence::from(vec![item.clone()]);
+        let sequence = Sequence::from(vec![item.clone()]);
         assert_eq!(sequence.items().one().unwrap(), item);
     }
 }

@@ -4,10 +4,10 @@ mod tests {
     use miette::SourceSpan;
 
     use crate::ir::convert_xpath;
-    use crate::output;
+    use crate::sequence;
     use crate::{evaluate_without_focus, Error};
 
-    fn span(result: Result<output::Sequence, Error>) -> Option<SourceSpan> {
+    fn span(result: Result<sequence::Sequence, Error>) -> Option<SourceSpan> {
         match result.err().unwrap() {
             Error::SpannedType { span, .. } => Some(span),
             _ => None,

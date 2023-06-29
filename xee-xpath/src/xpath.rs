@@ -6,7 +6,6 @@ use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Prog
 use crate::ir;
 use crate::ir::IrConverter;
 use crate::occurrence::Occurrence;
-use crate::output;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
@@ -75,7 +74,7 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
-    ) -> Result<output::Sequence> {
+    ) -> Result<sequence::Sequence> {
         let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
         self.many(dynamic_context, Some(&item))
@@ -85,9 +84,9 @@ impl XPath {
         &self,
         dynamic_context: &DynamicContext,
         item: Option<&sequence::Item>,
-    ) -> Result<output::Sequence> {
+    ) -> Result<sequence::Sequence> {
         let value = self.run_value(dynamic_context, item)?;
-        Ok(value.into_output())
+        Ok(value.into())
     }
 
     pub fn one(
@@ -96,7 +95,8 @@ impl XPath {
         item: Option<&sequence::Item>,
     ) -> Result<sequence::Item> {
         let value = self.run_value(dynamic_context, item)?;
-        value.into_output().items().one()
+        let sequence: sequence::Sequence = value.into();
+        sequence.items().one()
     }
 
     pub fn option(
@@ -105,7 +105,8 @@ impl XPath {
         item: Option<&sequence::Item>,
     ) -> Result<Option<sequence::Item>> {
         let value = self.run_value(dynamic_context, item)?;
-        value.into_output().items().option()
+        let sequence: sequence::Sequence = value.into();
+        sequence.items().option()
     }
 }
 

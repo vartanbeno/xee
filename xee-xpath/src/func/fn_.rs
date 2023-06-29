@@ -5,7 +5,6 @@ use crate::atomic;
 use crate::context::{DynamicContext, FunctionKind, StaticFunctionDescription};
 use crate::error;
 use crate::occurrence::Occurrence;
-use crate::output;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
@@ -21,8 +20,8 @@ fn my_function(a: i64, b: i64) -> i64 {
 
 fn bound_position(
     _context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     if arguments[0].is_absent() {
         return Err(error::Error::ComponentAbsentInDynamicContext);
     }
@@ -32,8 +31,8 @@ fn bound_position(
 
 fn bound_last(
     _context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     if arguments[0].is_absent() {
         return Err(error::Error::ComponentAbsentInDynamicContext);
     }
@@ -111,18 +110,18 @@ fn empty(arg: &[sequence::Item]) -> bool {
 }
 
 #[xpath_fn("fn:boolean($arg as item()*) as xs:boolean")]
-fn boolean(arg: &output::Sequence) -> error::Result<bool> {
+fn boolean(arg: &sequence::Sequence) -> error::Result<bool> {
     arg.effective_boolean_value()
 }
 
 // TODO: we can now use a Sequence argument
 fn not(
     _context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     let a = &arguments[0];
     let b = a.effective_boolean_value()?;
-    Ok(output::Sequence::from(vec![sequence::Item::from(
+    Ok(sequence::Sequence::from(vec![sequence::Item::from(
         atomic::Atomic::from(!b),
     )]))
 }
@@ -140,22 +139,22 @@ fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 
 fn untyped_atomic(
     context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     let a = &arguments[0];
     let value = a.atomized(context.xot).one()?;
     // TODO: this needs more work to implement:
     // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
     let s: String = value.try_into()?;
-    Ok(output::Sequence::from(vec![sequence::Item::from(
+    Ok(sequence::Sequence::from(vec![sequence::Item::from(
         atomic::Atomic::from(s),
     )]))
 }
 
 fn error(
     _context: &DynamicContext,
-    _arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    _arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     Err(error::Error::FOER0000)
 }
 
@@ -227,8 +226,8 @@ fn string_length(arg: Option<&str>) -> i64 {
 // of arities
 fn concat(
     context: &DynamicContext,
-    arguments: &[output::Sequence],
-) -> error::Result<output::Sequence> {
+    arguments: &[sequence::Sequence],
+) -> error::Result<sequence::Sequence> {
     debug_assert!(arguments.len() >= 2);
 
     let strings = arguments

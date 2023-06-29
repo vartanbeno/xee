@@ -5,7 +5,6 @@ mod test {
     use xot::Xot;
 
     use crate::atomic;
-    use crate::output;
     use crate::sequence;
     use crate::{DynamicContext, Namespaces, StaticContext};
 
@@ -26,7 +25,7 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let expected =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
         assert_eq!(foo::WRAPPER(&context, &[]), Ok(expected));
     }
 
@@ -37,11 +36,11 @@ mod test {
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let expected =
-            output::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
         assert_eq!(
             int_to_string::WRAPPER(
                 &context,
-                &[output::Sequence::from(vec![sequence::Item::from(
+                &[sequence::Sequence::from(vec![sequence::Item::from(
                     atomic::Atomic::from(42i64)
                 )])]
             ),
