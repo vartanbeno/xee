@@ -98,7 +98,7 @@ impl InnerSequence {
         match value {
             stack::Value::Empty => {}
             stack::Value::Item(item) => self.items.push(item),
-            stack::Value::Many(items) => self.items.extend(items),
+            stack::Value::Many(items) => self.items.extend(items.as_ref().into_iter().cloned()),
             stack::Value::Absent => panic!("Don't know how to handle absent"),
             stack::Value::Build(_) => unreachable!(),
         }
@@ -114,7 +114,7 @@ impl InnerSequence {
         } else if self.items.len() == 1 {
             stack::Value::Item(self.items.pop().unwrap())
         } else {
-            stack::Value::Many(self.items)
+            stack::Value::Many(Rc::new(self.items))
         }
     }
 }

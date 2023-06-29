@@ -27,9 +27,11 @@ impl<'a> AtomizedIter<'a> {
                     AtomizedIter::Erroring(std::iter::once(Err(error::Error::Type)))
                 }
             },
-            stack::Value::Many(items) => {
-                AtomizedIter::Sequence(AtomizedSequenceIter::new(items.into_iter(), xot))
-            }
+            stack::Value::Many(items) => AtomizedIter::Sequence(AtomizedSequenceIter::new(
+                // TODO: ugly
+                items.iter().cloned().collect::<Vec<_>>().into_iter(),
+                xot,
+            )),
             stack::Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),

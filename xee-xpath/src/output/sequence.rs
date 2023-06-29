@@ -123,18 +123,8 @@ impl From<output::Item> for Sequence {
 
 impl From<Vec<output::Item>> for Sequence {
     fn from(items: Vec<output::Item>) -> Self {
-        if items.is_empty() {
-            return Self {
-                stack_value: stack::Value::Empty,
-            };
-        }
-        if items.len() == 1 {
-            return Self {
-                stack_value: stack::Value::Item(items[0].clone()),
-            };
-        }
         Self {
-            stack_value: stack::Value::Many(items),
+            stack_value: items.into()
         }
     }
 }

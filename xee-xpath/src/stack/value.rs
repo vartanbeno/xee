@@ -1,4 +1,5 @@
 use ahash::{HashSet, HashSetExt};
+use std::rc::Rc;
 use xot::Xot;
 
 use crate::error;
@@ -10,7 +11,7 @@ use crate::xml;
 pub(crate) enum Value {
     Empty,
     Item(stack::Item),
-    Many(Vec<stack::Item>),
+    Many(Rc<Vec<stack::Item>>),
     Absent,
     Build(stack::BuildSequence),
 }
@@ -60,17 +61,22 @@ impl Value {
         match self {
             Value::Empty => Ok(false),
             Value::Item(item) => item.effective_boolean_value(),
-            Value::Many(_) => Err(error::Error::Type),
+            Value::Many(items) => {
+                // handle the case where the first item is a node
+                // it has to be a singleton otherwise
+                if matches!(items[0], stack::Item::Node(_)) {
+                    Ok(true)
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
             Value::Build(_) => unreachable!(),
         }
     }
 
     pub(crate) fn is_empty_sequence(&self) -> bool {
-        match self {
-            Value::Empty => true,
-            _ => false,
-        }
+        matches!(self, Value::Empty)
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> error::Result<String> {
@@ -90,18 +96,21 @@ impl Value {
             (Value::Item(item), Value::Empty) => Value::Item(item),
             (Value::Empty, Value::Many(items)) => Value::Many(items),
             (Value::Many(items), Value::Empty) => Value::Many(items),
-            (Value::Item(item1), Value::Item(item2)) => Value::Many(vec![item1, item2]),
-            (Value::Item(item), Value::Many(mut items)) => {
-                items.insert(0, item);
-                Value::Many(items)
+            (Value::Item(item1), Value::Item(item2)) => Value::Many(Rc::new(vec![item1, item2])),
+            (Value::Item(item), Value::Many(items)) => {
+                let mut many = vec![item];
+                many.extend(Rc::as_ref(&items).clone());
+                Value::Many(Rc::new(many))
             }
-            (Value::Many(mut items), Value::Item(item)) => {
-                items.push(item);
-                Value::Many(items)
+            (Value::Many(items), Value::Item(item)) => {
+                let mut many = Rc::as_ref(&items).clone();
+                many.push(item);
+                Value::Many(Rc::new(many))
             }
-            (Value::Many(mut items1), Value::Many(items2)) => {
-                items1.extend(items2);
-                Value::Many(items1)
+            (Value::Many(items1), Value::Many(items2)) => {
+                let mut many = Rc::as_ref(&items1).clone();
+                many.extend(Rc::as_ref(&items2).clone());
+                Value::Many(Rc::new(many))
             }
             _ => unreachable!(),
         }
@@ -155,7 +164,7 @@ impl From<Vec<stack::Item>> for Value {
         } else if items.len() == 1 {
             Value::Item(items.pop().unwrap())
         } else {
-            Value::Many(items)
+            Value::Many(Rc::new(items))
         }
     }
 }
@@ -215,11 +224,11 @@ impl ValueIter {
         match value {
             Value::Empty => ValueIter::Empty,
             Value::Item(item) => ValueIter::ItemIter(std::iter::once(item)),
-            Value::Many(items) => ValueIter::ManyIter(items.into_iter()),
+            Value::Many(items) => ValueIter::ManyIter(Rc::as_ref(&items).clone().into_iter()),
             Value::Absent => ValueIter::AbsentIter(std::iter::once(Err(
                 error::Error::ComponentAbsentInDynamicContext,
             ))),
-            Value::Build(build) => unreachable!(),
+            Value::Build(_) => unreachable!(),
         }
     }
 }
