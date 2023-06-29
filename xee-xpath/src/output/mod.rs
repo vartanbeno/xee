@@ -3,5 +3,5 @@ mod item;
 mod sequence;
 
 pub use function::Closure;
-pub use item::{Item, ItemValue};
+pub use item::Item;
 pub use sequence::{AtomizedIter, Sequence, UnboxedAtomizedIter};

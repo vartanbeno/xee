@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::{evaluate_root, Node};
-use xee_xpath::{Atomic, Item, ItemValue};
+use xee_xpath::{Atomic, Item};
 use xot::Xot;
 
 #[derive(Parser)]
@@ -61,12 +61,12 @@ fn main() -> Result<()> {
 }
 
 fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
-    match item.value() {
-        ItemValue::Node(node) => {
-            println!("node: \n{}", display_node(xot, node)?);
+    match item {
+        Item::Node(node) => {
+            println!("node: \n{}", display_node(xot, *node)?);
         }
-        ItemValue::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
-        ItemValue::Function(function) => println!("{:?}", function),
+        Item::Atomic(value) => println!("atomic: {}", display_atomic(&value)),
+        Item::Function(function) => println!("{:?}", function),
     }
     Ok(())
 }

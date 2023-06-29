@@ -7,34 +7,34 @@ use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Item {
+pub enum Item {
     Atomic(atomic::Atomic),
     Function(Rc<stack::Closure>),
     Node(xml::Node),
 }
 
 impl Item {
-    pub(crate) fn to_atomic(&self) -> error::Result<atomic::Atomic> {
+    pub fn to_atomic(&self) -> error::Result<atomic::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
             _ => Err(error::Error::Type),
         }
     }
-    pub(crate) fn to_node(&self) -> error::Result<xml::Node> {
+    pub fn to_node(&self) -> error::Result<xml::Node> {
         match self {
             Item::Node(n) => Ok(*n),
             _ => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn to_function(&self) -> error::Result<&stack::Closure> {
+    pub fn to_function(&self) -> error::Result<&stack::Closure> {
         match self {
             Item::Function(f) => Ok(f.as_ref()),
             _ => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
+    pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             stack::Item::Atomic(a) => a.effective_boolean_value(),
             // If its operand is a sequence whose first item is a node, fn:boolean returns true;
@@ -48,7 +48,7 @@ impl Item {
         }
     }
 
-    pub(crate) fn string_value(&self, xot: &Xot) -> error::Result<String> {
+    pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
         match self {
             stack::Item::Atomic(atomic) => atomic.string_value(),
             stack::Item::Node(node) => Ok(node.string_value(xot)),
