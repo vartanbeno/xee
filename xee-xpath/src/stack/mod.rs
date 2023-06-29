@@ -1,4 +1,3 @@
-mod atomized;
 mod build;
 mod function;
 mod item;
