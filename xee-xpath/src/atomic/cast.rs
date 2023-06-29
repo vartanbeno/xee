@@ -600,10 +600,11 @@ mod tests {
 
     #[test]
     fn test_parse_double_nan() {
-        assert_eq!(
-            atomic::Atomic::parse_atomic::<f64>("NaN").unwrap(),
-            atomic::Atomic::Double(OrderedFloat(f64::NAN))
-        );
+        let a = atomic::Atomic::parse_atomic::<f64>("NaN").unwrap();
+        match a {
+            atomic::Atomic::Double(OrderedFloat(f)) => assert!(f.is_nan()),
+            _ => panic!("Expected double"),
+        }
     }
 
     #[test]
@@ -727,12 +728,13 @@ mod tests {
 
     #[test]
     fn test_cast_double_to_float_nan() {
-        assert_eq!(
-            atomic::Atomic::Double(OrderedFloat(f64::NAN))
-                .cast_to_float()
-                .unwrap(),
-            atomic::Atomic::Float(OrderedFloat(f32::NAN))
-        );
+        let a = atomic::Atomic::Double(OrderedFloat(f64::NAN))
+            .cast_to_float()
+            .unwrap();
+        match a {
+            atomic::Atomic::Float(OrderedFloat(f)) => assert!(f.is_nan()),
+            _ => panic!("Expected float"),
+        }
     }
 
     #[test]

@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use xee_schema_type::Xs;
 
-use crate::comparison;
+use crate::atomic;
 use crate::error;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -276,10 +276,7 @@ impl Atomic {
 
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
-        match comparison::value_eq(self, other) {
-            Ok(b) => b.is_true(),
-            Err(_) => false,
-        }
+        atomic::comparison_op::<atomic::EqualOp>(self.clone(), other.clone()).unwrap_or(false)
     }
 }
 
