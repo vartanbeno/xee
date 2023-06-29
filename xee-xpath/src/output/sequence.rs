@@ -130,7 +130,7 @@ impl From<Vec<xml::Node>> for Sequence {
             .into_iter()
             .map(sequence::Item::from)
             .collect::<Vec<_>>();
-        Self::from(items)
+        items.into()
     }
 }
 
