@@ -1,7 +1,6 @@
 use miette::SourceSpan;
 
 use crate::ir;
-use crate::output;
 use crate::stack;
 use crate::xml;
 
@@ -44,13 +43,4 @@ pub(crate) enum ClosureFunctionId {
 pub struct Closure {
     pub(crate) function_id: ClosureFunctionId,
     pub(crate) values: Vec<stack::Value>,
-}
-
-impl Closure {
-    pub(crate) fn to_output(&self) -> output::Closure {
-        output::Closure {
-            function_id: self.function_id,
-            // values: self.values.iter().map(|v| v.to_output()).collect(),
-        }
-    }
 }
