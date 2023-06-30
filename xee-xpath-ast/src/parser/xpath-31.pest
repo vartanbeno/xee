@@ -388,7 +388,9 @@ UnaryLookup = { "?" ~ KeySpecifier }
 
 // SingleType
 // ::= SimpleTypeName "?"?
-SingleType = { SimpleTypeName ~ "?"? }
+SingleType = { SimpleTypeName ~ QuestionMark? }
+
+QuestionMark = { "?" }
 
 // TypeDeclaration
 // ::= "as" SequenceType

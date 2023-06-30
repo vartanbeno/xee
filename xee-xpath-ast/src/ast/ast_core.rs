@@ -169,7 +169,7 @@ pub enum UnaryOperator {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SingleType {
-    pub name: EQName,
+    pub name: Name,
     pub question_mark: bool,
 }
 

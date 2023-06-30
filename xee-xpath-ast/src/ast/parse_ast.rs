@@ -136,14 +136,24 @@ impl<'a> AstParser<'a> {
             Rule::ArrowExpr => {
                 let pair = pair.into_inner().next().unwrap();
                 self.expr_single(pair)
-
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
             }
             Rule::CastExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                self.expr_single(pair)
-
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
+                let mut pairs = pair.into_inner();
+                let pair = pairs.next().unwrap();
+                let single_type_pair = pairs.next();
+                if let Some(single_type_pair) = single_type_pair {
+                    let path_expr = self.pair_to_path_expr(pair);
+                    let single_type = self.single_type(single_type_pair);
+                    spanned(
+                        ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::Cast(single_type),
+                        }),
+                        span,
+                    )
+                } else {
+                    self.expr_single(pair)
+                }
             }
             Rule::CastableExpr => {
                 let pair = pair.into_inner().next().unwrap();
@@ -1122,6 +1132,29 @@ impl<'a> AstParser<'a> {
         self.eq_name_to_name(pair, None)
     }
 
+    fn single_type(&self, pair: Pair<Rule>) -> ast::SingleType {
+        debug_assert_eq!(pair.as_rule(), Rule::SingleType);
+        let mut pairs = pair.into_inner();
+        let name = self.simple_type_name(pairs.next().unwrap());
+        let question_mark = pairs.next().is_some();
+        ast::SingleType {
+            name,
+            question_mark,
+        }
+    }
+
+    fn simple_type_name(&self, pair: Pair<Rule>) -> ast::Name {
+        debug_assert_eq!(pair.as_rule(), Rule::SimpleTypeName);
+        let pair = pair.into_inner().next().unwrap();
+        self.type_name(pair)
+    }
+
+    fn type_name(&self, pair: Pair<Rule>) -> ast::Name {
+        debug_assert_eq!(pair.as_rule(), Rule::TypeName);
+        let pair = pair.into_inner().next().unwrap();
+        self.eq_name_to_name(pair, None)
+    }
+
     fn function_body_to_body(&self, pair: Pair<Rule>) -> ast::ExprS {
         debug_assert_eq!(pair.as_rule(), Rule::FunctionBody);
         let pair = pair.into_inner().next().unwrap();
@@ -1802,4 +1835,17 @@ mod tests {
     fn test_unary_multiple() {
         assert_debug_snapshot!(parse_expr_single("+-1"));
     }
+
+    #[test]
+    fn test_cast_as() {
+        assert_debug_snapshot!(parse_expr_single("1 cast as xs:integer"));
+    }
+
+    #[test]
+    fn test_cast_as_with_question_mark() {
+        assert_debug_snapshot!(parse_expr_single("1 cast as xs:integer?"));
+    }
+
+    // cast as xs:anySimpleType, xs:anyAtomicType or xs:NOTATION is not
+    // allowed statically
 }
