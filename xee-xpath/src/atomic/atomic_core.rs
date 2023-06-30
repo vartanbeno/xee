@@ -8,6 +8,8 @@ use xee_schema_type::Xs;
 use crate::atomic;
 use crate::error;
 
+use super::comparison;
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
@@ -272,11 +274,19 @@ impl Atomic {
             Atomic::Untyped(_) => unreachable!(),
         }
     }
+
+    pub(crate) fn value_comparison<O>(&self, other: &Atomic) -> error::Result<bool>
+    where
+        O: comparison::ComparisonOp,
+    {
+        comparison::value_comparison_op::<O>(self, other)
+    }
 }
 
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
-        atomic::comparison_op::<atomic::EqualOp>(self.clone(), other.clone()).unwrap_or(false)
+        self.value_comparison::<atomic::EqualOp>(other)
+            .unwrap_or(false)
     }
 }
 

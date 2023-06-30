@@ -223,22 +223,20 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::Eq => {
-                    self.value_compare(atomic::comparison_op::<atomic::EqualOp>)?;
+                    self.value_compare::<atomic::EqualOp>()?;
                 }
-                EncodedInstruction::Ne => {
-                    self.value_compare(atomic::comparison_op::<atomic::NotEqualOp>)?;
-                }
+                EncodedInstruction::Ne => self.value_compare::<atomic::NotEqualOp>()?,
                 EncodedInstruction::Lt => {
-                    self.value_compare(atomic::comparison_op::<atomic::LessThanOp>)?;
+                    self.value_compare::<atomic::LessThanOp>()?;
                 }
                 EncodedInstruction::Le => {
-                    self.value_compare(atomic::comparison_op::<atomic::LessThanOrEqualOp>)?;
+                    self.value_compare::<atomic::LessThanOrEqualOp>()?;
                 }
                 EncodedInstruction::Gt => {
-                    self.value_compare(atomic::comparison_op::<atomic::GreaterThanOp>)?;
+                    self.value_compare::<atomic::GreaterThanOp>()?;
                 }
                 EncodedInstruction::Ge => {
-                    self.value_compare(atomic::comparison_op::<atomic::GreaterThanOrEqualOp>)?;
+                    self.value_compare::<atomic::GreaterThanOrEqualOp>()?;
                 }
                 EncodedInstruction::GenEq => {
                     let (atomized_a, atomized_b) = self.pop_atomized2();
@@ -426,9 +424,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn value_compare<F>(&mut self, compare: F) -> error::Result<()>
+    fn value_compare<O>(&mut self) -> error::Result<()>
     where
-        F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<bool>,
+        O: atomic::ComparisonOp,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -442,7 +440,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = compare(a, b)?;
+        let result = a.value_comparison::<O>(&b)?;
         self.stack.push(result.into());
         Ok(())
     }
