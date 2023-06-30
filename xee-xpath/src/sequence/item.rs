@@ -91,7 +91,7 @@ impl AtomizedItemIter {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
-            Item::Function(_) => Self::Erroring(std::iter::once(Err(error::Error::Type))),
+            Item::Function(_) => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
         }
     }
 }

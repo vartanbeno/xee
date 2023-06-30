@@ -79,10 +79,14 @@ fn test_string_length() {
 
 #[test]
 fn test_concat() {
-    // only run a few of the concat tests for now,
-    // as a lot of tests depend on constructor functions we
-    // don't have yet
-    Tests::new("fn/concat").include("fn-concatint2args*").run()
+    Tests::all("fn/concat")
+        // constructor functions we don't have yet like negative integer, etc
+        .exclude("fn-concatnint2* fn-concatpint2* fn-concatnpi2* fn-concatnni2*")
+        // fn:upper-case
+        .exclude("fn-concat-9")
+        // instance of
+        .exclude("K-ConcatFunc-4 K-ConcatFunc-5")
+        .run()
 }
 
 #[test]

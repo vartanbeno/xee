@@ -561,6 +561,7 @@ pub enum Error {
     /// Raised by fn:data, or by implicit atomization, if the sequence to be
     /// atomized contains a function item.
     #[error("Argument to fn:data() contains a function item")]
+    #[diagnostic(code(FOTY0013))]
     FOTY0013,
     /// The argument to fn:string() is a function item.
     ///

@@ -92,22 +92,7 @@ impl Atomic {
     }
 
     pub(crate) fn string_value(&self) -> error::Result<String> {
-        Ok(match self {
-            Atomic::String(s) => s.to_string(),
-            Atomic::Untyped(s) => s.to_string(),
-            Atomic::Boolean(b) => b.to_string(),
-            Atomic::Integer(i) => i.to_string(),
-            Atomic::Float(f) => f.to_string(),
-            Atomic::Double(d) => d.to_string(),
-            Atomic::Decimal(d) => d.to_string(),
-            Atomic::Int(i) => i.to_string(),
-            Atomic::Short(i) => i.to_string(),
-            Atomic::Byte(i) => i.to_string(),
-            Atomic::UnsignedLong(i) => i.to_string(),
-            Atomic::UnsignedInt(i) => i.to_string(),
-            Atomic::UnsignedShort(i) => i.to_string(),
-            Atomic::UnsignedByte(i) => i.to_string(),
-        })
+        Ok(self.to_canonical())
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -241,16 +226,7 @@ impl PartialEq for Atomic {
 
 impl fmt::Display for Atomic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self {
-            Atomic::Boolean(b) => write!(f, "{}", b),
-            Atomic::Integer(i) => write!(f, "{}", i),
-            Atomic::Float(n) => write!(f, "{}", n),
-            Atomic::Double(d) => write!(f, "{}", d),
-            Atomic::Decimal(d) => write!(f, "{}", d),
-            Atomic::String(s) => write!(f, "{}", s),
-            Atomic::Untyped(s) => write!(f, "{}", s),
-            _ => unreachable!("Cannot exist in output space"),
-        }
+        write!(f, "{:?} {}", self.schema_type(), self.to_canonical())
     }
 }
 
