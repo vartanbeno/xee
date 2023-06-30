@@ -342,6 +342,8 @@ impl<'a> Interpreter<'a> {
                         }
                         (Some(a), Some(b)) => (a, b),
                     };
+                    // we want to ensure we have integers at this point;
+                    // we don't want to be casting strings or anything
                     a.ensure_base_schema_type(Xs::Integer)?;
                     b.ensure_base_schema_type(Xs::Integer)?;
 
