@@ -180,10 +180,22 @@ impl<'a> AstParser<'a> {
                 // ast::ExprSingle::Path(pair_to_path_expr(pair))
             }
             Rule::InstanceofExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                self.expr_single(pair)
-
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
+                let mut pairs = pair.into_inner();
+                let pair = pairs.next().unwrap();
+                let sequence_type_pair = pairs.next();
+                if let Some(sequence_type_pair) = sequence_type_pair {
+                    let path_expr = self.pair_to_path_expr(pair);
+                    let sequence_type = self.sequence_type(sequence_type_pair);
+                    spanned(
+                        ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::InstanceOf(sequence_type),
+                        }),
+                        span,
+                    )
+                } else {
+                    self.expr_single(pair)
+                }
             }
             Rule::AdditiveExpr => self.binary_op(pair, |r| match r {
                 Rule::Plus => ast::BinaryOperator::Add,
@@ -1866,5 +1878,15 @@ mod tests {
     #[test]
     fn test_castable_as_with_question_mark() {
         assert_debug_snapshot!(parse_expr_single("1 castable as xs:integer?"));
+    }
+
+    #[test]
+    fn test_instance_of() {
+        assert_debug_snapshot!(parse_expr_single("1 instance of xs:integer"));
+    }
+
+    #[test]
+    fn test_instance_of_with_star() {
+        assert_debug_snapshot!(parse_expr_single("1 instance of xs:integer*"));
     }
 }
