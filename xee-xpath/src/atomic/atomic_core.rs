@@ -43,48 +43,6 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn convert_to_integer(&self) -> error::Result<i64> {
-        match self {
-            Atomic::Integer(i) => Ok(*i),
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn convert_to_decimal(&self) -> error::Result<Decimal> {
-        match self {
-            Atomic::Decimal(d) => Ok(*d),
-            Atomic::Integer(i) => Ok(Decimal::from(*i)),
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn convert_to_float(&self) -> error::Result<OrderedFloat<f32>> {
-        match self {
-            Atomic::Float(f) => Ok(*f),
-            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f32().ok_or(error::Error::Type)?)),
-            Atomic::Integer(_) => Ok(OrderedFloat(
-                self.convert_to_decimal()?
-                    .to_f32()
-                    .ok_or(error::Error::Type)?,
-            )),
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn convert_to_double(&self) -> error::Result<OrderedFloat<f64>> {
-        match self {
-            Atomic::Double(d) => Ok(*d),
-            Atomic::Float(OrderedFloat(f)) => Ok(OrderedFloat(*f as f64)),
-            Atomic::Decimal(d) => Ok(OrderedFloat(d.to_f64().ok_or(error::Error::Type)?)),
-            Atomic::Integer(_) => Ok(OrderedFloat(
-                self.convert_to_decimal()?
-                    .to_f64()
-                    .ok_or(error::Error::Type)?,
-            )),
-            _ => Err(error::Error::Type),
-        }
-    }
-
     pub(crate) fn match_type_name(&self, name: &str) -> bool {
         if name == "anyAtomicType" {
             return true;
@@ -226,6 +184,14 @@ impl Atomic {
             Atomic::UnsignedByte(_) => Xs::UnsignedByte,
             Atomic::Float(_) => Xs::Float,
             Atomic::Double(_) => Xs::Double,
+        }
+    }
+
+    pub(crate) fn ensure_base_schema_type(&self, xs: Xs) -> error::Result<()> {
+        if self.has_base_schema_type(xs) {
+            Ok(())
+        } else {
+            Err(error::Error::Type)
         }
     }
 

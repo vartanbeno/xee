@@ -1,6 +1,7 @@
 use arrayvec::ArrayVec;
 use miette::SourceSpan;
 use std::cmp::Ordering;
+use xee_schema_type::Xs;
 
 use crate::atomic;
 use crate::context::DynamicContext;
@@ -328,9 +329,25 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(return_value);
                 }
                 EncodedInstruction::Range => {
-                    let (a, b) = self.pop_atomic2()?;
-                    let a = a.convert_to_integer()?;
-                    let b = b.convert_to_integer()?;
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let mut a = a.atomized(self.dynamic_context.xot);
+                    let mut b = b.atomized(self.dynamic_context.xot);
+                    let a = a.option()?;
+                    let b = b.option()?;
+                    let (a, b) = match (a, b) {
+                        (None, None) | (None, _) | (_, None) => {
+                            self.stack.push(stack::Value::Empty);
+                            continue;
+                        }
+                        (Some(a), Some(b)) => (a, b),
+                    };
+                    a.ensure_base_schema_type(Xs::Integer)?;
+                    b.ensure_base_schema_type(Xs::Integer)?;
+
+                    let a = a.cast_to_value::<i64>()?;
+                    let b = b.cast_to_value::<i64>()?;
+
                     match a.cmp(&b) {
                         Ordering::Greater => self.stack.push(stack::Value::Empty),
                         Ordering::Equal => self.stack.push(a.into()),
@@ -347,7 +364,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::SequenceGet => {
                     let value = self.stack.pop().unwrap();
-                    let index = self.pop_index();
+                    let index = self.pop_atomic()?;
+                    let index = index.cast_to_value::<i64>()? as usize;
                     // substract 1 as Xpath is 1-indexed
                     let item = value.index(index - 1)?;
                     self.stack.push(item.into())
@@ -480,17 +498,6 @@ impl<'a> Interpreter<'a> {
         let value = op(a)?;
         self.stack.push(value.into());
         Ok(())
-    }
-
-    fn pop_index(&mut self) -> usize {
-        let value = self.stack.pop().unwrap();
-        match value {
-            stack::Value::One(sequence::Item::Atomic(a)) => {
-                let index = a.convert_to_integer().unwrap();
-                index as usize
-            }
-            _ => unreachable!("Expected atomic value"),
-        }
     }
 
     fn pop_is_numeric(&mut self) -> bool {
