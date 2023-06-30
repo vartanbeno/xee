@@ -5,14 +5,12 @@ extern crate num;
 extern crate num_derive;
 
 mod atomic;
-mod comparison;
 mod context;
 mod error;
 mod func;
 mod interpreter;
 mod ir;
 mod occurrence;
-mod op;
 mod query;
 mod run;
 mod sequence;
