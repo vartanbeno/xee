@@ -35,6 +35,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
+            _ => todo!("not yet"),
         }
     }
 

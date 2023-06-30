@@ -505,6 +505,24 @@ impl<'a> IrConverter<'a> {
                     Ok(bindings.bind(binding))
                 })
             }
+            ast::ApplyOperator::Cast(single_type) => {
+                let mut bindings = self.path_expr(&ast.path_expr)?;
+                let expr = ir::Expr::Cast(ir::Cast {
+                    atom: bindings.atom(),
+                    type_: single_type.clone(),
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::ApplyOperator::Castable(single_type) => {
+                let mut bindings = self.path_expr(&ast.path_expr)?;
+                let expr = ir::Expr::Castable(ir::Castable {
+                    atom: bindings.atom(),
+                    type_: single_type.clone(),
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
             _ => {
                 todo!("ApplyOperator: {:?}", ast.operator)
             }
@@ -909,5 +927,25 @@ mod tests {
     #[test]
     fn test_unary_combo() {
         assert_debug_snapshot!(convert_expr_single("-+1"));
+    }
+
+    #[test]
+    fn test_cast() {
+        assert_debug_snapshot!(convert_expr_single("1 cast as xs:string"));
+    }
+
+    #[test]
+    fn test_cast_question_mark() {
+        assert_debug_snapshot!(convert_expr_single("1 cast as xs:string?"));
+    }
+
+    #[test]
+    fn test_castable() {
+        assert_debug_snapshot!(convert_expr_single("1 castable as xs:string"));
+    }
+
+    #[test]
+    fn test_castable_question_mark() {
+        assert_debug_snapshot!(convert_expr_single("1 castable as xs:string?"));
     }
 }

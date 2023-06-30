@@ -4,7 +4,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
-pub use xee_xpath_ast::ast::{BinaryOperator, UnaryOperator};
+pub use xee_xpath_ast::ast::{BinaryOperator, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
 use crate::stack::StaticFunctionId;
@@ -26,6 +26,8 @@ pub(crate) enum Expr {
     Map(Map),
     Filter(Filter),
     Quantified(Quantified),
+    Cast(Cast),
+    Castable(Castable),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -130,4 +132,16 @@ pub(crate) struct Quantified {
 pub(crate) enum Quantifier {
     Some,
     Every,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Cast {
+    pub(crate) atom: AtomS,
+    pub(crate) type_: SingleType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Castable {
+    pub(crate) atom: AtomS,
+    pub(crate) type_: SingleType,
 }

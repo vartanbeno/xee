@@ -1,0 +1,44 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"1 castable as xs:string?\")"
+---
+Ok(
+    Spanned {
+        value: Castable(
+            Castable {
+                atom: Spanned {
+                    value: Const(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                    span: SourceSpan {
+                        offset: SourceOffset(
+                            0,
+                        ),
+                        length: SourceOffset(
+                            1,
+                        ),
+                    },
+                },
+                type_: SingleType {
+                    name: Name {
+                        name: "string",
+                        namespace: Some(
+                            "http://www.w3.org/2001/XMLSchema",
+                        ),
+                    },
+                    question_mark: true,
+                },
+            },
+        ),
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                24,
+            ),
+        },
+    },
+)
