@@ -168,29 +168,6 @@ fn false_() -> bool {
     false
 }
 
-#[xpath_fn("xs:string($arg as xs:anyAtomicType?) as xs:string")]
-fn xs_string(arg: Option<atomic::Atomic>) -> error::Result<String> {
-    if let Some(arg) = arg {
-        arg.string_value()
-    } else {
-        Ok("".to_string())
-    }
-}
-
-#[xpath_fn("xs:int($arg as xs:anyAtomicType?) as xs:int?")]
-fn xs_int(arg: Option<atomic::Atomic>) -> error::Result<Option<i64>> {
-    if let Some(arg) = arg {
-        // TODO: only handle the string case for now
-        Ok(Some(
-            arg.string_value()?
-                .parse()
-                .map_err(|_| error::Error::FORG0001)?,
-        ))
-    } else {
-        Ok(None)
-    }
-}
-
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*) as xs:string")]
 fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
     let arg1 = arg1
@@ -271,8 +248,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(generate_id),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
-        wrap_xpath_fn!(xs_string),
-        wrap_xpath_fn!(xs_int),
         wrap_xpath_fn!(string_length),
         StaticFunctionDescription {
             name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),

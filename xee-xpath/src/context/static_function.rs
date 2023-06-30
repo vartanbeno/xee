@@ -4,7 +4,7 @@ use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 
 use crate::error;
-use crate::func::static_function_descriptions;
+use crate::func::{fn_static_function_descriptions, xs_static_function_descriptions};
 use crate::sequence;
 use crate::stack;
 
@@ -226,7 +226,8 @@ pub(crate) struct StaticFunctions {
 impl StaticFunctions {
     pub(crate) fn new() -> Self {
         let mut by_name = HashMap::new();
-        let descriptions = static_function_descriptions();
+        let mut descriptions = fn_static_function_descriptions();
+        descriptions.extend(xs_static_function_descriptions());
         let mut by_index = Vec::new();
         for description in descriptions {
             by_index.extend(description.functions());
