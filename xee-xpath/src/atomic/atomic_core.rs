@@ -207,41 +207,6 @@ impl Atomic {
         self.schema_type() == other.schema_type()
     }
 
-    pub(crate) fn general_comparison_cast(&self, v: &str) -> error::Result<Atomic> {
-        match self {
-            // i. If T is a numeric type or is derived from a numeric type, then V
-            // is cast to xs:double.
-            Atomic::Integer(_)
-            | Atomic::Decimal(_)
-            | Atomic::Float(_)
-            | Atomic::Double(_)
-            | Atomic::Int(_)
-            | Atomic::Short(_)
-            | Atomic::Byte(_)
-            | Atomic::UnsignedLong(_)
-            | Atomic::UnsignedInt(_)
-            | Atomic::UnsignedShort(_)
-            | Atomic::UnsignedByte(_) => {
-                // cast string to double
-                // Need to unify the parsing code with literal parser in parse_ast
-                Ok(Atomic::Double(OrderedFloat(
-                    v.parse::<f64>().map_err(|_| error::Error::Overflow)?,
-                )))
-            }
-            // don't handle ii and iii for now
-            // iv. In all other cases, V is cast to the primitive base type of T.
-            Atomic::String(_) => Ok(Atomic::String(Rc::new(v.to_string()))),
-            Atomic::Boolean(_) => {
-                // XXX casting rules are way more complex, see 19.2 in the
-                // XPath and Functions spec
-                Ok(Atomic::Boolean(
-                    v.parse::<bool>().map_err(|_| error::Error::Type)?,
-                ))
-            }
-            Atomic::Untyped(_) => unreachable!(),
-        }
-    }
-
     // value comparison as per XPath rules
     pub(crate) fn value_comparison<O>(self, other: Atomic) -> error::Result<bool>
     where
