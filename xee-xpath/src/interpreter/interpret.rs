@@ -3,7 +3,6 @@ use miette::SourceSpan;
 use std::cmp::Ordering;
 
 use crate::atomic;
-use crate::comparison;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
@@ -239,34 +238,22 @@ impl<'a> Interpreter<'a> {
                     self.value_compare::<atomic::GreaterThanOrEqualOp>()?;
                 }
                 EncodedInstruction::GenEq => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_eq(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::EqualOp>()?;
                 }
                 EncodedInstruction::GenNe => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_ne(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::NotEqualOp>()?;
                 }
                 EncodedInstruction::GenLt => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_lt(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::LessThanOp>()?;
                 }
                 EncodedInstruction::GenLe => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_le(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::LessThanOrEqualOp>()?;
                 }
                 EncodedInstruction::GenGt => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_gt(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::GreaterThanOp>()?;
                 }
                 EncodedInstruction::GenGe => {
-                    let (atomized_a, atomized_b) = self.pop_atomized2();
-                    let r = comparison::general_ge(atomized_a, atomized_b)?.into();
-                    self.stack.push(r);
+                    self.general_compare::<atomic::GreaterThanOrEqualOp>()?;
                 }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
@@ -445,6 +432,19 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
+    fn general_compare<O>(&mut self) -> error::Result<()>
+    where
+        O: atomic::ComparisonOp,
+    {
+        let b = self.stack.pop().unwrap();
+        let a = self.stack.pop().unwrap();
+        let value = a
+            .general_comparison::<O>(b, self.dynamic_context.xot)?
+            .into();
+        self.stack.push(value);
+        Ok(())
+    }
+
     fn arithmetic<O>(&mut self) -> error::Result<()>
     where
         O: atomic::ArithmeticOp,
@@ -520,19 +520,6 @@ impl<'a> Interpreter<'a> {
         let b = self.pop_atomic()?;
         let a = self.pop_atomic()?;
         Ok((a, b))
-    }
-
-    fn pop_atomized2(
-        &mut self,
-    ) -> (
-        impl Iterator<Item = error::Result<atomic::Atomic>> + '_,
-        impl Iterator<Item = error::Result<atomic::Atomic>> + '_ + std::clone::Clone,
-    ) {
-        let value_b = self.stack.pop().unwrap();
-        let value_a = self.stack.pop().unwrap();
-        let atomized_a = value_a.atomized(self.dynamic_context.xot);
-        let atomized_b = value_b.atomized(self.dynamic_context.xot);
-        (atomized_a, atomized_b)
     }
 
     fn pop_effective_boolean(&mut self) -> error::Result<bool> {

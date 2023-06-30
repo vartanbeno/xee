@@ -1,4 +1,3 @@
-mod comparison;
 mod item;
 mod sequence_core;
 

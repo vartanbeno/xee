@@ -3,10 +3,10 @@ use crate::error;
 
 // https://www.w3.org/TR/xpath-31/#id-general-comparisons
 // step 1, atomization, has already taken place
-fn general_comparison_op<O>(
+pub(crate) fn general_comparison<O>(
     a_atoms: impl Iterator<Item = error::Result<atomic::Atomic>>,
     b_atoms: impl Iterator<Item = error::Result<atomic::Atomic>> + std::clone::Clone,
-) -> error::Result<atomic::Atomic>
+) -> error::Result<bool>
 where
     O: atomic::ComparisonOp,
 {
@@ -18,11 +18,11 @@ where
             let (a, b) = cast(&a, b)?;
             // 2c do value comparison
             if a.value_comparison::<O>(b)? {
-                return Ok(atomic::Atomic::Boolean(true));
+                return Ok(true);
             }
         }
     }
-    Ok(atomic::Atomic::Boolean(false))
+    Ok(false)
 }
 
 // step 2: cast

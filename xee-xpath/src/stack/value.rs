@@ -13,6 +13,8 @@ use crate::sequence;
 use crate::stack;
 use crate::xml;
 
+use super::comparison;
+
 #[derive(Debug, Clone)]
 pub(crate) enum Value {
     Empty,
@@ -84,6 +86,13 @@ impl Value {
             Value::Many(_) => Err(error::Error::Type),
             Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
         }
+    }
+
+    pub(crate) fn general_comparison<O>(&self, other: Value, xot: &Xot) -> error::Result<bool>
+    where
+        O: atomic::ComparisonOp,
+    {
+        comparison::general_comparison::<O>(self.atomized(xot), other.atomized(xot))
     }
 
     pub(crate) fn concat(self, other: stack::Value) -> stack::Value {
