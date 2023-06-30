@@ -156,10 +156,22 @@ impl<'a> AstParser<'a> {
                 }
             }
             Rule::CastableExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                self.expr_single(pair)
-
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
+                let mut pairs = pair.into_inner();
+                let pair = pairs.next().unwrap();
+                let single_type_pair = pairs.next();
+                if let Some(single_type_pair) = single_type_pair {
+                    let path_expr = self.pair_to_path_expr(pair);
+                    let single_type = self.single_type(single_type_pair);
+                    spanned(
+                        ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::Castable(single_type),
+                        }),
+                        span,
+                    )
+                } else {
+                    self.expr_single(pair)
+                }
             }
             Rule::TreatExpr => {
                 let pair = pair.into_inner().next().unwrap();
@@ -1846,6 +1858,13 @@ mod tests {
         assert_debug_snapshot!(parse_expr_single("1 cast as xs:integer?"));
     }
 
-    // cast as xs:anySimpleType, xs:anyAtomicType or xs:NOTATION is not
-    // allowed statically
+    #[test]
+    fn test_castable_as() {
+        assert_debug_snapshot!(parse_expr_single("1 castable as xs:integer"));
+    }
+
+    #[test]
+    fn test_castable_as_with_question_mark() {
+        assert_debug_snapshot!(parse_expr_single("1 castable as xs:integer?"));
+    }
 }
