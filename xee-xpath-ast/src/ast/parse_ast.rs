@@ -174,10 +174,22 @@ impl<'a> AstParser<'a> {
                 }
             }
             Rule::TreatExpr => {
-                let pair = pair.into_inner().next().unwrap();
-                self.expr_single(pair)
-
-                // ast::ExprSingle::Path(pair_to_path_expr(pair))
+                let mut pairs = pair.into_inner();
+                let pair = pairs.next().unwrap();
+                let sequence_type_pair = pairs.next();
+                if let Some(sequence_type_pair) = sequence_type_pair {
+                    let path_expr = self.pair_to_path_expr(pair);
+                    let sequence_type = self.sequence_type(sequence_type_pair);
+                    spanned(
+                        ast::ExprSingle::Apply(ast::ApplyExpr {
+                            path_expr,
+                            operator: ast::ApplyOperator::Treat(sequence_type),
+                        }),
+                        span,
+                    )
+                } else {
+                    self.expr_single(pair)
+                }
             }
             Rule::InstanceofExpr => {
                 let mut pairs = pair.into_inner();
@@ -1888,5 +1900,15 @@ mod tests {
     #[test]
     fn test_instance_of_with_star() {
         assert_debug_snapshot!(parse_expr_single("1 instance of xs:integer*"));
+    }
+
+    #[test]
+    fn test_treat() {
+        assert_debug_snapshot!(parse_expr_single("1 treat as xs:integer"));
+    }
+
+    #[test]
+    fn test_treat_with_star() {
+        assert_debug_snapshot!(parse_expr_single("1 treat as xs:integer*"));
     }
 }
