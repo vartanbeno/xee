@@ -135,6 +135,22 @@ impl atomic::Atomic {
         self.cast_to_schema_type(other.schema_type())
     }
 
+    // if a derives from b, cast to b, otherwise vice versa
+    pub(crate) fn cast_to_same_schema_type(
+        &self,
+        other: &atomic::Atomic,
+    ) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+        if self.derives_from(other) {
+            let a = self.cast_to_schema_type_of(other)?;
+            Ok((a, other.clone()))
+        } else if other.derives_from(self) {
+            let b = other.cast_to_schema_type_of(self)?;
+            Ok((self.clone(), b))
+        } else {
+            Err(error::Error::Type)
+        }
+    }
+
     pub(crate) fn cast_to_string(&self) -> atomic::Atomic {
         atomic::Atomic::String(Rc::new(self.to_canonical()))
     }
@@ -378,21 +394,6 @@ impl atomic::Atomic {
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
         }
-    }
-}
-
-pub(crate) fn cast_to_same(
-    a: atomic::Atomic,
-    b: atomic::Atomic,
-) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
-    if a.derives_from(&b) {
-        let a = a.cast_to_schema_type_of(&b)?;
-        Ok((a, b))
-    } else if b.derives_from(&a) {
-        let b = b.cast_to_schema_type_of(&a)?;
-        Ok((a, b))
-    } else {
-        Err(error::Error::Type)
     }
 }
 

@@ -101,28 +101,28 @@ impl<'a> Interpreter<'a> {
             let instruction = self.read_instruction();
             match instruction {
                 EncodedInstruction::Add => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::AddOp>)?;
+                    self.arithmetic::<atomic::AddOp>()?;
                 }
                 EncodedInstruction::Sub => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::SubtractOp>)?;
+                    self.arithmetic::<atomic::SubtractOp>()?;
                 }
                 EncodedInstruction::Mul => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::MultiplyOp>)?;
+                    self.arithmetic::<atomic::MultiplyOp>()?;
                 }
                 EncodedInstruction::Div => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::DivideOp>)?;
+                    self.arithmetic::<atomic::DivideOp>()?;
                 }
                 EncodedInstruction::IntDiv => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::IntegerDivideOp>)?;
+                    self.arithmetic::<atomic::IntegerDivideOp>()?;
                 }
                 EncodedInstruction::Mod => {
-                    self.arithmetic(atomic::arithmetic_op::<atomic::ModuloOp>)?;
+                    self.arithmetic::<atomic::ModuloOp>()?;
                 }
                 EncodedInstruction::Plus => {
-                    self.unary_arithmetic(atomic::numeric_unary_plus)?;
+                    self.unary_arithmetic(|a| a.plus())?;
                 }
                 EncodedInstruction::Minus => {
-                    self.unary_arithmetic(atomic::numeric_unary_minus)?;
+                    self.unary_arithmetic(|a| a.minus())?;
                 }
                 EncodedInstruction::Concat => {
                     let (a, b) = self.pop_atomic2()?;
@@ -440,14 +440,14 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = a.value_comparison::<O>(&b)?;
+        let result = a.value_comparison::<O>(b)?;
         self.stack.push(result.into());
         Ok(())
     }
 
-    fn arithmetic<F>(&mut self, op: F) -> error::Result<()>
+    fn arithmetic<O>(&mut self) -> error::Result<()>
     where
-        F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<atomic::Atomic>,
+        O: atomic::ArithmeticOp,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -461,7 +461,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = op(a, b)?;
+        let result = a.arithmetic::<O>(b)?;
         self.stack.push(result.into());
         Ok(())
     }

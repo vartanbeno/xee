@@ -13,8 +13,6 @@ use xee_schema_type::Xs;
 use crate::atomic;
 use crate::error;
 
-use super::cast::cast_to_same;
-
 pub(crate) fn arithmetic_op<O>(
     a: atomic::Atomic,
     b: atomic::Atomic,
@@ -107,7 +105,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
             // we know they're not the same type and not float or double,
             // so should be safe to cast to the same type
             // TODO: what about weird stuff like PositiveInteger?
-            cast_to_same(a, b)
+            a.cast_to_same_schema_type(&b)
         }
     }
 }
@@ -327,7 +325,7 @@ impl ArithmeticOp for ModuloOp {
     }
 }
 
-pub(crate) fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         Ok(atomic)
     } else {
@@ -335,7 +333,7 @@ pub(crate) fn numeric_unary_plus(atomic: atomic::Atomic) -> error::Result<atomic
     }
 }
 
-pub(crate) fn numeric_unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
         match atomic {
             atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),

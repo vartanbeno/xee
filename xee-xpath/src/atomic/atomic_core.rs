@@ -8,6 +8,7 @@ use xee_schema_type::Xs;
 use crate::atomic;
 use crate::error;
 
+use super::arithmetic;
 use super::comparison;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -275,17 +276,34 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn value_comparison<O>(&self, other: &Atomic) -> error::Result<bool>
+    // value comparison as per XPath rules
+    pub(crate) fn value_comparison<O>(self, other: Atomic) -> error::Result<bool>
     where
         O: comparison::ComparisonOp,
     {
         comparison::value_comparison_op::<O>(self, other)
     }
+
+    pub(crate) fn arithmetic<O>(self, other: Atomic) -> error::Result<Atomic>
+    where
+        O: arithmetic::ArithmeticOp,
+    {
+        arithmetic::arithmetic_op::<O>(self, other)
+    }
+
+    pub(crate) fn plus(self) -> error::Result<Atomic> {
+        arithmetic::unary_plus(self)
+    }
+
+    pub(crate) fn minus(self) -> error::Result<Atomic> {
+        arithmetic::unary_minus(self)
+    }
 }
 
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
-        self.value_comparison::<atomic::EqualOp>(other)
+        self.clone()
+            .value_comparison::<atomic::EqualOp>(other.clone())
             .unwrap_or(false)
     }
 }
