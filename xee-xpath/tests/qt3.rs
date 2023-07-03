@@ -112,6 +112,14 @@ fn test_cast() {
         .run()
 }
 
+#[test]
+fn test_castable() {
+    Tests::none("prod/CastableExpr")
+        .include("CastableAs01? CastableAs02?")
+        .exclude("CastableAs027 CastableAs028 CastableAs029")
+        .run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")
