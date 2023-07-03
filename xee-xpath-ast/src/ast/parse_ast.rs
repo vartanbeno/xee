@@ -1010,18 +1010,16 @@ impl<'a> AstParser<'a> {
         let mut pairs = pair.into_inner();
         let mut next = pairs.next().unwrap();
         let params = if next.as_rule() == Rule::ParamList {
-            let params = self.param_list_to_params(next);
+            let params = self.params(next);
             next = pairs.next().unwrap();
             params
         } else {
             vec![]
         };
         let return_type = if next.as_rule() == Rule::SequenceType {
+            let sequence_type = Some(self.sequence_type(next));
             next = pairs.next().unwrap();
-            Some(ast::SequenceType::Unsupported)
-            // panic!("unimplemented: return type");
-            // let return_type = sequence_type(next);
-            // Some(return_type)
+            sequence_type
         } else {
             None
         };
@@ -1055,13 +1053,13 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn param_list_to_params(&self, pair: Pair<Rule>) -> Vec<ast::Param> {
+    fn params(&self, pair: Pair<Rule>) -> Vec<ast::Param> {
         debug_assert_eq!(pair.as_rule(), Rule::ParamList);
         let mut parameters = vec![];
         for pair in pair.into_inner() {
             match pair.as_rule() {
                 Rule::Param => {
-                    parameters.push(self.param_to_param(pair));
+                    parameters.push(self.param(pair));
                 }
                 _ => {
                     panic!("unhandled ParamList: {:?}", pair.as_rule())
@@ -1071,11 +1069,12 @@ impl<'a> AstParser<'a> {
         parameters
     }
 
-    fn param_to_param(&self, pair: Pair<Rule>) -> ast::Param {
+    fn param(&self, pair: Pair<Rule>) -> ast::Param {
         debug_assert_eq!(pair.as_rule(), Rule::Param);
         let mut pairs = pair.into_inner();
         let name = self.eq_name_to_name(pairs.next().unwrap(), None);
-        let type_ = pairs.next().map(|_pair| ast::SequenceType::Unsupported);
+        let next = pairs.next();
+        let type_ = next.map(|next| self.type_declaration(next));
         ast::Param { name, type_ }
     }
 
@@ -1581,6 +1580,16 @@ mod tests {
     #[test]
     fn test_inline_function() {
         assert_debug_snapshot!(parse_expr_single("function($x) { $x }"));
+    }
+
+    #[test]
+    fn test_inline_function_with_param_types() {
+        assert_debug_snapshot!(parse_expr_single("function($x as xs:integer) { $x }"));
+    }
+
+    #[test]
+    fn test_inline_function_with_return_type() {
+        assert_debug_snapshot!(parse_expr_single("function($x) as xs:integer { $x }"));
     }
 
     #[test]

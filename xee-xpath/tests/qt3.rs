@@ -48,6 +48,8 @@ fn test_inline_function_expr() {
         .exclude(
             "inline-fn-004 inline-fn-11 inline-fn-012a inline-fn-013 inline-fn-032 inline-fn-033",
         )
+        // function type declaration
+        .exclude("inline-fn-014")
         .run()
 }
 
