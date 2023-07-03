@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod test {
-
     use xee_xpath_macros::xpath_fn;
     use xot::Xot;
 
@@ -13,7 +12,7 @@ mod test {
         "foo".to_string()
     }
 
-    #[xpath_fn("fn:int_to_string($x as xs:integer) as xs:string")]
+    #[xpath_fn("fn:int_to_string($x as xs:long) as xs:string")]
     fn int_to_string(x: i64) -> String {
         x.to_string()
     }

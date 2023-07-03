@@ -28,6 +28,7 @@ xee-xpath-ast = { path = "../xee-xpath-ast"}
 xee-xpath-macros = { path = "../xee-xpath-macros"}
 xee-schema-type = { path = "../xee-schema-type"}
 lexical = { version = "6.1.1", features = ["format"] }
+ibig = "0.3.6"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

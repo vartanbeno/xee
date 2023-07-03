@@ -1,4 +1,5 @@
 use ahash::{HashMap, HashMapExt};
+use ibig::IBig;
 use miette::SourceSpan;
 
 use xee_schema_type::Xs;
@@ -414,7 +415,7 @@ impl<'a> IrConverter<'a> {
     fn literal(&mut self, ast: &ast::Literal, span: SourceSpan) -> Result<Bindings> {
         let atom = match ast {
             ast::Literal::Integer(i) => {
-                let i = i.parse::<i64>().map_err(|_e| Error::Overflow)?;
+                let i = i.parse::<IBig>().map_err(|_e| Error::Overflow)?;
                 ir::Atom::Const(ir::Const::Integer(i))
             }
             ast::Literal::String(s) => ir::Atom::Const(ir::Const::String(s.clone())),

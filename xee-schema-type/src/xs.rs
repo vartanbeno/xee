@@ -178,7 +178,7 @@ impl Xs {
             Float => Some(RustInfo::new("f32")),
             Double => Some(RustInfo::new("f64")),
             Decimal => Some(RustInfo::new("rust_decimal::Decimal")),
-            Integer => Some(RustInfo::new("i64")),
+            Integer => Some(RustInfo::new("ibig::IBig")),
             NonPositiveInteger => Some(RustInfo::new("i64")),
             NegativeInteger => Some(RustInfo::new("i64")),
             Long => Some(RustInfo::new("i64")),

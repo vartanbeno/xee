@@ -19,6 +19,7 @@ proc-macro2 = { version = "1", default-features = false }
 quote = "1"
 syn = { version = "2", features = ["full", "extra-traits"] }
 xee-xpath-ast = { path = "../xee-xpath-ast"}
+xee-schema-type = { path = "../xee-schema-type"}
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

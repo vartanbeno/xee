@@ -5,7 +5,7 @@ expression: "run(\"1 to 1\")"
 Ok(
     One(
         Atomic(
-            Integer(
+            Long(
                 1,
             ),
         ),

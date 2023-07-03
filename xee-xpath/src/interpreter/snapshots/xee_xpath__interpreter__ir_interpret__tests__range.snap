@@ -6,27 +6,27 @@ Ok(
     Many(
         [
             Atomic(
-                Integer(
+                Long(
                     1,
                 ),
             ),
             Atomic(
-                Integer(
+                Long(
                     2,
                 ),
             ),
             Atomic(
-                Integer(
+                Long(
                     3,
                 ),
             ),
             Atomic(
-                Integer(
+                Long(
                     4,
                 ),
             ),
             Atomic(
-                Integer(
+                Long(
                     5,
                 ),
             ),

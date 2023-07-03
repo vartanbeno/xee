@@ -339,13 +339,14 @@ impl<'a> Iterator for AtomizedManyIter<'a> {
 
 #[cfg(test)]
 mod tests {
+    use ibig::ibig;
     use rust_decimal::Decimal;
 
     use crate::atomic;
 
     #[test]
     fn test_integer_compares_with_decimal() {
-        let a = atomic::Atomic::Integer(1);
+        let a = atomic::Atomic::Integer(ibig!(1));
         let b = atomic::Atomic::Decimal(Decimal::from(1));
         assert_eq!(a, b);
     }

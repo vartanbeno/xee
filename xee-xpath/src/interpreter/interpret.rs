@@ -1,4 +1,5 @@
 use arrayvec::ArrayVec;
+use ibig::IBig;
 use miette::SourceSpan;
 use std::cmp::Ordering;
 use xee_schema_type::Xs;
@@ -388,7 +389,8 @@ impl<'a> Interpreter<'a> {
 
                 EncodedInstruction::SequenceLen => {
                     let value = self.stack.pop().unwrap();
-                    self.stack.push((value.len() as i64).into());
+                    let l: IBig = value.len().into();
+                    self.stack.push(l.into());
                 }
                 EncodedInstruction::SequenceGet => {
                     let value = self.stack.pop().unwrap();
@@ -623,6 +625,7 @@ fn build_push(build: &mut Vec<sequence::Item>, value: stack::Value) -> error::Re
 mod tests {
     use super::*;
 
+    use ibig::ibig;
     use xee_xpath_ast::Namespaces;
     use xot::Xot;
 
@@ -650,7 +653,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -711,7 +714,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -745,7 +748,7 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(0))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
             vec![],
         );
         interpreter.run_actual()?;

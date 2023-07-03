@@ -1,3 +1,4 @@
+use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::fmt;
@@ -28,8 +29,9 @@ pub enum Atomic {
     // The XML Schema 1.1 approaches this differently, but are still within
     // bounds of these restrictions.
     // That said, not all UnsignedLong fit in a i64, so that may lead to trouble
-    Integer(i64),
+    Integer(IBig),
     // machine integers
+    Long(i64),
     Int(i32),
     Short(i16),
     Byte(i8),
@@ -61,11 +63,12 @@ impl Atomic {
 
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
-            Atomic::Integer(i) => Ok(*i != 0),
+            Atomic::Integer(i) => Ok(!i.is_zero()),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
+            Atomic::Long(i) => Ok(*i != 0),
             Atomic::Int(i) => Ok(*i != 0),
             Atomic::Short(i) => Ok(*i != 0),
             Atomic::Byte(i) => Ok(*i != 0),
@@ -160,6 +163,7 @@ impl Atomic {
             Atomic::Boolean(_) => Xs::Boolean,
             Atomic::Decimal(_) => Xs::Decimal,
             Atomic::Integer(_) => Xs::Integer,
+            Atomic::Long(_) => Xs::Long,
             Atomic::Int(_) => Xs::Int,
             Atomic::Short(_) => Xs::Short,
             Atomic::Byte(_) => Xs::Byte,
@@ -299,9 +303,26 @@ impl TryFrom<Atomic> for Decimal {
     }
 }
 
+impl From<IBig> for Atomic {
+    fn from(i: IBig) -> Self {
+        Atomic::Integer(i)
+    }
+}
+
+impl TryFrom<Atomic> for IBig {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Integer(i) => Ok(i),
+            _ => Err(error::Error::Type),
+        }
+    }
+}
+
 impl From<i64> for Atomic {
     fn from(i: i64) -> Self {
-        Atomic::Integer(i)
+        Atomic::Long(i)
     }
 }
 
@@ -310,7 +331,7 @@ impl TryFrom<Atomic> for i64 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Integer(i) => Ok(i),
+            Atomic::Long(i) => Ok(i),
             _ => Err(error::Error::Type),
         }
     }

@@ -101,6 +101,7 @@ impl atomic::Atomic {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ibig::ibig;
 
     use xee_xpath_ast::ast::parse_sequence_type;
     use xee_xpath_ast::Namespaces;
@@ -127,11 +128,10 @@ mod tests {
         let namespaces = Namespaces::default();
         let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
 
-        let right_sequence =
-            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+        let right_sequence = sequence::Sequence::from(vec![sequence::Item::from(ibig!(1))]);
         let wrong_amount_sequence = sequence::Sequence::from(vec![
-            sequence::Item::from(atomic::Atomic::from(1i64)),
-            sequence::Item::from(atomic::Atomic::from(2i64)),
+            sequence::Item::from(ibig!(1)),
+            sequence::Item::from(ibig!(2)),
         ]);
         let wrong_type_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
@@ -155,8 +155,8 @@ mod tests {
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
         let wrong_amount_sequence = sequence::Sequence::from(vec![
-            sequence::Item::from(atomic::Atomic::from(1i64)),
-            sequence::Item::from(atomic::Atomic::from(2i64)),
+            sequence::Item::from(ibig!(1)),
+            sequence::Item::from(ibig!(2)),
         ]);
         let right_type_sequence2 =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
@@ -207,10 +207,10 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:integer?", &namespaces).unwrap();
 
         let right_sequence =
-            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(ibig!(1)))]);
         let wrong_amount_sequence = sequence::Sequence::from(vec![
-            sequence::Item::from(atomic::Atomic::from(1i64)),
-            sequence::Item::from(atomic::Atomic::from(2i64)),
+            sequence::Item::from(ibig!(1)),
+            sequence::Item::from(ibig!(2)),
         ]);
         let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();
@@ -232,10 +232,10 @@ mod tests {
         let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
 
         let right_sequence =
-            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(ibig!(1)))]);
         let right_multi_sequence = sequence::Sequence::from(vec![
-            sequence::Item::from(atomic::Atomic::from(1i64)),
-            sequence::Item::from(atomic::Atomic::from(2i64)),
+            sequence::Item::from(ibig!(1)),
+            sequence::Item::from(ibig!(2)),
         ]);
         let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();

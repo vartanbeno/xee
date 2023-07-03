@@ -307,13 +307,13 @@ impl ManyRecurseQuery {
 
 #[cfg(test)]
 mod tests {
+    use ibig::{ibig, IBig};
     use xot::Xot;
 
     use super::*;
 
     use xee_xpath_ast::Namespaces;
 
-    use crate::atomic;
     use crate::error::Result;
     use crate::xml;
 
@@ -324,7 +324,7 @@ mod tests {
         let mut queries = Queries::new(&static_context);
         let q = queries
             .one("1 + 2", |_, item| {
-                let v: Result<i64> = item.to_atomic()?.try_into();
+                let v: Result<IBig> = item.to_atomic()?.try_into();
                 v
             })
             .unwrap();
@@ -332,10 +332,8 @@ mod tests {
         let xot = Xot::new();
         let dynamic_context = DynamicContext::new(&xot, &static_context);
         let session = queries.session(&dynamic_context);
-        let r = q
-            .execute(&session, &sequence::Item::from(atomic::Atomic::from(1i64)))
-            .unwrap();
-        assert_eq!(r, 3);
+        let r = q.execute(&session, &1i64.into()).unwrap();
+        assert_eq!(r, ibig!(3));
     }
 
     #[test]

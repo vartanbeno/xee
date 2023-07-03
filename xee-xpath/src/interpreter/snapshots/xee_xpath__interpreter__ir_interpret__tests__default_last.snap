@@ -6,7 +6,7 @@ Ok(
     Sequence {
         stack_value: One(
             Atomic(
-                Integer(
+                Long(
                     1,
                 ),
             ),

@@ -1,3 +1,4 @@
+use ibig::IBig;
 // an Intermediate Representation in ANF - administrative normal form
 // XXX is this really ANF? Maybe it is, though it doesn't support recursion
 // (without function arguments), as XPath doesn't.
@@ -40,7 +41,7 @@ pub(crate) enum Atom {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Const {
-    Integer(i64),
+    Integer(IBig),
     String(String),
     Double(OrderedFloat<f64>),
     Decimal(Decimal),

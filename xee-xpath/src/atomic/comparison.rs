@@ -1,4 +1,5 @@
-use num_traits::{Float, PrimInt};
+use ibig::IBig;
+use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
@@ -13,13 +14,7 @@ where
     O: ComparisonOp,
 {
     let (a, b) = cast(a, b)?;
-    comparison_op::<O>(a, b)
-}
 
-pub(crate) fn comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>
-where
-    O: ComparisonOp,
-{
     // cast guarantees both atomic types are the same concrete atomic
     Ok(match (a, b) {
         (atomic::Atomic::String(a), atomic::Atomic::String(b)) => {
@@ -31,24 +26,7 @@ where
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
             <O as ComparisonOp>::decimal(a, b)
         }
-        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
-            <O as ComparisonOp>::integer(a, b)
-        }
-        (atomic::Atomic::Int(a), atomic::Atomic::Int(b)) => <O as ComparisonOp>::integer(a, b),
-        (atomic::Atomic::Short(a), atomic::Atomic::Short(b)) => <O as ComparisonOp>::integer(a, b),
-        (atomic::Atomic::Byte(a), atomic::Atomic::Byte(b)) => <O as ComparisonOp>::integer(a, b),
-        (atomic::Atomic::UnsignedLong(a), atomic::Atomic::UnsignedLong(b)) => {
-            <O as ComparisonOp>::integer(a, b)
-        }
-        (atomic::Atomic::UnsignedInt(a), atomic::Atomic::UnsignedInt(b)) => {
-            <O as ComparisonOp>::integer(a, b)
-        }
-        (atomic::Atomic::UnsignedShort(a), atomic::Atomic::UnsignedShort(b)) => {
-            <O as ComparisonOp>::integer(a, b)
-        }
-        (atomic::Atomic::UnsignedByte(a), atomic::Atomic::UnsignedByte(b)) => {
-            <O as ComparisonOp>::integer(a, b)
-        }
+        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => <O as ComparisonOp>::ibig(a, b),
         (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
             <O as ComparisonOp>::float(a, b)
         }
@@ -102,16 +80,20 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
         // 5c: xs:float & xs:double -> cast float to double
         (BaseType::Float, BaseType::Double) => Ok((a.cast_to_double()?, b)),
         (BaseType::Double, BaseType::Float) => Ok((a, b.cast_to_double()?)),
-
-        // decimal types need to be made the same
-        (BaseType::Decimal, BaseType::Decimal) => a.cast_to_same_schema_type(&b),
         // float and double types are already the same
         (BaseType::Float, BaseType::Float) => Ok((a, b)),
         (BaseType::Double, BaseType::Double) => Ok((a, b)),
         // any other type can be compared if the types are the same
-        (BaseType::Other, _) | (_, BaseType::Other) => {
-            // if we're the type, we're done
-            if a.has_same_schema_type(&b) {
+        (BaseType::Decimal, _) | (BaseType::Other, _) | (_, BaseType::Other) => {
+            if a.has_base_schema_type(Xs::Integer) && b.has_base_schema_type(Xs::Integer) {
+                // if both are derived from integers, cast them to integer
+                Ok((a.cast_to_integer()?, b.cast_to_integer()?))
+            } else if a.has_base_schema_type(Xs::Decimal) & b.has_base_schema_type(Xs::Decimal) {
+                // if both are derived from decimals, cast them to decimal
+                Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
+            } else if a.has_same_schema_type(&b) {
+                // if both are non-numeric (already handled) and the same type,
+                // they are comparable
                 Ok((a, b))
             } else {
                 // We're not handling derived non-atomic data types,
@@ -132,9 +114,7 @@ fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
 }
 
 pub(crate) trait ComparisonOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt;
+    fn ibig(a: IBig, b: IBig) -> bool;
     fn decimal(a: Decimal, b: Decimal) -> bool;
     fn float<F>(a: F, b: F) -> bool
     where
@@ -146,10 +126,7 @@ pub(crate) trait ComparisonOp {
 pub(crate) struct EqualOp;
 
 impl ComparisonOp for EqualOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a == b
     }
 
@@ -176,10 +153,7 @@ impl ComparisonOp for EqualOp {
 pub(crate) struct NotEqualOp;
 
 impl ComparisonOp for NotEqualOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a != b
     }
 
@@ -206,10 +180,7 @@ impl ComparisonOp for NotEqualOp {
 pub(crate) struct LessThanOp;
 
 impl ComparisonOp for LessThanOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a < b
     }
 
@@ -237,10 +208,7 @@ impl ComparisonOp for LessThanOp {
 pub(crate) struct LessThanOrEqualOp;
 
 impl ComparisonOp for LessThanOrEqualOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a <= b
     }
 
@@ -268,10 +236,7 @@ impl ComparisonOp for LessThanOrEqualOp {
 pub(crate) struct GreaterThanOp;
 
 impl ComparisonOp for GreaterThanOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a > b
     }
 
@@ -299,10 +264,7 @@ impl ComparisonOp for GreaterThanOp {
 pub(crate) struct GreaterThanOrEqualOp;
 
 impl ComparisonOp for GreaterThanOrEqualOp {
-    fn integer<I>(a: I, b: I) -> bool
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> bool {
         a >= b
     }
 

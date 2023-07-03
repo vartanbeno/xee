@@ -1,3 +1,4 @@
+use ibig::ibig;
 use miette::SourceSpan;
 
 use crate::context::{ContextRule, StaticContext};
@@ -45,7 +46,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Atom::Const(c) => {
                 match c {
                     ir::Const::Integer(i) => {
-                        self.builder.emit_constant((*i).into(), atom.span);
+                        self.builder.emit_constant((i.clone()).into(), atom.span);
                     }
                     ir::Const::String(s) => {
                         self.builder.emit_constant((s).into(), atom.span);
@@ -509,7 +510,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.emit(Instruction::SequenceLen, span);
 
         // place index on stack
-        self.builder.emit_constant(1i64.into(), span);
+        self.builder.emit_constant(ibig!(1).into(), span);
         self.scopes.push_name(&context_names.position);
 
         let loop_start_ref = self.builder.loop_start();
@@ -545,7 +546,7 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> Result<()> {
         // update index with 1
         self.compile_variable(&context_names.position, span)?;
-        self.builder.emit_constant(1i64.into(), span);
+        self.builder.emit_constant(ibig!(1).into(), span);
         self.builder.emit(Instruction::Add, span);
         self.compile_variable_set(&context_names.position, span)?;
         self.builder

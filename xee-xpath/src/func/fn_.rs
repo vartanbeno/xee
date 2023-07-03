@@ -1,3 +1,4 @@
+use ibig::IBig;
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
@@ -14,7 +15,7 @@ use crate::xml;
 const MAX_CONCAT_ARITY: usize = 32;
 
 #[xpath_fn("my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
-fn my_function(a: i64, b: i64) -> i64 {
+fn my_function(a: IBig, b: IBig) -> IBig {
     a + b
 }
 
@@ -59,8 +60,8 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[sequence::Item]) -> i64 {
-    arg.len() as i64
+fn count(arg: &[sequence::Item]) -> IBig {
+    arg.len().into()
 }
 
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
@@ -187,12 +188,12 @@ fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String>
 }
 
 #[xpath_fn("fn:string-length($arg as xs:string?) as xs:integer", context_first)]
-fn string_length(arg: Option<&str>) -> i64 {
+fn string_length(arg: Option<&str>) -> IBig {
     if let Some(arg) = arg {
         // TODO: what about overflow? not a very realistic situation
-        arg.chars().count() as i64
+        arg.chars().count().into()
     } else {
-        0
+        0.into()
     }
 }
 

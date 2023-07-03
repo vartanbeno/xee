@@ -4,7 +4,8 @@
 
 // with an additional untypedAtomic casting rule
 
-use num_traits::{Float, PrimInt};
+use ibig::IBig;
+use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
@@ -27,28 +28,7 @@ where
             <O as ArithmeticOp>::decimal_atomic(a, b)
         }
         (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<i64>(a, b)
-        }
-        (atomic::Atomic::Int(a), atomic::Atomic::Int(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<i32>(a, b)
-        }
-        (atomic::Atomic::Short(a), atomic::Atomic::Short(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<i16>(a, b)
-        }
-        (atomic::Atomic::Byte(a), atomic::Atomic::Byte(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<i8>(a, b)
-        }
-        (atomic::Atomic::UnsignedLong(a), atomic::Atomic::UnsignedLong(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<u64>(a, b)
-        }
-        (atomic::Atomic::UnsignedInt(a), atomic::Atomic::UnsignedInt(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<u32>(a, b)
-        }
-        (atomic::Atomic::UnsignedShort(a), atomic::Atomic::UnsignedShort(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<u16>(a, b)
-        }
-        (atomic::Atomic::UnsignedByte(a), atomic::Atomic::UnsignedByte(b)) => {
-            <O as ArithmeticOp>::integer_atomic::<u8>(a, b)
+            <O as ArithmeticOp>::ibig_atomic(a, b)
         }
         (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
             <O as ArithmeticOp>::float_atomic::<f32>(a, b)
@@ -72,40 +52,42 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
     let a = cast_untyped(a)?;
     let b = cast_untyped(b)?;
 
-    // if the types are the same, we don't need to do anything
-    if a.schema_type() == b.schema_type() {
-        return Ok((a, b));
-    }
-
     // 1b promote decimal to float or double
     if a.has_base_schema_type(Xs::Decimal) {
         if b.schema_type() == Xs::Float {
             return Ok((a.cast_to_float()?, b));
-        }
-        if b.schema_type() == Xs::Double {
+        } else if b.schema_type() == Xs::Double {
             return Ok((a.cast_to_double()?, b));
         }
     }
     if b.has_base_schema_type(Xs::Decimal) {
         if a.schema_type() == Xs::Float {
             return Ok((a, b.cast_to_float()?));
-        }
-        if a.schema_type() == Xs::Double {
+        } else if a.schema_type() == Xs::Double {
             return Ok((a, b.cast_to_double()?));
         }
     }
 
     match (&a, &b) {
+        (atomic::Atomic::Float(_), atomic::Atomic::Float(_)) => Ok((a, b)),
+        (atomic::Atomic::Double(_), atomic::Atomic::Double(_)) => Ok((a, b)),
         // B.1 Type Promotion
         // 1 numeric type promotion
         // 1a a value of float can be promoted to double
         (atomic::Atomic::Float(_), atomic::Atomic::Double(_)) => Ok((a.cast_to_double()?, b)),
         (atomic::Atomic::Double(_), atomic::Atomic::Float(_)) => Ok((a, b.cast_to_double()?)),
+
+        // if one is a decimal, cast the other to decimal too
+        (atomic::Atomic::Decimal(_), _) => Ok((a, b.cast_to_decimal()?)),
+        (_, atomic::Atomic::Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
         _ => {
-            // we know they're not the same type and not float or double,
-            // so should be safe to cast to the same type
-            // TODO: what about weird stuff like PositiveInteger?
-            a.cast_to_same_schema_type(&b)
+            if a.has_base_schema_type(Xs::Integer) && b.has_base_schema_type(Xs::Integer) {
+                // we have integers or subtypes of integer, cast them to the
+                // same type
+                Ok((a.cast_to_integer()?, b.cast_to_integer()?))
+            } else {
+                Err(error::Error::Type)
+            }
         }
     }
 }
@@ -119,19 +101,17 @@ fn cast_untyped(value: atomic::Atomic) -> error::Result<atomic::Atomic> {
 }
 
 pub(crate) trait ArithmeticOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt;
+    // fn integer<I>(a: I, b: I) -> error::Result<I>
+    // where
+    //     I: PrimInt;
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig>;
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal>;
     fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float;
 
-    fn integer_atomic<I>(a: I, b: I) -> error::Result<atomic::Atomic>
-    where
-        I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
-    {
-        let v = <Self as ArithmeticOp>::integer(a, b)?;
+    fn ibig_atomic(a: IBig, b: IBig) -> error::Result<atomic::Atomic> {
+        let v = <Self as ArithmeticOp>::ibig(a, b)?;
         Ok(v.into())
     }
 
@@ -152,11 +132,8 @@ pub(crate) trait ArithmeticOp {
 pub(crate) struct AddOp;
 
 impl ArithmeticOp for AddOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
-        a.checked_add(&b).ok_or(error::Error::Overflow)
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
+        Ok(a + b)
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -174,11 +151,8 @@ impl ArithmeticOp for AddOp {
 pub(crate) struct SubtractOp;
 
 impl ArithmeticOp for SubtractOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
-        a.checked_sub(&b).ok_or(error::Error::Overflow)
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
+        Ok(a - b)
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -196,11 +170,8 @@ impl ArithmeticOp for SubtractOp {
 pub(crate) struct MultiplyOp;
 
 impl ArithmeticOp for MultiplyOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
-        a.checked_mul(&b).ok_or(error::Error::Overflow)
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
+        Ok(a * b)
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -218,26 +189,17 @@ impl ArithmeticOp for MultiplyOp {
 pub(crate) struct DivideOp;
 
 impl ArithmeticOp for DivideOp {
-    fn integer_atomic<I>(a: I, b: I) -> error::Result<atomic::Atomic>
-    where
-        I: PrimInt + Into<atomic::Atomic> + Into<Decimal>,
-    {
+    fn ibig_atomic(a: IBig, b: IBig) -> error::Result<atomic::Atomic> {
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
-        let a: Decimal = a.into();
-        let b: Decimal = b.into();
-        let v = <Self as ArithmeticOp>::decimal(a, b)?;
+        let a: i128 = a.try_into().map_err(|_| error::Error::FOCA0001)?;
+        let b: i128 = b.try_into().map_err(|_| error::Error::FOCA0001)?;
+        let v = <Self as ArithmeticOp>::decimal(a.into(), b.into())?;
         Ok(v.into())
     }
 
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
-        if b.is_zero() {
-            return Err(error::Error::DivisionByZero);
-        }
-        a.checked_div(&b).ok_or(error::Error::Overflow)
+    fn ibig(_a: IBig, _b: IBig) -> error::Result<IBig> {
+        unreachable!()
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -258,20 +220,19 @@ impl ArithmeticOp for DivideOp {
 pub(crate) struct IntegerDivideOp;
 
 impl ArithmeticOp for IntegerDivideOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(&b).ok_or(error::Error::Overflow)
+        Ok(a / b)
     }
 
     fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
         let v = <DivideOp as ArithmeticOp>::decimal(a, b)?;
 
-        Ok(v.trunc().to_i64().ok_or(error::Error::Overflow)?.into())
+        let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
+        let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
+        Ok(i.into())
     }
 
     fn decimal(_a: Decimal, _b: Decimal) -> error::Result<Decimal> {
@@ -286,7 +247,9 @@ impl ArithmeticOp for IntegerDivideOp {
             return Err(error::Error::DivisionByZero);
         }
         let v = <DivideOp as ArithmeticOp>::float(a, b)?;
-        Ok(v.trunc().to_i64().ok_or(error::Error::Overflow)?.into())
+        let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
+        let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
+        Ok(i.into())
     }
 
     fn float<F>(_a: F, _b: F) -> error::Result<F>
@@ -300,10 +263,7 @@ impl ArithmeticOp for IntegerDivideOp {
 pub(crate) struct ModuloOp;
 
 impl ArithmeticOp for ModuloOp {
-    fn integer<I>(a: I, b: I) -> error::Result<I>
-    where
-        I: PrimInt,
-    {
+    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
@@ -327,7 +287,11 @@ impl ArithmeticOp for ModuloOp {
 
 pub(crate) fn unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
-        Ok(atomic)
+        if atomic.has_base_schema_type(Xs::Integer) {
+            atomic.cast_to_integer()
+        } else {
+            Ok(atomic)
+        }
     } else {
         Err(error::Error::Type)
     }
@@ -335,21 +299,16 @@ pub(crate) fn unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic
 
 pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
     if atomic.is_numeric() {
+        let atomic = if atomic.has_base_schema_type(Xs::Integer) {
+            atomic.cast_to_integer()?
+        } else {
+            atomic
+        };
         match atomic {
             atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),
             atomic::Atomic::Integer(v) => Ok(atomic::Atomic::Integer(-v)),
-            atomic::Atomic::Int(v) => Ok(atomic::Atomic::Int(-v)),
-            atomic::Atomic::Short(v) => Ok(atomic::Atomic::Short(-v)),
-            atomic::Atomic::Byte(v) => Ok(atomic::Atomic::Byte(-v)),
             atomic::Atomic::Float(v) => Ok(atomic::Atomic::Float(-v)),
             atomic::Atomic::Double(v) => Ok(atomic::Atomic::Double(-v)),
-            // what is the correct behavior for unsigned types? We could return
-            // a signed integer of the same type with overflow behavior if
-            // that's not possible, but for now we just refuse to do it.
-            atomic::Atomic::UnsignedLong(_) => Err(error::Error::Type),
-            atomic::Atomic::UnsignedInt(_) => Err(error::Error::Type),
-            atomic::Atomic::UnsignedShort(_) => Err(error::Error::Type),
-            atomic::Atomic::UnsignedByte(_) => Err(error::Error::Type),
             _ => unreachable!(),
         }
     } else {
@@ -401,14 +360,6 @@ mod tests {
         let b = 2i64.into();
         let result = arithmetic_op::<AddOp>(a, b).unwrap();
         assert_eq!(result, 3i64.into());
-    }
-
-    #[test]
-    fn test_add_integers_overflow() {
-        let a = i64::MAX.into();
-        let b = 2i64.into();
-        let result = arithmetic_op::<AddOp>(a, b);
-        assert_eq!(result, Err(error::Error::Overflow));
     }
 
     #[test]
