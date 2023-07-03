@@ -2,8 +2,10 @@
 // The convert module is used for checking and converting values for
 // external functions declared with xpath_fn
 use std::borrow::Cow;
-use xee_xpath_ast::{ast, XS_NAMESPACE};
 use xot::Xot;
+
+use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 
 use crate::atomic;
 use crate::error;
@@ -83,14 +85,10 @@ impl sequence::Item {
 
 impl atomic::Atomic {
     fn atomic_type_matching(&self, name: &ast::Name) -> error::Result<()> {
-        if let Some(namespace) = name.namespace() {
-            // TODO union and derived types need something fancier
-            if namespace != XS_NAMESPACE {
-                return Ok(());
-            }
-        }
-
-        if self.match_type_name(name.local_name()) {
+        // XXX error should be detectable statically, earlier
+        let xs = Xs::by_name(name.namespace(), name.local_name())
+            .ok_or(error::Error::UndefinedTypeReference)?;
+        if self.schema_type().derives_from(xs) {
             Ok(())
         } else {
             Err(error::Error::Type)
@@ -133,6 +131,28 @@ mod tests {
             sequence::Item::from(ibig!(1)),
             sequence::Item::from(ibig!(2)),
         ]);
+        let wrong_type_sequence =
+            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
+        let xot = Xot::new();
+
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
+        assert!(is_owned(right_result));
+        let wrong_amount_result =
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        let wrong_type_result = wrong_type_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(wrong_type_result, Err(error::Error::Type));
+    }
+
+    #[test]
+    fn test_one_long_matches_integer() {
+        let namespaces = Namespaces::default();
+        let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
+
+        let right_sequence = sequence::Sequence::from(vec![sequence::Item::from(1i64)]);
+        let wrong_amount_sequence =
+            sequence::Sequence::from(vec![sequence::Item::from(1i64), sequence::Item::from(1i64)]);
         let wrong_type_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
