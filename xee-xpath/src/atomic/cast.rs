@@ -500,9 +500,9 @@ impl atomic::Atomic {
             atomic::Atomic::UnsignedShort(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::UnsignedByte(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::NonNegativeInteger(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
-            atomic::Atomic::PositiveInteger(i) => Ok(true.into()),
+            atomic::Atomic::PositiveInteger(_) => Ok(true.into()),
             atomic::Atomic::NonPositiveInteger(i) => Ok(atomic::Atomic::Boolean(i.is_zero())),
-            atomic::Atomic::NegativeInteger(i) => Ok(true.into()),
+            atomic::Atomic::NegativeInteger(_) => Ok(true.into()),
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
         }
