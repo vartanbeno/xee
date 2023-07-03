@@ -8,7 +8,7 @@ use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
-use crate::stack::StaticFunctionId;
+use crate::stack::{CastType, StaticFunctionId};
 use crate::xml;
 
 pub(crate) type AtomS = Spanned<Atom>;
@@ -142,9 +142,27 @@ pub(crate) struct Cast {
     pub(crate) empty_sequence_allowed: bool,
 }
 
+impl Cast {
+    pub(crate) fn cast_type(&self) -> CastType {
+        CastType {
+            xs: self.xs,
+            empty_sequence_allowed: self.empty_sequence_allowed,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Castable {
     pub(crate) atom: AtomS,
     pub(crate) xs: Xs,
     pub(crate) empty_sequence_allowed: bool,
+}
+
+impl Castable {
+    pub(crate) fn cast_type(&self) -> CastType {
+        CastType {
+            xs: self.xs,
+            empty_sequence_allowed: self.empty_sequence_allowed,
+        }
+    }
 }

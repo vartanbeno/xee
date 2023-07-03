@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"1 cast as xs:string\")"
+---
+Ok(
+    One(
+        Atomic(
+            String(
+                "1",
+            ),
+        ),
+    ),
+)

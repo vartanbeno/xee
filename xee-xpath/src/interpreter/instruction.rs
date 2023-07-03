@@ -43,7 +43,8 @@ pub(crate) enum Instruction {
     Dup,
     Pop,
     LetDone,
-
+    Cast(u16),
+    Castable(u16),
     Range,
     SequenceLen,
     SequenceGet,
@@ -95,6 +96,8 @@ pub(crate) enum EncodedInstruction {
     Dup,
     Pop,
     LetDone,
+    Cast,
+    Castable,
     Range,
     SequenceLen,
     SequenceGet,
@@ -176,6 +179,14 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Step => {
             let step = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Step(step), 3)
+        }
+        EncodedInstruction::Cast => {
+            let type_id = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Cast(type_id), 3)
+        }
+        EncodedInstruction::Castable => {
+            let type_id = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::Castable(type_id), 3)
         }
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
@@ -277,6 +288,14 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::Dup => bytes.push(EncodedInstruction::Dup.to_u8().unwrap()),
         Instruction::Pop => bytes.push(EncodedInstruction::Pop.to_u8().unwrap()),
         Instruction::LetDone => bytes.push(EncodedInstruction::LetDone.to_u8().unwrap()),
+        Instruction::Cast(type_id) => {
+            bytes.push(EncodedInstruction::Cast.to_u8().unwrap());
+            bytes.extend_from_slice(&type_id.to_le_bytes());
+        }
+        Instruction::Castable(type_id) => {
+            bytes.push(EncodedInstruction::Castable.to_u8().unwrap());
+            bytes.extend_from_slice(&type_id.to_le_bytes());
+        }
         Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
         Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
         Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
@@ -346,6 +365,8 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Jump(_)
         | Instruction::JumpIfTrue(_)
         | Instruction::Step(_)
+        | Instruction::Cast(_)
+        | Instruction::Castable(_)
         | Instruction::JumpIfFalse(_) => 3,
     }
 }

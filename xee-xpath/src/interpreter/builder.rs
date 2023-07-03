@@ -2,6 +2,7 @@ use miette::SourceSpan;
 
 use crate::ir;
 use crate::stack;
+use crate::stack::CastType;
 use crate::xml;
 
 use super::instruction::{encode_instruction, instruction_size, Instruction};
@@ -66,6 +67,7 @@ pub(crate) struct FunctionBuilder<'a> {
     spans: Vec<SourceSpan>,
     constants: Vec<stack::Value>,
     steps: Vec<xml::Step>,
+    types: Vec<CastType>,
     closure_names: Vec<ir::Name>,
 }
 
@@ -77,6 +79,7 @@ impl<'a> FunctionBuilder<'a> {
             spans: Vec::new(),
             constants: Vec::new(),
             steps: Vec::new(),
+            types: Vec::new(),
             closure_names: Vec::new(),
         }
     }
@@ -117,6 +120,15 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many steps");
         }
         step_id
+    }
+
+    pub(crate) fn add_cast_type(&mut self, cast_type: CastType) -> usize {
+        let cast_type_id = self.types.len();
+        self.types.push(cast_type);
+        if cast_type_id > (u16::MAX as usize) {
+            panic!("too many cast types");
+        }
+        cast_type_id
     }
 
     pub(crate) fn emit_compare_value(&mut self, comparison: Comparison, span: SourceSpan) {
@@ -199,6 +211,7 @@ impl<'a> FunctionBuilder<'a> {
             closure_names: self.closure_names,
             constants: self.constants,
             steps: self.steps,
+            types: self.types,
         }
     }
 

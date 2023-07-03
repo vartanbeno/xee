@@ -1,4 +1,5 @@
 use miette::SourceSpan;
+use xee_schema_type::Xs;
 
 use crate::ir;
 use crate::stack;
@@ -22,12 +23,19 @@ impl StaticFunctionId {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct CastType {
+    pub(crate) xs: Xs,
+    pub(crate) empty_sequence_allowed: bool,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Function {
     pub(crate) name: String,
     pub(crate) arity: usize,
     pub(crate) constants: Vec<stack::Value>,
     pub(crate) steps: Vec<xml::Step>,
+    pub(crate) types: Vec<CastType>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,

@@ -3,7 +3,7 @@ use miette::SourceSpan;
 use crate::context::{ContextRule, StaticContext};
 use crate::error::{Error, Result};
 use crate::ir;
-use crate::stack;
+use crate::stack::{self, StaticFunctionId};
 
 use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use super::instruction::Instruction;
@@ -35,7 +35,8 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
-            _ => todo!("not yet"),
+            ir::Expr::Cast(cast) => self.compile_cast(cast, span),
+            ir::Expr::Castable(castable) => self.compile_castable(castable, span),
         }
     }
 
@@ -282,7 +283,7 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_static_function_reference(
         &mut self,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
         span: SourceSpan,
     ) -> Result<()> {
@@ -338,6 +339,24 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&step.context)?;
         let step_id = self.builder.add_step(step.step.clone());
         self.builder.emit(Instruction::Step(step_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_cast(&mut self, cast: &ir::Cast, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&cast.atom)?;
+        let cast_type = cast.cast_type();
+        let cast_type_id = self.builder.add_cast_type(cast_type);
+        self.builder
+            .emit(Instruction::Cast(cast_type_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_castable(&mut self, castable: &ir::Castable, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&castable.atom)?;
+        let cast_type = castable.cast_type();
+        let cast_type_id = self.builder.add_cast_type(cast_type);
+        self.builder
+            .emit(Instruction::Castable(cast_type_id as u16), span);
         Ok(())
     }
 
@@ -1402,5 +1421,20 @@ mod tests {
     #[test]
     fn test_run_unary_minus() {
         assert_debug_snapshot!(run("-1"));
+    }
+
+    #[test]
+    fn test_cast_integer_as_string() {
+        assert_debug_snapshot!(run("1 cast as xs:string"));
+    }
+
+    #[test]
+    fn test_cast_empty_sequence_as_string() {
+        assert_debug_snapshot!(run("() cast as xs:string"));
+    }
+
+    #[test]
+    fn test_cast_empty_sequence_as_string_question_mark() {
+        assert_debug_snapshot!(run("() cast as xs:string?"));
     }
 }

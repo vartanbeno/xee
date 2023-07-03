@@ -328,6 +328,23 @@ impl<'a> Interpreter<'a> {
                     let _ = self.stack.pop();
                     self.stack.push(return_value);
                 }
+                EncodedInstruction::Cast => {
+                    dbg!("here");
+                    let type_id = self.read_u16();
+                    let value = self.pop_atomic_option();
+                    let value = value?;
+                    let cast_type = &(self.function().types[type_id as usize]);
+                    dbg!(&value, cast_type);
+                    if let Some(value) = value {
+                        let cast_value = value.cast_to_schema_type(cast_type.xs)?;
+                        self.stack.push(cast_value.into());
+                    } else if cast_type.empty_sequence_allowed {
+                        self.stack.push(stack::Value::Empty);
+                    } else {
+                        Err(error::Error::Type)?;
+                    }
+                }
+                EncodedInstruction::Castable => {}
                 EncodedInstruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
@@ -523,6 +540,12 @@ impl<'a> Interpreter<'a> {
         let value = self.stack.pop().unwrap();
         let mut atomized = value.atomized(self.dynamic_context.xot);
         atomized.one()
+    }
+
+    fn pop_atomic_option(&mut self) -> error::Result<Option<atomic::Atomic>> {
+        let value = self.stack.pop().unwrap();
+        let mut atomized = value.atomized(self.dynamic_context.xot);
+        atomized.option()
     }
 
     fn pop_atomic2(&mut self) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
