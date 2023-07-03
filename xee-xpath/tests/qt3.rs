@@ -31,8 +31,6 @@ fn test_for_clause() {
 #[test]
 fn test_let_clause() {
     Tests::all("prod/LetClause")
-        // The 2.0 is represented as 2.0 instead of 2
-        .bug("LetExpr015")
         .exclude("LetExpr004 LetExpr005 LetExpr006 LetExpr013")
         .run()
 }
