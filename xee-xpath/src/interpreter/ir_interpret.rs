@@ -1437,4 +1437,24 @@ mod tests {
     fn test_cast_empty_sequence_as_string_question_mark() {
         assert_debug_snapshot!(run("() cast as xs:string?"));
     }
+
+    #[test]
+    fn test_castable_as_integer_success() {
+        assert_debug_snapshot!(run("1 castable as xs:integer"));
+    }
+
+    #[test]
+    fn test_castable_as_integer_failure() {
+        assert_debug_snapshot!(run("'A' castable as xs:integer"));
+    }
+
+    #[test]
+    fn test_castable_as_integer_empty_sequence_fails() {
+        assert_debug_snapshot!(run("() castable as xs:integer"));
+    }
+
+    #[test]
+    fn test_castable_as_integer_empty_sequence_question_mark() {
+        assert_debug_snapshot!(run("() castable as xs:integer?"));
+    }
 }

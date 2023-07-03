@@ -329,12 +329,9 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(return_value);
                 }
                 EncodedInstruction::Cast => {
-                    dbg!("here");
                     let type_id = self.read_u16();
-                    let value = self.pop_atomic_option();
-                    let value = value?;
+                    let value = self.pop_atomic_option()?;
                     let cast_type = &(self.function().types[type_id as usize]);
-                    dbg!(&value, cast_type);
                     if let Some(value) = value {
                         let cast_value = value.cast_to_schema_type(cast_type.xs)?;
                         self.stack.push(cast_value.into());
@@ -344,7 +341,19 @@ impl<'a> Interpreter<'a> {
                         Err(error::Error::Type)?;
                     }
                 }
-                EncodedInstruction::Castable => {}
+                EncodedInstruction::Castable => {
+                    let type_id = self.read_u16();
+                    let value = self.pop_atomic_option()?;
+                    let cast_type = &(self.function().types[type_id as usize]);
+                    if let Some(value) = value {
+                        let cast_value = value.cast_to_schema_type(cast_type.xs);
+                        self.stack.push(cast_value.is_ok().into());
+                    } else if cast_type.empty_sequence_allowed {
+                        self.stack.push(true.into())
+                    } else {
+                        self.stack.push(false.into());
+                    }
+                }
                 EncodedInstruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();

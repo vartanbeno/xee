@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"() castable as xs:integer\")"
+---
+Ok(
+    One(
+        Atomic(
+            Boolean(
+                false,
+            ),
+        ),
+    ),
+)
