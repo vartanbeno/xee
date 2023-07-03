@@ -90,7 +90,7 @@ impl atomic::Atomic {
             }
         }
 
-        if self.match_type_name(name.as_str()) {
+        if self.match_type_name(name.local_name()) {
             Ok(())
         } else {
             Err(error::Error::Type)

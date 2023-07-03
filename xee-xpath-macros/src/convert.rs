@@ -101,7 +101,7 @@ fn convert_atomic_or_union_type(
     // TODO: we don't handle anything but xs: yet
     assert_eq!(name.namespace(), Some(XS_NAMESPACE));
 
-    let local_name = name.as_str();
+    let local_name = name.local_name();
     if local_name == "anyAtomicType" {
         return Ok((quote!(#arg.atomized(context.xot)), false));
     }

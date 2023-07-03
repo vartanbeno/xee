@@ -4,6 +4,7 @@
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
+use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
@@ -137,11 +138,13 @@ pub(crate) enum Quantifier {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Cast {
     pub(crate) atom: AtomS,
-    pub(crate) type_: SingleType,
+    pub(crate) xs: Xs,
+    pub(crate) empty_sequence_allowed: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Castable {
     pub(crate) atom: AtomS,
-    pub(crate) type_: SingleType,
+    pub(crate) xs: Xs,
+    pub(crate) empty_sequence_allowed: bool,
 }

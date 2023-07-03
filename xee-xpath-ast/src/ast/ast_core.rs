@@ -69,6 +69,10 @@ impl Name {
         self.namespace.as_deref()
     }
 
+    pub fn local_name(&self) -> &str {
+        &self.name
+    }
+
     pub fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         if let Some(namespace) = &self.namespace {
             let namespace_id = xot.namespace(namespace);
@@ -89,10 +93,6 @@ impl Name {
             name,
             namespace: self.namespace.clone(),
         }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.name
     }
 }
 

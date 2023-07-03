@@ -68,7 +68,7 @@ fn make_wrapper(
         conversion_names.push(context_ident);
     }
     for (i, param) in signature.params.iter().enumerate() {
-        let name = Ident::new(param.name.as_str(), Span::call_site());
+        let name = Ident::new(param.name.local_name(), Span::call_site());
         conversion_names.push(name.clone());
         let arg = quote!(arguments[#i]);
         let fn_arg = &ast.sig.inputs[i];

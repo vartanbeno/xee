@@ -1,6 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use miette::SourceSpan;
 
+use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, span::Spanned, Namespaces, FN_NAMESPACE};
 
 use crate::context::StaticContext;
@@ -506,22 +507,46 @@ impl<'a> IrConverter<'a> {
                 })
             }
             ast::ApplyOperator::Cast(single_type) => {
-                let mut bindings = self.path_expr(&ast.path_expr)?;
-                let expr = ir::Expr::Cast(ir::Cast {
-                    atom: bindings.atom(),
-                    type_: single_type.clone(),
-                });
-                let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
+                let xs = Xs::by_name(single_type.name.namespace(), single_type.name.local_name());
+                if let Some(xs) = xs {
+                    if !xs.derives_from(Xs::AnySimpleType) {
+                        return Err(Error::XQST0052);
+                    }
+                    if xs == Xs::Notation || xs == Xs::AnySimpleType || xs == Xs::AnyAtomicType {
+                        return Err(Error::XPST0080);
+                    }
+                    let mut bindings = self.path_expr(&ast.path_expr)?;
+                    let expr = ir::Expr::Cast(ir::Cast {
+                        atom: bindings.atom(),
+                        xs,
+                        empty_sequence_allowed: single_type.question_mark,
+                    });
+                    let binding = self.new_binding(expr, span);
+                    Ok(bindings.bind(binding))
+                } else {
+                    Err(Error::XQST0052)
+                }
             }
             ast::ApplyOperator::Castable(single_type) => {
-                let mut bindings = self.path_expr(&ast.path_expr)?;
-                let expr = ir::Expr::Castable(ir::Castable {
-                    atom: bindings.atom(),
-                    type_: single_type.clone(),
-                });
-                let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
+                let xs = Xs::by_name(single_type.name.namespace(), single_type.name.local_name());
+                if let Some(xs) = xs {
+                    if !xs.derives_from(Xs::AnySimpleType) {
+                        return Err(Error::XQST0052);
+                    }
+                    if xs == Xs::Notation || xs == Xs::AnySimpleType || xs == Xs::AnyAtomicType {
+                        return Err(Error::XPST0080);
+                    }
+                    let mut bindings = self.path_expr(&ast.path_expr)?;
+                    let expr = ir::Expr::Castable(ir::Castable {
+                        atom: bindings.atom(),
+                        xs,
+                        empty_sequence_allowed: single_type.question_mark,
+                    });
+                    let binding = self.new_binding(expr, span);
+                    Ok(bindings.bind(binding))
+                } else {
+                    Err(Error::XQST0052)
+                }
             }
             _ => {
                 todo!("ApplyOperator: {:?}", ast.operator)
@@ -947,5 +972,20 @@ mod tests {
     #[test]
     fn test_castable_question_mark() {
         assert_debug_snapshot!(convert_expr_single("1 castable as xs:string?"));
+    }
+
+    #[test]
+    fn test_cast_unknown_schema_type() {
+        assert_debug_snapshot!(convert_expr_single("1 cast as unknown"));
+    }
+
+    #[test]
+    fn test_cast_non_simple_schema_type() {
+        assert_debug_snapshot!(convert_expr_single("1 cast as xs:untyped"));
+    }
+
+    #[test]
+    fn test_cast_illegal_simple_type() {
+        assert_debug_snapshot!(convert_expr_single("1 cast as xs:NOTATION"));
     }
 }

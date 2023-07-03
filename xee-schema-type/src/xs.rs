@@ -25,6 +25,7 @@ pub enum Xs {
     UnsignedByte,
     Float,
     Double,
+    Notation,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -50,7 +51,15 @@ impl RustInfo {
 }
 
 impl Xs {
-    pub fn by_name(&self, local_name: &str) -> Option<Self> {
+    pub fn by_name(namespace: Option<&str>, local_name: &str) -> Option<Self> {
+        if namespace == Some(XS_NAMESPACE) {
+            Xs::by_local_name(local_name)
+        } else {
+            None
+        }
+    }
+
+    pub fn by_local_name(local_name: &str) -> Option<Self> {
         use Xs::*;
         let xs = match local_name {
             "anyType" => AnyType,
@@ -76,14 +85,16 @@ impl Xs {
             "unsignedByte" => UnsignedByte,
             "float" => Float,
             "double" => Double,
+            "NOTATION" => Notation,
             _ => return None,
         };
         Some(xs)
     }
 
-    pub fn namespace(&self) -> &str {
+    pub fn namespace() -> &'static str {
         XS_NAMESPACE
     }
+
     pub fn local_name(&self) -> &str {
         use Xs::*;
         match self {
@@ -110,6 +121,7 @@ impl Xs {
             UnsignedByte => "unsignedByte",
             Float => "float",
             Double => "double",
+            Notation => "NOTATION",
         }
     }
 
@@ -139,6 +151,7 @@ impl Xs {
             UnsignedInt => Some(UnsignedLong),
             UnsignedShort => Some(UnsignedInt),
             UnsignedByte => Some(UnsignedShort),
+            Notation => Some(AnyAtomicType),
         }
     }
 
@@ -178,6 +191,7 @@ impl Xs {
             UnsignedInt => Some(RustInfo::new("u32")),
             UnsignedShort => Some(RustInfo::new("u16")),
             UnsignedByte => Some(RustInfo::new("u8")),
+            Notation => None,
         }
     }
 }

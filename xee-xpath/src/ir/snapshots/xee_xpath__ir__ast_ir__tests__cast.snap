@@ -21,15 +21,8 @@ Ok(
                         ),
                     },
                 },
-                type_: SingleType {
-                    name: Name {
-                        name: "string",
-                        namespace: Some(
-                            "http://www.w3.org/2001/XMLSchema",
-                        ),
-                    },
-                    question_mark: false,
-                },
+                xs: String,
+                empty_sequence_allowed: false,
             },
         ),
         span: SourceSpan {
