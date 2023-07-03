@@ -90,12 +90,8 @@ fn test_concat() {
 #[test]
 fn test_unary_minus() {
     Tests::all("op/numeric-unary-minus")
-        // these depend on constructor functions
-        .exclude("op-numeric-unary-minus*args*")
         // this depends on fn:floor
         .exclude("K-NumericUnaryMinus-15")
-        // these depend on constructor functions
-        .exclude("K2-NumericUnaryMinus*")
         .run()
 }
 

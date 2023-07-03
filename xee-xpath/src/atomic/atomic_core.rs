@@ -147,12 +147,17 @@ impl Atomic {
                 | Atomic::Decimal(_)
                 | Atomic::Integer(_)
                 | Atomic::Int(_)
+                | Atomic::Long(_)
                 | Atomic::Short(_)
                 | Atomic::Byte(_)
                 | Atomic::UnsignedLong(_)
                 | Atomic::UnsignedInt(_)
                 | Atomic::UnsignedShort(_)
                 | Atomic::UnsignedByte(_)
+                | Atomic::NonPositiveInteger(_)
+                | Atomic::NegativeInteger(_)
+                | Atomic::NonNegativeInteger(_)
+                | Atomic::PositiveInteger(_)
         )
     }
 
