@@ -332,7 +332,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Cast => {
                     let type_id = self.read_u16();
                     let value = self.pop_atomic_option()?;
-                    let cast_type = &(self.function().types[type_id as usize]);
+                    let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value.cast_to_schema_type(cast_type.xs)?;
                         self.stack.push(cast_value.into());
@@ -345,7 +345,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Castable => {
                     let type_id = self.read_u16();
                     let value = self.pop_atomic_option()?;
-                    let cast_type = &(self.function().types[type_id as usize]);
+                    let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value.cast_to_schema_type(cast_type.xs);
                         self.stack.push(cast_value.is_ok().into());

@@ -35,7 +35,7 @@ pub(crate) struct Function {
     pub(crate) arity: usize,
     pub(crate) constants: Vec<stack::Value>,
     pub(crate) steps: Vec<xml::Step>,
-    pub(crate) types: Vec<CastType>,
+    pub(crate) cast_types: Vec<CastType>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
