@@ -15,7 +15,7 @@ pub struct Tests {
 }
 
 impl Tests {
-    pub fn new(path: &str) -> Self {
+    pub fn none(path: &str) -> Self {
         Self {
             path: path.to_string(),
             include: Vec::new(),
