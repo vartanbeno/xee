@@ -101,6 +101,17 @@ fn test_unary_minus() {
         .run()
 }
 
+#[test]
+fn test_cast() {
+    Tests::none("prod/CastExpr")
+        .include("casthc*")
+        // canonical float representation rules
+        .exclude("casthc17 casthc18")
+        // date, time
+        .exclude("casthc28 casthc29 casthc30 casthc31 casthc32 casthc33 casthc34 casthc35 casthc36")
+        .run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")

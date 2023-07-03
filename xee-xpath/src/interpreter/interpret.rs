@@ -374,8 +374,8 @@ impl<'a> Interpreter<'a> {
                     a.ensure_base_schema_type(Xs::Integer)?;
                     b.ensure_base_schema_type(Xs::Integer)?;
 
-                    let a = a.cast_to_value::<i64>()?;
-                    let b = b.cast_to_value::<i64>()?;
+                    let a = a.cast_to_integer_value::<i64>()?;
+                    let b = b.cast_to_integer_value::<i64>()?;
 
                     match a.cmp(&b) {
                         Ordering::Greater => self.stack.push(stack::Value::Empty),
@@ -395,7 +395,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::SequenceGet => {
                     let value = self.stack.pop().unwrap();
                     let index = self.pop_atomic()?;
-                    let index = index.cast_to_value::<i64>()? as usize;
+                    let index = index.cast_to_integer_value::<i64>()? as usize;
                     // substract 1 as Xpath is 1-indexed
                     let item = value.index(index - 1)?;
                     self.stack.push(item.into())

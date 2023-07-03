@@ -1,4 +1,4 @@
-use ibig::IBig;
+use ibig::{ibig, IBig};
 use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
@@ -98,6 +98,10 @@ impl atomic::Atomic {
             atomic::Atomic::UnsignedInt(i) => i.to_string(),
             atomic::Atomic::UnsignedShort(i) => i.to_string(),
             atomic::Atomic::UnsignedByte(i) => i.to_string(),
+            atomic::Atomic::NonPositiveInteger(i) => i.to_string(),
+            atomic::Atomic::NegativeInteger(i) => i.to_string(),
+            atomic::Atomic::NonNegativeInteger(i) => i.to_string(),
+            atomic::Atomic::PositiveInteger(i) => i.to_string(),
             atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(*f),
             atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(*f),
         }
@@ -126,6 +130,10 @@ impl atomic::Atomic {
             Xs::UnsignedByte => self.cast_to_unsigned_byte(),
             Xs::Float => self.cast_to_float(),
             Xs::Double => self.cast_to_double(),
+            Xs::NonPositiveInteger => self.cast_to_non_positive_integer(),
+            Xs::NegativeInteger => self.cast_to_negative_integer(),
+            Xs::NonNegativeInteger => self.cast_to_non_negative_integer(),
+            Xs::PositiveInteger => self.cast_to_positive_integer(),
             _ => unreachable!(),
         }
     }
@@ -177,6 +185,10 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Decimal(_)
             | atomic::Atomic::Integer(_)
+            | atomic::Atomic::NonPositiveInteger(_)
+            | atomic::Atomic::NegativeInteger(_)
+            | atomic::Atomic::NonNegativeInteger(_)
+            | atomic::Atomic::PositiveInteger(_)
             | atomic::Atomic::Long(_)
             | atomic::Atomic::Int(_)
             | atomic::Atomic::Short(_)
@@ -207,6 +219,10 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Decimal(_)
             | atomic::Atomic::Integer(_)
+            | atomic::Atomic::NonPositiveInteger(_)
+            | atomic::Atomic::NegativeInteger(_)
+            | atomic::Atomic::NonNegativeInteger(_)
+            | atomic::Atomic::PositiveInteger(_)
             | atomic::Atomic::Long(_)
             | atomic::Atomic::Int(_)
             | atomic::Atomic::Short(_)
@@ -230,7 +246,11 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_decimal(&self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Decimal(_) => Ok(self.clone()),
-            atomic::Atomic::Integer(i) => Ok(atomic::Atomic::Decimal(
+            atomic::Atomic::Integer(i)
+            | atomic::Atomic::NonPositiveInteger(i)
+            | atomic::Atomic::NegativeInteger(i)
+            | atomic::Atomic::PositiveInteger(i)
+            | atomic::Atomic::NonNegativeInteger(i) => Ok(atomic::Atomic::Decimal(
                 // rust decimal doesn't support arbitrary precision integers,
                 // so we fail some conversions
                 Decimal::try_from_i128_with_scale(
@@ -280,42 +300,92 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_integer(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Integer(self.cast_to_value::<IBig>()?))
+        Ok(atomic::Atomic::Integer(
+            self.cast_to_integer_value::<IBig>()?,
+        ))
     }
 
     pub(crate) fn cast_to_long(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Long(self.cast_to_value::<i64>()?))
+        Ok(atomic::Atomic::Long(self.cast_to_integer_value::<i64>()?))
     }
 
     pub(crate) fn cast_to_int(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Int(self.cast_to_value::<i32>()?))
+        Ok(atomic::Atomic::Int(self.cast_to_integer_value::<i32>()?))
     }
 
     pub(crate) fn cast_to_short(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Short(self.cast_to_value::<i16>()?))
+        Ok(atomic::Atomic::Short(self.cast_to_integer_value::<i16>()?))
     }
 
     pub(crate) fn cast_to_byte(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Byte(self.cast_to_value::<i8>()?))
+        Ok(atomic::Atomic::Byte(self.cast_to_integer_value::<i8>()?))
     }
 
     pub(crate) fn cast_to_unsigned_long(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::UnsignedLong(self.cast_to_value::<u64>()?))
+        Ok(atomic::Atomic::UnsignedLong(
+            self.cast_to_integer_value::<u64>()?,
+        ))
     }
 
     pub(crate) fn cast_to_unsigned_int(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::UnsignedInt(self.cast_to_value::<u32>()?))
+        Ok(atomic::Atomic::UnsignedInt(
+            self.cast_to_integer_value::<u32>()?,
+        ))
     }
 
     pub(crate) fn cast_to_unsigned_short(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::UnsignedShort(self.cast_to_value::<u16>()?))
+        Ok(atomic::Atomic::UnsignedShort(
+            self.cast_to_integer_value::<u16>()?,
+        ))
     }
 
     pub(crate) fn cast_to_unsigned_byte(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::UnsignedByte(self.cast_to_value::<u8>()?))
+        Ok(atomic::Atomic::UnsignedByte(
+            self.cast_to_integer_value::<u8>()?,
+        ))
     }
 
-    pub(crate) fn cast_to_value<V>(&self) -> error::Result<V>
+    pub(crate) fn cast_to_non_positive_integer(&self) -> error::Result<atomic::Atomic> {
+        let i = self.cast_to_integer_value::<IBig>()?;
+        if i > ibig!(0) {
+            return Err(error::Error::FOCA0003);
+        }
+        Ok(atomic::Atomic::NonPositiveInteger(
+            self.cast_to_integer_value::<IBig>()?,
+        ))
+    }
+
+    pub(crate) fn cast_to_negative_integer(&self) -> error::Result<atomic::Atomic> {
+        let i = self.cast_to_integer_value::<IBig>()?;
+        if i >= ibig!(0) {
+            return Err(error::Error::FOCA0003);
+        }
+        Ok(atomic::Atomic::NegativeInteger(
+            self.cast_to_integer_value::<IBig>()?,
+        ))
+    }
+
+    pub(crate) fn cast_to_non_negative_integer(&self) -> error::Result<atomic::Atomic> {
+        let i = self.cast_to_integer_value::<IBig>()?;
+        if i < ibig!(0) {
+            return Err(error::Error::FOCA0003);
+        }
+        Ok(atomic::Atomic::NonNegativeInteger(
+            self.cast_to_integer_value::<IBig>()?,
+        ))
+    }
+
+    pub(crate) fn cast_to_positive_integer(&self) -> error::Result<atomic::Atomic> {
+        let i = self.cast_to_integer_value::<IBig>()?;
+        if i <= ibig!(0) {
+            return Err(error::Error::FOCA0003);
+        }
+        Ok(atomic::Atomic::PositiveInteger(
+            self.cast_to_integer_value::<IBig>()?,
+        ))
+    }
+
+    pub(crate) fn cast_to_integer_value<V>(&self) -> error::Result<V>
     where
         V: TryFrom<IBig>
             + TryFrom<i128>
@@ -330,7 +400,11 @@ impl atomic::Atomic {
         Parsed<V>: FromStr<Err = error::Error>,
     {
         match self {
-            atomic::Atomic::Integer(i) => {
+            atomic::Atomic::Integer(i)
+            | atomic::Atomic::NonPositiveInteger(i)
+            | atomic::Atomic::NegativeInteger(i)
+            | atomic::Atomic::NonNegativeInteger(i)
+            | atomic::Atomic::PositiveInteger(i) => {
                 let i: V = (i.clone()).try_into().map_err(|_| error::Error::FOCA0003)?;
                 Ok(i)
             }
@@ -425,6 +499,10 @@ impl atomic::Atomic {
             atomic::Atomic::UnsignedInt(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::UnsignedShort(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::UnsignedByte(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
+            atomic::Atomic::NonNegativeInteger(i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
+            atomic::Atomic::PositiveInteger(i) => Ok(true.into()),
+            atomic::Atomic::NonPositiveInteger(i) => Ok(atomic::Atomic::Boolean(i.is_zero())),
+            atomic::Atomic::NegativeInteger(i) => Ok(true.into()),
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
         }

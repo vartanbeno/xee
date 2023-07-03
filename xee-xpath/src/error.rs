@@ -176,6 +176,7 @@ pub enum Error {
     /// It is a static error if the target type of a cast or castable
     /// expression is xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType.
     #[error("Invalid target type of cast or castable expression")]
+    #[diagnostic(code(XPST0080))]
     XPST0080,
     /// Unknown namespace prefix.
     ///
@@ -239,6 +240,7 @@ pub enum Error {
     ///
     /// Raised when casting to xs:decimal if the supplied value exceeds the implementation-defined limits for the datatype.
     #[error("Input value too large for decimal")]
+    #[diagnostic(code(FOCA0001))]
     FOCA0001,
     /// Invalid lexical value.
     ///
@@ -251,6 +253,7 @@ pub enum Error {
     ///
     /// Raised when casting to xs:integer if the supplied value exceeds the implementation-defined limits for the datatype.
     #[error("Input too large for integer")]
+    #[diagnostic(code(FOCA0003))]
     FOCA0003,
     /// NaN supplied as float/double value.
     ///
@@ -264,6 +267,7 @@ pub enum Error {
     /// digits of precision than the implementation can represent (the
     /// implementation also has the option of rounding).
     #[error("String to be cast to decimal has too many digits of precision")]
+    #[diagnostic(code(FOCA0006))]
     FOCA0006,
     /// Codepoint not valid.
     ///

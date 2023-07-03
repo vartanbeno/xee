@@ -39,6 +39,10 @@ pub enum Atomic {
     UnsignedInt(u32),
     UnsignedShort(u16),
     UnsignedByte(u8),
+    NonPositiveInteger(IBig),
+    NegativeInteger(IBig),
+    NonNegativeInteger(IBig),
+    PositiveInteger(IBig),
     // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
@@ -76,6 +80,10 @@ impl Atomic {
             Atomic::UnsignedInt(i) => Ok(*i != 0),
             Atomic::UnsignedShort(i) => Ok(*i != 0),
             Atomic::UnsignedByte(i) => Ok(*i != 0),
+            Atomic::NonPositiveInteger(i) => Ok(!i.is_zero()),
+            Atomic::NegativeInteger(i) => Ok(!i.is_zero()),
+            Atomic::NonNegativeInteger(i) => Ok(!i.is_zero()),
+            Atomic::PositiveInteger(i) => Ok(!i.is_zero()),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
         }
@@ -171,6 +179,10 @@ impl Atomic {
             Atomic::UnsignedInt(_) => Xs::UnsignedInt,
             Atomic::UnsignedShort(_) => Xs::UnsignedShort,
             Atomic::UnsignedByte(_) => Xs::UnsignedByte,
+            Atomic::NonPositiveInteger(_) => Xs::NonPositiveInteger,
+            Atomic::NegativeInteger(_) => Xs::NegativeInteger,
+            Atomic::NonNegativeInteger(_) => Xs::NonNegativeInteger,
+            Atomic::PositiveInteger(_) => Xs::PositiveInteger,
             Atomic::Float(_) => Xs::Float,
             Atomic::Double(_) => Xs::Double,
         }

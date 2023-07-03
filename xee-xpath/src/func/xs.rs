@@ -75,6 +75,28 @@ fn xs_unsigned_byte(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic:
     arg.map(|arg| arg.cast_to_unsigned_byte()).transpose()
 }
 
+#[xpath_fn("xs:nonPositiveInteger($arg as xs:anyAtomicType?) as xs:nonPositiveInteger?")]
+fn xs_non_positive_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_non_positive_integer())
+        .transpose()
+}
+
+#[xpath_fn("xs:negativeInteger($arg as xs:anyAtomicType?) as xs:negativeInteger?")]
+fn xs_negative_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_negative_integer()).transpose()
+}
+
+#[xpath_fn("xs:nonNegativeInteger($arg as xs:anyAtomicType?) as xs:nonNegativeInteger?")]
+fn xs_non_negative_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_non_negative_integer())
+        .transpose()
+}
+
+#[xpath_fn("xs:positiveInteger($arg as xs:anyAtomicType?) as xs:positiveInteger?")]
+fn xs_positive_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_positive_integer()).transpose()
+}
+
 #[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
 fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_boolean()).transpose()
