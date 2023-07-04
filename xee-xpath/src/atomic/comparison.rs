@@ -68,21 +68,24 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
             use BaseNumericType::*;
             match (a_numeric_type, b_numeric_type) {
                 // 5b: xs:decimal & xs:float -> cast decimal to float
-                (Decimal, Float) | (Integer, Float) => Ok((a.cast_to_float()?, b)),
-                (Float, Decimal) | (Float, Integer) => Ok((a, b.cast_to_float()?)),
+                (Decimal, Float) | (Integer, Float) | (Float, Decimal) | (Float, Integer) => {
+                    Ok((a.cast_to_float()?, b.cast_to_float()?))
+                }
                 // 5c: xs:decimal & xs:double -> cast decimal to double
-                (Decimal, Double) | (Integer, Double) => Ok((a.cast_to_double()?, b)),
-                (Double, Decimal) | (Double, Integer) => Ok((a, b.cast_to_double()?)),
+                (Decimal, Double) | (Integer, Double) | (Double, Decimal) | (Double, Integer) => {
+                    Ok((a.cast_to_double()?, b.cast_to_double()?))
+                }
                 // 5c: xs:float & xs:double -> cast float to double
-                (Float, Double) => Ok((a.cast_to_double()?, b)),
-                (Double, Float) => Ok((a, b.cast_to_double()?)),
-                // both are floats or decimals
-                (Float, Float) | (Double, Double) => Ok((a, b)),
+                (Float, Double) | (Double, Float) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
+                // both are floats
+                (Float, Float) => Ok((a.cast_to_float()?, b.cast_to_float()?)),
+                // both are doubles
+                (Double, Double) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
                 // both are decimals
                 (Decimal, Decimal) | (Decimal, Integer) | (Integer, Decimal) => {
                     Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
                 }
-                // both are integers of somet ype
+                // both are integers of some type
                 (Integer, Integer) => Ok((a.cast_to_integer()?, b.cast_to_integer()?)),
             }
         }
