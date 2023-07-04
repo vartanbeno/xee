@@ -519,8 +519,21 @@ pub(crate) fn cast_numeric_binary<F>(
 where
     F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)>,
 {
-    let a_numeric_type = a.schema_type().base_numeric_type();
-    let b_numeric_type = b.schema_type().base_numeric_type();
+    let a_schema_type = a.schema_type();
+    let b_schema_type = b.schema_type();
+
+    // early return for case where the concrete types are already correct
+    use Xs::*;
+    match (a_schema_type, b_schema_type) {
+        (Float, Float) | (Double, Double) | (Decimal, Decimal) | (Integer, Integer) => {
+            return Ok((a, b))
+        }
+        _ => {}
+    }
+
+    // otherwise we need to do some casting
+    let a_numeric_type = a_schema_type.base_numeric_type();
+    let b_numeric_type = b_schema_type.base_numeric_type();
 
     match (a_numeric_type, b_numeric_type) {
         (None, None) | (_, None) | (None, _) => non_numeric(a, b),
