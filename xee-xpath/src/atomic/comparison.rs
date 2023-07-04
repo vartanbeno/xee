@@ -3,11 +3,10 @@ use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
-use xee_schema_type::BaseNumericType;
-
 use crate::error;
 
 use super::atomic_core as atomic;
+use super::cast::cast_numeric_binary;
 
 pub(crate) fn value_comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>
 where
@@ -47,49 +46,18 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
     let a = cast_untyped(a);
     let b = cast_untyped(b);
 
-    let a_numeric_type = a.schema_type().base_numeric_type();
-    let b_numeric_type = b.schema_type().base_numeric_type();
-
-    match (a_numeric_type, b_numeric_type) {
-        (None, None) | (_, None) | (None, _) => {
-            if a.has_same_schema_type(&b) {
-                // if both are non-numeric (already handled) and the same type,
-                // they are comparable
-                Ok((a, b))
-            } else {
-                // We're not handling derived non-atomic data types,
-                // which is okay as atomization has taking place already
-                // 5d otherwise, type error
-                Err(error::Error::Type)
-            }
+    cast_numeric_binary(a, b, |a, b| {
+        if a.has_same_schema_type(&b) {
+            // if both are non-numeric (already handled) and the same type,
+            // they are comparable
+            Ok((a, b))
+        } else {
+            // We're not handling derived non-atomic data types,
+            // which is okay as atomization has taking place already
+            // 5d otherwise, type error
+            Err(error::Error::Type)
         }
-
-        (Some(a_numeric_type), Some(b_numeric_type)) => {
-            use BaseNumericType::*;
-            match (a_numeric_type, b_numeric_type) {
-                // 5b: xs:decimal & xs:float -> cast decimal to float
-                (Decimal, Float) | (Integer, Float) | (Float, Decimal) | (Float, Integer) => {
-                    Ok((a.cast_to_float()?, b.cast_to_float()?))
-                }
-                // 5c: xs:decimal & xs:double -> cast decimal to double
-                (Decimal, Double) | (Integer, Double) | (Double, Decimal) | (Double, Integer) => {
-                    Ok((a.cast_to_double()?, b.cast_to_double()?))
-                }
-                // 5c: xs:float & xs:double -> cast float to double
-                (Float, Double) | (Double, Float) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
-                // both are floats
-                (Float, Float) => Ok((a.cast_to_float()?, b.cast_to_float()?)),
-                // both are doubles
-                (Double, Double) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
-                // both are decimals
-                (Decimal, Decimal) | (Decimal, Integer) | (Integer, Decimal) => {
-                    Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
-                }
-                // both are integers of some type
-                (Integer, Integer) => Ok((a.cast_to_integer()?, b.cast_to_integer()?)),
-            }
-        }
-    }
+    })
 }
 
 fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {

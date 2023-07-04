@@ -4,7 +4,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
 
-use xee_schema_type::Xs;
+use xee_schema_type::{BaseNumericType, Xs};
 
 use crate::error;
 
@@ -505,6 +505,50 @@ impl atomic::Atomic {
             atomic::Atomic::NegativeInteger(_) => Ok(true.into()),
             atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
+        }
+    }
+}
+
+// shared casting logic for binary operations; both comparison and arithmetic use
+// this
+pub(crate) fn cast_numeric_binary<F>(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+    non_numeric: F,
+) -> error::Result<(atomic::Atomic, atomic::Atomic)>
+where
+    F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)>,
+{
+    let a_numeric_type = a.schema_type().base_numeric_type();
+    let b_numeric_type = b.schema_type().base_numeric_type();
+
+    match (a_numeric_type, b_numeric_type) {
+        (None, None) | (_, None) | (None, _) => non_numeric(a, b),
+
+        (Some(a_numeric_type), Some(b_numeric_type)) => {
+            use BaseNumericType::*;
+            match (a_numeric_type, b_numeric_type) {
+                // 5b: xs:decimal & xs:float -> cast decimal to float
+                (Decimal, Float) | (Integer, Float) | (Float, Decimal) | (Float, Integer) => {
+                    Ok((a.cast_to_float()?, b.cast_to_float()?))
+                }
+                // 5c: xs:decimal & xs:double -> cast decimal to double
+                (Decimal, Double) | (Integer, Double) | (Double, Decimal) | (Double, Integer) => {
+                    Ok((a.cast_to_double()?, b.cast_to_double()?))
+                }
+                // 5c: xs:float & xs:double -> cast float to double
+                (Float, Double) | (Double, Float) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
+                // both are floats
+                (Float, Float) => Ok((a.cast_to_float()?, b.cast_to_float()?)),
+                // both are doubles
+                (Double, Double) => Ok((a.cast_to_double()?, b.cast_to_double()?)),
+                // both are decimals
+                (Decimal, Decimal) | (Decimal, Integer) | (Integer, Decimal) => {
+                    Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
+                }
+                // both are integers of some type
+                (Integer, Integer) => Ok((a.cast_to_integer()?, b.cast_to_integer()?)),
+            }
         }
     }
 }

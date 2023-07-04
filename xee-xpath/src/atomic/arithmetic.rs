@@ -14,6 +14,8 @@ use xee_schema_type::Xs;
 use crate::atomic;
 use crate::error;
 
+use super::cast::cast_numeric_binary;
+
 pub(crate) fn arithmetic_op<O>(
     a: atomic::Atomic,
     b: atomic::Atomic,
@@ -52,44 +54,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
     let a = cast_untyped(a)?;
     let b = cast_untyped(b)?;
 
-    // 1b promote decimal to float or double
-    if a.has_base_schema_type(Xs::Decimal) {
-        if b.schema_type() == Xs::Float {
-            return Ok((a.cast_to_float()?, b));
-        } else if b.schema_type() == Xs::Double {
-            return Ok((a.cast_to_double()?, b));
-        }
-    }
-    if b.has_base_schema_type(Xs::Decimal) {
-        if a.schema_type() == Xs::Float {
-            return Ok((a, b.cast_to_float()?));
-        } else if a.schema_type() == Xs::Double {
-            return Ok((a, b.cast_to_double()?));
-        }
-    }
-
-    match (&a, &b) {
-        (atomic::Atomic::Float(_), atomic::Atomic::Float(_)) => Ok((a, b)),
-        (atomic::Atomic::Double(_), atomic::Atomic::Double(_)) => Ok((a, b)),
-        // B.1 Type Promotion
-        // 1 numeric type promotion
-        // 1a a value of float can be promoted to double
-        (atomic::Atomic::Float(_), atomic::Atomic::Double(_)) => Ok((a.cast_to_double()?, b)),
-        (atomic::Atomic::Double(_), atomic::Atomic::Float(_)) => Ok((a, b.cast_to_double()?)),
-
-        // if one is a decimal, cast the other to decimal too
-        (atomic::Atomic::Decimal(_), _) => Ok((a, b.cast_to_decimal()?)),
-        (_, atomic::Atomic::Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
-        _ => {
-            if a.has_base_schema_type(Xs::Integer) && b.has_base_schema_type(Xs::Integer) {
-                // we have integers or subtypes of integer, cast them to the
-                // same type
-                Ok((a.cast_to_integer()?, b.cast_to_integer()?))
-            } else {
-                Err(error::Error::Type)
-            }
-        }
-    }
+    cast_numeric_binary(a, b, |_a, _b| Err(error::Error::Type))
 }
 
 fn cast_untyped(value: atomic::Atomic) -> error::Result<atomic::Atomic> {
