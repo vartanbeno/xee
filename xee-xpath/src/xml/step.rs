@@ -98,26 +98,7 @@ fn node_take_axis<'a>(
 
 fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::Node) -> bool {
     match node_test {
-        ast::NodeTest::KindTest(kind_test) => match kind_test {
-            ast::KindTest::Any => true,
-            ast::KindTest::Text => {
-                if let xml::Node::Xot(node) = node {
-                    xot.value_type(node) == ValueType::Text
-                } else {
-                    false
-                }
-            }
-            ast::KindTest::Comment => {
-                if let xml::Node::Xot(node) = node {
-                    xot.value_type(node) == ValueType::Comment
-                } else {
-                    false
-                }
-            }
-            _ => {
-                todo!("kind test not implemented yet {:?}", kind_test);
-            }
-        },
+        ast::NodeTest::KindTest(kt) => kind_test(kt, xot, node),
         ast::NodeTest::NameTest(name_test) => {
             if node_kind(xot, node) != principal_node_kind(axis) {
                 return false;
@@ -181,6 +162,28 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
     }
 }
 
+fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -> bool {
+    match kind_test {
+        ast::KindTest::Any => true,
+        ast::KindTest::Text => {
+            if let xml::Node::Xot(node) = node {
+                xot.value_type(node) == ValueType::Text
+            } else {
+                false
+            }
+        }
+        ast::KindTest::Comment => {
+            if let xml::Node::Xot(node) = node {
+                xot.value_type(node) == ValueType::Comment
+            } else {
+                false
+            }
+        }
+        _ => {
+            todo!("kind test not implemented yet {:?}", kind_test);
+        }
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PrincipalNodeKind {
     Element,
