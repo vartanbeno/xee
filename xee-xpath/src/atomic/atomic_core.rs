@@ -188,15 +188,11 @@ impl Atomic {
     }
 
     pub(crate) fn ensure_base_schema_type(&self, xs: Xs) -> error::Result<()> {
-        if self.has_base_schema_type(xs) {
+        if self.schema_type().derives_from(xs) {
             Ok(())
         } else {
             Err(error::Error::Type)
         }
-    }
-
-    pub(crate) fn has_base_schema_type(&self, xs: Xs) -> bool {
-        self.schema_type().derives_from(xs)
     }
 
     pub(crate) fn derives_from(&self, other: &Atomic) -> bool {
