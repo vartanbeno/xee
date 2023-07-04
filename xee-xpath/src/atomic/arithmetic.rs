@@ -11,8 +11,6 @@ use rust_decimal::prelude::*;
 use std::rc::Rc;
 use xee_schema_type::BaseNumericType;
 
-use xee_schema_type::Xs;
-
 use crate::atomic;
 use crate::error;
 
