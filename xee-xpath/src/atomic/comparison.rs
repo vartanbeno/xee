@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ibig::IBig;
 use num_traits::Float;
 use ordered_float::OrderedFloat;
@@ -69,7 +71,7 @@ fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
 }
 
 pub(crate) trait ComparisonOp {
-    fn ibig(a: IBig, b: IBig) -> bool;
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool;
     fn decimal(a: Decimal, b: Decimal) -> bool;
     fn float<F>(a: F, b: F) -> bool
     where
@@ -81,7 +83,7 @@ pub(crate) trait ComparisonOp {
 pub(crate) struct EqualOp;
 
 impl ComparisonOp for EqualOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a == b
     }
 
@@ -108,7 +110,7 @@ impl ComparisonOp for EqualOp {
 pub(crate) struct NotEqualOp;
 
 impl ComparisonOp for NotEqualOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a != b
     }
 
@@ -135,7 +137,7 @@ impl ComparisonOp for NotEqualOp {
 pub(crate) struct LessThanOp;
 
 impl ComparisonOp for LessThanOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a < b
     }
 
@@ -163,7 +165,7 @@ impl ComparisonOp for LessThanOp {
 pub(crate) struct LessThanOrEqualOp;
 
 impl ComparisonOp for LessThanOrEqualOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a <= b
     }
 
@@ -191,7 +193,7 @@ impl ComparisonOp for LessThanOrEqualOp {
 pub(crate) struct GreaterThanOp;
 
 impl ComparisonOp for GreaterThanOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a > b
     }
 
@@ -219,7 +221,7 @@ impl ComparisonOp for GreaterThanOp {
 pub(crate) struct GreaterThanOrEqualOp;
 
 impl ComparisonOp for GreaterThanOrEqualOp {
-    fn ibig(a: IBig, b: IBig) -> bool {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
         a >= b
     }
 

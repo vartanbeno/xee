@@ -256,7 +256,7 @@ impl atomic::Atomic {
                 Decimal::try_from_i128_with_scale(
                     // if this is bigger than an i128, it certainly can't be
                     // an integer
-                    i.try_into().map_err(|_| error::Error::Overflow)?,
+                    i.as_ref().try_into().map_err(|_| error::Error::Overflow)?,
                     0,
                 )
                 .map_err(|_| error::Error::Overflow)?,
@@ -300,9 +300,9 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_integer(&self) -> error::Result<atomic::Atomic> {
-        Ok(atomic::Atomic::Integer(
+        Ok(atomic::Atomic::Integer(Rc::new(
             self.cast_to_integer_value::<IBig>()?,
-        ))
+        )))
     }
 
     pub(crate) fn cast_to_long(&self) -> error::Result<atomic::Atomic> {
@@ -350,9 +350,9 @@ impl atomic::Atomic {
         if i > ibig!(0) {
             return Err(error::Error::FOCA0003);
         }
-        Ok(atomic::Atomic::NonPositiveInteger(
+        Ok(atomic::Atomic::NonPositiveInteger(Rc::new(
             self.cast_to_integer_value::<IBig>()?,
-        ))
+        )))
     }
 
     pub(crate) fn cast_to_negative_integer(&self) -> error::Result<atomic::Atomic> {
@@ -360,9 +360,9 @@ impl atomic::Atomic {
         if i >= ibig!(0) {
             return Err(error::Error::FOCA0003);
         }
-        Ok(atomic::Atomic::NegativeInteger(
+        Ok(atomic::Atomic::NegativeInteger(Rc::new(
             self.cast_to_integer_value::<IBig>()?,
-        ))
+        )))
     }
 
     pub(crate) fn cast_to_non_negative_integer(&self) -> error::Result<atomic::Atomic> {
@@ -370,9 +370,9 @@ impl atomic::Atomic {
         if i < ibig!(0) {
             return Err(error::Error::FOCA0003);
         }
-        Ok(atomic::Atomic::NonNegativeInteger(
+        Ok(atomic::Atomic::NonNegativeInteger(Rc::new(
             self.cast_to_integer_value::<IBig>()?,
-        ))
+        )))
     }
 
     pub(crate) fn cast_to_positive_integer(&self) -> error::Result<atomic::Atomic> {
@@ -380,9 +380,9 @@ impl atomic::Atomic {
         if i <= ibig!(0) {
             return Err(error::Error::FOCA0003);
         }
-        Ok(atomic::Atomic::PositiveInteger(
+        Ok(atomic::Atomic::PositiveInteger(Rc::new(
             self.cast_to_integer_value::<IBig>()?,
-        ))
+        )))
     }
 
     pub(crate) fn cast_to_integer_value<V>(&self) -> error::Result<V>
@@ -405,7 +405,11 @@ impl atomic::Atomic {
             | atomic::Atomic::NegativeInteger(i)
             | atomic::Atomic::NonNegativeInteger(i)
             | atomic::Atomic::PositiveInteger(i) => {
-                let i: V = (i.clone()).try_into().map_err(|_| error::Error::FOCA0003)?;
+                let i: V = i
+                    .as_ref()
+                    .clone()
+                    .try_into()
+                    .map_err(|_| error::Error::FOCA0003)?;
                 Ok(i)
             }
             atomic::Atomic::Long(i) => {
@@ -744,7 +748,7 @@ mod tests {
     fn test_parse_integer() {
         assert_eq!(
             atomic::Atomic::parse_atomic::<IBig>("1").unwrap(),
-            atomic::Atomic::Integer(ibig!(1))
+            atomic::Atomic::Integer(ibig!(1).into())
         );
     }
 
@@ -848,7 +852,10 @@ mod tests {
 
     #[test]
     fn test_canonical_integer() {
-        assert_eq!(atomic::Atomic::Integer(ibig!(15)).to_canonical(), "15");
+        assert_eq!(
+            atomic::Atomic::Integer(ibig!(15).into()).to_canonical(),
+            "15"
+        );
     }
 
     #[test]

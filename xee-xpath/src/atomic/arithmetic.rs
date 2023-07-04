@@ -8,6 +8,7 @@ use ibig::IBig;
 use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use std::rc::Rc;
 
 use xee_schema_type::Xs;
 
@@ -69,13 +70,13 @@ pub(crate) trait ArithmeticOp {
     // fn integer<I>(a: I, b: I) -> error::Result<I>
     // where
     //     I: PrimInt;
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig>;
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>>;
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal>;
     fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float;
 
-    fn ibig_atomic(a: IBig, b: IBig) -> error::Result<atomic::Atomic> {
+    fn ibig_atomic(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
         let v = <Self as ArithmeticOp>::ibig(a, b)?;
         Ok(v.into())
     }
@@ -97,8 +98,8 @@ pub(crate) trait ArithmeticOp {
 pub(crate) struct AddOp;
 
 impl ArithmeticOp for AddOp {
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
-        Ok(a + b)
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>> {
+        Ok(Rc::new(a.as_ref() + b.as_ref()))
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -116,8 +117,8 @@ impl ArithmeticOp for AddOp {
 pub(crate) struct SubtractOp;
 
 impl ArithmeticOp for SubtractOp {
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
-        Ok(a - b)
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>> {
+        Ok(Rc::new(a.as_ref() - b.as_ref()))
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -135,8 +136,8 @@ impl ArithmeticOp for SubtractOp {
 pub(crate) struct MultiplyOp;
 
 impl ArithmeticOp for MultiplyOp {
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
-        Ok(a * b)
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>> {
+        Ok(Rc::new(a.as_ref() * b.as_ref()))
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -154,16 +155,16 @@ impl ArithmeticOp for MultiplyOp {
 pub(crate) struct DivideOp;
 
 impl ArithmeticOp for DivideOp {
-    fn ibig_atomic(a: IBig, b: IBig) -> error::Result<atomic::Atomic> {
+    fn ibig_atomic(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
         // As a special case, if the types of both $arg1 and $arg2 are
         // xs:integer, then the return type is xs:decimal.
-        let a: i128 = a.try_into().map_err(|_| error::Error::FOCA0001)?;
-        let b: i128 = b.try_into().map_err(|_| error::Error::FOCA0001)?;
+        let a: i128 = a.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
+        let b: i128 = b.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
         let v = <Self as ArithmeticOp>::decimal(a.into(), b.into())?;
         Ok(v.into())
     }
 
-    fn ibig(_a: IBig, _b: IBig) -> error::Result<IBig> {
+    fn ibig(_a: Rc<IBig>, _b: Rc<IBig>) -> error::Result<Rc<IBig>> {
         unreachable!()
     }
 
@@ -185,11 +186,11 @@ impl ArithmeticOp for DivideOp {
 pub(crate) struct IntegerDivideOp;
 
 impl ArithmeticOp for IntegerDivideOp {
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        Ok(a / b)
+        Ok(Rc::new(a.as_ref() / b.as_ref()))
     }
 
     fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
@@ -228,11 +229,11 @@ impl ArithmeticOp for IntegerDivideOp {
 pub(crate) struct ModuloOp;
 
 impl ArithmeticOp for ModuloOp {
-    fn ibig(a: IBig, b: IBig) -> error::Result<IBig> {
+    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        Ok(a % b)
+        Ok(Rc::new(a.as_ref() % b.as_ref()))
     }
 
     fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
@@ -271,7 +272,7 @@ pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomi
         };
         match atomic {
             atomic::Atomic::Decimal(v) => Ok(atomic::Atomic::Decimal(-v)),
-            atomic::Atomic::Integer(v) => Ok(atomic::Atomic::Integer(-v)),
+            atomic::Atomic::Integer(v) => Ok(atomic::Atomic::Integer(Rc::new(-v.as_ref()))),
             atomic::Atomic::Float(v) => Ok(atomic::Atomic::Float(-v)),
             atomic::Atomic::Double(v) => Ok(atomic::Atomic::Double(-v)),
             _ => unreachable!(),

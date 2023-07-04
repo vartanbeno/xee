@@ -22,7 +22,7 @@ pub enum Atomic {
     Boolean(bool),
     // decimal based
     Decimal(Decimal),
-    Integer(IBig),
+    Integer(Rc<IBig>),
     // machine integers
     Long(i64),
     Int(i32),
@@ -32,10 +32,10 @@ pub enum Atomic {
     UnsignedInt(u32),
     UnsignedShort(u16),
     UnsignedByte(u8),
-    NonPositiveInteger(IBig),
-    NegativeInteger(IBig),
-    NonNegativeInteger(IBig),
-    PositiveInteger(IBig),
+    NonPositiveInteger(Rc<IBig>),
+    NegativeInteger(Rc<IBig>),
+    NonNegativeInteger(Rc<IBig>),
+    PositiveInteger(Rc<IBig>),
     // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
@@ -315,7 +315,24 @@ impl TryFrom<Atomic> for Decimal {
 
 impl From<IBig> for Atomic {
     fn from(i: IBig) -> Self {
+        Atomic::Integer(Rc::new(i))
+    }
+}
+
+impl From<Rc<IBig>> for Atomic {
+    fn from(i: Rc<IBig>) -> Self {
         Atomic::Integer(i)
+    }
+}
+
+impl TryFrom<Atomic> for Rc<IBig> {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Integer(i) => Ok(i),
+            _ => Err(error::Error::Type),
+        }
     }
 }
 
@@ -324,7 +341,7 @@ impl TryFrom<Atomic> for IBig {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Integer(i) => Ok(i),
+            Atomic::Integer(i) => Ok(i.as_ref().clone()),
             _ => Err(error::Error::Type),
         }
     }

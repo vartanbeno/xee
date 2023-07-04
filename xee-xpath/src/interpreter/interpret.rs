@@ -653,7 +653,9 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(
+                ibig!(0).into(),
+            ))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -714,7 +716,9 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(
+                ibig!(0).into(),
+            ))),
             vec![],
         );
         interpreter.run_actual()?;
@@ -748,7 +752,9 @@ mod tests {
         let mut interpreter = Interpreter::new(&program, &context);
         interpreter.start(
             main_id,
-            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(ibig!(0)))),
+            Some(&sequence::Item::Atomic(atomic::Atomic::Integer(
+                ibig!(0).into(),
+            ))),
             vec![],
         );
         interpreter.run_actual()?;
