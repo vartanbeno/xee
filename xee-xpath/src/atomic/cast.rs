@@ -539,6 +539,7 @@ where
         (None, None) | (_, None) | (None, _) => non_numeric(a, b),
 
         (Some(a_numeric_type), Some(b_numeric_type)) => {
+            // this is in terms of the base numeric schema type
             use BaseNumericType::*;
             match (a_numeric_type, b_numeric_type) {
                 // 5b: xs:decimal & xs:float -> cast decimal to float
