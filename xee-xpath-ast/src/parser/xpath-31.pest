@@ -473,7 +473,9 @@ AttributeDeclaration = { AttributeName }
 
 // ElementTest
 // ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
-ElementTest = { "element" ~ "(" ~ (ElementNameOrWildcard ~ ("," ~ TypeName ~ "?"?)?)? ~ ")" }
+ElementTest = { "element" ~ "(" ~ (ElementNameOrWildcard ~ ("," ~ ElementTypeName)?)? ~ ")" }
+
+ElementTypeName = { TypeName ~ QuestionMark? }
 
 // ElementNameOrWildcard
 // ::= ElementName | "*"

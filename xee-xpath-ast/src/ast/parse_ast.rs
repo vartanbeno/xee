@@ -711,8 +711,13 @@ impl<'a> AstParser<'a> {
             Rule::NamespaceNodeTest => ast::KindTest::NamespaceNode,
             Rule::ElementTest => {
                 let mut pairs = pair.into_inner();
-                if let Some(_pair) = pairs.next() {
-                    todo!("no arguments for element test yet")
+                if let Some(pair) = pairs.next() {
+                    let name_test = self.element_name_or_wildcard(pair);
+                    let type_name = pairs.next().map(|pair| self.element_type_name(pair));
+                    ast::KindTest::Element(Some(ast::ElementTest {
+                        name_test,
+                        type_name,
+                    }))
                 } else {
                     ast::KindTest::Element(None)
                 }
@@ -1152,6 +1157,34 @@ impl<'a> AstParser<'a> {
         ast::Item {
             item_type,
             occurrence,
+        }
+    }
+
+    fn element_name_or_wildcard(&self, pair: Pair<Rule>) -> ast::ElementNameOrWildcard {
+        debug_assert_eq!(pair.as_rule(), Rule::ElementNameOrWildcard);
+        let mut pairs = pair.into_inner();
+        let next = pairs.next().unwrap();
+        match next.as_rule() {
+            Rule::WildcardStar => ast::ElementNameOrWildcard::Wildcard,
+            Rule::ElementName => ast::ElementNameOrWildcard::Name(self.eq_name_to_name(
+                next.into_inner().next().unwrap(),
+                self.namespaces.default_element_namespace,
+            )),
+            _ => {
+                panic!("unhandled NameTest: {:?}", next.as_rule())
+            }
+        }
+    }
+
+    fn element_type_name(&self, pair: Pair<Rule>) -> ast::ElementTypeName {
+        debug_assert_eq!(pair.as_rule(), Rule::ElementTypeName);
+        let mut pairs = pair.into_inner();
+        let next = pairs.next().unwrap();
+        let type_name = self.type_name(next);
+        let question_mark = pairs.next().is_some();
+        ast::ElementTypeName {
+            name: type_name,
+            question_mark,
         }
     }
 
