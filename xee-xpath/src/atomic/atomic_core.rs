@@ -22,7 +22,12 @@ pub enum Atomic {
     Boolean(bool),
     // decimal based
     Decimal(Decimal),
+    // integers
     Integer(Rc<IBig>),
+    NonPositiveInteger(Rc<IBig>),
+    NegativeInteger(Rc<IBig>),
+    NonNegativeInteger(Rc<IBig>),
+    PositiveInteger(Rc<IBig>),
     // machine integers
     Long(i64),
     Int(i32),
@@ -32,10 +37,6 @@ pub enum Atomic {
     UnsignedInt(u32),
     UnsignedShort(u16),
     UnsignedByte(u8),
-    NonPositiveInteger(Rc<IBig>),
-    NegativeInteger(Rc<IBig>),
-    NonNegativeInteger(Rc<IBig>),
-    PositiveInteger(Rc<IBig>),
     // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
