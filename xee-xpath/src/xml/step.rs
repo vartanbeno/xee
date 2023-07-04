@@ -164,6 +164,19 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
 
 fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -> bool {
     match kind_test {
+        ast::KindTest::Document(dt) => {
+            if let Some(document_test) = dt {
+                false
+                // match document_test {
+                //     ast::DocumentTest::Element(et) => element_test(et, xot, node),
+                //     ast::DocumentTest::SchemaElement(set) => schema_element_test(set, xot, node),
+                // }
+            } else if let xml::Node::Xot(node) = node {
+                xot.value_type(node) == ValueType::Root
+            } else {
+                false
+            }
+        }
         ast::KindTest::Any => true,
         ast::KindTest::Text => {
             if let xml::Node::Xot(node) = node {
@@ -316,5 +329,16 @@ mod tests {
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(comment)));
+    }
+
+    #[test]
+    fn test_kind_test_document() {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<root></root>"#).unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let namespaces = Namespaces::default();
+        let kt = parse_kind_test("document-node()", &namespaces).unwrap();
+        assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
     }
 }

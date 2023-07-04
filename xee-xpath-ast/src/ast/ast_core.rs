@@ -397,7 +397,6 @@ pub enum KindTest {
 pub enum DocumentTest {
     Element(ElementTest),
     SchemaElement(SchemaElementTest),
-    AnyKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

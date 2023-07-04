@@ -727,6 +727,15 @@ impl<'a> AstParser<'a> {
                     ast::KindTest::Attribute(None)
                 }
             }
+            Rule::DocumentTest => {
+                let mut pairs = pair.into_inner();
+                let first_pair = pairs.next();
+                if let Some(_pair) = first_pair {
+                    todo!("no arguments for document test yet")
+                } else {
+                    ast::KindTest::Document(None)
+                }
+            }
             _ => {
                 panic!("unhandled KindTest: {:?}", pair.as_rule());
             }
