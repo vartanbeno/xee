@@ -3,7 +3,7 @@ use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
-use xee_schema_type::Xs;
+use xee_schema_type::BaseNumericType;
 
 use crate::error;
 
@@ -37,25 +37,6 @@ where
     })
 }
 
-enum BaseType {
-    Decimal,
-    Float,
-    Double,
-    Other,
-}
-
-fn base_type(a: &atomic::Atomic) -> BaseType {
-    if a.has_base_schema_type(Xs::Decimal) {
-        BaseType::Decimal
-    } else if a.has_base_schema_type(Xs::Float) {
-        BaseType::Float
-    } else if a.has_base_schema_type(Xs::Double) {
-        BaseType::Double
-    } else {
-        BaseType::Other
-    }
-}
-
 fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
     // 3.7.1 Value Comparisons
     // We start in step 4, as the previous steps have been handled
@@ -66,32 +47,12 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
     let a = cast_untyped(a);
     let b = cast_untyped(b);
 
-    let a_base_type = base_type(&a);
-    let b_base_type = base_type(&b);
+    let a_numeric_type = a.schema_type().base_numeric_type();
+    let b_numeric_type = b.schema_type().base_numeric_type();
 
-    match (a_base_type, b_base_type) {
-        // 5a: TODO: xs:string and xs:anyURI
-        // 5b: xs:decimal & xs:float -> cast decimal to float
-        (BaseType::Decimal, BaseType::Float) => Ok((a.cast_to_float()?, b)),
-        (BaseType::Float, BaseType::Decimal) => Ok((a, b.cast_to_float()?)),
-        // 5c: xs:decimal & xs:double -> cast decimal to double
-        (BaseType::Decimal, BaseType::Double) => Ok((a.cast_to_double()?, b)),
-        (BaseType::Double, BaseType::Decimal) => Ok((a, b.cast_to_double()?)),
-        // 5c: xs:float & xs:double -> cast float to double
-        (BaseType::Float, BaseType::Double) => Ok((a.cast_to_double()?, b)),
-        (BaseType::Double, BaseType::Float) => Ok((a, b.cast_to_double()?)),
-        // float and double types are already the same
-        (BaseType::Float, BaseType::Float) => Ok((a, b)),
-        (BaseType::Double, BaseType::Double) => Ok((a, b)),
-        // any other type can be compared if the types are the same
-        (BaseType::Decimal, _) | (BaseType::Other, _) | (_, BaseType::Other) => {
-            if a.has_base_schema_type(Xs::Integer) && b.has_base_schema_type(Xs::Integer) {
-                // if both are derived from integers, cast them to integer
-                Ok((a.cast_to_integer()?, b.cast_to_integer()?))
-            } else if a.has_base_schema_type(Xs::Decimal) & b.has_base_schema_type(Xs::Decimal) {
-                // if both are derived from decimals, cast them to decimal
-                Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
-            } else if a.has_same_schema_type(&b) {
+    match (a_numeric_type, b_numeric_type) {
+        (None, None) | (_, None) | (None, _) => {
+            if a.has_same_schema_type(&b) {
                 // if both are non-numeric (already handled) and the same type,
                 // they are comparable
                 Ok((a, b))
@@ -100,6 +61,29 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
                 // which is okay as atomization has taking place already
                 // 5d otherwise, type error
                 Err(error::Error::Type)
+            }
+        }
+
+        (Some(a_numeric_type), Some(b_numeric_type)) => {
+            use BaseNumericType::*;
+            match (a_numeric_type, b_numeric_type) {
+                // 5b: xs:decimal & xs:float -> cast decimal to float
+                (Decimal, Float) | (Integer, Float) => Ok((a.cast_to_float()?, b)),
+                (Float, Decimal) | (Float, Integer) => Ok((a, b.cast_to_float()?)),
+                // 5c: xs:decimal & xs:double -> cast decimal to double
+                (Decimal, Double) | (Integer, Double) => Ok((a.cast_to_double()?, b)),
+                (Double, Decimal) | (Double, Integer) => Ok((a, b.cast_to_double()?)),
+                // 5c: xs:float & xs:double -> cast float to double
+                (Float, Double) => Ok((a.cast_to_double()?, b)),
+                (Double, Float) => Ok((a, b.cast_to_double()?)),
+                // both are floats or decimals
+                (Float, Float) | (Double, Double) => Ok((a, b)),
+                // both are decimals
+                (Decimal, Decimal) | (Decimal, Integer) | (Integer, Decimal) => {
+                    Ok((a.cast_to_decimal()?, b.cast_to_decimal()?))
+                }
+                // both are integers of somet ype
+                (Integer, Integer) => Ok((a.cast_to_integer()?, b.cast_to_integer()?)),
             }
         }
     }

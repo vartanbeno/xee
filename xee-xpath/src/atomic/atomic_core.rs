@@ -22,13 +22,6 @@ pub enum Atomic {
     Boolean(bool),
     // decimal based
     Decimal(Decimal),
-    // We use i64 for xs:integer. According to the XML Schema 1.0 spec,
-    // xs:integer is derived from xs:decimal. A conforming specification must
-    // support 18 digit decimals. Since i64 can hold 19 digits, we are safe to
-    // use it and still be conforming. xs:long is aliased to this.
-    // The XML Schema 1.1 approaches this differently, but are still within
-    // bounds of these restrictions.
-    // That said, not all UnsignedLong fit in a i64, so that may lead to trouble
     Integer(IBig),
     // machine integers
     Long(i64),

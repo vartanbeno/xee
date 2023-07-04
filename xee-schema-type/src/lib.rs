@@ -1,3 +1,3 @@
 mod xs;
 
-pub use xs::Xs;
+pub use {xs::BaseNumericType, xs::Xs};

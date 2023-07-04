@@ -28,6 +28,14 @@ pub enum Xs {
     Notation,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BaseNumericType {
+    Decimal,
+    Integer,
+    Float,
+    Double,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct RustInfo {
     rust_name: String,
@@ -191,6 +199,36 @@ impl Xs {
             UnsignedInt => Some(RustInfo::new("u32")),
             UnsignedShort => Some(RustInfo::new("u16")),
             UnsignedByte => Some(RustInfo::new("u8")),
+            Notation => None,
+        }
+    }
+
+    pub fn base_numeric_type(&self) -> Option<BaseNumericType> {
+        use Xs::*;
+        match self {
+            AnyType => None,
+            AnySimpleType => None,
+            Untyped => None,
+            AnyAtomicType => None,
+            UntypedAtomic => None,
+            String => None,
+            Boolean => None,
+            Float => Some(BaseNumericType::Float),
+            Double => Some(BaseNumericType::Double),
+            Decimal => Some(BaseNumericType::Decimal),
+            Integer => Some(BaseNumericType::Integer),
+            NonPositiveInteger => Some(BaseNumericType::Integer),
+            NegativeInteger => Some(BaseNumericType::Integer),
+            Long => Some(BaseNumericType::Integer),
+            Int => Some(BaseNumericType::Integer),
+            Short => Some(BaseNumericType::Integer),
+            Byte => Some(BaseNumericType::Integer),
+            NonNegativeInteger => Some(BaseNumericType::Integer),
+            PositiveInteger => Some(BaseNumericType::Integer),
+            UnsignedLong => Some(BaseNumericType::Integer),
+            UnsignedInt => Some(BaseNumericType::Integer),
+            UnsignedShort => Some(BaseNumericType::Integer),
+            UnsignedByte => Some(BaseNumericType::Integer),
             Notation => None,
         }
     }
