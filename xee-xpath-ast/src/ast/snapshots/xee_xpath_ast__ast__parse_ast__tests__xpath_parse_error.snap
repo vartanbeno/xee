@@ -7,7 +7,7 @@ Err(
         src: "1 + 2 +",
         span: SourceSpan {
             offset: SourceOffset(
-                6,
+                7,
             ),
             length: SourceOffset(
                 0,

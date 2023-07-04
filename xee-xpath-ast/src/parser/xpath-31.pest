@@ -10,6 +10,8 @@ OuterSignature = { SOI ~ Signature ~ EOI }
 
 OuterSequenceType = { SOI ~ SequenceType ~ EOI }
 
+OuterKindTest = { SOI ~ KindTest ~ EOI }
+
 // ParamList
 // ::= Param ("," Param)*
 ParamList = { Param ~ ("," ~ Param)* }

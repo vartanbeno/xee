@@ -569,18 +569,18 @@ impl<'a> AstParser<'a> {
             let axis = self.forward_axis_to_axis(first_pair);
             let is_attribute = matches!(axis, ast::Axis::Attribute);
             let node_test_pair = pairs.next().unwrap();
-            let node_test = self.node_test_to_node_test(node_test_pair, is_attribute);
+            let node_test = self.node_test(node_test_pair, is_attribute);
             (axis, node_test)
         } else {
             let mut pairs = first_pair.into_inner();
             let first = pairs.next().unwrap();
             match first.as_rule() {
                 Rule::AbbrevAtSign => {
-                    let node_test = self.node_test_to_node_test(pairs.next().unwrap(), true);
+                    let node_test = self.node_test(pairs.next().unwrap(), true);
                     (ast::Axis::Attribute, node_test)
                 }
                 Rule::NodeTest => {
-                    let node_test = self.node_test_to_node_test(first, false);
+                    let node_test = self.node_test(first, false);
                     // https://www.w3.org/TR/xpath-31/#abbrev
                     let axis = match &node_test {
                         ast::NodeTest::KindTest(t) => match t {
@@ -608,7 +608,7 @@ impl<'a> AstParser<'a> {
         if first_pair.as_rule() == Rule::ReverseAxis {
             let axis = self.reverse_axis_to_axis(first_pair);
             let node_test_pair = pairs.next().unwrap();
-            let node_test = self.node_test_to_node_test(node_test_pair, false);
+            let node_test = self.node_test(node_test_pair, false);
             (axis, node_test)
         } else {
             // abbrev reverse step
@@ -645,12 +645,12 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn node_test_to_node_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NodeTest {
+    fn node_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NodeTest {
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
-            Rule::KindTest => ast::NodeTest::KindTest(self.kind_test_to_kind_test(pair)),
+            Rule::KindTest => ast::NodeTest::KindTest(self.kind_test(pair)),
             Rule::NameTest => ast::NodeTest::NameTest(
-                self.name_test_to_name_test(pair.into_inner().next().unwrap(), is_attribute),
+                self.name_test(pair.into_inner().next().unwrap(), is_attribute),
             ),
             _ => {
                 panic!("unhandled NodeTest: {:?}", pair.as_rule())
@@ -658,7 +658,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn name_test_to_name_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NameTest {
+    fn name_test(&self, pair: Pair<Rule>, is_attribute: bool) -> ast::NameTest {
         match pair.as_rule() {
             Rule::Wildcard => {
                 let pair = pair.into_inner().next().unwrap();
@@ -702,7 +702,7 @@ impl<'a> AstParser<'a> {
         }
     }
 
-    fn kind_test_to_kind_test(&self, pair: Pair<Rule>) -> ast::KindTest {
+    fn kind_test(&self, pair: Pair<Rule>) -> ast::KindTest {
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::AnyKindTest => ast::KindTest::Any,
@@ -1150,7 +1150,7 @@ impl<'a> AstParser<'a> {
         debug_assert_eq!(pair.as_rule(), Rule::ItemType);
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
-            Rule::KindTest => ast::ItemType::KindTest(self.kind_test_to_kind_test(pair)),
+            Rule::KindTest => ast::ItemType::KindTest(self.kind_test(pair)),
             Rule::AnyItemType => ast::ItemType::Item,
             Rule::AtomicOrUnionType => {
                 ast::ItemType::AtomicOrUnionType(self.atomic_or_union_type(pair))
@@ -1318,15 +1318,7 @@ pub fn parse_xpath(
             unique_names(&mut xpath, variables);
             Ok(xpath)
         }
-        Err(e) => {
-            let src = input.to_string();
-            let location = e.location;
-            let span: SourceSpan = match location {
-                InputLocation::Pos(pos) => (pos - 1, 0).into(),
-                InputLocation::Span((start, end)) => (start, end).into(),
-            };
-            Err(Error::ParseError { src, span })
-        }
+        Err(e) => Err(handle_parse_error(input, e)),
     }
 }
 
@@ -1336,15 +1328,7 @@ pub fn parse_signature(input: &str, namespaces: &Namespaces) -> Result<ast::Sign
 
     match result {
         Ok(signature) => Ok(signature),
-        Err(e) => {
-            let src = input.to_string();
-            let location = e.location;
-            let span: SourceSpan = match location {
-                InputLocation::Pos(pos) => (pos, 0).into(),
-                InputLocation::Span((start, end)) => (start, end).into(),
-            };
-            Err(Error::ParseError { src, span })
-        }
+        Err(e) => Err(handle_parse_error(input, e)),
     }
 }
 
@@ -1359,16 +1343,27 @@ pub fn parse_sequence_type(
 
     match result {
         Ok(sequence_type) => Ok(sequence_type),
-        Err(e) => {
-            let src = input.to_string();
-            let location = e.location;
-            let span: SourceSpan = match location {
-                InputLocation::Pos(pos) => (pos, 0).into(),
-                InputLocation::Span((start, end)) => (start, end).into(),
-            };
-            Err(Error::ParseError { src, span })
-        }
+        Err(e) => Err(handle_parse_error(input, e)),
     }
+}
+
+pub fn parse_kind_test(input: &str, namespaces: &Namespaces) -> Result<ast::KindTest, Error> {
+    let ast_parser = AstParser::new(namespaces);
+    let result = parse_rule_start_end(Rule::OuterKindTest, input, |p| ast_parser.kind_test(p));
+    match result {
+        Ok(kind_test) => Ok(kind_test),
+        Err(e) => Err(handle_parse_error(input, e)),
+    }
+}
+
+fn handle_parse_error(input: &str, e: pest::error::Error<Rule>) -> Error {
+    let src = input.to_string();
+    let location = e.location;
+    let span: SourceSpan = match location {
+        InputLocation::Pos(pos) => (pos, 0).into(),
+        InputLocation::Span((start, end)) => (start, end).into(),
+    };
+    Error::ParseError { src, span }
 }
 
 pub(crate) fn spanned<T>(value: T, span: &pest::Span) -> Spanned<T> {
