@@ -16,6 +16,9 @@ resolver = "2"
 xot = "0.13.5"
 miette = "5.8.0"
 clap = "4.2.7"
+ibig = "0.3.6"
+ordered-float = "3.7.0"
+rust_decimal = "1.30.0"
 
 [profile.test.package.xot]
 opt-level = 3

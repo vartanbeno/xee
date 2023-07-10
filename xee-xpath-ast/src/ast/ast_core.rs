@@ -1,24 +1,42 @@
+use chumsky::span::SimpleSpan as SourceSpan;
+use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use xot::Xot;
 
 pub use crate::operator::BinaryOperator;
-use crate::span::Spanned;
+use crate::{
+    namespaces::Namespaces,
+    span::{spanned, Spanned},
+};
 
 pub type ExprSingleS = Spanned<ExprSingle>;
 pub type PrimaryExprS = Spanned<PrimaryExpr>;
 pub type StepExprS = Spanned<StepExpr>;
 
-pub type Expr = Vec<ExprSingleS>;
+// pub type Expr = Vec<ExprSingleS>;
 pub type ExprS = Spanned<Expr>;
+pub type NameS = Spanned<Name>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
+pub struct Expr(pub Vec<ExprSingleS>);
+
+impl Expr {
+    pub(crate) fn with_span(self, span: SourceSpan) -> ExprS {
+        spanned(self, span)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct XPath {
     // at least one entry
     pub exprs: ExprS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ExprSingle {
     // a path expression
     Path(PathExpr),
@@ -32,14 +50,22 @@ pub enum ExprSingle {
     Quantified(QuantifiedExpr),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+impl ExprSingle {
+    pub(crate) fn with_span(self, span: SourceSpan) -> ExprSingleS {
+        spanned(self, span)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct ForExpr {
     pub var_name: Name,
     pub var_expr: Box<ExprSingleS>,
     pub return_expr: Box<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct QuantifiedExpr {
     pub quantifier: Quantifier,
     pub var_name: Name,
@@ -48,20 +74,48 @@ pub struct QuantifiedExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct Name {
     name: String,
+    prefix: Option<String>,
     namespace: Option<String>,
 }
 
 impl Name {
     pub fn new(name: String, namespace: Option<String>) -> Self {
-        Name { name, namespace }
+        Name {
+            name,
+            namespace,
+            prefix: None,
+        }
     }
 
-    pub fn without_ns(name: &str) -> Self {
+    pub(crate) fn with_span(self, span: SourceSpan) -> NameS {
+        spanned(self, span)
+    }
+
+    pub fn prefixed(prefix: &str, name: &str, namespaces: &Namespaces) -> Option<Self> {
+        let namespace = namespaces.by_prefix(prefix)?;
+        Some(Name {
+            name: name.to_string(),
+            namespace: Some(namespace.to_string()),
+            prefix: Some(prefix.to_string()),
+        })
+    }
+
+    pub fn unprefixed(name: &str) -> Self {
         Name {
             name: name.to_string(),
             namespace: None,
+            prefix: None,
+        }
+    }
+
+    pub fn uri_qualified(uri: &str, name: &str) -> Self {
+        Name {
+            name: name.to_string(),
+            namespace: Some(uri.to_string()),
+            prefix: None,
         }
     }
 
@@ -92,31 +146,36 @@ impl Name {
         Name {
             name,
             namespace: self.namespace.clone(),
+            prefix: self.prefix.clone(),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct LetExpr {
-    pub var_name: Name,
+    pub var_name: NameS,
     pub var_expr: Box<ExprSingleS>,
     pub return_expr: Box<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct IfExpr {
     pub condition: ExprS,
     pub then: Box<ExprSingleS>,
     pub else_: Box<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Quantifier {
     Some,
     Every,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum PrimaryExpr {
     Literal(Literal),
     VarRef(Name),
@@ -130,27 +189,37 @@ pub enum PrimaryExpr {
     UnaryLookup(UnaryLookup),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+impl PrimaryExpr {
+    pub(crate) fn with_span(self, span: SourceSpan) -> PrimaryExprS {
+        spanned(self, span)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum UnaryLookup {
     Name(String),
     IntegerLiteral(i64),
     Expr(ExprS),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct BinaryExpr {
     pub operator: BinaryOperator,
     pub left: PathExpr,
     pub right: PathExpr,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct ApplyExpr {
     pub path_expr: PathExpr,
     pub operator: ApplyOperator,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
@@ -161,62 +230,72 @@ pub enum ApplyOperator {
     InstanceOf(SequenceType),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum UnaryOperator {
     Plus,
     Minus,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct SingleType {
-    pub name: Name,
+    pub name: NameS,
     pub question_mark: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ArrowFunctionSpecifier {
     Name(EQName),
     VarRef(EQName),
     Expr(ExprS),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct MapConstructor {
     pub entries: Vec<MapConstructorEntry>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct MapConstructorEntry {
     pub key: ExprSingleS,
     pub value: ExprSingleS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct ArrayConstructor {
     pub members: Vec<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Literal {
     Decimal(Decimal),
-    Integer(String),
+    Integer(IBig),
     Double(OrderedFloat<f64>),
     String(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct FunctionCall {
     pub name: Name,
     pub arguments: Vec<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct NamedFunctionRef {
     pub name: Name,
     pub arity: u8,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct InlineFunction {
     pub params: Vec<Param>,
     pub return_type: Option<SequenceType>,
@@ -225,26 +304,30 @@ pub struct InlineFunction {
 
 // a function signature as described by:
 // https://www.w3.org/TR/xpath-functions-31/#func-signatures
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct Signature {
     pub name: Name,
     pub params: Vec<SignatureParam>,
     pub return_type: SequenceType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct Param {
     pub name: Name,
     pub type_: Option<SequenceType>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct SignatureParam {
     pub name: Name,
     pub type_: SequenceType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Postfix {
     // vec contains at least 1 element
     Predicate(ExprS),
@@ -252,7 +335,8 @@ pub enum Postfix {
     Lookup(Lookup),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Lookup {
     Name(String),
     IntegerLiteral(i64),
@@ -260,12 +344,14 @@ pub enum Lookup {
     Star,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct PathExpr {
     pub steps: Vec<StepExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum StepExpr {
     PrimaryExpr(PrimaryExprS),
     PostfixExpr {
@@ -275,14 +361,22 @@ pub enum StepExpr {
     AxisStep(AxisStep),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+impl StepExpr {
+    pub(crate) fn with_span(self, span: SourceSpan) -> StepExprS {
+        spanned(self, span)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct AxisStep {
     pub axis: Axis,
     pub node_test: NodeTest,
     pub predicates: Vec<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Axis {
     Ancestor,
     AncestorOrSelf,
@@ -299,13 +393,15 @@ pub enum Axis {
     Self_,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum NodeTest {
     KindTest(KindTest),
     NameTest(NameTest),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum NameTest {
     Name(Name),
     Star,
@@ -313,52 +409,60 @@ pub enum NameTest {
     Namespace(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum EQName {
     QName(QName),
     URIQualifiedName(URIQualifiedName),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum QName {
     PrefixedName(PrefixedName),
     UnprefixedName(UnprefixedName),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct PrefixedName {
     pub prefix: String,
     pub local_part: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct UnprefixedName {
     pub local_part: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct URIQualifiedName {
     pub uri: String,
     pub local_part: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum SequenceType {
     Empty,
     Item(Item),
     Unsupported,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct Item {
     pub item_type: ItemType,
     pub occurrence: Occurrence,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ItemType {
     Item,
-    AtomicOrUnionType(Name),
+    AtomicOrUnionType(NameS),
     KindTest(KindTest),
     FunctionTest(Box<FunctionTest>),
     MapTest(Box<MapTest>),
@@ -371,7 +475,8 @@ impl ItemType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Occurrence {
     One,
     Option,
@@ -379,7 +484,8 @@ pub enum Occurrence {
     NonEmpty,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum KindTest {
     Document(Option<DocumentTest>),
     Element(Option<ElementTest>),
@@ -393,88 +499,103 @@ pub enum KindTest {
     Any,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum DocumentTest {
     Element(ElementTest),
     SchemaElement(SchemaElementTest),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct ElementTest {
     pub name_test: ElementNameOrWildcard,
     pub type_name: Option<ElementTypeName>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct ElementTypeName {
     pub name: Name,
     pub question_mark: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ElementNameOrWildcard {
     Name(Name),
     Wildcard,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct AttributeTest {
     pub name_test: AttribNameOrWildcard,
     pub type_name: Option<Name>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum AttribNameOrWildcard {
     Name(Name),
     Wildcard,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaElementTest {
     pub name: Name,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaAttributeTest {
     pub name: Name,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum FunctionTest {
     AnyFunctionTest,
     TypedFunctionTest(TypedFunctionTest),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypedFunctionTest {
     parameter_types: Vec<SequenceType>,
     return_type: SequenceType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum MapTest {
     AnyMapTest,
     TypedMapTest(TypedMapTest),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypedMapTest {
     pub key_type: Name,
     pub value_type: SequenceType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum ArrayTest {
     AnyArrayTest,
     TypedArrayTest(TypedArrayTest),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypedArrayTest {
     pub item_type: SequenceType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum PITest {
     Name(String),
     StringLiteral(String),

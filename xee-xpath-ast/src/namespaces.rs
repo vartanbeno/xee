@@ -14,7 +14,7 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
     ("output", "http://www.w3.org/2010/xslt-xquery-serialization"),
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Namespaces<'a> {
     namespaces: HashMap<&'a str, &'a str>,
     pub(crate) default_element_namespace: Option<&'a str>,

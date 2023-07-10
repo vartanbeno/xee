@@ -54,7 +54,7 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_expr<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::ExprS) {
-        for expr_single in expr.value.iter_mut() {
+        for expr_single in expr.value.0.iter_mut() {
             v.visit_expr_single(expr_single);
         }
     }
@@ -122,7 +122,7 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_let_expr<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::LetExpr) {
-        v.visit_var_binding(&mut expr.var_name);
+        v.visit_var_binding(&mut expr.var_name.value);
         v.visit_expr_single(&mut expr.var_expr);
         v.visit_expr_single(&mut expr.return_expr);
     }

@@ -1,4 +1,5 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum BinaryOperator {
     // logical
     Or,
