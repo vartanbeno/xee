@@ -180,7 +180,15 @@ where
             .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
             .boxed();
 
-        let primary_expr = parenthesized_expr.or(literal).or(var_ref).boxed();
+        let context_item_expr = just(Token::Dot)
+            .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
+            .boxed();
+
+        let primary_expr = parenthesized_expr
+            .or(literal)
+            .or(var_ref)
+            .or(context_item_expr)
+            .boxed();
 
         let postfix_expr = primary_expr
             .then(postfix.repeated().collect::<Vec<_>>())
@@ -237,19 +245,16 @@ where
 
         let value_expr = path_expr
             .clone()
-            .then(
-                just(Token::ExclamationMark)
-                    .ignore_then(path_expr)
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map_with_span(|(path_expr, mapped_path_exprs), span| {
-                if mapped_path_exprs.is_empty() {
-                    ast::ExprSingle::Path(path_expr).with_span(span)
+            .separated_by(just(Token::ExclamationMark))
+            .at_least(1)
+            .collect::<Vec<_>>()
+            .map_with_span(|path_exprs, span| {
+                if path_exprs.len() == 1 {
+                    ast::ExprSingle::Path(path_exprs[0].clone()).with_span(span)
                 } else {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
-                        operator: ast::ApplyOperator::SimpleMap(mapped_path_exprs),
-                        path_expr,
+                        operator: ast::ApplyOperator::SimpleMap(path_exprs[1..].to_vec()),
+                        path_expr: path_exprs[0].clone(),
                     })
                     .with_span(span)
                 }
@@ -924,10 +929,10 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("1 to 2"));
     }
 
-    // #[test]
-    // fn test_simple_map() {
-    //     assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
-    // }
+    #[test]
+    fn test_simple_map() {
+        assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
+    }
 
     #[test]
     fn test_predicate() {
