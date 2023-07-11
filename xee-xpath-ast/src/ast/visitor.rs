@@ -147,7 +147,7 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_for_expr<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::ForExpr) {
-        v.visit_var_binding(&mut expr.var_name);
+        v.visit_var_binding(&mut expr.var_name.value);
         v.visit_expr_single(&mut expr.var_expr);
         v.visit_expr_single(&mut expr.return_expr);
     }
@@ -157,7 +157,7 @@ pub(crate) mod visit {
         expr: &mut ast::QuantifiedExpr,
     ) {
         v.visit_quantifier(&mut expr.quantifier);
-        v.visit_var_binding(&mut expr.var_name);
+        v.visit_var_binding(&mut expr.var_name.value);
         v.visit_expr_single(&mut expr.var_expr);
         v.visit_expr_single(&mut expr.satisfies_expr);
     }

@@ -48,7 +48,7 @@ impl WithSpan for ExprSingle {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct ForExpr {
-    pub var_name: Name,
+    pub var_name: NameS,
     pub var_expr: Box<ExprSingleS>,
     pub return_expr: Box<ExprSingleS>,
 }
@@ -57,7 +57,7 @@ pub struct ForExpr {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct QuantifiedExpr {
     pub quantifier: Quantifier,
-    pub var_name: Name,
+    pub var_name: NameS,
     pub var_expr: Box<ExprSingleS>,
     pub satisfies_expr: Box<ExprSingleS>,
 }

@@ -92,14 +92,16 @@ impl AstVisitor for Renamer {
 
     fn visit_for_expr(&mut self, expr: &mut ast::ForExpr) {
         self.visit_expr_single(&mut expr.var_expr);
-        expr.var_name = self.push_name(&expr.var_name);
+        let old_span = expr.var_name.span;
+        expr.var_name = self.push_name(&expr.var_name.value).with_span(old_span);
         self.visit_expr_single(&mut expr.return_expr);
         self.pop_name();
     }
 
     fn visit_quantified_expr(&mut self, expr: &mut ast::QuantifiedExpr) {
         self.visit_expr_single(&mut expr.var_expr);
-        expr.var_name = self.push_name(&expr.var_name);
+        let old_span = expr.var_name.span;
+        expr.var_name = self.push_name(&expr.var_name.value).with_span(old_span);
         self.visit_expr_single(&mut expr.satisfies_expr);
         self.pop_name();
     }

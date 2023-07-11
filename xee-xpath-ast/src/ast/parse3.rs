@@ -433,16 +433,17 @@ where
             .then(expr_single.clone())
             .boxed();
 
-        let let_expr = just(Token::Let)
-            .ignore_then(
-                simple_let_binding
-                    .clone()
-                    .separated_by(just(Token::Comma))
-                    .at_least(1)
-                    .collect::<Vec<_>>(),
-            )
+        let simple_let_clause = just(Token::Let).ignore_then(
+            simple_let_binding
+                .clone()
+                .separated_by(just(Token::Comma))
+                .at_least(1)
+                .collect::<Vec<_>>(),
+        );
+
+        let let_expr = simple_let_clause
             .then_ignore(just(Token::Return))
-            .then(expr_single)
+            .then(expr_single.clone())
             .map_with_span(|(bindings, return_expr), span| {
                 bindings
                     .iter()
@@ -458,7 +459,39 @@ where
             })
             .boxed();
 
-        let expr_single_ = path_expr.or(let_expr).boxed();
+        let simple_for_binding = just(Token::Dollar)
+            .ignore_then(eqname.clone())
+            .then_ignore(just(Token::In))
+            .then(expr_single.clone())
+            .boxed();
+
+        let simple_for_clause = just(Token::For).ignore_then(
+            simple_for_binding
+                .clone()
+                .separated_by(just(Token::Comma))
+                .at_least(1)
+                .collect::<Vec<_>>(),
+        );
+
+        let for_expr = simple_for_clause
+            .then_ignore(just(Token::Return))
+            .then(expr_single.clone())
+            .map_with_span(|(bindings, return_expr), span| {
+                bindings
+                    .iter()
+                    .rev()
+                    .fold(return_expr, |return_expr, (var_name, var_expr)| {
+                        ast::ExprSingle::For(ast::ForExpr {
+                            var_name: var_name.clone(),
+                            var_expr: Box::new(var_expr.clone()),
+                            return_expr: Box::new(return_expr),
+                        })
+                        .with_span(span)
+                    })
+            })
+            .boxed();
+
+        let expr_single_ = path_expr.or(let_expr).or(for_expr).boxed();
 
         expr_single_
     })
@@ -739,15 +772,15 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
     }
 
-    // #[test]
-    // fn test_single_for_expr() {
-    //     assert_ron_snapshot!(parse_expr_single("for $x in 1 return 5"));
-    // }
+    #[test]
+    fn test_single_for_expr() {
+        assert_ron_snapshot!(parse_expr_single("for $x in 1 return 5"));
+    }
 
-    // #[test]
-    // fn test_for_loop() {
-    //     assert_ron_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
-    // }
+    #[test]
+    fn test_for_loop() {
+        assert_ron_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
+    }
 
     // #[test]
     // fn test_if_expr() {
