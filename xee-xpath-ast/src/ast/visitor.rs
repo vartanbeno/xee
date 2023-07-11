@@ -310,7 +310,7 @@ pub(crate) mod visit {
         v: &mut V,
         function_call: &mut ast::FunctionCall,
     ) {
-        v.visit_function_name(&mut function_call.name);
+        v.visit_function_name(&mut function_call.name.value);
         for arg in function_call.arguments.iter_mut() {
             v.visit_expr_single(arg);
         }

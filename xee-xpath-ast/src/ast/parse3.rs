@@ -184,6 +184,50 @@ where
             .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
             .boxed();
 
+        enum ArgumentOrPlaceholder {
+            Argument(ast::ExprSingleS),
+            Placeholder,
+        }
+
+        let argument_placeholder = just(Token::QuestionMark)
+            .map(|_| ArgumentOrPlaceholder::Placeholder)
+            .boxed();
+        let argument = expr_single
+            .clone()
+            .map(ArgumentOrPlaceholder::Argument)
+            .or(argument_placeholder)
+            .boxed();
+        let argument_list = argument
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen));
+
+        let has_placeholders = |arguments: &[ArgumentOrPlaceholder]| {
+            arguments
+                .iter()
+                .any(|argument| matches!(argument, ArgumentOrPlaceholder::Placeholder))
+        };
+
+        let function_call = eqname
+            .clone()
+            .then(argument_list)
+            .map_with_span(move |(name, arguments), span| {
+                if has_placeholders(&arguments) {
+                    todo!();
+                } else {
+                    let arguments = arguments
+                        .iter()
+                        .map(|arg| match arg {
+                            ArgumentOrPlaceholder::Argument(expr) => expr.clone(),
+                            ArgumentOrPlaceholder::Placeholder => unreachable!(),
+                        })
+                        .collect();
+                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
+                        .with_span(span)
+                }
+            })
+            .boxed();
+
         let named_function_ref = eqname
             .clone()
             .then_ignore(just(Token::Hash))
@@ -238,6 +282,7 @@ where
             .or(context_item_expr)
             .or(named_function_ref)
             .or(inline_function_expr)
+            .or(function_call)
             .boxed();
 
         let postfix_expr = primary_expr
@@ -672,7 +717,8 @@ fn root_step(span: Span) -> ast::StepExprS {
 
     ast::StepExpr::PrimaryExpr(
         ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string()))
+                .with_empty_span(),
             arguments: vec![path_arg],
         })
         .with_empty_span(),
@@ -929,30 +975,30 @@ mod tests {
     //     assert_ron_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
     // }
 
-    // #[test]
-    // fn test_static_function_call() {
-    //     assert_ron_snapshot!(parse_expr_single("my_function()"));
-    // }
+    #[test]
+    fn test_static_function_call() {
+        assert_ron_snapshot!(parse_expr_single("my_function()"));
+    }
 
-    // #[test]
-    // fn test_static_function_call_fn_prefix() {
-    //     assert_ron_snapshot!(parse_expr_single("fn:root()"));
-    // }
+    #[test]
+    fn test_static_function_call_fn_prefix() {
+        assert_ron_snapshot!(parse_expr_single("fn:root()"));
+    }
 
-    // #[test]
-    // fn test_static_function_call_q() {
-    //     assert_ron_snapshot!(parse_expr_single("Q{http://example.com}something()"));
-    // }
+    #[test]
+    fn test_static_function_call_q() {
+        assert_ron_snapshot!(parse_expr_single("Q{http://example.com}something()"));
+    }
 
-    // #[test]
-    // fn test_static_function_call_args() {
-    //     assert_ron_snapshot!(parse_expr_single("my_function(1, 2)"));
-    // }
+    #[test]
+    fn test_static_function_call_args() {
+        assert_ron_snapshot!(parse_expr_single("my_function(1, 2)"));
+    }
 
-    // #[test]
-    // fn test_named_function_ref() {
-    //     assert_ron_snapshot!(parse_expr_single("my_function#2"));
-    // }
+    #[test]
+    fn test_named_function_ref() {
+        assert_ron_snapshot!(parse_expr_single("my_function#2"));
+    }
 
     // #[test]
     // fn test_dynamic_function_call_placeholder() {

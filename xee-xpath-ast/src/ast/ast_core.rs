@@ -261,7 +261,7 @@ pub enum Literal {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct FunctionCall {
-    pub name: Name,
+    pub name: NameS,
     pub arguments: Vec<ExprSingleS>,
 }
 
