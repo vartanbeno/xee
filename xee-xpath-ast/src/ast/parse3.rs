@@ -413,6 +413,19 @@ where
 
     let type_declaration = just(Token::As).ignore_then(sequence_type.clone());
 
+    let param = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .then(type_declaration.or_not())
+        .map(|(name, type_)| ast::Param {
+            name: name.value,
+            type_,
+        });
+
+    let param_list = param
+        .separated_by(just(Token::Comma))
+        .collect::<Vec<_>>()
+        .boxed();
+
     // ugly way to get expr out of recursive
     let mut expr_ = None;
 
@@ -490,19 +503,6 @@ where
                     placeholder_wrapper_function(step_expr, params, span)
                 }
             })
-            .boxed();
-
-        let param = just(Token::Dollar)
-            .ignore_then(eqname.clone())
-            .then(type_declaration.or_not())
-            .map(|(name, type_)| ast::Param {
-                name: name.value,
-                type_,
-            });
-
-        let param_list = param
-            .separated_by(just(Token::Comma))
-            .collect::<Vec<_>>()
             .boxed();
 
         let enclosed_expr =
