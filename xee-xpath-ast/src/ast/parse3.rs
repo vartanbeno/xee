@@ -137,12 +137,44 @@ where
             .boxed()
             .map_with_span(|expr, span| ast::PrimaryExpr::Expr(expr).with_span(span));
 
+        let argument_placeholder = just(Token::QuestionMark)
+            .map(|_| ArgumentOrPlaceholder::Placeholder)
+            .boxed();
+        let argument = expr_single
+            .clone()
+            .map(ArgumentOrPlaceholder::Argument)
+            .or(argument_placeholder)
+            .boxed();
+        let argument_list = argument
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen));
+
+        enum PostfixOrPlaceholderWrapper {
+            Postfix(ast::Postfix),
+            PlaceholderWrapper(Vec<ast::ExprSingleS>, Vec<ast::Param>, Span),
+        }
+
         let predicate = expr
             .clone()
             .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
+            .map(ast::Postfix::Predicate)
+            .map(PostfixOrPlaceholderWrapper::Postfix)
             .boxed();
 
-        let postfix = predicate.map(ast::Postfix::Predicate).boxed();
+        let argument_list_postfix = argument_list
+            .clone()
+            .map_with_span(|arguments, span| {
+                let (arguments, params) = placeholder_arguments(&arguments);
+                if params.is_empty() {
+                    PostfixOrPlaceholderWrapper::Postfix(ast::Postfix::ArgumentList(arguments))
+                } else {
+                    PostfixOrPlaceholderWrapper::PlaceholderWrapper(arguments, params, span)
+                }
+            })
+            .boxed();
+
+        let postfix = predicate.or(argument_list_postfix).boxed();
 
         let string_literal = select! {
             Token::StringLiteral(s) => s,
@@ -184,19 +216,6 @@ where
             .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
             .boxed();
 
-        let argument_placeholder = just(Token::QuestionMark)
-            .map(|_| ArgumentOrPlaceholder::Placeholder)
-            .boxed();
-        let argument = expr_single
-            .clone()
-            .map(ArgumentOrPlaceholder::Argument)
-            .or(argument_placeholder)
-            .boxed();
-        let argument_list = argument
-            .separated_by(just(Token::Comma))
-            .collect::<Vec<_>>()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen));
-
         let function_call = eqname
             .clone()
             .then(argument_list)
@@ -206,7 +225,12 @@ where
                     ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
                         .with_span(span)
                 } else {
-                    placeholdered_wrapper_function(name, arguments, params, span)
+                    let inner_function_call =
+                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
+                            .with_empty_span();
+                    let step_expr =
+                        ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
+                    placeholder_wrapper_function(step_expr, params, span)
                 }
             })
             .boxed();
@@ -271,10 +295,41 @@ where
         let postfix_expr = primary_expr
             .then(postfix.repeated().collect::<Vec<_>>())
             .map_with_span(|(primary, postfixes), span| {
-                if postfixes.is_empty() {
+                // in case of a placeholder argument list we need to
+                // wrap the existing primary
+                let mut normal_postfixes = Vec::new();
+                let mut primary = primary;
+                for postfix in postfixes {
+                    match postfix {
+                        PostfixOrPlaceholderWrapper::Postfix(postfix) => {
+                            normal_postfixes.push(postfix)
+                        }
+                        PostfixOrPlaceholderWrapper::PlaceholderWrapper(
+                            arguments,
+                            params,
+                            span,
+                        ) => {
+                            normal_postfixes.push(ast::Postfix::ArgumentList(arguments));
+                            let step_expr = ast::StepExpr::PostfixExpr {
+                                primary,
+                                postfixes: normal_postfixes.clone(),
+                            }
+                            .with_empty_span();
+                            // replace primary with a placeholder wrapper function
+                            primary = placeholder_wrapper_function(step_expr, params, span);
+                            // now collect more postfixes
+                            normal_postfixes.clear();
+                        }
+                    }
+                }
+                if normal_postfixes.is_empty() {
                     ast::StepExpr::PrimaryExpr(primary).with_span(span)
                 } else {
-                    ast::StepExpr::PostfixExpr { primary, postfixes }.with_span(span)
+                    ast::StepExpr::PostfixExpr {
+                        primary,
+                        postfixes: normal_postfixes,
+                    }
+                    .with_span(span)
                 }
             })
             .boxed();
@@ -756,15 +811,11 @@ fn placeholder_arguments(
 
 // construct an inline function that calls the underlying
 // function with the reduced placeholdered params
-fn placeholdered_wrapper_function(
-    name: ast::NameS,
-    arguments: Vec<ast::ExprSingleS>,
+fn placeholder_wrapper_function(
+    step_expr: ast::StepExprS,
     params: Vec<ast::Param>,
     span: Span,
 ) -> ast::PrimaryExprS {
-    let inner_function_call =
-        ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments }).with_empty_span();
-    let step_expr = ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
     let path_expr = ast::PathExpr {
         steps: vec![step_expr],
     };
@@ -1017,15 +1068,20 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
     }
 
-    // #[test]
-    // fn test_dynamic_function_call() {
-    //     assert_ron_snapshot!(parse_expr_single("$foo()"));
-    // }
+    #[test]
+    fn test_dynamic_function_call() {
+        assert_ron_snapshot!(parse_expr_single("$foo()"));
+    }
 
-    // #[test]
-    // fn test_dynamic_function_call_args() {
-    //     assert_ron_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
-    // }
+    #[test]
+    fn test_dynamic_function_call_args() {
+        assert_ron_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
+    }
+
+    #[test]
+    fn test_dynamic_function_call_placeholder() {
+        assert_ron_snapshot!(parse_expr_single("$foo(1, ?)"));
+    }
 
     #[test]
     fn test_static_function_call() {
@@ -1051,11 +1107,6 @@ mod tests {
     fn test_named_function_ref() {
         assert_ron_snapshot!(parse_expr_single("my_function#2"));
     }
-
-    // #[test]
-    // fn test_dynamic_function_call_placeholder() {
-    //     assert_ron_snapshot!(parse_expr_single("$foo(1, ?)"));
-    // }
 
     #[test]
     fn test_static_function_call_placeholder() {
