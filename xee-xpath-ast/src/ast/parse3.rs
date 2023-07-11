@@ -491,7 +491,23 @@ where
             })
             .boxed();
 
-        let expr_single_ = path_expr.or(let_expr).or(for_expr).boxed();
+        let if_expr = just(Token::If)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::Then))
+            .then(expr_single.clone())
+            .then_ignore(just(Token::Else))
+            .then(expr_single.clone())
+            .map_with_span(|((condition, then), else_), span| {
+                ast::ExprSingle::If(ast::IfExpr {
+                    condition,
+                    then: Box::new(then),
+                    else_: Box::new(else_),
+                })
+                .with_span(span)
+            })
+            .boxed();
+
+        let expr_single_ = path_expr.or(let_expr).or(for_expr).or(if_expr).boxed();
 
         expr_single_
     })
@@ -782,10 +798,10 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
     }
 
-    // #[test]
-    // fn test_if_expr() {
-    //     assert_ron_snapshot!(parse_expr_single("if (1) then 2 else 3"));
-    // }
+    #[test]
+    fn test_if_expr() {
+        assert_ron_snapshot!(parse_expr_single("if (1) then 2 else 3"));
+    }
 
     // #[test]
     // fn test_inline_function() {
