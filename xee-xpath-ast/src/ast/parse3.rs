@@ -70,6 +70,45 @@ where
 
     let eqname = qname.or(uri_qualified_name).boxed();
 
+    let string = select! {
+        Token::StringLiteral(s) => s,
+    };
+    let string_literal = string.map(|s| ast::Literal::String(s.to_string())).boxed();
+
+    let integer = select! {
+        Token::IntegerLiteral(i) => i,
+    };
+
+    let integer_literal = integer.map(ast::Literal::Integer).boxed();
+
+    let decimal_literal = select! {
+        Token::DecimalLiteral(d) => d,
+    }
+    .map(ast::Literal::Decimal)
+    .boxed();
+
+    let double_literal = select! {
+        Token::DoubleLiteral(d) => d,
+    }
+    .map(|d| ast::Literal::Double(OrderedFloat(d)))
+    .boxed();
+
+    let literal = string_literal
+        .or(integer_literal.clone())
+        .or(decimal_literal)
+        .or(double_literal)
+        .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
+        .boxed();
+
+    let var_ref = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
+        .boxed();
+
+    let context_item_expr = just(Token::Dot)
+        .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
+        .boxed();
+
     let single_type = eqname
         .clone()
         .then(just(Token::QuestionMark).or_not())
@@ -116,6 +155,247 @@ where
         });
 
     let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
+
+    let element_declaration = eqname.clone();
+    let schema_element_test = just(Token::SchemaElement)
+        .ignore_then(
+            element_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .map(|name| ast::SchemaElementTest { name });
+
+    let element_name_or_wildcard = just(Token::Asterisk)
+        .to(ast::ElementNameOrWildcard::Wildcard)
+        .or(eqname.clone().map(ast::ElementNameOrWildcard::Name));
+
+    let type_name = eqname.clone();
+
+    let element_type_name = type_name
+        .clone()
+        .then(just(Token::QuestionMark).or_not())
+        .map(|(name, question_mark)| ast::ElementTypeName {
+            name,
+            question_mark: question_mark.is_some(),
+        });
+
+    let element_test_content = element_name_or_wildcard
+        .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
+        .map(|(name_test, type_name)| ast::ElementTest {
+            name_test,
+            type_name,
+        });
+
+    let element_test = just(Token::Element)
+        .ignore_then(
+            element_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .boxed();
+
+    let document_test_content = element_test
+        .clone()
+        .map(ast::DocumentTest::Element)
+        .or(schema_element_test
+            .clone()
+            .map(ast::DocumentTest::SchemaElement))
+        .boxed();
+
+    let document_test = just(Token::DocumentNode)
+        .ignore_then(
+            document_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .boxed();
+
+    let attrib_name_or_wildcard = just(Token::Asterisk)
+        .to(ast::AttribNameOrWildcard::Wildcard)
+        .or(eqname.clone().map(ast::AttribNameOrWildcard::Name));
+
+    let attribute_test_content = attrib_name_or_wildcard
+        .then((just(Token::Comma).ignore_then(type_name)).or_not())
+        .map(|(name_test, type_name)| ast::AttributeTest {
+            name_test,
+            type_name,
+        });
+
+    let attribute_test = just(Token::Attribute).ignore_then(
+        attribute_test_content
+            .or_not()
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+    );
+
+    let any_test = just(Token::Node)
+        .ignore_then(empty_call.clone())
+        .to(ast::KindTest::Any)
+        .boxed();
+
+    let attribute_name = eqname.clone();
+    let attribute_declaration = attribute_name;
+    let schema_attribute_test = just(Token::SchemaAttribute)
+        .ignore_then(
+            attribute_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .map(|name| ast::SchemaAttributeTest { name });
+
+    let pi_test_content = ncname
+        .map(|s| ast::PITest::Name(s.to_string()))
+        .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())));
+
+    let pi_test = just(Token::ProcessingInstruction).ignore_then(
+        pi_test_content
+            .or_not()
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+    );
+
+    let text_test = just(Token::Text)
+        .ignore_then(empty_call.clone())
+        .to(ast::KindTest::Text);
+    let comment_test = just(Token::Comment)
+        .ignore_then(empty_call.clone())
+        .to(ast::KindTest::Comment);
+    let namespace_node_test = just(Token::NamespaceNode)
+        .ignore_then(empty_call.clone())
+        .to(ast::KindTest::NamespaceNode);
+
+    let kind_test = document_test
+        .map(ast::KindTest::Document)
+        .or(element_test.map(ast::KindTest::Element))
+        .or(attribute_test.map(ast::KindTest::Attribute))
+        .or(schema_element_test.map(ast::KindTest::SchemaElement))
+        .or(schema_attribute_test.map(ast::KindTest::SchemaAttribute))
+        .or(pi_test.map(ast::KindTest::PI))
+        .or(comment_test)
+        .or(text_test)
+        .or(namespace_node_test)
+        .or(any_test)
+        .boxed();
+
+    let wildcard_ncname = ncname
+        .then_ignore(just(Token::ColonAsterisk))
+        .try_map_with_state(|prefix, span, state: &mut State| {
+            let namespace = state
+                .namespaces
+                .by_prefix(prefix)
+                .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))?;
+            Ok(ast::NameTest::Namespace(namespace.to_string()))
+        });
+    let wildcard_braced_uri_literal = braced_uri_literal
+        .then_ignore(just(Token::Asterisk))
+        .map(|uri| ast::NameTest::Namespace(uri.to_string()));
+    let wildcard_localname = just(Token::AsteriskColon)
+        .ignore_then(ncname)
+        .map(|name| ast::NameTest::LocalName(name.to_string()));
+    let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star);
+
+    let wildcard = wildcard_ncname
+        .or(wildcard_braced_uri_literal)
+        .or(wildcard_localname)
+        .or(wildcard_star)
+        .boxed();
+
+    let name_test = wildcard.or(eqname.clone().map(ast::NameTest::Name));
+
+    let parent_axis = just(Token::Parent)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Parent);
+    let ancestor_axis = just(Token::Ancestor)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Ancestor);
+    let preceding_sibling_axis = just(Token::PrecedingSibling)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::PrecedingSibling);
+    let preceding_axis = just(Token::Preceding)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Preceding);
+    let ancestor_or_self_axis = just(Token::AncestorOrSelf)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::AncestorOrSelf);
+
+    let reverse_axis = choice::<_>([
+        parent_axis,
+        ancestor_axis,
+        preceding_sibling_axis,
+        preceding_axis,
+        ancestor_or_self_axis,
+    ])
+    .boxed();
+
+    let node_test = name_test
+        .map(ast::NodeTest::NameTest)
+        .or(kind_test.map(ast::NodeTest::KindTest));
+
+    let abbrev_reverse_step = just(Token::DotDot).to((
+        ast::Axis::Parent,
+        ast::NodeTest::KindTest(ast::KindTest::Any),
+    ));
+
+    let reverse_axis_with_node_test = reverse_axis.then(node_test.clone()).boxed();
+    let reverse_step = reverse_axis_with_node_test.or(abbrev_reverse_step).boxed();
+
+    let child_axis = just(Token::Child)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Child);
+    let descendant_axis = just(Token::Descendant)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Descendant);
+    let attribute_axis = just(Token::Attribute)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Attribute);
+    let self_axis = just(Token::Self_)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Self_);
+    let descendant_or_self_axis = just(Token::DescendantOrSelf)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::DescendantOrSelf);
+    let following_sibling_axis = just(Token::FollowingSibling)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::FollowingSibling);
+    let following_axis = just(Token::Following)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Following);
+    let namespace_axis = just(Token::Namespace)
+        .ignore_then(just(Token::DoubleColon))
+        .to(ast::Axis::Namespace);
+
+    let forward_axis = choice::<_>([
+        child_axis,
+        descendant_axis,
+        attribute_axis,
+        self_axis,
+        descendant_or_self_axis,
+        following_sibling_axis,
+        following_axis,
+        namespace_axis,
+    ])
+    .boxed();
+
+    let forward_step_with_node_test = forward_axis.then(node_test.clone()).boxed();
+
+    let abbrev_forward_step = just(Token::At)
+        .or_not()
+        .then(node_test.clone())
+        .map(|(at, node_test)| {
+            if at.is_some() {
+                (ast::Axis::Attribute, node_test)
+            } else {
+                // https://www.w3.org/TR/xpath-31/#abbrev
+                let axis = match &node_test {
+                    ast::NodeTest::KindTest(t) => match t {
+                        ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+                            ast::Axis::Attribute
+                        }
+                        ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+                        _ => ast::Axis::Child,
+                    },
+                    _ => ast::Axis::Child,
+                };
+                (axis, node_test)
+            }
+        })
+        .boxed();
+
+    let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
     // ugly way to get expr out of recursive
     let mut expr_ = None;
@@ -176,44 +456,6 @@ where
             .boxed();
 
         let postfix = predicate.or(argument_list_postfix).boxed();
-        let string = select! {
-            Token::StringLiteral(s) => s,
-        };
-        let string_literal = string.map(|s| ast::Literal::String(s.to_string())).boxed();
-
-        let integer = select! {
-            Token::IntegerLiteral(i) => i,
-        };
-
-        let integer_literal = integer.map(ast::Literal::Integer).boxed();
-
-        let decimal_literal = select! {
-            Token::DecimalLiteral(d) => d,
-        }
-        .map(ast::Literal::Decimal)
-        .boxed();
-
-        let double_literal = select! {
-            Token::DoubleLiteral(d) => d,
-        }
-        .map(|d| ast::Literal::Double(OrderedFloat(d)))
-        .boxed();
-
-        let literal = string_literal
-            .or(integer_literal.clone())
-            .or(decimal_literal)
-            .or(double_literal)
-            .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
-            .boxed();
-
-        let var_ref = just(Token::Dollar)
-            .ignore_then(eqname.clone())
-            .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
-            .boxed();
-
-        let context_item_expr = just(Token::Dot)
-            .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
-            .boxed();
 
         let function_call = eqname
             .clone()
@@ -332,247 +574,6 @@ where
                 }
             })
             .boxed();
-
-        let element_declaration = eqname.clone();
-        let schema_element_test = just(Token::SchemaElement)
-            .ignore_then(
-                element_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-            )
-            .map(|name| ast::SchemaElementTest { name });
-
-        let element_name_or_wildcard = just(Token::Asterisk)
-            .to(ast::ElementNameOrWildcard::Wildcard)
-            .or(eqname.clone().map(ast::ElementNameOrWildcard::Name));
-
-        let type_name = eqname.clone();
-
-        let element_type_name = type_name
-            .clone()
-            .then(just(Token::QuestionMark).or_not())
-            .map(|(name, question_mark)| ast::ElementTypeName {
-                name,
-                question_mark: question_mark.is_some(),
-            });
-
-        let element_test_content = element_name_or_wildcard
-            .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
-            .map(|(name_test, type_name)| ast::ElementTest {
-                name_test,
-                type_name,
-            });
-
-        let element_test = just(Token::Element)
-            .ignore_then(
-                element_test_content
-                    .or_not()
-                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-            )
-            .boxed();
-
-        let document_test_content = element_test
-            .clone()
-            .map(ast::DocumentTest::Element)
-            .or(schema_element_test
-                .clone()
-                .map(ast::DocumentTest::SchemaElement))
-            .boxed();
-
-        let document_test = just(Token::DocumentNode)
-            .ignore_then(
-                document_test_content
-                    .or_not()
-                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-            )
-            .boxed();
-
-        let attrib_name_or_wildcard = just(Token::Asterisk)
-            .to(ast::AttribNameOrWildcard::Wildcard)
-            .or(eqname.clone().map(ast::AttribNameOrWildcard::Name));
-
-        let attribute_test_content = attrib_name_or_wildcard
-            .then((just(Token::Comma).ignore_then(type_name)).or_not())
-            .map(|(name_test, type_name)| ast::AttributeTest {
-                name_test,
-                type_name,
-            });
-
-        let attribute_test = just(Token::Attribute).ignore_then(
-            attribute_test_content
-                .or_not()
-                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-        );
-
-        let any_test = just(Token::Node)
-            .ignore_then(empty_call.clone())
-            .to(ast::KindTest::Any)
-            .boxed();
-
-        let attribute_name = eqname.clone();
-        let attribute_declaration = attribute_name;
-        let schema_attribute_test = just(Token::SchemaAttribute)
-            .ignore_then(
-                attribute_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-            )
-            .map(|name| ast::SchemaAttributeTest { name });
-
-        let pi_test_content = ncname
-            .map(|s| ast::PITest::Name(s.to_string()))
-            .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())));
-
-        let pi_test = just(Token::ProcessingInstruction).ignore_then(
-            pi_test_content
-                .or_not()
-                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-        );
-
-        let text_test = just(Token::Text)
-            .ignore_then(empty_call.clone())
-            .to(ast::KindTest::Text);
-        let comment_test = just(Token::Comment)
-            .ignore_then(empty_call.clone())
-            .to(ast::KindTest::Comment);
-        let namespace_node_test = just(Token::NamespaceNode)
-            .ignore_then(empty_call.clone())
-            .to(ast::KindTest::NamespaceNode);
-
-        let kind_test = document_test
-            .map(ast::KindTest::Document)
-            .or(element_test.map(ast::KindTest::Element))
-            .or(attribute_test.map(ast::KindTest::Attribute))
-            .or(schema_element_test.map(ast::KindTest::SchemaElement))
-            .or(schema_attribute_test.map(ast::KindTest::SchemaAttribute))
-            .or(pi_test.map(ast::KindTest::PI))
-            .or(comment_test)
-            .or(text_test)
-            .or(namespace_node_test)
-            .or(any_test)
-            .boxed();
-
-        let wildcard_ncname = ncname
-            .then_ignore(just(Token::ColonAsterisk))
-            .try_map_with_state(|prefix, span, state: &mut State| {
-                let namespace = state
-                    .namespaces
-                    .by_prefix(prefix)
-                    .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))?;
-                Ok(ast::NameTest::Namespace(namespace.to_string()))
-            });
-        let wildcard_braced_uri_literal = braced_uri_literal
-            .then_ignore(just(Token::Asterisk))
-            .map(|uri| ast::NameTest::Namespace(uri.to_string()));
-        let wildcard_localname = just(Token::AsteriskColon)
-            .ignore_then(ncname)
-            .map(|name| ast::NameTest::LocalName(name.to_string()));
-        let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star);
-
-        let wildcard = wildcard_ncname
-            .or(wildcard_braced_uri_literal)
-            .or(wildcard_localname)
-            .or(wildcard_star)
-            .boxed();
-
-        let name_test = wildcard.or(eqname.clone().map(ast::NameTest::Name));
-
-        let parent_axis = just(Token::Parent)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Parent);
-        let ancestor_axis = just(Token::Ancestor)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Ancestor);
-        let preceding_sibling_axis = just(Token::PrecedingSibling)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::PrecedingSibling);
-        let preceding_axis = just(Token::Preceding)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Preceding);
-        let ancestor_or_self_axis = just(Token::AncestorOrSelf)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::AncestorOrSelf);
-
-        let reverse_axis = choice::<_>([
-            parent_axis,
-            ancestor_axis,
-            preceding_sibling_axis,
-            preceding_axis,
-            ancestor_or_self_axis,
-        ])
-        .boxed();
-
-        let node_test = name_test
-            .map(ast::NodeTest::NameTest)
-            .or(kind_test.map(ast::NodeTest::KindTest));
-
-        let abbrev_reverse_step = just(Token::DotDot).to((
-            ast::Axis::Parent,
-            ast::NodeTest::KindTest(ast::KindTest::Any),
-        ));
-
-        let reverse_axis_with_node_test = reverse_axis.then(node_test.clone()).boxed();
-        let reverse_step = reverse_axis_with_node_test.or(abbrev_reverse_step).boxed();
-
-        let child_axis = just(Token::Child)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Child);
-        let descendant_axis = just(Token::Descendant)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Descendant);
-        let attribute_axis = just(Token::Attribute)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Attribute);
-        let self_axis = just(Token::Self_)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Self_);
-        let descendant_or_self_axis = just(Token::DescendantOrSelf)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::DescendantOrSelf);
-        let following_sibling_axis = just(Token::FollowingSibling)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::FollowingSibling);
-        let following_axis = just(Token::Following)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Following);
-        let namespace_axis = just(Token::Namespace)
-            .ignore_then(just(Token::DoubleColon))
-            .to(ast::Axis::Namespace);
-
-        let forward_axis = choice::<_>([
-            child_axis,
-            descendant_axis,
-            attribute_axis,
-            self_axis,
-            descendant_or_self_axis,
-            following_sibling_axis,
-            following_axis,
-            namespace_axis,
-        ])
-        .boxed();
-
-        let forward_step_with_node_test = forward_axis.then(node_test.clone()).boxed();
-
-        let abbrev_forward_step = just(Token::At)
-            .or_not()
-            .then(node_test.clone())
-            .map(|(at, node_test)| {
-                if at.is_some() {
-                    (ast::Axis::Attribute, node_test)
-                } else {
-                    // https://www.w3.org/TR/xpath-31/#abbrev
-                    let axis = match &node_test {
-                        ast::NodeTest::KindTest(t) => match t {
-                            ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
-                                ast::Axis::Attribute
-                            }
-                            ast::KindTest::NamespaceNode => ast::Axis::Namespace,
-                            _ => ast::Axis::Child,
-                        },
-                        _ => ast::Axis::Child,
-                    };
-                    (axis, node_test)
-                }
-            })
-            .boxed();
-
-        let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
         let predicate = expr
             .clone()
