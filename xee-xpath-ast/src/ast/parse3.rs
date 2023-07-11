@@ -463,14 +463,12 @@ where
     })
     .boxed();
 
-    let xpath = expr_
-        .unwrap()
-        .then_ignore(end())
-        .map(|expr| ast::XPath(expr))
-        .boxed();
+    let name = eqname.clone().then_ignore(end()).boxed();
+    let expr_single = expr_single.then_ignore(end()).boxed();
+    let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
 
     ParserOutput {
-        name: eqname,
+        name,
         expr_single,
         xpath,
     }
