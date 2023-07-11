@@ -184,11 +184,6 @@ where
             .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
             .boxed();
 
-        enum ArgumentOrPlaceholder {
-            Argument(ast::ExprSingleS),
-            Placeholder,
-        }
-
         let argument_placeholder = just(Token::QuestionMark)
             .map(|_| ArgumentOrPlaceholder::Placeholder)
             .boxed();
@@ -202,28 +197,16 @@ where
             .collect::<Vec<_>>()
             .delimited_by(just(Token::LeftParen), just(Token::RightParen));
 
-        let has_placeholders = |arguments: &[ArgumentOrPlaceholder]| {
-            arguments
-                .iter()
-                .any(|argument| matches!(argument, ArgumentOrPlaceholder::Placeholder))
-        };
-
         let function_call = eqname
             .clone()
             .then(argument_list)
             .map_with_span(move |(name, arguments), span| {
-                if has_placeholders(&arguments) {
-                    todo!();
-                } else {
-                    let arguments = arguments
-                        .iter()
-                        .map(|arg| match arg {
-                            ArgumentOrPlaceholder::Argument(expr) => expr.clone(),
-                            ArgumentOrPlaceholder::Placeholder => unreachable!(),
-                        })
-                        .collect();
+                let (arguments, params) = placeholder_arguments(&arguments);
+                if params.is_empty() {
                     ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
                         .with_span(span)
+                } else {
+                    placeholdered_wrapper_function(name, arguments, params, span)
                 }
             })
             .boxed();
@@ -726,6 +709,75 @@ fn root_step(span: Span) -> ast::StepExprS {
     .with_span(span)
 }
 
+enum ArgumentOrPlaceholder {
+    Argument(ast::ExprSingleS),
+    Placeholder,
+}
+
+// given a list of entries, each an argument or a placeholder, split this into
+// a list of real arguments and a list of parameters to construct for the new
+// function without the placeholders. If this list of parameters is empty, no
+// wrapping placeholder function is constructed.
+fn placeholder_arguments(
+    aps: &[ArgumentOrPlaceholder],
+) -> (Vec<ast::ExprSingleS>, Vec<ast::Param>) {
+    let mut placeholder_index = 0;
+    let mut arguments = Vec::new();
+    let mut params = Vec::new();
+    for argument_or_placeholder in aps.iter() {
+        match argument_or_placeholder {
+            ArgumentOrPlaceholder::Argument(expr) => {
+                arguments.push(expr.clone());
+            }
+            ArgumentOrPlaceholder::Placeholder => {
+                // XXX what if someone uses this as a parameter name?
+                let param_name = format!("placeholder{}", placeholder_index);
+                placeholder_index += 1;
+                let name = ast::Name::unprefixed(&param_name);
+                let param = ast::Param {
+                    name: name.clone(),
+                    type_: None,
+                };
+                params.push(param);
+                arguments.push(
+                    ast::ExprSingle::Path(ast::PathExpr {
+                        steps: vec![ast::StepExpr::PrimaryExpr(
+                            ast::PrimaryExpr::VarRef(name).with_empty_span(),
+                        )
+                        .with_empty_span()],
+                    })
+                    .with_empty_span(),
+                );
+            }
+        }
+    }
+    (arguments, params)
+}
+
+// construct an inline function that calls the underlying
+// function with the reduced placeholdered params
+fn placeholdered_wrapper_function(
+    name: ast::NameS,
+    arguments: Vec<ast::ExprSingleS>,
+    params: Vec<ast::Param>,
+    span: Span,
+) -> ast::PrimaryExprS {
+    let inner_function_call =
+        ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments }).with_empty_span();
+    let step_expr = ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
+    let path_expr = ast::PathExpr {
+        steps: vec![step_expr],
+    };
+    let expr_single = ast::ExprSingle::Path(path_expr).with_empty_span();
+    let body = ast::Expr(vec![expr_single]).with_empty_span();
+    ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+        params,
+        return_type: None,
+        body: Some(body),
+    })
+    .with_span(span)
+}
+
 fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '_ {
     lexer(src).map(|(tok, span)| match tok {
         Ok(tok) => (tok, span.into()),
@@ -1005,10 +1057,10 @@ mod tests {
     //     assert_ron_snapshot!(parse_expr_single("$foo(1, ?)"));
     // }
 
-    // #[test]
-    // fn test_static_function_call_placeholder() {
-    //     assert_ron_snapshot!(parse_expr_single("my_function(?, 1)"));
-    // }
+    #[test]
+    fn test_static_function_call_placeholder() {
+        assert_ron_snapshot!(parse_expr_single("my_function(?, 1)"));
+    }
 
     #[test]
     fn test_simple_comma() {
