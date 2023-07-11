@@ -474,7 +474,7 @@ pub enum KindTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum DocumentTest {
-    Element(ElementTest),
+    Element(Option<ElementTest>),
     SchemaElement(SchemaElementTest),
 }
 
@@ -488,14 +488,14 @@ pub struct ElementTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct ElementTypeName {
-    pub name: Name,
+    pub name: NameS,
     pub question_mark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ElementNameOrWildcard {
-    Name(Name),
+    Name(NameS),
     Wildcard,
 }
 
@@ -503,26 +503,26 @@ pub enum ElementNameOrWildcard {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct AttributeTest {
     pub name_test: AttribNameOrWildcard,
-    pub type_name: Option<Name>,
+    pub type_name: Option<NameS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum AttribNameOrWildcard {
-    Name(Name),
+    Name(NameS),
     Wildcard,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaElementTest {
-    pub name: Name,
+    pub name: NameS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaAttributeTest {
-    pub name: Name,
+    pub name: NameS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

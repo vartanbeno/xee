@@ -93,11 +93,12 @@ where
             _ => unreachable!(),
         })
         .or_not()
-        .map(|o| o.unwrap_or(ast::Occurrence::One));
+        .map(|o| o.unwrap_or(ast::Occurrence::One))
+        .boxed();
 
     let item_type = recursive(|item_type| {
         just(Token::Item)
-            .ignore_then(empty_call)
+            .ignore_then(empty_call.clone())
             .to(ast::ItemType::Item)
             .or(eqname
                 .clone()
@@ -175,12 +176,10 @@ where
             .boxed();
 
         let postfix = predicate.or(argument_list_postfix).boxed();
-
-        let string_literal = select! {
+        let string = select! {
             Token::StringLiteral(s) => s,
-        }
-        .map(|s| ast::Literal::String(s.to_string()))
-        .boxed();
+        };
+        let string_literal = string.map(|s| ast::Literal::String(s.to_string())).boxed();
 
         let integer = select! {
             Token::IntegerLiteral(i) => i,
@@ -334,7 +333,120 @@ where
             })
             .boxed();
 
-        // let kind_test =
+        let element_declaration = eqname.clone();
+        let schema_element_test = just(Token::SchemaElement)
+            .ignore_then(
+                element_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .map(|name| ast::SchemaElementTest { name });
+
+        let element_name_or_wildcard = just(Token::Asterisk)
+            .to(ast::ElementNameOrWildcard::Wildcard)
+            .or(eqname.clone().map(ast::ElementNameOrWildcard::Name));
+
+        let type_name = eqname.clone();
+
+        let element_type_name = type_name
+            .clone()
+            .then(just(Token::QuestionMark).or_not())
+            .map(|(name, question_mark)| ast::ElementTypeName {
+                name,
+                question_mark: question_mark.is_some(),
+            });
+
+        let element_test_content = element_name_or_wildcard
+            .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
+            .map(|(name_test, type_name)| ast::ElementTest {
+                name_test,
+                type_name,
+            });
+
+        let element_test = just(Token::Element)
+            .ignore_then(
+                element_test_content
+                    .or_not()
+                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .boxed();
+
+        let document_test_content = element_test
+            .clone()
+            .map(ast::DocumentTest::Element)
+            .or(schema_element_test
+                .clone()
+                .map(ast::DocumentTest::SchemaElement))
+            .boxed();
+
+        let document_test = just(Token::DocumentNode)
+            .ignore_then(
+                document_test_content
+                    .or_not()
+                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .boxed();
+
+        let attrib_name_or_wildcard = just(Token::Asterisk)
+            .to(ast::AttribNameOrWildcard::Wildcard)
+            .or(eqname.clone().map(ast::AttribNameOrWildcard::Name));
+
+        let attribute_test_content = attrib_name_or_wildcard
+            .then((just(Token::Comma).ignore_then(type_name)).or_not())
+            .map(|(name_test, type_name)| ast::AttributeTest {
+                name_test,
+                type_name,
+            });
+
+        let attribute_test = just(Token::Attribute).ignore_then(
+            attribute_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        );
+
+        let any_test = just(Token::Node)
+            .ignore_then(empty_call.clone())
+            .to(ast::KindTest::Any)
+            .boxed();
+
+        let attribute_name = eqname.clone();
+        let attribute_declaration = attribute_name;
+        let schema_attribute_test = just(Token::SchemaAttribute)
+            .ignore_then(
+                attribute_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .map(|name| ast::SchemaAttributeTest { name });
+
+        let pi_test_content = ncname
+            .map(|s| ast::PITest::Name(s.to_string()))
+            .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())));
+
+        let pi_test = just(Token::ProcessingInstruction).ignore_then(
+            pi_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        );
+
+        let text_test = just(Token::Text)
+            .ignore_then(empty_call.clone())
+            .to(ast::KindTest::Text);
+        let comment_test = just(Token::Comment)
+            .ignore_then(empty_call.clone())
+            .to(ast::KindTest::Comment);
+        let namespace_node_test = just(Token::NamespaceNode)
+            .ignore_then(empty_call.clone())
+            .to(ast::KindTest::NamespaceNode);
+
+        let kind_test = document_test
+            .map(ast::KindTest::Document)
+            .or(element_test.map(ast::KindTest::Element))
+            .or(attribute_test.map(ast::KindTest::Attribute))
+            .or(schema_element_test.map(ast::KindTest::SchemaElement))
+            .or(schema_attribute_test.map(ast::KindTest::SchemaAttribute))
+            .or(pi_test.map(ast::KindTest::PI))
+            .or(comment_test)
+            .or(text_test)
+            .or(namespace_node_test)
+            .or(any_test)
+            .boxed();
 
         let wildcard_ncname = ncname
             .then_ignore(just(Token::ColonAsterisk))
@@ -386,7 +498,9 @@ where
         ])
         .boxed();
 
-        let node_test = name_test.boxed().map(ast::NodeTest::NameTest);
+        let node_test = name_test
+            .map(ast::NodeTest::NameTest)
+            .or(kind_test.map(ast::NodeTest::KindTest));
 
         let abbrev_reverse_step = just(Token::DotDot).to((
             ast::Axis::Parent,
@@ -483,24 +597,55 @@ where
 
         let relative_path_expr = step_expr
             .clone()
-            .separated_by(just(Token::Slash))
-            .at_least(1)
-            .collect::<Vec<_>>()
+            .then(
+                just(Token::Slash)
+                    .or(just(Token::DoubleSlash))
+                    .then(step_expr.clone())
+                    .repeated()
+                    .collect::<Vec<_>>(),
+            )
+            .map(|(first_step, rest_steps)| {
+                let mut steps = vec![first_step];
+                for (token, step) in rest_steps {
+                    match token {
+                        Token::Slash => {}
+                        Token::DoubleSlash => {
+                            steps.push(
+                                ast::StepExpr::AxisStep(ast::AxisStep {
+                                    axis: ast::Axis::DescendantOrSelf,
+                                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                                    predicates: vec![],
+                                })
+                                .with_empty_span(),
+                            );
+                        }
+                        _ => unreachable!(),
+                    }
+                    steps.push(step);
+                }
+                steps
+            })
             .boxed();
 
         let slash_prefix_path_expr = just(Token::Slash)
             .map_with_span(|_, span| span)
-            .then(relative_path_expr.clone())
+            .then(relative_path_expr.clone().or_not())
             .map(|(slash_span, steps)| {
                 let root_step = root_step(slash_span);
-                let all_steps = once(root_step).chain(steps.into_iter()).collect();
-                ast::PathExpr { steps: all_steps }
+                if let Some(steps) = steps {
+                    let all_steps = once(root_step).chain(steps.into_iter()).collect();
+                    ast::PathExpr { steps: all_steps }
+                } else {
+                    ast::PathExpr {
+                        steps: vec![root_step],
+                    }
+                }
             })
             .boxed();
 
         let doubleslash_prefix_path_expr = just(Token::DoubleSlash)
             .map_with_span(|_, span| span)
-            .then(relative_path_expr.clone())
+            .then(relative_path_expr.clone().or_not())
             .map(|(double_slash_span, steps)| {
                 let root_step = root_step(double_slash_span);
                 let descendant_step = ast::StepExpr::AxisStep(ast::AxisStep {
@@ -509,10 +654,16 @@ where
                     predicates: vec![],
                 })
                 .with_span(double_slash_span);
-                let all_steps = once(root_step)
-                    .chain(once(descendant_step).chain(steps.into_iter()))
-                    .collect();
-                ast::PathExpr { steps: all_steps }
+                if let Some(steps) = steps {
+                    let all_steps = once(root_step)
+                        .chain(once(descendant_step).chain(steps.into_iter()))
+                        .collect();
+                    ast::PathExpr { steps: all_steps }
+                } else {
+                    ast::PathExpr {
+                        steps: vec![root_step, descendant_step],
+                    }
+                }
             })
             .boxed();
 
@@ -1328,117 +1479,122 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("parent::foo"));
     }
 
-    // #[test]
-    // fn test_node_test() {
-    //     assert_ron_snapshot!(parse_expr_single("self::node()"));
-    // }
+    #[test]
+    fn test_node_test() {
+        assert_ron_snapshot!(parse_expr_single("self::node()"));
+    }
 
-    // #[test]
-    // fn test_text_test() {
-    //     assert_ron_snapshot!(parse_expr_single("self::text()"));
-    // }
+    #[test]
+    fn test_text_test() {
+        assert_ron_snapshot!(parse_expr_single("self::text()"));
+    }
 
-    // #[test]
-    // fn test_comment_test() {
-    //     assert_ron_snapshot!(parse_expr_single("self::comment()"));
-    // }
+    #[test]
+    fn test_comment_test() {
+        assert_ron_snapshot!(parse_expr_single("self::comment()"));
+    }
 
-    // #[test]
-    // fn test_namespace_node_test() {
-    //     assert_ron_snapshot!(parse_expr_single("self::namespace-node()"));
-    // }
+    #[test]
+    fn test_namespace_node_test() {
+        assert_ron_snapshot!(parse_expr_single("self::namespace-node()"));
+    }
 
-    // #[test]
-    // fn test_attribute_test_no_args() {
-    //     assert_ron_snapshot!(parse_expr_single("self::attribute()"));
-    // }
+    #[test]
+    fn test_attribute_test_no_args() {
+        assert_ron_snapshot!(parse_expr_single("self::attribute()"));
+    }
 
-    // #[test]
-    // fn test_attribute_test_star_arg() {
-    //     assert_ron_snapshot!(parse_expr_single("self::attribute(*)"));
-    // }
+    #[test]
+    fn test_attribute_test_star_arg() {
+        assert_ron_snapshot!(parse_expr_single("self::attribute(*)"));
+    }
 
-    // #[test]
-    // fn test_attribute_test_name_arg() {
-    //     assert_ron_snapshot!(parse_expr_single("self::attribute(foo)"));
-    // }
+    #[test]
+    fn test_attribute_test_name_arg() {
+        assert_ron_snapshot!(parse_expr_single("self::attribute(foo)"));
+    }
 
-    // #[test]
-    // fn test_attribute_test_name_arg_type_arg() {
-    //     assert_ron_snapshot!(parse_expr_single("self::attribute(foo, bar)"));
-    // }
+    #[test]
+    fn test_attribute_test_name_arg_type_arg() {
+        assert_ron_snapshot!(parse_expr_single("self::attribute(foo, bar)"));
+    }
 
-    // #[test]
-    // fn test_element_test() {
-    //     assert_ron_snapshot!(parse_expr_single("self::element()"));
-    // }
+    #[test]
+    fn test_element_test() {
+        assert_ron_snapshot!(parse_expr_single("self::element()"));
+    }
 
-    // #[test]
-    // fn test_abbreviated_forward_step() {
-    //     assert_ron_snapshot!(parse_expr_single("foo"));
-    // }
+    #[test]
+    fn test_abbreviated_forward_step() {
+        assert_ron_snapshot!(parse_expr_single("foo"));
+    }
 
-    // #[test]
-    // fn test_abbreviated_forward_step_with_attribute_test() {
-    //     assert_ron_snapshot!(parse_expr_single("foo/attribute()"));
-    // }
+    #[test]
+    fn test_abbreviated_forward_step_with_attribute_test() {
+        assert_ron_snapshot!(parse_expr_single("foo/attribute()"));
+    }
 
     // XXX should test for attribute axis for SchemaAttributeTest too
 
-    // #[test]
-    // fn test_namespace_node_default_axis() {
-    //     assert_ron_snapshot!(parse_expr_single("foo/namespace-node()"));
-    // }
+    #[test]
+    fn test_namespace_node_default_axis() {
+        assert_ron_snapshot!(parse_expr_single("foo/namespace-node()"));
+    }
 
-    // #[test]
-    // fn test_abbreviated_forward_step_attr() {
-    //     assert_ron_snapshot!(parse_expr_single("@foo"));
-    // }
+    #[test]
+    fn test_abbreviated_forward_step_attr() {
+        assert_ron_snapshot!(parse_expr_single("@foo"));
+    }
 
-    // #[test]
-    // fn test_abbreviated_reverse_step() {
-    //     assert_ron_snapshot!(parse_expr_single("foo/.."));
-    // }
+    #[test]
+    fn test_abbreviated_reverse_step() {
+        assert_ron_snapshot!(parse_expr_single("foo/.."));
+    }
 
-    // #[test]
-    // fn test_abbreviated_reverse_step_with_predicates() {
-    //     assert_ron_snapshot!(parse_expr_single("..[1]"));
-    // }
+    #[test]
+    fn test_abbreviated_reverse_step_with_predicates() {
+        assert_ron_snapshot!(parse_expr_single("..[1]"));
+    }
 
-    // #[test]
-    // fn test_starts_single_slash() {
-    //     assert_ron_snapshot!(parse_expr_single("/child::foo"));
-    // }
+    #[test]
+    fn test_starts_single_slash() {
+        assert_ron_snapshot!(parse_expr_single("/child::foo"));
+    }
 
-    // #[test]
-    // fn test_single_slash_by_itself() {
-    //     assert_ron_snapshot!(parse_expr_single("/"));
-    // }
+    #[test]
+    fn test_single_slash_by_itself() {
+        assert_ron_snapshot!(parse_expr_single("/"));
+    }
 
-    // #[test]
-    // fn test_starts_double_slash() {
-    //     assert_ron_snapshot!(parse_expr_single("//child::foo"));
-    // }
+    #[test]
+    fn test_double_slash_by_itself() {
+        assert_ron_snapshot!(parse_expr_single("//"));
+    }
 
-    // #[test]
-    // fn test_double_slash_middle() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo//child::bar"));
-    // }
+    #[test]
+    fn test_starts_double_slash() {
+        assert_ron_snapshot!(parse_expr_single("//child::foo"));
+    }
 
-    // #[test]
-    // fn test_union() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo | child::bar"));
-    // }
+    #[test]
+    fn test_double_slash_middle() {
+        assert_ron_snapshot!(parse_expr_single("child::foo//child::bar"));
+    }
 
-    // #[test]
-    // fn test_intersect() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo intersect child::bar"));
-    // }
+    #[test]
+    fn test_union() {
+        assert_ron_snapshot!(parse_expr_single("child::foo | child::bar"));
+    }
 
-    // #[test]
-    // fn test_except() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo except child::bar"));
-    // }
+    #[test]
+    fn test_intersect() {
+        assert_ron_snapshot!(parse_expr_single("child::foo intersect child::bar"));
+    }
+
+    #[test]
+    fn test_except() {
+        assert_ron_snapshot!(parse_expr_single("child::foo except child::bar"));
+    }
 
     #[test]
     fn test_xpath_parse_error() {
