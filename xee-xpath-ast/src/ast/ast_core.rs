@@ -1,4 +1,3 @@
-use chumsky::span::SimpleSpan as SourceSpan;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
@@ -13,16 +12,18 @@ use crate::{
 pub type ExprSingleS = Spanned<ExprSingle>;
 pub type PrimaryExprS = Spanned<PrimaryExpr>;
 pub type StepExprS = Spanned<StepExpr>;
-
-// pub type Expr = Vec<ExprSingleS>;
 pub type ExprS = Spanned<Expr>;
 pub type NameS = Spanned<Name>;
+
+impl WithSpan for ExprSingle {}
+impl WithSpan for PrimaryExpr {}
+impl WithSpan for StepExpr {}
+impl WithSpan for Expr {}
+impl WithSpan for Name {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct Expr(pub Vec<ExprSingleS>);
-
-impl WithSpan for Expr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -42,8 +43,6 @@ pub enum ExprSingle {
     For(ForExpr),
     Quantified(QuantifiedExpr),
 }
-
-impl WithSpan for ExprSingle {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -136,8 +135,6 @@ impl Name {
     }
 }
 
-impl WithSpan for Name {}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct LetExpr {
@@ -175,8 +172,6 @@ pub enum PrimaryExpr {
     ArrayConstructor(ArrayConstructor),
     UnaryLookup(UnaryLookup),
 }
-
-impl WithSpan for PrimaryExpr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -343,8 +338,6 @@ pub enum StepExpr {
     },
     AxisStep(AxisStep),
 }
-
-impl WithSpan for StepExpr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
