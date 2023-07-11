@@ -150,11 +150,11 @@ where
         .map(|s| ast::Literal::String(s.to_string()))
         .boxed();
 
-        let integer_literal = select! {
+        let integer = select! {
             Token::IntegerLiteral(i) => i,
-        }
-        .map(ast::Literal::Integer)
-        .boxed();
+        };
+
+        let integer_literal = integer.map(ast::Literal::Integer).boxed();
 
         let decimal_literal = select! {
             Token::DecimalLiteral(d) => d,
@@ -169,7 +169,7 @@ where
         .boxed();
 
         let literal = string_literal
-            .or(integer_literal)
+            .or(integer_literal.clone())
             .or(decimal_literal)
             .or(double_literal)
             .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
@@ -184,10 +184,60 @@ where
             .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
             .boxed();
 
+        let named_function_ref = eqname
+            .clone()
+            .then_ignore(just(Token::Hash))
+            .then(integer)
+            .map_with_span(|(name, arity), span| {
+                ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
+                    name,
+                    // TODO: handle overflow
+                    arity: arity.try_into().unwrap(),
+                })
+                .with_span(span)
+            })
+            .boxed();
+
+        let type_declaration = just(Token::As).ignore_then(sequence_type.clone());
+
+        let param = just(Token::Dollar)
+            .ignore_then(eqname.clone())
+            .then(type_declaration.or_not())
+            .map(|(name, type_)| ast::Param {
+                name: name.value,
+                type_,
+            });
+
+        let param_list = param
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .boxed();
+
+        let enclosed_expr =
+            (expr.clone().or_not()).delimited_by(just(Token::LeftBrace), just(Token::RightBrace));
+
+        let function_body = enclosed_expr;
+
+        let inline_function_expr = just(Token::Function)
+            .ignore_then(param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
+            .then(just(Token::As).ignore_then(sequence_type.clone()).or_not())
+            .then(function_body)
+            .map_with_span(|((params, return_type), body), span| {
+                ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
+                    params,
+                    return_type,
+                    body,
+                })
+                .with_span(span)
+            })
+            .boxed();
+
         let primary_expr = parenthesized_expr
             .or(literal)
             .or(var_ref)
             .or(context_item_expr)
+            .or(named_function_ref)
+            .or(inline_function_expr)
             .boxed();
 
         let postfix_expr = primary_expr
@@ -849,25 +899,25 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn test_inline_function() {
-    //     assert_ron_snapshot!(parse_expr_single("function($x) { $x }"));
-    // }
+    #[test]
+    fn test_inline_function() {
+        assert_ron_snapshot!(parse_expr_single("function($x) { $x }"));
+    }
 
-    // #[test]
-    // fn test_inline_function_with_param_types() {
-    //     assert_ron_snapshot!(parse_expr_single("function($x as xs:integer) { $x }"));
-    // }
+    #[test]
+    fn test_inline_function_with_param_types() {
+        assert_ron_snapshot!(parse_expr_single("function($x as xs:integer) { $x }"));
+    }
 
-    // #[test]
-    // fn test_inline_function_with_return_type() {
-    //     assert_ron_snapshot!(parse_expr_single("function($x) as xs:integer { $x }"));
-    // }
+    #[test]
+    fn test_inline_function_with_return_type() {
+        assert_ron_snapshot!(parse_expr_single("function($x) as xs:integer { $x }"));
+    }
 
-    // #[test]
-    // fn test_inline_function2() {
-    //     assert_ron_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
-    // }
+    #[test]
+    fn test_inline_function2() {
+        assert_ron_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
+    }
 
     // #[test]
     // fn test_dynamic_function_call() {

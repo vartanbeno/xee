@@ -268,7 +268,7 @@ pub struct FunctionCall {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct NamedFunctionRef {
-    pub name: Name,
+    pub name: NameS,
     pub arity: u8,
 }
 
@@ -277,7 +277,7 @@ pub struct NamedFunctionRef {
 pub struct InlineFunction {
     pub params: Vec<Param>,
     pub return_type: Option<SequenceType>,
-    pub body: ExprS,
+    pub body: Option<ExprS>,
 }
 
 // a function signature as described by:

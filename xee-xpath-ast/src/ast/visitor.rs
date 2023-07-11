@@ -320,7 +320,7 @@ pub(crate) mod visit {
         v: &mut V,
         named_function_ref: &mut ast::NamedFunctionRef,
     ) {
-        v.visit_function_name(&mut named_function_ref.name);
+        v.visit_function_name(&mut named_function_ref.name.value);
     }
 
     pub(crate) fn visit_inline_function<V: AstVisitor + ?Sized>(
@@ -331,7 +331,9 @@ pub(crate) mod visit {
             v.visit_param(param);
         }
         v.visit_sequence_type(&mut inline_function.return_type);
-        v.visit_expr(&mut inline_function.body);
+        if let Some(expr) = &mut inline_function.body {
+            v.visit_expr(expr);
+        }
     }
 
     pub(crate) fn visit_param<V: AstVisitor + ?Sized>(v: &mut V, param: &mut ast::Param) {

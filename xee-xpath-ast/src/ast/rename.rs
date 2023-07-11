@@ -110,7 +110,9 @@ impl AstVisitor for Renamer {
         for param in &mut expr.params {
             param.name = self.push_name(&param.name);
         }
-        self.visit_expr(&mut expr.body);
+        if let Some(body) = &mut expr.body {
+            self.visit_expr(body);
+        }
         for _ in &expr.params {
             self.pop_name();
         }
