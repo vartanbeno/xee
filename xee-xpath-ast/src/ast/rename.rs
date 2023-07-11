@@ -1,6 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 
-use crate::ast;
+use crate::{ast, span::WithSpan};
 
 use super::visitor::AstVisitor;
 

@@ -6,6 +6,18 @@ pub struct Spanned<T> {
     pub span: SourceSpan,
 }
 
+pub(crate) trait WithSpan
+where
+    Self: Sized,
+{
+    fn with_span(self, span: SourceSpan) -> Spanned<Self> {
+        Spanned { value: self, span }
+    }
+    fn with_empty_span(self) -> Spanned<Self> {
+        self.with_span((0..0).into())
+    }
+}
+
 // custom serializer that skips span, so we don't see it in the ron
 // snapshot tests
 #[cfg(test)]
@@ -27,17 +39,6 @@ impl<T> Spanned<T> {
         }
     }
 }
-
-pub(crate) fn spanned<T>(value: T, span: SourceSpan) -> Spanned<T> {
-    Spanned { value, span }
-}
-
-// pub fn not_spanned<T>(value: T) -> Spanned<T> {
-//     Spanned {
-//         value,
-//         span: (0, 0).into::<std::ops::Range<usize>>(),
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

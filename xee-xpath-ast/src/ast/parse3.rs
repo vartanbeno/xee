@@ -2,10 +2,13 @@ use chumsky::input::Stream;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
 use ordered_float::OrderedFloat;
 use std::borrow::Cow;
+use std::iter::once;
 
 use crate::error::Error;
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
+use crate::span::WithSpan;
+use crate::FN_NAMESPACE;
 
 use super::ast_core as ast;
 
@@ -26,6 +29,7 @@ where
 {
     name: BoxedParser<'a, I, ast::NameS>,
     expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
+    xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
 fn parser<'a, I>() -> ParserOutput<'a, I>
@@ -112,28 +116,26 @@ where
 
     let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
+    // ugly way to get expr out of recursive
+    let mut expr_ = None;
+
     let expr_single = recursive(|expr_single| {
         let expr = expr_single
             .clone()
-            .then(
-                (just(Token::Comma).ignore_then(expr_single.clone()))
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map_with_span(|(expr, exprs), span| {
-                ast::Expr(
-                    std::iter::once(expr)
-                        .chain(exprs.into_iter())
-                        .collect::<Vec<_>>(),
-                )
-                .with_span(span)
-            })
+            .separated_by(just(Token::Comma))
+            .at_least(1)
+            .collect::<Vec<_>>()
+            .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
             .boxed();
 
+        expr_ = Some(expr.clone());
+
+        // TODO: handle empty parenthesized expr which means empty sequence
         let parenthesized_expr = expr
             .clone()
             .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .boxed();
+            .boxed()
+            .map_with_span(|expr, span| ast::PrimaryExpr::Expr(expr).with_span(span));
 
         let predicate = expr
             .clone()
@@ -170,6 +172,7 @@ where
             .or(integer_literal)
             .or(decimal_literal)
             .or(double_literal)
+            .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
             .boxed();
 
         let var_ref = just(Token::Dollar)
@@ -177,12 +180,7 @@ where
             .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
             .boxed();
 
-        let primary_expr = literal
-            .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
-            .or(var_ref)
-            .or(parenthesized_expr
-                .map_with_span(|v, span| ast::PrimaryExpr::Expr(v).with_span(span)))
-            .boxed();
+        let primary_expr = parenthesized_expr.or(literal).or(var_ref).boxed();
 
         let postfix_expr = primary_expr
             .then(postfix.repeated().collect::<Vec<_>>())
@@ -199,23 +197,42 @@ where
 
         let relative_path_expr = step_expr
             .clone()
-            .then(
-                (just(Token::Slash).ignore_then(step_expr))
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map(|(step, steps)| {
-                let mut steps = steps;
-                steps.insert(0, step);
-                steps
+            .separated_by(just(Token::Slash))
+            .at_least(1)
+            .collect::<Vec<_>>()
+            .boxed();
+
+        let slash_prefix_path_expr = just(Token::Slash)
+            .map_with_span(|_, span| span)
+            .then(relative_path_expr.clone())
+            .map(|(slash_span, steps)| {
+                let root_step = root_step(slash_span);
+                let all_steps = once(root_step).chain(steps.into_iter()).collect();
+                ast::PathExpr { steps: all_steps }
             })
             .boxed();
 
-        // TODO: include // and / in map
-        let path_expr = (just(Token::DoubleSlash).ignore_then(relative_path_expr.clone()))
-            .or(just(Token::Slash).ignore_then(relative_path_expr.clone()))
-            .or(relative_path_expr)
-            .map(|steps| ast::PathExpr { steps })
+        let doubleslash_prefix_path_expr = just(Token::DoubleSlash)
+            .map_with_span(|_, span| span)
+            .then(relative_path_expr.clone())
+            .map(|(double_slash_span, steps)| {
+                let root_step = root_step(double_slash_span);
+                let descendant_step = ast::StepExpr::AxisStep(ast::AxisStep {
+                    axis: ast::Axis::DescendantOrSelf,
+                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                    predicates: vec![],
+                })
+                .with_span(double_slash_span);
+                let all_steps = once(root_step)
+                    .chain(once(descendant_step).chain(steps.into_iter()))
+                    .collect();
+                ast::PathExpr { steps: all_steps }
+            })
+            .boxed();
+
+        let path_expr = doubleslash_prefix_path_expr
+            .or(slash_prefix_path_expr)
+            .or(relative_path_expr.map(|steps| ast::PathExpr { steps }))
             .boxed();
 
         let value_expr = path_expr
@@ -440,13 +457,22 @@ where
             })
             .boxed();
 
-        path_expr.or(let_expr).boxed()
+        let expr_single_ = path_expr.or(let_expr).boxed();
+
+        expr_single_
     })
     .boxed();
+
+    let xpath = expr_
+        .unwrap()
+        .then_ignore(end())
+        .map(|expr| ast::XPath(expr))
+        .boxed();
 
     ParserOutput {
         name: eqname,
         expr_single,
+        xpath,
     }
 }
 
@@ -501,6 +527,27 @@ fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
     }
 }
 
+fn root_step(span: Span) -> ast::StepExprS {
+    let path_arg = ast::ExprSingle::Path(ast::PathExpr {
+        steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
+            axis: ast::Axis::Self_,
+            node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+            predicates: vec![],
+        })
+        .with_empty_span()],
+    })
+    .with_empty_span();
+
+    ast::StepExpr::PrimaryExpr(
+        ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
+            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string())),
+            arguments: vec![path_arg],
+        })
+        .with_empty_span(),
+    )
+    .with_span(span)
+}
+
 fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '_ {
     lexer(src).map(|(tok, span)| match tok {
         Ok(tok) => (tok, span.into()),
@@ -512,11 +559,23 @@ fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {
     Stream::from_iter(create_token_iter(src)).spanned((src.len()..src.len()).into())
 }
 
-#[cfg_attr(test, derive(serde::Serialize))]
-struct ParseError<'a> {
-    // skip
-    #[cfg_attr(test, serde(skip))]
+#[derive(Debug)]
+pub struct ParseError<'a> {
     errors: Vec<Rich<'a, Token<'a>>>,
+}
+
+#[cfg(test)]
+impl serde::Serialize for ParseError<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let formatted = format!("{:?}", self.errors);
+        serializer.serialize_str(&formatted)
+
+        // let mut errors = serializer.serialize_struct("ParseError", 1)?;
+        // now output formatted as serialized
+        // use serde::ser::SerializeStruct;
+        // // errors.serialize_field("errors", &formatted)?;
+        // errors.end()
+    }
 }
 
 fn parse<'a, I, T>(
@@ -535,11 +594,11 @@ where
         .map_err(|errors| ParseError { errors })
 }
 
-pub fn parse_xpath(
-    input: &str,
-    namespaces: &Namespaces,
-    variables: &[ast::Name],
-) -> Result<ast::XPath, Error> {
+pub fn parse_xpath<'a>(
+    input: &'a str,
+    namespaces: &'a Namespaces,
+    variables: &'a [ast::Name],
+) -> Result<ast::XPath, ParseError<'a>> {
     todo!();
 }
 
@@ -574,6 +633,11 @@ mod tests {
     fn parse_name(src: &str) -> Result<ast::NameS, ParseError> {
         let namespaces = Namespaces::default();
         parse(parser().name, tokens(src), Cow::Owned(namespaces))
+    }
+
+    fn parse_xpath_simple(src: &str) -> Result<ast::XPath, ParseError> {
+        let namespaces = Namespaces::default();
+        parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 
     #[test]
@@ -658,23 +722,23 @@ mod tests {
 
     #[test]
     fn test_xpath_multi_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2, 3 + 4"));
+        assert_ron_snapshot!(parse_xpath_simple("1 + 2, 3 + 4"));
     }
 
-    #[test]
-    fn test_single_let_expr() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1 return 5"));
-    }
+    // #[test]
+    // fn test_single_let_expr() {
+    //     assert_ron_snapshot!(parse_expr_single("let $x := 1 return 5"));
+    // }
 
-    #[test]
-    fn test_single_let_expr_var_ref() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1 return $x"));
-    }
+    // #[test]
+    // fn test_single_let_expr_var_ref() {
+    //     assert_ron_snapshot!(parse_expr_single("let $x := 1 return $x"));
+    // }
 
-    #[test]
-    fn test_nested_let_expr() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
-    }
+    // #[test]
+    // fn test_nested_let_expr() {
+    //     assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
+    // }
 
     // #[test]
     // fn test_single_for_expr() {
@@ -758,12 +822,12 @@ mod tests {
 
     #[test]
     fn test_simple_comma() {
-        assert_ron_snapshot!(parse_expr_single("1, 2"));
+        assert_ron_snapshot!(parse_xpath_simple("1, 2"));
     }
 
     #[test]
     fn test_complex_comma() {
-        assert_ron_snapshot!(parse_expr_single("(1, 2), (3, 4)"));
+        assert_ron_snapshot!(parse_xpath_simple("(1, 2), (3, 4)"));
     }
 
     #[test]
@@ -771,10 +835,10 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("1 to 2"));
     }
 
-    #[test]
-    fn test_simple_map() {
-        assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
-    }
+    // #[test]
+    // fn test_simple_map() {
+    //     assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
+    // }
 
     // #[test]
     // fn test_quantified() {

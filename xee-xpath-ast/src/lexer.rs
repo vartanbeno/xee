@@ -420,7 +420,8 @@ impl<'a> Iterator for XPathLexer<'a> {
                             match token {
                                 // T is an NCName and U is "-"
                                 Token::Minus => {
-                                    if !self.last_is_separator
+                                    if self.last_is_non_delimiting
+                                        && !self.last_is_separator
                                         && matches!(self.last_terminal, LastTerminal::NCName)
                                     {
                                         return Some((Err(()), span.clone()));
@@ -429,7 +430,8 @@ impl<'a> Iterator for XPathLexer<'a> {
                                 // T is an NCName and U is "."
                                 // T is a numeric literal and U is "."
                                 Token::Dot => {
-                                    if !self.last_is_separator
+                                    if self.last_is_non_delimiting
+                                        && !self.last_is_separator
                                         && matches!(
                                             self.last_terminal,
                                             LastTerminal::NCName | LastTerminal::NumericLiteral
@@ -835,5 +837,30 @@ mod tests {
             Some((Ok(Token::DecimalLiteral(dec!(0.1))), (0..2)))
         );
         assert_eq!(lex.next(), Some((Err(()), 2..4)));
+    }
+
+    #[test]
+    fn test_simple_map() {
+        let mut lex = lexer("(1, 2) ! (. * 2)");
+        assert_eq!(lex.next(), Some((Ok(Token::LeftParen), (0..1))));
+        assert_eq!(
+            lex.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), (1..2)))
+        );
+        assert_eq!(lex.next(), Some((Ok(Token::Comma), (2..3))));
+        assert_eq!(
+            lex.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(2))), (4..5)))
+        );
+        assert_eq!(lex.next(), Some((Ok(Token::RightParen), (5..6))));
+        assert_eq!(lex.next(), Some((Ok(Token::ExclamationMark), (7..8))));
+        assert_eq!(lex.next(), Some((Ok(Token::LeftParen), (9..10))));
+        assert_eq!(lex.next(), Some((Ok(Token::Dot), (10..11))));
+        assert_eq!(lex.next(), Some((Ok(Token::Asterisk), (12..13))));
+        assert_eq!(
+            lex.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(2))), (14..15)))
+        );
+        assert_eq!(lex.next(), Some((Ok(Token::RightParen), (15..16))));
     }
 }

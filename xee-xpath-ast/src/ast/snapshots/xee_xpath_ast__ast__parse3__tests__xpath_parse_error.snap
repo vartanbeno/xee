@@ -2,4 +2,4 @@
 source: xee-xpath-ast/src/ast/parse3.rs
 expression: "parse_expr_single(\"1 + 2 +\")"
 ---
-Err(ParseError())
+Err("[found \'Plus\' at 6..7 expected \'LeftBracket\', \'Slash\', \'ExclamationMark\', \'Cast\', \'Castable\', \'Treat\', \'Instance\', \'Intersect\', \'Except\', \'Pipe\', \'Union\', \'Asterisk\', \'Div\', \'Idiv\', \'Mod\', \'Minus\', \'Plus\', \'DoubleSlash\', \'LeftParen\', \'Dollar\', \'To\', \'DoublePipe\', \'Equal\', \'NotEqual\', \'LessThan\', \'LessThanEqual\', \'GreaterThan\', \'GreaterThanEqual\', \'Eq\', \'Ne\', \'Lt\', \'Le\', \'Gt\', \'Ge\', \'Is\', \'Precedes\', \'Follows\', \'And\', or \'Or\']")

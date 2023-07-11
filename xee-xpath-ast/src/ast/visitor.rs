@@ -50,7 +50,7 @@ pub(crate) mod visit {
     use crate::ast;
 
     pub(crate) fn visit_xpath<V: AstVisitor + ?Sized>(v: &mut V, xpath: &mut ast::XPath) {
-        v.visit_expr(&mut xpath.exprs)
+        v.visit_expr(&mut xpath.0)
     }
 
     pub(crate) fn visit_expr<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::ExprS) {

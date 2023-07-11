@@ -7,7 +7,7 @@ use xot::Xot;
 pub use crate::operator::BinaryOperator;
 use crate::{
     namespaces::Namespaces,
-    span::{spanned, Spanned},
+    span::{Spanned, WithSpan},
 };
 
 pub type ExprSingleS = Spanned<ExprSingle>;
@@ -22,18 +22,11 @@ pub type NameS = Spanned<Name>;
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct Expr(pub Vec<ExprSingleS>);
 
-impl Expr {
-    pub(crate) fn with_span(self, span: SourceSpan) -> ExprS {
-        spanned(self, span)
-    }
-}
+impl WithSpan for Expr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub struct XPath {
-    // at least one entry
-    pub exprs: ExprS,
-}
+pub struct XPath(pub ExprS);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -50,11 +43,7 @@ pub enum ExprSingle {
     Quantified(QuantifiedExpr),
 }
 
-impl ExprSingle {
-    pub(crate) fn with_span(self, span: SourceSpan) -> ExprSingleS {
-        spanned(self, span)
-    }
-}
+impl WithSpan for ExprSingle {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -88,10 +77,6 @@ impl Name {
             namespace,
             prefix: None,
         }
-    }
-
-    pub(crate) fn with_span(self, span: SourceSpan) -> NameS {
-        spanned(self, span)
     }
 
     pub fn prefixed(prefix: &str, name: &str, namespaces: &Namespaces) -> Option<Self> {
@@ -151,6 +136,8 @@ impl Name {
     }
 }
 
+impl WithSpan for Name {}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct LetExpr {
@@ -189,11 +176,7 @@ pub enum PrimaryExpr {
     UnaryLookup(UnaryLookup),
 }
 
-impl PrimaryExpr {
-    pub(crate) fn with_span(self, span: SourceSpan) -> PrimaryExprS {
-        spanned(self, span)
-    }
-}
+impl WithSpan for PrimaryExpr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -361,11 +344,7 @@ pub enum StepExpr {
     AxisStep(AxisStep),
 }
 
-impl StepExpr {
-    pub(crate) fn with_span(self, span: SourceSpan) -> StepExprS {
-        spanned(self, span)
-    }
-}
+impl WithSpan for StepExpr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
