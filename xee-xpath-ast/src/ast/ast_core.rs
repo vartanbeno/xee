@@ -285,7 +285,7 @@ pub struct InlineFunction {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct Signature {
-    pub name: Name,
+    pub name: NameS,
     pub params: Vec<SignatureParam>,
     pub return_type: SequenceType,
 }

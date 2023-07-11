@@ -29,6 +29,7 @@ where
 {
     name: BoxedParser<'a, I, ast::NameS>,
     expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
+    signature: BoxedParser<'a, I, ast::Signature>,
     xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
@@ -124,37 +125,6 @@ where
     let empty = just(Token::EmptySequence)
         .ignore_then(empty_call.clone())
         .to(ast::SequenceType::Empty);
-    let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
-        .map(|c| match c {
-            Token::QuestionMark => ast::Occurrence::Option,
-            Token::Asterisk => ast::Occurrence::Many,
-            Token::Plus => ast::Occurrence::NonEmpty,
-            _ => unreachable!(),
-        })
-        .or_not()
-        .map(|o| o.unwrap_or(ast::Occurrence::One))
-        .boxed();
-
-    let item_type = recursive(|item_type| {
-        just(Token::Item)
-            .ignore_then(empty_call.clone())
-            .to(ast::ItemType::Item)
-            .or(eqname
-                .clone()
-                .map_with_span(|name, _span| ast::ItemType::AtomicOrUnionType(name)))
-            .or(item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
-    })
-    .boxed();
-
-    let item = item_type
-        .clone()
-        .then(occurrence)
-        .map(|(item_type, occurrence)| ast::Item {
-            item_type,
-            occurrence,
-        });
-
-    let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
     let element_declaration = eqname.clone();
     let schema_element_test = just(Token::SchemaElement)
@@ -270,6 +240,42 @@ where
         .or(namespace_node_test)
         .or(any_test)
         .boxed();
+
+    let item_type_kind_test = kind_test.clone().map(ast::ItemType::KindTest);
+    let item_type_empty = just(Token::Item)
+        .ignore_then(empty_call.clone())
+        .to(ast::ItemType::Item);
+    let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
+    let item_type = recursive(|item_type| {
+        let parenthesized_item_type =
+            item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
+        item_type_empty
+            .or(item_type_atomic_or_union)
+            .or(parenthesized_item_type)
+            .or(item_type_kind_test)
+    })
+    .boxed();
+
+    let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
+        .map(|c| match c {
+            Token::QuestionMark => ast::Occurrence::Option,
+            Token::Asterisk => ast::Occurrence::Many,
+            Token::Plus => ast::Occurrence::NonEmpty,
+            _ => unreachable!(),
+        })
+        .or_not()
+        .map(|o| o.unwrap_or(ast::Occurrence::One))
+        .boxed();
+
+    let item = item_type
+        .clone()
+        .then(occurrence)
+        .map(|(item_type, occurrence)| ast::Item {
+            item_type,
+            occurrence,
+        });
+
+    let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
     let wildcard_ncname = ncname
         .then_ignore(just(Token::ColonAsterisk))
@@ -411,11 +417,11 @@ where
         })
         .boxed();
 
-    let type_declaration = just(Token::As).ignore_then(sequence_type.clone());
+    let type_declaration = just(Token::As).ignore_then(sequence_type.clone()).boxed();
 
     let param = just(Token::Dollar)
         .ignore_then(eqname.clone())
-        .then(type_declaration.or_not())
+        .then(type_declaration.clone().or_not())
         .map(|(name, type_)| ast::Param {
             name: name.value,
             type_,
@@ -424,6 +430,31 @@ where
     let param_list = param
         .separated_by(just(Token::Comma))
         .collect::<Vec<_>>()
+        .boxed();
+
+    let signature_param = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .then(type_declaration.clone())
+        .map(|(name, type_)| ast::SignatureParam {
+            name: name.value,
+            type_,
+        });
+
+    let signature_param_list = signature_param
+        .separated_by(just(Token::Comma))
+        .collect::<Vec<_>>()
+        .boxed();
+
+    let signature = eqname
+        .clone()
+        .then(signature_param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
+        .then_ignore(just(Token::As))
+        .then(sequence_type.clone())
+        .map(|((name, params), return_type)| ast::Signature {
+            name,
+            params,
+            return_type,
+        })
         .boxed();
 
     // ugly way to get expr out of recursive
@@ -980,11 +1011,13 @@ where
     let name = eqname.clone().then_ignore(end()).boxed();
     let expr_single = expr_single.then_ignore(end()).boxed();
     let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
+    let signature = signature.then_ignore(end()).boxed();
 
     ParserOutput {
         name,
         expr_single,
         xpath,
+        signature,
     }
 }
 
@@ -1180,19 +1213,11 @@ pub fn parse_xpath<'a>(
     todo!();
 }
 
-pub fn parse_signature(input: &str, namespaces: &Namespaces) -> Result<ast::Signature, Error> {
-    todo!();
-}
-
-pub fn parse_sequence_type(
-    input: &str,
-    namespaces: &Namespaces,
-) -> Result<ast::SequenceType, Error> {
-    todo!();
-}
-
-pub fn parse_kind_test(input: &str, namespaces: &Namespaces) -> Result<ast::KindTest, Error> {
-    todo!();
+pub fn parse_signature<'a>(
+    input: &'a str,
+    namespaces: &'a Namespaces,
+) -> Result<ast::Signature, ParseError<'a>> {
+    parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
 }
 
 #[cfg(test)]
@@ -1607,35 +1632,35 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("1 >= 2"));
     }
 
-    // #[test]
-    // fn test_signature_without_params() {
-    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    //     assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer", &namespaces));
-    // }
+    #[test]
+    fn test_signature_without_params() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer", &namespaces));
+    }
 
-    // #[test]
-    // fn test_signature_without_params2() {
-    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    //     assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer*", &namespaces));
-    // }
+    #[test]
+    fn test_signature_without_params2() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer*", &namespaces));
+    }
 
-    // #[test]
-    // fn test_signature_with_params() {
-    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    //     assert_ron_snapshot!(parse_signature(
-    //         "fn:foo($a as xs:decimal*) as xs:integer",
-    //         &namespaces
-    //     ));
-    // }
+    #[test]
+    fn test_signature_with_params() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature(
+            "fn:foo($a as xs:decimal*) as xs:integer",
+            &namespaces
+        ));
+    }
 
-    // #[test]
-    // fn test_signature_with_node_param() {
-    //     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    //     assert_ron_snapshot!(parse_signature(
-    //         "fn:foo($a as node()) as xs:integer",
-    //         &namespaces
-    //     ));
-    // }
+    #[test]
+    fn test_signature_with_node_param() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature(
+            "fn:foo($a as node()) as xs:integer",
+            &namespaces
+        ));
+    }
 
     #[test]
     fn test_unary_multiple() {
