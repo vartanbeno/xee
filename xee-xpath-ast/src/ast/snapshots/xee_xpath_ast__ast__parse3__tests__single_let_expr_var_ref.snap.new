@@ -1,6 +1,0 @@
----
-source: xee-xpath-ast/src/ast/parse3.rs
-assertion_line: 735
-expression: "parse_expr_single(\"let $x := 1 return $x\")"
----
-Err("[found \'Return\' at 12..18 expected \'LeftBracket\', \'Slash\', \'ExclamationMark\', \'Cast\', \'Castable\', \'Treat\', \'Instance\', \'Intersect\', \'Except\', \'Pipe\', \'Union\', \'Asterisk\', \'Div\', \'Idiv\', \'Mod\', \'Plus\', \'Minus\', \'To\', \'DoublePipe\', \'Equal\', \'NotEqual\', \'LessThan\', \'LessThanEqual\', \'GreaterThan\', \'GreaterThanEqual\', \'Eq\', \'Ne\', \'Lt\', \'Le\', \'Gt\', \'Ge\', \'Is\', \'Precedes\', \'Follows\', \'And\', \'Or\', \'Comma\', \'DoubleSlash\', \'LeftParen\', \'Dollar\', or \'Let\']")

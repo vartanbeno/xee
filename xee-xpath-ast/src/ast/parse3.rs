@@ -441,6 +441,7 @@ where
                     .at_least(1)
                     .collect::<Vec<_>>(),
             )
+            .then_ignore(just(Token::Return))
             .then(expr_single)
             .map_with_span(|(bindings, return_expr), span| {
                 bindings
@@ -723,20 +724,20 @@ mod tests {
         assert_ron_snapshot!(parse_xpath_simple("1 + 2, 3 + 4"));
     }
 
-    // #[test]
-    // fn test_single_let_expr() {
-    //     assert_ron_snapshot!(parse_expr_single("let $x := 1 return 5"));
-    // }
+    #[test]
+    fn test_single_let_expr() {
+        assert_ron_snapshot!(parse_expr_single("let $x := 1 return 5"));
+    }
 
-    // #[test]
-    // fn test_single_let_expr_var_ref() {
-    //     assert_ron_snapshot!(parse_expr_single("let $x := 1 return $x"));
-    // }
+    #[test]
+    fn test_single_let_expr_var_ref() {
+        assert_ron_snapshot!(parse_expr_single("let $x := 1 return $x"));
+    }
 
-    // #[test]
-    // fn test_nested_let_expr() {
-    //     assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
-    // }
+    #[test]
+    fn test_nested_let_expr() {
+        assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
+    }
 
     // #[test]
     // fn test_single_for_expr() {
