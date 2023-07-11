@@ -334,7 +334,152 @@ where
             })
             .boxed();
 
-        let step_expr = postfix_expr;
+        // let kind_test =
+
+        let wildcard_ncname = ncname
+            .then_ignore(just(Token::ColonAsterisk))
+            .try_map_with_state(|prefix, span, state: &mut State| {
+                let namespace = state
+                    .namespaces
+                    .by_prefix(prefix)
+                    .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))?;
+                Ok(ast::NameTest::Namespace(namespace.to_string()))
+            });
+        let wildcard_braced_uri_literal = braced_uri_literal
+            .then_ignore(just(Token::Asterisk))
+            .map(|uri| ast::NameTest::Namespace(uri.to_string()));
+        let wildcard_localname = just(Token::AsteriskColon)
+            .ignore_then(ncname)
+            .map(|name| ast::NameTest::LocalName(name.to_string()));
+        let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star);
+
+        let wildcard = wildcard_ncname
+            .or(wildcard_braced_uri_literal)
+            .or(wildcard_localname)
+            .or(wildcard_star)
+            .boxed();
+
+        let name_test = wildcard.or(eqname.clone().map(ast::NameTest::Name));
+
+        let parent_axis = just(Token::Parent)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Parent);
+        let ancestor_axis = just(Token::Ancestor)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Ancestor);
+        let preceding_sibling_axis = just(Token::PrecedingSibling)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::PrecedingSibling);
+        let preceding_axis = just(Token::Preceding)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Preceding);
+        let ancestor_or_self_axis = just(Token::AncestorOrSelf)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::AncestorOrSelf);
+
+        let reverse_axis = choice::<_>([
+            parent_axis,
+            ancestor_axis,
+            preceding_sibling_axis,
+            preceding_axis,
+            ancestor_or_self_axis,
+        ])
+        .boxed();
+
+        let node_test = name_test.boxed().map(ast::NodeTest::NameTest);
+
+        let abbrev_reverse_step = just(Token::DotDot).to((
+            ast::Axis::Parent,
+            ast::NodeTest::KindTest(ast::KindTest::Any),
+        ));
+
+        let reverse_axis_with_node_test = reverse_axis.then(node_test.clone()).boxed();
+        let reverse_step = reverse_axis_with_node_test.or(abbrev_reverse_step).boxed();
+
+        let child_axis = just(Token::Child)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Child);
+        let descendant_axis = just(Token::Descendant)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Descendant);
+        let attribute_axis = just(Token::Attribute)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Attribute);
+        let self_axis = just(Token::Self_)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Self_);
+        let descendant_or_self_axis = just(Token::DescendantOrSelf)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::DescendantOrSelf);
+        let following_sibling_axis = just(Token::FollowingSibling)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::FollowingSibling);
+        let following_axis = just(Token::Following)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Following);
+        let namespace_axis = just(Token::Namespace)
+            .ignore_then(just(Token::DoubleColon))
+            .to(ast::Axis::Namespace);
+
+        let forward_axis = choice::<_>([
+            child_axis,
+            descendant_axis,
+            attribute_axis,
+            self_axis,
+            descendant_or_self_axis,
+            following_sibling_axis,
+            following_axis,
+            namespace_axis,
+        ])
+        .boxed();
+
+        let forward_step_with_node_test = forward_axis.then(node_test.clone()).boxed();
+
+        let abbrev_forward_step = just(Token::At)
+            .or_not()
+            .then(node_test.clone())
+            .map(|(at, node_test)| {
+                if at.is_some() {
+                    (ast::Axis::Attribute, node_test)
+                } else {
+                    // https://www.w3.org/TR/xpath-31/#abbrev
+                    let axis = match &node_test {
+                        ast::NodeTest::KindTest(t) => match t {
+                            ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+                                ast::Axis::Attribute
+                            }
+                            ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+                            _ => ast::Axis::Child,
+                        },
+                        _ => ast::Axis::Child,
+                    };
+                    (axis, node_test)
+                }
+            })
+            .boxed();
+
+        let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
+
+        let predicate = expr
+            .clone()
+            .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
+            .boxed();
+
+        let predicate_list = predicate.repeated().collect::<Vec<_>>().boxed();
+
+        let axis_step = (reverse_step.or(forward_step))
+            .then(predicate_list)
+            .map_with_span(|((axis, node_test), predicates), span| {
+                ast::StepExpr::AxisStep(ast::AxisStep {
+                    axis,
+                    node_test,
+                    predicates,
+                })
+                .with_span(span)
+            })
+            .boxed();
+
+        let step_expr = postfix_expr.or(axis_step).boxed();
 
         let relative_path_expr = step_expr
             .clone()
@@ -1138,50 +1283,50 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("(1, 2)[2]"));
     }
 
-    // #[test]
-    // fn test_axis() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo"));
-    // }
+    #[test]
+    fn test_axis() {
+        assert_ron_snapshot!(parse_expr_single("child::foo"));
+    }
 
-    // #[test]
-    // fn test_multiple_steps() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo/child::bar"));
-    // }
+    #[test]
+    fn test_multiple_steps() {
+        assert_ron_snapshot!(parse_expr_single("child::foo/child::bar"));
+    }
 
-    // #[test]
-    // fn test_with_predicate() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
-    // }
+    #[test]
+    fn test_with_predicate() {
+        assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
+    }
 
-    // #[test]
-    // fn test_axis_with_predicate() {
-    //     assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
-    // }
+    #[test]
+    fn test_axis_with_predicate() {
+        assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
+    }
 
-    // #[test]
-    // fn test_axis_star() {
-    //     assert_ron_snapshot!(parse_expr_single("child::*"));
-    // }
+    #[test]
+    fn test_axis_star() {
+        assert_ron_snapshot!(parse_expr_single("child::*"));
+    }
 
-    // #[test]
-    // fn test_axis_wildcard_prefix() {
-    //     assert_ron_snapshot!(parse_expr_single("child::*:foo"));
-    // }
+    #[test]
+    fn test_axis_wildcard_prefix() {
+        assert_ron_snapshot!(parse_expr_single("child::*:foo"));
+    }
 
-    // #[test]
-    // fn test_axis_wildcard_local_name() {
-    //     assert_ron_snapshot!(parse_expr_single("child::fn:*"));
-    // }
+    #[test]
+    fn test_axis_wildcard_local_name() {
+        assert_ron_snapshot!(parse_expr_single("child::fn:*"));
+    }
 
-    // #[test]
-    // fn test_axis_wildcard_q_name() {
-    //     assert_ron_snapshot!(parse_expr_single("child::Q{http://example.com}*"));
-    // }
+    #[test]
+    fn test_axis_wildcard_q_name() {
+        assert_ron_snapshot!(parse_expr_single("child::Q{http://example.com}*"));
+    }
 
-    // #[test]
-    // fn test_reverse_axis() {
-    //     assert_ron_snapshot!(parse_expr_single("parent::foo"));
-    // }
+    #[test]
+    fn test_reverse_axis() {
+        assert_ron_snapshot!(parse_expr_single("parent::foo"));
+    }
 
     // #[test]
     // fn test_node_test() {

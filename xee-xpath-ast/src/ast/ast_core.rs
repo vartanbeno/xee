@@ -375,7 +375,7 @@ pub enum NodeTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum NameTest {
-    Name(Name),
+    Name(NameS),
     Star,
     LocalName(String),
     Namespace(String),
