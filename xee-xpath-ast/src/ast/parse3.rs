@@ -10,6 +10,7 @@ use crate::span::WithSpan;
 use crate::FN_NAMESPACE;
 
 use super::ast_core as ast;
+use super::rename::unique_names;
 
 type Span = SimpleSpan;
 
@@ -1207,7 +1208,16 @@ pub fn parse_xpath<'a>(
     namespaces: &'a Namespaces,
     variables: &'a [ast::Name],
 ) -> Result<ast::XPath, ParseError<'a>> {
-    todo!();
+    let result = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces));
+
+    match result {
+        Ok(mut xpath) => {
+            // rename all variables to unique names
+            unique_names(&mut xpath, variables);
+            Ok(xpath)
+        }
+        Err(e) => Err(e),
+    }
 }
 
 pub fn parse_signature<'a>(
