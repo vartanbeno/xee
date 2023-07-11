@@ -46,7 +46,6 @@ where
         Token::BracedURILiteral(s) => s,
     };
 
-    // PrefixedName ::= Prefix ':' LocalPart
     let prefixed_name = ncname
         .then_ignore(just(Token::Colon))
         .then(ncname)
@@ -56,7 +55,6 @@ where
                 .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))
         });
 
-    // QName ::= PrefixedName | UnprefixedName
     let qname = prefixed_name
         .or(ncname
             .map_with_span(|local_name, span| ast::Name::unprefixed(local_name).with_span(span)))
