@@ -465,15 +465,16 @@ where
             .then(expr_single.clone())
             .boxed();
 
-        let simple_for_clause = just(Token::For).ignore_then(
-            simple_for_binding
-                .clone()
-                .separated_by(just(Token::Comma))
-                .at_least(1)
-                .collect::<Vec<_>>(),
-        );
+        let for_bindings = simple_for_binding
+            .clone()
+            .separated_by(just(Token::Comma))
+            .at_least(1)
+            .collect::<Vec<_>>();
+
+        let simple_for_clause = just(Token::For).ignore_then(for_bindings.clone());
 
         let for_expr = simple_for_clause
+            .clone()
             .then_ignore(just(Token::Return))
             .then(expr_single.clone())
             .map_with_span(|(bindings, return_expr), span| {
@@ -507,7 +508,35 @@ where
             })
             .boxed();
 
-        let expr_single_ = path_expr.or(let_expr).or(for_expr).or(if_expr).boxed();
+        let quantified_expr = choice::<_>([
+            just(Token::Some).to(ast::Quantifier::Some),
+            just(Token::Every).to(ast::Quantifier::Every),
+        ])
+        .then(for_bindings.clone())
+        .then_ignore(just(Token::Satisfies))
+        .then(expr_single)
+        .map_with_span(|((quantifier, bindings), satisfies_expr), span| {
+            bindings
+                .iter()
+                .rev()
+                .fold(satisfies_expr, |satisfies_expr, (var_name, var_expr)| {
+                    ast::ExprSingle::Quantified(ast::QuantifiedExpr {
+                        quantifier: quantifier.clone(),
+                        var_name: var_name.clone(),
+                        var_expr: Box::new(var_expr.clone()),
+                        satisfies_expr: Box::new(satisfies_expr),
+                    })
+                    .with_span(span)
+                })
+        })
+        .boxed();
+
+        let expr_single_ = path_expr
+            .or(let_expr)
+            .or(for_expr)
+            .or(if_expr)
+            .or(quantified_expr)
+            .boxed();
 
         expr_single_
     })
@@ -803,6 +832,18 @@ mod tests {
         assert_ron_snapshot!(parse_expr_single("if (1) then 2 else 3"));
     }
 
+    #[test]
+    fn test_quantified() {
+        assert_ron_snapshot!(parse_expr_single("every $x in (1, 2) satisfies $x > 0"));
+    }
+
+    #[test]
+    fn test_quantified_nested() {
+        assert_ron_snapshot!(parse_expr_single(
+            "every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0"
+        ));
+    }
+
     // #[test]
     // fn test_inline_function() {
     //     assert_ron_snapshot!(parse_expr_single("function($x) { $x }"));
@@ -886,18 +927,6 @@ mod tests {
     // #[test]
     // fn test_simple_map() {
     //     assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
-    // }
-
-    // #[test]
-    // fn test_quantified() {
-    //     assert_ron_snapshot!(parse_expr_single("every $x in (1, 2) satisfies $x > 0"));
-    // }
-
-    // #[test]
-    // fn test_quantified_nested() {
-    //     assert_ron_snapshot!(parse_expr_single(
-    //         "every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0"
-    //     ));
     // }
 
     #[test]
