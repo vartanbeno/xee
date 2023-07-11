@@ -397,6 +397,22 @@ where
 
     let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
+    let named_function_ref = eqname
+        .clone()
+        .then_ignore(just(Token::Hash))
+        .then(integer)
+        .map_with_span(|(name, arity), span| {
+            ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
+                name,
+                // TODO: handle overflow
+                arity: arity.try_into().unwrap(),
+            })
+            .with_span(span)
+        })
+        .boxed();
+
+    let type_declaration = just(Token::As).ignore_then(sequence_type.clone());
+
     // ugly way to get expr out of recursive
     let mut expr_ = None;
 
@@ -475,22 +491,6 @@ where
                 }
             })
             .boxed();
-
-        let named_function_ref = eqname
-            .clone()
-            .then_ignore(just(Token::Hash))
-            .then(integer)
-            .map_with_span(|(name, arity), span| {
-                ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
-                    name,
-                    // TODO: handle overflow
-                    arity: arity.try_into().unwrap(),
-                })
-                .with_span(span)
-            })
-            .boxed();
-
-        let type_declaration = just(Token::As).ignore_then(sequence_type.clone());
 
         let param = just(Token::Dollar)
             .ignore_then(eqname.clone())
