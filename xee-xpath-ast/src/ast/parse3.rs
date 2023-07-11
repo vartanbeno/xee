@@ -4,7 +4,6 @@ use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use std::iter::once;
 
-use crate::error::Error;
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
 use crate::span::WithSpan;
