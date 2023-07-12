@@ -1013,7 +1013,10 @@ where
             .boxed();
 
         let if_expr = just(Token::If)
-            .ignore_then(expr.clone())
+            .ignore_then(
+                expr.delimited_by(just(Token::LeftParen), just(Token::RightParen))
+                    .clone(),
+            )
             .then_ignore(just(Token::Then))
             .then(expr_single.clone())
             .then_ignore(just(Token::Else))
