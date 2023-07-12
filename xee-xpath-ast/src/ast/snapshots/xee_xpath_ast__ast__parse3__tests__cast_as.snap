@@ -19,7 +19,7 @@ Ok(Path(PathExpr(
             prefix: Some("xs"),
             namespace: Some("http://www.w3.org/2001/XMLSchema"),
           ),
-          question_mark: false,
+          optional: false,
         )),
       )),
     ]))),

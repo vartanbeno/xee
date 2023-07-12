@@ -113,7 +113,7 @@ where
         .then(just(Token::QuestionMark).or_not())
         .map_with_span(|(name, question_mark), _span| ast::SingleType {
             name,
-            question_mark: question_mark.is_some(),
+            optional: question_mark.is_some(),
         });
 
     let empty_call = just(Token::LeftParen)
@@ -142,7 +142,7 @@ where
         .then(just(Token::QuestionMark).or_not())
         .map(|(name, question_mark)| ast::ElementTypeName {
             name,
-            question_mark: question_mark.is_some(),
+            optional: question_mark.is_some(),
         });
 
     let element_test_content = element_name_or_wildcard

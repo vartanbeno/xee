@@ -520,7 +520,7 @@ impl<'a> IrConverter<'a> {
                     let expr = ir::Expr::Cast(ir::Cast {
                         atom: bindings.atom(),
                         xs,
-                        empty_sequence_allowed: single_type.question_mark,
+                        empty_sequence_allowed: single_type.optional,
                     });
                     let binding = self.new_binding(expr, span);
                     Ok(bindings.bind(binding))
@@ -541,7 +541,7 @@ impl<'a> IrConverter<'a> {
                     let expr = ir::Expr::Castable(ir::Castable {
                         atom: bindings.atom(),
                         xs,
-                        empty_sequence_allowed: single_type.question_mark,
+                        empty_sequence_allowed: single_type.optional,
                     });
                     let binding = self.new_binding(expr, span);
                     Ok(bindings.bind(binding))

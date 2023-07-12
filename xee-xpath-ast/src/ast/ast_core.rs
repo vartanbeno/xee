@@ -219,7 +219,7 @@ pub enum UnaryOperator {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct SingleType {
     pub name: NameS,
-    pub question_mark: bool,
+    pub optional: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -489,7 +489,7 @@ pub struct ElementTest {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct ElementTypeName {
     pub name: NameS,
-    pub question_mark: bool,
+    pub optional: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
