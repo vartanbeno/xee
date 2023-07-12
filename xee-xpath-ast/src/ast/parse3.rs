@@ -306,23 +306,26 @@ where
         .or(wildcard_star)
         .boxed();
 
-    let name_test_name = eqname.clone().map(ast::NameTest::Name);
-    // .configure(|cfg, ctx: &Context| {
-    //     cfg.map_with_state(|name, _span, state: &mut State| {
-    //         // this is context dependent: if the axis not the attribute
-    //         // axis, then we want to use the default element namespace,
-    //         // otherwise we don't
-    //         if !ctx.in_attribute_axis {
-    //             ast::NameTest::Name(name.map(|name| {
-    //                 name.with_default_namespace(state.namespaces.default_element_namespace)
-    //             }))
-    //         } else {
-    //             ast::NameTest::Name(name)
-    //         }
-    //     })
-    // });
+    // element names are in the the default element namespace
+    let name_test_element_name = eqname
+        .clone()
+        .map_with_state(|name, _span, state: &mut State| {
+            ast::NameTest::Name(name.map(|name| {
+                name.with_default_namespace(state.namespaces.default_element_namespace)
+            }))
+        })
+        .boxed();
+    // attribute names are not in the default element namespace
+    let name_test_attribute_name = eqname.clone().map(ast::NameTest::Name).boxed();
 
-    let name_test = name_test_wildcard.or(name_test_name).boxed();
+    // we need to duplicate the sub-parsers for the element and attribute cases
+    let name_test_element = name_test_wildcard
+        .clone()
+        .or(name_test_element_name.clone())
+        .boxed();
+    let name_test_attribute = name_test_wildcard
+        .or(name_test_attribute_name.clone())
+        .boxed();
 
     let parent_axis = just(Token::Parent)
         .ignore_then(just(Token::DoubleColon))
@@ -349,16 +352,24 @@ where
     ])
     .boxed();
 
-    let node_test = name_test
+    let node_test_element_name = name_test_element
+        .clone()
+        .map(ast::NodeTest::NameTest)
+        .or(kind_test.clone().map(ast::NodeTest::KindTest));
+    let node_test_attribute_name = name_test_attribute
         .map(ast::NodeTest::NameTest)
         .or(kind_test.map(ast::NodeTest::KindTest));
+    // let node_test = name_test
+    //     .map(ast::NodeTest::NameTest)
+    //     .or(kind_test.map(ast::NodeTest::KindTest));
 
     let abbrev_reverse_step = just(Token::DotDot).to((
         ast::Axis::Parent,
         ast::NodeTest::KindTest(ast::KindTest::Any),
     ));
 
-    let reverse_axis_with_node_test = reverse_axis.then(node_test.clone()).boxed();
+    // the reverse axis only allows element tests
+    let reverse_axis_with_node_test = reverse_axis.then(node_test_element_name.clone()).boxed();
     let reverse_step = reverse_axis_with_node_test.or(abbrev_reverse_step).boxed();
 
     let child_axis = just(Token::Child)
@@ -386,10 +397,9 @@ where
         .ignore_then(just(Token::DoubleColon))
         .to(ast::Axis::Namespace);
 
-    let forward_axis = choice::<_>([
+    let element_forward_axis = choice::<_>([
         child_axis,
         descendant_axis,
-        attribute_axis,
         self_axis,
         descendant_or_self_axis,
         following_sibling_axis,
@@ -398,31 +408,61 @@ where
     ])
     .boxed();
 
-    let forward_step_with_node_test = forward_axis.then(node_test.clone()).boxed();
-
-    let abbrev_forward_step = just(Token::At)
-        .or_not()
-        .then(node_test.clone())
-        .map(|(at, node_test)| {
-            if at.is_some() {
-                // strip default namespace from node test
-                (ast::Axis::Attribute, node_test)
-            } else {
-                // https://www.w3.org/TR/xpath-31/#abbrev
-                let axis = match &node_test {
-                    ast::NodeTest::KindTest(t) => match t {
-                        ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
-                            ast::Axis::Attribute
-                        }
-                        ast::KindTest::NamespaceNode => ast::Axis::Namespace,
-                        _ => ast::Axis::Child,
-                    },
-                    _ => ast::Axis::Child,
-                };
-                (axis, node_test)
-            }
-        })
+    let forward_step_with_node_test_element_name = element_forward_axis
+        .then(node_test_element_name.clone())
         .boxed();
+    let forward_step_with_node_test_attribute_name = attribute_axis
+        .then(node_test_attribute_name.clone())
+        .boxed();
+
+    let forward_step_with_node_test = forward_step_with_node_test_element_name
+        .or(forward_step_with_node_test_attribute_name)
+        .boxed();
+
+    let abbrev_forward_step_attribute = just(Token::At)
+        .ignore_then(node_test_attribute_name.map(|node_test| (ast::Axis::Attribute, node_test)));
+    let abbrev_forward_step_element = node_test_element_name.map(|node_test| {
+        // https://www.w3.org/TR/xpath-31/#abbrev
+        let axis = match &node_test {
+            ast::NodeTest::KindTest(t) => match t {
+                ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+                    ast::Axis::Attribute
+                }
+                ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+                _ => ast::Axis::Child,
+            },
+            _ => ast::Axis::Child,
+        };
+        (axis, node_test)
+    });
+
+    let abbrev_forward_step = abbrev_forward_step_attribute
+        .or(abbrev_forward_step_element)
+        .boxed();
+
+    // let abbrev_forward_step = just(Token::At)
+    //     .or_not()
+    //     .then(node_test.clone())
+    //     .map(|(at, node_test)| {
+    //         if at.is_some() {
+    //             // strip default namespace from node test
+    //             (ast::Axis::Attribute, node_test)
+    //         } else {
+    //             // https://www.w3.org/TR/xpath-31/#abbrev
+    //             let axis = match &node_test {
+    //                 ast::NodeTest::KindTest(t) => match t {
+    //                     ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+    //                         ast::Axis::Attribute
+    //                     }
+    //                     ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+    //                     _ => ast::Axis::Child,
+    //                 },
+    //                 _ => ast::Axis::Child,
+    //             };
+    //             (axis, node_test)
+    //         }
+    //     })
+    //     .boxed();
 
     let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
@@ -1280,6 +1320,11 @@ mod tests {
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 
+    fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParseError> {
+        let namespaces = Namespaces::new(Some("http://example.com"), None);
+        parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
+    }
+
     #[test]
     fn test_unprefixed_name() {
         assert_ron_snapshot!(parse_name("foo"));
@@ -1742,5 +1787,35 @@ mod tests {
     #[test]
     fn test_treat_with_star() {
         assert_ron_snapshot!(parse_expr_single("1 treat as xs:integer*"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_element_kind_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("element(foo)"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_attribute_kind_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("attribute(foo)"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_element_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("foo"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_explicit_element_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("child::foo"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_attribute_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("@foo"));
+    }
+
+    #[test]
+    fn test_default_element_namespace_explicit_attribute_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple_element_ns("attribute::foo"));
     }
 }
