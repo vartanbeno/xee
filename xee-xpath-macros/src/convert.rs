@@ -84,7 +84,7 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
     match item {
         ast::ItemType::Item => Ok((quote!(#arg.items()), false)),
         ast::ItemType::AtomicOrUnionType(name) => {
-            let (token_stream, borrow) = convert_atomic_or_union_type(name, arg)?;
+            let (token_stream, borrow) = convert_atomic_or_union_type(&name.value, arg)?;
             Ok((token_stream, borrow))
         }
         ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),

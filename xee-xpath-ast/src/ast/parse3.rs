@@ -30,6 +30,7 @@ where
     name: BoxedParser<'a, I, ast::NameS>,
     expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
     signature: BoxedParser<'a, I, ast::Signature>,
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
     xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
@@ -877,7 +878,7 @@ where
             .then(
                 just(Token::Instance)
                     .ignore_then(just(Token::Of))
-                    .ignore_then(sequence_type)
+                    .ignore_then(sequence_type.clone())
                     .or_not(),
             )
             .map_with_span(|(expr, sequence_type), span| {
@@ -1080,12 +1081,14 @@ where
     let expr_single = expr_single.then_ignore(end()).boxed();
     let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
     let signature = signature.then_ignore(end()).boxed();
+    let sequence_type = sequence_type.then_ignore(end()).boxed();
 
     ParserOutput {
         name,
         expr_single,
         xpath,
         signature,
+        sequence_type,
     }
 }
 
@@ -1295,6 +1298,17 @@ pub fn parse_signature<'a>(
     namespaces: &'a Namespaces,
 ) -> Result<ast::Signature, ParseError<'a>> {
     parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
+}
+
+pub fn parse_sequence_type<'a>(
+    input: &'a str,
+    namespaces: &'a Namespaces,
+) -> Result<ast::SequenceType, ParseError<'a>> {
+    parse(
+        parser().sequence_type,
+        tokens(input),
+        Cow::Borrowed(namespaces),
+    )
 }
 
 #[cfg(test)]

@@ -5,21 +5,33 @@ expression: "syn::parse_str::<XPathFnOptions>(r#\"\"fn:foo() as xs:string\", con
 Ok(
     XPathFnOptions {
         signature: Signature {
-            name: Name {
-                name: "foo",
-                namespace: Some(
-                    "http://www.w3.org/2005/xpath-functions",
-                ),
+            name: Spanned {
+                value: Name {
+                    name: "foo",
+                    prefix: Some(
+                        "fn",
+                    ),
+                    namespace: Some(
+                        "http://www.w3.org/2005/xpath-functions",
+                    ),
+                },
+                span: 0..6,
             },
             params: [],
             return_type: Item(
                 Item {
                     item_type: AtomicOrUnionType(
-                        Name {
-                            name: "string",
-                            namespace: Some(
-                                "http://www.w3.org/2001/XMLSchema",
-                            ),
+                        Spanned {
+                            value: Name {
+                                name: "string",
+                                prefix: Some(
+                                    "xs",
+                                ),
+                                namespace: Some(
+                                    "http://www.w3.org/2001/XMLSchema",
+                                ),
+                            },
+                            span: 12..21,
                         },
                     ),
                     occurrence: One,

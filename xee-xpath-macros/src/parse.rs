@@ -46,7 +46,7 @@ impl Parse for XPathFnOptions {
         let signature_string = signature.unwrap();
         let namespaces = Namespaces::default();
         let signature = parse_signature(&signature_string, &namespaces)
-            .map_err(|e| syn::Error::new(input.span(), e))?;
+            .map_err(|e| syn::Error::new(input.span(), format!("{:?}", e)))?;
         Ok(Self {
             signature,
             kind,
