@@ -208,7 +208,7 @@ fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -> bool {
 }
 
 fn element_test(element_test: &ast::ElementTest, xot: &Xot, node: xot::Node) -> bool {
-    let name_matches = match &element_test.name_test {
+    let name_matches = match &element_test.element_name_or_wildcard {
         ast::ElementNameOrWildcard::Name(name) => {
             if let Some(element) = xot.element(node) {
                 let name_id = name_id_for_name(xot, name);

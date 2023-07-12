@@ -8,7 +8,7 @@ Ok(Path(PathExpr(
       name: Name(
         name: "my_function",
         prefix: None,
-        namespace: None,
+        namespace: Some("http://www.w3.org/2005/xpath-functions"),
       ),
       arguments: [],
     ))),

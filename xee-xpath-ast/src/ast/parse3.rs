@@ -430,9 +430,11 @@ where
         .clone()
         .then_ignore(just(Token::Hash))
         .then(integer)
-        .map_with_span(|(name, arity), span| {
+        .map_with_state(|(name, arity), span, state: &mut State| {
             ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
-                name,
+                name: name.map(|name| {
+                    name.with_default_namespace(state.namespaces.default_function_namespace)
+                }),
                 // TODO: handle overflow
                 arity: arity.try_into().unwrap(),
             })
@@ -543,7 +545,10 @@ where
         let function_call = eqname
             .clone()
             .then(argument_list)
-            .map_with_span(move |(name, arguments), span| {
+            .map_with_state(move |(name, arguments), span, state: &mut State| {
+                let name = name.map(|name| {
+                    name.with_default_namespace(state.namespaces.default_function_namespace)
+                });
                 let (arguments, params) = placeholder_arguments(&arguments);
                 if params.is_empty() {
                     ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
