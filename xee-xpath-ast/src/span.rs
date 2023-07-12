@@ -6,7 +6,7 @@ pub struct Spanned<T> {
     pub span: SourceSpan,
 }
 
-pub(crate) trait WithSpan
+pub trait WithSpan
 where
     Self: Sized,
 {

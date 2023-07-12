@@ -6,7 +6,7 @@ use crate::sequence;
 use crate::stack;
 use crate::xml;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
     pub(crate) axis: ast::Axis,
     pub(crate) node_test: ast::NodeTest,
@@ -105,7 +105,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
             }
             match name_test {
                 ast::NameTest::Name(name) => {
-                    let name_id = name.to_name_id(xot);
+                    let name_id = name.value.to_name_id(xot);
                     // if name isn't present in XML document it's certainly
                     // false
                     if let Some(name_id) = name_id {
@@ -211,7 +211,7 @@ fn element_test(element_test: &ast::ElementTest, xot: &Xot, node: xot::Node) -> 
     let name_matches = match &element_test.element_name_or_wildcard {
         ast::ElementNameOrWildcard::Name(name) => {
             if let Some(element) = xot.element(node) {
-                let name_id = name_id_for_name(xot, name);
+                let name_id = name_id_for_name(xot, &name.value);
                 Some(element.name()) == name_id
             } else {
                 false
@@ -287,7 +287,7 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 
 #[cfg(test)]
 mod tests {
-    use xee_xpath_ast::{ast::parse_kind_test, Namespaces};
+    use xee_xpath_ast::{ast::parse_kind_test, Namespaces, WithSpan};
 
     use super::*;
 
@@ -324,7 +324,9 @@ mod tests {
 
         let step = Step {
             axis: ast::Axis::Child,
-            node_test: ast::NodeTest::NameTest(ast::NameTest::Name(ast::Name::without_ns("a"))),
+            node_test: ast::NodeTest::NameTest(ast::NameTest::Name(
+                ast::Name::unprefixed("a").with_empty_span(),
+            )),
         };
         let value = resolve_step(&step, xml::Node::Xot(doc_el), &xot);
         assert_eq!(value, xot_nodes_to_value(&[a]));
@@ -340,7 +342,7 @@ mod tests {
 
         let namespaces = Namespaces::default();
 
-        let kt = parse_kind_test("node()", &namespaces).unwrap();
+        let kt = parse_kind_test("node()").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -354,8 +356,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let a_text = xot.first_child(a).unwrap();
 
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("text()", &namespaces).unwrap();
+        let kt = parse_kind_test("text()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -369,8 +370,7 @@ mod tests {
         let doc_el = xot.document_element(doc).unwrap();
         let comment = xot.first_child(doc_el).unwrap();
 
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("comment()", &namespaces).unwrap();
+        let kt = parse_kind_test("comment()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(comment)));
@@ -381,8 +381,7 @@ mod tests {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<root></root>"#).unwrap();
         let doc_el = xot.document_element(doc).unwrap();
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("document-node()", &namespaces).unwrap();
+        let kt = parse_kind_test("document-node()").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
     }
@@ -395,8 +394,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("element()", &namespaces).unwrap();
+        let kt = parse_kind_test("element()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -411,8 +409,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("element(*)", &namespaces).unwrap();
+        let kt = parse_kind_test("element(*)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -427,8 +424,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let namespaces = Namespaces::default();
-        let kt = parse_kind_test("element(a)", &namespaces).unwrap();
+        let kt = parse_kind_test("element(a)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));

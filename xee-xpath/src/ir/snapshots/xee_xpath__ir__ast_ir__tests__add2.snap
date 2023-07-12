@@ -18,14 +18,7 @@ Ok(
                                         1,
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        0,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
+                                span: 0..1,
                             },
                             op: Add,
                             right: Spanned {
@@ -34,25 +27,11 @@ Ok(
                                         2,
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        4,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
+                                span: 4..5,
                             },
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            6,
-                        ),
-                    },
+                    span: 0..5,
                 },
                 return_expr: Spanned {
                     value: Binary(
@@ -63,14 +42,7 @@ Ok(
                                         "v2",
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        0,
-                                    ),
-                                    length: SourceOffset(
-                                        6,
-                                    ),
-                                },
+                                span: 0..5,
                             },
                             op: Add,
                             right: Spanned {
@@ -79,35 +51,14 @@ Ok(
                                         3,
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        8,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
+                                span: 8..9,
                             },
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            9,
-                        ),
-                    },
+                    span: 0..9,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                9,
-            ),
-        },
+        span: 0..9,
     },
 )

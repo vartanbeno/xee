@@ -4,15 +4,15 @@ use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use std::iter::once;
 
+use crate::error::{Error, Result};
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
 use crate::span::WithSpan;
 use crate::FN_NAMESPACE;
 
 use super::ast_core as ast;
+use super::ast_core::Span;
 use super::rename::unique_names;
-
-type Span = SimpleSpan;
 
 pub(crate) struct State<'a> {
     namespaces: Cow<'a, Namespaces<'a>>,
@@ -31,6 +31,7 @@ where
     expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
     signature: BoxedParser<'a, I, ast::Signature>,
     sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
     xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
@@ -359,10 +360,7 @@ where
         .or(kind_test.clone().map(ast::NodeTest::KindTest));
     let node_test_attribute_name = name_test_attribute
         .map(ast::NodeTest::NameTest)
-        .or(kind_test.map(ast::NodeTest::KindTest));
-    // let node_test = name_test
-    //     .map(ast::NodeTest::NameTest)
-    //     .or(kind_test.map(ast::NodeTest::KindTest));
+        .or(kind_test.clone().map(ast::NodeTest::KindTest));
 
     let abbrev_reverse_step = just(Token::DotDot).to((
         ast::Axis::Parent,
@@ -441,30 +439,6 @@ where
         .or(abbrev_forward_step_element)
         .boxed();
 
-    // let abbrev_forward_step = just(Token::At)
-    //     .or_not()
-    //     .then(node_test.clone())
-    //     .map(|(at, node_test)| {
-    //         if at.is_some() {
-    //             // strip default namespace from node test
-    //             (ast::Axis::Attribute, node_test)
-    //         } else {
-    //             // https://www.w3.org/TR/xpath-31/#abbrev
-    //             let axis = match &node_test {
-    //                 ast::NodeTest::KindTest(t) => match t {
-    //                     ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
-    //                         ast::Axis::Attribute
-    //                     }
-    //                     ast::KindTest::NamespaceNode => ast::Axis::Namespace,
-    //                     _ => ast::Axis::Child,
-    //                 },
-    //                 _ => ast::Axis::Child,
-    //             };
-    //             (axis, node_test)
-    //         }
-    //     })
-    //     .boxed();
-
     let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
     let named_function_ref = eqname
@@ -537,12 +511,17 @@ where
 
         expr_ = Some(expr.clone());
 
-        // TODO: handle empty parenthesized expr which means empty sequence
+        // unlike a normal expr, this can create an empty expression sequence,
+        // which is used to represent to represent an empty sequence
         let parenthesized_expr = expr
             .clone()
+            .or_not()
             .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .boxed()
-            .map_with_span(|expr, span| ast::PrimaryExpr::Expr(expr).with_span(span));
+            .map_with_span(|expr, span| {
+                let expr_or_empty = expr.map(|expr| expr.value);
+                ast::PrimaryExpr::Expr(expr_or_empty.with_span(span)).with_span(span)
+            })
+            .boxed();
 
         let argument_placeholder = just(Token::QuestionMark)
             .map(|_| ArgumentOrPlaceholder::Placeholder)
@@ -608,7 +587,13 @@ where
         let enclosed_expr =
             (expr.clone().or_not()).delimited_by(just(Token::LeftBrace), just(Token::RightBrace));
 
-        let function_body = enclosed_expr;
+        let function_body = enclosed_expr.map_with_span(|expr, span| {
+            if let Some(expr) = expr {
+                Some(expr.value).with_span(span)
+            } else {
+                None.with_span(span)
+            }
+        });
 
         let inline_function_expr = just(Token::Function)
             .ignore_then(param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
@@ -1082,6 +1067,7 @@ where
     let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
     let signature = signature.then_ignore(end()).boxed();
     let sequence_type = sequence_type.then_ignore(end()).boxed();
+    let kind_test = kind_test.then_ignore(end()).boxed();
 
     ParserOutput {
         name,
@@ -1089,6 +1075,7 @@ where
         xpath,
         signature,
         sequence_type,
+        kind_test,
     }
 }
 
@@ -1136,7 +1123,7 @@ fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
         ast::ExprSingle::Path(path) => path,
         _ => ast::PathExpr {
             steps: vec![ast::StepExpr::PrimaryExpr(
-                ast::PrimaryExpr::Expr(ast::Expr(vec![expr]).with_span(span)).with_span(span),
+                ast::PrimaryExpr::Expr(Some(ast::Expr(vec![expr])).with_span(span)).with_span(span),
             )
             .with_span(span)],
         },
@@ -1221,11 +1208,11 @@ fn placeholder_wrapper_function(
         steps: vec![step_expr],
     };
     let expr_single = ast::ExprSingle::Path(path_expr).with_empty_span();
-    let body = ast::Expr(vec![expr_single]).with_empty_span();
+    let body = Some(ast::Expr(vec![expr_single])).with_empty_span();
     ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
         params,
         return_type: None,
-        body: Some(body),
+        body,
     })
     .with_span(span)
 }
@@ -1241,46 +1228,24 @@ fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {
     Stream::from_iter(create_token_iter(src)).spanned((src.len()..src.len()).into())
 }
 
-#[derive(Debug)]
-pub struct ParseError<'a> {
-    errors: Vec<Rich<'a, Token<'a>>>,
-}
-
-#[cfg(test)]
-impl serde::Serialize for ParseError<'_> {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let formatted = format!("{:?}", self.errors);
-        serializer.serialize_str(&formatted)
-
-        // let mut errors = serializer.serialize_struct("ParseError", 1)?;
-        // now output formatted as serialized
-        // use serde::ser::SerializeStruct;
-        // // errors.serialize_field("errors", &formatted)?;
-        // errors.end()
-    }
-}
-
 fn parse<'a, I, T>(
     parser: BoxedParser<'a, I, T>,
     input: I,
     namespaces: Cow<'a, Namespaces<'a>>,
-) -> Result<T, ParseError<'a>>
+) -> std::result::Result<T, Vec<Rich<'a, Token<'a>>>>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
     T: std::fmt::Debug,
 {
     let mut state = State { namespaces };
-    parser
-        .parse_with_state(input, &mut state)
-        .into_result()
-        .map_err(|errors| ParseError { errors })
+    parser.parse_with_state(input, &mut state).into_result()
 }
 
 pub fn parse_xpath<'a>(
     input: &'a str,
     namespaces: &'a Namespaces,
     variables: &'a [ast::Name],
-) -> Result<ast::XPath, ParseError<'a>> {
+) -> Result<'a, ast::XPath> {
     let result = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces));
 
     match result {
@@ -1289,26 +1254,40 @@ pub fn parse_xpath<'a>(
             unique_names(&mut xpath, variables);
             Ok(xpath)
         }
-        Err(e) => Err(e),
+        Err(errors) => Err(Error { src: input, errors }),
     }
+}
+
+pub fn parse_expr_single(src: &str) -> Result<ast::ExprSingleS> {
+    let namespaces = Namespaces::default();
+    parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
+        .map_err(|errors| Error { src, errors })
+}
+
+pub fn parse_kind_test(src: &str) -> Result<ast::KindTest> {
+    let namespaces = Namespaces::default();
+    parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
+        .map_err(|errors| Error { src, errors })
 }
 
 pub fn parse_signature<'a>(
     input: &'a str,
     namespaces: &'a Namespaces,
-) -> Result<ast::Signature, ParseError<'a>> {
+) -> Result<'a, ast::Signature> {
     parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
+        .map_err(|errors| Error { src: input, errors })
 }
 
 pub fn parse_sequence_type<'a>(
     input: &'a str,
     namespaces: &'a Namespaces,
-) -> Result<ast::SequenceType, ParseError<'a>> {
+) -> Result<'a, ast::SequenceType> {
     parse(
         parser().sequence_type,
         tokens(input),
         Cow::Borrowed(namespaces),
     )
+    .map_err(|errors| Error { src: input, errors })
 }
 
 #[cfg(test)]
@@ -1319,24 +1298,22 @@ mod tests {
 
     use insta::assert_ron_snapshot;
 
-    fn parse_expr_single(src: &str) -> Result<ast::ExprSingleS, ParseError> {
-        let namespaces = Namespaces::default();
-        parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
-    }
-
-    fn parse_name(src: &str) -> Result<ast::NameS, ParseError> {
+    fn parse_name(src: &str) -> Result<ast::NameS> {
         let namespaces = Namespaces::default();
         parse(parser().name, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
     }
 
-    fn parse_xpath_simple(src: &str) -> Result<ast::XPath, ParseError> {
+    fn parse_xpath_simple(src: &str) -> Result<ast::XPath> {
         let namespaces = Namespaces::default();
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
     }
 
-    fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParseError> {
+    fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath> {
         let namespaces = Namespaces::new(Some("http://example.com"), None);
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
     }
 
     #[test]
@@ -1754,6 +1731,24 @@ mod tests {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
         assert_ron_snapshot!(parse_signature(
             "fn:foo($a as node()) as xs:integer",
+            &namespaces
+        ));
+    }
+
+    #[test]
+    fn test_signature_with_node_param_and_question_mark() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature(
+            "fn:foo($a as node()?) as xs:integer",
+            &namespaces
+        ));
+    }
+
+    #[test]
+    fn test_signature_with_minus_in_name() {
+        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        assert_ron_snapshot!(parse_signature(
+            "fn:foo-bar($a as node()?) as xs:integer",
             &namespaces
         ));
     }

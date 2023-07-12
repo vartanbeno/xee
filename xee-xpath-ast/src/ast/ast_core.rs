@@ -1,3 +1,4 @@
+use chumsky::prelude::SimpleSpan;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
@@ -9,10 +10,14 @@ use crate::{
     span::{Spanned, WithSpan},
 };
 
+pub type Span = SimpleSpan;
+
 pub type ExprSingleS = Spanned<ExprSingle>;
 pub type PrimaryExprS = Spanned<PrimaryExpr>;
 pub type StepExprS = Spanned<StepExpr>;
 pub type ExprS = Spanned<Expr>;
+pub type ExprOrEmpty = Option<Expr>;
+pub type ExprOrEmptyS = Spanned<ExprOrEmpty>;
 pub type NameS = Spanned<Name>;
 
 impl WithSpan for ExprSingle {}
@@ -20,6 +25,7 @@ impl WithSpan for PrimaryExpr {}
 impl WithSpan for StepExpr {}
 impl WithSpan for Expr {}
 impl WithSpan for Name {}
+impl WithSpan for ExprOrEmpty {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -61,12 +67,27 @@ pub struct QuantifiedExpr {
     pub satisfies_expr: Box<ExprSingleS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct Name {
     name: String,
     prefix: Option<String>,
     namespace: Option<String>,
+}
+
+// a custom hasher that ignores the prefix
+impl std::hash::Hash for Name {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        self.namespace.hash(state);
+    }
+}
+
+// and partial eq that ignores the prefix
+impl PartialEq for Name {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.namespace == other.namespace
+    }
 }
 
 impl Name {
@@ -176,7 +197,7 @@ pub enum Quantifier {
 pub enum PrimaryExpr {
     Literal(Literal),
     VarRef(Name),
-    Expr(ExprS),
+    Expr(ExprOrEmptyS),
     ContextItem,
     FunctionCall(FunctionCall),
     NamedFunctionRef(NamedFunctionRef),
@@ -290,7 +311,7 @@ pub struct NamedFunctionRef {
 pub struct InlineFunction {
     pub params: Vec<Param>,
     pub return_type: Option<SequenceType>,
-    pub body: Option<ExprS>,
+    pub body: ExprOrEmptyS,
 }
 
 // a function signature as described by:

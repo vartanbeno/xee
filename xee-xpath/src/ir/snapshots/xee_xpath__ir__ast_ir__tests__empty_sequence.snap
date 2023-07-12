@@ -29,34 +29,13 @@ Ok(
                             value: Const(
                                 EmptySequence,
                             ),
-                            span: SourceSpan {
-                                offset: SourceOffset(
-                                    0,
-                                ),
-                                length: SourceOffset(
-                                    2,
-                                ),
-                            },
+                            span: 0..2,
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            2,
-                        ),
-                    },
+                    span: 0..2,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                2,
-            ),
-        },
+        span: 0..2,
     },
 )

@@ -1,0 +1,19 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+assertion_line: 881
+expression: "convert_expr_single(\"my_function(5, 2)\")"
+---
+Err(
+    IncorrectFunctionNameOrWrongNumberOfArguments {
+        advice: "Either the function name Spanned { value: Name { name: \"my_function\", prefix: None, namespace: Some(\"http://www.w3.org/2005/xpath-functions\") }, span: 0..11 } does not exist, or you are calling it with the wrong number of arguments (2)",
+        src: "my_function(5, 2)",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                17,
+            ),
+        },
+    },
+)

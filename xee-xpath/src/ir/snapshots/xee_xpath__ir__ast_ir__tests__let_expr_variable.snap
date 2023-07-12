@@ -17,24 +17,10 @@ Ok(
                                     1,
                                 ),
                             ),
-                            span: SourceSpan {
-                                offset: SourceOffset(
-                                    10,
-                                ),
-                                length: SourceOffset(
-                                    1,
-                                ),
-                            },
+                            span: 10..11,
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            10,
-                        ),
-                        length: SourceOffset(
-                            1,
-                        ),
-                    },
+                    span: 10..11,
                 },
                 return_expr: Spanned {
                     value: Atom(
@@ -44,34 +30,13 @@ Ok(
                                     "v0",
                                 ),
                             ),
-                            span: SourceSpan {
-                                offset: SourceOffset(
-                                    19,
-                                ),
-                                length: SourceOffset(
-                                    2,
-                                ),
-                            },
+                            span: 19..21,
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            19,
-                        ),
-                        length: SourceOffset(
-                            2,
-                        ),
-                    },
+                    span: 19..21,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                21,
-            ),
-        },
+        span: 0..21,
     },
 )

@@ -12,26 +12,12 @@ Ok(
                             1,
                         ),
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            1,
-                        ),
-                    },
+                    span: 0..1,
                 },
                 xs: String,
                 empty_sequence_allowed: true,
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                20,
-            ),
-        },
+        span: 0..20,
     },
 )

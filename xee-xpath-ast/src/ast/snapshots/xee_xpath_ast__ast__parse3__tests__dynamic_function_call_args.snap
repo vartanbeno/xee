@@ -14,7 +14,7 @@ Ok(Path(PathExpr(
         ArgumentList([
           Path(PathExpr(
             steps: [
-              PrimaryExpr(Expr(Expr([
+              PrimaryExpr(Expr(Some(Expr([
                 Binary(BinaryExpr(
                   operator: Add,
                   left: PathExpr(
@@ -32,7 +32,7 @@ Ok(Path(PathExpr(
                     ],
                   ),
                 )),
-              ]))),
+              ])))),
             ],
           )),
           Path(PathExpr(

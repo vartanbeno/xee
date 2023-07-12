@@ -75,7 +75,9 @@ impl sequence::Item {
     fn item_type_matching(&self, item_type: &ast::ItemType) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => Ok(()),
-            ast::ItemType::AtomicOrUnionType(name) => self.to_atomic()?.atomic_type_matching(name),
+            ast::ItemType::AtomicOrUnionType(name) => {
+                self.to_atomic()?.atomic_type_matching(&name.value)
+            }
             _ => {
                 todo!("not yet")
             }

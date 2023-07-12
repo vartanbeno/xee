@@ -4,6 +4,7 @@ use miette::SourceSpan;
 use crate::context::{ContextRule, StaticContext};
 use crate::error::{Error, Result};
 use crate::ir;
+use crate::span;
 use crate::stack::{self, StaticFunctionId};
 
 use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
@@ -19,7 +20,7 @@ pub(crate) struct InterpreterCompiler<'a> {
 
 impl<'a> InterpreterCompiler<'a> {
     pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> Result<()> {
-        let span = expr.span;
+        let span = span::to_miette(expr.span);
         match &expr.value {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
             ir::Expr::Let(let_) => self.compile_let(let_, span),
@@ -42,35 +43,36 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
+        let span = span::to_miette(atom.span);
         match &atom.value {
             ir::Atom::Const(c) => {
                 match c {
                     ir::Const::Integer(i) => {
-                        self.builder.emit_constant((i.clone()).into(), atom.span);
+                        self.builder.emit_constant((i.clone()).into(), span);
                     }
                     ir::Const::String(s) => {
-                        self.builder.emit_constant((s).into(), atom.span);
+                        self.builder.emit_constant((s).into(), span);
                     }
                     ir::Const::Double(d) => {
-                        self.builder.emit_constant((*d).into(), atom.span);
+                        self.builder.emit_constant((*d).into(), span);
                     }
                     ir::Const::Decimal(d) => {
-                        self.builder.emit_constant((*d).into(), atom.span);
+                        self.builder.emit_constant((*d).into(), span);
                     }
                     ir::Const::EmptySequence => {
-                        self.builder.emit_constant(stack::Value::Empty, atom.span)
+                        self.builder.emit_constant(stack::Value::Empty, span)
                     }
                     ir::Const::StaticFunctionReference(static_function_id, context_names) => {
                         self.compile_static_function_reference(
                             *static_function_id,
                             context_names.as_ref(),
-                            atom.span,
+                            span,
                         )?;
                     }
                 };
                 Ok(())
             }
-            ir::Atom::Variable(name) => self.compile_variable(name, atom.span),
+            ir::Atom::Variable(name) => self.compile_variable(name, span),
         }
     }
 
@@ -1337,7 +1339,7 @@ mod tests {
         assert_debug_snapshot!(run_with_variables(
             "$foo",
             &[(
-                ast::Name::without_ns("foo"),
+                ast::Name::unprefixed("foo"),
                 vec![sequence::Item::from(atomic::Atomic::from("FOO"))]
             )],
         ))
@@ -1349,11 +1351,11 @@ mod tests {
             "$foo + $bar",
             &[
                 (
-                    ast::Name::without_ns("foo"),
+                    ast::Name::unprefixed("foo"),
                     vec![sequence::Item::from(atomic::Atomic::from(1i64))]
                 ),
                 (
-                    ast::Name::without_ns("bar"),
+                    ast::Name::unprefixed("bar"),
                     vec![sequence::Item::from(atomic::Atomic::from(2i64))]
                 )
             ]

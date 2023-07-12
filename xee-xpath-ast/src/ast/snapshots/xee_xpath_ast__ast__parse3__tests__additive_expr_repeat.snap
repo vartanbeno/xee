@@ -4,12 +4,12 @@ expression: "parse_expr_single(\"1 + 2 + 3\")"
 ---
 Ok(Path(PathExpr(
   steps: [
-    PrimaryExpr(Expr(Expr([
+    PrimaryExpr(Expr(Some(Expr([
       Binary(BinaryExpr(
         operator: Add,
         left: PathExpr(
           steps: [
-            PrimaryExpr(Expr(Expr([
+            PrimaryExpr(Expr(Some(Expr([
               Binary(BinaryExpr(
                 operator: Add,
                 left: PathExpr(
@@ -27,7 +27,7 @@ Ok(Path(PathExpr(
                   ],
                 ),
               )),
-            ]))),
+            ])))),
           ],
         ),
         right: PathExpr(
@@ -38,6 +38,6 @@ Ok(Path(PathExpr(
           ],
         ),
       )),
-    ]))),
+    ])))),
   ],
 )))

@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::interpreter::Program;
+use crate::{interpreter::Program, span};
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {
@@ -643,10 +643,14 @@ pub enum Error {
     FOXT0006,
 }
 
-impl From<xee_xpath_ast::Error> for Error {
+impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
     fn from(e: xee_xpath_ast::Error) -> Self {
-        match e {
-            xee_xpath_ast::Error::ParseError { src, span } => Error::Parse { src, span },
+        Error::Parse {
+            // TODO: we don't want to copy the source code, but
+            // otherwise we introduce a lifetime into Error which is painful right
+            // now
+            src: e.src.to_string(),
+            span: span::to_miette(e.span()),
         }
     }
 }

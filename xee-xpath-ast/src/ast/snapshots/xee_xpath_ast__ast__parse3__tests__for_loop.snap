@@ -10,7 +10,7 @@ Ok(For(ForExpr(
   ),
   var_expr: Path(PathExpr(
     steps: [
-      PrimaryExpr(Expr(Expr([
+      PrimaryExpr(Expr(Some(Expr([
         Binary(BinaryExpr(
           operator: Range,
           left: PathExpr(
@@ -28,7 +28,7 @@ Ok(For(ForExpr(
             ],
           ),
         )),
-      ]))),
+      ])))),
     ],
   )),
   return_expr: Path(PathExpr(

@@ -6,6 +6,7 @@ use super::ast_core as ast;
 pub(crate) trait AstVisitor {
     fn visit_xpath(&mut self, xpath: &mut ast::XPath);
     fn visit_expr(&mut self, expr: &mut ast::ExprS);
+    fn visit_expr_or_empty(&mut self, expr: &mut ast::ExprOrEmptyS);
     fn visit_expr_single(&mut self, expr: &mut ast::ExprSingleS);
     fn visit_path_expr(&mut self, expr: &mut ast::PathExpr);
     fn visit_apply_expr(&mut self, expr: &mut ast::ApplyExpr);
@@ -56,6 +57,17 @@ pub(crate) mod visit {
     pub(crate) fn visit_expr<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::ExprS) {
         for expr_single in expr.value.0.iter_mut() {
             v.visit_expr_single(expr_single);
+        }
+    }
+
+    pub(crate) fn visit_expr_or_empty<V: AstVisitor + ?Sized>(
+        v: &mut V,
+        expr: &mut ast::ExprOrEmptyS,
+    ) {
+        if let Some(expr) = &mut expr.value {
+            for expr_single in expr.0.iter_mut() {
+                v.visit_expr_single(expr_single);
+            }
         }
     }
 
@@ -257,7 +269,7 @@ pub(crate) mod visit {
                 v.visit_var_ref(var_ref);
             }
             ast::PrimaryExpr::Expr(expr) => {
-                v.visit_expr(expr);
+                v.visit_expr_or_empty(expr);
             }
             ast::PrimaryExpr::ContextItem => {
                 v.visit_context_item();
@@ -331,9 +343,7 @@ pub(crate) mod visit {
             v.visit_param(param);
         }
         v.visit_sequence_type(&mut inline_function.return_type);
-        if let Some(expr) = &mut inline_function.body {
-            v.visit_expr(expr);
-        }
+        v.visit_expr_or_empty(&mut inline_function.body);
     }
 
     pub(crate) fn visit_param<V: AstVisitor + ?Sized>(v: &mut V, param: &mut ast::Param) {

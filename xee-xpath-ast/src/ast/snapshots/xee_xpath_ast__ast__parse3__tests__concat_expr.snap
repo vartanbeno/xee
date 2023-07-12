@@ -4,7 +4,7 @@ expression: "parse_expr_single(\"'a' || 'b'\")"
 ---
 Ok(Path(PathExpr(
   steps: [
-    PrimaryExpr(Expr(Expr([
+    PrimaryExpr(Expr(Some(Expr([
       Binary(BinaryExpr(
         operator: Concat,
         left: PathExpr(
@@ -18,6 +18,6 @@ Ok(Path(PathExpr(
           ],
         ),
       )),
-    ]))),
+    ])))),
   ],
 )))

@@ -30,9 +30,13 @@ Ok(
                                 axis: Child,
                                 node_test: NameTest(
                                     Name(
-                                        Name {
-                                            name: "a",
-                                            namespace: None,
+                                        Spanned {
+                                            value: Name {
+                                                name: "a",
+                                                prefix: None,
+                                                namespace: None,
+                                            },
+                                            span: 7..8,
                                         },
                                     ),
                                 ),
@@ -43,35 +47,14 @@ Ok(
                                         "v0",
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        0,
-                                    ),
-                                    length: SourceOffset(
-                                        0,
-                                    ),
-                                },
+                                span: 0..0,
                             },
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            8,
-                        ),
-                    },
+                    span: 0..8,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                8,
-            ),
-        },
+        span: 0..8,
     },
 )

@@ -2,6 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
+use xee_xpath_ast::FN_NAMESPACE;
 
 use crate::error;
 use crate::func::{fn_static_function_descriptions, xs_static_function_descriptions};
@@ -68,7 +69,7 @@ impl StaticFunctionDescription {
             .expect("Signature parse failed unexpectedly");
 
         Self {
-            name: signature.name,
+            name: signature.name.value,
             arity: signature.params.len(),
             function_kind,
             func,
@@ -247,7 +248,7 @@ impl StaticFunctions {
         name: &ast::Name,
         arity: u8,
     ) -> Option<stack::StaticFunctionId> {
-        // XXX annoying clone
+        // TODO annoying clone
         self.by_name.get(&(name.clone(), arity)).copied()
     }
 

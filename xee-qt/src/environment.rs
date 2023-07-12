@@ -38,7 +38,7 @@ impl EnvironmentSpec {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, source_cache)?;
-                variables.push((Name::without_ns(name), vec![Item::from(node)]));
+                variables.push((Name::unprefixed(name), vec![Item::from(node)]));
             }
         }
         Ok(variables)

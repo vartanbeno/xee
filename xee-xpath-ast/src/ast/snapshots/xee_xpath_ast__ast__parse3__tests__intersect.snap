@@ -4,7 +4,7 @@ expression: "parse_expr_single(\"child::foo intersect child::bar\")"
 ---
 Ok(Path(PathExpr(
   steps: [
-    PrimaryExpr(Expr(Expr([
+    PrimaryExpr(Expr(Some(Expr([
       Binary(BinaryExpr(
         operator: Intersect,
         left: PathExpr(
@@ -34,6 +34,6 @@ Ok(Path(PathExpr(
           ],
         ),
       )),
-    ]))),
+    ])))),
   ],
 )))

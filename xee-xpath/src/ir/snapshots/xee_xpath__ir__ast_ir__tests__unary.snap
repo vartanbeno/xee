@@ -13,24 +13,10 @@ Ok(
                             1,
                         ),
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            1,
-                        ),
-                        length: SourceOffset(
-                            1,
-                        ),
-                    },
+                    span: 1..2,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                2,
-            ),
-        },
+        span: 0..2,
     },
 )

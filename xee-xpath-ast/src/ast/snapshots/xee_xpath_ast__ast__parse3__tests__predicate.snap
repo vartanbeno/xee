@@ -5,7 +5,7 @@ expression: "parse_expr_single(\"(1, 2)[2]\")"
 Ok(Path(PathExpr(
   steps: [
     PostfixExpr(
-      primary: Expr(Expr([
+      primary: Expr(Some(Expr([
         Path(PathExpr(
           steps: [
             PrimaryExpr(Literal(Integer((Positive, [
@@ -20,7 +20,7 @@ Ok(Path(PathExpr(
             ])))),
           ],
         )),
-      ])),
+      ]))),
       postfixes: [
         Predicate(Expr([
           Path(PathExpr(

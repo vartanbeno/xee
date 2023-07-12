@@ -15,7 +15,7 @@ use crate::xml;
 pub(crate) type AtomS = Spanned<Atom>;
 pub(crate) type ExprS = Spanned<Expr>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Expr {
     Atom(AtomS),
     Let(Let),
@@ -33,13 +33,13 @@ pub(crate) enum Expr {
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Atom {
     Const(Const),
     Variable(Name),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Const {
     Integer(IBig),
     String(String),
@@ -50,79 +50,79 @@ pub(crate) enum Const {
     EmptySequence,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Name(pub(crate) String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ContextNames {
     pub(crate) item: Name,
     pub(crate) position: Name,
     pub(crate) last: Name,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Let {
     pub(crate) name: Name,
     pub(crate) var_expr: Box<ExprS>,
     pub(crate) return_expr: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct If {
     pub(crate) condition: AtomS,
     pub(crate) then: Box<ExprS>,
     pub(crate) else_: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Binary {
     pub(crate) left: AtomS,
     pub(crate) op: BinaryOperator,
     pub(crate) right: AtomS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Unary {
     pub(crate) op: UnaryOperator,
     pub(crate) atom: AtomS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionDefinition {
     pub(crate) params: Vec<Param>,
     pub(crate) body: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Param(pub(crate) Name);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionCall {
     pub(crate) atom: AtomS,
     pub(crate) args: Vec<AtomS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Step {
     pub(crate) step: xml::Step,
     pub(crate) context: AtomS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Map {
     pub(crate) context_names: ContextNames,
     pub(crate) var_atom: AtomS,
     pub(crate) return_expr: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Filter {
     pub(crate) context_names: ContextNames,
     pub(crate) var_atom: AtomS,
     pub(crate) return_expr: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Quantified {
     pub(crate) quantifier: Quantifier,
     pub(crate) context_names: ContextNames,
@@ -130,13 +130,13 @@ pub(crate) struct Quantified {
     pub(crate) satisifies_expr: Box<ExprS>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Quantifier {
     Some,
     Every,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Cast {
     pub(crate) atom: AtomS,
     pub(crate) xs: Xs,
@@ -152,7 +152,7 @@ impl Cast {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Castable {
     pub(crate) atom: AtomS,
     pub(crate) xs: Xs,

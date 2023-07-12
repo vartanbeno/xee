@@ -27,7 +27,7 @@ Ok(Path(PathExpr(
       body: Some(Expr([
         Path(PathExpr(
           steps: [
-            PrimaryExpr(Expr(Expr([
+            PrimaryExpr(Expr(Some(Expr([
               Binary(BinaryExpr(
                 operator: Add,
                 left: PathExpr(
@@ -49,7 +49,7 @@ Ok(Path(PathExpr(
                   ],
                 ),
               )),
-            ]))),
+            ])))),
           ],
         )),
       ])),

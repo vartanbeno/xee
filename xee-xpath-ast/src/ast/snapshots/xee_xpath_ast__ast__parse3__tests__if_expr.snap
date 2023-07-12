@@ -6,7 +6,7 @@ Ok(If(IfExpr(
   condition: Expr([
     Path(PathExpr(
       steps: [
-        PrimaryExpr(Expr(Expr([
+        PrimaryExpr(Expr(Some(Expr([
           Path(PathExpr(
             steps: [
               PrimaryExpr(Literal(Integer((Positive, [
@@ -14,7 +14,7 @@ Ok(If(IfExpr(
               ])))),
             ],
           )),
-        ]))),
+        ])))),
       ],
     )),
   ]),

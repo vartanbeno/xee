@@ -6,9 +6,9 @@ use rust_decimal::Decimal;
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(subpattern name_start_char_without_colon = r"[A-Za-z_\u{c0}-\u{d6}\u{d8}-\u{f6}\u{f8}-\u{2ff}\u{370}-\u{37d}\u{37f}-\u{1fff}\u{200c}-\u{200d}\u{2070}-\u{218f}\u{2c00}-\u{2fef}\u{3001}-\u{d7ff}\u{f900}-\u{fdfc}\u{fdf0}-\u{fffd}\u{10000}-\u{effff}]")]
-#[logos(subpattern name_char_without_colon = r"(?&name_start_char_without_colon)|\-\.0-9\u{b7}\u{300}-\u{36F}\u{203f}-\u{2040}]")]
+#[logos(subpattern name_char_without_colon = r"(?&name_start_char_without_colon)|[\-\.0-9\u{b7}\u{300}-\u{36F}\u{203f}-\u{2040}]")]
 #[logos(subpattern ncname = r"(?&name_start_char_without_colon)(?&name_char_without_colon)*")]
-pub(crate) enum Token<'a> {
+pub enum Token<'a> {
     Error,
     #[regex(r"[0-9]+", integer_literal, priority = 3)]
     IntegerLiteral(IBig),
@@ -22,7 +22,7 @@ pub(crate) enum Token<'a> {
     DoubleLiteral(f64),
     #[regex(r#""(?:""|[^"])*"|'(?:''|[^'])*'"#, string_literal, priority = 1)]
     StringLiteral(Cow<'a, str>),
-    #[regex(r"(?&ncname)", priority = 1)]
+    #[regex(r"(?&ncname)")]
     NCName(&'a str),
     // QName is a token according to the spec, but it's too complex to analyze
     // in the lexer, so we will do it in the grammar. QName always ends with an
@@ -417,31 +417,21 @@ impl<'a> Iterator for XPathLexer<'a> {
                     use SymbolType::*;
                     match token.symbol_type() {
                         Delimiting => {
-                            match token {
-                                // T is an NCName and U is "-"
-                                Token::Minus => {
-                                    if self.last_is_non_delimiting
-                                        && !self.last_is_separator
-                                        && matches!(self.last_terminal, LastTerminal::NCName)
-                                    {
-                                        return Some((Err(()), span.clone()));
-                                    }
+                            // if T is an NCName and U is "-" or ".", then the
+                            // lexer will absorb the "-" and "." at the end of
+                            // the ncname. This is a valid NCName and should be
+                            // accepted.
+
+                            // We still need to handle the case where a dot
+                            // appears after a numeric literal
+                            if matches!(token, Token::Dot) {
+                                if self.last_is_non_delimiting
+                                    && !self.last_is_separator
+                                    && matches!(self.last_terminal, LastTerminal::NumericLiteral)
+                                {
+                                    return Some((Err(()), span.clone()));
                                 }
-                                // T is an NCName and U is "."
-                                // T is a numeric literal and U is "."
-                                Token::Dot => {
-                                    if self.last_is_non_delimiting
-                                        && !self.last_is_separator
-                                        && matches!(
-                                            self.last_terminal,
-                                            LastTerminal::NCName | LastTerminal::NumericLiteral
-                                        )
-                                    {
-                                        return Some((Err(()), span.clone()));
-                                    }
-                                    self.last_terminal = LastTerminal::Dot;
-                                }
-                                _ => {}
+                                self.last_terminal = LastTerminal::Dot;
                             }
                             self.last_is_separator = false;
                             self.last_is_non_delimiting = false;
@@ -777,12 +767,12 @@ mod tests {
     }
 
     #[test]
-    fn qname_then_dot_must_have_separator() {
+    fn qname_then_dot_is_ncname() {
         let mut lex = lexer("xs:integer.");
         assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
         assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
-        assert_eq!(lex.next(), Some((Ok(Token::NCName("integer")), (3..10))));
-        assert_eq!(lex.next(), Some((Err(()), 10..11)));
+        assert_eq!(lex.next(), Some((Ok(Token::NCName("integer.")), (3..11))));
+        assert_eq!(lex.next(), None);
     }
 
     #[test]
@@ -795,12 +785,12 @@ mod tests {
     }
 
     #[test]
-    fn qname_then_minus_must_have_separator() {
+    fn qname_then_minus_is_ncname() {
         let mut lex = lexer("xs:integer-");
         assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
         assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
-        assert_eq!(lex.next(), Some((Ok(Token::NCName("integer")), (3..10))));
-        assert_eq!(lex.next(), Some((Err(()), 10..11)));
+        assert_eq!(lex.next(), Some((Ok(Token::NCName("integer-")), (3..11))));
+        assert_eq!(lex.next(), None);
     }
 
     #[test]
@@ -862,5 +852,11 @@ mod tests {
             Some((Ok(Token::IntegerLiteral(ibig!(2))), (14..15)))
         );
         assert_eq!(lex.next(), Some((Ok(Token::RightParen), (15..16))));
+    }
+
+    #[test]
+    fn test_ncname_contains_minus() {
+        let mut lex = lexer("a-b");
+        assert_eq!(lex.next(), Some((Ok(Token::NCName("a-b")), (0..3))));
     }
 }

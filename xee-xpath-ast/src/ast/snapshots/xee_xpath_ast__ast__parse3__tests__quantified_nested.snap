@@ -11,7 +11,7 @@ Ok(Quantified(QuantifiedExpr(
   ),
   var_expr: Path(PathExpr(
     steps: [
-      PrimaryExpr(Expr(Expr([
+      PrimaryExpr(Expr(Some(Expr([
         Path(PathExpr(
           steps: [
             PrimaryExpr(Literal(Integer((Positive, [
@@ -26,7 +26,7 @@ Ok(Quantified(QuantifiedExpr(
             ])))),
           ],
         )),
-      ]))),
+      ])))),
     ],
   )),
   satisfies_expr: Quantified(QuantifiedExpr(
@@ -38,7 +38,7 @@ Ok(Quantified(QuantifiedExpr(
     ),
     var_expr: Path(PathExpr(
       steps: [
-        PrimaryExpr(Expr(Expr([
+        PrimaryExpr(Expr(Some(Expr([
           Path(PathExpr(
             steps: [
               PrimaryExpr(Literal(Integer((Positive, [
@@ -53,17 +53,17 @@ Ok(Quantified(QuantifiedExpr(
               ])))),
             ],
           )),
-        ]))),
+        ])))),
       ],
     )),
     satisfies_expr: Path(PathExpr(
       steps: [
-        PrimaryExpr(Expr(Expr([
+        PrimaryExpr(Expr(Some(Expr([
           Binary(BinaryExpr(
             operator: And,
             left: PathExpr(
               steps: [
-                PrimaryExpr(Expr(Expr([
+                PrimaryExpr(Expr(Some(Expr([
                   Binary(BinaryExpr(
                     operator: GenGt,
                     left: PathExpr(
@@ -81,12 +81,12 @@ Ok(Quantified(QuantifiedExpr(
                       ],
                     ),
                   )),
-                ]))),
+                ])))),
               ],
             ),
             right: PathExpr(
               steps: [
-                PrimaryExpr(Expr(Expr([
+                PrimaryExpr(Expr(Some(Expr([
                   Binary(BinaryExpr(
                     operator: GenGt,
                     left: PathExpr(
@@ -104,11 +104,11 @@ Ok(Quantified(QuantifiedExpr(
                       ],
                     ),
                   )),
-                ]))),
+                ])))),
               ],
             ),
           )),
-        ]))),
+        ])))),
       ],
     )),
   )),

@@ -19,25 +19,11 @@ Ok(
                                         1,
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        2,
-                                    ),
-                                    length: SourceOffset(
-                                        1,
-                                    ),
-                                },
+                                span: 2..3,
                             },
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            3,
-                        ),
-                    },
+                    span: 0..3,
                 },
                 return_expr: Spanned {
                     value: Unary(
@@ -49,35 +35,14 @@ Ok(
                                         "v1",
                                     ),
                                 ),
-                                span: SourceSpan {
-                                    offset: SourceOffset(
-                                        0,
-                                    ),
-                                    length: SourceOffset(
-                                        3,
-                                    ),
-                                },
+                                span: 0..3,
                             },
                         },
                     ),
-                    span: SourceSpan {
-                        offset: SourceOffset(
-                            0,
-                        ),
-                        length: SourceOffset(
-                            3,
-                        ),
-                    },
+                    span: 0..3,
                 },
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                3,
-            ),
-        },
+        span: 0..3,
     },
 )

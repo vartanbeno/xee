@@ -667,7 +667,7 @@ fn run_xpath(expr: &qt::XPathExpr, xot: &Xot) -> Result<Sequence> {
 
 fn run_xpath_with_result(expr: &qt::XPathExpr, sequence: &Sequence, xot: &Xot) -> Result<Sequence> {
     let namespaces = Namespaces::default();
-    let name = Name::without_ns("result");
+    let name = Name::unprefixed("result");
     let names = vec![name.clone()];
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
