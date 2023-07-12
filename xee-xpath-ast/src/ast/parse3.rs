@@ -133,7 +133,15 @@ where
 
     let element_name_or_wildcard = just(Token::Asterisk)
         .to(ast::ElementNameOrWildcard::Wildcard)
-        .or(eqname.clone().map(ast::ElementNameOrWildcard::Name));
+        .or(eqname
+            .clone()
+            .map_with_state(|name, _span, state: &mut State| {
+                // use default element namespace; we can do this without worrying
+                // about context, as it's an element name test
+                ast::ElementNameOrWildcard::Name(name.map(|name| {
+                    name.with_default_namespace(state.namespaces.default_element_namespace)
+                }))
+            }));
 
     let type_name = eqname.clone();
 
@@ -148,7 +156,7 @@ where
     let element_test_content = element_name_or_wildcard
         .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
         .map(|(name_test, type_name)| ast::ElementTest {
-            name_test,
+            element_name_or_wildcard: name_test,
             type_name,
         });
 
@@ -182,8 +190,8 @@ where
 
     let attribute_test_content = attrib_name_or_wildcard
         .then((just(Token::Comma).ignore_then(type_name)).or_not())
-        .map(|(name_test, type_name)| ast::AttributeTest {
-            name_test,
+        .map(|(attrib_name_or_wildcard, type_name)| ast::AttributeTest {
+            attrib_name_or_wildcard,
             type_name,
         });
 
@@ -292,13 +300,29 @@ where
         .map(|name| ast::NameTest::LocalName(name.to_string()));
     let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star);
 
-    let wildcard = wildcard_ncname
+    let name_test_wildcard = wildcard_ncname
         .or(wildcard_braced_uri_literal)
         .or(wildcard_localname)
         .or(wildcard_star)
         .boxed();
 
-    let name_test = wildcard.or(eqname.clone().map(ast::NameTest::Name));
+    let name_test_name = eqname.clone().map(ast::NameTest::Name);
+    // .configure(|cfg, ctx: &Context| {
+    //     cfg.map_with_state(|name, _span, state: &mut State| {
+    //         // this is context dependent: if the axis not the attribute
+    //         // axis, then we want to use the default element namespace,
+    //         // otherwise we don't
+    //         if !ctx.in_attribute_axis {
+    //             ast::NameTest::Name(name.map(|name| {
+    //                 name.with_default_namespace(state.namespaces.default_element_namespace)
+    //             }))
+    //         } else {
+    //             ast::NameTest::Name(name)
+    //         }
+    //     })
+    // });
+
+    let name_test = name_test_wildcard.or(name_test_name).boxed();
 
     let parent_axis = just(Token::Parent)
         .ignore_then(just(Token::DoubleColon))
@@ -381,6 +405,7 @@ where
         .then(node_test.clone())
         .map(|(at, node_test)| {
             if at.is_some() {
+                // strip default namespace from node test
                 (ast::Axis::Attribute, node_test)
             } else {
                 // https://www.w3.org/TR/xpath-31/#abbrev

@@ -103,6 +103,19 @@ impl Name {
         }
     }
 
+    pub fn with_default_namespace(self, uri: Option<&str>) -> Self {
+        if let Some(uri) = uri {
+            if self.namespace.is_none() {
+                return Name {
+                    name: self.name,
+                    namespace: Some(uri.to_string()),
+                    prefix: None,
+                };
+            }
+        }
+        self
+    }
+
     pub fn namespace(&self) -> Option<&str> {
         self.namespace.as_deref()
     }
@@ -481,7 +494,7 @@ pub enum DocumentTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct ElementTest {
-    pub name_test: ElementNameOrWildcard,
+    pub element_name_or_wildcard: ElementNameOrWildcard,
     pub type_name: Option<ElementTypeName>,
 }
 
@@ -502,7 +515,7 @@ pub enum ElementNameOrWildcard {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct AttributeTest {
-    pub name_test: AttribNameOrWildcard,
+    pub attrib_name_or_wildcard: AttribNameOrWildcard,
     pub type_name: Option<NameS>,
 }
 

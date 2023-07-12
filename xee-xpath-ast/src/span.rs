@@ -32,9 +32,9 @@ impl<T> Spanned<T> {
         Self { value, span }
     }
 
-    pub fn map(&self, f: impl FnOnce(&T) -> T) -> Self {
+    pub fn map(self, f: impl FnOnce(T) -> T) -> Self {
         Self {
-            value: f(&self.value),
+            value: f(self.value),
             span: self.span,
         }
     }

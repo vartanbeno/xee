@@ -7,7 +7,7 @@ Ok(Path(PathExpr(
     AxisStep(AxisStep(
       axis: Self_,
       node_test: KindTest(Attribute(Some(AttributeTest(
-        name_test: Name(Name(
+        attrib_name_or_wildcard: Name(Name(
           name: "foo",
           prefix: None,
           namespace: None,
