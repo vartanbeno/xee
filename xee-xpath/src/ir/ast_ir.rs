@@ -747,14 +747,14 @@ impl<'a> IrConverter<'a> {
 
 fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
     let ast = xee_xpath_ast::ast::parse_expr_single(s)?;
-    let namespaces = Namespaces::new(None, None);
+    let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_expr_single(&ast)
 }
 
 pub(crate) fn convert_xpath(s: &str) -> Result<ir::ExprS> {
-    let namespaces = Namespaces::new(None, None);
+    let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
     let ast = xee_xpath_ast::ast::parse_xpath(s, &namespaces, &[])?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);

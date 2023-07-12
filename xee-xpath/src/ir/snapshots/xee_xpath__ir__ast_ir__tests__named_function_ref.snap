@@ -14,23 +14,9 @@ Ok(
                         None,
                     ),
                 ),
-                span: SourceSpan {
-                    offset: SourceOffset(
-                        0,
-                    ),
-                    length: SourceOffset(
-                        13,
-                    ),
-                },
+                span: 0..13,
             },
         ),
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: SourceOffset(
-                13,
-            ),
-        },
+        span: 0..13,
     },
 )

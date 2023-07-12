@@ -405,7 +405,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::CompilationError(Error::Parse {
                 src: "1 @#!".to_string(),
-                span: (2, 0).into()
+                span: (2, 1).into()
             })
         );
     }

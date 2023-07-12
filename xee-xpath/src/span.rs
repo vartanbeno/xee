@@ -65,7 +65,7 @@ mod tests {
         // I think this is because the parser consumes this space
         // let's accept this behavior for now
         let r = evaluate_without_focus(expr);
-        assert_eq!(span(r), Some((0, 14).into()));
+        assert_eq!(span(r), Some((0, 13).into()));
     }
 
     #[test]

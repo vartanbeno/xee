@@ -38,21 +38,32 @@ impl FunctionKind {
     }
 }
 
-// pub(crate) type StaticFunctionType =
-//     fn(context: &DynamicContext, arguments: &[stack::Value]) -> stack::Result<stack::Value>;
 pub(crate) type StaticFunctionType = fn(
     context: &DynamicContext,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence>;
-
-// pub(crate) type StaticFunctionType2 =
-//     fn(context: &DynamicContext, arguments: &[sequence::Sequence]) -> stack::Result<sequence::Sequence>;
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
     pub(crate) arity: usize,
     pub(crate) function_kind: Option<FunctionKind>,
     pub(crate) func: StaticFunctionType,
+}
+
+// Wraps a Rust function annotated with `#[xpath_fn]` and turns it
+// into a StaticFunctionDescription
+#[macro_export]
+macro_rules! wrap_xpath_fn {
+    ($function:path) => {{
+        use $function as wrapped_function;
+        let namespaces = xee_xpath_ast::Namespaces::default();
+        $crate::context::StaticFunctionDescription::new(
+            wrapped_function::WRAPPER,
+            wrapped_function::SIGNATURE,
+            $crate::context::FunctionKind::parse(wrapped_function::KIND),
+            &namespaces,
+        )
+    }};
 }
 
 impl StaticFunctionDescription {
@@ -75,25 +86,7 @@ impl StaticFunctionDescription {
             func,
         }
     }
-}
 
-// Wraps a Rust function annotated with `#[xpath_fn]` and turns it
-// into a StaticFunctionDescription
-#[macro_export]
-macro_rules! wrap_xpath_fn {
-    ($function:path) => {{
-        use $function as wrapped_function;
-        let namespaces = xee_xpath_ast::Namespaces::default();
-        $crate::context::StaticFunctionDescription::new(
-            wrapped_function::WRAPPER,
-            wrapped_function::SIGNATURE,
-            $crate::context::FunctionKind::parse(wrapped_function::KIND),
-            &namespaces,
-        )
-    }};
-}
-
-impl StaticFunctionDescription {
     fn functions(&self) -> Vec<StaticFunction> {
         if let Some(function_kind) = &self.function_kind {
             match function_kind {

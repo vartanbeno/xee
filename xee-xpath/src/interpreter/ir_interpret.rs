@@ -589,7 +589,7 @@ mod tests {
 
     fn run(s: &str) -> Result<stack::Value> {
         let xot = Xot::new();
-        let namespaces = Namespaces::new(None, None);
+        let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
@@ -601,7 +601,7 @@ mod tests {
         variables: &[(ast::Name, Vec<sequence::Item>)],
     ) -> Result<stack::Value> {
         let xot = Xot::new();
-        let namespaces = Namespaces::new(None, None);
+        let namespaces = Namespaces::default();
         let variable_names = variables
             .iter()
             .map(|(name, _)| name.clone())
@@ -614,7 +614,7 @@ mod tests {
 
     fn run_debug(s: &str) -> Result<stack::Value> {
         let xot = Xot::new();
-        let namespaces = Namespaces::new(None, None);
+        let namespaces = Namespaces::default();
         let static_context = StaticContext::new(&namespaces);
         let context = DynamicContext::new(&xot, &static_context);
         let xpath = XPath::new(context.static_context, s)?;
