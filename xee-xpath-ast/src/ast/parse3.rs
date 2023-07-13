@@ -259,6 +259,83 @@ where
 }
 
 #[derive(Clone)]
+struct ParserTypeOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    single_type: BoxedParser<'a, I, ast::SingleType>,
+}
+
+fn parser_type<'a, I>(
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    empty_call: BoxedParser<'a, I, Token<'a>>,
+    ncname: BoxedParser<'a, I, &'a str>,
+    string: BoxedParser<'a, I, Cow<'a, str>>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
+) -> ParserTypeOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let single_type = eqname
+        .clone()
+        .then(just(Token::QuestionMark).or_not())
+        .map_with_span(|(name, question_mark), _span| ast::SingleType {
+            name,
+            optional: question_mark.is_some(),
+        })
+        .boxed();
+
+    let empty = just(Token::EmptySequence)
+        .ignore_then(empty_call.clone())
+        .to(ast::SequenceType::Empty)
+        .boxed();
+
+    let item_type_kind_test = kind_test.clone().map(ast::ItemType::KindTest);
+    let item_type_empty = just(Token::Item)
+        .ignore_then(empty_call.clone())
+        .to(ast::ItemType::Item)
+        .boxed();
+    let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
+    let item_type = recursive(|item_type| {
+        let parenthesized_item_type =
+            item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
+        item_type_empty
+            .or(item_type_atomic_or_union)
+            .or(parenthesized_item_type)
+            .or(item_type_kind_test)
+    })
+    .boxed();
+
+    let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
+        .map(|c| match c {
+            Token::QuestionMark => ast::Occurrence::Option,
+            Token::Asterisk => ast::Occurrence::Many,
+            Token::Plus => ast::Occurrence::NonEmpty,
+            _ => unreachable!(),
+        })
+        .or_not()
+        .map(|o| o.unwrap_or(ast::Occurrence::One))
+        .boxed();
+
+    let item = item_type
+        .clone()
+        .then(occurrence)
+        .map(|(item_type, occurrence)| ast::Item {
+            item_type,
+            occurrence,
+        })
+        .boxed();
+
+    let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
+
+    ParserTypeOutput {
+        sequence_type,
+        single_type,
+    }
+}
+
+#[derive(Clone)]
 struct ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
@@ -329,69 +406,6 @@ where
     let context_item_expr = just(Token::Dot)
         .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
         .boxed();
-
-    let single_type = eqname
-        .clone()
-        .then(just(Token::QuestionMark).or_not())
-        .map_with_span(|(name, question_mark), _span| ast::SingleType {
-            name,
-            optional: question_mark.is_some(),
-        })
-        .boxed();
-
-    let empty_call = just(Token::LeftParen)
-        .ignore_then(just(Token::RightParen))
-        .boxed();
-
-    let ParserKindTestOutput { kind_test } = parser_kind_test(
-        eqname.clone(),
-        empty_call.clone(),
-        ncname.clone(),
-        string.clone(),
-    );
-
-    let empty = just(Token::EmptySequence)
-        .ignore_then(empty_call.clone())
-        .to(ast::SequenceType::Empty)
-        .boxed();
-
-    let item_type_kind_test = kind_test.clone().map(ast::ItemType::KindTest);
-    let item_type_empty = just(Token::Item)
-        .ignore_then(empty_call.clone())
-        .to(ast::ItemType::Item)
-        .boxed();
-    let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
-    let item_type = recursive(|item_type| {
-        let parenthesized_item_type =
-            item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
-        item_type_empty
-            .or(item_type_atomic_or_union)
-            .or(parenthesized_item_type)
-            .or(item_type_kind_test)
-    })
-    .boxed();
-
-    let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
-        .map(|c| match c {
-            Token::QuestionMark => ast::Occurrence::Option,
-            Token::Asterisk => ast::Occurrence::Many,
-            Token::Plus => ast::Occurrence::NonEmpty,
-            _ => unreachable!(),
-        })
-        .or_not()
-        .map(|o| o.unwrap_or(ast::Occurrence::One))
-        .boxed();
-
-    let item = item_type
-        .clone()
-        .then(occurrence)
-        .map(|(item_type, occurrence)| ast::Item {
-            item_type,
-            occurrence,
-        })
-        .boxed();
-
-    let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
     let wildcard_ncname = ncname
         .clone()
@@ -465,6 +479,17 @@ where
         ancestor_or_self_axis,
     ])
     .boxed();
+
+    let empty_call = just(Token::LeftParen)
+        .ignore_then(just(Token::RightParen))
+        .boxed();
+
+    let ParserKindTestOutput { kind_test } = parser_kind_test(
+        eqname.clone(),
+        empty_call.clone(),
+        ncname.clone(),
+        string.clone(),
+    );
 
     let node_test_element_name = name_test_element
         .clone()
@@ -578,6 +603,17 @@ where
             .with_span(span)
         })
         .boxed();
+
+    let ParserTypeOutput {
+        sequence_type,
+        single_type,
+    } = parser_type(
+        eqname.clone(),
+        empty_call.clone(),
+        ncname.clone(),
+        string.clone(),
+        kind_test.clone(),
+    );
 
     let type_declaration = just(Token::As).ignore_then(sequence_type.clone()).boxed();
 
