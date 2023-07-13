@@ -56,7 +56,26 @@ where
     xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
-fn parser<'a, I>() -> ParserOutput<'a, I>
+#[derive(Clone)]
+struct ParserSupplementOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    literal: BoxedParser<'a, I, ast::PrimaryExprS>,
+    var_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
+    context_item_expr: BoxedParser<'a, I, ast::PrimaryExprS>,
+    named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
+    param_list: BoxedParser<'a, I, Vec<ast::Param>>,
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    reverse_step: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
+    forward_step: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
+    single_type: BoxedParser<'a, I, ast::SingleType>,
+    signature: BoxedParser<'a, I, ast::Signature>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
+}
+
+fn parser_supplement<'a, I>() -> ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
@@ -548,6 +567,40 @@ where
         })
         .boxed();
 
+    ParserSupplementOutput {
+        eqname,
+        literal,
+        var_ref,
+        context_item_expr,
+        named_function_ref,
+        param_list,
+        sequence_type,
+        reverse_step,
+        forward_step,
+        single_type,
+        signature,
+        kind_test,
+    }
+}
+
+fn parser<'a, I>() -> ParserOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let ParserSupplementOutput {
+        eqname,
+        literal,
+        var_ref,
+        context_item_expr,
+        named_function_ref,
+        param_list,
+        sequence_type,
+        reverse_step,
+        forward_step,
+        single_type,
+        signature,
+        kind_test,
+    } = parser_supplement();
     // ugly way to get expr out of recursive
     let mut expr_ = None;
 
