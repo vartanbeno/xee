@@ -270,8 +270,6 @@ where
 fn parser_type<'a, I>(
     eqname: BoxedParser<'a, I, ast::NameS>,
     empty_call: BoxedParser<'a, I, Token<'a>>,
-    ncname: BoxedParser<'a, I, &'a str>,
-    string: BoxedParser<'a, I, Cow<'a, str>>,
     kind_test: BoxedParser<'a, I, ast::KindTest>,
 ) -> ParserTypeOutput<'a, I>
 where
@@ -607,13 +605,7 @@ where
     let ParserTypeOutput {
         sequence_type,
         single_type,
-    } = parser_type(
-        eqname.clone(),
-        empty_call.clone(),
-        ncname.clone(),
-        string.clone(),
-        kind_test.clone(),
-    );
+    } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
 
     let type_declaration = just(Token::As).ignore_then(sequence_type.clone()).boxed();
 
