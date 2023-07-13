@@ -1,0 +1,9 @@
+---
+source: xee-xpath-ast/src/parser/mod.rs
+expression: "ast::Name::parse(\"foo\")"
+---
+Ok(Name(
+  name: "foo",
+  prefix: None,
+  namespace: None,
+))

@@ -1,0 +1,16 @@
+---
+source: xee-xpath-ast/src/parser/mod.rs
+expression: "ast::ExprSingle::parse(\"Q{http://example.com}something()\")"
+---
+Ok(Path(PathExpr(
+  steps: [
+    PrimaryExpr(FunctionCall(FunctionCall(
+      name: Name(
+        name: "something",
+        prefix: None,
+        namespace: Some("http://example.com"),
+      ),
+      arguments: [],
+    ))),
+  ],
+)))

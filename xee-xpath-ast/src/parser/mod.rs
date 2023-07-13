@@ -10,7 +10,6 @@ mod xpath_type;
 use chumsky::input::Stream;
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
-use std::iter::once;
 
 use crate::ast;
 use crate::ast::unique_names;
@@ -18,813 +17,9 @@ use crate::ast::Span;
 use crate::error::{Error, Result};
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
-use crate::span::WithSpan;
-use crate::FN_NAMESPACE;
 
-use super::parser::axis_node_test::{parser_axis_node_test, ParserAxisNodeTestOutput};
-use super::parser::kind_test::{parser_kind_test, ParserKindTestOutput};
-use super::parser::name::{parser_name, ParserNameOutput};
-use super::parser::primary::{check_reserved, parser_primary, ParserPrimaryOutput};
-use super::parser::signature::{parser_signature, ParserSignatureOutput};
+use super::parser::parser_core::parser;
 use super::parser::types::{BoxedParser, State};
-use super::parser::xpath_type::{parser_type, ParserTypeOutput};
-
-#[derive(Clone)]
-struct ParserOutput<'a, I>
-where
-    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-{
-    #[cfg(test)]
-    name: BoxedParser<'a, I, ast::NameS>,
-    expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
-    signature: BoxedParser<'a, I, ast::Signature>,
-    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
-    kind_test: BoxedParser<'a, I, ast::KindTest>,
-    xpath: BoxedParser<'a, I, ast::XPath>,
-}
-
-fn parser<'a, I>() -> ParserOutput<'a, I>
-where
-    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-{
-    let ParserNameOutput {
-        eqname,
-        ncname,
-        braced_uri_literal,
-    } = parser_name();
-
-    let ParserPrimaryOutput {
-        literal,
-        var_ref,
-        context_item_expr,
-        named_function_ref,
-        string,
-    } = parser_primary(eqname.clone());
-
-    let empty_call = just(Token::LeftParen)
-        .ignore_then(just(Token::RightParen))
-        .boxed();
-
-    let ParserKindTestOutput { kind_test } = parser_kind_test(
-        eqname.clone(),
-        empty_call.clone(),
-        ncname.clone(),
-        string.clone(),
-    );
-
-    let ParserTypeOutput {
-        sequence_type,
-        single_type,
-    } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
-
-    let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
-        eqname.clone(),
-        ncname.clone(),
-        braced_uri_literal.clone(),
-        kind_test.clone(),
-    );
-
-    let ParserSignatureOutput {
-        signature,
-        param_list,
-    } = parser_signature(eqname.clone(), sequence_type.clone());
-
-    // ugly way to get expr out of recursive
-    let mut expr_ = None;
-
-    let expr_single = recursive(|expr_single| {
-        let expr = expr_single
-            .clone()
-            .separated_by(just(Token::Comma))
-            .at_least(1)
-            .collect::<Vec<_>>()
-            .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
-            .boxed();
-
-        expr_ = Some(expr.clone());
-
-        // unlike a normal expr, this can create an empty expression sequence,
-        // which is used to represent to represent an empty sequence
-        let parenthesized_expr = expr
-            .clone()
-            .or_not()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .map_with_span(|expr, span| {
-                let expr_or_empty = expr.map(|expr| expr.value);
-                ast::PrimaryExpr::Expr(expr_or_empty.with_span(span)).with_span(span)
-            })
-            .boxed();
-
-        let argument_placeholder = just(Token::QuestionMark)
-            .map(|_| ArgumentOrPlaceholder::Placeholder)
-            .boxed();
-        let argument = expr_single
-            .clone()
-            .map(ArgumentOrPlaceholder::Argument)
-            .or(argument_placeholder)
-            .boxed();
-        let argument_list = argument
-            .separated_by(just(Token::Comma))
-            .collect::<Vec<_>>()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .boxed();
-
-        enum PostfixOrPlaceholderWrapper {
-            Postfix(ast::Postfix),
-            PlaceholderWrapper(Vec<ast::ExprSingleS>, Vec<ast::Param>, Span),
-        }
-
-        let predicate = expr
-            .clone()
-            .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
-            .map(ast::Postfix::Predicate)
-            .map(PostfixOrPlaceholderWrapper::Postfix)
-            .boxed();
-
-        let argument_list_postfix = argument_list
-            .clone()
-            .map_with_span(|arguments, span| {
-                let (arguments, params) = placeholder_arguments(&arguments);
-                if params.is_empty() {
-                    PostfixOrPlaceholderWrapper::Postfix(ast::Postfix::ArgumentList(arguments))
-                } else {
-                    PostfixOrPlaceholderWrapper::PlaceholderWrapper(arguments, params, span)
-                }
-            })
-            .boxed();
-
-        let postfix = predicate.or(argument_list_postfix).boxed();
-
-        let function_call = eqname
-            .clone()
-            .then(argument_list)
-            .try_map(|(name, arguments), span| {
-                check_reserved(&name, span)?;
-                Ok((name, arguments))
-            })
-            .map_with_state(move |(name, arguments), span, state: &mut State| {
-                let name = name.map(|name| {
-                    name.with_default_namespace(state.namespaces.default_function_namespace)
-                });
-                let (arguments, params) = placeholder_arguments(&arguments);
-                if params.is_empty() {
-                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
-                        .with_span(span)
-                } else {
-                    let inner_function_call =
-                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
-                            .with_empty_span();
-                    let step_expr =
-                        ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
-                    placeholder_wrapper_function(step_expr, params, span)
-                }
-            })
-            .boxed();
-
-        let enclosed_expr = (expr.clone().or_not())
-            .delimited_by(just(Token::LeftBrace), just(Token::RightBrace))
-            .boxed();
-
-        let function_body = enclosed_expr
-            .map_with_span(|expr, span| {
-                if let Some(expr) = expr {
-                    Some(expr.value).with_span(span)
-                } else {
-                    None.with_span(span)
-                }
-            })
-            .boxed();
-
-        let inline_function_expr = just(Token::Function)
-            .ignore_then(param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
-            .then(just(Token::As).ignore_then(sequence_type.clone()).or_not())
-            .then(function_body)
-            .map_with_span(|((params, return_type), body), span| {
-                ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
-                    params,
-                    return_type,
-                    body,
-                })
-                .with_span(span)
-            })
-            .boxed();
-
-        let primary_expr = parenthesized_expr
-            .or(literal)
-            .or(var_ref)
-            .or(context_item_expr)
-            .or(named_function_ref)
-            .or(inline_function_expr)
-            .or(function_call)
-            .boxed();
-
-        let postfix_expr = primary_expr
-            .then(postfix.repeated().collect::<Vec<_>>())
-            .map_with_span(|(primary, postfixes), span| {
-                // in case of a placeholder argument list we need to
-                // wrap the existing primary
-                let mut normal_postfixes = Vec::new();
-                let mut primary = primary;
-                for postfix in postfixes {
-                    match postfix {
-                        PostfixOrPlaceholderWrapper::Postfix(postfix) => {
-                            normal_postfixes.push(postfix)
-                        }
-                        PostfixOrPlaceholderWrapper::PlaceholderWrapper(
-                            arguments,
-                            params,
-                            span,
-                        ) => {
-                            normal_postfixes.push(ast::Postfix::ArgumentList(arguments));
-                            let step_expr = ast::StepExpr::PostfixExpr {
-                                primary,
-                                postfixes: normal_postfixes.clone(),
-                            }
-                            .with_empty_span();
-                            // replace primary with a placeholder wrapper function
-                            primary = placeholder_wrapper_function(step_expr, params, span);
-                            // now collect more postfixes
-                            normal_postfixes.clear();
-                        }
-                    }
-                }
-                if normal_postfixes.is_empty() {
-                    ast::StepExpr::PrimaryExpr(primary).with_span(span)
-                } else {
-                    ast::StepExpr::PostfixExpr {
-                        primary,
-                        postfixes: normal_postfixes,
-                    }
-                    .with_span(span)
-                }
-            })
-            .boxed();
-
-        let predicate = expr
-            .clone()
-            .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
-            .boxed();
-
-        let predicate_list = predicate.repeated().collect::<Vec<_>>().boxed();
-
-        let axis_step = axis_node_test
-            .then(predicate_list)
-            .map_with_span(|((axis, node_test), predicates), span| {
-                ast::StepExpr::AxisStep(ast::AxisStep {
-                    axis,
-                    node_test,
-                    predicates,
-                })
-                .with_span(span)
-            })
-            .boxed();
-
-        let step_expr = postfix_expr.or(axis_step).boxed();
-
-        let relative_path_expr = step_expr
-            .clone()
-            .then(
-                just(Token::Slash)
-                    .or(just(Token::DoubleSlash))
-                    .then(step_expr.clone())
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map(|(first_step, rest_steps)| {
-                let mut steps = vec![first_step];
-                for (token, step) in rest_steps {
-                    match token {
-                        Token::Slash => {}
-                        Token::DoubleSlash => {
-                            steps.push(
-                                ast::StepExpr::AxisStep(ast::AxisStep {
-                                    axis: ast::Axis::DescendantOrSelf,
-                                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                                    predicates: vec![],
-                                })
-                                .with_empty_span(),
-                            );
-                        }
-                        _ => unreachable!(),
-                    }
-                    steps.push(step);
-                }
-                steps
-            })
-            .boxed();
-
-        let slash_prefix_path_expr = just(Token::Slash)
-            .map_with_span(|_, span| span)
-            .then(relative_path_expr.clone().or_not())
-            .map(|(slash_span, steps)| {
-                let root_step = root_step(slash_span);
-                if let Some(steps) = steps {
-                    let all_steps = once(root_step).chain(steps.into_iter()).collect();
-                    ast::PathExpr { steps: all_steps }
-                } else {
-                    ast::PathExpr {
-                        steps: vec![root_step],
-                    }
-                }
-            })
-            .boxed();
-
-        let doubleslash_prefix_path_expr = just(Token::DoubleSlash)
-            .map_with_span(|_, span| span)
-            .then(relative_path_expr.clone().or_not())
-            .map(|(double_slash_span, steps)| {
-                let root_step = root_step(double_slash_span);
-                let descendant_step = ast::StepExpr::AxisStep(ast::AxisStep {
-                    axis: ast::Axis::DescendantOrSelf,
-                    node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-                    predicates: vec![],
-                })
-                .with_span(double_slash_span);
-                if let Some(steps) = steps {
-                    let all_steps = once(root_step)
-                        .chain(once(descendant_step).chain(steps.into_iter()))
-                        .collect();
-                    ast::PathExpr { steps: all_steps }
-                } else {
-                    ast::PathExpr {
-                        steps: vec![root_step, descendant_step],
-                    }
-                }
-            })
-            .boxed();
-
-        let path_expr = doubleslash_prefix_path_expr
-            .or(slash_prefix_path_expr)
-            .or(relative_path_expr.map(|steps| ast::PathExpr { steps }))
-            .boxed();
-
-        let value_expr = path_expr
-            .clone()
-            .separated_by(just(Token::ExclamationMark))
-            .at_least(1)
-            .collect::<Vec<_>>()
-            .map_with_span(|path_exprs, span| {
-                if path_exprs.len() == 1 {
-                    ast::ExprSingle::Path(path_exprs[0].clone()).with_span(span)
-                } else {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        operator: ast::ApplyOperator::SimpleMap(path_exprs[1..].to_vec()),
-                        path_expr: path_exprs[0].clone(),
-                    })
-                    .with_span(span)
-                }
-            })
-            .boxed();
-
-        let unary_operator = just(Token::Minus)
-            .to(ast::UnaryOperator::Minus)
-            .or(just(Token::Plus).to(ast::UnaryOperator::Plus))
-            .boxed();
-
-        let unary_expr = unary_operator
-            .repeated()
-            .collect::<Vec<_>>()
-            .then(value_expr.clone())
-            .map_with_span(|(unary_operators, expr), span| {
-                if unary_operators.is_empty() {
-                    expr
-                } else {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        operator: ast::ApplyOperator::Unary(unary_operators),
-                        path_expr: expr_single_to_path_expr(expr),
-                    })
-                    .with_span(span)
-                }
-            })
-            .boxed();
-
-        // // TODO
-        let arrow_expr = unary_expr;
-        let cast_expr = arrow_expr
-            .then(
-                just(Token::Cast)
-                    .ignore_then(just(Token::As))
-                    .ignore_then(single_type.clone())
-                    .or_not(),
-            )
-            .map_with_span(|(expr, single_type), span| {
-                if let Some(single_type) = single_type {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        path_expr: expr_single_to_path_expr(expr),
-                        operator: ast::ApplyOperator::Cast(single_type),
-                    })
-                    .with_span(span)
-                } else {
-                    expr
-                }
-            })
-            .boxed();
-
-        let castable_expr = cast_expr
-            .then(
-                just(Token::Castable)
-                    .ignore_then(just(Token::As))
-                    .ignore_then(single_type)
-                    .or_not(),
-            )
-            .map_with_span(|(expr, single_type), span| {
-                if let Some(single_type) = single_type {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        path_expr: expr_single_to_path_expr(expr),
-                        operator: ast::ApplyOperator::Castable(single_type),
-                    })
-                    .with_span(span)
-                } else {
-                    expr
-                }
-            })
-            .boxed();
-
-        let treat_expr = castable_expr
-            .then(
-                just(Token::Treat)
-                    .ignore_then(just(Token::As))
-                    .ignore_then(sequence_type.clone())
-                    .or_not(),
-            )
-            .map_with_span(|(expr, sequence_type), span| {
-                if let Some(sequence_type) = sequence_type {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        path_expr: expr_single_to_path_expr(expr),
-                        operator: ast::ApplyOperator::Treat(sequence_type),
-                    })
-                    .with_span(span)
-                } else {
-                    expr
-                }
-            })
-            .boxed();
-
-        let instance_of_expr = treat_expr
-            .then(
-                just(Token::Instance)
-                    .ignore_then(just(Token::Of))
-                    .ignore_then(sequence_type.clone())
-                    .or_not(),
-            )
-            .map_with_span(|(expr, sequence_type), span| {
-                if let Some(sequence_type) = sequence_type {
-                    ast::ExprSingle::Apply(ast::ApplyExpr {
-                        path_expr: expr_single_to_path_expr(expr),
-                        operator: ast::ApplyOperator::InstanceOf(sequence_type),
-                    })
-                    .with_span(span)
-                } else {
-                    expr
-                }
-            })
-            .boxed();
-
-        let intersect_except_operator = just(Token::Intersect)
-            .to(ast::BinaryOperator::Intersect)
-            .or(just(Token::Except).to(ast::BinaryOperator::Except))
-            .boxed();
-
-        let intersect_except_expr =
-            binary_expr_op(instance_of_expr, intersect_except_operator).boxed();
-
-        let union_operator = just(Token::Pipe)
-            .map(|_| ast::BinaryOperator::Union)
-            .or(just(Token::Union).map(|_| ast::BinaryOperator::Union))
-            .boxed();
-
-        let union_expr = binary_expr_op(intersect_except_expr, union_operator).boxed();
-
-        let multiplicative_operator = choice::<_>([
-            just(Token::Asterisk).to(ast::BinaryOperator::Mul),
-            just(Token::Div).to(ast::BinaryOperator::Div),
-            just(Token::Idiv).to(ast::BinaryOperator::IntDiv),
-            just(Token::Mod).to(ast::BinaryOperator::Mod),
-        ])
-        .boxed();
-
-        let multiplicative_expr = binary_expr_op(union_expr, multiplicative_operator).boxed();
-
-        let additive_operator = one_of([Token::Plus, Token::Minus])
-            .map(|c| match c {
-                Token::Plus => ast::BinaryOperator::Add,
-                Token::Minus => ast::BinaryOperator::Sub,
-                _ => unreachable!(),
-            })
-            .boxed();
-        let additive_expr = binary_expr_op(multiplicative_expr, additive_operator).boxed();
-
-        let range_expr = binary_expr(additive_expr, Token::To, ast::BinaryOperator::Range).boxed();
-        let string_concat_expr =
-            binary_expr(range_expr, Token::DoublePipe, ast::BinaryOperator::Concat).boxed();
-        use ast::BinaryOperator::*;
-
-        let comparison_operator = choice::<_>([
-            just(Token::Equal).to(GenEq),
-            just(Token::NotEqual).to(GenNe),
-            just(Token::LessThan).to(GenLt),
-            just(Token::LessThanEqual).to(GenLe),
-            just(Token::GreaterThan).to(GenGt),
-            just(Token::GreaterThanEqual).to(GenGe),
-            just(Token::Eq).to(ValueEq),
-            just(Token::Ne).to(ValueNe),
-            just(Token::Lt).to(ValueLt),
-            just(Token::Le).to(ValueLe),
-            just(Token::Gt).to(ValueGt),
-            just(Token::Ge).to(ValueGe),
-            just(Token::Is).to(Is),
-            just(Token::Precedes).to(Precedes),
-            just(Token::Follows).to(Follows),
-        ])
-        .boxed();
-
-        let comparison_expr = binary_expr_op(string_concat_expr, comparison_operator).boxed();
-        let and_expr = binary_expr(comparison_expr, Token::And, ast::BinaryOperator::And).boxed();
-        let or_expr = binary_expr(and_expr, Token::Or, ast::BinaryOperator::Or).boxed();
-
-        let path_expr = or_expr
-            .map_with_span(|expr_single, span| {
-                ast::ExprSingle::Path(expr_single_to_path_expr(expr_single)).with_span(span)
-            })
-            .boxed();
-
-        let simple_let_binding = just(Token::Dollar)
-            .ignore_then(eqname.clone())
-            .then_ignore(just(Token::ColonEqual))
-            .then(expr_single.clone())
-            .boxed();
-
-        let simple_let_clause = just(Token::Let)
-            .ignore_then(
-                simple_let_binding
-                    .clone()
-                    .separated_by(just(Token::Comma))
-                    .at_least(1)
-                    .collect::<Vec<_>>(),
-            )
-            .boxed();
-
-        let let_expr = simple_let_clause
-            .then_ignore(just(Token::Return))
-            .then(expr_single.clone())
-            .map_with_span(|(bindings, return_expr), span| {
-                bindings
-                    .iter()
-                    .rev()
-                    .fold(return_expr, |return_expr, (var_name, var_expr)| {
-                        ast::ExprSingle::Let(ast::LetExpr {
-                            var_name: var_name.clone(),
-                            var_expr: Box::new(var_expr.clone()),
-                            return_expr: Box::new(return_expr),
-                        })
-                        .with_span(span)
-                    })
-            })
-            .boxed();
-
-        let simple_for_binding = just(Token::Dollar)
-            .ignore_then(eqname.clone())
-            .then_ignore(just(Token::In))
-            .then(expr_single.clone())
-            .boxed();
-
-        let for_bindings = simple_for_binding
-            .clone()
-            .separated_by(just(Token::Comma))
-            .at_least(1)
-            .collect::<Vec<_>>()
-            .boxed();
-
-        let simple_for_clause = just(Token::For).ignore_then(for_bindings.clone()).boxed();
-
-        let for_expr = simple_for_clause
-            .clone()
-            .then_ignore(just(Token::Return))
-            .then(expr_single.clone())
-            .map_with_span(|(bindings, return_expr), span| {
-                bindings
-                    .iter()
-                    .rev()
-                    .fold(return_expr, |return_expr, (var_name, var_expr)| {
-                        ast::ExprSingle::For(ast::ForExpr {
-                            var_name: var_name.clone(),
-                            var_expr: Box::new(var_expr.clone()),
-                            return_expr: Box::new(return_expr),
-                        })
-                        .with_span(span)
-                    })
-            })
-            .boxed();
-
-        let if_expr = just(Token::If)
-            .ignore_then(
-                expr.delimited_by(just(Token::LeftParen), just(Token::RightParen))
-                    .clone(),
-            )
-            .then_ignore(just(Token::Then))
-            .then(expr_single.clone())
-            .then_ignore(just(Token::Else))
-            .then(expr_single.clone())
-            .map_with_span(|((condition, then), else_), span| {
-                ast::ExprSingle::If(ast::IfExpr {
-                    condition,
-                    then: Box::new(then),
-                    else_: Box::new(else_),
-                })
-                .with_span(span)
-            })
-            .boxed();
-
-        let quantified_expr = choice::<_>([
-            just(Token::Some).to(ast::Quantifier::Some),
-            just(Token::Every).to(ast::Quantifier::Every),
-        ])
-        .then(for_bindings.clone())
-        .then_ignore(just(Token::Satisfies))
-        .then(expr_single)
-        .map_with_span(|((quantifier, bindings), satisfies_expr), span| {
-            bindings
-                .iter()
-                .rev()
-                .fold(satisfies_expr, |satisfies_expr, (var_name, var_expr)| {
-                    ast::ExprSingle::Quantified(ast::QuantifiedExpr {
-                        quantifier: quantifier.clone(),
-                        var_name: var_name.clone(),
-                        var_expr: Box::new(var_expr.clone()),
-                        satisfies_expr: Box::new(satisfies_expr),
-                    })
-                    .with_span(span)
-                })
-        })
-        .boxed();
-
-        let expr_single_ = let_expr
-            .or(for_expr)
-            .or(if_expr)
-            .or(quantified_expr)
-            .or(path_expr)
-            .boxed();
-
-        expr_single_
-    })
-    .boxed();
-
-    #[cfg(test)]
-    let name = eqname.clone().then_ignore(end()).boxed();
-    let expr_single = expr_single.then_ignore(end()).boxed();
-    let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
-    let signature = signature.then_ignore(end()).boxed();
-    let sequence_type = sequence_type.then_ignore(end()).boxed();
-    let kind_test = kind_test.then_ignore(end()).boxed();
-
-    ParserOutput {
-        #[cfg(test)]
-        name,
-        expr_single,
-        xpath,
-        signature,
-        sequence_type,
-        kind_test,
-    }
-}
-
-fn binary_expr<'a, I>(
-    sub_expr: BoxedParser<'a, I, ast::ExprSingleS>,
-    operator_token: Token<'a>,
-    operator: ast::BinaryOperator,
-) -> BoxedParser<'a, I, ast::ExprSingleS>
-where
-    I: Input<'a, Token = Token<'a>, Span = Span> + ValueInput<'a>,
-{
-    binary_expr_op(
-        sub_expr,
-        just(operator_token).map(move |_| operator).boxed(),
-    )
-}
-
-fn binary_expr_op<'a, I>(
-    sub_expr: BoxedParser<'a, I, ast::ExprSingleS>,
-    operator: BoxedParser<'a, I, ast::BinaryOperator>,
-) -> BoxedParser<'a, I, ast::ExprSingleS>
-where
-    I: Input<'a, Token = Token<'a>, Span = Span> + ValueInput<'a>,
-{
-    sub_expr
-        .clone()
-        .foldl(
-            operator.then(sub_expr).repeated(),
-            move |left, (operator, right)| {
-                let span: SimpleSpan = (left.span.start..right.span.end).into();
-                ast::ExprSingle::Binary(ast::BinaryExpr {
-                    operator,
-                    left: expr_single_to_path_expr(left),
-                    right: expr_single_to_path_expr(right),
-                })
-                .with_span(span)
-            },
-        )
-        .boxed()
-}
-
-fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
-    let span = expr.span;
-    match expr.value {
-        ast::ExprSingle::Path(path) => path,
-        _ => ast::PathExpr {
-            steps: vec![ast::StepExpr::PrimaryExpr(
-                ast::PrimaryExpr::Expr(Some(ast::Expr(vec![expr])).with_span(span)).with_span(span),
-            )
-            .with_span(span)],
-        },
-    }
-}
-
-fn root_step(span: Span) -> ast::StepExprS {
-    let path_arg = ast::ExprSingle::Path(ast::PathExpr {
-        steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
-            axis: ast::Axis::Self_,
-            node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
-            predicates: vec![],
-        })
-        .with_empty_span()],
-    })
-    .with_empty_span();
-
-    ast::StepExpr::PrimaryExpr(
-        ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string()))
-                .with_empty_span(),
-            arguments: vec![path_arg],
-        })
-        .with_empty_span(),
-    )
-    .with_span(span)
-}
-
-enum ArgumentOrPlaceholder {
-    Argument(ast::ExprSingleS),
-    Placeholder,
-}
-
-// given a list of entries, each an argument or a placeholder, split this into
-// a list of real arguments and a list of parameters to construct for the new
-// function without the placeholders. If this list of parameters is empty, no
-// wrapping placeholder function is constructed.
-fn placeholder_arguments(
-    aps: &[ArgumentOrPlaceholder],
-) -> (Vec<ast::ExprSingleS>, Vec<ast::Param>) {
-    let mut placeholder_index = 0;
-    let mut arguments = Vec::new();
-    let mut params = Vec::new();
-    for argument_or_placeholder in aps.iter() {
-        match argument_or_placeholder {
-            ArgumentOrPlaceholder::Argument(expr) => {
-                arguments.push(expr.clone());
-            }
-            ArgumentOrPlaceholder::Placeholder => {
-                // XXX what if someone uses this as a parameter name?
-                let param_name = format!("placeholder{}", placeholder_index);
-                placeholder_index += 1;
-                let name = ast::Name::unprefixed(&param_name);
-                let param = ast::Param {
-                    name: name.clone(),
-                    type_: None,
-                };
-                params.push(param);
-                arguments.push(
-                    ast::ExprSingle::Path(ast::PathExpr {
-                        steps: vec![ast::StepExpr::PrimaryExpr(
-                            ast::PrimaryExpr::VarRef(name).with_empty_span(),
-                        )
-                        .with_empty_span()],
-                    })
-                    .with_empty_span(),
-                );
-            }
-        }
-    }
-    (arguments, params)
-}
-
-// construct an inline function that calls the underlying
-// function with the reduced placeholdered params
-fn placeholder_wrapper_function(
-    step_expr: ast::StepExprS,
-    params: Vec<ast::Param>,
-    span: Span,
-) -> ast::PrimaryExprS {
-    let path_expr = ast::PathExpr {
-        steps: vec![step_expr],
-    };
-    let expr_single = ast::ExprSingle::Path(path_expr).with_empty_span();
-    let body = Some(ast::Expr(vec![expr_single])).with_empty_span();
-    ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
-        params,
-        return_type: None,
-        body,
-    })
-    .with_span(span)
-}
 
 fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '_ {
     lexer(src).map(|(tok, span)| match tok {
@@ -850,53 +45,65 @@ where
     parser.parse_with_state(input, &mut state).into_result()
 }
 
-pub fn parse_xpath<'a>(
-    input: &'a str,
-    namespaces: &'a Namespaces,
-    variables: &'a [ast::Name],
-) -> Result<'a, ast::XPath> {
-    let result = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces));
+impl ast::XPath {
+    pub fn parse<'a>(
+        input: &'a str,
+        namespaces: &'a Namespaces,
+        variables: &'a [ast::Name],
+    ) -> Result<'a, Self> {
+        let result = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces));
 
-    match result {
-        Ok(mut xpath) => {
-            // rename all variables to unique names
-            unique_names(&mut xpath, variables);
-            Ok(xpath)
+        match result {
+            Ok(mut xpath) => {
+                // rename all variables to unique names
+                unique_names(&mut xpath, variables);
+                Ok(xpath)
+            }
+            Err(errors) => Err(Error { src: input, errors }),
         }
-        Err(errors) => Err(Error { src: input, errors }),
     }
 }
 
-pub fn parse_expr_single(src: &str) -> Result<ast::ExprSingleS> {
-    let namespaces = Namespaces::default();
-    parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
-        .map_err(|errors| Error { src, errors })
+impl ast::ExprSingle {
+    pub fn parse(src: &str) -> Result<ast::ExprSingleS> {
+        let namespaces = Namespaces::default();
+        parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
+    }
 }
 
-pub fn parse_kind_test(src: &str) -> Result<ast::KindTest> {
-    let namespaces = Namespaces::default();
-    parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
-        .map_err(|errors| Error { src, errors })
+impl ast::KindTest {
+    pub fn parse(src: &str) -> Result<Self> {
+        let namespaces = Namespaces::default();
+        parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
+    }
 }
 
-pub fn parse_signature<'a>(
-    input: &'a str,
-    namespaces: &'a Namespaces,
-) -> Result<'a, ast::Signature> {
-    parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
+impl ast::Signature {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<'a, Self> {
+        parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
+            .map_err(|errors| Error { src: input, errors })
+    }
+}
+
+impl ast::SequenceType {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<'a, ast::SequenceType> {
+        parse(
+            parser().sequence_type,
+            tokens(input),
+            Cow::Borrowed(namespaces),
+        )
         .map_err(|errors| Error { src: input, errors })
+    }
 }
 
-pub fn parse_sequence_type<'a>(
-    input: &'a str,
-    namespaces: &'a Namespaces,
-) -> Result<'a, ast::SequenceType> {
-    parse(
-        parser().sequence_type,
-        tokens(input),
-        Cow::Borrowed(namespaces),
-    )
-    .map_err(|errors| Error { src: input, errors })
+impl ast::Name {
+    pub fn parse(src: &str) -> Result<ast::NameS> {
+        let namespaces = Namespaces::default();
+        parse(parser().name, tokens(src), Cow::Owned(namespaces))
+            .map_err(|errors| Error { src, errors })
+    }
 }
 
 #[cfg(test)]
@@ -906,12 +113,6 @@ mod tests {
     use super::*;
 
     use insta::assert_ron_snapshot;
-
-    fn parse_name(src: &str) -> Result<ast::NameS> {
-        let namespaces = Namespaces::default();
-        parse(parser().name, tokens(src), Cow::Owned(namespaces))
-            .map_err(|errors| Error { src, errors })
-    }
 
     fn parse_xpath_simple(src: &str) -> Result<ast::XPath> {
         let namespaces = Namespaces::default();
@@ -927,82 +128,82 @@ mod tests {
 
     #[test]
     fn test_unprefixed_name() {
-        assert_ron_snapshot!(parse_name("foo"));
+        assert_ron_snapshot!(ast::Name::parse("foo"));
     }
 
     #[test]
     fn test_prefixed_name() {
-        assert_ron_snapshot!(parse_name("xs:foo"));
+        assert_ron_snapshot!(ast::Name::parse("xs:foo"));
     }
 
     #[test]
     fn test_qualified_name() {
-        assert_ron_snapshot!(parse_name("Q{http://example.com}foo"));
+        assert_ron_snapshot!(ast::Name::parse("Q{http://example.com}foo"));
     }
 
     #[test]
     fn test_literal() {
-        assert_ron_snapshot!(parse_expr_single("1"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1"));
     }
 
     #[test]
     fn test_var_ref() {
-        assert_ron_snapshot!(parse_expr_single("$foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("$foo"));
     }
 
     #[test]
     fn test_expr_single_addition() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + 2"));
     }
 
     #[test]
     fn test_simple_map_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 ! 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 ! 2"));
     }
 
     #[test]
     fn test_unary_expr() {
-        assert_ron_snapshot!(parse_expr_single("-1"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("-1"));
     }
 
     #[test]
     fn test_additive_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + 2"));
     }
 
     #[test]
     fn test_additive_expr_repeat() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2 + 3"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + 2 + 3"));
     }
 
     #[test]
     fn test_or_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 or 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 or 2"));
     }
 
     #[test]
     fn test_and_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 and 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 and 2"));
     }
 
     #[test]
     fn test_comparison_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 < 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 < 2"));
     }
 
     #[test]
     fn test_concat_expr() {
-        assert_ron_snapshot!(parse_expr_single("'a' || 'b'"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("'a' || 'b'"));
     }
 
     #[test]
     fn test_nested_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 + (2 * 3)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + (2 * 3)"));
     }
 
     #[test]
     fn test_xpath_single_expr() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + 2"));
     }
 
     #[test]
@@ -1012,109 +213,111 @@ mod tests {
 
     #[test]
     fn test_single_let_expr() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1 return 5"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("let $x := 1 return 5"));
     }
 
     #[test]
     fn test_single_let_expr_var_ref() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1 return $x"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("let $x := 1 return $x"));
     }
 
     #[test]
     fn test_nested_let_expr() {
-        assert_ron_snapshot!(parse_expr_single("let $x := 1, $y := 2 return 5"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("let $x := 1, $y := 2 return 5"));
     }
 
     #[test]
     fn test_single_for_expr() {
-        assert_ron_snapshot!(parse_expr_single("for $x in 1 return 5"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("for $x in 1 return 5"));
     }
 
     #[test]
     fn test_for_loop() {
-        assert_ron_snapshot!(parse_expr_single("for $x in 1 to 2 return $x"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("for $x in 1 to 2 return $x"));
     }
 
     #[test]
     fn test_if_expr() {
-        assert_ron_snapshot!(parse_expr_single("if (1) then 2 else 3"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("if (1) then 2 else 3"));
     }
 
     #[test]
     fn test_quantified() {
-        assert_ron_snapshot!(parse_expr_single("every $x in (1, 2) satisfies $x > 0"));
+        assert_ron_snapshot!(ast::ExprSingle::parse(
+            "every $x in (1, 2) satisfies $x > 0"
+        ));
     }
 
     #[test]
     fn test_quantified_nested() {
-        assert_ron_snapshot!(parse_expr_single(
+        assert_ron_snapshot!(ast::ExprSingle::parse(
             "every $x in (1, 2), $y in (3, 4) satisfies $x > 0 and $y > 0"
         ));
     }
 
     #[test]
     fn test_inline_function() {
-        assert_ron_snapshot!(parse_expr_single("function($x) { $x }"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("function($x) { $x }"));
     }
 
     #[test]
     fn test_inline_function_with_param_types() {
-        assert_ron_snapshot!(parse_expr_single("function($x as xs:integer) { $x }"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("function($x as xs:integer) { $x }"));
     }
 
     #[test]
     fn test_inline_function_with_return_type() {
-        assert_ron_snapshot!(parse_expr_single("function($x) as xs:integer { $x }"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("function($x) as xs:integer { $x }"));
     }
 
     #[test]
     fn test_inline_function2() {
-        assert_ron_snapshot!(parse_expr_single("function($x, $y) { $x + $y }"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("function($x, $y) { $x + $y }"));
     }
 
     #[test]
     fn test_dynamic_function_call() {
-        assert_ron_snapshot!(parse_expr_single("$foo()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("$foo()"));
     }
 
     #[test]
     fn test_dynamic_function_call_args() {
-        assert_ron_snapshot!(parse_expr_single("$foo(1 + 1, 3)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("$foo(1 + 1, 3)"));
     }
 
     #[test]
     fn test_dynamic_function_call_placeholder() {
-        assert_ron_snapshot!(parse_expr_single("$foo(1, ?)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("$foo(1, ?)"));
     }
 
     #[test]
     fn test_static_function_call() {
-        assert_ron_snapshot!(parse_expr_single("my_function()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("my_function()"));
     }
 
     #[test]
     fn test_static_function_call_fn_prefix() {
-        assert_ron_snapshot!(parse_expr_single("fn:root()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("fn:root()"));
     }
 
     #[test]
     fn test_static_function_call_q() {
-        assert_ron_snapshot!(parse_expr_single("Q{http://example.com}something()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("Q{http://example.com}something()"));
     }
 
     #[test]
     fn test_static_function_call_args() {
-        assert_ron_snapshot!(parse_expr_single("my_function(1, 2)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("my_function(1, 2)"));
     }
 
     #[test]
     fn test_named_function_ref() {
-        assert_ron_snapshot!(parse_expr_single("my_function#2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("my_function#2"));
     }
 
     #[test]
     fn test_static_function_call_placeholder() {
-        assert_ron_snapshot!(parse_expr_single("my_function(?, 1)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("my_function(?, 1)"));
     }
 
     #[test]
@@ -1129,207 +332,210 @@ mod tests {
 
     #[test]
     fn test_range() {
-        assert_ron_snapshot!(parse_expr_single("1 to 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 to 2"));
     }
 
     #[test]
     fn test_simple_map() {
-        assert_ron_snapshot!(parse_expr_single("(1, 2) ! (. * 2)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("(1, 2) ! (. * 2)"));
     }
 
     #[test]
     fn test_predicate() {
-        assert_ron_snapshot!(parse_expr_single("(1, 2)[2]"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("(1, 2)[2]"));
     }
 
     #[test]
     fn test_axis() {
-        assert_ron_snapshot!(parse_expr_single("child::foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo"));
     }
 
     #[test]
     fn test_multiple_steps() {
-        assert_ron_snapshot!(parse_expr_single("child::foo/child::bar"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo/child::bar"));
     }
 
     #[test]
     fn test_with_predicate() {
-        assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo[1]"));
     }
 
     #[test]
     fn test_axis_with_predicate() {
-        assert_ron_snapshot!(parse_expr_single("child::foo[1]"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo[1]"));
     }
 
     #[test]
     fn test_axis_star() {
-        assert_ron_snapshot!(parse_expr_single("child::*"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::*"));
     }
 
     #[test]
     fn test_axis_wildcard_prefix() {
-        assert_ron_snapshot!(parse_expr_single("child::*:foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::*:foo"));
     }
 
     #[test]
     fn test_axis_wildcard_local_name() {
-        assert_ron_snapshot!(parse_expr_single("child::fn:*"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::fn:*"));
     }
 
     #[test]
     fn test_axis_wildcard_q_name() {
-        assert_ron_snapshot!(parse_expr_single("child::Q{http://example.com}*"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::Q{http://example.com}*"));
     }
 
     #[test]
     fn test_reverse_axis() {
-        assert_ron_snapshot!(parse_expr_single("parent::foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("parent::foo"));
     }
 
     #[test]
     fn test_node_test() {
-        assert_ron_snapshot!(parse_expr_single("self::node()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::node()"));
     }
 
     #[test]
     fn test_text_test() {
-        assert_ron_snapshot!(parse_expr_single("self::text()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::text()"));
     }
 
     #[test]
     fn test_comment_test() {
-        assert_ron_snapshot!(parse_expr_single("self::comment()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::comment()"));
     }
 
     #[test]
     fn test_namespace_node_test() {
-        assert_ron_snapshot!(parse_expr_single("self::namespace-node()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::namespace-node()"));
     }
 
     #[test]
     fn test_attribute_test_no_args() {
-        assert_ron_snapshot!(parse_expr_single("self::attribute()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute()"));
     }
 
     #[test]
     fn test_attribute_test_star_arg() {
-        assert_ron_snapshot!(parse_expr_single("self::attribute(*)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute(*)"));
     }
 
     #[test]
     fn test_attribute_test_name_arg() {
-        assert_ron_snapshot!(parse_expr_single("self::attribute(foo)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute(foo)"));
     }
 
     #[test]
     fn test_attribute_test_name_arg_type_arg() {
-        assert_ron_snapshot!(parse_expr_single("self::attribute(foo, bar)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute(foo, bar)"));
     }
 
     #[test]
     fn test_element_test() {
-        assert_ron_snapshot!(parse_expr_single("self::element()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::element()"));
     }
 
     #[test]
     fn test_abbreviated_forward_step() {
-        assert_ron_snapshot!(parse_expr_single("foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("foo"));
     }
 
     #[test]
     fn test_abbreviated_forward_step_with_attribute_test() {
-        assert_ron_snapshot!(parse_expr_single("foo/attribute()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("foo/attribute()"));
     }
 
     // XXX should test for attribute axis for SchemaAttributeTest too
 
     #[test]
     fn test_namespace_node_default_axis() {
-        assert_ron_snapshot!(parse_expr_single("foo/namespace-node()"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("foo/namespace-node()"));
     }
 
     #[test]
     fn test_abbreviated_forward_step_attr() {
-        assert_ron_snapshot!(parse_expr_single("@foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("@foo"));
     }
 
     #[test]
     fn test_abbreviated_reverse_step() {
-        assert_ron_snapshot!(parse_expr_single("foo/.."));
+        assert_ron_snapshot!(ast::ExprSingle::parse("foo/.."));
     }
 
     #[test]
     fn test_abbreviated_reverse_step_with_predicates() {
-        assert_ron_snapshot!(parse_expr_single("..[1]"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("..[1]"));
     }
 
     #[test]
     fn test_starts_single_slash() {
-        assert_ron_snapshot!(parse_expr_single("/child::foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("/child::foo"));
     }
 
     #[test]
     fn test_single_slash_by_itself() {
-        assert_ron_snapshot!(parse_expr_single("/"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("/"));
     }
 
     #[test]
     fn test_double_slash_by_itself() {
-        assert_ron_snapshot!(parse_expr_single("//"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("//"));
     }
 
     #[test]
     fn test_starts_double_slash() {
-        assert_ron_snapshot!(parse_expr_single("//child::foo"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("//child::foo"));
     }
 
     #[test]
     fn test_double_slash_middle() {
-        assert_ron_snapshot!(parse_expr_single("child::foo//child::bar"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo//child::bar"));
     }
 
     #[test]
     fn test_union() {
-        assert_ron_snapshot!(parse_expr_single("child::foo | child::bar"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo | child::bar"));
     }
 
     #[test]
     fn test_intersect() {
-        assert_ron_snapshot!(parse_expr_single("child::foo intersect child::bar"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo intersect child::bar"));
     }
 
     #[test]
     fn test_except() {
-        assert_ron_snapshot!(parse_expr_single("child::foo except child::bar"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("child::foo except child::bar"));
     }
 
     #[test]
     fn test_xpath_parse_error() {
-        assert_ron_snapshot!(parse_expr_single("1 + 2 +"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 + 2 +"));
     }
 
     #[test]
     fn test_xpath_ge() {
-        assert_ron_snapshot!(parse_expr_single("1 >= 2"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 >= 2"));
     }
 
     #[test]
     fn test_signature_without_params() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer", &namespaces));
+        assert_ron_snapshot!(ast::Signature::parse("fn:foo() as xs:integer", &namespaces));
     }
 
     #[test]
     fn test_signature_without_params2() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature("fn:foo() as xs:integer*", &namespaces));
+        assert_ron_snapshot!(ast::Signature::parse(
+            "fn:foo() as xs:integer*",
+            &namespaces
+        ));
     }
 
     #[test]
     fn test_signature_with_params() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature(
+        assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as xs:decimal*) as xs:integer",
             &namespaces
         ));
@@ -1338,7 +544,7 @@ mod tests {
     #[test]
     fn test_signature_with_node_param() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature(
+        assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as node()) as xs:integer",
             &namespaces
         ));
@@ -1347,7 +553,7 @@ mod tests {
     #[test]
     fn test_signature_with_node_param_and_question_mark() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature(
+        assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as node()?) as xs:integer",
             &namespaces
         ));
@@ -1356,7 +562,7 @@ mod tests {
     #[test]
     fn test_signature_with_minus_in_name() {
         let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-        assert_ron_snapshot!(parse_signature(
+        assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo-bar($a as node()?) as xs:integer",
             &namespaces
         ));
@@ -1364,47 +570,47 @@ mod tests {
 
     #[test]
     fn test_unary_multiple() {
-        assert_ron_snapshot!(parse_expr_single("+-1"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("+-1"));
     }
 
     #[test]
     fn test_cast_as() {
-        assert_ron_snapshot!(parse_expr_single("1 cast as xs:integer"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 cast as xs:integer"));
     }
 
     #[test]
     fn test_cast_as_with_question_mark() {
-        assert_ron_snapshot!(parse_expr_single("1 cast as xs:integer?"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 cast as xs:integer?"));
     }
 
     #[test]
     fn test_castable_as() {
-        assert_ron_snapshot!(parse_expr_single("1 castable as xs:integer"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 castable as xs:integer"));
     }
 
     #[test]
     fn test_castable_as_with_question_mark() {
-        assert_ron_snapshot!(parse_expr_single("1 castable as xs:integer?"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 castable as xs:integer?"));
     }
 
     #[test]
     fn test_instance_of() {
-        assert_ron_snapshot!(parse_expr_single("1 instance of xs:integer"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 instance of xs:integer"));
     }
 
     #[test]
     fn test_instance_of_with_star() {
-        assert_ron_snapshot!(parse_expr_single("1 instance of xs:integer*"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 instance of xs:integer*"));
     }
 
     #[test]
     fn test_treat() {
-        assert_ron_snapshot!(parse_expr_single("1 treat as xs:integer"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 treat as xs:integer"));
     }
 
     #[test]
     fn test_treat_with_star() {
-        assert_ron_snapshot!(parse_expr_single("1 treat as xs:integer*"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("1 treat as xs:integer*"));
     }
 
     #[test]

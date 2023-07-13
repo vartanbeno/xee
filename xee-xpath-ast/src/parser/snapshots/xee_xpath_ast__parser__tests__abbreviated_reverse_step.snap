@@ -1,0 +1,22 @@
+---
+source: xee-xpath-ast/src/parser/mod.rs
+expression: "ast::ExprSingle::parse(\"foo/..\")"
+---
+Ok(Path(PathExpr(
+  steps: [
+    AxisStep(AxisStep(
+      axis: Child,
+      node_test: NameTest(Name(Name(
+        name: "foo",
+        prefix: None,
+        namespace: None,
+      ))),
+      predicates: [],
+    )),
+    AxisStep(AxisStep(
+      axis: Parent,
+      node_test: KindTest(Any),
+      predicates: [],
+    )),
+  ],
+)))

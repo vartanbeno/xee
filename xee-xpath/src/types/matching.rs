@@ -103,7 +103,7 @@ mod tests {
     use super::*;
     use ibig::ibig;
 
-    use xee_xpath_ast::parse_sequence_type;
+    use xee_xpath_ast::ast;
     use xee_xpath_ast::Namespaces;
 
     use crate::xml;
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_one_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("xs:integer", &namespaces).unwrap();
 
         let right_sequence = sequence::Sequence::from(vec![sequence::Item::from(ibig!(1))]);
         let wrong_amount_sequence = sequence::Sequence::from(vec![
@@ -150,7 +150,7 @@ mod tests {
     #[test]
     fn test_one_long_matches_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("xs:integer", &namespaces).unwrap();
 
         let right_sequence = sequence::Sequence::from(vec![sequence::Item::from(1i64)]);
         let wrong_amount_sequence =
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn test_one_any_atomic() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("xs:anyAtomicType", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("xs:anyAtomicType", &namespaces).unwrap();
 
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(1i64))]);
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn test_one_item() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("item()", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("item()", &namespaces).unwrap();
         let mut xot = Xot::new();
         let root = xot.parse("<doc/>").unwrap();
         let node = xot.document_element(root).unwrap();
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn test_option_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("xs:integer?", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("xs:integer?", &namespaces).unwrap();
 
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(ibig!(1)))]);
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn test_many_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
+        let sequence_type = ast::SequenceType::parse("xs:integer*", &namespaces).unwrap();
 
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(ibig!(1)))]);

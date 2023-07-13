@@ -5,7 +5,6 @@ use syn::{
 };
 
 use xee_xpath_ast::ast::Signature;
-use xee_xpath_ast::parse_signature;
 use xee_xpath_ast::Namespaces;
 
 #[derive(Debug)]
@@ -46,7 +45,7 @@ impl Parse for XPathFnOptions {
         }
         let signature_string = signature.unwrap();
         let namespaces = Namespaces::default();
-        let signature = parse_signature(&signature_string, &namespaces)
+        let signature = Signature::parse(&signature_string, &namespaces)
             .map_err(|e| syn::Error::new(input.span(), format!("{:?}", e)))?;
         Ok(Self {
             signature,
