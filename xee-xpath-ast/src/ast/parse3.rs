@@ -520,7 +520,71 @@ where
 }
 
 #[derive(Clone)]
-struct ParserSupplementOutput<'a, I>
+struct ParserSignatureOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    param_list: BoxedParser<'a, I, Vec<ast::Param>>,
+    signature: BoxedParser<'a, I, ast::Signature>,
+}
+
+fn parser_signature<'a, I>(
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+) -> ParserSignatureOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let type_declaration = just(Token::As).ignore_then(sequence_type.clone()).boxed();
+
+    let param = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .then(type_declaration.clone().or_not())
+        .map(|(name, type_)| ast::Param {
+            name: name.value,
+            type_,
+        })
+        .boxed();
+
+    let param_list = param
+        .separated_by(just(Token::Comma))
+        .collect::<Vec<_>>()
+        .boxed();
+
+    let signature_param = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .then(type_declaration.clone())
+        .map(|(name, type_)| ast::SignatureParam {
+            name: name.value,
+            type_,
+        })
+        .boxed();
+
+    let signature_param_list = signature_param
+        .separated_by(just(Token::Comma))
+        .collect::<Vec<_>>()
+        .boxed();
+
+    let signature = eqname
+        .clone()
+        .then(signature_param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
+        .then_ignore(just(Token::As))
+        .then(sequence_type.clone())
+        .map(|((name, params), return_type)| ast::Signature {
+            name,
+            params,
+            return_type,
+        })
+        .boxed();
+
+    ParserSignatureOutput {
+        param_list,
+        signature,
+    }
+}
+
+#[derive(Clone)]
+struct ParserPrimaryOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
@@ -528,17 +592,10 @@ where
     var_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
     context_item_expr: BoxedParser<'a, I, ast::PrimaryExprS>,
     named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
-    param_list: BoxedParser<'a, I, Vec<ast::Param>>,
-    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
-    single_type: BoxedParser<'a, I, ast::SingleType>,
-    signature: BoxedParser<'a, I, ast::Signature>,
-    kind_test: BoxedParser<'a, I, ast::KindTest>,
+    string: BoxedParser<'a, I, Cow<'a, str>>,
 }
 
-fn parser_supplement<'a, I>(
-    eqname: BoxedParser<'a, I, ast::NameS>,
-    ncname: BoxedParser<'a, I, &'a str>,
-) -> ParserSupplementOutput<'a, I>
+fn parser_primary<'a, I>(eqname: BoxedParser<'a, I, ast::NameS>) -> ParserPrimaryOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
@@ -606,74 +663,12 @@ where
         })
         .boxed();
 
-    let empty_call = just(Token::LeftParen)
-        .ignore_then(just(Token::RightParen))
-        .boxed();
-
-    let ParserKindTestOutput { kind_test } = parser_kind_test(
-        eqname.clone(),
-        empty_call.clone(),
-        ncname.clone(),
-        string.clone(),
-    );
-
-    let ParserTypeOutput {
-        sequence_type,
-        single_type,
-    } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
-
-    let type_declaration = just(Token::As).ignore_then(sequence_type.clone()).boxed();
-
-    let param = just(Token::Dollar)
-        .ignore_then(eqname.clone())
-        .then(type_declaration.clone().or_not())
-        .map(|(name, type_)| ast::Param {
-            name: name.value,
-            type_,
-        })
-        .boxed();
-
-    let param_list = param
-        .separated_by(just(Token::Comma))
-        .collect::<Vec<_>>()
-        .boxed();
-
-    let signature_param = just(Token::Dollar)
-        .ignore_then(eqname.clone())
-        .then(type_declaration.clone())
-        .map(|(name, type_)| ast::SignatureParam {
-            name: name.value,
-            type_,
-        })
-        .boxed();
-
-    let signature_param_list = signature_param
-        .separated_by(just(Token::Comma))
-        .collect::<Vec<_>>()
-        .boxed();
-
-    let signature = eqname
-        .clone()
-        .then(signature_param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
-        .then_ignore(just(Token::As))
-        .then(sequence_type.clone())
-        .map(|((name, params), return_type)| ast::Signature {
-            name,
-            params,
-            return_type,
-        })
-        .boxed();
-
-    ParserSupplementOutput {
+    ParserPrimaryOutput {
         literal,
         var_ref,
         context_item_expr,
         named_function_ref,
-        param_list,
-        sequence_type,
-        single_type,
-        signature,
-        kind_test,
+        string,
     }
 }
 
@@ -700,17 +695,29 @@ where
         braced_uri_literal,
     } = parser_name();
 
-    let ParserSupplementOutput {
+    let ParserPrimaryOutput {
         literal,
         var_ref,
         context_item_expr,
         named_function_ref,
-        param_list,
+        string,
+    } = parser_primary(eqname.clone());
+
+    let empty_call = just(Token::LeftParen)
+        .ignore_then(just(Token::RightParen))
+        .boxed();
+
+    let ParserKindTestOutput { kind_test } = parser_kind_test(
+        eqname.clone(),
+        empty_call.clone(),
+        ncname.clone(),
+        string.clone(),
+    );
+
+    let ParserTypeOutput {
         sequence_type,
         single_type,
-        signature,
-        kind_test,
-    } = parser_supplement(eqname.clone(), ncname.clone());
+    } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
 
     let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
         eqname.clone(),
@@ -718,6 +725,11 @@ where
         braced_uri_literal.clone(),
         kind_test.clone(),
     );
+
+    let ParserSignatureOutput {
+        signature,
+        param_list,
+    } = parser_signature(eqname.clone(), sequence_type.clone());
 
     // ugly way to get expr out of recursive
     let mut expr_ = None;
