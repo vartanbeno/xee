@@ -1,6 +1,5 @@
 mod ast_core;
 mod parse3;
-mod parse_ast;
 mod rename;
 mod visitor;
 

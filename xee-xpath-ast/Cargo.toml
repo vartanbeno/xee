@@ -16,13 +16,10 @@ ahash = "0.8.3"
 chumsky = "1.0.0-alpha.4"
 logos = "0.13.0"
 blanket = "0.2.0"
-pest = "2.5.6"
-pest_derive = "2.5.6"
 thiserror = "1.0.40"
 ordered-float = { workspace = true }
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
-miette = { workspace = true }
 xot = { workspace = true }
 
 [dev-dependencies]

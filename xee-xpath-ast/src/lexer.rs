@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use ibig::IBig;
-use logos::{FilterResult, Lexer, Logos, Span, SpannedIter};
+use logos::{Lexer, Logos, Span, SpannedIter};
 use rust_decimal::Decimal;
 
 #[derive(Logos, Clone, Debug, PartialEq)]
@@ -324,23 +324,6 @@ impl<'a> Token<'a> {
             // lexer
             Token::Error => unreachable!(),
         }
-    }
-}
-
-fn comment<'a>(lex: &mut Lexer<'a, Token<'a>>) -> FilterResult<(), ()> {
-    let mut depth = 1;
-    while depth > 0 {
-        match lex.next() {
-            Some(Ok(Token::CommentStart)) => depth += 1,
-            Some(Ok(Token::CommentEnd)) => depth -= 1,
-            None => break,
-            _ => {}
-        }
-    }
-    if depth > 0 {
-        FilterResult::Error(())
-    } else {
-        FilterResult::Skip
     }
 }
 

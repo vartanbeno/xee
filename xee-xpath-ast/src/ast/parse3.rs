@@ -680,6 +680,7 @@ struct ParserOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
+    #[cfg(test)]
     name: BoxedParser<'a, I, ast::NameS>,
     expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
     signature: BoxedParser<'a, I, ast::Signature>,
@@ -1314,6 +1315,7 @@ where
     })
     .boxed();
 
+    #[cfg(test)]
     let name = eqname.clone().then_ignore(end()).boxed();
     let expr_single = expr_single.then_ignore(end()).boxed();
     let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
@@ -1322,6 +1324,7 @@ where
     let kind_test = kind_test.then_ignore(end()).boxed();
 
     ParserOutput {
+        #[cfg(test)]
         name,
         expr_single,
         xpath,
