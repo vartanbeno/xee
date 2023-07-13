@@ -466,6 +466,10 @@ where
         .clone()
         .then_ignore(just(Token::Hash))
         .then(integer)
+        .try_map(|(name, arity), span| {
+            check_reserved(&name, span)?;
+            Ok((name, arity))
+        })
         .map_with_state(|(name, arity), span, state: &mut State| {
             ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
                 name: name.map(|name| {
@@ -587,13 +591,7 @@ where
             .clone()
             .then(argument_list)
             .try_map(|(name, arguments), span| {
-                let local_name = name.value.local_name();
-                if RESERVED_FUNCTION_NAMES.contains(&local_name) {
-                    return Err(Rich::custom(
-                        span,
-                        format!("Function name cannot be reserved: {}", local_name),
-                    ));
-                }
+                check_reserved(&name, span)?;
                 Ok((name, arguments))
             })
             .map_with_state(move |(name, arguments), span, state: &mut State| {
@@ -1251,6 +1249,23 @@ fn placeholder_wrapper_function(
     .with_span(span)
 }
 
+fn check_reserved<'a>(
+    name: &ast::NameS,
+    span: Span,
+) -> std::result::Result<(), Rich<'a, Token<'a>>> {
+    let local_name = name.value.local_name();
+    if RESERVED_FUNCTION_NAMES.contains(&local_name) {
+        return Err(Rich::custom(
+            span,
+            format!(
+                "Cannot use '{}' as a function name as it is a reserved name",
+                local_name
+            ),
+        ));
+    }
+    Ok(())
+}
+
 fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '_ {
     lexer(src).map(|(tok, span)| match tok {
         Ok(tok) => (tok, span.into()),
@@ -1870,5 +1885,10 @@ mod tests {
     #[test]
     fn test_reserved_function_name() {
         assert_ron_snapshot!(parse_xpath_simple("switch()"));
+    }
+
+    #[test]
+    fn test_reserved_function_name_reference() {
+        assert_ron_snapshot!(parse_xpath_simple("switch#2"));
     }
 }
