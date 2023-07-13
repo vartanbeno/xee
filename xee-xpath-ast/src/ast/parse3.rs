@@ -1891,4 +1891,22 @@ mod tests {
     fn test_reserved_function_name_reference() {
         assert_ron_snapshot!(parse_xpath_simple("switch#2"));
     }
+
+    #[test]
+    fn test_occurrence_indicators_ambiguity() {
+        // See Constraint: occurrence-indicators
+        assert_ron_snapshot!(parse_xpath_simple("4 treat as item() + - 5"));
+    }
+
+    #[test]
+    fn test_occurrence_indicators_disambiguate() {
+        // See Constraint: occurrence-indicators
+        assert_ron_snapshot!(parse_xpath_simple("(4 treat as item()) + - 5"));
+    }
+
+    #[test]
+    fn test_occurrence_indicators_function() {
+        // See Constraint: occurrence-indicators
+        assert_ron_snapshot!(parse_xpath_simple("function () as xs:string * {}"));
+    }
 }
