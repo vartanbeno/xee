@@ -694,11 +694,11 @@ _Note: not yet implemented for inline functions, only static functions_
 
 ### 3.14.2 Cast
 
-- [ ] `cast as`
+- [x] `cast as`
 
 ### 3.14.3 Castable
 
-- [ ] `castable as`
+- [x] `castable as`
 
 ### 3.14.4 Constructor functions
 
