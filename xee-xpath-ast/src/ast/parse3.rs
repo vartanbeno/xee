@@ -524,29 +524,25 @@ struct ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    eqname: BoxedParser<'a, I, ast::NameS>,
     literal: BoxedParser<'a, I, ast::PrimaryExprS>,
     var_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
     context_item_expr: BoxedParser<'a, I, ast::PrimaryExprS>,
     named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
     param_list: BoxedParser<'a, I, Vec<ast::Param>>,
     sequence_type: BoxedParser<'a, I, ast::SequenceType>,
-    axis_node_test: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
     single_type: BoxedParser<'a, I, ast::SingleType>,
     signature: BoxedParser<'a, I, ast::Signature>,
     kind_test: BoxedParser<'a, I, ast::KindTest>,
 }
 
-fn parser_supplement<'a, I>() -> ParserSupplementOutput<'a, I>
+fn parser_supplement<'a, I>(
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    ncname: BoxedParser<'a, I, &'a str>,
+    braced_uri_literal: BoxedParser<'a, I, &'a str>,
+) -> ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let ParserNameOutput {
-        eqname,
-        ncname,
-        braced_uri_literal,
-    } = parser_name();
-
     let string = select! {
         Token::StringLiteral(s) => s,
     }
@@ -669,22 +665,13 @@ where
         })
         .boxed();
 
-    let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
-        eqname.clone(),
-        ncname.clone(),
-        braced_uri_literal.clone(),
-        kind_test.clone(),
-    );
-
     ParserSupplementOutput {
-        eqname,
         literal,
         var_ref,
         context_item_expr,
         named_function_ref,
         param_list,
         sequence_type,
-        axis_node_test,
         single_type,
         signature,
         kind_test,
@@ -708,19 +695,31 @@ fn parser<'a, I>() -> ParserOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let ParserSupplementOutput {
+    let ParserNameOutput {
         eqname,
+        ncname,
+        braced_uri_literal,
+    } = parser_name();
+
+    let ParserSupplementOutput {
         literal,
         var_ref,
         context_item_expr,
         named_function_ref,
         param_list,
-        axis_node_test,
         sequence_type,
         single_type,
         signature,
         kind_test,
-    } = parser_supplement();
+    } = parser_supplement(eqname.clone(), ncname.clone(), braced_uri_literal.clone());
+
+    let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
+        eqname.clone(),
+        ncname.clone(),
+        braced_uri_literal.clone(),
+        kind_test.clone(),
+    );
+
     // ugly way to get expr out of recursive
     let mut expr_ = None;
 
