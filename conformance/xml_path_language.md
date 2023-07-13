@@ -374,9 +374,9 @@ Note: detailed rules of 36 items, may spell it out when implementing.
 
 - [x] Integer literals
 
-- [x] Decimal literals _But bounds check not yet implemented_
+- [x] Decimal literals
 
-- [x] Double literals _But bounds check not yet implemented_
+- [x] Double literals
 
 - [x] String literals
 
