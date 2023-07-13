@@ -30,9 +30,7 @@ fn test_for_clause() {
 
 #[test]
 fn test_let_clause() {
-    Tests::all("prod/LetClause")
-        .exclude("LetExpr004 LetExpr005 LetExpr006 LetExpr013")
-        .run()
+    Tests::all("prod/LetClause").run()
 }
 
 #[test]
