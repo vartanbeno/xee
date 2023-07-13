@@ -44,16 +44,62 @@ pub(crate) type Extra<'a, T> = Full<Rich<'a, T>, State<'a>, ()>;
 type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a, Token<'a>>>;
 
 #[derive(Clone)]
-struct ParserOutput<'a, I>
+struct ParserNameOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    name: BoxedParser<'a, I, ast::NameS>,
-    expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
-    signature: BoxedParser<'a, I, ast::Signature>,
-    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
-    kind_test: BoxedParser<'a, I, ast::KindTest>,
-    xpath: BoxedParser<'a, I, ast::XPath>,
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    ncname: BoxedParser<'a, I, &'a str>,
+    braced_uri_literal: BoxedParser<'a, I, &'a str>,
+}
+
+fn parser_name<'a, I>() -> ParserNameOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let ncname = select! {
+        Token::NCName(s) => s,
+
+    }
+    .boxed();
+
+    let braced_uri_literal = select! {
+        Token::BracedURILiteral(s) => s,
+    }
+    .boxed();
+
+    let prefixed_name = ncname
+        .clone()
+        .then_ignore(just(Token::Colon))
+        .then(ncname.clone())
+        .try_map_with_state(|(prefix, local_name), span, state: &mut State| {
+            ast::Name::prefixed(prefix, local_name, state.namespaces.as_ref())
+                .map(|name| name.with_span(span))
+                .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))
+        })
+        .boxed();
+
+    let qname = prefixed_name
+        .or(ncname
+            .clone()
+            .map_with_span(|local_name, span| ast::Name::unprefixed(local_name).with_span(span)))
+        .boxed();
+
+    let uri_qualified_name = braced_uri_literal
+        .clone()
+        .then(ncname.clone())
+        .map_with_span(|(uri, local_name), span| {
+            ast::Name::uri_qualified(uri, local_name).with_span(span)
+        })
+        .boxed();
+
+    let eqname = qname.or(uri_qualified_name).boxed();
+
+    ParserNameOutput {
+        eqname,
+        ncname,
+        braced_uri_literal,
+    }
 }
 
 #[derive(Clone)]
@@ -78,38 +124,11 @@ fn parser_supplement<'a, I>() -> ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let ncname = select! {
-        Token::NCName(s) => s,
-
-    };
-
-    let braced_uri_literal = select! {
-        Token::BracedURILiteral(s) => s,
-    };
-
-    let prefixed_name = ncname
-        .then_ignore(just(Token::Colon))
-        .then(ncname)
-        .try_map_with_state(|(prefix, local_name), span, state: &mut State| {
-            ast::Name::prefixed(prefix, local_name, state.namespaces.as_ref())
-                .map(|name| name.with_span(span))
-                .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))
-        })
-        .boxed();
-
-    let qname = prefixed_name
-        .or(ncname
-            .map_with_span(|local_name, span| ast::Name::unprefixed(local_name).with_span(span)))
-        .boxed();
-
-    let uri_qualified_name = braced_uri_literal
-        .then(ncname)
-        .map_with_span(|(uri, local_name), span| {
-            ast::Name::uri_qualified(uri, local_name).with_span(span)
-        })
-        .boxed();
-
-    let eqname = qname.or(uri_qualified_name).boxed();
+    let ParserNameOutput {
+        eqname,
+        ncname,
+        braced_uri_literal,
+    } = parser_name();
 
     let string = select! {
         Token::StringLiteral(s) => s,
@@ -268,6 +287,7 @@ where
         .boxed();
 
     let pi_test_content = ncname
+        .clone()
         .map(|s| ast::PITest::Name(s.to_string()))
         .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())))
         .boxed();
@@ -342,6 +362,7 @@ where
     let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
     let wildcard_ncname = ncname
+        .clone()
         .then_ignore(just(Token::ColonAsterisk))
         .try_map_with_state(|prefix, span, state: &mut State| {
             let namespace = state
@@ -356,7 +377,7 @@ where
         .map(|uri| ast::NameTest::Namespace(uri.to_string()))
         .boxed();
     let wildcard_localname = just(Token::AsteriskColon)
-        .ignore_then(ncname)
+        .ignore_then(ncname.clone())
         .map(|name| ast::NameTest::LocalName(name.to_string()))
         .boxed();
     let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star).boxed();
@@ -581,6 +602,19 @@ where
         signature,
         kind_test,
     }
+}
+
+#[derive(Clone)]
+struct ParserOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    name: BoxedParser<'a, I, ast::NameS>,
+    expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
+    signature: BoxedParser<'a, I, ast::Signature>,
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
+    xpath: BoxedParser<'a, I, ast::XPath>,
 }
 
 fn parser<'a, I>() -> ParserOutput<'a, I>
