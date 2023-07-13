@@ -63,6 +63,8 @@ where
     }
     .boxed();
 
+    let ncname = ncname.clone().or(parser_keyword()).boxed();
+
     let braced_uri_literal = select! {
         Token::BracedURILiteral(s) => s,
     }
@@ -299,9 +301,9 @@ where
         let parenthesized_item_type =
             item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
         item_type_empty
+            .or(item_type_kind_test)
             .or(item_type_atomic_or_union)
             .or(parenthesized_item_type)
-            .or(item_type_kind_test)
     })
     .boxed();
 
@@ -423,14 +425,15 @@ where
     ])
     .boxed();
 
-    let node_test_element_name = name_test_element
+    let node_test_element_name = kind_test
         .clone()
-        .map(ast::NodeTest::NameTest)
-        .or(kind_test.clone().map(ast::NodeTest::KindTest))
+        .map(ast::NodeTest::KindTest)
+        .or(name_test_element.clone().map(ast::NodeTest::NameTest))
         .boxed();
-    let node_test_attribute_name = name_test_attribute
-        .map(ast::NodeTest::NameTest)
-        .or(kind_test.clone().map(ast::NodeTest::KindTest))
+    let node_test_attribute_name = kind_test
+        .clone()
+        .map(ast::NodeTest::KindTest)
+        .or(name_test_attribute.map(ast::NodeTest::NameTest))
         .boxed();
 
     let abbrev_reverse_step = just(Token::DotDot).to((
@@ -1300,11 +1303,11 @@ where
         })
         .boxed();
 
-        let expr_single_ = path_expr
-            .or(let_expr)
+        let expr_single_ = let_expr
             .or(for_expr)
             .or(if_expr)
             .or(quantified_expr)
+            .or(path_expr)
             .boxed();
 
         expr_single_
@@ -1326,6 +1329,76 @@ where
         sequence_type,
         kind_test,
     }
+}
+
+fn parser_keyword<'a, I>() -> BoxedParser<'a, I, &'a str>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    // this implementation seems unfortunate but I cannot find
+    // a way to turn a logos token back into the original string
+    choice::<_>([
+        just(Token::Ancestor).to("ancestor"),
+        just(Token::AncestorOrSelf).to("ancestor-or-self"),
+        just(Token::And).to("and"),
+        just(Token::Array).to("array"),
+        just(Token::As).to("as"),
+        just(Token::Attribute).to("attribute"),
+        just(Token::Cast).to("cast"),
+        just(Token::Castable).to("castable"),
+        just(Token::Child).to("child"),
+        just(Token::Comment).to("comment"),
+        just(Token::Descendant).to("descendant"),
+        just(Token::DescendantOrSelf).to("descendant-or-self"),
+        just(Token::Div).to("div"),
+        just(Token::DocumentNode).to("document-node"),
+        just(Token::Element).to("element"),
+        just(Token::Else).to("else"),
+        just(Token::EmptySequence).to("empty-sequence"),
+        just(Token::Eq).to("eq"),
+        just(Token::Every).to("every"),
+        just(Token::Except).to("except"),
+        just(Token::Following).to("following"),
+        just(Token::FollowingSibling).to("following-sibling"),
+        just(Token::For).to("for"),
+        just(Token::Function).to("function"),
+        just(Token::Ge).to("ge"),
+        just(Token::Gt).to("gt"),
+        just(Token::Idiv).to("idiv"),
+        just(Token::If).to("if"),
+        just(Token::In).to("in"),
+        just(Token::Instance).to("instance"),
+        just(Token::Intersect).to("intersect"),
+        just(Token::Is).to("is"),
+        just(Token::Item).to("item"),
+        just(Token::Le).to("le"),
+        just(Token::Let).to("let"),
+        just(Token::Lt).to("lt"),
+        just(Token::Map).to("map"),
+        just(Token::Mod).to("mod"),
+        just(Token::Namespace).to("namespace"),
+        just(Token::NamespaceNode).to("namespace-node"),
+        just(Token::Ne).to("ne"),
+        just(Token::Node).to("node"),
+        just(Token::Of).to("of"),
+        just(Token::Or).to("or"),
+        just(Token::Parent).to("parent"),
+        just(Token::Preceding).to("preceding"),
+        just(Token::PrecedingSibling).to("preceding-sibling"),
+        just(Token::ProcessingInstruction).to("processing-instruction"),
+        just(Token::Return).to("return"),
+        just(Token::Satisfies).to("satisfies"),
+        just(Token::SchemaAttribute).to("schema-attribute"),
+        just(Token::SchemaElement).to("schema-element"),
+        just(Token::Self_).to("self"),
+        just(Token::Some).to("some"),
+        just(Token::Text).to("text"),
+        just(Token::Then).to("then"),
+        just(Token::To).to("to"),
+        just(Token::Treat).to("treat"),
+        just(Token::Union).to("union"),
+    ])
+    .boxed()
 }
 
 fn binary_expr<'a, I>(
@@ -2156,8 +2229,28 @@ mod tests {
         assert_ron_snapshot!(parse_xpath_simple("address (: this may be empty :)"));
     }
 
+    #[test]
+    fn test_symbol_as_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple("/if"))
+    }
+
+    #[test]
+    fn test_another_symbol_as_name_test() {
+        assert_ron_snapshot!(parse_xpath_simple("/else"))
+    }
+
+    #[test]
+    fn test_symbol_as_name_test_with_prefix() {
+        assert_ron_snapshot!(parse_xpath_simple("fn:if"))
+    }
+
+    #[test]
+    fn test_symbol_as_name_test_with_prefix_wildcard() {
+        assert_ron_snapshot!(parse_xpath_simple("*:if"))
+    }
+
     // #[test]
-    // fn test_symbol_as_name_test() {
-    //     assert_ron_snapshot!(parse_xpath_simple("/if"))
+    // fn test_symbol_as_name_test_with_localname_wildcard() {
+    //     assert_ron_snapshot!(parse_xpath_simple("if:*"))
     // }
 }
