@@ -153,8 +153,8 @@ where
 
     let element_test_content = element_name_or_wildcard
         .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
-        .map(|(name_test, type_name)| ast::ElementTest {
-            element_name_or_wildcard: name_test,
+        .map(|(element_name_or_wildcard, type_name)| ast::ElementTest {
+            element_name_or_wildcard,
             type_name,
         })
         .boxed();
@@ -350,7 +350,7 @@ fn parser_axis_node_test<'a, I>(
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let wildcard_ncname = ncname
+    let wildcard_prefix = ncname
         .clone()
         .then_ignore(just(Token::ColonAsterisk))
         .try_map_with_state(|prefix, span, state: &mut State| {
@@ -371,7 +371,7 @@ where
         .boxed();
     let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star).boxed();
 
-    let name_test_wildcard = wildcard_ncname
+    let name_test_wildcard = wildcard_prefix
         .or(wildcard_braced_uri_literal)
         .or(wildcard_localname)
         .or(wildcard_star)
@@ -2155,4 +2155,9 @@ mod tests {
         // This should be interpreted as a comment, not a function call
         assert_ron_snapshot!(parse_xpath_simple("address (: this may be empty :)"));
     }
+
+    // #[test]
+    // fn test_symbol_as_name_test() {
+    //     assert_ron_snapshot!(parse_xpath_simple("/if"))
+    // }
 }
