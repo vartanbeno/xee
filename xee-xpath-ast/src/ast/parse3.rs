@@ -2144,7 +2144,7 @@ mod tests {
     }
 
     #[test]
-    fn test_leading_lone_slash_disambiguite() {
+    fn test_leading_lone_slash_disambiguate() {
         // See Constraint: leading-lone-slash
         assert_ron_snapshot!(parse_xpath_simple("(/) * 5"))
     }
