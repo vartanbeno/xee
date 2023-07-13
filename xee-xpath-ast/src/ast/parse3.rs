@@ -538,7 +538,6 @@ where
 fn parser_supplement<'a, I>(
     eqname: BoxedParser<'a, I, ast::NameS>,
     ncname: BoxedParser<'a, I, &'a str>,
-    braced_uri_literal: BoxedParser<'a, I, &'a str>,
 ) -> ParserSupplementOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
@@ -711,7 +710,7 @@ where
         single_type,
         signature,
         kind_test,
-    } = parser_supplement(eqname.clone(), ncname.clone(), braced_uri_literal.clone());
+    } = parser_supplement(eqname.clone(), ncname.clone());
 
     let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
         eqname.clone(),
