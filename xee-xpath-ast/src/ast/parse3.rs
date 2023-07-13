@@ -76,19 +76,20 @@ where
             ast::Name::prefixed(prefix, local_name, state.namespaces.as_ref())
                 .map(|name| name.with_span(span))
                 .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))
-        });
+        })
+        .boxed();
 
     let qname = prefixed_name
         .or(ncname
             .map_with_span(|local_name, span| ast::Name::unprefixed(local_name).with_span(span)))
         .boxed();
 
-    let uri_qualified_name =
-        braced_uri_literal
-            .then(ncname)
-            .map_with_span(|(uri, local_name), span| {
-                ast::Name::uri_qualified(uri, local_name).with_span(span)
-            });
+    let uri_qualified_name = braced_uri_literal
+        .then(ncname)
+        .map_with_span(|(uri, local_name), span| {
+            ast::Name::uri_qualified(uri, local_name).with_span(span)
+        })
+        .boxed();
 
     let eqname = qname.or(uri_qualified_name).boxed();
 
@@ -137,7 +138,8 @@ where
         .map_with_span(|(name, question_mark), _span| ast::SingleType {
             name,
             optional: question_mark.is_some(),
-        });
+        })
+        .boxed();
 
     let empty_call = just(Token::LeftParen)
         .ignore_then(just(Token::RightParen))
@@ -145,14 +147,16 @@ where
 
     let empty = just(Token::EmptySequence)
         .ignore_then(empty_call.clone())
-        .to(ast::SequenceType::Empty);
+        .to(ast::SequenceType::Empty)
+        .boxed();
 
     let element_declaration = eqname.clone();
     let schema_element_test = just(Token::SchemaElement)
         .ignore_then(
             element_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
         )
-        .map(|name| ast::SchemaElementTest { name });
+        .map(|name| ast::SchemaElementTest { name })
+        .boxed();
 
     let element_name_or_wildcard = just(Token::Asterisk)
         .to(ast::ElementNameOrWildcard::Wildcard)
@@ -164,7 +168,8 @@ where
                 ast::ElementNameOrWildcard::Name(name.map(|name| {
                     name.with_default_namespace(state.namespaces.default_element_namespace)
                 }))
-            }));
+            }))
+        .boxed();
 
     let type_name = eqname.clone();
 
@@ -174,14 +179,16 @@ where
         .map(|(name, question_mark)| ast::ElementTypeName {
             name,
             optional: question_mark.is_some(),
-        });
+        })
+        .boxed();
 
     let element_test_content = element_name_or_wildcard
         .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
         .map(|(name_test, type_name)| ast::ElementTest {
             element_name_or_wildcard: name_test,
             type_name,
-        });
+        })
+        .boxed();
 
     let element_test = just(Token::Element)
         .ignore_then(
@@ -209,20 +216,24 @@ where
 
     let attrib_name_or_wildcard = just(Token::Asterisk)
         .to(ast::AttribNameOrWildcard::Wildcard)
-        .or(eqname.clone().map(ast::AttribNameOrWildcard::Name));
+        .or(eqname.clone().map(ast::AttribNameOrWildcard::Name))
+        .boxed();
 
     let attribute_test_content = attrib_name_or_wildcard
         .then((just(Token::Comma).ignore_then(type_name)).or_not())
         .map(|(attrib_name_or_wildcard, type_name)| ast::AttributeTest {
             attrib_name_or_wildcard,
             type_name,
-        });
+        })
+        .boxed();
 
-    let attribute_test = just(Token::Attribute).ignore_then(
-        attribute_test_content
-            .or_not()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-    );
+    let attribute_test = just(Token::Attribute)
+        .ignore_then(
+            attribute_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .boxed();
 
     let any_test = just(Token::Node)
         .ignore_then(empty_call.clone())
@@ -235,17 +246,21 @@ where
         .ignore_then(
             attribute_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
         )
-        .map(|name| ast::SchemaAttributeTest { name });
+        .map(|name| ast::SchemaAttributeTest { name })
+        .boxed();
 
     let pi_test_content = ncname
         .map(|s| ast::PITest::Name(s.to_string()))
-        .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())));
+        .or(string.map(|s| ast::PITest::StringLiteral(s.to_string())))
+        .boxed();
 
-    let pi_test = just(Token::ProcessingInstruction).ignore_then(
-        pi_test_content
-            .or_not()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-    );
+    let pi_test = just(Token::ProcessingInstruction)
+        .ignore_then(
+            pi_test_content
+                .or_not()
+                .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .boxed();
 
     let text_test = just(Token::Text)
         .ignore_then(empty_call.clone())
@@ -273,7 +288,8 @@ where
     let item_type_kind_test = kind_test.clone().map(ast::ItemType::KindTest);
     let item_type_empty = just(Token::Item)
         .ignore_then(empty_call.clone())
-        .to(ast::ItemType::Item);
+        .to(ast::ItemType::Item)
+        .boxed();
     let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
     let item_type = recursive(|item_type| {
         let parenthesized_item_type =
@@ -302,7 +318,8 @@ where
         .map(|(item_type, occurrence)| ast::Item {
             item_type,
             occurrence,
-        });
+        })
+        .boxed();
 
     let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
@@ -314,14 +331,17 @@ where
                 .by_prefix(prefix)
                 .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))?;
             Ok(ast::NameTest::Namespace(namespace.to_string()))
-        });
+        })
+        .boxed();
     let wildcard_braced_uri_literal = braced_uri_literal
         .then_ignore(just(Token::Asterisk))
-        .map(|uri| ast::NameTest::Namespace(uri.to_string()));
+        .map(|uri| ast::NameTest::Namespace(uri.to_string()))
+        .boxed();
     let wildcard_localname = just(Token::AsteriskColon)
         .ignore_then(ncname)
-        .map(|name| ast::NameTest::LocalName(name.to_string()));
-    let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star);
+        .map(|name| ast::NameTest::LocalName(name.to_string()))
+        .boxed();
+    let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star).boxed();
 
     let name_test_wildcard = wildcard_ncname
         .or(wildcard_braced_uri_literal)
@@ -378,10 +398,12 @@ where
     let node_test_element_name = name_test_element
         .clone()
         .map(ast::NodeTest::NameTest)
-        .or(kind_test.clone().map(ast::NodeTest::KindTest));
+        .or(kind_test.clone().map(ast::NodeTest::KindTest))
+        .boxed();
     let node_test_attribute_name = name_test_attribute
         .map(ast::NodeTest::NameTest)
-        .or(kind_test.clone().map(ast::NodeTest::KindTest));
+        .or(kind_test.clone().map(ast::NodeTest::KindTest))
+        .boxed();
 
     let abbrev_reverse_step = just(Token::DotDot).to((
         ast::Axis::Parent,
@@ -441,20 +463,22 @@ where
 
     let abbrev_forward_step_attribute = just(Token::At)
         .ignore_then(node_test_attribute_name.map(|node_test| (ast::Axis::Attribute, node_test)));
-    let abbrev_forward_step_element = node_test_element_name.map(|node_test| {
-        // https://www.w3.org/TR/xpath-31/#abbrev
-        let axis = match &node_test {
-            ast::NodeTest::KindTest(t) => match t {
-                ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
-                    ast::Axis::Attribute
-                }
-                ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+    let abbrev_forward_step_element = node_test_element_name
+        .map(|node_test| {
+            // https://www.w3.org/TR/xpath-31/#abbrev
+            let axis = match &node_test {
+                ast::NodeTest::KindTest(t) => match t {
+                    ast::KindTest::Attribute(_) | ast::KindTest::SchemaAttribute(_) => {
+                        ast::Axis::Attribute
+                    }
+                    ast::KindTest::NamespaceNode => ast::Axis::Namespace,
+                    _ => ast::Axis::Child,
+                },
                 _ => ast::Axis::Child,
-            },
-            _ => ast::Axis::Child,
-        };
-        (axis, node_test)
-    });
+            };
+            (axis, node_test)
+        })
+        .boxed();
 
     let abbrev_forward_step = abbrev_forward_step_attribute
         .or(abbrev_forward_step_element)
@@ -490,7 +514,8 @@ where
         .map(|(name, type_)| ast::Param {
             name: name.value,
             type_,
-        });
+        })
+        .boxed();
 
     let param_list = param
         .separated_by(just(Token::Comma))
@@ -503,7 +528,8 @@ where
         .map(|(name, type_)| ast::SignatureParam {
             name: name.value,
             type_,
-        });
+        })
+        .boxed();
 
     let signature_param_list = signature_param
         .separated_by(just(Token::Comma))
@@ -559,7 +585,8 @@ where
         let argument_list = argument
             .separated_by(just(Token::Comma))
             .collect::<Vec<_>>()
-            .delimited_by(just(Token::LeftParen), just(Token::RightParen));
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen))
+            .boxed();
 
         enum PostfixOrPlaceholderWrapper {
             Postfix(ast::Postfix),
@@ -613,16 +640,19 @@ where
             })
             .boxed();
 
-        let enclosed_expr =
-            (expr.clone().or_not()).delimited_by(just(Token::LeftBrace), just(Token::RightBrace));
+        let enclosed_expr = (expr.clone().or_not())
+            .delimited_by(just(Token::LeftBrace), just(Token::RightBrace))
+            .boxed();
 
-        let function_body = enclosed_expr.map_with_span(|expr, span| {
-            if let Some(expr) = expr {
-                Some(expr.value).with_span(span)
-            } else {
-                None.with_span(span)
-            }
-        });
+        let function_body = enclosed_expr
+            .map_with_span(|expr, span| {
+                if let Some(expr) = expr {
+                    Some(expr.value).with_span(span)
+                } else {
+                    None.with_span(span)
+                }
+            })
+            .boxed();
 
         let inline_function_expr = just(Token::Function)
             .ignore_then(param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
@@ -807,7 +837,8 @@ where
 
         let unary_operator = just(Token::Minus)
             .to(ast::UnaryOperator::Minus)
-            .or(just(Token::Plus).to(ast::UnaryOperator::Plus));
+            .or(just(Token::Plus).to(ast::UnaryOperator::Plus))
+            .boxed();
 
         let unary_expr = unary_operator
             .repeated()
@@ -982,13 +1013,15 @@ where
             .then(expr_single.clone())
             .boxed();
 
-        let simple_let_clause = just(Token::Let).ignore_then(
-            simple_let_binding
-                .clone()
-                .separated_by(just(Token::Comma))
-                .at_least(1)
-                .collect::<Vec<_>>(),
-        );
+        let simple_let_clause = just(Token::Let)
+            .ignore_then(
+                simple_let_binding
+                    .clone()
+                    .separated_by(just(Token::Comma))
+                    .at_least(1)
+                    .collect::<Vec<_>>(),
+            )
+            .boxed();
 
         let let_expr = simple_let_clause
             .then_ignore(just(Token::Return))
@@ -1018,9 +1051,10 @@ where
             .clone()
             .separated_by(just(Token::Comma))
             .at_least(1)
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+            .boxed();
 
-        let simple_for_clause = just(Token::For).ignore_then(for_bindings.clone());
+        let simple_for_clause = just(Token::For).ignore_then(for_bindings.clone()).boxed();
 
         let for_expr = simple_for_clause
             .clone()
