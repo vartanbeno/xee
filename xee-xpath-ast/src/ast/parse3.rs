@@ -1909,4 +1909,26 @@ mod tests {
         // See Constraint: occurrence-indicators
         assert_ron_snapshot!(parse_xpath_simple("function () as xs:string * {}"));
     }
+
+    #[test]
+    fn test_leading_lone_slash_can_form_a_path_expression() {
+        // See Constraint: leading-lone-slash
+
+        // if the token immediately following a slash can form a path
+        // expression, then the slash must be the beginning of a path
+        // expression, not the entirety of it
+        assert_ron_snapshot!(parse_xpath_simple("/ *"));
+    }
+
+    #[test]
+    fn test_leading_lone_slash_can_form_a_path_expression_error() {
+        // See Constraint: leading-lone-slash
+        assert_ron_snapshot!(parse_xpath_simple("/ * 5"))
+    }
+
+    #[test]
+    fn test_leading_lone_slash_disambiguite() {
+        // See Constraint: leading-lone-slash
+        assert_ron_snapshot!(parse_xpath_simple("(/) * 5"))
+    }
 }
