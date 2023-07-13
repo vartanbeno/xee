@@ -36,9 +36,10 @@ fn test_let_clause() {
 #[test]
 fn test_inline_function_expr() {
     Tests::all("prod/InlineFunctionExpr")
-        // unexpected parse errors. Is this because of `-` in the
-        // function name?
-        .bug("inline-fn-011 inline-fn-021 inline-fn-022 inline-fn-025")
+        // type checking
+        .exclude("inline-fn-011")
+        // function-name, function-arity
+        .exclude("inline-fn-021 inline-fn-022 inline-fn-025")
         // treat functions as objects
         .bug("inline-fn-028 inline-fn-029 inline-fn-030 inline-fn-031 inline-fn-036")
         .exclude(
