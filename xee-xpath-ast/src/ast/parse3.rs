@@ -1931,4 +1931,11 @@ mod tests {
         // See Constraint: leading-lone-slash
         assert_ron_snapshot!(parse_xpath_simple("(/) * 5"))
     }
+
+    #[test]
+    fn test_grammar_note_parens() {
+        // See Grammar Note: parens
+        // This should be interpreted as a comment, not a function call
+        assert_ron_snapshot!(parse_xpath_simple("address (: this may be empty :)"));
+    }
 }

@@ -730,7 +730,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 ### A.1.2 Extra grammatical constraints
 
-- [ ] Leading-lone-slash
+- [x] Leading-lone-slash
 
 - [ ] xml-version
 
@@ -740,9 +740,9 @@ _Note: not yet implemented for inline functions, only static functions_
 
 ### A.1.3 Grammar notes
 
-- [ ] parens
+- [x] parens
 
-- [ ] comments
+- [x] comments
 
 ## A.2 Lexical structure
 
