@@ -720,7 +720,73 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [ ] Arrow operator
 
-# Type Promotion and Operator Mapping
+# A XPath 3.1 Grammar
+
+## A.1 EBNF
+
+- [x] Grammar (a few details remain)
+
+### A.1.1 Notation
+
+### A.1.2 Extra grammatical constraints
+
+- [ ] Leading-lone-slash
+
+- [ ] xml-version
+
+- [x] reserved-function-names
+
+- [x] occurrence-indicators
+
+### A.1.3 Grammar notes
+
+- [ ] parens
+
+- [ ] comments
+
+## A.2 Lexical structure
+
+### A.2.1 Terminal Symbols
+
+- [x] Terminal symbols
+
+### A.2.2 Terminal Delimination
+
+- [x] distinguish delimiting terminal symbols from non-delimiting ones
+
+- [x] comment and whitespace symbol separators
+
+- [x] symbol separator between two non-delimiting terminal symbols
+
+- [x] symbol separator after NCName and "." and "-"
+
+- [x] symbol separator between numeric literal and "." and vice versa
+
+### A.2.3 End of line handling
+
+TDB
+
+#### A.2.3.1 XML 1.0 end of line handling
+
+#### A.2.3.2 XML 1.1 end of line handling
+
+### A.2.4 Whitespace rules
+
+- [x] whitespace rules
+
+#### A.2.4.2 Explicit whitespace handling
+
+- [x] explicit whitespace handling inside various literals
+
+## A.3 Reserved function names
+
+- [x] reserved function names
+
+## A.4. Precedence order (non-normative)
+
+- [x] Implemented grammar so should follow precedence order
+
+# B Type Promotion and Operator Mapping
 
 ## B.1 Type Promotion
 
