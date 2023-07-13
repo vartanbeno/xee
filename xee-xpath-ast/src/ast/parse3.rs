@@ -334,77 +334,22 @@ where
 }
 
 #[derive(Clone)]
-struct ParserSupplementOutput<'a, I>
+struct ParserAxisNodeTestOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    eqname: BoxedParser<'a, I, ast::NameS>,
-    literal: BoxedParser<'a, I, ast::PrimaryExprS>,
-    var_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
-    context_item_expr: BoxedParser<'a, I, ast::PrimaryExprS>,
-    named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
-    param_list: BoxedParser<'a, I, Vec<ast::Param>>,
-    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
     axis_node_test: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
-    single_type: BoxedParser<'a, I, ast::SingleType>,
-    signature: BoxedParser<'a, I, ast::Signature>,
-    kind_test: BoxedParser<'a, I, ast::KindTest>,
 }
 
-fn parser_supplement<'a, I>() -> ParserSupplementOutput<'a, I>
+fn parser_axis_node_test<'a, I>(
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    ncname: BoxedParser<'a, I, &'a str>,
+    braced_uri_literal: BoxedParser<'a, I, &'a str>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
+) -> ParserAxisNodeTestOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let ParserNameOutput {
-        eqname,
-        ncname,
-        braced_uri_literal,
-    } = parser_name();
-
-    let string = select! {
-        Token::StringLiteral(s) => s,
-    }
-    .boxed();
-    let string_literal = string
-        .clone()
-        .map(|s| ast::Literal::String(s.to_string()))
-        .boxed();
-
-    let integer = select! {
-        Token::IntegerLiteral(i) => i,
-    };
-
-    let integer_literal = integer.map(ast::Literal::Integer).boxed();
-
-    let decimal_literal = select! {
-        Token::DecimalLiteral(d) => d,
-    }
-    .map(ast::Literal::Decimal)
-    .boxed();
-
-    let double_literal = select! {
-        Token::DoubleLiteral(d) => d,
-    }
-    .map(|d| ast::Literal::Double(OrderedFloat(d)))
-    .boxed();
-
-    let literal = string_literal
-        .clone()
-        .or(integer_literal.clone())
-        .or(decimal_literal)
-        .or(double_literal)
-        .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
-        .boxed();
-
-    let var_ref = just(Token::Dollar)
-        .ignore_then(eqname.clone())
-        .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
-        .boxed();
-
-    let context_item_expr = just(Token::Dot)
-        .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
-        .boxed();
-
     let wildcard_ncname = ncname
         .clone()
         .then_ignore(just(Token::ColonAsterisk))
@@ -477,17 +422,6 @@ where
         ancestor_or_self_axis,
     ])
     .boxed();
-
-    let empty_call = just(Token::LeftParen)
-        .ignore_then(just(Token::RightParen))
-        .boxed();
-
-    let ParserKindTestOutput { kind_test } = parser_kind_test(
-        eqname.clone(),
-        empty_call.clone(),
-        ncname.clone(),
-        string.clone(),
-    );
 
     let node_test_element_name = name_test_element
         .clone()
@@ -582,6 +516,81 @@ where
 
     let axis_node_test = reverse_step.or(forward_step).boxed();
 
+    ParserAxisNodeTestOutput { axis_node_test }
+}
+
+#[derive(Clone)]
+struct ParserSupplementOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    eqname: BoxedParser<'a, I, ast::NameS>,
+    literal: BoxedParser<'a, I, ast::PrimaryExprS>,
+    var_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
+    context_item_expr: BoxedParser<'a, I, ast::PrimaryExprS>,
+    named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
+    param_list: BoxedParser<'a, I, Vec<ast::Param>>,
+    sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    axis_node_test: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
+    single_type: BoxedParser<'a, I, ast::SingleType>,
+    signature: BoxedParser<'a, I, ast::Signature>,
+    kind_test: BoxedParser<'a, I, ast::KindTest>,
+}
+
+fn parser_supplement<'a, I>() -> ParserSupplementOutput<'a, I>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let ParserNameOutput {
+        eqname,
+        ncname,
+        braced_uri_literal,
+    } = parser_name();
+
+    let string = select! {
+        Token::StringLiteral(s) => s,
+    }
+    .boxed();
+    let string_literal = string
+        .clone()
+        .map(|s| ast::Literal::String(s.to_string()))
+        .boxed();
+
+    let integer = select! {
+        Token::IntegerLiteral(i) => i,
+    };
+
+    let integer_literal = integer.map(ast::Literal::Integer).boxed();
+
+    let decimal_literal = select! {
+        Token::DecimalLiteral(d) => d,
+    }
+    .map(ast::Literal::Decimal)
+    .boxed();
+
+    let double_literal = select! {
+        Token::DoubleLiteral(d) => d,
+    }
+    .map(|d| ast::Literal::Double(OrderedFloat(d)))
+    .boxed();
+
+    let literal = string_literal
+        .clone()
+        .or(integer_literal.clone())
+        .or(decimal_literal)
+        .or(double_literal)
+        .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
+        .boxed();
+
+    let var_ref = just(Token::Dollar)
+        .ignore_then(eqname.clone())
+        .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
+        .boxed();
+
+    let context_item_expr = just(Token::Dot)
+        .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
+        .boxed();
+
     let named_function_ref = eqname
         .clone()
         .then_ignore(just(Token::Hash))
@@ -601,6 +610,17 @@ where
             .with_span(span)
         })
         .boxed();
+
+    let empty_call = just(Token::LeftParen)
+        .ignore_then(just(Token::RightParen))
+        .boxed();
+
+    let ParserKindTestOutput { kind_test } = parser_kind_test(
+        eqname.clone(),
+        empty_call.clone(),
+        ncname.clone(),
+        string.clone(),
+    );
 
     let ParserTypeOutput {
         sequence_type,
@@ -648,6 +668,13 @@ where
             return_type,
         })
         .boxed();
+
+    let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
+        eqname.clone(),
+        ncname.clone(),
+        braced_uri_literal.clone(),
+        kind_test.clone(),
+    );
 
     ParserSupplementOutput {
         eqname,
