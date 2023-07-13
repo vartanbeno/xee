@@ -661,6 +661,16 @@ mod tests {
     }
 
     #[test]
+    fn test_arith_empty_sequence_left() {
+        assert_debug_snapshot!(run("() + 1"));
+    }
+
+    #[test]
+    fn test_arith_empty_sequence_right() {
+        assert_debug_snapshot!(run("1 + ()"));
+    }
+
+    #[test]
     fn test_comma() {
         assert_debug_snapshot!(run("1, 2"));
     }

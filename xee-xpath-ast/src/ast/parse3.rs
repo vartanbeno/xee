@@ -14,6 +14,27 @@ use super::ast_core as ast;
 use super::ast_core::Span;
 use super::rename::unique_names;
 
+const RESERVED_FUNCTION_NAMES: [&str; 18] = [
+    "array",
+    "attribute",
+    "comment",
+    "document-node",
+    "element",
+    "empty-sequence",
+    "function",
+    "if",
+    "item",
+    "map",
+    "namespace-node",
+    "node",
+    "processing-instruction",
+    "schema-attribute",
+    "schema-element",
+    "switch",
+    "text",
+    "typeswitch",
+];
+
 pub(crate) struct State<'a> {
     namespaces: Cow<'a, Namespaces<'a>>,
 }
@@ -565,6 +586,16 @@ where
         let function_call = eqname
             .clone()
             .then(argument_list)
+            .try_map(|(name, arguments), span| {
+                let local_name = name.value.local_name();
+                if RESERVED_FUNCTION_NAMES.contains(&local_name) {
+                    return Err(Rich::custom(
+                        span,
+                        format!("Function name cannot be reserved: {}", local_name),
+                    ));
+                }
+                Ok((name, arguments))
+            })
             .map_with_state(move |(name, arguments), span, state: &mut State| {
                 let name = name.map(|name| {
                     name.with_default_namespace(state.namespaces.default_function_namespace)
@@ -1829,5 +1860,15 @@ mod tests {
     #[test]
     fn test_default_element_namespace_explicit_attribute_name_test() {
         assert_ron_snapshot!(parse_xpath_simple_element_ns("attribute::foo"));
+    }
+
+    #[test]
+    fn test_function_call_without_arguments() {
+        assert_ron_snapshot!(parse_xpath_simple("fn:foo()"));
+    }
+
+    #[test]
+    fn test_reserved_function_name() {
+        assert_ron_snapshot!(parse_xpath_simple("switch()"));
     }
 }
