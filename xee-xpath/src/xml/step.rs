@@ -287,7 +287,7 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 
 #[cfg(test)]
 mod tests {
-    use xee_xpath_ast::{parse_kind_test, Namespaces, WithSpan};
+    use xee_xpath_ast::{parse_kind_test, WithSpan};
 
     use super::*;
 
