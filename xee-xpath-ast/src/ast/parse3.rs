@@ -68,8 +68,7 @@ where
     named_function_ref: BoxedParser<'a, I, ast::PrimaryExprS>,
     param_list: BoxedParser<'a, I, Vec<ast::Param>>,
     sequence_type: BoxedParser<'a, I, ast::SequenceType>,
-    reverse_step: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
-    forward_step: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
+    axis_node_test: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
     single_type: BoxedParser<'a, I, ast::SingleType>,
     signature: BoxedParser<'a, I, ast::Signature>,
     kind_test: BoxedParser<'a, I, ast::KindTest>,
@@ -505,6 +504,8 @@ where
 
     let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
 
+    let axis_node_test = reverse_step.or(forward_step).boxed();
+
     let named_function_ref = eqname
         .clone()
         .then_ignore(just(Token::Hash))
@@ -575,8 +576,7 @@ where
         named_function_ref,
         param_list,
         sequence_type,
-        reverse_step,
-        forward_step,
+        axis_node_test,
         single_type,
         signature,
         kind_test,
@@ -594,9 +594,8 @@ where
         context_item_expr,
         named_function_ref,
         param_list,
+        axis_node_test,
         sequence_type,
-        reverse_step,
-        forward_step,
         single_type,
         signature,
         kind_test,
@@ -779,7 +778,7 @@ where
 
         let predicate_list = predicate.repeated().collect::<Vec<_>>().boxed();
 
-        let axis_step = (reverse_step.or(forward_step))
+        let axis_step = axis_node_test
             .then(predicate_list)
             .map_with_span(|((axis, node_test), predicates), span| {
                 ast::StepExpr::AxisStep(ast::AxisStep {
