@@ -1,4 +1,4 @@
-use xee_xpath_ast::ast::parse_xpath;
+use xee_xpath_ast::parse_xpath;
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};

@@ -1,8 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
 use xee_xpath_ast::ast;
-use xee_xpath_ast::Namespaces;
-use xee_xpath_ast::FN_NAMESPACE;
+use xee_xpath_ast::{parse_signature, Namespaces};
 
 use crate::error;
 use crate::func::{fn_static_function_descriptions, xs_static_function_descriptions};
@@ -76,8 +75,8 @@ impl StaticFunctionDescription {
         // XXX reparse signature; the macro could have stored the parsed
         // version as code, but that's more work than I'm prepared to do
         // right now.
-        let signature = ast::parse_signature(signature, namespaces)
-            .expect("Signature parse failed unexpectedly");
+        let signature =
+            parse_signature(signature, namespaces).expect("Signature parse failed unexpectedly");
 
         Self {
             name: signature.name.value,

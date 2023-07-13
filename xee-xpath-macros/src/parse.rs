@@ -4,7 +4,8 @@ use syn::{
     LitStr, Result,
 };
 
-use xee_xpath_ast::ast::{parse_signature, Signature};
+use xee_xpath_ast::ast::Signature;
+use xee_xpath_ast::parse_signature;
 use xee_xpath_ast::Namespaces;
 
 #[derive(Debug)]

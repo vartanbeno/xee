@@ -10,9 +10,9 @@ use crate::namespaces::Namespaces;
 use crate::span::WithSpan;
 use crate::FN_NAMESPACE;
 
-use super::ast_core as ast;
-use super::ast_core::Span;
-use super::rename::unique_names;
+use crate::ast;
+use crate::ast::unique_names;
+use crate::ast::Span;
 
 const RESERVED_FUNCTION_NAMES: [&str; 18] = [
     "array",

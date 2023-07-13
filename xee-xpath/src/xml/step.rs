@@ -287,7 +287,7 @@ fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
 
 #[cfg(test)]
 mod tests {
-    use xee_xpath_ast::{ast::parse_kind_test, Namespaces, WithSpan};
+    use xee_xpath_ast::{parse_kind_test, Namespaces, WithSpan};
 
     use super::*;
 
@@ -339,8 +339,6 @@ mod tests {
         let doc = xot.parse(r#"<root><a/><b/></root>"#).unwrap();
         let doc_el = xot.document_element(doc).unwrap();
         let a = xot.first_child(doc_el).unwrap();
-
-        let namespaces = Namespaces::default();
 
         let kt = parse_kind_test("node()").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));

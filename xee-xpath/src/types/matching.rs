@@ -103,7 +103,7 @@ mod tests {
     use super::*;
     use ibig::ibig;
 
-    use xee_xpath_ast::ast::parse_sequence_type;
+    use xee_xpath_ast::parse_sequence_type;
     use xee_xpath_ast::Namespaces;
 
     use crate::xml;

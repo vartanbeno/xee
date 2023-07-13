@@ -173,6 +173,7 @@ fn is_sequence_arg(fn_arg: &syn::FnArg) -> bool {
 mod tests {
     use super::*;
     use insta::assert_debug_snapshot;
+    use xee_xpath_ast::parse_sequence_type;
     use xee_xpath_ast::Namespaces;
 
     fn convert(s: &str) -> String {
@@ -182,7 +183,7 @@ mod tests {
 
     fn convert_fn_arg(s: &str, fn_arg: &syn::FnArg) -> String {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::parse_sequence_type(s, &namespaces).unwrap();
+        let sequence_type = parse_sequence_type(s, &namespaces).unwrap();
         let name = quote!(a);
         let arg = quote!(arguments[0]);
 

@@ -1,5 +1,4 @@
 use ahash::{HashMap, HashMapExt};
-use ibig::IBig;
 
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, Namespaces, FN_NAMESPACE};
@@ -746,7 +745,7 @@ impl<'a> IrConverter<'a> {
 }
 
 fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
-    let ast = xee_xpath_ast::ast::parse_expr_single(s)?;
+    let ast = xee_xpath_ast::parse_expr_single(s)?;
     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
@@ -755,7 +754,7 @@ fn convert_expr_single(s: &str) -> Result<ir::ExprS> {
 
 pub(crate) fn convert_xpath(s: &str) -> Result<ir::ExprS> {
     let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
-    let ast = xee_xpath_ast::ast::parse_xpath(s, &namespaces, &[])?;
+    let ast = xee_xpath_ast::parse_xpath(s, &namespaces, &[])?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)
