@@ -7,22 +7,7 @@ use crate::xml;
 
 pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -> bool {
     match kind_test {
-        ast::KindTest::Document(dt) => {
-            if let xml::Node::Xot(node) = node {
-                if let Some(_document_test) = dt {
-                    // document-node(E) matches any document node that contains
-                    // exactly one element node, optionally accompanied by one or more
-                    // comment or processing nodes, and E is an ElementTest or SchemaElementTest
-                    // that matches the element node
-                    todo!();
-                } else {
-                    // document-node() matches any document node
-                    xot.value_type(node) == ValueType::Root
-                }
-            } else {
-                false
-            }
-        }
+        ast::KindTest::Document(dt) => document_test(dt.as_ref(), xot, node),
         ast::KindTest::Element(et) => element_test(et.as_ref(), xot, node),
         ast::KindTest::SchemaElement(set) => {
             todo!()
@@ -83,6 +68,37 @@ fn attribute_test(test: Option<&ast::ElementOrAttributeTest>, xot: &Xot, node: x
     element_or_attribute_test(test, xot, node, |node, _| {
         matches!(node, xml::Node::Attribute(_, _))
     })
+}
+
+fn document_test(test: Option<&ast::DocumentTest>, xot: &Xot, node: xml::Node) -> bool {
+    let node_type_match = if let xml::Node::Xot(node) = node {
+        xot.value_type(node) == ValueType::Root
+    } else {
+        false
+    };
+    if !node_type_match {
+        return false;
+    }
+
+    if let Some(document_test) = test {
+        // get document element node
+        let node = xml::Node::Xot(if let xml::Node::Xot(node) = node {
+            // will always succeed as node is the root node
+            xot.document_element(node).unwrap()
+        } else {
+            // at this point node has to be root node, and therefore a xot node
+            unreachable!();
+        });
+
+        match document_test {
+            ast::DocumentTest::Element(et) => element_test(et.as_ref(), xot, node),
+            ast::DocumentTest::SchemaElement(_set) => {
+                todo!()
+            }
+        }
+    } else {
+        true
+    }
 }
 
 fn element_or_attribute_test(
@@ -332,5 +348,26 @@ mod tests {
 
         let kt = ast::KindTest::parse("attribute(alpha, xs:string)").unwrap();
         assert!(!kind_test(&kt, &xot, alpha));
+    }
+
+    #[test]
+    fn test_kind_test_document_with_name() {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<root><a>text</a></root>"#).unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.first_child(a).unwrap();
+
+        let kt = ast::KindTest::parse("document-node(element(root))").unwrap();
+        assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+
+        let kt = ast::KindTest::parse("document-node(element(a))").unwrap();
+        // the document doesn't match as its root node isn't 'a'
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        // the 'a' node doesn't match either as it's not a document node
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
     }
 }
