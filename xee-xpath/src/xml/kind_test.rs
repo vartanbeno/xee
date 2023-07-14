@@ -71,93 +71,70 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
     }
 }
 
-fn element_test(
-    element_test: Option<&ast::ElementOrAttributeTest>,
-    xot: &Xot,
-    node: xml::Node,
-) -> bool {
-    if let xml::Node::Xot(xot_node) = node {
-        if let Some(element_test) = element_test {
-            let name_matches = match &element_test.name_or_wildcard {
-                ast::NameOrWildcard::Name(name) => {
-                    if let Some(element) = xot.element(xot_node) {
-                        let name_id = name_id_for_name(xot, &name.value);
-                        Some(element.name()) == name_id
-                    } else {
-                        false
-                    }
-                }
-                ast::NameOrWildcard::Wildcard => xot.value_type(xot_node) == ValueType::Element,
-            };
-            if !name_matches {
-                return false;
-            }
-            if let Some(type_name) = &element_test.type_name {
-                // derives-from(type-annotation, TypeName) must be true
-                let name = &type_name.name.value;
-                let type_ = Xs::by_name(name.namespace(), name.local_name());
-                if let Some(type_) = type_ {
-                    node.type_annotation().derives_from(type_)
-                } else {
-                    // unknown type
-                    false
-                }
-                // ignoring can_be_nilled for now
-            } else {
-                true
-            }
+fn element_test(test: Option<&ast::ElementOrAttributeTest>, xot: &Xot, node: xml::Node) -> bool {
+    element_or_attribute_test(test, xot, node, |node, xot| {
+        if let xml::Node::Xot(node) = node {
+            xot.value_type(node) == ValueType::Element
         } else {
-            xot.value_type(xot_node) == ValueType::Element
+            false
         }
-    } else {
-        false
-    }
+    })
 }
 
-// fn element_or_attribute_test(
-//     element_test: Option<&ast::ElementTest>,
-//     xot: &Xot,
-//     node: xml::Node,
-// ) -> bool {
-//     if let xml::Node::Xot(xot_node) = node {
-//         if let Some(element_test) = element_test {
-//             let name_matches = match &element_test.element_name_or_wildcard {
-//                 ast::ElementNameOrWildcard::Name(name) => {
-//                     if let Some(element) = xot.element(xot_node) {
-//                         let name_id = name_id_for_name(xot, &name.value);
-//                         Some(element.name()) == name_id
-//                     } else {
-//                         false
-//                     }
-//                 }
-//                 ast::ElementNameOrWildcard::Wildcard => {
-//                     xot.value_type(xot_node) == ValueType::Element
-//                 }
-//             };
-//             if !name_matches {
-//                 return false;
-//             }
-//             if let Some(type_name) = &element_test.type_name {
-//                 // derives-from(type-annotation, TypeName) must be true
-//                 let name = &type_name.name.value;
-//                 let type_ = Xs::by_name(name.namespace(), name.local_name());
-//                 if let Some(type_) = type_ {
-//                     node.type_annotation().derives_from(type_)
-//                 } else {
-//                     // unknown type
-//                     false
-//                 }
-//                 // ignoring can_be_nilled for now
-//             } else {
-//                 true
-//             }
-//         } else {
-//             xot.value_type(xot_node) == ValueType::Element
-//         }
-//     } else {
-//         false
-//     }
-// }
+fn attribute_test(test: Option<&ast::ElementOrAttributeTest>, xot: &Xot, node: xml::Node) -> bool {
+    element_or_attribute_test(test, xot, node, |node, _| {
+        matches!(node, xml::Node::Attribute(_, _))
+    })
+}
+
+fn element_or_attribute_test(
+    test: Option<&ast::ElementOrAttributeTest>,
+    xot: &Xot,
+    node: xml::Node,
+    node_type_match: impl Fn(xml::Node, &Xot) -> bool,
+) -> bool {
+    // if we're not the right node type (element, or attribute) then we
+    // bail out
+    if !node_type_match(node, xot) {
+        return false;
+    }
+
+    if let Some(test) = test {
+        // the name has to match first
+        let name_matches = match &test.name_or_wildcard {
+            ast::NameOrWildcard::Name(name) => {
+                if let Some(node_name) = node.node_name(xot) {
+                    let name_id = name_id_for_name(xot, &name.value);
+                    Some(node_name) == name_id
+                } else {
+                    false
+                }
+            }
+            ast::NameOrWildcard::Wildcard => true,
+        };
+        if !name_matches {
+            return false;
+        }
+        // the type also has to match
+        if let Some(type_name) = &test.type_name {
+            // derives-from(type-annotation, TypeName) must be true
+            let name = &type_name.name.value;
+            let type_ = Xs::by_name(name.namespace(), name.local_name());
+            if let Some(type_) = type_ {
+                node.type_annotation().derives_from(type_)
+            } else {
+                // unknown type
+                false
+            }
+            // ignoring can_be_nilled for now
+        } else {
+            true
+        }
+    } else {
+        // there is further test, so we're done
+        true
+    }
+}
 
 fn name_id_for_name(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
     if let Some(namespace) = name.namespace() {
