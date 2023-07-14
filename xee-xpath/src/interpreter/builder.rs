@@ -35,6 +35,10 @@ impl Program {
     pub(crate) fn get_function(&self, index: usize) -> &stack::Function {
         &self.functions[index]
     }
+
+    pub(crate) fn get_function_by_id(&self, id: stack::FunctionId) -> &stack::Function {
+        self.get_function(id.0)
+    }
 }
 
 #[must_use]
@@ -211,13 +215,13 @@ impl<'a> FunctionBuilder<'a> {
     pub(crate) fn finish(
         mut self,
         name: String,
-        arity: usize,
+        params: Vec<ir::Param>,
         span: SourceSpan,
     ) -> stack::Function {
         self.emit(Instruction::Return, span);
         stack::Function {
             name,
-            arity,
+            params,
             chunk: self.compiled,
             spans: self.spans,
             closure_names: self.closure_names,

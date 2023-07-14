@@ -462,6 +462,12 @@ impl<'a> Interpreter<'a> {
     }
 
     fn call_closure(&mut self, function_id: stack::FunctionId, arity: u8) -> error::Result<()> {
+        // look up the function in order to access the argument information
+        // let function = &self.program.get_function_by_id(function_id);
+
+        // we need to convert each value first with sequence type matching,
+        // failing if the types don't match
+
         if self.frames.len() >= self.frames.capacity() {
             return Err(error::Error::StackOverflow);
         }
@@ -656,7 +662,7 @@ mod tests {
         builder.emit_constant(1i64.into(), empty_span);
         builder.emit_constant(2i64.into(), empty_span);
         builder.emit(Instruction::Add, empty_span);
-        let function = builder.finish("main".to_string(), 0, empty_span);
+        let function = builder.finish("main".to_string(), vec![], empty_span);
 
         let main_id = program.add_function(function);
         let xot = Xot::new();
@@ -687,7 +693,7 @@ mod tests {
         builder.emit_constant(3i64.into(), empty_span);
         builder.patch_jump(jump);
         builder.emit_constant(4i64.into(), empty_span);
-        let function = builder.finish("main".to_string(), 0, empty_span);
+        let function = builder.finish("main".to_string(), vec![], empty_span);
 
         let instructions = decode_instructions(&function.chunk);
         program.add_function(function);
@@ -718,7 +724,7 @@ mod tests {
         builder.patch_jump(lt_false);
         builder.emit_constant(4i64.into(), empty_span);
         builder.patch_jump(end);
-        let function = builder.finish("main".to_string(), 0, empty_span);
+        let function = builder.finish("main".to_string(), vec![], empty_span);
 
         let main_id = program.add_function(function);
 
@@ -755,7 +761,7 @@ mod tests {
         builder.patch_jump(lt_false);
         builder.emit_constant(4i64.into(), empty_span);
         builder.patch_jump(end);
-        let function = builder.finish("main".to_string(), 0, empty_span);
+        let function = builder.finish("main".to_string(), vec![], empty_span);
 
         let main_id = program.add_function(function);
 

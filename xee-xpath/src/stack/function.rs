@@ -33,12 +33,14 @@ pub(crate) struct CastType {
 #[derive(Debug, Clone)]
 pub(crate) struct Function {
     pub(crate) name: String,
-    pub(crate) arity: usize,
+    pub(crate) params: Vec<ir::Param>,
+    // things referenced by instructions (by index)
     pub(crate) constants: Vec<stack::Value>,
     pub(crate) steps: Vec<xml::Step>,
     pub(crate) cast_types: Vec<CastType>,
     pub(crate) sequence_types: Vec<ast::SequenceType>,
     pub(crate) closure_names: Vec<ir::Name>,
+    // the compiled code, and the spans of each instruction
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,
 }

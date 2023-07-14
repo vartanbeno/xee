@@ -95,7 +95,10 @@ pub(crate) struct FunctionDefinition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Param(pub(crate) Name);
+pub(crate) struct Param {
+    pub(crate) name: Name,
+    pub(crate) type_: Option<SequenceType>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionCall {

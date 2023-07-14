@@ -7,21 +7,24 @@ Ok(
         value: FunctionDefinition(
             FunctionDefinition {
                 params: [
-                    Param(
-                        Name(
+                    Param {
+                        name: Name(
                             "v0",
                         ),
-                    ),
-                    Param(
-                        Name(
+                        type_: None,
+                    },
+                    Param {
+                        name: Name(
                             "v1",
                         ),
-                    ),
-                    Param(
-                        Name(
+                        type_: None,
+                    },
+                    Param {
+                        name: Name(
                             "v2",
                         ),
-                    ),
+                        type_: None,
+                    },
                 ],
                 body: Spanned {
                     value: Binary(

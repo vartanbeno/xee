@@ -13,11 +13,12 @@ Ok(
                     value: FunctionDefinition(
                         FunctionDefinition {
                             params: [
-                                Param(
-                                    Name(
+                                Param {
+                                    name: Name(
                                         "v0",
                                     ),
-                                ),
+                                    type_: None,
+                                },
                             ],
                             body: Spanned {
                                 value: Binary(

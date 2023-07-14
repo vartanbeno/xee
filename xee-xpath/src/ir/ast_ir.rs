@@ -260,13 +260,25 @@ impl<'a> IrConverter<'a> {
         let exprs_bindings = self.expr(&ast.0)?;
         self.pop_context();
         let mut params = vec![
-            ir::Param(context_names.item),
-            ir::Param(context_names.position),
-            ir::Param(context_names.last),
+            ir::Param {
+                name: context_names.item,
+                type_: None,
+            },
+            ir::Param {
+                name: context_names.position,
+                type_: None,
+            },
+            ir::Param {
+                name: context_names.last,
+                type_: None,
+            },
         ];
         // add any variables defined in static context as parameters
         for ir_name in ir_names {
-            params.push(ir::Param(ir_name));
+            params.push(ir::Param {
+                name: ir_name,
+                type_: None,
+            });
         }
         let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
@@ -666,7 +678,10 @@ impl<'a> IrConverter<'a> {
     }
 
     fn param(&mut self, param: &ast::Param) -> ir::Param {
-        ir::Param(self.new_var_name(&param.name))
+        ir::Param {
+            name: self.new_var_name(&param.name),
+            type_: param.type_.clone(),
+        }
     }
 
     fn function_call(&mut self, ast: &ast::FunctionCall, span: Span) -> Result<Bindings> {
