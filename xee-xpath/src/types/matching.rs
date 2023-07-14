@@ -14,7 +14,7 @@ use crate::sequence;
 use crate::xml;
 
 impl sequence::Sequence {
-    fn sequence_type_matching(
+    pub(crate) fn sequence_type_matching(
         &self,
         t: &ast::SequenceType,
         xot: &Xot,

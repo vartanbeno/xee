@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"1 instance of xs:integer\")"
+---
+Ok(
+    One(
+        Atomic(
+            Boolean(
+                true,
+            ),
+        ),
+    ),
+)

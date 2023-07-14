@@ -1,5 +1,6 @@
 use miette::SourceSpan;
 use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 
 use crate::ir;
 use crate::stack;
@@ -36,6 +37,7 @@ pub(crate) struct Function {
     pub(crate) constants: Vec<stack::Value>,
     pub(crate) steps: Vec<xml::Step>,
     pub(crate) cast_types: Vec<CastType>,
+    pub(crate) sequence_types: Vec<ast::SequenceType>,
     pub(crate) closure_names: Vec<ir::Name>,
     pub(crate) chunk: Vec<u8>,
     pub(crate) spans: Vec<SourceSpan>,

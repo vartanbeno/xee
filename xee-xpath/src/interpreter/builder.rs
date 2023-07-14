@@ -1,4 +1,5 @@
 use miette::SourceSpan;
+use xee_xpath_ast::ast;
 
 use crate::ir;
 use crate::stack;
@@ -68,6 +69,7 @@ pub(crate) struct FunctionBuilder<'a> {
     constants: Vec<stack::Value>,
     steps: Vec<xml::Step>,
     cast_types: Vec<CastType>,
+    sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
 }
 
@@ -80,6 +82,7 @@ impl<'a> FunctionBuilder<'a> {
             constants: Vec::new(),
             steps: Vec::new(),
             cast_types: Vec::new(),
+            sequence_types: Vec::new(),
             closure_names: Vec::new(),
         }
     }
@@ -129,6 +132,15 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many cast types");
         }
         cast_type_id
+    }
+
+    pub(crate) fn add_sequence_type(&mut self, sequence_type: ast::SequenceType) -> usize {
+        let sequence_type_id = self.sequence_types.len();
+        self.sequence_types.push(sequence_type);
+        if sequence_type_id > (u16::MAX as usize) {
+            panic!("too many sequence types");
+        }
+        sequence_type_id
     }
 
     pub(crate) fn emit_compare_value(&mut self, comparison: Comparison, span: SourceSpan) {
@@ -212,6 +224,7 @@ impl<'a> FunctionBuilder<'a> {
             constants: self.constants,
             steps: self.steps,
             cast_types: self.cast_types,
+            sequence_types: self.sequence_types,
         }
     }
 

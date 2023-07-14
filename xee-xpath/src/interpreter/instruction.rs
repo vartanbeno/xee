@@ -45,6 +45,7 @@ pub(crate) enum Instruction {
     LetDone,
     Cast(u16),
     Castable(u16),
+    InstanceOf(u16),
     Range,
     SequenceLen,
     SequenceGet,
@@ -98,6 +99,7 @@ pub(crate) enum EncodedInstruction {
     LetDone,
     Cast,
     Castable,
+    InstanceOf,
     Range,
     SequenceLen,
     SequenceGet,
@@ -187,6 +189,10 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::Castable => {
             let type_id = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Castable(type_id), 3)
+        }
+        EncodedInstruction::InstanceOf => {
+            let sequence_type_id = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::InstanceOf(sequence_type_id), 3)
         }
         EncodedInstruction::Return => (Instruction::Return, 1),
         EncodedInstruction::Dup => (Instruction::Dup, 1),
@@ -296,6 +302,10 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(EncodedInstruction::Castable.to_u8().unwrap());
             bytes.extend_from_slice(&type_id.to_le_bytes());
         }
+        Instruction::InstanceOf(sequence_type_id) => {
+            bytes.push(EncodedInstruction::InstanceOf.to_u8().unwrap());
+            bytes.extend_from_slice(&sequence_type_id.to_le_bytes());
+        }
         Instruction::Range => bytes.push(EncodedInstruction::Range.to_u8().unwrap()),
         Instruction::SequenceLen => bytes.push(EncodedInstruction::SequenceLen.to_u8().unwrap()),
         Instruction::SequenceGet => bytes.push(EncodedInstruction::SequenceGet.to_u8().unwrap()),
@@ -367,6 +377,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Step(_)
         | Instruction::Cast(_)
         | Instruction::Castable(_)
+        | Instruction::InstanceOf(_)
         | Instruction::JumpIfFalse(_) => 3,
     }
 }

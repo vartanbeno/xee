@@ -39,7 +39,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
             ir::Expr::Cast(cast) => self.compile_cast(cast, span),
             ir::Expr::Castable(castable) => self.compile_castable(castable, span),
-            ir::Expr::InstanceOf(instance_of) => todo!(),
+            ir::Expr::InstanceOf(instance_of) => self.compile_instance_of(instance_of, span),
         }
     }
 
@@ -361,6 +361,20 @@ impl<'a> InterpreterCompiler<'a> {
         let cast_type_id = self.builder.add_cast_type(cast_type);
         self.builder
             .emit(Instruction::Castable(cast_type_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_instance_of(
+        &mut self,
+        instance_of: &ir::InstanceOf,
+        span: SourceSpan,
+    ) -> Result<()> {
+        self.compile_atom(&instance_of.atom)?;
+        let sequence_type_id = self
+            .builder
+            .add_sequence_type(instance_of.sequence_type.clone());
+        self.builder
+            .emit(Instruction::InstanceOf(sequence_type_id as u16), span);
         Ok(())
     }
 
@@ -1470,5 +1484,36 @@ mod tests {
     #[test]
     fn test_castable_as_integer_empty_sequence_question_mark() {
         assert_debug_snapshot!(run("() castable as xs:integer?"));
+    }
+
+    #[test]
+    fn test_instance_of_one() {
+        assert_debug_snapshot!(run("1 instance of xs:integer"));
+    }
+
+    #[test]
+    fn test_instance_of_one_fails() {
+        assert_debug_snapshot!(run("() instance of xs:integer"));
+    }
+
+    #[test]
+    fn test_instance_of_many() {
+        assert_debug_snapshot!(run("(1, 2) instance of xs:integer*"));
+    }
+
+    #[test]
+    fn test_instance_of_node() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/></doc>"#,
+            "doc/a instance of element(a)",
+        ));
+    }
+
+    #[test]
+    fn test_instance_of_node_fails() {
+        assert_debug_snapshot!(run_xml(
+            r#"<doc><a/></doc>"#,
+            "doc/a instance of element(b)",
+        ));
     }
 }

@@ -355,6 +355,20 @@ impl<'a> Interpreter<'a> {
                         self.stack.push(false.into());
                     }
                 }
+                EncodedInstruction::InstanceOf => {
+                    let sequence_type_id = self.read_u16();
+                    let value = self.stack.pop().unwrap();
+                    let sequence_type =
+                        &(self.function().sequence_types[sequence_type_id as usize]);
+                    let sequence: sequence::Sequence = value.into();
+                    let matches =
+                        sequence.sequence_type_matching(sequence_type, self.dynamic_context.xot);
+                    if matches.is_ok() {
+                        self.stack.push(true.into());
+                    } else {
+                        self.stack.push(false.into());
+                    }
+                }
                 EncodedInstruction::Range => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
