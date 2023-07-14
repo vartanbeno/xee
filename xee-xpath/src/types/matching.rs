@@ -32,6 +32,25 @@ impl sequence::Sequence {
         }
     }
 
+    // as in function conversion rules
+    pub fn atomized_sequence(&self, xot: &Xot, xs: Xs) -> error::Result<sequence::Sequence> {
+        let atomized = self.atomized(xot);
+        let mut items = Vec::new();
+
+        for atom in atomized {
+            let atom = atom?;
+            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
+                atom.cast_to_schema_type(xs)?
+            } else {
+                atom
+            };
+            let atom = atom.type_promote(xs)?;
+            let item = sequence::Item::from(atom);
+            items.push(item);
+        }
+        Ok(sequence::Sequence::from(items))
+    }
+
     fn occurrence_item_matching(
         self,
         occurrence_item: &ast::Item,
@@ -365,7 +384,31 @@ mod tests {
     }
 
     #[test]
-    fn test_many_atomized() {
+    fn test_many_atomized_promote() {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse("xs:double*", &namespaces).unwrap();
+
+        // integers count as decimals, so should be promoted to a double
+        let right_sequence = sequence::Sequence::from(vec![
+            sequence::Item::from(ibig!(1)),
+            sequence::Item::from(ibig!(2)),
+        ]);
+
+        let xot = Xot::new();
+
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        // atomization has changed the result sequence
+        assert_eq!(
+            right_result,
+            Ok(sequence::Sequence::from(vec![
+                sequence::Item::from(atomic::Atomic::from(1f64)),
+                sequence::Item::from(atomic::Atomic::from(2f64)),
+            ]))
+        );
+    }
+
+    #[test]
+    fn test_many_cast_untyped() {
         let namespaces = Namespaces::default();
         let sequence_type = ast::SequenceType::parse("xs:integer*", &namespaces).unwrap();
 
@@ -381,11 +424,8 @@ mod tests {
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(a), sequence::Item::from(b)]);
 
-        let right_result = right_sequence
-            .clone()
-            .sequence_type_matching(&sequence_type, &xot);
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
         // atomization has changed the result sequence
-        assert_ne!(right_result, Ok(right_sequence));
         assert_eq!(
             right_result,
             Ok(sequence::Sequence::from(vec![

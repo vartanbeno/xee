@@ -1,8 +1,6 @@
 // This contains a sequence abstraction that is useful
 // in interfacing with external APIs. It's a layer over the
-// stack::Value abstraction.
-
-use xee_schema_type::Xs;
+// stack::Value abstraction
 use xot::Xot;
 
 use crate::atomic;
@@ -67,25 +65,6 @@ impl Sequence {
 
     pub fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
         self.stack_value.atomized(xot)
-    }
-
-    pub fn atomized_sequence(&self, xot: &Xot, xs: Xs) -> error::Result<Sequence> {
-        let atomized = self.atomized(xot);
-        let mut items = Vec::new();
-
-        for atom in atomized {
-            let atom = atom?;
-            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-                atom.cast_to_schema_type(xs)?
-            } else {
-                atom
-            };
-            // TODO: numeric type promotion
-            // TODO: anyURI type promotion
-            let item = sequence::Item::from(atom);
-            items.push(item);
-        }
-        Ok(Sequence::from(items))
     }
 
     pub fn unboxed_atomized<'a, T>(

@@ -517,6 +517,22 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
         }
     }
+
+    pub(crate) fn type_promote(self, xs: Xs) -> error::Result<atomic::Atomic> {
+        // Section B.1 type promotion
+        let schema_type = self.schema_type();
+        if xs == Xs::Double
+            && (schema_type.derives_from(Xs::Float) || schema_type.derives_from(Xs::Decimal))
+        {
+            return self.cast_to_double();
+        }
+
+        if xs == Xs::Float && schema_type.derives_from(Xs::Decimal) {
+            return self.cast_to_float();
+        }
+        // TODO: handle xs:anyURI
+        Ok(self)
+    }
 }
 
 // shared casting logic for binary operations; both comparison and arithmetic use
@@ -552,6 +568,7 @@ where
             // this is in terms of the base numeric schema type
             use BaseNumericType::*;
             match (a_numeric_type, b_numeric_type) {
+                // comparison step 5
                 // 5b: xs:decimal & xs:float -> cast decimal to float
                 (Decimal, Float) | (Integer, Float) | (Float, Decimal) | (Float, Integer) => {
                     Ok((a.cast_to_float()?, b.cast_to_float()?))

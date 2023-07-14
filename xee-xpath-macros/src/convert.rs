@@ -18,9 +18,6 @@ pub(crate) fn convert_sequence_type(
             let #name = #arg.ensure_empty()?;
         )),
         ast::SequenceType::Item(item) => convert_item(item, fn_arg, name, arg),
-        _ => {
-            panic!("Unsupported");
-        }
     }
 }
 

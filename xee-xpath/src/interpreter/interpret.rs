@@ -466,26 +466,28 @@ impl<'a> Interpreter<'a> {
         let function = self.program.get_function_by_id(function_id);
         let params = &function.params;
 
+        // TODO: fast path if no sequence types exist for parameters
+
         // now pop everything off the stack to do type matching, along
         // with sequence type conversion
-        // let mut arguments = Vec::with_capacity(arity as usize);
-        // for param in params.iter().rev() {
-        //     let value = self.stack.pop().unwrap();
-        //     if let Some(type_) = &param.type_ {
-        //         let sequence: sequence::Sequence = value.into();
-        //         let sequence = sequence.sequence_type_matching(type_, self.dynamic_context.xot)?;
-        //         arguments.push(sequence.into())
-        //     } else {
-        //         // no need to do any checking or conversion
-        //         arguments.push(value);
-        //     }
-        //     let value = self.stack.pop().unwrap();
-        //     self.stack.push(value);
-        // }
-        // for each stack item, do function value conversion
-
-        // we need to convert each value first with sequence type matching,
-        // failing if the types don't match
+        let mut arguments = Vec::with_capacity(arity as usize);
+        for param in params.iter().rev() {
+            let value = self.stack.pop().unwrap();
+            if let Some(type_) = &param.type_ {
+                let sequence: sequence::Sequence = value.into();
+                // matching also takes care of function conversion rules
+                let sequence = sequence.sequence_type_matching(type_, self.dynamic_context.xot)?;
+                arguments.push(sequence.into())
+            } else {
+                // no need to do any checking or conversion
+                arguments.push(value);
+            }
+        }
+        // now we have a list of arguments that we want to push back onto the stack,
+        // in reverse
+        for arg in arguments.into_iter().rev() {
+            self.stack.push(arg);
+        }
 
         if self.frames.len() >= self.frames.capacity() {
             return Err(error::Error::StackOverflow);
