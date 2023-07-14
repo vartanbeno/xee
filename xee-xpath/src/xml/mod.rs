@@ -1,5 +1,6 @@
 mod annotation;
 mod document;
+mod kind_test;
 mod node;
 mod step;
 
