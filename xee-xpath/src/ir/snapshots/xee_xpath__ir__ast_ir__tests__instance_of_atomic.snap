@@ -1,0 +1,40 @@
+---
+source: xee-xpath/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"1 instance of xs:string\")"
+---
+Ok(
+    Spanned {
+        value: InstanceOf(
+            InstanceOf {
+                atom: Spanned {
+                    value: Const(
+                        Integer(
+                            1,
+                        ),
+                    ),
+                    span: 0..1,
+                },
+                sequence_type: Item(
+                    Item {
+                        item_type: AtomicOrUnionType(
+                            Spanned {
+                                value: Name {
+                                    name: "string",
+                                    prefix: Some(
+                                        "xs",
+                                    ),
+                                    namespace: Some(
+                                        "http://www.w3.org/2001/XMLSchema",
+                                    ),
+                                },
+                                span: 14..23,
+                            },
+                        ),
+                        occurrence: One,
+                    },
+                ),
+            },
+        ),
+        span: 0..23,
+    },
+)

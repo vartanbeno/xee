@@ -563,6 +563,15 @@ impl<'a> IrConverter<'a> {
                     Err(Error::XQST0052)
                 }
             }
+            ast::ApplyOperator::InstanceOf(sequence_type) => {
+                let mut bindings = self.path_expr(&ast.path_expr)?;
+                let expr = ir::Expr::InstanceOf(ir::InstanceOf {
+                    atom: bindings.atom(),
+                    sequence_type: sequence_type.clone(),
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
             _ => {
                 todo!("ApplyOperator: {:?}", ast.operator)
             }
@@ -998,5 +1007,15 @@ mod tests {
     #[test]
     fn test_cast_illegal_simple_type() {
         assert_debug_snapshot!(convert_expr_single("1 cast as xs:NOTATION"));
+    }
+
+    #[test]
+    fn test_instance_of_atomic() {
+        assert_debug_snapshot!(convert_expr_single("1 instance of xs:string"));
+    }
+
+    #[test]
+    fn test_instance_of_kind_test() {
+        assert_debug_snapshot!(convert_expr_single("1 instance of node()"));
     }
 }

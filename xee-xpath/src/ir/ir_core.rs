@@ -6,7 +6,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
 use xee_schema_type::Xs;
-pub use xee_xpath_ast::ast::{BinaryOperator, SingleType, UnaryOperator};
+pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
 use crate::stack::{CastType, StaticFunctionId};
@@ -30,6 +30,7 @@ pub(crate) enum Expr {
     Quantified(Quantified),
     Cast(Cast),
     Castable(Castable),
+    InstanceOf(InstanceOf),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -166,4 +167,10 @@ impl Castable {
             empty_sequence_allowed: self.empty_sequence_allowed,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct InstanceOf {
+    pub(crate) atom: AtomS,
+    pub(crate) sequence_type: SequenceType,
 }
