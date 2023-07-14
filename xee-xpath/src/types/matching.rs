@@ -11,6 +11,7 @@ use crate::atomic;
 use crate::error;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::xml;
 
 impl sequence::Sequence {
     fn sequence_type_matching(
@@ -46,13 +47,13 @@ impl sequence::Sequence {
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = sequence.items().one()?;
-                one.item_type_matching(&occurrence_item.item_type)?;
+                one.item_type_matching(&occurrence_item.item_type, xot)?;
                 Ok(sequence)
             }
             ast::Occurrence::Option => {
                 let option = sequence.items().option()?;
                 if let Some(item) = option {
-                    item.item_type_matching(&occurrence_item.item_type)?;
+                    item.item_type_matching(&occurrence_item.item_type, xot)?;
                     Ok(sequence)
                 } else {
                     Ok(sequence)
@@ -60,7 +61,7 @@ impl sequence::Sequence {
             }
             ast::Occurrence::Many => {
                 for item in sequence.items() {
-                    item?.item_type_matching(&occurrence_item.item_type)?;
+                    item?.item_type_matching(&occurrence_item.item_type, xot)?;
                 }
                 Ok(sequence)
             }
@@ -72,15 +73,30 @@ impl sequence::Sequence {
 }
 
 impl sequence::Item {
-    fn item_type_matching(&self, item_type: &ast::ItemType) -> error::Result<()> {
+    fn item_type_matching(&self, item_type: &ast::ItemType, xot: &Xot) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => Ok(()),
             ast::ItemType::AtomicOrUnionType(name) => {
                 self.to_atomic()?.atomic_type_matching(&name.value)
             }
+            ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
             _ => {
                 todo!("not yet")
             }
+        }
+    }
+
+    fn kind_test_matching(&self, kind_test: &ast::KindTest, xot: &Xot) -> error::Result<()> {
+        match self {
+            sequence::Item::Node(node) => {
+                if xml::kind_test(kind_test, xot, *node) {
+                    Ok(())
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
+            sequence::Item::Atomic(_) => Err(error::Error::Type),
+            sequence::Item::Function(_) => Err(error::Error::Type),
         }
     }
 }
@@ -271,5 +287,78 @@ mod tests {
         let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
         assert!(is_owned(right_empty_result));
+    }
+
+    #[test]
+    fn test_many_node() {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse("node()*", &namespaces).unwrap();
+
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<doc><a attr="Attr">A</a><b/></doc>"#).unwrap();
+        let doc = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+        let text = xot.first_child(a).unwrap();
+
+        let doc = xml::Node::Xot(doc);
+        let attr = xml::Node::Attribute(a, xot.name("attr").unwrap());
+        let a = xml::Node::Xot(a);
+        let b = xml::Node::Xot(b);
+        let text = xml::Node::Xot(text);
+
+        let right_sequence = sequence::Sequence::from(vec![
+            sequence::Item::from(doc),
+            sequence::Item::from(a),
+            sequence::Item::from(b),
+            sequence::Item::from(text),
+            sequence::Item::from(attr),
+        ]);
+
+        let wrong_sequence = sequence::Sequence::from(vec![sequence::Item::from(ibig!(1))]);
+
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
+        assert!(is_borrowed(right_result));
+
+        let wrong_result = wrong_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(wrong_result, Err(error::Error::Type));
+    }
+
+    #[test]
+    fn test_many_element() {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse("element()*", &namespaces).unwrap();
+
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<doc><a attr="Attr">A</a><b/></doc>"#).unwrap();
+        let doc = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+        let text = xot.first_child(a).unwrap();
+
+        let doc = xml::Node::Xot(doc);
+        let attr = xml::Node::Attribute(a, xot.name("attr").unwrap());
+        let a = xml::Node::Xot(a);
+        let b = xml::Node::Xot(b);
+        let text = xml::Node::Xot(text);
+
+        let right_sequence = sequence::Sequence::from(vec![
+            sequence::Item::from(doc),
+            sequence::Item::from(a),
+            sequence::Item::from(b),
+        ]);
+
+        let wrong_sequence_text = sequence::Sequence::from(vec![sequence::Item::from(text)]);
+        let wrong_sequence_attr = sequence::Sequence::from(vec![sequence::Item::from(attr)]);
+
+        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
+        assert!(is_borrowed(right_result));
+
+        let wrong_result = wrong_sequence_text.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(wrong_result, Err(error::Error::Type));
+        let wrong_result = wrong_sequence_attr.sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(wrong_result, Err(error::Error::Type));
     }
 }
