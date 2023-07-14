@@ -27,9 +27,7 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
         ast::KindTest::SchemaElement(set) => {
             todo!()
         }
-        ast::KindTest::Attribute(at) => {
-            todo!()
-        }
+        ast::KindTest::Attribute(at) => attribute_test(at.as_ref(), xot, node),
         ast::KindTest::SchemaAttribute(sat) => {
             todo!()
         }
@@ -268,5 +266,71 @@ mod tests {
         // but we're not an xs:string
         let kt = ast::KindTest::parse("element(a, xs:string)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
+    }
+
+    #[test]
+    fn test_kind_test_attribute_without_name() {
+        let mut xot = Xot::new();
+        let doc = xot
+            .parse(r#"<root><a alpha="Alpha" beta="Beta">text</a></root>"#)
+            .unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.first_child(a).unwrap();
+        let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
+        let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
+
+        let kt = ast::KindTest::parse("attribute()").unwrap();
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
+        assert!(kind_test(&kt, &xot, alpha));
+        assert!(kind_test(&kt, &xot, beta));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+    }
+
+    #[test]
+    fn test_kind_test_attribute_with_name() {
+        let mut xot = Xot::new();
+        let doc = xot
+            .parse(r#"<root><a alpha="Alpha" beta="Beta">text</a></root>"#)
+            .unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.first_child(a).unwrap();
+        let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
+        let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
+
+        let kt = ast::KindTest::parse("attribute(alpha)").unwrap();
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
+        assert!(kind_test(&kt, &xot, alpha));
+        assert!(!kind_test(&kt, &xot, beta));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+    }
+
+    #[test]
+    fn test_kind_test_attribute_with_type_name() {
+        let mut xot = Xot::new();
+        let doc = xot
+            .parse(r#"<root><a alpha="Alpha" beta="Beta">text</a></root>"#)
+            .unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.first_child(a).unwrap();
+        let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
+        let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
+
+        let kt = ast::KindTest::parse("attribute(alpha, xs:untypedAtomic)").unwrap();
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
+        assert!(kind_test(&kt, &xot, alpha));
+        assert!(!kind_test(&kt, &xot, beta));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+
+        let kt = ast::KindTest::parse("attribute(alpha, xs:string)").unwrap();
+        assert!(!kind_test(&kt, &xot, alpha));
     }
 }
