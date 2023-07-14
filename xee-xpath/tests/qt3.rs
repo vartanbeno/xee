@@ -36,8 +36,6 @@ fn test_let_clause() {
 #[test]
 fn test_inline_function_expr() {
     Tests::all("prod/InlineFunctionExpr")
-        // type checking
-        .exclude("inline-fn-011")
         // function-name, function-arity
         .exclude("inline-fn-021 inline-fn-022 inline-fn-025")
         // treat functions as objects
@@ -45,7 +43,7 @@ fn test_inline_function_expr() {
         .exclude(
             "inline-fn-004 inline-fn-11 inline-fn-012a inline-fn-013 inline-fn-032 inline-fn-033",
         )
-        // function type declaration
+        // function type `function(*)`
         .exclude("inline-fn-014")
         .run()
 }
