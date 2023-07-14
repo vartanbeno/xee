@@ -239,6 +239,13 @@ fn test_cases_query<'a>(
         ))
     })?;
 
+    let assert_type_query = queries.one("string()", |_, item| {
+        let string_value: String = item.to_atomic()?.try_into()?;
+        Ok(qt::TestCaseResult::AssertType(assert::AssertType::new(
+            string_value,
+        )))
+    })?;
+
     let assert_query = queries.one("string()", |_, item| {
         let xpath: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::Assert(assert::Assert::new(
@@ -281,6 +288,8 @@ fn test_cases_query<'a>(
                 assert_query.execute(session, item)?
             } else if local_name == "assert-empty" {
                 qt::TestCaseResult::AssertEmpty(assert::AssertEmpty::new())
+            } else if local_name == "assert_type" {
+                assert_type_query.execute(session, item)?
             } else {
                 qt::TestCaseResult::Unsupported
                 // qt::TestCaseResult::AssertFalse

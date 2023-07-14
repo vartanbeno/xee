@@ -476,7 +476,8 @@ impl<'a> Interpreter<'a> {
             if let Some(type_) = &param.type_ {
                 let sequence: sequence::Sequence = value.into();
                 // matching also takes care of function conversion rules
-                let sequence = sequence.sequence_type_matching(type_, self.dynamic_context.xot)?;
+                let sequence = sequence
+                    .sequence_type_matching_function_conversion(type_, self.dynamic_context.xot)?;
                 arguments.push(sequence.into())
             } else {
                 // no need to do any checking or conversion

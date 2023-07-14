@@ -1,10 +1,11 @@
 // This module matches types for inline functions or type checks
 // The convert module is used for checking and converting values for
 // external functions declared with xpath_fn
-use xot::Xot;
 
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
+use xee_xpath_ast::Namespaces;
+use xot::Xot;
 
 use crate::atomic;
 use crate::error;
@@ -13,9 +14,71 @@ use crate::sequence;
 use crate::xml;
 
 impl sequence::Sequence {
+    /// Check a type for qee-qt assert-type
+    pub fn matches_type(&self, s: &str, xot: &Xot) -> error::Result<bool> {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse(s, &namespaces)?;
+        if self
+            .clone()
+            .sequence_type_matching(&sequence_type, xot)
+            .is_ok()
+        {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    // sequence type matching for the purposes of instance of
     pub(crate) fn sequence_type_matching(
         self,
+        sequence_type: &ast::SequenceType,
+        xot: &Xot,
+    ) -> error::Result<Self> {
+        self.sequence_type_matching_convert(
+            sequence_type,
+            |sequence, _| {
+                let atomized = sequence.atomized(xot);
+                let sequence: sequence::Sequence =
+                    atomized.collect::<error::Result<Vec<_>>>()?.into();
+                Ok(sequence)
+            },
+            xot,
+        )
+    }
+
+    // sequence type matching, including function conversion rules
+    pub(crate) fn sequence_type_matching_function_conversion(
+        self,
+        sequence_type: &ast::SequenceType,
+        xot: &Xot,
+    ) -> error::Result<Self> {
+        self.sequence_type_matching_convert(
+            sequence_type,
+            |sequence, xs| {
+                let atomized = sequence.atomized(xot);
+                let mut items = Vec::new();
+                for atom in atomized {
+                    let atom = atom?;
+                    let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
+                        atom.cast_to_schema_type(xs)?
+                    } else {
+                        atom
+                    };
+                    let atom = atom.type_promote(xs)?;
+                    let item = sequence::Item::from(atom);
+                    items.push(item);
+                }
+                Ok(sequence::Sequence::from(items))
+            },
+            xot,
+        )
+    }
+
+    fn sequence_type_matching_convert(
+        self,
         t: &ast::SequenceType,
+        convert: impl Fn(&sequence::Sequence, Xs) -> error::Result<sequence::Sequence>,
         xot: &Xot,
     ) -> error::Result<Self> {
         match t {
@@ -27,40 +90,22 @@ impl sequence::Sequence {
                 }
             }
             ast::SequenceType::Item(occurrence_item) => {
-                self.occurrence_item_matching(occurrence_item, xot)
+                self.occurrence_item_matching(occurrence_item, convert, xot)
             }
         }
-    }
-
-    // as in function conversion rules
-    pub fn atomized_sequence(&self, xot: &Xot, xs: Xs) -> error::Result<sequence::Sequence> {
-        let atomized = self.atomized(xot);
-        let mut items = Vec::new();
-
-        for atom in atomized {
-            let atom = atom?;
-            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-                atom.cast_to_schema_type(xs)?
-            } else {
-                atom
-            };
-            let atom = atom.type_promote(xs)?;
-            let item = sequence::Item::from(atom);
-            items.push(item);
-        }
-        Ok(sequence::Sequence::from(items))
     }
 
     fn occurrence_item_matching(
         self,
         occurrence_item: &ast::Item,
+        convert: impl Fn(&sequence::Sequence, Xs) -> error::Result<sequence::Sequence>,
         xot: &Xot,
     ) -> error::Result<Self> {
         let sequence = if let ast::ItemType::AtomicOrUnionType(name) = &occurrence_item.item_type {
             let name = &name.value;
             let xs = Xs::by_name(name.namespace(), name.local_name())
                 .ok_or(error::Error::UndefinedTypeReference)?;
-            self.atomized_sequence(xot, xs)?
+            convert(&self, xs)?
         } else {
             self
         };
@@ -86,7 +131,13 @@ impl sequence::Sequence {
                 Ok(sequence)
             }
             ast::Occurrence::NonEmpty => {
-                todo!("not yet")
+                if sequence.is_empty() {
+                    return Err(error::Error::Type);
+                }
+                for item in sequence.items() {
+                    item?.item_type_matching(&occurrence_item.item_type, xot)?;
+                }
+                Ok(sequence)
             }
         }
     }
@@ -396,7 +447,8 @@ mod tests {
 
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        let right_result =
+            right_sequence.sequence_type_matching_function_conversion(&sequence_type, &xot);
         // atomization has changed the result sequence
         assert_eq!(
             right_result,
@@ -424,7 +476,8 @@ mod tests {
         let right_sequence =
             sequence::Sequence::from(vec![sequence::Item::from(a), sequence::Item::from(b)]);
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
+        let right_result =
+            right_sequence.sequence_type_matching_function_conversion(&sequence_type, &xot);
         // atomization has changed the result sequence
         assert_eq!(
             right_result,

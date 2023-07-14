@@ -40,9 +40,9 @@ fn test_inline_function_expr() {
         .exclude("inline-fn-021 inline-fn-022 inline-fn-025")
         // treat functions as objects
         .bug("inline-fn-028 inline-fn-029 inline-fn-030 inline-fn-031 inline-fn-036")
-        .exclude(
-            "inline-fn-004 inline-fn-11 inline-fn-012a inline-fn-013 inline-fn-032 inline-fn-033",
-        )
+        .exclude("inline-fn-012a inline-fn-013 inline-fn-032 inline-fn-033")
+        // sum function
+        .exclude("inline-fn-004")
         // function type `function(*)`
         .exclude("inline-fn-014")
         .run()
@@ -111,6 +111,12 @@ fn test_castable() {
         .run()
 }
 
+#[test]
+fn test_instance_of() {
+    Tests::all("prod/InstanceofExpr")
+        .exclude("instanceof? instanceof1? instanceof2? instanceof3? instanceof6? instanceof7? instanceof111 instanceof121 instanceof12? instanceof13? K*-SeqExprInstanceOf*")
+        .run()
+}
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")

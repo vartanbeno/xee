@@ -324,7 +324,25 @@ pub(crate) struct AssertSerializationMatches;
 pub(crate) struct AssertSerializationError(String);
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct AssertType(String);
+pub struct AssertType(String);
+
+impl AssertType {
+    pub(crate) fn new(type_name: String) -> Self {
+        Self(type_name)
+    }
+}
+
+impl Assertable for AssertType {
+    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+        // TODO: ugly unwrap in here; what if qt test has sequence type that cannot
+        // be parsed?
+        if sequence.matches_type(&self.0, xot).unwrap() {
+            TestOutcome::Passed
+        } else {
+            TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertTrue;
@@ -577,6 +595,7 @@ pub enum Failure {
     Assert(Assert, Sequence),
     Empty(AssertEmpty, Sequence),
     Error(AssertError, Sequence),
+    Type(AssertType, Sequence),
 }
 
 impl fmt::Display for Failure {
@@ -645,6 +664,12 @@ impl fmt::Display for Failure {
             Failure::Empty(_a, value) => {
                 writeln!(f, "empty:")?;
                 writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::Type(_a, value) => {
+                writeln!(f, "type:")?;
+                writeln!(f, "  expected type: {:?}", _a.0)?;
+                writeln!(f, "  value of wrong type: {:?}", value)?;
                 Ok(())
             }
             Failure::Error(a, value) => {
