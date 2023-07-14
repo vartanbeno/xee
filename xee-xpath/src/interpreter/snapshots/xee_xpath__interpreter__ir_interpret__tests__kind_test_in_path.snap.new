@@ -1,0 +1,37 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+assertion_line: 1522
+expression: "run_xml(r#\"<doc><a/>foo<b/></doc>\"#, \"doc/element()\")"
+---
+Ok(
+    Sequence {
+        stack_value: Many(
+            [
+                Node(
+                    Xot(
+                        Node(
+                            NodeId {
+                                index1: 3,
+                                stamp: NodeStamp(
+                                    0,
+                                ),
+                            },
+                        ),
+                    ),
+                ),
+                Node(
+                    Xot(
+                        Node(
+                            NodeId {
+                                index1: 5,
+                                stamp: NodeStamp(
+                                    0,
+                                ),
+                            },
+                        ),
+                    ),
+                ),
+            ],
+        ),
+    },
+)

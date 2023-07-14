@@ -1516,4 +1516,19 @@ mod tests {
             "doc/a instance of element(b)",
         ));
     }
+
+    #[test]
+    fn test_kind_test_in_path() -> Result<()> {
+        assert_nodes(
+            r#"<doc><a/>foo<b/></doc>"#,
+            "doc/element()",
+            |xot, document| {
+                let doc_el = xot.document_element(document.root).unwrap();
+                let a = xot.first_child(doc_el).unwrap();
+                let text = xot.next_sibling(a).unwrap();
+                let b = xot.next_sibling(text).unwrap();
+                vec![a, b]
+            },
+        )
+    }
 }
