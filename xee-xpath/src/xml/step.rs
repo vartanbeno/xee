@@ -1,4 +1,4 @@
-use xot::Xot;
+use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
 
@@ -6,7 +6,7 @@ use crate::sequence;
 use crate::stack;
 use crate::xml;
 
-use super::kind_test::{kind_test, node_kind, principal_node_kind};
+use super::kind_test::kind_test;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
@@ -161,6 +161,49 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
                 },
             }
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PrincipalNodeKind {
+    Element,
+    Attribute,
+    Namespace,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum NodeKind {
+    Document,
+    Element,
+    Attribute,
+    Text,
+    Namespace,
+    ProcessingInstruction,
+    Comment,
+}
+
+fn node_kind(xot: &Xot, node: xml::Node) -> NodeKind {
+    match node {
+        xml::Node::Xot(node) => {
+            let node = xot.value_type(node);
+            match node {
+                ValueType::Element => NodeKind::Element,
+                ValueType::Text => NodeKind::Text,
+                ValueType::ProcessingInstruction => NodeKind::ProcessingInstruction,
+                ValueType::Comment => NodeKind::Comment,
+                ValueType::Root => NodeKind::Document,
+            }
+        }
+        xml::Node::Attribute(..) => NodeKind::Attribute,
+        xml::Node::Namespace(..) => NodeKind::Namespace,
+    }
+}
+
+fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
+    match axis {
+        ast::Axis::Attribute => NodeKind::Attribute,
+        ast::Axis::Namespace => NodeKind::Namespace,
+        _ => NodeKind::Element,
     }
 }
 

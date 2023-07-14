@@ -84,49 +84,6 @@ fn name_id_for_name(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PrincipalNodeKind {
-    Element,
-    Attribute,
-    Namespace,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum NodeKind {
-    Document,
-    Element,
-    Attribute,
-    Text,
-    Namespace,
-    ProcessingInstruction,
-    Comment,
-}
-
-pub(crate) fn node_kind(xot: &Xot, node: xml::Node) -> NodeKind {
-    match node {
-        xml::Node::Xot(node) => {
-            let node = xot.value_type(node);
-            match node {
-                ValueType::Element => NodeKind::Element,
-                ValueType::Text => NodeKind::Text,
-                ValueType::ProcessingInstruction => NodeKind::ProcessingInstruction,
-                ValueType::Comment => NodeKind::Comment,
-                ValueType::Root => NodeKind::Document,
-            }
-        }
-        xml::Node::Attribute(..) => NodeKind::Attribute,
-        xml::Node::Namespace(..) => NodeKind::Namespace,
-    }
-}
-
-pub(crate) fn principal_node_kind(axis: &ast::Axis) -> NodeKind {
-    match axis {
-        ast::Axis::Attribute => NodeKind::Attribute,
-        ast::Axis::Namespace => NodeKind::Namespace,
-        _ => NodeKind::Element,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use xee_xpath_ast::ast;
