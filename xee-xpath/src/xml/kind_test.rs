@@ -9,11 +9,11 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
     match kind_test {
         ast::KindTest::Document(dt) => document_test(dt.as_ref(), xot, node),
         ast::KindTest::Element(et) => element_test(et.as_ref(), xot, node),
-        ast::KindTest::SchemaElement(set) => {
+        ast::KindTest::SchemaElement(_set) => {
             todo!()
         }
         ast::KindTest::Attribute(at) => attribute_test(at.as_ref(), xot, node),
-        ast::KindTest::SchemaAttribute(sat) => {
+        ast::KindTest::SchemaAttribute(_sat) => {
             todo!()
         }
         ast::KindTest::Any => true,

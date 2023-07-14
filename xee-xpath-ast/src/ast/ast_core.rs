@@ -454,7 +454,6 @@ pub struct URIQualifiedName {
 pub enum SequenceType {
     Empty,
     Item(Item),
-    Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -473,12 +472,6 @@ pub enum ItemType {
     FunctionTest(Box<FunctionTest>),
     MapTest(Box<MapTest>),
     ArrayTest(Box<ArrayTest>),
-}
-
-impl ItemType {
-    pub fn is_generalized_atomic_type(&self) -> bool {
-        matches!(self, ItemType::AtomicOrUnionType(_))
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

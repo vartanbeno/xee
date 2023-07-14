@@ -108,6 +108,12 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_schema_type(&self, xs: Xs) -> error::Result<atomic::Atomic> {
+        // if we try to cast to any atomic type, we're already the correct type
+        if xs == Xs::AnyAtomicType {
+            // TODO: if we made the cast functions take self, not &self, we
+            // could make this cheaper
+            return Ok(self.clone());
+        }
         if !xs.derives_from(Xs::UntypedAtomic) {
             todo!("We can only cast to atomic types right now")
         }

@@ -1,7 +1,6 @@
 // This module matches types for inline functions or type checks
 // The convert module is used for checking and converting values for
 // external functions declared with xpath_fn
-use std::borrow::Cow;
 use xot::Xot;
 
 use xee_schema_type::Xs;
@@ -15,14 +14,14 @@ use crate::xml;
 
 impl sequence::Sequence {
     pub(crate) fn sequence_type_matching(
-        &self,
+        self,
         t: &ast::SequenceType,
         xot: &Xot,
-    ) -> error::Result<Cow<sequence::Sequence>> {
+    ) -> error::Result<Self> {
         match t {
             ast::SequenceType::Empty => {
                 if self.is_empty() {
-                    Ok(Cow::Borrowed(self))
+                    Ok(self)
                 } else {
                     Err(error::Error::Type)
                 }
@@ -30,19 +29,21 @@ impl sequence::Sequence {
             ast::SequenceType::Item(occurrence_item) => {
                 self.occurrence_item_matching(occurrence_item, xot)
             }
-            _ => todo!("Not yet implemented"),
         }
     }
 
     fn occurrence_item_matching(
-        &self,
+        self,
         occurrence_item: &ast::Item,
         xot: &Xot,
-    ) -> error::Result<Cow<sequence::Sequence>> {
-        let sequence = if occurrence_item.item_type.is_generalized_atomic_type() {
-            Cow::Owned(self.atomized_sequence(xot)?)
+    ) -> error::Result<Self> {
+        let sequence = if let ast::ItemType::AtomicOrUnionType(name) = &occurrence_item.item_type {
+            let name = &name.value;
+            let xs = Xs::by_name(name.namespace(), name.local_name())
+                .ok_or(error::Error::UndefinedTypeReference)?;
+            self.atomized_sequence(xot, xs)?
         } else {
-            Cow::Borrowed(self)
+            self
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
@@ -124,21 +125,6 @@ mod tests {
 
     use crate::xml;
 
-    fn is_owned(sequence: error::Result<Cow<sequence::Sequence>>) -> bool {
-        if let Ok(sequence) = sequence {
-            match sequence {
-                Cow::Borrowed(_) => false,
-                Cow::Owned(_) => true,
-            }
-        } else {
-            false
-        }
-    }
-
-    fn is_borrowed(sequence: error::Result<Cow<sequence::Sequence>>) -> bool {
-        !is_owned(sequence)
-    }
-
     #[test]
     fn test_one_integer() {
         let namespaces = Namespaces::default();
@@ -153,9 +139,11 @@ mod tests {
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_owned(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(&right_result.unwrap(), &right_sequence);
+
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
@@ -175,9 +163,10 @@ mod tests {
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_owned(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
@@ -200,15 +189,17 @@ mod tests {
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_owned(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
-        let right_type_result2 = right_type_sequence2.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_type_result2, Ok(Cow::Borrowed(&right_type_sequence2)));
-        assert!(is_owned(right_type_result2));
+        let right_type_result2 = right_type_sequence2
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_type_result2, Ok(right_type_sequence2));
     }
 
     #[test]
@@ -227,16 +218,18 @@ mod tests {
         ]);
         let right_type_sequence2 = sequence::Sequence::from(vec![sequence::Item::from(node)]);
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_borrowed(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
-        let right_type_result2 = right_type_sequence2.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_type_result2, Ok(Cow::Borrowed(&right_type_sequence2)));
-        assert!(is_borrowed(right_type_result2));
+        let right_type_result2 = right_type_sequence2
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_type_result2, Ok(right_type_sequence2));
     }
 
     #[test]
@@ -253,15 +246,17 @@ mod tests {
         let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_owned(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
-        let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
-        assert!(is_owned(right_empty_result));
+        let right_empty_result = right_empty_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_empty_result, Ok(right_empty_sequence));
     }
 
     #[test]
@@ -278,15 +273,20 @@ mod tests {
         let right_empty_sequence = sequence::Sequence::empty();
         let xot = Xot::new();
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_owned(right_result));
-        let right_multi_result = right_multi_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_multi_result, Ok(Cow::Borrowed(&right_multi_sequence)));
-        assert!(is_owned(right_multi_result));
-        let right_empty_result = right_empty_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_empty_result, Ok(Cow::Borrowed(&right_empty_sequence)));
-        assert!(is_owned(right_empty_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
+
+        let right_multi_result = right_multi_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_multi_result, Ok(right_multi_sequence));
+
+        let right_empty_result = right_empty_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_empty_result, Ok(right_empty_sequence));
     }
 
     #[test]
@@ -317,9 +317,10 @@ mod tests {
 
         let wrong_sequence = sequence::Sequence::from(vec![sequence::Item::from(ibig!(1))]);
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_borrowed(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_result = wrong_sequence.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_result, Err(error::Error::Type));
@@ -352,13 +353,45 @@ mod tests {
         let wrong_sequence_text = sequence::Sequence::from(vec![sequence::Item::from(text)]);
         let wrong_sequence_attr = sequence::Sequence::from(vec![sequence::Item::from(attr)]);
 
-        let right_result = right_sequence.sequence_type_matching(&sequence_type, &xot);
-        assert_eq!(right_result, Ok(Cow::Borrowed(&right_sequence)));
-        assert!(is_borrowed(right_result));
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_result = wrong_sequence_text.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_result, Err(error::Error::Type));
         let wrong_result = wrong_sequence_attr.sequence_type_matching(&sequence_type, &xot);
         assert_eq!(wrong_result, Err(error::Error::Type));
+    }
+
+    #[test]
+    fn test_many_atomized() {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse("xs:integer*", &namespaces).unwrap();
+
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<doc><a>1</a><b>2</b></doc>"#).unwrap();
+        let doc = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc).unwrap();
+        let b = xot.next_sibling(a).unwrap();
+
+        let a = xml::Node::Xot(a);
+        let b = xml::Node::Xot(b);
+
+        let right_sequence =
+            sequence::Sequence::from(vec![sequence::Item::from(a), sequence::Item::from(b)]);
+
+        let right_result = right_sequence
+            .clone()
+            .sequence_type_matching(&sequence_type, &xot);
+        // atomization has changed the result sequence
+        assert_ne!(right_result, Ok(right_sequence));
+        assert_eq!(
+            right_result,
+            Ok(sequence::Sequence::from(vec![
+                sequence::Item::from(atomic::Atomic::from(ibig!(1))),
+                sequence::Item::from(atomic::Atomic::from(ibig!(2))),
+            ]))
+        );
     }
 }

@@ -462,8 +462,27 @@ impl<'a> Interpreter<'a> {
     }
 
     fn call_closure(&mut self, function_id: stack::FunctionId, arity: u8) -> error::Result<()> {
-        // look up the function in order to access the argument information
-        // let function = &self.program.get_function_by_id(function_id);
+        // look up the function in order to access the parameters information
+        let function = self.program.get_function_by_id(function_id);
+        let params = &function.params;
+
+        // now pop everything off the stack to do type matching, along
+        // with sequence type conversion
+        // let mut arguments = Vec::with_capacity(arity as usize);
+        // for param in params.iter().rev() {
+        //     let value = self.stack.pop().unwrap();
+        //     if let Some(type_) = &param.type_ {
+        //         let sequence: sequence::Sequence = value.into();
+        //         let sequence = sequence.sequence_type_matching(type_, self.dynamic_context.xot)?;
+        //         arguments.push(sequence.into())
+        //     } else {
+        //         // no need to do any checking or conversion
+        //         arguments.push(value);
+        //     }
+        //     let value = self.stack.pop().unwrap();
+        //     self.stack.push(value);
+        // }
+        // for each stack item, do function value conversion
 
         // we need to convert each value first with sequence type matching,
         // failing if the types don't match

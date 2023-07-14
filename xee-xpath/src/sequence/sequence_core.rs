@@ -2,6 +2,7 @@
 // in interfacing with external APIs. It's a layer over the
 // stack::Value abstraction.
 
+use xee_schema_type::Xs;
 use xot::Xot;
 
 use crate::atomic;
@@ -68,14 +69,22 @@ impl Sequence {
         self.stack_value.atomized(xot)
     }
 
-    pub fn atomized_sequence(&self, xot: &Xot) -> error::Result<Sequence> {
-        // TODO: conceivably we don't consume the iterator here,
-        // but this would require the Sequence to be aware of an atomized
-        // iterator.
-        let items = self
-            .atomized(xot)
-            .map(|a| a.map(sequence::Item::from).map_err(|_| error::Error::Type))
-            .collect::<error::Result<Vec<_>>>()?;
+    pub fn atomized_sequence(&self, xot: &Xot, xs: Xs) -> error::Result<Sequence> {
+        let atomized = self.atomized(xot);
+        let mut items = Vec::new();
+
+        for atom in atomized {
+            let atom = atom?;
+            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
+                atom.cast_to_schema_type(xs)?
+            } else {
+                atom
+            };
+            // TODO: numeric type promotion
+            // TODO: anyURI type promotion
+            let item = sequence::Item::from(atom);
+            items.push(item);
+        }
         Ok(Sequence::from(items))
     }
 
