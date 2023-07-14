@@ -7,11 +7,11 @@ Ok(XPath(Expr([
     steps: [
       AxisStep(AxisStep(
         axis: Attribute,
-        node_test: KindTest(Attribute(Some(AttributeTest(
-          attrib_name_or_wildcard: Name(Name(
+        node_test: KindTest(Attribute(Some(ElementOrAttributeTest(
+          name_or_wildcard: Name(Name(
             name: "foo",
             prefix: None,
-            namespace: None,
+            namespace: Some("http://example.com"),
           )),
           type_name: None,
         )))),

@@ -32,14 +32,14 @@ where
         .map(|name| ast::SchemaElementTest { name })
         .boxed();
 
-    let element_name_or_wildcard = just(Token::Asterisk)
-        .to(ast::ElementNameOrWildcard::Wildcard)
+    let name_or_wildcard = just(Token::Asterisk)
+        .to(ast::NameOrWildcard::Wildcard)
         .or(eqname
             .clone()
             .map_with_state(|name, _span, state: &mut State| {
                 // use default element namespace; we can do this without worrying
                 // about context, as it's an element name test
-                ast::ElementNameOrWildcard::Name(name.map(|name| {
+                ast::NameOrWildcard::Name(name.map(|name| {
                     name.with_default_namespace(state.namespaces.default_element_namespace)
                 }))
             }))
@@ -50,18 +50,21 @@ where
     let element_type_name = type_name
         .clone()
         .then(just(Token::QuestionMark).or_not())
-        .map(|(name, question_mark)| ast::ElementTypeName {
+        .map(|(name, question_mark)| ast::TypeName {
             name,
-            optional: question_mark.is_some(),
+            can_be_nilled: question_mark.is_some(),
         })
         .boxed();
 
-    let element_test_content = element_name_or_wildcard
+    let element_test_content = name_or_wildcard
+        .clone()
         .then((just(Token::Comma).ignore_then(element_type_name)).or_not())
-        .map(|(element_name_or_wildcard, type_name)| ast::ElementTest {
-            element_name_or_wildcard,
-            type_name,
-        })
+        .map(
+            |(name_or_wildcard, type_name)| ast::ElementOrAttributeTest {
+                name_or_wildcard,
+                type_name,
+            },
+        )
         .boxed();
 
     let element_test = just(Token::Element)
@@ -88,17 +91,18 @@ where
         )
         .boxed();
 
-    let attrib_name_or_wildcard = just(Token::Asterisk)
-        .to(ast::AttribNameOrWildcard::Wildcard)
-        .or(eqname.clone().map(ast::AttribNameOrWildcard::Name))
-        .boxed();
-
-    let attribute_test_content = attrib_name_or_wildcard
+    let attribute_test_content = name_or_wildcard
         .then((just(Token::Comma).ignore_then(type_name)).or_not())
-        .map(|(attrib_name_or_wildcard, type_name)| ast::AttributeTest {
-            attrib_name_or_wildcard,
-            type_name,
-        })
+        .map(
+            |(name_or_wildcard, type_name)| ast::ElementOrAttributeTest {
+                name_or_wildcard,
+                type_name: type_name.map(|name| ast::TypeName {
+                    name,
+                    // this is not relevant for attributes
+                    can_be_nilled: true,
+                }),
+            },
+        )
         .boxed();
 
     let attribute_test = just(Token::Attribute)

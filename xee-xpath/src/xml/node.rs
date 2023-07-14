@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::vec;
+use xee_schema_type::Xs;
 use xot::Xot;
 
 use crate::atomic;
@@ -81,6 +82,11 @@ impl Node {
         // for now we don't know any types of nodes yet
         let s = self.string_value(xot);
         vec![atomic::Atomic::Untyped(Rc::new(s))]
+    }
+
+    pub(crate) fn type_annotation(&self) -> Xs {
+        // for now we don't know any types of nodes yet
+        Xs::UntypedAtomic
     }
 
     pub(crate) fn string_value(&self, xot: &Xot) -> String {

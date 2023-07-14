@@ -1,3 +1,4 @@
+use xee_schema_type::Xs;
 use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
@@ -9,26 +10,31 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
         ast::KindTest::Document(dt) => {
             if let xml::Node::Xot(node) = node {
                 if let Some(_document_test) = dt {
+                    // document-node(E) matches any document node that contains
+                    // exactly one element node, optionally accompanied by one or more
+                    // comment or processing nodes, and E is an ElementTest or SchemaElementTest
+                    // that matches the element node
                     todo!();
                 } else {
+                    // document-node() matches any document node
                     xot.value_type(node) == ValueType::Root
                 }
             } else {
                 false
             }
         }
-        ast::KindTest::Element(et) => {
-            if let xml::Node::Xot(node) = node {
-                if let Some(et) = et {
-                    element_test(et, xot, node)
-                } else {
-                    xot.value_type(node) == ValueType::Element
-                }
-            } else {
-                false
-            }
+        ast::KindTest::Element(et) => element_test(et.as_ref(), xot, node),
+        ast::KindTest::SchemaElement(set) => {
+            todo!()
+        }
+        ast::KindTest::Attribute(at) => {
+            todo!()
+        }
+        ast::KindTest::SchemaAttribute(sat) => {
+            todo!()
         }
         ast::KindTest::Any => true,
+        // text() matches any text node
         ast::KindTest::Text => {
             if let xml::Node::Xot(node) = node {
                 xot.value_type(node) == ValueType::Text
@@ -36,6 +42,7 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
                 false
             }
         }
+        // comment() matches any comment node
         ast::KindTest::Comment => {
             if let xml::Node::Xot(node) = node {
                 xot.value_type(node) == ValueType::Comment
@@ -43,33 +50,114 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
                 false
             }
         }
-        _ => {
-            todo!("kind test not implemented yet {:?}", kind_test);
+        ast::KindTest::NamespaceNode => {
+            // namespace-node() matches any namespace node
+            todo!();
         }
-    }
-}
-
-fn element_test(element_test: &ast::ElementTest, xot: &Xot, node: xot::Node) -> bool {
-    let name_matches = match &element_test.element_name_or_wildcard {
-        ast::ElementNameOrWildcard::Name(name) => {
-            if let Some(element) = xot.element(node) {
-                let name_id = name_id_for_name(xot, &name.value);
-                Some(element.name()) == name_id
+        ast::KindTest::PI(pi_test) => {
+            if let xml::Node::Xot(node) = node {
+                if let Some(_pi_test) = pi_test {
+                    // processing-instruction N matches any processing-instruction node
+                    // whose PITarget is equal to fn:normalize-space(N)
+                    todo!();
+                } else {
+                    // processing-instruction() matches any processing-instruction node
+                    xot.value_type(node) == ValueType::ProcessingInstruction
+                }
             } else {
                 false
             }
         }
-        ast::ElementNameOrWildcard::Wildcard => xot.value_type(node) == ValueType::Element,
-    };
-    if !name_matches {
-        return false;
-    }
-    if let Some(_type_name) = &element_test.type_name {
-        todo!();
-    } else {
-        true
     }
 }
+
+fn element_test(
+    element_test: Option<&ast::ElementOrAttributeTest>,
+    xot: &Xot,
+    node: xml::Node,
+) -> bool {
+    if let xml::Node::Xot(xot_node) = node {
+        if let Some(element_test) = element_test {
+            let name_matches = match &element_test.name_or_wildcard {
+                ast::NameOrWildcard::Name(name) => {
+                    if let Some(element) = xot.element(xot_node) {
+                        let name_id = name_id_for_name(xot, &name.value);
+                        Some(element.name()) == name_id
+                    } else {
+                        false
+                    }
+                }
+                ast::NameOrWildcard::Wildcard => xot.value_type(xot_node) == ValueType::Element,
+            };
+            if !name_matches {
+                return false;
+            }
+            if let Some(type_name) = &element_test.type_name {
+                // derives-from(type-annotation, TypeName) must be true
+                let name = &type_name.name.value;
+                let type_ = Xs::by_name(name.namespace(), name.local_name());
+                if let Some(type_) = type_ {
+                    node.type_annotation().derives_from(type_)
+                } else {
+                    // unknown type
+                    false
+                }
+                // ignoring can_be_nilled for now
+            } else {
+                true
+            }
+        } else {
+            xot.value_type(xot_node) == ValueType::Element
+        }
+    } else {
+        false
+    }
+}
+
+// fn element_or_attribute_test(
+//     element_test: Option<&ast::ElementTest>,
+//     xot: &Xot,
+//     node: xml::Node,
+// ) -> bool {
+//     if let xml::Node::Xot(xot_node) = node {
+//         if let Some(element_test) = element_test {
+//             let name_matches = match &element_test.element_name_or_wildcard {
+//                 ast::ElementNameOrWildcard::Name(name) => {
+//                     if let Some(element) = xot.element(xot_node) {
+//                         let name_id = name_id_for_name(xot, &name.value);
+//                         Some(element.name()) == name_id
+//                     } else {
+//                         false
+//                     }
+//                 }
+//                 ast::ElementNameOrWildcard::Wildcard => {
+//                     xot.value_type(xot_node) == ValueType::Element
+//                 }
+//             };
+//             if !name_matches {
+//                 return false;
+//             }
+//             if let Some(type_name) = &element_test.type_name {
+//                 // derives-from(type-annotation, TypeName) must be true
+//                 let name = &type_name.name.value;
+//                 let type_ = Xs::by_name(name.namespace(), name.local_name());
+//                 if let Some(type_) = type_ {
+//                     node.type_annotation().derives_from(type_)
+//                 } else {
+//                     // unknown type
+//                     false
+//                 }
+//                 // ignoring can_be_nilled for now
+//             } else {
+//                 true
+//             }
+//         } else {
+//             xot.value_type(xot_node) == ValueType::Element
+//         }
+//     } else {
+//         false
+//     }
+// }
 
 fn name_id_for_name(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
     if let Some(namespace) = name.namespace() {
@@ -157,7 +245,7 @@ mod tests {
     }
 
     #[test]
-    fn test_kind_test_with_wildcard() {
+    fn test_kind_test_element_with_wildcard() {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<root><a>text</a></root>"#).unwrap();
         let doc_el = xot.document_element(doc).unwrap();
@@ -172,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn test_kind_test_with_name() {
+    fn test_kind_test_element_with_name() {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<root><a>text</a></root>"#).unwrap();
         let doc_el = xot.document_element(doc).unwrap();
@@ -184,5 +272,24 @@ mod tests {
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+    }
+
+    #[test]
+    fn test_kind_test_element_with_type_name() {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<root><a>text</a></root>"#).unwrap();
+        let doc_el = xot.document_element(doc).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.first_child(a).unwrap();
+
+        let kt = ast::KindTest::parse("element(a, xs:untypedAtomic)").unwrap();
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
+        assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
+
+        // but we're not an xs:string
+        let kt = ast::KindTest::parse("element(a, xs:string)").unwrap();
+        assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
     }
 }

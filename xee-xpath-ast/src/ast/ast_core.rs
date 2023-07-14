@@ -494,8 +494,8 @@ pub enum Occurrence {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum KindTest {
     Document(Option<DocumentTest>),
-    Element(Option<ElementTest>),
-    Attribute(Option<AttributeTest>),
+    Element(Option<ElementOrAttributeTest>),
+    Attribute(Option<ElementOrAttributeTest>),
     SchemaElement(SchemaElementTest),
     SchemaAttribute(SchemaAttributeTest),
     PI(Option<PITest>),
@@ -508,41 +508,28 @@ pub enum KindTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum DocumentTest {
-    Element(Option<ElementTest>),
+    Element(Option<ElementOrAttributeTest>),
     SchemaElement(SchemaElementTest),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub struct ElementTest {
-    pub element_name_or_wildcard: ElementNameOrWildcard,
-    pub type_name: Option<ElementTypeName>,
+pub struct ElementOrAttributeTest {
+    pub name_or_wildcard: NameOrWildcard,
+    pub type_name: Option<TypeName>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub struct ElementTypeName {
+pub struct TypeName {
     pub name: NameS,
-    pub optional: bool,
+    // only relevant for elements; for attributes it's always true
+    pub can_be_nilled: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub enum ElementNameOrWildcard {
-    Name(NameS),
-    Wildcard,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct AttributeTest {
-    pub attrib_name_or_wildcard: AttribNameOrWildcard,
-    pub type_name: Option<NameS>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub enum AttribNameOrWildcard {
+pub enum NameOrWildcard {
     Name(NameS),
     Wildcard,
 }
