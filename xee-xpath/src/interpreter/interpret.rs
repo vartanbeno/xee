@@ -427,7 +427,7 @@ impl<'a> Interpreter<'a> {
                     self.stack.push(build.into());
                 }
                 EncodedInstruction::IsNumeric => {
-                    let is_numeric = self.pop_is_numeric();
+                    let is_numeric = self.pop_is_numeric()?;
                     self.stack.push(is_numeric.into());
                 }
                 EncodedInstruction::PrintTop => {
@@ -572,20 +572,14 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn pop_is_numeric(&mut self) -> bool {
+    fn pop_is_numeric(&mut self) -> error::Result<bool> {
         let value = self.stack.pop().unwrap();
         let mut atomized = value.atomized(self.dynamic_context.xot);
-        if let Some(a) = atomized.next() {
-            if atomized.next().is_none() {
-                match a {
-                    Ok(a) => a.is_numeric(),
-                    Err(_) => false,
-                }
-            } else {
-                false
-            }
+        let a = atomized.option()?;
+        if let Some(a) = a {
+            Ok(a.is_numeric())
         } else {
-            false
+            Ok(false)
         }
     }
 
