@@ -16,7 +16,6 @@ mod run;
 mod sequence;
 mod span;
 mod stack;
-mod types;
 mod xml;
 mod xpath;
 
