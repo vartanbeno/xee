@@ -91,6 +91,7 @@ pub(crate) struct Unary {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionDefinition {
     pub(crate) params: Vec<Param>,
+    pub(crate) return_type: Option<SequenceType>,
     pub(crate) body: Box<ExprS>,
 }
 

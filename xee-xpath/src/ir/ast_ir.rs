@@ -282,6 +282,7 @@ impl<'a> IrConverter<'a> {
         }
         let outer_function_expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
+            return_type: None,
             body: Box::new(exprs_bindings.expr()),
         });
         let binding = self.new_binding(outer_function_expr, ast.0.span);
@@ -671,6 +672,7 @@ impl<'a> IrConverter<'a> {
         self.pop_context();
         let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
+            return_type: inline_function.return_type.clone(),
             body: Box::new(body_bindings.expr()),
         });
         let binding = self.new_binding(expr, span);

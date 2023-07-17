@@ -215,13 +215,20 @@ impl<'a> FunctionBuilder<'a> {
     pub(crate) fn finish(
         mut self,
         name: String,
-        params: Vec<ir::Param>,
+        function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
     ) -> stack::Function {
+        if let Some(return_type) = &function_definition.return_type {
+            let sequence_type_id = self.add_sequence_type(return_type.clone());
+            if sequence_type_id > (u16::MAX as usize) {
+                panic!("too many sequence types");
+            }
+            self.emit(Instruction::ReturnConvert(sequence_type_id as u16), span);
+        }
         self.emit(Instruction::Return, span);
         stack::Function {
             name,
-            params,
+            params: function_definition.params.clone(),
             chunk: self.compiled,
             spans: self.spans,
             closure_names: self.closure_names,

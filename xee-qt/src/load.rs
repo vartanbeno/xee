@@ -288,7 +288,7 @@ fn test_cases_query<'a>(
                 assert_query.execute(session, item)?
             } else if local_name == "assert-empty" {
                 qt::TestCaseResult::AssertEmpty(assert::AssertEmpty::new())
-            } else if local_name == "assert_type" {
+            } else if local_name == "assert-type" {
                 assert_type_query.execute(session, item)?
             } else {
                 qt::TestCaseResult::Unsupported

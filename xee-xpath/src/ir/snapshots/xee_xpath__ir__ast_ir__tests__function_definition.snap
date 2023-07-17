@@ -14,6 +14,7 @@ Ok(
                         type_: None,
                     },
                 ],
+                return_type: None,
                 body: Spanned {
                     value: Binary(
                         Binary {

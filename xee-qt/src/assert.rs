@@ -556,6 +556,7 @@ impl TestCaseResult {
             TestCaseResult::Assert(a) => a.assert_result(xot, result),
             TestCaseResult::AssertError(a) => a.assert_result(xot, result),
             TestCaseResult::AssertEmpty(a) => a.assert_result(xot, result),
+            TestCaseResult::AssertType(a) => a.assert_result(xot, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);

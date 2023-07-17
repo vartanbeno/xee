@@ -269,11 +269,9 @@ impl<'a> InterpreterCompiler<'a> {
 
         compiler.scopes.pop_scope();
 
-        let function = compiler.builder.finish(
-            "inline".to_string(),
-            function_definition.params.clone(),
-            span,
-        );
+        let function = compiler
+            .builder
+            .finish("inline".to_string(), function_definition, span);
         // now place all captured names on stack, to ensure we have the
         // closure
         // in reverse order so we can pop them off in the right order
