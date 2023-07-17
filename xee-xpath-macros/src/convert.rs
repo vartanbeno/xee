@@ -4,8 +4,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
+use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
-use xee_xpath_ast::XS_NAMESPACE;
 
 pub(crate) fn convert_sequence_type(
     sequence_type: &ast::SequenceType,
@@ -95,44 +95,27 @@ fn convert_atomic_or_union_type(
     name: &ast::Name,
     arg: TokenStream,
 ) -> syn::Result<(TokenStream, bool)> {
-    // TODO: we don't handle anything but xs: yet
-    assert_eq!(name.namespace(), Some(XS_NAMESPACE));
+    // TODO: instead of unwrap we should return an error. But this requires
+    // having access to the ParseStream at this point to call error, which
+    // seems to require a major refactoring.
+    let xs = Xs::by_name(name.namespace(), name.local_name()).unwrap();
 
-    let local_name = name.local_name();
-    if local_name == "anyAtomicType" {
+    if xs == Xs::AnyAtomicType {
         return Ok((quote!(#arg.atomized(context.xot)), false));
     }
 
-    let type_name = syn::parse_str::<syn::Type>(&rust_type_name(local_name))?;
+    // TODO: another unwrap that should really be "we cannot create a rust wrapper
+    // for this type" error
+    let rust_info = xs.rust_info().unwrap();
+    let type_name = rust_info.rust_name();
+    let type_name = syn::parse_str::<syn::Type>(type_name)?;
     let convert = quote!(std::convert::TryInto::<#type_name>::try_into(atomic));
 
-    let borrow = local_name == "string";
+    let borrow = rust_info.is_reference();
     Ok((
         quote!(#arg.unboxed_atomized(context.xot, |atomic| #convert)),
         borrow,
     ))
-}
-
-fn rust_type_name(local_name: &str) -> String {
-    match local_name {
-        "string" => "String".to_string(),
-        "boolean" => "bool".to_string(),
-        "decimal" => "rust_decimal::Decimal".to_string(),
-        "integer" => "ibig::IBig".to_string(),
-        "long" => "i64".to_string(),
-        "int" => "i32".to_string(),
-        "short" => "i16".to_string(),
-        "byte" => "i8".to_string(),
-        "unsignedLong" => "u64".to_string(),
-        "unsignedInt" => "u32".to_string(),
-        "unsignedShort" => "u16".to_string(),
-        "unsignedByte" => "u8".to_string(),
-        "float" => "f32".to_string(),
-        "double" => "f64".to_string(),
-        _ => {
-            panic!("Cannot get type name for {}", local_name);
-        }
-    }
 }
 
 fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result<TokenStream> {

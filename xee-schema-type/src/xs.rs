@@ -56,6 +56,14 @@ impl RustInfo {
             as_ref: true,
         }
     }
+
+    pub fn rust_name(&self) -> &str {
+        &self.rust_name
+    }
+
+    pub fn is_reference(&self) -> bool {
+        self.as_ref
+    }
 }
 
 impl Xs {
