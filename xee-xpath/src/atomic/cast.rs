@@ -95,7 +95,7 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_schema_type(&self, xs: Xs) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_schema_type(self, xs: Xs) -> error::Result<atomic::Atomic> {
         // if we try to cast to any atomic type, we're already the correct type
         if xs == Xs::AnyAtomicType {
             // TODO: if we made the cast functions take self, not &self, we
@@ -133,7 +133,7 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_schema_type_of(
-        &self,
+        self,
         other: &atomic::Atomic,
     ) -> error::Result<atomic::Atomic> {
         self.cast_to_schema_type(other.schema_type())
@@ -141,29 +141,29 @@ impl atomic::Atomic {
 
     // if a derives from b, cast to b, otherwise vice versa
     pub(crate) fn cast_to_same_schema_type(
-        &self,
-        other: &atomic::Atomic,
+        self,
+        other: atomic::Atomic,
     ) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
-        if self.derives_from(other) {
-            let a = self.cast_to_schema_type_of(other)?;
-            Ok((a, other.clone()))
-        } else if other.derives_from(self) {
-            let b = other.cast_to_schema_type_of(self)?;
-            Ok((self.clone(), b))
+        if self.derives_from(&other) {
+            let a = self.cast_to_schema_type_of(&other)?;
+            Ok((a, other))
+        } else if other.derives_from(&self) {
+            let b = other.cast_to_schema_type_of(&self)?;
+            Ok((self, b))
         } else {
             Err(error::Error::Type)
         }
     }
 
-    pub(crate) fn cast_to_string(&self) -> atomic::Atomic {
+    pub(crate) fn cast_to_string(self) -> atomic::Atomic {
         atomic::Atomic::String(Rc::new(self.to_canonical()))
     }
 
-    pub(crate) fn cast_to_untyped_atomic(&self) -> atomic::Atomic {
+    pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
         atomic::Atomic::Untyped(Rc::new(self.to_canonical()))
     }
 
-    pub(crate) fn cast_to_float(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Float(_) => Ok(self.clone()),
             // TODO: this should implement the rule in 19.1.2.1
@@ -175,7 +175,7 @@ impl atomic::Atomic {
                 // confused. For now I'm keeping the simple implementation
                 // below, which may not behave exactly as per the conversion
                 // rules at the extremes of the ranges.
-                Ok(atomic::Atomic::Float(OrderedFloat(*d as f32)))
+                Ok(atomic::Atomic::Float(OrderedFloat(d as f32)))
             }
             atomic::Atomic::Decimal(_) | atomic::Atomic::Integer(_, _) => {
                 Self::parse_atomic::<f32>(&self.to_canonical())
@@ -183,39 +183,39 @@ impl atomic::Atomic {
             // TODO: any type of integer needs to cast to string first,
             // then to that from float
             atomic::Atomic::Boolean(b) => {
-                if *b {
+                if b {
                     Ok(atomic::Atomic::Float(OrderedFloat(1.0)))
                 } else {
                     Ok(atomic::Atomic::Float(OrderedFloat(0.0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<f32>(s),
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(s),
+            atomic::Atomic::String(s) => Self::parse_atomic::<f32>(&s),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
         }
     }
 
-    pub(crate) fn cast_to_double(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_double(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Double(_) => Ok(self.clone()),
             atomic::Atomic::Float(OrderedFloat(f)) => {
-                Ok(atomic::Atomic::Double(OrderedFloat(*f as f64)))
+                Ok(atomic::Atomic::Double(OrderedFloat(f as f64)))
             }
             atomic::Atomic::Decimal(_) | atomic::Atomic::Integer(_, _) => {
                 Self::parse_atomic::<f64>(&self.to_canonical())
             }
             atomic::Atomic::Boolean(b) => {
-                if *b {
+                if b {
                     Ok(atomic::Atomic::Double(OrderedFloat(1.0)))
                 } else {
                     Ok(atomic::Atomic::Double(OrderedFloat(0.0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<f64>(s),
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(s),
+            atomic::Atomic::String(s) => Self::parse_atomic::<f64>(&s),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
         }
     }
 
-    pub(crate) fn cast_to_decimal(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_decimal(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Decimal(_) => Ok(self.clone()),
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Decimal(
@@ -235,7 +235,7 @@ impl atomic::Atomic {
                 }
 
                 Ok(atomic::Atomic::Decimal(
-                    Decimal::try_from(*f).map_err(|_| error::Error::FOCA0001)?,
+                    Decimal::try_from(f).map_err(|_| error::Error::FOCA0001)?,
                 ))
             }
             atomic::Atomic::Double(OrderedFloat(f)) => {
@@ -244,85 +244,85 @@ impl atomic::Atomic {
                 }
 
                 Ok(atomic::Atomic::Decimal(
-                    Decimal::try_from(*f).map_err(|_| error::Error::FOCA0001)?,
+                    Decimal::try_from(f).map_err(|_| error::Error::FOCA0001)?,
                 ))
             }
             atomic::Atomic::Boolean(b) => {
-                if *b {
+                if b {
                     Ok(atomic::Atomic::Decimal(Decimal::from(1)))
                 } else {
                     Ok(atomic::Atomic::Decimal(Decimal::from(0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<Decimal>(s),
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(s),
+            atomic::Atomic::String(s) => Self::parse_atomic::<Decimal>(&s),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
         }
     }
 
-    pub(crate) fn cast_to_integer(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_integer(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::Integer,
             Rc::new(self.cast_to_integer_value::<IBig>()?),
         ))
     }
 
-    pub(crate) fn cast_to_long(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_long(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::Long,
             Rc::new(self.cast_to_integer_value::<i64>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_int(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_int(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::Int,
             Rc::new(self.cast_to_integer_value::<i32>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_short(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_short(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::Short,
             Rc::new(self.cast_to_integer_value::<i16>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_byte(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_byte(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::Byte,
             Rc::new(self.cast_to_integer_value::<i8>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_unsigned_long(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_unsigned_long(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::UnsignedLong,
             Rc::new(self.cast_to_integer_value::<u64>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_unsigned_int(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_unsigned_int(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::UnsignedInt,
             Rc::new(self.cast_to_integer_value::<u32>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_unsigned_short(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_unsigned_short(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::UnsignedShort,
             Rc::new(self.cast_to_integer_value::<u16>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_unsigned_byte(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_unsigned_byte(self) -> error::Result<atomic::Atomic> {
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::UnsignedByte,
             Rc::new(self.cast_to_integer_value::<u8>()?.into()),
         ))
     }
 
-    pub(crate) fn cast_to_non_positive_integer(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_non_positive_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i > ibig!(0) {
             return Err(error::Error::FOCA0003);
@@ -333,7 +333,7 @@ impl atomic::Atomic {
         ))
     }
 
-    pub(crate) fn cast_to_negative_integer(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_negative_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i >= ibig!(0) {
             return Err(error::Error::FOCA0003);
@@ -344,7 +344,7 @@ impl atomic::Atomic {
         ))
     }
 
-    pub(crate) fn cast_to_non_negative_integer(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_non_negative_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i < ibig!(0) {
             return Err(error::Error::FOCA0003);
@@ -355,7 +355,7 @@ impl atomic::Atomic {
         ))
     }
 
-    pub(crate) fn cast_to_positive_integer(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_positive_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i <= ibig!(0) {
             return Err(error::Error::FOCA0003);
@@ -366,7 +366,7 @@ impl atomic::Atomic {
         ))
     }
 
-    pub(crate) fn cast_to_integer_value<V>(&self) -> error::Result<V>
+    pub(crate) fn cast_to_integer_value<V>(self) -> error::Result<V>
     where
         V: TryFrom<IBig>
             + TryFrom<i128>
@@ -421,7 +421,7 @@ impl atomic::Atomic {
                 Ok(i)
             }
             atomic::Atomic::Boolean(b) => {
-                let v: V = if *b {
+                let v: V = if b {
                     1.try_into().map_err(|_| error::Error::FOCA0003)?
                 } else {
                     0.try_into().map_err(|_| error::Error::FOCA0003)?
@@ -433,15 +433,15 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_boolean(&self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_boolean(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Boolean(_) => Ok(self.clone()),
             atomic::Atomic::Float(f) => Ok(atomic::Atomic::Boolean(!(f.is_nan() || f.is_zero()))),
             atomic::Atomic::Double(d) => Ok(atomic::Atomic::Boolean(!(d.is_nan() || d.is_zero()))),
             atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Boolean(!d.is_zero())),
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
-            atomic::Atomic::String(s) => Self::parse_atomic::<bool>(s),
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(s),
+            atomic::Atomic::String(s) => Self::parse_atomic::<bool>(&s),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
         }
     }
 

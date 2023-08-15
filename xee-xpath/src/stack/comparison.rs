@@ -14,8 +14,7 @@ where
     for a in a_atoms {
         let a = a?;
         for b in b_atoms.iter() {
-            let b = b.as_ref().map_err(|e| e.clone())?;
-            let (a, b) = cast(&a, b)?;
+            let (a, b) = cast(a.clone(), b.clone()?)?;
             // 2c do value comparison
             if a.value_comparison::<O>(b)? {
                 return Ok(true);
@@ -26,8 +25,8 @@ where
 }
 
 // step 2: cast
-fn cast(a: &atomic::Atomic, b: &atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
-    Ok(match (a, b) {
+fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+    Ok(match (&a, &b) {
         // step 2a: if both are untyped atomic, cast them both to string
         (atomic::Atomic::Untyped(_), atomic::Atomic::Untyped(_)) => {
             let a = a.cast_to_string();
@@ -40,19 +39,19 @@ fn cast(a: &atomic::Atomic, b: &atomic::Atomic) -> error::Result<(atomic::Atomic
                 a.cast_to_double()?
             } else {
                 // step 2biv: in all other cases, cast untyped to primitive base type of other
-                a.cast_to_schema_type_of(b)?
+                a.cast_to_schema_type_of(&b)?
             };
-            (a, b.clone())
+            (a, b)
         }
         (_, atomic::Atomic::Untyped(_)) => {
             let b = if a.is_numeric() {
                 b.cast_to_double()?
             } else {
                 // step 2biv: in all other cases, cast untyped to primitive base type of other
-                b.cast_to_schema_type_of(a)?
+                b.cast_to_schema_type_of(&a)?
             };
-            (a.clone(), b)
+            (a, b)
         } // step 2bii & 2biii skipped until we have datetime stuff
-        _ => (a.clone(), b.clone()),
+        _ => (a, b),
     })
 }
