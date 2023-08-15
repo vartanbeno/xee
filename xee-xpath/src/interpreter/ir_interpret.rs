@@ -1471,6 +1471,11 @@ mod tests {
     }
 
     #[test]
+    fn test_cast_as_token() {
+        assert_debug_snapshot!(run("'  foo\n\nbar ' cast as xs:token"));
+    }
+
+    #[test]
     fn test_castable_as_integer_success() {
         assert_debug_snapshot!(run("1 castable as xs:integer"));
     }
