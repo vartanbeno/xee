@@ -52,16 +52,11 @@ impl IntegerType {
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
-    // strings
     String(Rc<String>),
     Untyped(Rc<String>),
-    // boolean
     Boolean(bool),
-    // decimal based
     Decimal(Decimal),
-    // integers
     Integer(IntegerType, Rc<IBig>),
-    // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
 }
