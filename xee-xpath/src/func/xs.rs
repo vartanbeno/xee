@@ -15,6 +15,11 @@ fn xs_untyped_atomic(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic
     Ok(arg.map(|arg| arg.cast_to_untyped_atomic()))
 }
 
+#[xpath_fn("xs:normalizedString($arg as xs:anyAtomicType?) as xs:normalizedString?")]
+fn xs_normalized_string(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    Ok(arg.map(|arg| arg.cast_to_normalized_string()))
+}
+
 #[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
 fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_float()).transpose()
@@ -106,6 +111,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(xs_string),
         wrap_xpath_fn!(xs_untyped_atomic),
+        wrap_xpath_fn!(xs_normalized_string),
         wrap_xpath_fn!(xs_float),
         wrap_xpath_fn!(xs_double),
         wrap_xpath_fn!(xs_decimal),

@@ -1,0 +1,14 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"'foo\\nbar' cast as xs:normalizedString\")"
+---
+Ok(
+    One(
+        Atomic(
+            String(
+                NormalizedString,
+                "foo bar",
+            ),
+        ),
+    ),
+)

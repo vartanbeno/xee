@@ -1466,6 +1466,11 @@ mod tests {
     }
 
     #[test]
+    fn test_cast_as_normalized_string() {
+        assert_debug_snapshot!(run("'foo\nbar' cast as xs:normalizedString"));
+    }
+
+    #[test]
     fn test_castable_as_integer_success() {
         assert_debug_snapshot!(run("1 castable as xs:integer"));
     }

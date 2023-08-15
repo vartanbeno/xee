@@ -110,6 +110,7 @@ impl atomic::Atomic {
         }
         match xs {
             Xs::String => Ok(self.cast_to_string()),
+            Xs::NormalizedString => Ok(self.cast_to_normalized_string()),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
@@ -161,6 +162,15 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
         atomic::Atomic::Untyped(Rc::new(self.to_canonical()))
+    }
+
+    pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
+        // all tab, linefeeds and carriage returns are replaced with a space
+        // character
+        let s = self
+            .to_canonical()
+            .replace(|c| c == '\t' || c == '\n' || c == '\r', " ");
+        atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::new(s))
     }
 
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {
