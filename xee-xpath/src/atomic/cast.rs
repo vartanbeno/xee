@@ -479,16 +479,22 @@ where
         | (Double(_), Double(_))
         | (Decimal(_), Decimal(_))
         | (Integer(_, _), Integer(_, _)) => Ok((a, b)),
+        // Cast a to a float
         (Decimal(_), Float(_)) | (Integer(_, _), Float(_)) => Ok((a.cast_to_float()?, b)),
+        // Cast b to a float
         (Float(_), Decimal(_)) | (Float(_), Integer(_, _)) => Ok((a, b.cast_to_float()?)),
+        // Cast a to a double
         (Decimal(_), Double(_)) | (Integer(_, _), Double(_)) | (Float(_), Double(_)) => {
             Ok((a.cast_to_double()?, b))
         }
+        // Cast b to a double
         (Double(_), Decimal(_)) | (Double(_), Integer(_, _)) | (Double(_), Float(_)) => {
             Ok((a, b.cast_to_double()?))
         }
+        // Cast integer to decimal
         (Decimal(_), Integer(_, _)) => Ok((a, b.cast_to_decimal()?)),
         (Integer(_, _), Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
+        // Non-numeric types are handled by the function passed in
         _ => non_numeric(a, b),
     }
 }
