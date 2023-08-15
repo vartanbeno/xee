@@ -8,21 +8,25 @@ Ok(
             [
                 Atomic(
                     String(
+                        String,
                         "http://example.com/",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "http://example.com/",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "http://example.com/",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "http://example.com/e",
                     ),
                 ),

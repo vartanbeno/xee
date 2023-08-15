@@ -18,7 +18,7 @@ where
 
     // cast guarantees both atomic types are the same concrete atomic
     Ok(match (a, b) {
-        (atomic::Atomic::String(a), atomic::Atomic::String(b)) => {
+        (atomic::Atomic::String(_, a), atomic::Atomic::String(_, b)) => {
             <O as ComparisonOp>::string(&a, &b)
         }
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => {
@@ -66,7 +66,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
 
 fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
     if let atomic::Atomic::Untyped(s) = value {
-        atomic::Atomic::String(s)
+        atomic::Atomic::String(atomic::StringType::String, s)
     } else {
         value
     }

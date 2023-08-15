@@ -70,7 +70,7 @@ impl atomic::Atomic {
     // from an atomic type to a canonical representation as a string
     pub(crate) fn to_canonical(&self) -> String {
         match self {
-            atomic::Atomic::String(s) => s.as_ref().clone(),
+            atomic::Atomic::String(_, s) => s.as_ref().clone(),
             atomic::Atomic::Untyped(s) => s.as_ref().clone(),
             atomic::Atomic::Boolean(b) => {
                 if *b {
@@ -156,7 +156,7 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_string(self) -> atomic::Atomic {
-        atomic::Atomic::String(Rc::new(self.to_canonical()))
+        atomic::Atomic::String(atomic::StringType::String, Rc::new(self.to_canonical()))
     }
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
@@ -189,7 +189,7 @@ impl atomic::Atomic {
                     Ok(atomic::Atomic::Float(OrderedFloat(0.0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<f32>(&s),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<f32>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
         }
     }
@@ -210,7 +210,7 @@ impl atomic::Atomic {
                     Ok(atomic::Atomic::Double(OrderedFloat(0.0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<f64>(&s),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
         }
     }
@@ -254,7 +254,7 @@ impl atomic::Atomic {
                     Ok(atomic::Atomic::Decimal(Decimal::from(0)))
                 }
             }
-            atomic::Atomic::String(s) => Self::parse_atomic::<Decimal>(&s),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<Decimal>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
         }
     }
@@ -428,7 +428,7 @@ impl atomic::Atomic {
                 };
                 Ok(v)
             }
-            atomic::Atomic::String(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
+            atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
         }
     }
@@ -440,7 +440,7 @@ impl atomic::Atomic {
             atomic::Atomic::Double(d) => Ok(atomic::Atomic::Boolean(!(d.is_nan() || d.is_zero()))),
             atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Boolean(!d.is_zero())),
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
-            atomic::Atomic::String(s) => Self::parse_atomic::<bool>(&s),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
         }
     }

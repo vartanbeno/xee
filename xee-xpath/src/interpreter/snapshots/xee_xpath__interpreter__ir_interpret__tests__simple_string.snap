@@ -6,6 +6,7 @@ Ok(
     One(
         Atomic(
             String(
+                String,
                 "hello",
             ),
         ),

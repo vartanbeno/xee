@@ -49,10 +49,42 @@ impl IntegerType {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StringType {
+    String,
+    NormalizedString,
+    Token,
+    Language,
+    NMTOKEN,
+    Name,
+    NCName,
+    ID,
+    IDREF,
+    ENTITY,
+}
+
+impl StringType {
+    fn schema_type(&self) -> Xs {
+        match self {
+            StringType::String => Xs::String,
+            StringType::NormalizedString => Xs::NormalizedString,
+            StringType::Token => Xs::Token,
+            StringType::Language => Xs::Language,
+            StringType::NMTOKEN => Xs::NMTOKEN,
+            StringType::Name => Xs::Name,
+            StringType::NCName => Xs::NCName,
+            StringType::ID => Xs::ID,
+            StringType::IDREF => Xs::IDREF,
+            StringType::ENTITY => Xs::ENTITY,
+        }
+    }
+}
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
-    String(Rc<String>),
+    String(StringType, Rc<String>),
     Untyped(Rc<String>),
     Boolean(bool),
     Decimal(Decimal),
@@ -69,7 +101,7 @@ impl Atomic {
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
-            Atomic::String(s) => Ok(!s.is_empty()),
+            Atomic::String(_, s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
         }
     }
@@ -78,7 +110,7 @@ impl Atomic {
     // but inconsistent with the to_string Rust convention
     pub(crate) fn to_str(&self) -> error::Result<&str> {
         match self {
-            Atomic::String(s) => Ok(s),
+            Atomic::String(_, s) => Ok(s),
             _ => Err(error::Error::Type),
         }
     }
@@ -134,7 +166,7 @@ impl Atomic {
 
     pub(crate) fn schema_type(&self) -> Xs {
         match self {
-            Atomic::String(_) => Xs::String,
+            Atomic::String(string_type, _) => string_type.schema_type(),
             Atomic::Untyped(_) => Xs::UntypedAtomic,
             Atomic::Boolean(_) => Xs::Boolean,
             Atomic::Decimal(_) => Xs::Decimal,
@@ -202,19 +234,19 @@ impl fmt::Display for Atomic {
 
 impl From<String> for Atomic {
     fn from(s: String) -> Self {
-        Atomic::String(Rc::new(s))
+        Atomic::String(StringType::String, Rc::new(s))
     }
 }
 
 impl From<&str> for Atomic {
     fn from(s: &str) -> Self {
-        Atomic::String(Rc::new(s.to_string()))
+        Atomic::String(StringType::String, Rc::new(s.to_string()))
     }
 }
 
 impl From<&String> for Atomic {
     fn from(s: &String) -> Self {
-        Atomic::String(Rc::new(s.clone()))
+        Atomic::String(StringType::String, Rc::new(s.clone()))
     }
 }
 
@@ -223,7 +255,7 @@ impl TryFrom<Atomic> for String {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::String(s) => Ok(s.as_ref().clone()),
+            Atomic::String(_, s) => Ok(s.as_ref().clone()),
             _ => Err(error::Error::Type),
         }
     }

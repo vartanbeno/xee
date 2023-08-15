@@ -8,21 +8,25 @@ Ok(
             [
                 Atomic(
                     String(
+                        String,
                         "doc",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "a",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "b",
                     ),
                 ),
                 Atomic(
                     String(
+                        String,
                         "c",
                     ),
                 ),
