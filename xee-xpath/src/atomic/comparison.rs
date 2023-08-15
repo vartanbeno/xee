@@ -27,7 +27,9 @@ where
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
             <O as ComparisonOp>::decimal(a, b)
         }
-        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => <O as ComparisonOp>::ibig(a, b),
+        (atomic::Atomic::Integer(_, a), atomic::Atomic::Integer(_, b)) => {
+            <O as ComparisonOp>::ibig(a, b)
+        }
         (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
             <O as ComparisonOp>::float(a, b)
         }

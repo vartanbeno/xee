@@ -1,3 +1,4 @@
+use ibig::error::OutOfBoundsError;
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
@@ -652,6 +653,12 @@ impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
             src: e.src.to_string(),
             span: span::to_miette(e.span()),
         }
+    }
+}
+
+impl From<OutOfBoundsError> for Error {
+    fn from(_e: OutOfBoundsError) -> Self {
+        Error::FOCA0003
     }
 }
 

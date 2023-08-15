@@ -29,6 +29,26 @@ pub enum IntegerType {
     UnsignedByte,
 }
 
+impl IntegerType {
+    fn schema_type(&self) -> Xs {
+        match self {
+            IntegerType::Integer => Xs::Integer,
+            IntegerType::Long => Xs::Long,
+            IntegerType::Int => Xs::Int,
+            IntegerType::Short => Xs::Short,
+            IntegerType::Byte => Xs::Byte,
+            IntegerType::UnsignedLong => Xs::UnsignedLong,
+            IntegerType::UnsignedInt => Xs::UnsignedInt,
+            IntegerType::UnsignedShort => Xs::UnsignedShort,
+            IntegerType::UnsignedByte => Xs::UnsignedByte,
+            IntegerType::NonPositiveInteger => Xs::NonPositiveInteger,
+            IntegerType::NegativeInteger => Xs::NegativeInteger,
+            IntegerType::NonNegativeInteger => Xs::NonNegativeInteger,
+            IntegerType::PositiveInteger => Xs::PositiveInteger,
+        }
+    }
+}
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
@@ -40,21 +60,7 @@ pub enum Atomic {
     // decimal based
     Decimal(Decimal),
     // integers
-    // Integer(IntegerType, Rc<IBig>),
-    Integer(Rc<IBig>),
-    NonPositiveInteger(Rc<IBig>),
-    NegativeInteger(Rc<IBig>),
-    NonNegativeInteger(Rc<IBig>),
-    PositiveInteger(Rc<IBig>),
-    // machine integers
-    Long(i64),
-    Int(i32),
-    Short(i16),
-    Byte(i8),
-    UnsignedLong(u64),
-    UnsignedInt(u32),
-    UnsignedShort(u16),
-    UnsignedByte(u8),
+    Integer(IntegerType, Rc<IBig>),
     // floats
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
@@ -63,23 +69,11 @@ pub enum Atomic {
 impl Atomic {
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
-            Atomic::Integer(i) => Ok(!i.is_zero()),
+            Atomic::Integer(_, i) => Ok(!i.is_zero()),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             Atomic::Boolean(b) => Ok(*b),
-            Atomic::Long(i) => Ok(*i != 0),
-            Atomic::Int(i) => Ok(*i != 0),
-            Atomic::Short(i) => Ok(*i != 0),
-            Atomic::Byte(i) => Ok(*i != 0),
-            Atomic::UnsignedLong(i) => Ok(*i != 0),
-            Atomic::UnsignedInt(i) => Ok(*i != 0),
-            Atomic::UnsignedShort(i) => Ok(*i != 0),
-            Atomic::UnsignedByte(i) => Ok(*i != 0),
-            Atomic::NonPositiveInteger(i) => Ok(!i.is_zero()),
-            Atomic::NegativeInteger(i) => Ok(!i.is_zero()),
-            Atomic::NonNegativeInteger(i) => Ok(!i.is_zero()),
-            Atomic::PositiveInteger(i) => Ok(!i.is_zero()),
             Atomic::String(s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
         }
@@ -123,14 +117,7 @@ impl Atomic {
             Atomic::Float(f) => f.is_zero(),
             Atomic::Double(d) => d.is_zero(),
             Atomic::Decimal(d) => d.is_zero(),
-            Atomic::Integer(i) => i.is_zero(),
-            Atomic::Int(i) => i.is_zero(),
-            Atomic::Short(i) => i.is_zero(),
-            Atomic::Byte(i) => i.is_zero(),
-            Atomic::UnsignedLong(i) => i.is_zero(),
-            Atomic::UnsignedInt(i) => i.is_zero(),
-            Atomic::UnsignedShort(i) => i.is_zero(),
-            Atomic::UnsignedByte(i) => i.is_zero(),
+            Atomic::Integer(_, i) => i.is_zero(),
             _ => false,
         }
     }
@@ -138,22 +125,7 @@ impl Atomic {
     pub(crate) fn is_numeric(&self) -> bool {
         matches!(
             self,
-            Atomic::Float(_)
-                | Atomic::Double(_)
-                | Atomic::Decimal(_)
-                | Atomic::Integer(_)
-                | Atomic::Int(_)
-                | Atomic::Long(_)
-                | Atomic::Short(_)
-                | Atomic::Byte(_)
-                | Atomic::UnsignedLong(_)
-                | Atomic::UnsignedInt(_)
-                | Atomic::UnsignedShort(_)
-                | Atomic::UnsignedByte(_)
-                | Atomic::NonPositiveInteger(_)
-                | Atomic::NegativeInteger(_)
-                | Atomic::NonNegativeInteger(_)
-                | Atomic::PositiveInteger(_)
+            Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_, _)
         )
     }
 
@@ -171,19 +143,7 @@ impl Atomic {
             Atomic::Untyped(_) => Xs::UntypedAtomic,
             Atomic::Boolean(_) => Xs::Boolean,
             Atomic::Decimal(_) => Xs::Decimal,
-            Atomic::Integer(_) => Xs::Integer,
-            Atomic::Long(_) => Xs::Long,
-            Atomic::Int(_) => Xs::Int,
-            Atomic::Short(_) => Xs::Short,
-            Atomic::Byte(_) => Xs::Byte,
-            Atomic::UnsignedLong(_) => Xs::UnsignedLong,
-            Atomic::UnsignedInt(_) => Xs::UnsignedInt,
-            Atomic::UnsignedShort(_) => Xs::UnsignedShort,
-            Atomic::UnsignedByte(_) => Xs::UnsignedByte,
-            Atomic::NonPositiveInteger(_) => Xs::NonPositiveInteger,
-            Atomic::NegativeInteger(_) => Xs::NegativeInteger,
-            Atomic::NonNegativeInteger(_) => Xs::NonNegativeInteger,
-            Atomic::PositiveInteger(_) => Xs::PositiveInteger,
+            Atomic::Integer(integer_type, _) => integer_type.schema_type(),
             Atomic::Float(_) => Xs::Float,
             Atomic::Double(_) => Xs::Double,
         }
@@ -314,13 +274,13 @@ impl TryFrom<Atomic> for Decimal {
 
 impl From<IBig> for Atomic {
     fn from(i: IBig) -> Self {
-        Atomic::Integer(Rc::new(i))
+        Atomic::Integer(IntegerType::Integer, Rc::new(i))
     }
 }
 
 impl From<Rc<IBig>> for Atomic {
     fn from(i: Rc<IBig>) -> Self {
-        Atomic::Integer(i)
+        Atomic::Integer(IntegerType::Integer, i)
     }
 }
 
@@ -329,7 +289,7 @@ impl TryFrom<Atomic> for Rc<IBig> {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Integer(i) => Ok(i),
+            Atomic::Integer(_, i) => Ok(i),
             _ => Err(error::Error::Type),
         }
     }
@@ -340,7 +300,7 @@ impl TryFrom<Atomic> for IBig {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Integer(i) => Ok(i.as_ref().clone()),
+            Atomic::Integer(_, i) => Ok(i.as_ref().clone()),
             _ => Err(error::Error::Type),
         }
     }
@@ -348,7 +308,7 @@ impl TryFrom<Atomic> for IBig {
 
 impl From<i64> for Atomic {
     fn from(i: i64) -> Self {
-        Atomic::Long(i)
+        Atomic::Integer(IntegerType::Long, Rc::new(i.into()))
     }
 }
 
@@ -357,7 +317,7 @@ impl TryFrom<Atomic> for i64 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Long(i) => Ok(i),
+            Atomic::Integer(IntegerType::Long, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -369,7 +329,7 @@ impl TryFrom<Atomic> for i64 {
 
 impl From<i32> for Atomic {
     fn from(i: i32) -> Self {
-        Atomic::Int(i)
+        Atomic::Integer(IntegerType::Int, Rc::new(i.into()))
     }
 }
 
@@ -378,7 +338,7 @@ impl TryFrom<Atomic> for i32 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Int(i) => Ok(i),
+            Atomic::Integer(IntegerType::Int, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -386,7 +346,7 @@ impl TryFrom<Atomic> for i32 {
 
 impl From<i16> for Atomic {
     fn from(i: i16) -> Self {
-        Atomic::Short(i)
+        Atomic::Integer(IntegerType::Short, Rc::new(i.into()))
     }
 }
 
@@ -395,7 +355,7 @@ impl TryFrom<Atomic> for i16 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Short(i) => Ok(i),
+            Atomic::Integer(IntegerType::Short, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -403,7 +363,7 @@ impl TryFrom<Atomic> for i16 {
 
 impl From<i8> for Atomic {
     fn from(i: i8) -> Self {
-        Atomic::Byte(i)
+        Atomic::Integer(IntegerType::Byte, Rc::new(i.into()))
     }
 }
 
@@ -412,7 +372,7 @@ impl TryFrom<Atomic> for i8 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Byte(i) => Ok(i),
+            Atomic::Integer(IntegerType::Byte, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -420,7 +380,7 @@ impl TryFrom<Atomic> for i8 {
 
 impl From<u64> for Atomic {
     fn from(i: u64) -> Self {
-        Atomic::UnsignedLong(i)
+        Atomic::Integer(IntegerType::UnsignedLong, Rc::new(i.into()))
     }
 }
 
@@ -429,7 +389,7 @@ impl TryFrom<Atomic> for u64 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::UnsignedLong(i) => Ok(i),
+            Atomic::Integer(IntegerType::UnsignedLong, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -437,7 +397,7 @@ impl TryFrom<Atomic> for u64 {
 
 impl From<u32> for Atomic {
     fn from(i: u32) -> Self {
-        Atomic::UnsignedInt(i)
+        Atomic::Integer(IntegerType::UnsignedInt, Rc::new(i.into()))
     }
 }
 
@@ -446,7 +406,7 @@ impl TryFrom<Atomic> for u32 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::UnsignedInt(i) => Ok(i),
+            Atomic::Integer(IntegerType::UnsignedInt, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -454,7 +414,7 @@ impl TryFrom<Atomic> for u32 {
 
 impl From<u16> for Atomic {
     fn from(i: u16) -> Self {
-        Atomic::UnsignedShort(i)
+        Atomic::Integer(IntegerType::UnsignedShort, Rc::new(i.into()))
     }
 }
 
@@ -463,7 +423,7 @@ impl TryFrom<Atomic> for u16 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::UnsignedShort(i) => Ok(i),
+            Atomic::Integer(IntegerType::UnsignedShort, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }
@@ -471,7 +431,7 @@ impl TryFrom<Atomic> for u16 {
 
 impl From<u8> for Atomic {
     fn from(i: u8) -> Self {
-        Atomic::UnsignedByte(i)
+        Atomic::Integer(IntegerType::UnsignedByte, Rc::new(i.into()))
     }
 }
 
@@ -480,7 +440,7 @@ impl TryFrom<Atomic> for u8 {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::UnsignedByte(i) => Ok(i),
+            Atomic::Integer(IntegerType::UnsignedByte, i) => Ok(i.as_ref().clone().try_into()?),
             _ => Err(error::Error::Type),
         }
     }

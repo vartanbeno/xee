@@ -6,6 +6,7 @@ Ok(
     One(
         Atomic(
             Integer(
+                Integer,
                 2,
             ),
         ),

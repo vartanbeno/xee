@@ -53,14 +53,6 @@ pub enum Xs {
     ENTITY,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum BaseNumericType {
-    Decimal,
-    Integer,
-    Float,
-    Double,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct RustInfo {
     rust_name: String,
@@ -309,29 +301,6 @@ impl Xs {
             UnsignedByte => Some(RustInfo::new("u8")),
             Notation => None,
             // TODO: need to find rust representation for the missing atomic types
-            _ => None,
-        }
-    }
-
-    pub fn base_numeric_type(&self) -> Option<BaseNumericType> {
-        use Xs::*;
-        match self {
-            Float => Some(BaseNumericType::Float),
-            Double => Some(BaseNumericType::Double),
-            Decimal => Some(BaseNumericType::Decimal),
-            Integer => Some(BaseNumericType::Integer),
-            NonPositiveInteger => Some(BaseNumericType::Integer),
-            NegativeInteger => Some(BaseNumericType::Integer),
-            Long => Some(BaseNumericType::Integer),
-            Int => Some(BaseNumericType::Integer),
-            Short => Some(BaseNumericType::Integer),
-            Byte => Some(BaseNumericType::Integer),
-            NonNegativeInteger => Some(BaseNumericType::Integer),
-            PositiveInteger => Some(BaseNumericType::Integer),
-            UnsignedLong => Some(BaseNumericType::Integer),
-            UnsignedInt => Some(BaseNumericType::Integer),
-            UnsignedShort => Some(BaseNumericType::Integer),
-            UnsignedByte => Some(BaseNumericType::Integer),
             _ => None,
         }
     }

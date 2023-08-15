@@ -9,7 +9,6 @@ use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
-use xee_schema_type::BaseNumericType;
 
 use crate::atomic;
 use crate::error;
@@ -29,7 +28,7 @@ where
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
             <O as ArithmeticOp>::decimal_atomic(a, b)
         }
-        (atomic::Atomic::Integer(a), atomic::Atomic::Integer(b)) => {
+        (atomic::Atomic::Integer(_, a), atomic::Atomic::Integer(_, b)) => {
             <O as ArithmeticOp>::ibig_atomic(a, b)
         }
         (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
@@ -251,41 +250,27 @@ impl ArithmeticOp for ModuloOp {
 }
 
 pub(crate) fn unary_plus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
-    let schema_type = atomic.schema_type();
-    let numeric_type = schema_type.base_numeric_type();
-
-    use BaseNumericType::*;
-    match numeric_type {
-        Some(Integer) => atomic.cast_to_integer(),
-        Some(Decimal) => atomic.cast_to_decimal(),
-        Some(Float) => atomic.cast_to_float(),
-        Some(Double) => atomic.cast_to_double(),
+    match atomic {
+        atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Integer(
+            atomic::IntegerType::Integer,
+            i.clone(),
+        )),
+        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(d)),
+        atomic::Atomic::Float(f) => Ok(atomic::Atomic::Float(f)),
+        atomic::Atomic::Double(d) => Ok(atomic::Atomic::Double(d)),
         _ => Err(error::Error::Type),
     }
 }
 
 pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomic> {
-    let schema_type = atomic.schema_type();
-    let numeric_type = schema_type.base_numeric_type();
-
-    use BaseNumericType::*;
-    match numeric_type {
-        Some(Integer) => {
-            let v: IBig = atomic.cast_to_integer()?.try_into()?;
-            Ok(atomic::Atomic::Integer((-v).into()))
-        }
-        Some(Decimal) => {
-            let v: rust_decimal::Decimal = atomic.cast_to_decimal()?.try_into()?;
-            Ok(atomic::Atomic::Decimal(-v))
-        }
-        Some(Float) => {
-            let v: f32 = atomic.cast_to_float()?.try_into()?;
-            Ok(atomic::Atomic::Float(OrderedFloat(-v)))
-        }
-        Some(Double) => {
-            let v: f64 = atomic.cast_to_double()?.try_into()?;
-            Ok(atomic::Atomic::Double(OrderedFloat(-v)))
-        }
+    match atomic {
+        atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Integer(
+            atomic::IntegerType::Integer,
+            Rc::new(-(i.as_ref().clone())),
+        )),
+        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(-d)),
+        atomic::Atomic::Float(f) => Ok(atomic::Atomic::Float(-f)),
+        atomic::Atomic::Double(d) => Ok(atomic::Atomic::Double(-d)),
         _ => Err(error::Error::Type),
     }
 }

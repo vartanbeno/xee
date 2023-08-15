@@ -8,21 +8,25 @@ Ok(
             [
                 Atomic(
                     Integer(
+                        Integer,
                         1,
                     ),
                 ),
                 Atomic(
                     Integer(
+                        Integer,
                         2,
                     ),
                 ),
                 Atomic(
                     Integer(
+                        Integer,
                         3,
                     ),
                 ),
                 Atomic(
                     Integer(
+                        Integer,
                         4,
                     ),
                 ),

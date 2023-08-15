@@ -1,11 +1,12 @@
 ---
 source: xee-xpath/src/interpreter/ir_interpret.rs
-expression: "run_with_variables(\"$foo + $bar\",\n    &[(ast::Name::without_ns(\"foo\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(1i64))]),\n                (ast::Name::without_ns(\"bar\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(2i64))])])"
+expression: "run_with_variables(\"$foo + $bar\",\n    &[(ast::Name::unprefixed(\"foo\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(1i64))]),\n                (ast::Name::unprefixed(\"bar\"),\n                    vec![sequence :: Item ::\n                        from(atomic :: Atomic :: from(2i64))])])"
 ---
 Ok(
     One(
         Atomic(
             Integer(
+                Integer,
                 3,
             ),
         ),

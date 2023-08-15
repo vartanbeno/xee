@@ -7,31 +7,37 @@ Ok(
         [
             Atomic(
                 Integer(
+                    Integer,
                     11,
                 ),
             ),
             Atomic(
                 Integer(
+                    Integer,
                     12,
                 ),
             ),
             Atomic(
                 Integer(
+                    Integer,
                     21,
                 ),
             ),
             Atomic(
                 Integer(
+                    Integer,
                     22,
                 ),
             ),
             Atomic(
                 Integer(
+                    Integer,
                     31,
                 ),
             ),
             Atomic(
                 Integer(
+                    Integer,
                     32,
                 ),
             ),
