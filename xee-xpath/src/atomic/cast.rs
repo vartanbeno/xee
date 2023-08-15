@@ -166,27 +166,12 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
-        // XML Schema whitespace: replace
-        // all tab, linefeeds and carriage returns are replaced with a space
-        // character
-        let s = self
-            .to_canonical()
-            .replace(|c| c == '\t' || c == '\n' || c == '\r', " ");
+        let s = whitespace_replace(&self.to_canonical());
         atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::new(s))
     }
 
     pub(crate) fn cast_to_token(self) -> atomic::Atomic {
-        // XML Schema whitespace: collapse
-        // after doing a replace, collapse all space characters into a single
-        // space character. Any space characters at the start or end of string
-        // are then removed.
-        let s = self
-            .cast_to_normalized_string()
-            .to_canonical()
-            .replace(|c| c == '\t' || c == '\n' || c == '\r', " ")
-            .split_whitespace()
-            .collect::<Vec<&str>>()
-            .join(" ");
+        let s = whitespace_collapse(&self.to_canonical());
         atomic::Atomic::String(atomic::StringType::Token, Rc::new(s))
     }
 
@@ -674,6 +659,24 @@ where
             .unwrap();
         lexical::to_string_with_options::<_, { lexical::format::XML }>(f, &options)
     }
+}
+
+fn whitespace_replace(s: &str) -> String {
+    // XML Schema whitespace: replace
+    // all tab, linefeeds and carriage returns are replaced with a space
+    // character
+    s.replace(|c| c == '\t' || c == '\n' || c == '\r', " ")
+}
+
+fn whitespace_collapse(s: &str) -> String {
+    // XML Schema whitespace: collapse
+    // after doing a replace, collapse all space characters into a single
+    // space character. Any space characters at the start or end of string
+    // are then removed.
+    whitespace_replace(s)
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[cfg(test)]
