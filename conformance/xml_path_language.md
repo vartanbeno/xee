@@ -272,19 +272,19 @@ derives-from pseudo function
 
 - [x] `item()`
 
-- [ ] `node()`
+- [x] `node()`
 
-- [ ] `text()`
+- [x] `text()`
 
-- [ ] `processing-instruction()`
+- [x] `processing-instruction()`
 
-- [ ] `processing-instruction(N)`
+- [x] `processing-instruction(N)`
 
-- [ ] `comment()`
+- [x] `comment()`
 
 - [ ] `namespace-node()`
 
-- [ ] `document-node()`
+- [x] `document-node()`
 
 - [ ] item type that is a test
 
@@ -302,13 +302,13 @@ derives-from pseudo function
 
 - [ ] Use in NodeTest
 
-- [ ] `element()` and `element(*)`
+- [x] `element()` and `element(*)`
 
-- [ ] `element(ElementName)`
+- [x] `element(ElementName)`
 
-- [ ] `element(ElementName, TypeName)`
+- [x] `element(ElementName, TypeName)`
 
-- [ ] `element(ElementName, TypeName?)`
+- [x] `element(ElementName, TypeName?)`
 
 - [ ] `element(*, TypeName)`
 
