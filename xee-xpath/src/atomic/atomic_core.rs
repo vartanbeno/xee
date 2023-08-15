@@ -248,7 +248,7 @@ impl TryFrom<Atomic> for bool {
     }
 }
 
-// decimal based
+// decimal
 
 impl From<Decimal> for Atomic {
     fn from(d: Decimal) -> Self {
@@ -266,6 +266,8 @@ impl TryFrom<Atomic> for Decimal {
         }
     }
 }
+
+// integers
 
 impl From<IBig> for Atomic {
     fn from(i: IBig) -> Self {
@@ -317,10 +319,6 @@ impl TryFrom<Atomic> for i64 {
         }
     }
 }
-
-// machine integers
-
-// xs:long is xs:integer
 
 impl From<i32> for Atomic {
     fn from(i: i32) -> Self {
