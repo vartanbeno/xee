@@ -12,6 +12,23 @@ use crate::error;
 use super::arithmetic;
 use super::comparison;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerType {
+    Integer,
+    NonPositiveInteger,
+    NegativeInteger,
+    NonNegativeInteger,
+    PositiveInteger,
+    Long,
+    Int,
+    Short,
+    Byte,
+    UnsignedLong,
+    UnsignedInt,
+    UnsignedShort,
+    UnsignedByte,
+}
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
@@ -23,6 +40,7 @@ pub enum Atomic {
     // decimal based
     Decimal(Decimal),
     // integers
+    // Integer(IntegerType, Rc<IBig>),
     Integer(Rc<IBig>),
     NonPositiveInteger(Rc<IBig>),
     NegativeInteger(Rc<IBig>),
@@ -43,22 +61,6 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub(crate) fn match_type_name(&self, name: &str) -> bool {
-        if name == "anyAtomicType" {
-            return true;
-        }
-        match self {
-            Atomic::Boolean(_) => name == "boolean",
-            Atomic::Integer(_) => name == "integer",
-            Atomic::Float(_) => name == "float",
-            Atomic::Double(_) => name == "double",
-            Atomic::Decimal(_) => name == "decimal",
-            Atomic::String(_) => name == "string",
-            // TODO: handle all cases instead of this fallback
-            _ => false,
-        }
-    }
-
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Atomic::Integer(i) => Ok(!i.is_zero()),
