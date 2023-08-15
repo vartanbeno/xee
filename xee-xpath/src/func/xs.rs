@@ -25,6 +25,11 @@ fn xs_token(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>
     Ok(arg.map(|arg| arg.cast_to_token()))
 }
 
+#[xpath_fn("xs:language($arg as xs:anyAtomicType?) as xs:language?")]
+fn xs_language(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_language()).transpose()
+}
+
 #[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
 fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_float()).transpose()
@@ -118,6 +123,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_untyped_atomic),
         wrap_xpath_fn!(xs_normalized_string),
         wrap_xpath_fn!(xs_token),
+        wrap_xpath_fn!(xs_language),
         wrap_xpath_fn!(xs_float),
         wrap_xpath_fn!(xs_double),
         wrap_xpath_fn!(xs_decimal),

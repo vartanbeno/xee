@@ -1471,6 +1471,16 @@ mod tests {
     }
 
     #[test]
+    fn test_cast_as_language() {
+        assert_debug_snapshot!(run("'en' cast as xs:language"));
+    }
+
+    #[test]
+    fn test_case_as_language_fails() {
+        assert_debug_snapshot!(run("'en us' cast as xs:language"));
+    }
+
+    #[test]
     fn test_cast_as_token() {
         assert_debug_snapshot!(run("'  foo\n\nbar ' cast as xs:token"));
     }

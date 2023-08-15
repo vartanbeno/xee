@@ -1,14 +1,18 @@
 use ibig::{ibig, IBig};
 use num_traits::Float;
 use ordered_float::OrderedFloat;
+use regex::Regex;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
+use std::sync::OnceLock;
 
 use xee_schema_type::Xs;
 
 use crate::error;
 
 use super::atomic_core as atomic;
+
+static LANGUAGE_REGEX: OnceLock<Regex> = OnceLock::new();
 
 impl atomic::Atomic {
     pub(crate) fn parse_atomic<V>(s: &str) -> error::Result<atomic::Atomic>
@@ -112,6 +116,7 @@ impl atomic::Atomic {
             Xs::String => Ok(self.cast_to_string()),
             Xs::NormalizedString => Ok(self.cast_to_normalized_string()),
             Xs::Token => Ok(self.cast_to_token()),
+            Xs::Language => self.cast_to_language(),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
@@ -173,6 +178,21 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_token(self) -> atomic::Atomic {
         let s = whitespace_collapse(&self.to_canonical());
         atomic::Atomic::String(atomic::StringType::Token, Rc::new(s))
+    }
+
+    pub(crate) fn cast_to_language(self) -> error::Result<atomic::Atomic> {
+        let r = LANGUAGE_REGEX.get_or_init(|| {
+            Regex::new(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$").expect("Invalid regex")
+        });
+        let s = whitespace_collapse(&self.to_canonical());
+        if r.is_match(&s) {
+            Ok(atomic::Atomic::String(
+                atomic::StringType::Language,
+                Rc::new(s),
+            ))
+        } else {
+            Err(error::Error::FORG0001)
+        }
     }
 
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {
