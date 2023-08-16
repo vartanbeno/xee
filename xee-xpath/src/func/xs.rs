@@ -160,6 +160,16 @@ fn xs_qname(
     arg.map(|arg| arg.cast_to_qname(context)).transpose()
 }
 
+#[xpath_fn("xs:hexBinary($arg as xs:anyAtomicType?) as xs:hexBinary?")]
+fn xs_hex_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_hex_binary()).transpose()
+}
+
+#[xpath_fn("xs:base64Binary($arg as xs:anyAtomicType?) as xs:base64Binary?")]
+fn xs_base64_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_base64_binary()).transpose()
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(xs_string),

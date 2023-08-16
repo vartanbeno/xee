@@ -958,6 +958,17 @@ fn test_case_as_hex_binary_fails() {
 }
 
 #[test]
+fn test_cast_as_base64_binary() {
+    // "hello" encoded
+    assert_debug_snapshot!(run("'aGVsbG8=' cast as xs:base64Binary"));
+}
+
+#[test]
+fn test_cast_as_base64_binary_fails() {
+    assert_debug_snapshot!(run("'flurb' cast as xs:base64Binary"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

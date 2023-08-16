@@ -631,29 +631,39 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_hex_binary(self) -> error::Result<atomic::Atomic> {
+    fn cast_to_binary<F>(
+        self,
+        binary_type: atomic::BinaryType,
+        decode: F,
+    ) -> error::Result<atomic::Atomic>
+    where
+        F: Fn(&str) -> error::Result<Vec<u8>>,
+    {
         match self {
-            atomic::Atomic::Binary(atomic::BinaryType::Hex, data) => {
-                Ok(atomic::Atomic::Binary(atomic::BinaryType::Hex, data))
-            }
+            atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 let s = s.as_ref();
-                let data = hex::decode(s);
-                let data = match data {
-                    Ok(data) => data,
-                    Err(_) => return Err(error::Error::FORG0001),
-                };
-                Ok(atomic::Atomic::Binary(
-                    atomic::BinaryType::Hex,
-                    Rc::new(data),
-                ))
+                let data = decode(s)?;
+                Ok(atomic::Atomic::Binary(binary_type, Rc::new(data)))
             }
             _ => Err(error::Error::Type),
         }
     }
 
+    pub(crate) fn cast_to_hex_binary(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_binary(atomic::BinaryType::Hex, |s: &str| {
+            let data = hex::decode(s);
+            data.map_err(|_| error::Error::FORG0001)
+        })
+    }
+
     pub(crate) fn cast_to_base64_binary(self) -> error::Result<atomic::Atomic> {
-        todo!();
+        self.cast_to_binary(atomic::BinaryType::Base64, |s: &str| {
+            use base64::Engine;
+            base64::engine::general_purpose::STANDARD
+                .decode(s)
+                .map_err(|_| error::Error::FORG0001)
+        })
     }
 
     pub(crate) fn type_promote(self, xs: Xs) -> error::Result<atomic::Atomic> {
@@ -865,7 +875,8 @@ fn canonical_hex_binary(data: &[u8]) -> String {
 }
 
 fn canonical_base64_binary(data: &[u8]) -> String {
-    todo!();
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(data)
 }
 
 fn whitespace_replace(s: &str) -> String {

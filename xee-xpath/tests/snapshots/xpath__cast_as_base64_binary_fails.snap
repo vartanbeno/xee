@@ -1,0 +1,7 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'flurb' cast as xs:base64Binary\")"
+---
+Err(
+    FORG0001,
+)
