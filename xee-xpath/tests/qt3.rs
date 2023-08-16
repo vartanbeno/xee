@@ -146,6 +146,16 @@ fn test_xs_normalized_string() {
     Tests::all("xs/normalizedString").run()
 }
 
+#[test]
+fn test_xs_token() {
+    Tests::all("xs/token").run()
+}
+
+#[test]
+fn test_xs_any_uri() {
+    Tests::all("xs/anyURI").run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")
