@@ -145,6 +145,17 @@ impl Name {
         &self.name
     }
 
+    pub fn to_full_name(&self) -> String {
+        if let Some(prefix) = &self.prefix {
+            format!("{}:{}", prefix, self.name)
+        } else if let Some(namespace) = &self.namespace {
+            // TODO: needs some kind of test
+            format!("Q{{{}}}{}", namespace, self.name)
+        } else {
+            self.name.clone()
+        }
+    }
+
     pub fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         if let Some(namespace) = &self.namespace {
             let namespace_id = xot.namespace(namespace);

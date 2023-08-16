@@ -3,6 +3,7 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::fmt;
 use std::rc::Rc;
+use xee_xpath_ast::ast::Name;
 
 use xee_schema_type::Xs;
 
@@ -24,6 +25,7 @@ pub enum Atomic {
     Integer(IntegerType, Rc<IBig>),
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
+    QName(Rc<Name>),
 }
 
 impl Atomic {
@@ -40,6 +42,8 @@ impl Atomic {
             Atomic::Decimal(d) => Ok(!d.is_zero()),
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
+            // point 6
+            Atomic::QName(_) => Err(error::Error::FORG0006),
         }
     }
 
@@ -111,6 +115,7 @@ impl Atomic {
             Atomic::Integer(integer_type, _) => integer_type.schema_type(),
             Atomic::Float(_) => Xs::Float,
             Atomic::Double(_) => Xs::Double,
+            Atomic::QName(_) => Xs::QName,
         }
     }
 

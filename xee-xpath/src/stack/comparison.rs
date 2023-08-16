@@ -1,4 +1,5 @@
 use crate::atomic;
+use crate::context;
 use crate::error;
 
 // https://www.w3.org/TR/xpath-31/#id-general-comparisons
@@ -6,6 +7,7 @@ use crate::error;
 pub(crate) fn general_comparison<O>(
     a_atoms: impl Iterator<Item = error::Result<atomic::Atomic>>,
     b_atoms: impl Iterator<Item = error::Result<atomic::Atomic>> + std::clone::Clone,
+    context: &context::DynamicContext,
 ) -> error::Result<bool>
 where
     O: atomic::ComparisonOp,
@@ -14,7 +16,7 @@ where
     for a in a_atoms {
         let a = a?;
         for b in b_atoms.iter() {
-            let (a, b) = cast(a.clone(), b.clone()?)?;
+            let (a, b) = cast(a.clone(), b.clone()?, context)?;
             // 2c do value comparison
             if a.value_comparison::<O>(b)? {
                 return Ok(true);
@@ -25,7 +27,11 @@ where
 }
 
 // step 2: cast
-fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+fn cast(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+    context: &context::DynamicContext,
+) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
     Ok(match (&a, &b) {
         // step 2a: if both are untyped atomic, cast them both to string
         (atomic::Atomic::Untyped(_), atomic::Atomic::Untyped(_)) => {
@@ -39,7 +45,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
                 a.cast_to_double()?
             } else {
                 // step 2biv: in all other cases, cast untyped to primitive base type of other
-                a.cast_to_schema_type_of(&b)?
+                a.cast_to_schema_type_of(&b, context)?
             };
             (a, b)
         }
@@ -48,7 +54,7 @@ fn cast(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<(atomic::Atomic, 
                 b.cast_to_double()?
             } else {
                 // step 2biv: in all other cases, cast untyped to primitive base type of other
-                b.cast_to_schema_type_of(&a)?
+                b.cast_to_schema_type_of(&a, context)?
             };
             (a, b)
         } // step 2bii & 2biii skipped until we have datetime stuff

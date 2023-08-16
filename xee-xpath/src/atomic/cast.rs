@@ -9,6 +9,7 @@ use std::sync::OnceLock;
 use xee_schema_type::Xs;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 
 // https://www.w3.org/TR/xml11/#NT-Nmtoken
@@ -103,10 +104,15 @@ impl atomic::Atomic {
             atomic::Atomic::Integer(_, i) => i.to_string(),
             atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(f),
             atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(f),
+            atomic::Atomic::QName(name) => name.to_full_name(),
         }
     }
 
-    pub(crate) fn cast_to_schema_type(self, xs: Xs) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_schema_type(
+        self,
+        xs: Xs,
+        dynamic_context: &context::DynamicContext,
+    ) -> error::Result<atomic::Atomic> {
         // if we try to cast to any atomic type, we're already the correct type
         if xs == Xs::AnyAtomicType {
             return Ok(self);
@@ -147,6 +153,7 @@ impl atomic::Atomic {
             Xs::NegativeInteger => self.cast_to_negative_integer(),
             Xs::NonNegativeInteger => self.cast_to_non_negative_integer(),
             Xs::PositiveInteger => self.cast_to_positive_integer(),
+            Xs::QName => self.cast_to_qname(dynamic_context),
             _ => unreachable!(),
         }
     }
@@ -154,20 +161,22 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_schema_type_of(
         self,
         other: &atomic::Atomic,
+        context: &context::DynamicContext,
     ) -> error::Result<atomic::Atomic> {
-        self.cast_to_schema_type(other.schema_type())
+        self.cast_to_schema_type(other.schema_type(), context)
     }
 
     // if a derives from b, cast to b, otherwise vice versa
     pub(crate) fn cast_to_same_schema_type(
         self,
         other: atomic::Atomic,
+        context: &context::DynamicContext,
     ) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
         if self.derives_from(&other) {
-            let a = self.cast_to_schema_type_of(&other)?;
+            let a = self.cast_to_schema_type_of(&other, context)?;
             Ok((a, other))
         } else if other.derives_from(&self) {
-            let b = other.cast_to_schema_type_of(&self)?;
+            let b = other.cast_to_schema_type_of(&self, context)?;
             Ok((self, b))
         } else {
             Err(error::Error::Type)
@@ -280,6 +289,8 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_entity(self) -> error::Result<atomic::Atomic> {
+        // https://www.w3.org/TR/xpath-functions-31/#casting-to-ENTITY
+        // we don't need to check whether it matches unparsed entities
         self.cast_to_ncname_helper(atomic::StringType::ENTITY)
     }
 
@@ -311,7 +322,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f32>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
-            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
         }
     }
 
@@ -333,7 +344,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
-            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
         }
     }
 
@@ -378,7 +389,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<Decimal>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
-            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
         }
     }
 
@@ -553,7 +564,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
-            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
         }
     }
 
@@ -566,7 +577,20 @@ impl atomic::Atomic {
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
-            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_qname(
+        self,
+        _dynamic_context: &context::DynamicContext,
+    ) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::QName(_) => Ok(self.clone()),
+            atomic::Atomic::String(_, _s) | atomic::Atomic::Untyped(_s) => {
+                panic!("uh oh we need the namespaces")
+            }
+            _ => Err(error::Error::Type),
         }
     }
 

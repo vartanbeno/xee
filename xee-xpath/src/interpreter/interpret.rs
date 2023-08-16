@@ -332,7 +332,7 @@ impl<'a> Interpreter<'a> {
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
-                        self.dynamic_context.xot,
+                        self.dynamic_context,
                     )?;
                     self.stack.push(sequence.into());
                 }
@@ -347,7 +347,8 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value = value.cast_to_schema_type(cast_type.xs)?;
+                        let cast_value =
+                            value.cast_to_schema_type(cast_type.xs, self.dynamic_context)?;
                         self.stack.push(cast_value.into());
                     } else if cast_type.empty_sequence_allowed {
                         self.stack.push(stack::Value::Empty);
@@ -360,7 +361,8 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value = value.cast_to_schema_type(cast_type.xs);
+                        let cast_value =
+                            value.cast_to_schema_type(cast_type.xs, self.dynamic_context);
                         self.stack.push(cast_value.is_ok().into());
                     } else if cast_type.empty_sequence_allowed {
                         self.stack.push(true.into())
@@ -490,7 +492,7 @@ impl<'a> Interpreter<'a> {
                 let sequence: sequence::Sequence = value.into();
                 // matching also takes care of function conversion rules
                 let sequence = sequence
-                    .sequence_type_matching_function_conversion(type_, self.dynamic_context.xot)?;
+                    .sequence_type_matching_function_conversion(type_, self.dynamic_context)?;
                 arguments.push(sequence.into())
             } else {
                 // no need to do any checking or conversion
@@ -541,9 +543,7 @@ impl<'a> Interpreter<'a> {
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
-        let value = a
-            .general_comparison::<O>(b, self.dynamic_context.xot)?
-            .into();
+        let value = a.general_comparison::<O>(b, self.dynamic_context)?.into();
         self.stack.push(value);
         Ok(())
     }

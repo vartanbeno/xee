@@ -8,6 +8,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 use crate::sequence;
 use crate::stack;
@@ -88,11 +89,19 @@ impl Value {
         }
     }
 
-    pub(crate) fn general_comparison<O>(&self, other: Value, xot: &Xot) -> error::Result<bool>
+    pub(crate) fn general_comparison<O>(
+        &self,
+        other: Value,
+        context: &context::DynamicContext,
+    ) -> error::Result<bool>
     where
         O: atomic::ComparisonOp,
     {
-        comparison::general_comparison::<O>(self.atomized(xot), other.atomized(xot))
+        comparison::general_comparison::<O>(
+            self.atomized(context.xot),
+            other.atomized(context.xot),
+            context,
+        )
     }
 
     pub(crate) fn concat(self, other: stack::Value) -> stack::Value {

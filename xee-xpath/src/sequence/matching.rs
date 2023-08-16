@@ -8,6 +8,7 @@ use xee_xpath_ast::Namespaces;
 use xot::Xot;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 use crate::occurrence::Occurrence;
 use crate::xml;
@@ -50,17 +51,17 @@ impl Sequence {
     pub(crate) fn sequence_type_matching_function_conversion(
         self,
         sequence_type: &ast::SequenceType,
-        xot: &Xot,
+        context: &context::DynamicContext,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
             |sequence, xs| {
-                let atomized = sequence.atomized(xot);
+                let atomized = sequence.atomized(context.xot);
                 let mut items = Vec::new();
                 for atom in atomized {
                     let atom = atom?;
                     let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-                        atom.cast_to_schema_type(xs)?
+                        atom.cast_to_schema_type(xs, context)?
                     } else {
                         atom
                     };
@@ -70,7 +71,7 @@ impl Sequence {
                 }
                 Ok(Sequence::from(items))
             },
-            xot,
+            context.xot,
         )
     }
 
@@ -421,9 +422,12 @@ mod tests {
         let right_sequence = Sequence::from(vec![Item::from(ibig!(1)), Item::from(ibig!(2))]);
 
         let xot = Xot::new();
+        let namespaces = Namespaces::default();
+        let static_context = context::StaticContext::new(&namespaces);
+        let dynamic_context = context::DynamicContext::new(&xot, &static_context);
 
-        let right_result =
-            right_sequence.sequence_type_matching_function_conversion(&sequence_type, &xot);
+        let right_result = right_sequence
+            .sequence_type_matching_function_conversion(&sequence_type, &dynamic_context);
         // atomization has changed the result sequence
         assert_eq!(
             right_result,
@@ -450,8 +454,12 @@ mod tests {
 
         let right_sequence = Sequence::from(vec![Item::from(a), Item::from(b)]);
 
-        let right_result =
-            right_sequence.sequence_type_matching_function_conversion(&sequence_type, &xot);
+        let namespaces = Namespaces::default();
+        let static_context = context::StaticContext::new(&namespaces);
+        let dynamic_context = context::DynamicContext::new(&xot, &static_context);
+
+        let right_result = right_sequence
+            .sequence_type_matching_function_conversion(&sequence_type, &dynamic_context);
         // atomization has changed the result sequence
         assert_eq!(
             right_result,
