@@ -117,6 +117,20 @@ fn test_instance_of() {
         .exclude("instanceof? instanceof1? instanceof2? instanceof3? instanceof6? instanceof7? instanceof111 instanceof121 instanceof12? instanceof13? K*-SeqExprInstanceOf*")
         .run()
 }
+
+#[test]
+fn test_xs_base64_binary() {
+    Tests::all("xs/base64Binary")
+        // needs implementation of codepoints-to-string
+        .exclude("base64-908 base64-909")
+        .run()
+}
+
+#[test]
+fn test_xs_hex_binary() {
+    Tests::all("xs/hexBinary").run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")

@@ -196,5 +196,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_positive_integer),
         wrap_xpath_fn!(xs_boolean),
         wrap_xpath_fn!(xs_qname),
+        wrap_xpath_fn!(xs_hex_binary),
+        wrap_xpath_fn!(xs_base64_binary),
     ]
 }

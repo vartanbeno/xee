@@ -643,7 +643,8 @@ impl atomic::Atomic {
             atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 let s = s.as_ref();
-                let data = decode(s)?;
+                let s = whitespace_remove(s);
+                let data = decode(&s)?;
                 Ok(atomic::Atomic::Binary(binary_type, Rc::new(data)))
             }
             _ => Err(error::Error::Type),
@@ -895,6 +896,12 @@ fn whitespace_collapse(s: &str) -> String {
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+fn whitespace_remove(s: &str) -> String {
+    // XML Schema whitespace: remove
+    // after doing a replace, remove all space characters
+    whitespace_replace(s).replace(' ', "")
 }
 
 #[cfg(test)]

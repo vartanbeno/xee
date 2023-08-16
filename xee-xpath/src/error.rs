@@ -483,6 +483,7 @@ pub enum Error {
     /// converted: for example when attempting to cast the string "nine" to an
     /// integer.
     #[error("Invalid value for cast/constructor")]
+    #[diagnostic(code(FORG0001))]
     FORG0001,
     /// Invalid argument to fn:resolve-uri().
     ///
