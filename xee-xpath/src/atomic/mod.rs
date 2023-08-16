@@ -12,4 +12,4 @@ pub(crate) use comparison::{
     ComparisonOp, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
     NotEqualOp,
 };
-pub use types::{IntegerType, StringType};
+pub use types::{BinaryType, IntegerType, StringType};

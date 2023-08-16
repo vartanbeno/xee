@@ -68,3 +68,18 @@ impl StringType {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryType {
+    Base64,
+    Hex,
+}
+
+impl BinaryType {
+    pub(crate) fn schema_type(&self) -> Xs {
+        match self {
+            BinaryType::Base64 => Xs::Base64Binary,
+            BinaryType::Hex => Xs::HexBinary,
+        }
+    }
+}

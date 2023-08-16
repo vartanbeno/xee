@@ -106,6 +106,10 @@ impl atomic::Atomic {
             atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(f),
             atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(f),
             atomic::Atomic::QName(name) => name.to_full_name(),
+            atomic::Atomic::Binary(binary_type, data) => match binary_type {
+                atomic::BinaryType::Hex => canonical_hex_binary(data.as_ref()),
+                atomic::BinaryType::Base64 => canonical_base64_binary(data.as_ref()),
+            },
         }
     }
 
@@ -155,6 +159,8 @@ impl atomic::Atomic {
             Xs::NonNegativeInteger => self.cast_to_non_negative_integer(),
             Xs::PositiveInteger => self.cast_to_positive_integer(),
             Xs::QName => self.cast_to_qname(dynamic_context),
+            Xs::HexBinary => self.cast_to_hex_binary(),
+            Xs::Base64Binary => self.cast_to_base64_binary(),
             _ => unreachable!(),
         }
     }
@@ -323,7 +329,9 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f32>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
+                Err(error::Error::Type)
+            }
         }
     }
 
@@ -345,7 +353,9 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
+                Err(error::Error::Type)
+            }
         }
     }
 
@@ -390,7 +400,9 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<Decimal>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
+                Err(error::Error::Type)
+            }
         }
     }
 
@@ -565,7 +577,9 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
+                Err(error::Error::Type)
+            }
         }
     }
 
@@ -578,7 +592,9 @@ impl atomic::Atomic {
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) => Err(error::Error::Type),
+            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
+                Err(error::Error::Type)
+            }
         }
     }
 
@@ -613,6 +629,31 @@ impl atomic::Atomic {
             }
             _ => Err(error::Error::Type),
         }
+    }
+
+    pub(crate) fn cast_to_hex_binary(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Binary(atomic::BinaryType::Hex, data) => {
+                Ok(atomic::Atomic::Binary(atomic::BinaryType::Hex, data))
+            }
+            atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
+                let s = s.as_ref();
+                let data = hex::decode(s);
+                let data = match data {
+                    Ok(data) => data,
+                    Err(_) => return Err(error::Error::FORG0001),
+                };
+                Ok(atomic::Atomic::Binary(
+                    atomic::BinaryType::Hex,
+                    Rc::new(data),
+                ))
+            }
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_base64_binary(self) -> error::Result<atomic::Atomic> {
+        todo!();
     }
 
     pub(crate) fn type_promote(self, xs: Xs) -> error::Result<atomic::Atomic> {
@@ -817,6 +858,14 @@ where
             .unwrap();
         lexical::to_string_with_options::<_, { lexical::format::XML }>(f, &options)
     }
+}
+
+fn canonical_hex_binary(data: &[u8]) -> String {
+    hex::encode_upper(data)
+}
+
+fn canonical_base64_binary(data: &[u8]) -> String {
+    todo!();
 }
 
 fn whitespace_replace(s: &str) -> String {

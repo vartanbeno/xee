@@ -948,6 +948,16 @@ fn test_xs_qname() {
 }
 
 #[test]
+fn test_cast_as_hex_binary() {
+    assert_debug_snapshot!(run("'ff' cast as xs:hexBinary"));
+}
+
+#[test]
+fn test_case_as_hex_binary_fails() {
+    assert_debug_snapshot!(run("'f' cast as xs:hexBinary"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

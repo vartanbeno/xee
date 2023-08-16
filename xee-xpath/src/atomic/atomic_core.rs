@@ -8,7 +8,7 @@ use xee_xpath_ast::ast::Name;
 use xee_schema_type::Xs;
 
 use crate::atomic;
-use crate::atomic::types::{IntegerType, StringType};
+use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
 use super::arithmetic;
@@ -26,6 +26,7 @@ pub enum Atomic {
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
     QName(Rc<Name>),
+    Binary(BinaryType, Rc<Vec<u8>>),
 }
 
 impl Atomic {
@@ -43,7 +44,7 @@ impl Atomic {
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             // point 6
-            Atomic::QName(_) => Err(error::Error::FORG0006),
+            Atomic::QName(_) | Atomic::Binary(_, _) => Err(error::Error::FORG0006),
         }
     }
 
@@ -116,6 +117,7 @@ impl Atomic {
             Atomic::Float(_) => Xs::Float,
             Atomic::Double(_) => Xs::Double,
             Atomic::QName(_) => Xs::QName,
+            Atomic::Binary(binary_type, _) => binary_type.schema_type(),
         }
     }
 
