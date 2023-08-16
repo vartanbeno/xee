@@ -1,7 +1,7 @@
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
-use crate::context::StaticFunctionDescription;
+use crate::context::{DynamicContext, StaticFunctionDescription};
 use crate::error;
 use crate::wrap_xpath_fn;
 
@@ -152,6 +152,14 @@ fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomi
     arg.map(|arg| arg.cast_to_boolean()).transpose()
 }
 
+#[xpath_fn("xs:QName($arg as xs:anyAtomicType?) as xs:QName?")]
+fn xs_qname(
+    context: &DynamicContext,
+    arg: Option<atomic::Atomic>,
+) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_qname(context)).transpose()
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(xs_string),
@@ -177,5 +185,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_non_negative_integer),
         wrap_xpath_fn!(xs_positive_integer),
         wrap_xpath_fn!(xs_boolean),
+        wrap_xpath_fn!(xs_qname),
     ]
 }

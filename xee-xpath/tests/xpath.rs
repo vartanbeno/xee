@@ -943,6 +943,11 @@ fn test_cast_as_qname_fails_illegal_value() {
 }
 
 #[test]
+fn test_xs_qname() {
+    assert_debug_snapshot!(run("xs:QName('xs:bar')"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }
