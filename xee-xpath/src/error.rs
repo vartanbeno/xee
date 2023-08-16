@@ -436,6 +436,7 @@ pub enum Error {
     /// Raised by fn:resolve-QName and analogous functions if a supplied QName
     /// has a prefix that has no binding to a namespace.
     #[error("No namespace found for prefix")]
+    #[diagnostic(code(FONS0004))]
     FONS0004,
     /// Base-uri not defined in the static context.
     ///
@@ -508,6 +509,7 @@ pub enum Error {
     /// Raised by functions such as fn:max, fn:min, fn:avg, fn:sum if the
     /// supplied sequence contains values inappropriate to this function.
     #[error("Invalid argument type")]
+    #[diagnostic(code(FORG0006))]
     FORG0006,
     /// The two arguments to fn:dateTime have inconsistent timezones.
     ///

@@ -7,6 +7,7 @@ use std::rc::Rc;
 use std::sync::OnceLock;
 
 use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 
 use crate::atomic;
 use crate::context;
@@ -583,12 +584,32 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_qname(
         self,
-        _dynamic_context: &context::DynamicContext,
+        dynamic_context: &context::DynamicContext,
     ) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::QName(_) => Ok(self.clone()),
-            atomic::Atomic::String(_, _s) | atomic::Atomic::Untyped(_s) => {
-                panic!("uh oh we need the namespaces")
+            atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
+                // https://www.w3.org/TR/xpath-functions-31/#constructor-qname-notation
+                let namespaces = dynamic_context.static_context.namespaces;
+
+                let name = ast::Name::parse(&s, namespaces);
+                match name {
+                    Ok(name) => {
+                        let name = name.value;
+                        if name.has_namespace_without_prefix() {
+                            // we deliberately do not parse Qualified names, as they are not
+                            // legal for xs:QName
+                            Err(error::Error::FORG0001)
+                        } else {
+                            Ok(atomic::Atomic::QName(Rc::new(name)))
+                        }
+                    }
+                    // TODO: We really want to distinguish between parse errors
+                    // and namespace lookup errors, which should be a FONS0004 error
+                    // This requires the parser to be modified so it retains that
+                    // information.
+                    Err(_) => Err(error::Error::FORG0001),
+                }
             }
             _ => Err(error::Error::Type),
         }

@@ -99,9 +99,8 @@ impl ast::SequenceType {
 }
 
 impl ast::Name {
-    pub fn parse(src: &str) -> Result<ast::NameS> {
-        let namespaces = Namespaces::default();
-        parse(parser().name, tokens(src), Cow::Owned(namespaces))
+    pub fn parse<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<'a, ast::NameS> {
+        parse(parser().name, tokens(src), Cow::Borrowed(namespaces))
             .map_err(|errors| Error { src, errors })
     }
 }
@@ -128,17 +127,20 @@ mod tests {
 
     #[test]
     fn test_unprefixed_name() {
-        assert_ron_snapshot!(ast::Name::parse("foo"));
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(ast::Name::parse("foo", &namespaces));
     }
 
     #[test]
     fn test_prefixed_name() {
-        assert_ron_snapshot!(ast::Name::parse("xs:foo"));
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(ast::Name::parse("xs:foo", &namespaces));
     }
 
     #[test]
     fn test_qualified_name() {
-        assert_ron_snapshot!(ast::Name::parse("Q{http://example.com}foo"));
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(ast::Name::parse("Q{http://example.com}foo", &namespaces));
     }
 
     #[test]

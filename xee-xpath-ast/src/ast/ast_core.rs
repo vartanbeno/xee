@@ -137,6 +137,10 @@ impl Name {
         self
     }
 
+    pub fn has_namespace_without_prefix(&self) -> bool {
+        self.namespace.is_some() && self.prefix.is_none()
+    }
+
     pub fn namespace(&self) -> Option<&str> {
         self.namespace.as_deref()
     }

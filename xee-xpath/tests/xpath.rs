@@ -7,15 +7,6 @@ use xee_xpath::{
     Documents, DynamicContext, Item, Node, Result, Sequence, StaticContext, Uri, XPath,
 };
 
-// use crate::context::{DynamicContext, StaticContext};
-// use crate::error::Result;
-// use crate::run::evaluate;
-// use crate::sequence;
-// use crate::stack;
-// use crate::xml;
-// use crate::xpath::XPath;
-// use xee_xpath::atomic;
-
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
     Sequence::from(
         node.iter()
@@ -26,26 +17,10 @@ fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
 
 fn run(s: &str) -> Result<Sequence> {
     evaluate_without_focus(s)
-    // let xot = Xot::new();
-    // let namespaces = Namespaces::default();
-    // let static_context = StaticContext::new(&namespaces);
-    // let context = DynamicContext::new(&xot, &static_context);
-    // let xpath = XPath::new(context.static_context, s)?;
-    // xpath.run_value(&context, None)
 }
 
 fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<Item>)]) -> Result<Sequence> {
     evaluate_without_focus_with_variables(s, variables)
-    // let xot = Xot::new();
-    // let namespaces = Namespaces::default();
-    // let variable_names = variables
-    //     .iter()
-    //     .map(|(name, _)| name.clone())
-    //     .collect::<Vec<_>>();
-    // let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
-    // let context = DynamicContext::with_variables(&xot, &static_context, variables);
-    // let xpath = XPath::new(context.static_context, s)?;
-    // xpath.run_value(&context, None)
 }
 
 // fn run_debug(s: &str) -> Result<stack::Value> {
@@ -945,6 +920,26 @@ fn test_cast_as_ncname() {
 #[test]
 fn test_cast_as_ncname_with_colon_fails() {
     assert_debug_snapshot!(run("'foo:bar' cast as xs:NCName"));
+}
+
+#[test]
+fn test_cast_as_qname() {
+    assert_debug_snapshot!(run("'xs:bar' cast as xs:QName"));
+}
+
+#[test]
+fn test_cast_as_qname_fails_unknown_prefix() {
+    assert_debug_snapshot!(run("'foo:bar' cast as xs:QName"));
+}
+
+#[test]
+fn test_cast_as_qname_fails_multiple_prefixes() {
+    assert_debug_snapshot!(run("'xs:bar:baz' cast as xs:QName"));
+}
+
+#[test]
+fn test_cast_as_qname_fails_illegal_value() {
+    assert_debug_snapshot!(run("'bar baz' cast as xs:QName"));
 }
 
 #[test]
