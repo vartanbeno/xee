@@ -40,6 +40,11 @@ fn xs_name(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>>
     arg.map(|arg| arg.cast_to_name()).transpose()
 }
 
+#[xpath_fn("xs:NCName($arg as xs:anyAtomicType?) as xs:NCName?")]
+fn xs_ncname(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_ncname()).transpose()
+}
+
 #[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
 fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_float()).transpose()

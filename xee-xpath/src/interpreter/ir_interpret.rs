@@ -1511,6 +1511,16 @@ mod tests {
     }
 
     #[test]
+    fn test_cast_as_ncname() {
+        assert_debug_snapshot!(run("'foobar' cast as xs:NCName"));
+    }
+
+    #[test]
+    fn test_cast_as_ncname_with_colon_fails() {
+        assert_debug_snapshot!(run("'foo:bar' cast as xs:NCName"));
+    }
+
+    #[test]
     fn test_castable_as_integer_success() {
         assert_debug_snapshot!(run("1 castable as xs:integer"));
     }
