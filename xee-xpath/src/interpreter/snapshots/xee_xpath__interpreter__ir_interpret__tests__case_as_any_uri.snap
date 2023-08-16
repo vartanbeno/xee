@@ -1,0 +1,13 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"'http://example.com' cast as xs:anyURI\")"
+---
+Ok(
+    One(
+        Atomic(
+            AnyURI(
+                "http://example.com",
+            ),
+        ),
+    ),
+)

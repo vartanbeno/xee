@@ -216,11 +216,11 @@ impl Xs {
             Untyped => Some(AnyType),
             AnyAtomicType => Some(AnySimpleType),
             UntypedAtomic => Some(AnyAtomicType),
-            String => Some(UntypedAtomic),
-            Boolean => Some(UntypedAtomic),
-            Float => Some(UntypedAtomic),
-            Double => Some(UntypedAtomic),
-            Decimal => Some(UntypedAtomic),
+            String => Some(AnyAtomicType),
+            Boolean => Some(AnyAtomicType),
+            Float => Some(AnyAtomicType),
+            Double => Some(AnyAtomicType),
+            Decimal => Some(AnyAtomicType),
             Integer => Some(Decimal),
             NonPositiveInteger => Some(Integer),
             NegativeInteger => Some(NonPositiveInteger),
@@ -317,6 +317,6 @@ mod tests {
         assert!(Xs::Integer.derives_from(Xs::AnyAtomicType));
         assert!(Xs::Integer.derives_from(Xs::AnySimpleType));
         assert!(Xs::Integer.derives_from(Xs::AnyType));
-        assert!(Xs::Byte.derives_from(Xs::UntypedAtomic));
+        assert!(Xs::Byte.derives_from(Xs::AnyAtomicType));
     }
 }

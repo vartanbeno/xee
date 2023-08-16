@@ -85,6 +85,7 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(_, s) => s.as_ref().clone(),
             atomic::Atomic::Untyped(s) => s.as_ref().clone(),
+            atomic::Atomic::AnyURI(s) => s.as_ref().clone(),
             atomic::Atomic::Boolean(b) => {
                 if b {
                     "true".to_string()
@@ -109,11 +110,9 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_schema_type(self, xs: Xs) -> error::Result<atomic::Atomic> {
         // if we try to cast to any atomic type, we're already the correct type
         if xs == Xs::AnyAtomicType {
-            // TODO: if we made the cast functions take self, not &self, we
-            // could make this cheaper
-            return Ok(self.clone());
+            return Ok(self);
         }
-        if !xs.derives_from(Xs::UntypedAtomic) {
+        if !xs.derives_from(Xs::AnyAtomicType) {
             todo!("We can only cast to atomic types right now")
         }
         if self.schema_type() == xs {
@@ -131,6 +130,7 @@ impl atomic::Atomic {
             Xs::IDREF => self.cast_to_idref(),
             Xs::ENTITY => self.cast_to_entity(),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
+            Xs::AnyURI => self.cast_to_any_uri(),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
             Xs::Integer => self.cast_to_integer(),
@@ -181,6 +181,16 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
         atomic::Atomic::Untyped(Rc::new(self.into_canonical()))
+    }
+
+    pub(crate) fn cast_to_any_uri(self) -> error::Result<atomic::Atomic> {
+        // https://www.w3.org/TR/xpath-functions-31/#casting-to-anyuri
+        match self {
+            atomic::Atomic::AnyURI(s) => Ok(atomic::Atomic::AnyURI(s.clone())),
+            atomic::Atomic::String(_, s) => Ok(atomic::Atomic::AnyURI(s.clone())),
+            atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::AnyURI(s.clone())),
+            _ => Err(error::Error::Type),
+        }
     }
 
     pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
@@ -302,6 +312,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f32>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
+            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
         }
     }
 
@@ -323,6 +334,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
+            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
         }
     }
 
@@ -367,6 +379,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Self::parse_atomic::<Decimal>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
+            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
         }
     }
 
@@ -541,6 +554,7 @@ impl atomic::Atomic {
             }
             atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
+            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
         }
     }
 
@@ -553,6 +567,7 @@ impl atomic::Atomic {
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
             atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
+            atomic::Atomic::AnyURI(_) => Err(error::Error::Type),
         }
     }
 

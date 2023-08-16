@@ -1466,6 +1466,11 @@ mod tests {
     }
 
     #[test]
+    fn test_case_as_any_uri() {
+        assert_debug_snapshot!(run("'http://example.com' cast as xs:anyURI"));
+    }
+
+    #[test]
     fn test_cast_as_normalized_string() {
         assert_debug_snapshot!(run("'foo\nbar' cast as xs:normalizedString"));
     }

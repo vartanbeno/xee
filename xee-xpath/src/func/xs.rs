@@ -15,6 +15,11 @@ fn xs_untyped_atomic(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic
     Ok(arg.map(|arg| arg.cast_to_untyped_atomic()))
 }
 
+#[xpath_fn("xs:anyURI($arg as xs:anyAtomicType?) as xs:anyURI?")]
+fn xs_any_uri(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_any_uri()).transpose()
+}
+
 #[xpath_fn("xs:normalizedString($arg as xs:anyAtomicType?) as xs:normalizedString?")]
 fn xs_normalized_string(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     Ok(arg.map(|arg| arg.cast_to_normalized_string()))

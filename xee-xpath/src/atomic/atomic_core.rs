@@ -86,6 +86,7 @@ impl StringType {
 pub enum Atomic {
     String(StringType, Rc<String>),
     Untyped(Rc<String>),
+    AnyURI(Rc<String>),
     Boolean(bool),
     Decimal(Decimal),
     Integer(IntegerType, Rc<IBig>),
@@ -96,13 +97,17 @@ pub enum Atomic {
 impl Atomic {
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
+            Atomic::Boolean(b) => Ok(*b),
+            // https://www.w3.org/TR/xpath-31/#id-ebv
+            // point 4
+            Atomic::String(_, s) => Ok(!s.is_empty()),
+            Atomic::Untyped(s) => Ok(!s.is_empty()),
+            Atomic::AnyURI(s) => Ok(!s.is_empty()),
+            // point 5
             Atomic::Integer(_, i) => Ok(!i.is_zero()),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
-            Atomic::Boolean(b) => Ok(*b),
-            Atomic::String(_, s) => Ok(!s.is_empty()),
-            Atomic::Untyped(s) => Ok(!s.is_empty()),
         }
     }
 
@@ -168,6 +173,7 @@ impl Atomic {
         match self {
             Atomic::String(string_type, _) => string_type.schema_type(),
             Atomic::Untyped(_) => Xs::UntypedAtomic,
+            Atomic::AnyURI(_) => Xs::AnyURI,
             Atomic::Boolean(_) => Xs::Boolean,
             Atomic::Decimal(_) => Xs::Decimal,
             Atomic::Integer(integer_type, _) => integer_type.schema_type(),
