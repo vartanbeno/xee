@@ -157,6 +157,11 @@ fn test_xs_any_uri() {
 }
 
 // #[test]
+// fn test_xs_numeric() {
+//     Tests::all("xs/numeric").run()
+// }
+
+// #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")
 //         // these depend on constructor functions
