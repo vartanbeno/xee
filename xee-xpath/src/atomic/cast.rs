@@ -19,6 +19,8 @@ static NAME_START_CHAR: &str = r":A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u0
 static NAME_CHAR_ADDITIONS: &str = r"-\.0-9\xb7\u0300-\u036F\u203F-\u2040";
 static LANGUAGE_REGEX: OnceLock<Regex> = OnceLock::new();
 static NMTOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
+static NAME_REGEX: OnceLock<Regex> = OnceLock::new();
+static NC_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
 
 impl atomic::Atomic {
     pub(crate) fn parse_atomic<V>(s: &str) -> error::Result<atomic::Atomic>
@@ -124,6 +126,7 @@ impl atomic::Atomic {
             Xs::Token => Ok(self.cast_to_token()),
             Xs::Language => self.cast_to_language(),
             Xs::NMTOKEN => self.cast_to_nmtoken(),
+            Xs::Name => self.cast_to_name(),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
@@ -187,36 +190,47 @@ impl atomic::Atomic {
         atomic::Atomic::String(atomic::StringType::Token, Rc::new(s))
     }
 
-    pub(crate) fn cast_to_language(self) -> error::Result<atomic::Atomic> {
-        let r = LANGUAGE_REGEX.get_or_init(|| {
-            Regex::new(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$").expect("Invalid regex")
-        });
+    fn cast_to_regex<F>(
+        self,
+        string_type: atomic::StringType,
+        regex_once_lock: &OnceLock<Regex>,
+        f: F,
+    ) -> error::Result<atomic::Atomic>
+    where
+        F: FnOnce() -> Regex,
+    {
+        let regex = regex_once_lock.get_or_init(f);
         let s = whitespace_collapse(&self.to_canonical());
-        if r.is_match(&s) {
-            Ok(atomic::Atomic::String(
-                atomic::StringType::Language,
-                Rc::new(s),
-            ))
+        if regex.is_match(&s) {
+            Ok(atomic::Atomic::String(string_type, Rc::new(s)))
         } else {
             Err(error::Error::FORG0001)
         }
     }
 
+    pub(crate) fn cast_to_language(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_regex(atomic::StringType::Language, &LANGUAGE_REGEX, || {
+            Regex::new(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$").expect("Invalid regex")
+        })
+    }
+
     pub(crate) fn cast_to_nmtoken(self) -> error::Result<atomic::Atomic> {
         // Nmtoken	 ::= (NameChar)+
-        let r = NMTOKEN_REGEX.get_or_init(|| {
+        self.cast_to_regex(atomic::StringType::NMTOKEN, &NMTOKEN_REGEX, || {
             Regex::new(&format!("^[{}{}]+$", NAME_START_CHAR, NAME_CHAR_ADDITIONS))
                 .expect("Invalid regex")
-        });
-        let s = whitespace_collapse(&self.to_canonical());
-        if r.is_match(&s) {
-            Ok(atomic::Atomic::String(
-                atomic::StringType::NMTOKEN,
-                Rc::new(s),
+        })
+    }
+
+    pub(crate) fn cast_to_name(self) -> error::Result<atomic::Atomic> {
+        // 	Name	   ::=   	NameStartChar (NameChar)*
+        self.cast_to_regex(atomic::StringType::Name, &NAME_REGEX, || {
+            Regex::new(&format!(
+                "^[{}][{}{}]*$",
+                NAME_START_CHAR, NAME_START_CHAR, NAME_CHAR_ADDITIONS
             ))
-        } else {
-            Err(error::Error::FORG0001)
-        }
+            .expect("Invalid regex")
+        })
     }
 
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {

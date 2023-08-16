@@ -1496,6 +1496,21 @@ mod tests {
     }
 
     #[test]
+    fn test_cast_as_name() {
+        assert_debug_snapshot!(run("'foobar' cast as xs:Name"));
+    }
+
+    #[test]
+    fn test_cast_as_name_with_colon() {
+        assert_debug_snapshot!(run("'foo:bar' cast as xs:Name"));
+    }
+
+    #[test]
+    fn test_cast_as_name_fails() {
+        assert_debug_snapshot!(run("'foo bar' cast as xs:Name"));
+    }
+
+    #[test]
     fn test_castable_as_integer_success() {
         assert_debug_snapshot!(run("1 castable as xs:integer"));
     }

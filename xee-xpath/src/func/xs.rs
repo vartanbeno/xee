@@ -35,6 +35,11 @@ fn xs_nmtoken(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomi
     arg.map(|arg| arg.cast_to_nmtoken()).transpose()
 }
 
+#[xpath_fn("xs:Name($arg as xs:anyAtomicType?) as xs:Name?")]
+fn xs_name(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_name()).transpose()
+}
+
 #[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
 fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_float()).transpose()
