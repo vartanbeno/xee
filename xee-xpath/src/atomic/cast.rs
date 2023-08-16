@@ -81,12 +81,12 @@ impl atomic::Atomic {
     }
 
     // from an atomic type to a canonical representation as a string
-    pub(crate) fn to_canonical(&self) -> String {
+    pub(crate) fn into_canonical(self) -> String {
         match self {
             atomic::Atomic::String(_, s) => s.as_ref().clone(),
             atomic::Atomic::Untyped(s) => s.as_ref().clone(),
             atomic::Atomic::Boolean(b) => {
-                if *b {
+                if b {
                     "true".to_string()
                 } else {
                     "false".to_string()
@@ -94,17 +94,15 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Decimal(d) => {
                 if d.is_integer() {
-                    // TODO: this could fail if the decimal is too big. Instead
-                    // we should relent and use bigint for xs:integer
-                    let i: i64 = (*d).try_into().unwrap();
+                    let i = self.cast_to_integer_value::<IBig>().unwrap();
                     i.to_string()
                 } else {
                     d.normalize().to_string()
                 }
             }
             atomic::Atomic::Integer(_, i) => i.to_string(),
-            atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(*f),
-            atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(*f),
+            atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(f),
+            atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(f),
         }
     }
 
@@ -178,20 +176,20 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_string(self) -> atomic::Atomic {
-        atomic::Atomic::String(atomic::StringType::String, Rc::new(self.to_canonical()))
+        atomic::Atomic::String(atomic::StringType::String, Rc::new(self.into_canonical()))
     }
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
-        atomic::Atomic::Untyped(Rc::new(self.to_canonical()))
+        atomic::Atomic::Untyped(Rc::new(self.into_canonical()))
     }
 
     pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
-        let s = whitespace_replace(&self.to_canonical());
+        let s = whitespace_replace(&self.into_canonical());
         atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::new(s))
     }
 
     pub(crate) fn cast_to_token(self) -> atomic::Atomic {
-        let s = whitespace_collapse(&self.to_canonical());
+        let s = whitespace_collapse(&self.into_canonical());
         atomic::Atomic::String(atomic::StringType::Token, Rc::new(s))
     }
 
@@ -205,7 +203,7 @@ impl atomic::Atomic {
         F: FnOnce() -> Regex,
     {
         let regex = regex_once_lock.get_or_init(f);
-        let s = whitespace_collapse(&self.to_canonical());
+        let s = whitespace_collapse(&self.into_canonical());
         if regex.is_match(&s) {
             Ok(atomic::Atomic::String(string_type, Rc::new(s)))
         } else {
@@ -291,7 +289,7 @@ impl atomic::Atomic {
                 Ok(atomic::Atomic::Float(OrderedFloat(d as f32)))
             }
             atomic::Atomic::Decimal(_) | atomic::Atomic::Integer(_, _) => {
-                Self::parse_atomic::<f32>(&self.to_canonical())
+                Self::parse_atomic::<f32>(&self.into_canonical())
             }
             // TODO: any type of integer needs to cast to string first,
             // then to that from float
@@ -314,7 +312,7 @@ impl atomic::Atomic {
                 Ok(atomic::Atomic::Double(OrderedFloat(f as f64)))
             }
             atomic::Atomic::Decimal(_) | atomic::Atomic::Integer(_, _) => {
-                Self::parse_atomic::<f64>(&self.to_canonical())
+                Self::parse_atomic::<f64>(&self.into_canonical())
             }
             atomic::Atomic::Boolean(b) => {
                 if b {
@@ -744,7 +742,7 @@ where
     if abs_f >= minimum && abs_f < maximum {
         // TODO: is this the right conversion?
         let d: Decimal = f.try_into().unwrap();
-        atomic::Atomic::Decimal(d).to_canonical()
+        atomic::Atomic::Decimal(d).into_canonical()
     } else {
         if f.is_zero() {
             if f.is_negative() {
@@ -886,33 +884,34 @@ mod tests {
 
     #[test]
     fn test_canonical_decimal_is_integer() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.0)).to_canonical(), "1");
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.0)).into_canonical(), "1");
     }
 
     #[test]
     fn test_canonical_decimal_is_decimal() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.5)).to_canonical(), "1.5");
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.5)).into_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_no_trailing_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.50)).to_canonical(), "1.5");
+        assert_eq!(atomic::Atomic::Decimal(dec!(1.50)).into_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_no_leading_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(01.50)).to_canonical(), "1.5");
+        assert_eq!(atomic::Atomic::Decimal(dec!(01.50)).into_canonical(), "1.5");
     }
 
     #[test]
     fn test_canonical_decimal_single_leading_zero() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).to_canonical(), "0.5");
+        assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).into_canonical(), "0.5");
     }
 
     #[test]
     fn test_canonical_integer() {
         assert_eq!(
-            atomic::Atomic::Integer(atomic::IntegerType::Integer, ibig!(15).into()).to_canonical(),
+            atomic::Atomic::Integer(atomic::IntegerType::Integer, ibig!(15).into())
+                .into_canonical(),
             "15"
         );
     }
@@ -920,7 +919,7 @@ mod tests {
     #[test]
     fn test_canonical_float_formatted_as_integer() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(15.0)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(15.0)).into_canonical(),
             "15"
         );
     }
@@ -928,7 +927,7 @@ mod tests {
     #[test]
     fn test_canonical_float_formatted_as_decimal() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(15.5)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(15.5)).into_canonical(),
             "15.5"
         );
     }
@@ -936,7 +935,7 @@ mod tests {
     #[test]
     fn test_canonical_float_formatted_as_float_big() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(1500000000000000f32)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(1500000000000000f32)).into_canonical(),
             "1.5E15"
         );
     }
@@ -944,20 +943,23 @@ mod tests {
     #[test]
     fn test_canonical_formatted_as_float_small() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(0.000000000000001f32)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(0.000000000000001f32)).into_canonical(),
             "1.0E-15"
         );
     }
 
     #[test]
     fn test_canonical_float_zero() {
-        assert_eq!(atomic::Atomic::Float(OrderedFloat(0.0)).to_canonical(), "0");
+        assert_eq!(
+            atomic::Atomic::Float(OrderedFloat(0.0)).into_canonical(),
+            "0"
+        );
     }
 
     #[test]
     fn test_canonical_float_minus_zero() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(-0.0)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(-0.0)).into_canonical(),
             "-0"
         );
     }
@@ -965,7 +967,7 @@ mod tests {
     #[test]
     fn test_canonical_float_inf() {
         assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(f32::INFINITY)).to_canonical(),
+            atomic::Atomic::Float(OrderedFloat(f32::INFINITY)).into_canonical(),
             "INF"
         );
     }
@@ -973,7 +975,7 @@ mod tests {
     #[test]
     fn test_canonical_double_formatted_as_decimal() {
         assert_eq!(
-            atomic::Atomic::Double(OrderedFloat(15.5)).to_canonical(),
+            atomic::Atomic::Double(OrderedFloat(15.5)).into_canonical(),
             "15.5"
         );
     }

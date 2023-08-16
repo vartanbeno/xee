@@ -120,7 +120,7 @@ impl Atomic {
     }
 
     pub(crate) fn string_value(&self) -> error::Result<String> {
-        Ok(self.to_canonical())
+        Ok(self.clone().into_canonical())
     }
 
     pub(crate) fn is_nan(&self) -> bool {
@@ -226,7 +226,12 @@ impl PartialEq for Atomic {
 
 impl fmt::Display for Atomic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} {}", self.schema_type(), self.to_canonical())
+        write!(
+            f,
+            "{:?} {}",
+            self.schema_type(),
+            self.clone().into_canonical()
+        )
     }
 }
 
