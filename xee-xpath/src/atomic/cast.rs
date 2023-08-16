@@ -129,6 +129,9 @@ impl atomic::Atomic {
             Xs::NMTOKEN => self.cast_to_nmtoken(),
             Xs::Name => self.cast_to_name(),
             Xs::NCName => self.cast_to_ncname(),
+            Xs::ID => self.cast_to_id(),
+            Xs::IDREF => self.cast_to_idref(),
+            Xs::ENTITY => self.cast_to_entity(),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
@@ -240,18 +243,37 @@ impl atomic::Atomic {
         })
     }
 
-    pub(crate) fn cast_to_ncname(self) -> error::Result<atomic::Atomic> {
+    fn cast_to_ncname_helper(
+        self,
+        string_type: atomic::StringType,
+    ) -> error::Result<atomic::Atomic> {
         // https://www.w3.org/TR/xml-names11/#NT-NCName
         // 	NCName	   ::=   	NCNameStartChar NCNameChar*
         // 	NCNameChar	   ::=   	NameChar - ':'
         //	NCNameStartChar	   ::=   	NameStartChar - ':'
-        self.cast_to_regex(atomic::StringType::NCName, &NC_NAME_REGEX, || {
+        self.cast_to_regex(string_type, &NC_NAME_REGEX, || {
             Regex::new(&format!(
                 "^[{}][{}{}]*$",
                 NCNAME_START_CHAR, NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
             ))
             .expect("Invalid regex")
         })
+    }
+
+    pub(crate) fn cast_to_ncname(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_ncname_helper(atomic::StringType::NCName)
+    }
+
+    pub(crate) fn cast_to_id(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_ncname_helper(atomic::StringType::ID)
+    }
+
+    pub(crate) fn cast_to_idref(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_ncname_helper(atomic::StringType::IDREF)
+    }
+
+    pub(crate) fn cast_to_entity(self) -> error::Result<atomic::Atomic> {
+        self.cast_to_ncname_helper(atomic::StringType::ENTITY)
     }
 
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {

@@ -45,6 +45,21 @@ fn xs_ncname(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic
     arg.map(|arg| arg.cast_to_ncname()).transpose()
 }
 
+#[xpath_fn("xs:ID($arg as xs:anyAtomicType?) as xs:ID?")]
+fn xs_id(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_id()).transpose()
+}
+
+#[xpath_fn("xs:IDREF($arg as xs:anyAtomicType?) as xs:IDREF?")]
+fn xs_idref(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_idref()).transpose()
+}
+
+#[xpath_fn("xs:ENTITY($arg as xs:anyAtomicType?) as xs:ENTITY?")]
+fn xs_entity(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_entity()).transpose()
+}
+
 #[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
 fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_float()).transpose()
