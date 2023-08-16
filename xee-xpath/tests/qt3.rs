@@ -141,6 +141,11 @@ fn test_xs_float() {
     Tests::all("xs/float").run()
 }
 
+#[test]
+fn test_xs_normalized_string() {
+    Tests::all("xs/normalizedString").run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")
