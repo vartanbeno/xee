@@ -7,29 +7,35 @@ use crate::xml;
 use super::annotation::Annotations;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub(crate) struct Uri(pub(crate) String);
+pub struct Uri(pub(crate) String);
 
-#[derive(Debug, Clone)]
-pub(crate) struct Document {
-    pub(crate) uri: Uri,
-    pub(crate) root: xot::Node,
+impl Uri {
+    pub fn new(s: &str) -> Self {
+        Self(s.to_string())
+    }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Documents {
+pub struct Document {
+    pub(crate) uri: Uri,
+    pub root: xot::Node,
+}
+
+#[derive(Debug, Clone)]
+pub struct Documents {
     pub(crate) annotations: Annotations,
     documents: HashMap<Uri, Document>,
 }
 
 impl Documents {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             annotations: Annotations::new(),
             documents: HashMap::new(),
         }
     }
 
-    pub(crate) fn add(&mut self, xot: &mut Xot, uri: &Uri, xml: &str) -> Result<(), xot::Error> {
+    pub fn add(&mut self, xot: &mut Xot, uri: &Uri, xml: &str) -> Result<(), xot::Error> {
         let root = xot.parse(xml)?;
         self.add_root(xot, uri, root);
         Ok(())
@@ -46,7 +52,13 @@ impl Documents {
         self.annotations.add(xot, xml::Node::Xot(root));
     }
 
-    pub(crate) fn get(&self, uri: &Uri) -> Option<&Document> {
+    pub fn get(&self, uri: &Uri) -> Option<&Document> {
         self.documents.get(uri)
+    }
+}
+
+impl Default for Documents {
+    fn default() -> Self {
+        Self::new()
     }
 }

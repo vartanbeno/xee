@@ -1,7 +1,0 @@
----
-source: xee-xpath/src/interpreter/ir_interpret.rs
-expression: "run(\"'en us' cast as xs:language\")"
----
-Err(
-    FORG0001,
-)

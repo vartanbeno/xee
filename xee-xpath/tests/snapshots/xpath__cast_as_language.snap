@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'en' cast as xs:language\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    Language,
+                    "en",
+                ),
+            ),
+        ),
+    },
+)

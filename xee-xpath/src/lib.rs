@@ -29,7 +29,9 @@ pub use crate::occurrence::Occurrence;
 pub use crate::query::{
     Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
 };
-pub use crate::run::{evaluate, evaluate_root, evaluate_without_focus};
+pub use crate::run::{
+    evaluate, evaluate_root, evaluate_without_focus, evaluate_without_focus_with_variables,
+};
 pub use crate::sequence::{Item, Sequence};
-pub use crate::xml::Node;
+pub use crate::xml::{Document, Documents, Node, Uri};
 pub use crate::xpath::XPath;

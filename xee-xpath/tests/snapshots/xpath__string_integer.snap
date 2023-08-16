@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"fn:string(1)\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "1",
+                ),
+            ),
+        ),
+    },
+)

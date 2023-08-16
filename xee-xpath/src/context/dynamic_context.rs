@@ -13,7 +13,7 @@ use super::static_context::StaticContext;
 
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
-    pub(crate) static_context: &'a StaticContext<'a>,
+    pub static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
     pub(crate) variables: HashMap<ast::Name, Vec<sequence::Item>>,
 }
@@ -38,7 +38,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub(crate) fn with_documents(
+    pub fn with_documents(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
         documents: &'a xml::Documents,

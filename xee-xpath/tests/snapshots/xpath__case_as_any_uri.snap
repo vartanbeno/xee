@@ -1,0 +1,15 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'http://example.com' cast as xs:anyURI\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                AnyURI(
+                    "http://example.com",
+                ),
+            ),
+        ),
+    },
+)

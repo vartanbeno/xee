@@ -1,0 +1,17 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"fn:last()\")"
+---
+Err(
+    SpannedComponentAbsentInDynamicContext {
+        src: "fn:last()",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                9,
+            ),
+        },
+    },
+)

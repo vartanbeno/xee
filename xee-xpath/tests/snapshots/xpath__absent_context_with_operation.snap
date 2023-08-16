@@ -1,0 +1,17 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\". + 1\")"
+---
+Err(
+    SpannedComponentAbsentInDynamicContext {
+        src: ". + 1",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                5,
+            ),
+        },
+    },
+)

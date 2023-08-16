@@ -5,9 +5,8 @@ mod node;
 mod step;
 
 pub(crate) use annotation::Annotations;
-#[cfg(test)]
-pub(crate) use document::Document;
-pub(crate) use document::{Documents, Uri};
+pub use document::Document;
+pub use document::{Documents, Uri};
 pub(crate) use kind_test::kind_test;
 pub use node::Node;
 pub(crate) use step::{resolve_step, Step};

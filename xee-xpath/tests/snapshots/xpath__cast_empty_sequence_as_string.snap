@@ -1,0 +1,17 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"() cast as xs:string\")"
+---
+Err(
+    SpannedType {
+        src: "() cast as xs:string",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                20,
+            ),
+        },
+    },
+)

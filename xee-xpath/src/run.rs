@@ -1,6 +1,6 @@
 use xot::Xot;
 
-use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
+use xee_xpath_ast::{ast, Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::Result;
@@ -40,9 +40,25 @@ pub fn evaluate_root(
 
 pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
     let xot = Xot::new();
-    let namespaces = Namespaces::new(None, None);
+    let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
+    let xpath = XPath::new(context.static_context, s)?;
+    xpath.many(&context, None)
+}
+
+pub fn evaluate_without_focus_with_variables(
+    s: &str,
+    variables: &[(ast::Name, Vec<sequence::Item>)],
+) -> Result<sequence::Sequence> {
+    let xot = Xot::new();
+    let namespaces = Namespaces::default();
+    let variable_names = variables
+        .iter()
+        .map(|(name, _)| name.clone())
+        .collect::<Vec<_>>();
+    let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
+    let context = DynamicContext::with_variables(&xot, &static_context, variables);
     let xpath = XPath::new(context.static_context, s)?;
     xpath.many(&context, None)
 }

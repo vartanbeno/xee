@@ -1,0 +1,17 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"fn:position()\")"
+---
+Err(
+    SpannedComponentAbsentInDynamicContext {
+        src: "fn:position()",
+        span: SourceSpan {
+            offset: SourceOffset(
+                0,
+            ),
+            length: SourceOffset(
+                13,
+            ),
+        },
+    },
+)
