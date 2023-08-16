@@ -1,0 +1,7 @@
+---
+source: xee-xpath/src/interpreter/ir_interpret.rs
+expression: "run(\"'foo bar' cast as xs:NMTOKEN\")"
+---
+Err(
+    FORG0001,
+)

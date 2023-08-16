@@ -12,7 +12,13 @@ use crate::error;
 
 use super::atomic_core as atomic;
 
+// https://www.w3.org/TR/xml11/#NT-Nmtoken
+// 	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+static NAME_START_CHAR: &str = r":A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\U00010000-\U000effff";
+// 	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+static NAME_CHAR_ADDITIONS: &str = r"-\.0-9\xb7\u0300-\u036F\u203F-\u2040";
 static LANGUAGE_REGEX: OnceLock<Regex> = OnceLock::new();
+static NMTOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
 
 impl atomic::Atomic {
     pub(crate) fn parse_atomic<V>(s: &str) -> error::Result<atomic::Atomic>
@@ -117,6 +123,7 @@ impl atomic::Atomic {
             Xs::NormalizedString => Ok(self.cast_to_normalized_string()),
             Xs::Token => Ok(self.cast_to_token()),
             Xs::Language => self.cast_to_language(),
+            Xs::NMTOKEN => self.cast_to_nmtoken(),
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Decimal => self.cast_to_decimal(),
@@ -188,6 +195,23 @@ impl atomic::Atomic {
         if r.is_match(&s) {
             Ok(atomic::Atomic::String(
                 atomic::StringType::Language,
+                Rc::new(s),
+            ))
+        } else {
+            Err(error::Error::FORG0001)
+        }
+    }
+
+    pub(crate) fn cast_to_nmtoken(self) -> error::Result<atomic::Atomic> {
+        // Nmtoken	 ::= (NameChar)+
+        let r = NMTOKEN_REGEX.get_or_init(|| {
+            Regex::new(&format!("^[{}{}]+$", NAME_START_CHAR, NAME_CHAR_ADDITIONS))
+                .expect("Invalid regex")
+        });
+        let s = whitespace_collapse(&self.to_canonical());
+        if r.is_match(&s) {
+            Ok(atomic::Atomic::String(
+                atomic::StringType::NMTOKEN,
                 Rc::new(s),
             ))
         } else {
