@@ -5,9 +5,9 @@ use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
+use crate::atomic;
 use crate::error;
 
-use super::atomic_core as atomic;
 use super::cast::cast_numeric_binary;
 
 pub(crate) fn value_comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>

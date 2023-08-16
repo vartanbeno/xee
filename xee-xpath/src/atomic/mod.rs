@@ -2,12 +2,14 @@ mod arithmetic;
 mod atomic_core;
 mod cast;
 mod comparison;
+mod types;
 
 pub(crate) use arithmetic::{
     AddOp, ArithmeticOp, DivideOp, IntegerDivideOp, ModuloOp, MultiplyOp, SubtractOp,
 };
-pub use atomic_core::{Atomic, IntegerType};
+pub use atomic_core::Atomic;
 pub(crate) use comparison::{
     ComparisonOp, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
     NotEqualOp,
 };
+pub use types::{IntegerType, StringType};
