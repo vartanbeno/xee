@@ -156,6 +156,14 @@ fn test_xs_any_uri() {
     Tests::all("xs/anyURI").run()
 }
 
+#[test]
+fn test_op_numeric_add() {
+    Tests::all("op/numeric-add")
+        // a bunch of tests use the remove() function or the subsequence function
+        .exclude("K-NumericAdd-5? K-NumericAdd-61 K-NumericAdd-62 K-NumericAdd-63 K-NumericAdd-64")
+        .run()
+}
+
 // #[test]
 // fn test_xs_numeric() {
 //     Tests::all("xs/numeric").run()
