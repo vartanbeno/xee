@@ -131,6 +131,16 @@ fn test_xs_hex_binary() {
     Tests::all("xs/hexBinary").run()
 }
 
+#[test]
+fn test_xs_double() {
+    Tests::all("xs/double").run()
+}
+
+#[test]
+fn test_xs_float() {
+    Tests::all("xs/float").run()
+}
+
 // #[test]
 // fn test_boolean() {
 //     Tests::all("fn/boolean")
