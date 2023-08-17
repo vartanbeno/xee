@@ -17,16 +17,28 @@ use super::comparison;
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {
-    String(StringType, Rc<String>),
     Untyped(Rc<String>),
-    AnyURI(Rc<String>),
-    Boolean(bool),
-    Decimal(Decimal),
-    Integer(IntegerType, Rc<IBig>),
+    String(StringType, Rc<String>),
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
-    QName(Rc<Name>),
+    Decimal(Decimal),
+    Integer(IntegerType, Rc<IBig>),
+    Duration(chrono::Months, chrono::Duration),
+    YearMonthDuration(chrono::Months),
+    DayTimeDuration(chrono::Duration),
+    DateTime(chrono::NaiveDateTime, Option<chrono::FixedOffset>),
+    DateTimeStamp(chrono::DateTime<chrono::FixedOffset>),
+    Time(chrono::NaiveTime, Option<chrono::FixedOffset>),
+    Date(chrono::NaiveDate, Option<chrono::FixedOffset>),
+    GYearMonth(i32, chrono::Month, Option<chrono::FixedOffset>),
+    GYear(i32, Option<chrono::FixedOffset>),
+    GMonthDay(chrono::Month, u8, Option<chrono::FixedOffset>),
+    GDay(u8, Option<chrono::FixedOffset>),
+    GMonth(chrono::Month, Option<chrono::FixedOffset>),
+    Boolean(bool),
     Binary(BinaryType, Rc<Vec<u8>>),
+    AnyURI(Rc<String>),
+    QName(Rc<Name>),
 }
 
 impl Atomic {
@@ -44,7 +56,7 @@ impl Atomic {
             Atomic::Float(f) => Ok(!f.is_zero()),
             Atomic::Double(d) => Ok(!d.is_zero()),
             // point 6
-            Atomic::QName(_) | Atomic::Binary(_, _) => Err(error::Error::FORG0006),
+            _ => Err(error::Error::FORG0006),
         }
     }
 
@@ -118,6 +130,18 @@ impl Atomic {
             Atomic::Double(_) => Xs::Double,
             Atomic::QName(_) => Xs::QName,
             Atomic::Binary(binary_type, _) => binary_type.schema_type(),
+            Atomic::Duration(_, _) => Xs::Duration,
+            Atomic::YearMonthDuration(_) => Xs::YearMonthDuration,
+            Atomic::DayTimeDuration(_) => Xs::DayTimeDuration,
+            Atomic::Time(_, _) => Xs::Time,
+            Atomic::Date(_, _) => Xs::Date,
+            Atomic::DateTime(_, _) => Xs::DateTime,
+            Atomic::DateTimeStamp(_) => Xs::DateTimeStamp,
+            Atomic::GYearMonth(_, _, _) => Xs::GYearMonth,
+            Atomic::GYear(_, _) => Xs::GYear,
+            Atomic::GMonthDay(_, _, _) => Xs::GMonthDay,
+            Atomic::GMonth(_, _) => Xs::GMonth,
+            Atomic::GDay(_, _) => Xs::GDay,
         }
     }
 

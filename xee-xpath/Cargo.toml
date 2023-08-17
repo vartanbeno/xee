@@ -32,6 +32,7 @@ ibig = "0.3.6"
 regex = "1.9.3"
 hex = "0.4.3"
 base64 = "0.21.2"
+chrono = "0.4.26"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

@@ -35,16 +35,10 @@ impl atomic::Atomic {
     // from an atomic type to a canonical representation as a string
     pub(crate) fn into_canonical(self) -> String {
         match self {
-            atomic::Atomic::String(_, s) => s.as_ref().clone(),
             atomic::Atomic::Untyped(s) => s.as_ref().clone(),
-            atomic::Atomic::AnyURI(s) => s.as_ref().clone(),
-            atomic::Atomic::Boolean(b) => {
-                if b {
-                    "true".to_string()
-                } else {
-                    "false".to_string()
-                }
-            }
+            atomic::Atomic::String(_, s) => s.as_ref().clone(),
+            atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(f),
+            atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(f),
             atomic::Atomic::Decimal(d) => {
                 if d.is_integer() {
                     let i = self.cast_to_integer_value::<IBig>().unwrap();
@@ -54,13 +48,31 @@ impl atomic::Atomic {
                 }
             }
             atomic::Atomic::Integer(_, i) => i.to_string(),
-            atomic::Atomic::Float(OrderedFloat(f)) => canonical_float(f),
-            atomic::Atomic::Double(OrderedFloat(f)) => canonical_float(f),
-            atomic::Atomic::QName(name) => name.to_full_name(),
+            atomic::Atomic::Duration(_, _) => todo!(),
+            atomic::Atomic::YearMonthDuration(_) => todo!(),
+            atomic::Atomic::DayTimeDuration(_) => todo!(),
+            atomic::Atomic::DateTime(_, _) => todo!(),
+            atomic::Atomic::DateTimeStamp(_) => todo!(),
+            atomic::Atomic::Time(_, _) => todo!(),
+            atomic::Atomic::Date(_, _) => todo!(),
+            atomic::Atomic::GYearMonth(_, _, _) => todo!(),
+            atomic::Atomic::GYear(_, _) => todo!(),
+            atomic::Atomic::GMonthDay(_, _, _) => todo!(),
+            atomic::Atomic::GDay(_, _) => todo!(),
+            atomic::Atomic::GMonth(_, _) => todo!(),
+            atomic::Atomic::Boolean(b) => {
+                if b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
             atomic::Atomic::Binary(binary_type, data) => match binary_type {
-                atomic::BinaryType::Hex => canonical_hex_binary(data.as_ref()),
                 atomic::BinaryType::Base64 => canonical_base64_binary(data.as_ref()),
+                atomic::BinaryType::Hex => canonical_hex_binary(data.as_ref()),
             },
+            atomic::Atomic::AnyURI(s) => s.as_ref().clone(),
+            atomic::Atomic::QName(name) => name.to_full_name(),
         }
     }
 
@@ -80,7 +92,31 @@ impl atomic::Atomic {
             return Ok(self.clone());
         }
         match xs {
+            Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
             Xs::String => Ok(self.cast_to_string()),
+            Xs::Float => self.cast_to_float(),
+            Xs::Double => self.cast_to_double(),
+            Xs::Decimal => self.cast_to_decimal(),
+            Xs::Integer => self.cast_to_integer(),
+            Xs::Duration => todo!(),
+            Xs::YearMonthDuration => todo!(),
+            Xs::DayTimeDuration => todo!(),
+            Xs::DateTime => todo!(),
+            Xs::DateTimeStamp => todo!(),
+            Xs::Time => todo!(),
+            Xs::Date => todo!(),
+            Xs::GYearMonth => todo!(),
+            Xs::GYear => todo!(),
+            Xs::GMonthDay => todo!(),
+            Xs::GDay => todo!(),
+            Xs::GMonth => todo!(),
+            Xs::Boolean => self.cast_to_boolean(),
+            Xs::Base64Binary => self.cast_to_base64_binary(),
+            Xs::HexBinary => self.cast_to_hex_binary(),
+            Xs::AnyURI => self.cast_to_any_uri(),
+            Xs::QName => self.cast_to_qname(dynamic_context),
+
+            // string subtypes
             Xs::NormalizedString => Ok(self.cast_to_normalized_string()),
             Xs::Token => Ok(self.cast_to_token()),
             Xs::Language => self.cast_to_language(),
@@ -90,11 +126,8 @@ impl atomic::Atomic {
             Xs::ID => self.cast_to_id(),
             Xs::IDREF => self.cast_to_idref(),
             Xs::ENTITY => self.cast_to_entity(),
-            Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
-            Xs::AnyURI => self.cast_to_any_uri(),
-            Xs::Boolean => self.cast_to_boolean(),
-            Xs::Decimal => self.cast_to_decimal(),
-            Xs::Integer => self.cast_to_integer(),
+
+            // integer subtypes
             Xs::Long => self.cast_to_long(),
             Xs::Int => self.cast_to_int(),
             Xs::Short => self.cast_to_short(),
@@ -103,15 +136,11 @@ impl atomic::Atomic {
             Xs::UnsignedInt => self.cast_to_unsigned_int(),
             Xs::UnsignedShort => self.cast_to_unsigned_short(),
             Xs::UnsignedByte => self.cast_to_unsigned_byte(),
-            Xs::Float => self.cast_to_float(),
-            Xs::Double => self.cast_to_double(),
             Xs::NonPositiveInteger => self.cast_to_non_positive_integer(),
             Xs::NegativeInteger => self.cast_to_negative_integer(),
             Xs::NonNegativeInteger => self.cast_to_non_negative_integer(),
             Xs::PositiveInteger => self.cast_to_positive_integer(),
-            Xs::QName => self.cast_to_qname(dynamic_context),
-            Xs::HexBinary => self.cast_to_hex_binary(),
-            Xs::Base64Binary => self.cast_to_base64_binary(),
+
             _ => unreachable!(),
         }
     }
@@ -143,16 +172,14 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_boolean(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Boolean(_) => Ok(self.clone()),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
             atomic::Atomic::Float(f) => Ok(atomic::Atomic::Boolean(!(f.is_nan() || f.is_zero()))),
-            atomic::Atomic::Double(d) => Ok(atomic::Atomic::Boolean(!(d.is_nan() || d.is_zero()))),
             atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Boolean(!d.is_zero())),
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
-            atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
-            atomic::Atomic::AnyURI(_) | atomic::Atomic::QName(_) | atomic::Atomic::Binary(_, _) => {
-                Err(error::Error::Type)
-            }
+            atomic::Atomic::Double(d) => Ok(atomic::Atomic::Boolean(!(d.is_nan() || d.is_zero()))),
+            atomic::Atomic::Boolean(_) => Ok(self.clone()),
+            _ => Err(error::Error::Type),
         }
     }
 
@@ -165,13 +192,13 @@ impl atomic::Atomic {
         F: Fn(&str) -> error::Result<Vec<u8>>,
     {
         match self {
-            atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 let s = s.as_ref();
                 let s = whitespace_remove(s);
                 let data = decode(&s)?;
                 Ok(atomic::Atomic::Binary(binary_type, Rc::new(data)))
             }
+            atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             _ => Err(error::Error::Type),
         }
     }
