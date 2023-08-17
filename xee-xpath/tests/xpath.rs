@@ -969,6 +969,11 @@ fn test_cast_as_base64_binary_fails() {
 }
 
 #[test]
+fn test_cast_as_year_month_duration() {
+    assert_debug_snapshot!(run("'P1Y2M' cast as xs:yearMonthDuration"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

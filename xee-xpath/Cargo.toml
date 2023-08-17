@@ -15,6 +15,7 @@ homepage = "https://github.com/Paligo/xee-xpath"
 ahash = "0.8.3"
 arrayvec = "0.7.2"
 miette = { workspace = true }
+chumsky = { workspace = true }
 next-gen = "0.1.1"
 nonempty = "0.8.1"
 num = "0.4.0"
@@ -24,9 +25,9 @@ ordered-float = "3.6.0"
 rust_decimal = "1.30.0"
 thiserror = "1.0.40"
 xot = { workspace = true }
-xee-xpath-ast = { path = "../xee-xpath-ast"}
-xee-xpath-macros = { path = "../xee-xpath-macros"}
-xee-schema-type = { path = "../xee-schema-type"}
+xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-xpath-macros = { path = "../xee-xpath-macros" }
+xee-schema-type = { path = "../xee-schema-type" }
 lexical = { version = "6.1.1", features = ["format"] }
 ibig = "0.3.6"
 regex = "1.9.3"
@@ -40,4 +41,4 @@ rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = "1.29.1"
-xee-qt = { path = "../xee-qt"}
+xee-qt = { path = "../xee-qt" }

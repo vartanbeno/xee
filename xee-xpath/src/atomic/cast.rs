@@ -104,7 +104,7 @@ impl atomic::Atomic {
             Xs::Decimal => self.cast_to_decimal(),
             Xs::Integer => self.cast_to_integer(),
             Xs::Duration => todo!(),
-            Xs::YearMonthDuration => todo!(),
+            Xs::YearMonthDuration => self.cast_to_year_month_duration(),
             Xs::DayTimeDuration => todo!(),
             Xs::DateTime => todo!(),
             Xs::DateTimeStamp => todo!(),
@@ -177,8 +177,9 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_boolean(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<bool>(&s),
-            atomic::Atomic::String(_, s) => Self::parse_atomic::<bool>(&s),
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_atomic::<bool>(&s)
+            }
             atomic::Atomic::Float(f) => Ok(atomic::Atomic::Boolean(!(f.is_nan() || f.is_zero()))),
             atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Boolean(!d.is_zero())),
             atomic::Atomic::Integer(_, i) => Ok(atomic::Atomic::Boolean(!i.is_zero())),
