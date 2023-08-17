@@ -5,20 +5,65 @@ use crate::context::{DynamicContext, StaticFunctionDescription};
 use crate::error;
 use crate::wrap_xpath_fn;
 
+#[xpath_fn("xs:untypedAtomic($arg as xs:anyAtomicType?) as xs:untypedAtomic?")]
+fn xs_untyped_atomic(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    Ok(arg.map(|arg| arg.cast_to_untyped_atomic()))
+}
+
 #[xpath_fn("xs:string($arg as xs:anyAtomicType?) as xs:string?")]
 fn xs_string(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     Ok(arg.map(|arg| arg.cast_to_string()))
 }
 
-#[xpath_fn("xs:untypedAtomic($arg as xs:anyAtomicType?) as xs:untypedAtomic?")]
-fn xs_untyped_atomic(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    Ok(arg.map(|arg| arg.cast_to_untyped_atomic()))
+#[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
+fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_float()).transpose()
+}
+
+#[xpath_fn("xs:double($arg as xs:anyAtomicType?) as xs:double?")]
+fn xs_double(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_double()).transpose()
+}
+
+#[xpath_fn("xs:decimal($arg as xs:anyAtomicType?) as xs:decimal?")]
+fn xs_decimal(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_decimal()).transpose()
+}
+
+#[xpath_fn("xs:integer($arg as xs:anyAtomicType?) as xs:integer?")]
+fn xs_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_integer()).transpose()
+}
+
+#[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
+fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_boolean()).transpose()
+}
+
+#[xpath_fn("xs:base64Binary($arg as xs:anyAtomicType?) as xs:base64Binary?")]
+fn xs_base64_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_base64_binary()).transpose()
+}
+
+#[xpath_fn("xs:hexBinary($arg as xs:anyAtomicType?) as xs:hexBinary?")]
+fn xs_hex_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_hex_binary()).transpose()
 }
 
 #[xpath_fn("xs:anyURI($arg as xs:anyAtomicType?) as xs:anyURI?")]
 fn xs_any_uri(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_any_uri()).transpose()
 }
+
+#[xpath_fn("xs:QName($arg as xs:anyAtomicType?) as xs:QName?")]
+fn xs_qname(
+    context: &DynamicContext,
+    arg: Option<atomic::Atomic>,
+) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_qname(context)).transpose()
+}
+
+// string subtypes
 
 #[xpath_fn("xs:normalizedString($arg as xs:anyAtomicType?) as xs:normalizedString?")]
 fn xs_normalized_string(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
@@ -65,25 +110,7 @@ fn xs_entity(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic
     arg.map(|arg| arg.cast_to_entity()).transpose()
 }
 
-#[xpath_fn("xs:float($arg as xs:anyAtomicType?) as xs:float?")]
-fn xs_float(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_float()).transpose()
-}
-
-#[xpath_fn("xs:double($arg as xs:anyAtomicType?) as xs:double?")]
-fn xs_double(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_double()).transpose()
-}
-
-#[xpath_fn("xs:decimal($arg as xs:anyAtomicType?) as xs:decimal?")]
-fn xs_decimal(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_decimal()).transpose()
-}
-
-#[xpath_fn("xs:integer($arg as xs:anyAtomicType?) as xs:integer?")]
-fn xs_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_integer()).transpose()
-}
+// integer subtypes
 
 #[xpath_fn("xs:long($arg as xs:anyAtomicType?) as xs:long?")]
 fn xs_long(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
@@ -147,33 +174,20 @@ fn xs_positive_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atom
     arg.map(|arg| arg.cast_to_positive_integer()).transpose()
 }
 
-#[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
-fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_boolean()).transpose()
-}
-
-#[xpath_fn("xs:QName($arg as xs:anyAtomicType?) as xs:QName?")]
-fn xs_qname(
-    context: &DynamicContext,
-    arg: Option<atomic::Atomic>,
-) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_qname(context)).transpose()
-}
-
-#[xpath_fn("xs:hexBinary($arg as xs:anyAtomicType?) as xs:hexBinary?")]
-fn xs_hex_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_hex_binary()).transpose()
-}
-
-#[xpath_fn("xs:base64Binary($arg as xs:anyAtomicType?) as xs:base64Binary?")]
-fn xs_base64_binary(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_base64_binary()).transpose()
-}
-
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
-        wrap_xpath_fn!(xs_string),
         wrap_xpath_fn!(xs_untyped_atomic),
+        wrap_xpath_fn!(xs_string),
+        wrap_xpath_fn!(xs_float),
+        wrap_xpath_fn!(xs_double),
+        wrap_xpath_fn!(xs_decimal),
+        wrap_xpath_fn!(xs_integer),
+        wrap_xpath_fn!(xs_boolean),
+        wrap_xpath_fn!(xs_base64_binary),
+        wrap_xpath_fn!(xs_hex_binary),
+        wrap_xpath_fn!(xs_any_uri),
+        wrap_xpath_fn!(xs_qname),
+        // string subtypes
         wrap_xpath_fn!(xs_normalized_string),
         wrap_xpath_fn!(xs_token),
         wrap_xpath_fn!(xs_language),
@@ -183,11 +197,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_id),
         wrap_xpath_fn!(xs_idref),
         wrap_xpath_fn!(xs_entity),
-        wrap_xpath_fn!(xs_any_uri),
-        wrap_xpath_fn!(xs_float),
-        wrap_xpath_fn!(xs_double),
-        wrap_xpath_fn!(xs_decimal),
-        wrap_xpath_fn!(xs_integer),
+        // integer subtypes
         wrap_xpath_fn!(xs_long),
         wrap_xpath_fn!(xs_int),
         wrap_xpath_fn!(xs_short),
@@ -200,9 +210,5 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_negative_integer),
         wrap_xpath_fn!(xs_non_negative_integer),
         wrap_xpath_fn!(xs_positive_integer),
-        wrap_xpath_fn!(xs_boolean),
-        wrap_xpath_fn!(xs_qname),
-        wrap_xpath_fn!(xs_hex_binary),
-        wrap_xpath_fn!(xs_base64_binary),
     ]
 }

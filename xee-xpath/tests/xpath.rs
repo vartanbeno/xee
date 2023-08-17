@@ -981,6 +981,21 @@ fn test_cast_as_year_month_duration_back_to_string() {
 }
 
 #[test]
+fn test_cast_as_day_time_duration_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('P1DT2H3M4S' cast as xs:dayTimeDuration) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_as_day_time_duration_back_to_string2() {
+    // should come out at P1DT1h, as 90000 seconds is 25 hours
+    assert_debug_snapshot!(run(
+        "('PT90000S' cast as xs:dayTimeDuration) cast as xs:string"
+    ));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }
