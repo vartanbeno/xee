@@ -1,5 +1,4 @@
 use ibig::{ibig, IBig};
-use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
@@ -479,44 +478,6 @@ impl FromStr for Parsed<f32> {
     }
 }
 
-struct WrappedIBig(IBig);
-
-fn canonical_float<F>(f: F) -> String
-where
-    F: Float
-        + TryInto<Decimal, Error = rust_decimal::Error>
-        + lexical::ToLexicalWithOptions<Options = lexical::WriteFloatOptions>
-        + num::Signed,
-{
-    // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
-    // If SV has an absolute value that is greater than or equal to
-    // 0.000001 (one millionth) and less than 1000000 (one
-    // million), then the value is converted to an xs:decimal and
-    // the resulting xs:decimal is converted to an xs:string
-    let abs_f = f.abs();
-    let minimum: F = num::cast(0.000001).unwrap();
-    let maximum: F = num::cast(1000000.0).unwrap();
-    if abs_f >= minimum && abs_f < maximum {
-        // TODO: is this the right conversion?
-        let d: Decimal = f.try_into().unwrap();
-        atomic::Atomic::Decimal(d).into_canonical()
-    } else {
-        if f.is_zero() {
-            if f.is_negative() {
-                return "-0".to_string();
-            } else {
-                return "0".to_string();
-            }
-        }
-        let options = lexical::WriteFloatOptionsBuilder::new()
-            .exponent(b'E')
-            .inf_string(Some(b"INF"))
-            .build()
-            .unwrap();
-        lexical::to_string_with_options::<_, { lexical::format::XML }>(f, &options)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -618,104 +579,6 @@ mod tests {
         assert_eq!(
             atomic::Atomic::parse_atomic::<f64>("NAN"),
             Err(error::Error::FORG0001)
-        );
-    }
-
-    #[test]
-    fn test_canonical_decimal_is_integer() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.0)).into_canonical(), "1");
-    }
-
-    #[test]
-    fn test_canonical_decimal_is_decimal() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.5)).into_canonical(), "1.5");
-    }
-
-    #[test]
-    fn test_canonical_decimal_no_trailing_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.50)).into_canonical(), "1.5");
-    }
-
-    #[test]
-    fn test_canonical_decimal_no_leading_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(01.50)).into_canonical(), "1.5");
-    }
-
-    #[test]
-    fn test_canonical_decimal_single_leading_zero() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).into_canonical(), "0.5");
-    }
-
-    #[test]
-    fn test_canonical_integer() {
-        assert_eq!(
-            atomic::Atomic::Integer(atomic::IntegerType::Integer, ibig!(15).into())
-                .into_canonical(),
-            "15"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_formatted_as_integer() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(15.0)).into_canonical(),
-            "15"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_formatted_as_decimal() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(15.5)).into_canonical(),
-            "15.5"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_formatted_as_float_big() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(1500000000000000f32)).into_canonical(),
-            "1.5E15"
-        );
-    }
-
-    #[test]
-    fn test_canonical_formatted_as_float_small() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(0.000000000000001f32)).into_canonical(),
-            "1.0E-15"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_zero() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(0.0)).into_canonical(),
-            "0"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_minus_zero() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(-0.0)).into_canonical(),
-            "-0"
-        );
-    }
-
-    #[test]
-    fn test_canonical_float_inf() {
-        assert_eq!(
-            atomic::Atomic::Float(OrderedFloat(f32::INFINITY)).into_canonical(),
-            "INF"
-        );
-    }
-
-    #[test]
-    fn test_canonical_double_formatted_as_decimal() {
-        assert_eq!(
-            atomic::Atomic::Double(OrderedFloat(15.5)).into_canonical(),
-            "15.5"
         );
     }
 
