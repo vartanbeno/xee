@@ -8,7 +8,7 @@ use rust_decimal::prelude::*;
 use crate::atomic;
 use crate::error;
 
-use super::cast::cast_numeric_binary;
+use super::cast_numeric::cast_numeric_binary;
 
 pub(crate) fn value_comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>
 where

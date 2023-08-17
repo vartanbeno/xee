@@ -13,7 +13,7 @@ use std::rc::Rc;
 use crate::atomic;
 use crate::error;
 
-use super::cast::cast_numeric_binary;
+use super::cast_numeric::cast_numeric_binary;
 
 pub(crate) fn arithmetic_op<O>(
     a: atomic::Atomic,
