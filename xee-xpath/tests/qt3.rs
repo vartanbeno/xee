@@ -164,6 +164,7 @@ fn test_op_numeric_add() {
         .run()
 }
 
+// This requires union type support
 // #[test]
 // fn test_xs_numeric() {
 //     Tests::all("xs/numeric").run()
