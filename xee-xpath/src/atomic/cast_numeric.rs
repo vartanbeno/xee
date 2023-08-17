@@ -1,4 +1,5 @@
 use ibig::{ibig, IBig};
+use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
@@ -11,6 +12,42 @@ use crate::error;
 use super::cast::Parsed;
 
 impl atomic::Atomic {
+    pub(crate) fn canonical_float<F>(f: F) -> String
+    where
+        F: Float
+            + TryInto<Decimal, Error = rust_decimal::Error>
+            + lexical::ToLexicalWithOptions<Options = lexical::WriteFloatOptions>
+            + num::Signed,
+    {
+        // https://www.w3.org/TR/xpath-functions-31/#casting-to-string
+        // If SV has an absolute value that is greater than or equal to
+        // 0.000001 (one millionth) and less than 1000000 (one
+        // million), then the value is converted to an xs:decimal and
+        // the resulting xs:decimal is converted to an xs:string
+        let abs_f = f.abs();
+        let minimum: F = num::cast(0.000001).unwrap();
+        let maximum: F = num::cast(1000000.0).unwrap();
+        if abs_f >= minimum && abs_f < maximum {
+            // TODO: is this the right conversion?
+            let d: Decimal = f.try_into().unwrap();
+            atomic::Atomic::Decimal(d).into_canonical()
+        } else {
+            if f.is_zero() {
+                if f.is_negative() {
+                    return "-0".to_string();
+                } else {
+                    return "0".to_string();
+                }
+            }
+            let options = lexical::WriteFloatOptionsBuilder::new()
+                .exponent(b'E')
+                .inf_string(Some(b"INF"))
+                .build()
+                .unwrap();
+            lexical::to_string_with_options::<_, { lexical::format::XML }>(f, &options)
+        }
+    }
+
     pub(crate) fn parse_decimal(s: &str) -> error::Result<Decimal> {
         if s.contains('_') {
             return Err(error::Error::FORG0001);

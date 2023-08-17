@@ -1,6 +1,7 @@
 mod arithmetic;
 mod atomic_core;
 mod cast;
+mod cast_datetime;
 mod cast_numeric;
 mod cast_string;
 mod comparison;
