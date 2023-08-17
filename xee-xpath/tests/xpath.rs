@@ -974,6 +974,13 @@ fn test_cast_as_year_month_duration() {
 }
 
 #[test]
+fn test_cast_as_year_month_duration_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('P14M' cast as xs:yearMonthDuration) cast as xs:string"
+    ));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }
