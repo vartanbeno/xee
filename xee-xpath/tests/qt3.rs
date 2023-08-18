@@ -201,6 +201,17 @@ fn test_literal() {
         .run()
 }
 
+#[test]
+fn test_eqname() {
+    // getting these to work at all trips up over namespace axis
+    // support somehow. eqname-023 uses the namespace access, we could
+    // exclude namespace-axis  feature from dependency
+    Tests::none("prod/EQName")
+        // whitespace may not be properly collapsed inside Q{} strings
+        .bug("eqname-024")
+        .run();
+}
+
 // This requires union type support
 // #[test]
 // fn test_xs_numeric() {
