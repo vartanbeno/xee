@@ -53,8 +53,9 @@ impl Atomic {
             // point 5
             Atomic::Integer(_, i) => Ok(!i.is_zero()),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
-            Atomic::Float(f) => Ok(!f.is_zero()),
-            Atomic::Double(d) => Ok(!d.is_zero()),
+            // NaN also counts as false
+            Atomic::Float(f) => Ok(!f.is_zero() && !f.is_nan()),
+            Atomic::Double(d) => Ok(!d.is_zero() && !d.is_nan()),
             // point 6
             _ => Err(error::Error::FORG0006),
         }

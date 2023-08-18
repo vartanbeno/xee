@@ -178,6 +178,31 @@ fn test_instance_of_expr() {
         .run()
 }
 
+#[test]
+fn test_appendix_a4() {
+    Tests::all("misc/AppendixA4").run()
+}
+
+#[test]
+fn test_literal() {
+    Tests::all("prod/Literal")
+        // float representation uses different rules, though it's formally
+        // correct. Check canonical float rules?
+        .exclude("Literals016 Literals017 Literals025 Literals027 Literals028")
+        // this enormously long decimal literal fails with a parse error
+        // apparently if it's an error it wants aa FOAR0002.
+        // It shouldn't be a compilation error in that case, but accepted
+        // in the AST but then rejected during compilation to IR
+        .exclude("K2-Literals-6")
+        // apparently 'import' needs to be accepted as a keyword,
+        // but why this should raise XPDY0002 is unclear; I guess because
+        // `import` is not defined?
+        .exclude("K2-Literals-37")
+        // the same story, but for `schema`
+        .exclude("K2-Literals-38")
+        .run()
+}
+
 // This requires union type support
 // #[test]
 // fn test_xs_numeric() {
