@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use chumsky::prelude::*;
 use rust_decimal::prelude::*;
 
@@ -166,8 +168,12 @@ impl atomic::Atomic {
     }
 }
 
+fn digit_parser<'a>() -> impl Parser<'a, &'a str, char> {
+    any::<&str, extra::Default>().filter(|c: &char| c.is_ascii_digit())
+}
+
 fn digits_parser<'a>() -> impl Parser<'a, &'a str, String> {
-    let digit = any::<&str, extra::Default>().filter(|c: &char| c.is_ascii_digit());
+    let digit = digit_parser();
     digit.repeated().at_least(1).collect::<String>()
 }
 
@@ -285,6 +291,69 @@ fn duration_parser<'a>() -> impl Parser<'a, &'a str, (i64, chrono::Duration)> {
             }
         })
 }
+
+fn year_parser<'a>() -> impl Parser<'a, &'a str, i32> {
+    let digits = digits_parser();
+    let sign = sign_parser();
+    // the year may have 0 prefixes, unless it's larger than 4, in
+    // which case we don't allow any prefixes
+    sign.then(digits.boxed()).try_map(|(sign, digits), _| {
+        let year = match digits.len().cmp(&4) {
+            Ordering::Greater => {
+                // cannot have any 0 prefix
+                if digits.starts_with('0') {
+                    Err(EmptyErr::default())
+                } else {
+                    Ok(digits.parse().unwrap())
+                }
+            }
+            Ordering::Equal => Ok(digits.parse().unwrap()),
+            Ordering::Less => Err(EmptyErr::default()),
+        };
+        year.map(|year: i32| if sign { -year } else { year })
+    })
+}
+
+fn month_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+    let digit = digit_parser().boxed();
+    digit.clone().then(digit).try_map(|(a, b), _| {
+        let month = a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap();
+        if month == 0 || month > 12 {
+            Err(EmptyErr::default())
+        } else {
+            Ok(month)
+        }
+    })
+}
+
+fn day_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+    let digit = digit_parser().boxed();
+    digit.clone().then(digit).try_map(|(a, b), _| {
+        let day = a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap();
+        if day == 0 || day > 31 {
+            Err(EmptyErr::default())
+        } else {
+            Ok(day)
+        }
+    })
+}
+
+fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
+    let year = year_parser().boxed();
+    let month = month_parser().boxed();
+    let day = day_parser().boxed();
+    year.then_ignore(just('-'))
+        .then(month)
+        .then_ignore(just('-'))
+        .then(day)
+        .try_map(|((year, month), day), _| {
+            chrono::NaiveDate::from_ymd_opt(year, month, day).ok_or(EmptyErr::default())
+        })
+}
+
+// fn tz_parser<'a>() -> impl Parser<'a, &'a str, Option<chrono::FixedOffset>> {
+//     just('-');
+// }
 
 #[cfg(test)]
 mod tests {
@@ -434,5 +503,49 @@ mod tests {
     #[test]
     fn test_duration_parser_nothing() {
         assert!(duration_parser().parse("P").has_errors());
+    }
+
+    #[test]
+    fn test_date_parser_4_digit_year() {
+        assert_eq!(
+            date_parser().parse("2020-01-02").unwrap(),
+            chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_date_parser_more_digits_year() {
+        assert_eq!(
+            date_parser().parse("20200-01-02").unwrap(),
+            chrono::NaiveDate::from_ymd_opt(20200, 1, 2).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_date_parser_year_with_zeros() {
+        assert_eq!(
+            date_parser().parse("0120-01-02").unwrap(),
+            chrono::NaiveDate::from_ymd_opt(120, 1, 2).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_date_parser_wrong_month() {
+        assert!(date_parser().parse("2020-13-02").has_errors());
+    }
+
+    #[test]
+    fn test_date_parser_wrong_day() {
+        assert!(date_parser().parse("2020-01-32").has_errors());
+    }
+
+    #[test]
+    fn test_date_parser_early_year_without_zeros_fails() {
+        assert!(date_parser().parse("120-01-02").has_errors());
+    }
+
+    #[test]
+    fn test_date_parser_long_year_leading_zeros_fails() {
+        assert!(date_parser().parse("012020-01-02").has_errors());
     }
 }
