@@ -1,6 +1,5 @@
 ---
 source: xee-xpath/tests/xpath.rs
-assertion_line: 992
 expression: "run(\"('PT90000S' cast as xs:dayTimeDuration) cast as xs:string\")"
 ---
 Ok(
