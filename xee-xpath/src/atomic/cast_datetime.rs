@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 
 use chrono::Offset;
+use chrono::TimeZone;
+use chrono::Timelike;
 use chumsky::prelude::*;
 use rust_decimal::prelude::*;
 
@@ -9,7 +11,7 @@ use crate::error;
 
 use super::cast::whitespace_collapse;
 
-pub(crate) type BoxedParser<'a, T> = Boxed<'a, 'a, &'a str, T, extra::Default>;
+pub(crate) type BoxedParser<'a, 'b, T> = Boxed<'a, 'b, &'a str, T, extra::Default>;
 
 impl atomic::Atomic {
     pub(crate) fn canonical_duration(months: i64, duration: chrono::Duration) -> String {
@@ -95,6 +97,83 @@ impl atomic::Atomic {
         }
     }
 
+    pub(crate) fn canonical_date_time(
+        date_time: chrono::NaiveDateTime,
+        offset: Option<chrono::FixedOffset>,
+    ) -> String {
+        let mut s = String::new();
+        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
+        let millis = date_time.timestamp_subsec_millis();
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_date_time_stamp(
+        date_time: chrono::DateTime<chrono::FixedOffset>,
+    ) -> String {
+        let mut s = String::new();
+        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
+        let millis = date_time.timestamp_subsec_millis();
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        let offset = date_time.offset();
+        Self::push_canonical_time_zone_offset(&mut s, offset);
+        s
+    }
+
+    pub(crate) fn canonical_time(
+        time: chrono::NaiveTime,
+        offset: Option<chrono::FixedOffset>,
+    ) -> String {
+        let mut s = String::new();
+        s.push_str(&time.format("%H:%M:%S").to_string());
+        let millis = time.nanosecond() / 1_000_000;
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_date(
+        date: chrono::NaiveDate,
+        offset: Option<chrono::FixedOffset>,
+    ) -> String {
+        let mut s = String::new();
+        s.push_str(&date.format("%Y-%m-%d").to_string());
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    fn push_canonical_time_zone_offset(s: &mut String, offset: &chrono::FixedOffset) {
+        let seconds = offset.local_minus_utc();
+        if seconds == 0 {
+            s.push('Z');
+            return;
+        }
+        let is_negative = seconds < 0;
+        let seconds = seconds.abs();
+        let hours = seconds / 3600;
+        let minutes = (seconds % 3600) / 60;
+        let seconds = seconds % 60;
+        if is_negative {
+            s.push('-');
+        } else {
+            s.push('+');
+        }
+        s.push_str(&format!("{:02}:{:02}:{02}", hours, minutes, seconds));
+    }
+
     // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
 
     pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
@@ -136,6 +215,44 @@ impl atomic::Atomic {
         }
     }
 
+    pub(crate) fn cast_to_date_time(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
+            atomic::Atomic::DateTime(_, _) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_date_time_stamp(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_date_time_stamp(&s)
+            }
+            atomic::Atomic::DateTimeStamp(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
+            atomic::Atomic::Time(_, _) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
+            atomic::Atomic::Date(_, _) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
     fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
@@ -164,6 +281,50 @@ impl atomic::Atomic {
         let parser = day_time_duration_parser();
         match parser.parse(&s).into_result() {
             Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(duration)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_date_time(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_time_parser();
+        match parser.parse(&s).into_result() {
+            Ok((date_time, tz)) => Ok(atomic::Atomic::DateTime(date_time, tz)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_date_time_stamp(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_time_stamp_parser();
+        match parser.parse(&s).into_result() {
+            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(date_time)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_time(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = time_parser();
+        match parser.parse(&s).into_result() {
+            Ok((time, tz)) => Ok(atomic::Atomic::Time(time, tz)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_parser();
+        match parser.parse(&s).into_result() {
+            Ok((date, tz)) => Ok(atomic::Atomic::Date(date, tz)),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -361,7 +522,7 @@ fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
 fn date_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveDate, Option<chrono::FixedOffset>)> {
     let date = date_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    date.then(tz).then_ignore(end())
+    date.then(tz.or_not()).then_ignore(end())
 }
 
 fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
@@ -401,7 +562,7 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
 fn time_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveTime, Option<chrono::FixedOffset>)> {
     let time = time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    time.then(tz).then_ignore(end())
+    time.then(tz.or_not()).then_ignore(end())
 }
 
 fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
@@ -416,7 +577,15 @@ fn date_time_parser<'a>(
 ) -> impl Parser<'a, &'a str, (chrono::NaiveDateTime, Option<chrono::FixedOffset>)> {
     let date_time = date_time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    date_time.then(tz)
+    date_time.then(tz.or_not())
+}
+
+fn date_time_stamp_parser<'a>() -> impl Parser<'a, &'a str, chrono::DateTime<chrono::FixedOffset>> {
+    let date_time = date_time_fragment_parser().boxed();
+    let tz = tz_parser().boxed();
+    date_time
+        .then(tz)
+        .map(|(date_time, tz)| tz.from_utc_datetime(&date_time))
 }
 
 fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32> {
@@ -447,10 +616,52 @@ fn offset_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
         })
 }
 
-fn tz_parser<'a>() -> impl Parser<'a, &'a str, Option<chrono::FixedOffset>> {
+fn tz_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
     let offset = offset_parser();
-    just('Z').to(chrono::offset::Utc.fix()).or(offset).or_not()
+    just('Z').to(chrono::offset::Utc.fix()).or(offset)
 }
+
+// pub(crate) struct DateTimeParsers<'input, 'parser: 'input> {
+//     pub(crate) duration: BoxedParser<'input, 'parser, (i64, chrono::Duration)>,
+//     pub(crate) year_month_duration: BoxedParser<'input, 'parser, i64>,
+//     pub(crate) day_time_duration: BoxedParser<'input, 'parser, chrono::Duration>,
+//     pub(crate) date_time:
+//         BoxedParser<'input, 'parser, (chrono::NaiveDateTime, Option<chrono::FixedOffset>)>,
+//     pub(crate) date_time_stamp: BoxedParser<'input, 'parser, chrono::DateTime<chrono::FixedOffset>>,
+//     pub(crate) time: BoxedParser<'input, 'parser, (chrono::NaiveTime, Option<chrono::FixedOffset>)>,
+//     pub(crate) date: BoxedParser<'input, 'parser, (chrono::NaiveDate, Option<chrono::FixedOffset>)>,
+// }
+
+// impl<'input, 'parser: 'input> DateTimeParsers<'input, 'parser> {
+//     pub(crate) fn new() -> DateTimeParsers<'input, 'parser> {
+//         let duration = duration_parser().boxed();
+//         let year_month_duration = year_month_duration_parser().boxed();
+//         let day_time_duration = day_time_duration_parser().boxed();
+//         let date_time = date_time_parser().boxed();
+//         let date_time_stamp = date_time_stamp_parser().boxed();
+//         let time = time_parser().boxed();
+//         let date = date_parser().boxed();
+//         Self {
+//             duration,
+//             year_month_duration,
+//             day_time_duration,
+//             date_time,
+//             date_time_stamp,
+//             time,
+//             date,
+//         }
+//     }
+
+//     fn parse_duration<'s: 'input>(&'parser self, s: &'s str) -> error::Result<atomic::Atomic> {
+//         let s = whitespace_collapse(s);
+//         self.duration.parse(&s);
+//         todo!();
+//         // match self.duration.parse(&s).into_result() {
+//         //     Ok((months, duration)) => Ok(atomic::Atomic::Duration(months, duration)),
+//         //     Err(_) => Err(error::Error::FORG0001),
+//         // }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -664,22 +875,19 @@ mod tests {
 
     #[test]
     fn test_tz_parser_utc() {
-        assert_eq!(
-            tz_parser().parse("Z").unwrap(),
-            Some(chrono::offset::Utc.fix())
-        );
+        assert_eq!(tz_parser().parse("Z").unwrap(), chrono::offset::Utc.fix());
     }
 
     #[test]
     fn test_tz_parser_naive() {
-        assert_eq!(tz_parser().parse("").unwrap(), None);
+        assert_eq!(tz_parser().or_not().parse("").unwrap(), None);
     }
 
     #[test]
     fn test_tz_parser_offset_east() {
         assert_eq!(
             tz_parser().parse("+01:00").unwrap(),
-            Some(chrono::FixedOffset::east_opt(3600).unwrap())
+            chrono::FixedOffset::east_opt(3600).unwrap()
         );
     }
 
@@ -687,7 +895,7 @@ mod tests {
     fn test_tz_parser_offset_west() {
         assert_eq!(
             tz_parser().parse("-01:00").unwrap(),
-            Some(chrono::FixedOffset::west_opt(3600).unwrap())
+            chrono::FixedOffset::west_opt(3600).unwrap()
         );
     }
 
@@ -700,7 +908,7 @@ mod tests {
     fn test_tz_parser_offset_max_range() {
         assert_eq!(
             tz_parser().parse("+14:00").unwrap(),
-            Some(chrono::FixedOffset::east_opt(50400).unwrap())
+            chrono::FixedOffset::east_opt(50400).unwrap()
         );
     }
 

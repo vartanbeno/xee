@@ -50,6 +50,26 @@ fn xs_day_time_duration(arg: Option<atomic::Atomic>) -> error::Result<Option<ato
     arg.map(|arg| arg.cast_to_day_time_duration()).transpose()
 }
 
+#[xpath_fn("xs:dateTime($arg as xs:anyAtomicType?) as xs:dateTime?")]
+fn xs_date_time(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_date_time()).transpose()
+}
+
+#[xpath_fn("xs:dateTimeStamp($arg as xs:anyAtomicType?) as xs:dateTimeStamp?")]
+fn xs_date_time_stamp(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_date_time_stamp()).transpose()
+}
+
+#[xpath_fn("xs:time($arg as xs:anyAtomicType?) as xs:time?")]
+fn xs_time(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_time()).transpose()
+}
+
+#[xpath_fn("xs:date($arg as xs:anyAtomicType?) as xs:date?")]
+fn xs_date(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_date()).transpose()
+}
+
 #[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
 fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_boolean()).transpose()
@@ -200,6 +220,10 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_duration),
         wrap_xpath_fn!(xs_year_month_duration),
         wrap_xpath_fn!(xs_day_time_duration),
+        wrap_xpath_fn!(xs_date_time),
+        wrap_xpath_fn!(xs_date_time_stamp),
+        wrap_xpath_fn!(xs_time),
+        wrap_xpath_fn!(xs_date),
         wrap_xpath_fn!(xs_boolean),
         wrap_xpath_fn!(xs_base64_binary),
         wrap_xpath_fn!(xs_hex_binary),

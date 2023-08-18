@@ -56,10 +56,12 @@ impl atomic::Atomic {
             atomic::Atomic::DayTimeDuration(duration) => {
                 Self::canonical_day_time_duration(duration)
             }
-            atomic::Atomic::DateTime(_, _) => todo!(),
-            atomic::Atomic::DateTimeStamp(_) => todo!(),
-            atomic::Atomic::Time(_, _) => todo!(),
-            atomic::Atomic::Date(_, _) => todo!(),
+            atomic::Atomic::DateTime(date_time, offset) => {
+                Self::canonical_date_time(date_time, offset)
+            }
+            atomic::Atomic::DateTimeStamp(date_time) => Self::canonical_date_time_stamp(date_time),
+            atomic::Atomic::Time(time, offset) => Self::canonical_time(time, offset),
+            atomic::Atomic::Date(date, offset) => Self::canonical_date(date, offset),
             atomic::Atomic::GYearMonth(_, _, _) => todo!(),
             atomic::Atomic::GYear(_, _) => todo!(),
             atomic::Atomic::GMonthDay(_, _, _) => todo!(),
@@ -106,10 +108,10 @@ impl atomic::Atomic {
             Xs::Duration => self.cast_to_duration(),
             Xs::YearMonthDuration => self.cast_to_year_month_duration(),
             Xs::DayTimeDuration => self.cast_to_day_time_duration(),
-            Xs::DateTime => todo!(),
-            Xs::DateTimeStamp => todo!(),
-            Xs::Time => todo!(),
-            Xs::Date => todo!(),
+            Xs::DateTime => self.cast_to_date_time(),
+            Xs::DateTimeStamp => self.cast_to_date_time_stamp(),
+            Xs::Time => self.cast_to_time(),
+            Xs::Date => self.cast_to_date(),
             Xs::GYearMonth => todo!(),
             Xs::GYear => todo!(),
             Xs::GMonthDay => todo!(),

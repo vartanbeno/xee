@@ -1008,6 +1008,115 @@ fn test_cast_duration_back_to_string2() {
 }
 
 #[test]
+fn test_cast_date_time() {
+    assert_debug_snapshot!(run("'2019-01-01T00:00:00' cast as xs:dateTime"));
+}
+
+#[test]
+fn test_cast_date_time_z() {
+    assert_debug_snapshot!(run("'2019-01-01T00:00:00Z' cast as xs:dateTime"));
+}
+
+#[test]
+fn test_cast_date_time_offset() {
+    assert_debug_snapshot!(run("'2019-01-01T00:00:00+01:00' cast as xs:dateTime"));
+}
+
+#[test]
+fn test_cast_date_time_back_to_string_naive() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30' cast as xs:dateTime) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_back_to_string_z() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30Z' cast as xs:dateTime) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_back_to_string_offset() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30+01:00' cast as xs:dateTime) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_millis_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30.125' cast as xs:dateTime) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_stamp() {
+    assert_debug_snapshot!(run(
+        "'2019-01-01T00:00:00.123+01:00' cast as xs:dateTimeStamp"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_stamp_no_millis_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30+01:00' cast as xs:dateTimeStamp) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_date_time_stamp_millis_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('2019-01-03T15:14:30.123+01:00' cast as xs:dateTimeStamp) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_time() {
+    assert_debug_snapshot!(run("'00:00:00' cast as xs:time"));
+}
+
+#[test]
+fn test_cast_time_z() {
+    assert_debug_snapshot!(run("'00:00:00Z' cast as xs:time"));
+}
+
+#[test]
+fn test_cast_time_naive_back_to_string() {
+    assert_debug_snapshot!(run("('15:14:30' cast as xs:time) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_time_millis_back_to_string() {
+    assert_debug_snapshot!(run("('15:14:30.123' cast as xs:time) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_time_z_back_to_string() {
+    assert_debug_snapshot!(run("('15:14:30Z' cast as xs:time) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_date() {
+    assert_debug_snapshot!(run("'2019-01-01' cast as xs:date"));
+}
+
+#[test]
+fn test_cast_date_naive_back_to_string() {
+    assert_debug_snapshot!(run("('2019-01-03' cast as xs:date) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_date_z_back_to_string() {
+    assert_debug_snapshot!(run("('2019-01-03Z' cast as xs:date) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_date_z() {
+    assert_debug_snapshot!(run("'2019-01-01Z' cast as xs:date"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

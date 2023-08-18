@@ -1,0 +1,18 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'2019-01-01Z' cast as xs:date\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Date(
+                    2019-01-01,
+                    Some(
+                        +00:00,
+                    ),
+                ),
+            ),
+        ),
+    },
+)
