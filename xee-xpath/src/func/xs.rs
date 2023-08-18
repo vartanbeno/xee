@@ -35,6 +35,16 @@ fn xs_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomi
     arg.map(|arg| arg.cast_to_integer()).transpose()
 }
 
+#[xpath_fn("xs:yearMonthDuration($arg as xs:anyAtomicType?) as xs:yearMonthDuration?")]
+fn xs_year_month_duration(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_year_month_duration()).transpose()
+}
+
+#[xpath_fn("xs:dayTimeDuration($arg as xs:anyAtomicType?) as xs:dayTimeDuration?")]
+fn xs_day_time_duration(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_day_time_duration()).transpose()
+}
+
 #[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
 fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_boolean()).transpose()
@@ -182,6 +192,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_double),
         wrap_xpath_fn!(xs_decimal),
         wrap_xpath_fn!(xs_integer),
+        wrap_xpath_fn!(xs_year_month_duration),
+        wrap_xpath_fn!(xs_day_time_duration),
         wrap_xpath_fn!(xs_boolean),
         wrap_xpath_fn!(xs_base64_binary),
         wrap_xpath_fn!(xs_hex_binary),
