@@ -35,6 +35,11 @@ fn xs_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomi
     arg.map(|arg| arg.cast_to_integer()).transpose()
 }
 
+#[xpath_fn("xs:duration($arg as xs:anyAtomicType?) as xs:duration?")]
+fn xs_duration(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_duration()).transpose()
+}
+
 #[xpath_fn("xs:yearMonthDuration($arg as xs:anyAtomicType?) as xs:yearMonthDuration?")]
 fn xs_year_month_duration(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_year_month_duration()).transpose()
@@ -192,6 +197,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_double),
         wrap_xpath_fn!(xs_decimal),
         wrap_xpath_fn!(xs_integer),
+        wrap_xpath_fn!(xs_duration),
         wrap_xpath_fn!(xs_year_month_duration),
         wrap_xpath_fn!(xs_day_time_duration),
         wrap_xpath_fn!(xs_boolean),
