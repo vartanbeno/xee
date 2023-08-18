@@ -358,8 +358,10 @@ fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
         })
 }
 
-fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
-    date_fragment_parser().then_ignore(end())
+fn date_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveDate, Option<chrono::FixedOffset>)> {
+    let date = date_fragment_parser().boxed();
+    let tz = tz_parser().boxed();
+    date.then(tz).then_ignore(end())
 }
 
 fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
@@ -396,16 +398,25 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
         })
 }
 
-fn time_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
-    time_fragment_parser().then_ignore(end())
+fn time_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveTime, Option<chrono::FixedOffset>)> {
+    let time = time_fragment_parser().boxed();
+    let tz = tz_parser().boxed();
+    time.then(tz).then_ignore(end())
 }
 
-fn date_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
+fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
     let date = date_fragment_parser().boxed();
     let time = time_fragment_parser().boxed();
     date.then_ignore(just('T'))
         .then(time)
         .map(|(date, time)| date.and_time(time))
+}
+
+fn date_time_parser<'a>(
+) -> impl Parser<'a, &'a str, (chrono::NaiveDateTime, Option<chrono::FixedOffset>)> {
+    let date_time = date_time_fragment_parser().boxed();
+    let tz = tz_parser().boxed();
+    date_time.then(tz)
 }
 
 fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32> {
@@ -595,7 +606,7 @@ mod tests {
     fn test_date_parser_4_digit_year() {
         assert_eq!(
             date_parser().parse("2020-01-02").unwrap(),
-            chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()
+            (chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap(), None)
         );
     }
 
@@ -603,7 +614,7 @@ mod tests {
     fn test_date_parser_more_digits_year() {
         assert_eq!(
             date_parser().parse("20200-01-02").unwrap(),
-            chrono::NaiveDate::from_ymd_opt(20200, 1, 2).unwrap()
+            (chrono::NaiveDate::from_ymd_opt(20200, 1, 2).unwrap(), None)
         );
     }
 
@@ -611,7 +622,7 @@ mod tests {
     fn test_date_parser_year_with_zeros() {
         assert_eq!(
             date_parser().parse("0120-01-02").unwrap(),
-            chrono::NaiveDate::from_ymd_opt(120, 1, 2).unwrap()
+            (chrono::NaiveDate::from_ymd_opt(120, 1, 2).unwrap(), None)
         );
     }
 
@@ -638,6 +649,17 @@ mod tests {
     #[test]
     fn test_date_parser_junk_fails() {
         assert!(date_parser().parse("2020-01-02flurb").has_errors());
+    }
+
+    #[test]
+    fn test_date_parser_utc() {
+        assert_eq!(
+            date_parser().parse("2020-01-02Z").unwrap(),
+            (
+                chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap(),
+                Some(chrono::offset::Utc.fix())
+            )
+        );
     }
 
     #[test]
@@ -696,7 +718,10 @@ mod tests {
     fn test_time_parser() {
         assert_eq!(
             time_parser().parse("01:02:03.456").unwrap(),
-            chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap()
+            (
+                chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap(),
+                None
+            )
         );
     }
 
@@ -704,7 +729,21 @@ mod tests {
     fn test_time_parser_no_ms() {
         assert_eq!(
             time_parser().parse("01:02:03").unwrap(),
-            chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 0).unwrap()
+            (
+                chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 0).unwrap(),
+                None
+            )
+        );
+    }
+
+    #[test]
+    fn test_time_parser_utc() {
+        assert_eq!(
+            time_parser().parse("01:02:03.456Z").unwrap(),
+            (
+                chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap(),
+                Some(chrono::offset::Utc.fix())
+            )
         );
     }
 
@@ -722,10 +761,45 @@ mod tests {
     fn test_date_time_parser() {
         assert_eq!(
             date_time_parser().parse("2020-01-02T01:02:03.456").unwrap(),
-            chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
-                .unwrap()
-                .and_hms_milli_opt(1, 2, 3, 456)
-                .unwrap()
+            (
+                chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
+                    .unwrap()
+                    .and_hms_milli_opt(1, 2, 3, 456)
+                    .unwrap(),
+                None
+            )
+        );
+    }
+
+    #[test]
+    fn test_date_time_parser_utc() {
+        assert_eq!(
+            date_time_parser()
+                .parse("2020-01-02T01:02:03.456Z")
+                .unwrap(),
+            (
+                chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
+                    .unwrap()
+                    .and_hms_milli_opt(1, 2, 3, 456)
+                    .unwrap(),
+                Some(chrono::offset::Utc.fix())
+            )
+        );
+    }
+
+    #[test]
+    fn test_date_time_parser_offset() {
+        assert_eq!(
+            date_time_parser()
+                .parse("2020-01-02T01:02:03.456+01:00")
+                .unwrap(),
+            (
+                chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
+                    .unwrap()
+                    .and_hms_milli_opt(1, 2, 3, 456)
+                    .unwrap(),
+                Some(chrono::FixedOffset::east_opt(3600).unwrap())
+            )
         );
     }
 
