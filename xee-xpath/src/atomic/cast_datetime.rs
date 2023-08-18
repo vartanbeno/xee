@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use chrono::Offset;
 use chumsky::prelude::*;
 use rust_decimal::prelude::*;
 
@@ -314,10 +315,16 @@ fn year_parser<'a>() -> impl Parser<'a, &'a str, i32> {
     })
 }
 
-fn month_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+fn two_digit_parser<'a>() -> impl Parser<'a, &'a str, u32> {
     let digit = digit_parser().boxed();
-    digit.clone().then(digit).try_map(|(a, b), _| {
-        let month = a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap();
+    digit
+        .clone()
+        .then(digit)
+        .map(|(a, b)| a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap())
+}
+
+fn month_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+    two_digit_parser().try_map(|month, _| {
         if month == 0 || month > 12 {
             Err(EmptyErr::default())
         } else {
@@ -327,9 +334,7 @@ fn month_parser<'a>() -> impl Parser<'a, &'a str, u32> {
 }
 
 fn day_parser<'a>() -> impl Parser<'a, &'a str, u32> {
-    let digit = digit_parser().boxed();
-    digit.clone().then(digit).try_map(|(a, b), _| {
-        let day = a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap();
+    two_digit_parser().try_map(|day, _| {
         if day == 0 || day > 31 {
             Err(EmptyErr::default())
         } else {
@@ -351,9 +356,58 @@ fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
         })
 }
 
-// fn tz_parser<'a>() -> impl Parser<'a, &'a str, Option<chrono::FixedOffset>> {
-//     just('-');
-// }
+fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+    two_digit_parser().try_map(|hour, _| {
+        if hour > 24 {
+            Err(EmptyErr::default())
+        } else {
+            Ok(hour)
+        }
+    })
+}
+
+fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+    two_digit_parser().try_map(|minute, _| {
+        if minute > 59 {
+            Err(EmptyErr::default())
+        } else {
+            Ok(minute)
+        }
+    })
+}
+
+fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32> {
+    let hour = hour_parser().boxed();
+    let minute = minute_parser().boxed();
+    hour.then_ignore(just(":"))
+        .then(minute)
+        .try_map(|(hour, minute), _| {
+            if hour > 14 || hour == 14 && minute > 0 {
+                Err(EmptyErr::default())
+            } else {
+                Ok(hour as i32 * 60 + minute as i32)
+            }
+        })
+}
+
+fn offset_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
+    one_of("+-")
+        .then(offset_time_parser())
+        .map(|(sign, offset)| {
+            // make it into seconds
+            let offset = offset * 60;
+            if sign == '+' {
+                chrono::FixedOffset::east_opt(offset).unwrap()
+            } else {
+                chrono::FixedOffset::west_opt(offset).unwrap()
+            }
+        })
+}
+
+fn tz_parser<'a>() -> impl Parser<'a, &'a str, Option<chrono::FixedOffset>> {
+    let offset = offset_parser();
+    just('Z').to(chrono::offset::Utc.fix()).or(offset).or_not()
+}
 
 #[cfg(test)]
 mod tests {
@@ -547,5 +601,57 @@ mod tests {
     #[test]
     fn test_date_parser_long_year_leading_zeros_fails() {
         assert!(date_parser().parse("012020-01-02").has_errors());
+    }
+
+    #[test]
+    fn test_tz_parser_utc() {
+        assert_eq!(
+            tz_parser().parse("Z").unwrap(),
+            Some(chrono::offset::Utc.fix())
+        );
+    }
+
+    #[test]
+    fn test_tz_parser_naive() {
+        assert_eq!(tz_parser().parse("").unwrap(), None);
+    }
+
+    #[test]
+    fn test_tz_parser_offset_east() {
+        assert_eq!(
+            tz_parser().parse("+01:00").unwrap(),
+            Some(chrono::FixedOffset::east_opt(3600).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_tz_parser_offset_west() {
+        assert_eq!(
+            tz_parser().parse("-01:00").unwrap(),
+            Some(chrono::FixedOffset::west_opt(3600).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_tz_parser_offset_too_big_fails() {
+        assert!(tz_parser().parse("+15:00").has_errors());
+    }
+
+    #[test]
+    fn test_tz_parser_offset_max_range() {
+        assert_eq!(
+            tz_parser().parse("+14:00").unwrap(),
+            Some(chrono::FixedOffset::east_opt(50400).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_tz_parser_offset_too_big2_fails() {
+        assert!(tz_parser().parse("+14:01").has_errors());
+    }
+
+    #[test]
+    fn test_tz_parser_offset_wrong_minutes_fails() {
+        assert!(tz_parser().parse("+01:60").has_errors());
     }
 }
