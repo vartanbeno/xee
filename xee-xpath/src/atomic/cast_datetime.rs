@@ -186,7 +186,7 @@ fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool> {
     just('-').or_not().map(|sign| sign.is_some())
 }
 
-fn milliseconds_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+fn second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
     let digits = digits_parser().boxed();
     let seconds_with_fraction = digits
         .clone()
@@ -199,13 +199,13 @@ fn milliseconds_parser<'a>() -> impl Parser<'a, &'a str, u32> {
 
             let a = a.parse::<u32>().unwrap();
             let b = b.parse::<u32>().unwrap();
-            a * 1000 + b * 10u32.pow(3 - l as u32)
+            (a, b * 10u32.pow(3 - l as u32))
         });
-    let seconds_without_fraction = digits.map(|s| s.parse::<u32>().unwrap() * 1000);
+    let seconds_without_fraction = digits.map(|s| (s.parse::<u32>().unwrap(), 0));
     seconds_with_fraction.or(seconds_without_fraction)
 }
 
-fn year_month_parser<'a>() -> impl Parser<'a, &'a str, i64> {
+fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64> {
     let number = number_parser().boxed();
     let year_y = number.clone().then_ignore(just('Y')).boxed();
     let month_m = number.then_ignore(just('M')).boxed();
@@ -219,7 +219,7 @@ fn year_month_parser<'a>() -> impl Parser<'a, &'a str, i64> {
 }
 
 fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, i64> {
-    let year_month = year_month_parser().boxed();
+    let year_month = year_month_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(year_month.clone())
@@ -227,26 +227,28 @@ fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, i64> {
         .map(|(sign, months)| if sign { -months } else { months })
 }
 
-fn day_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
+fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
     let number = number_parser().boxed();
     let day_d = number.clone().then_ignore(just('D')).boxed();
     let hour_h = number.clone().then_ignore(just('H')).boxed();
     let minute_m = number.clone().then_ignore(just('M')).boxed();
-    let second_s = milliseconds_parser().then_ignore(just('S')).boxed();
+    let second_s = second_parser().then_ignore(just('S')).boxed();
 
     let time = just('T')
         .ignore_then(hour_h.or_not())
         .then(minute_m.or_not())
         .then(second_s.or_not())
-        .try_map(|((hours, minutes), milliseconds), _| {
-            if hours.is_none() && minutes.is_none() && milliseconds.is_none() {
+        .try_map(|((hours, minutes), s_ms), _| {
+            if hours.is_none() && minutes.is_none() && s_ms.is_none() {
                 return Err(EmptyErr::default());
             }
             let hours = hours.unwrap_or(0);
             let minutes = minutes.unwrap_or(0);
-            let milliseconds = milliseconds.unwrap_or(0);
+            let s_ms = s_ms.unwrap_or((0, 0));
+            let (seconds, milliseconds) = s_ms;
             Ok(chrono::Duration::hours(hours as i64)
                 + chrono::Duration::minutes(minutes as i64)
+                + chrono::Duration::seconds(seconds as i64)
                 + chrono::Duration::milliseconds(milliseconds as i64))
         })
         .boxed();
@@ -263,7 +265,7 @@ fn day_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
 }
 
 fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
-    let day_time = day_time_parser().boxed();
+    let day_time = day_time_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(day_time.clone())
@@ -272,8 +274,8 @@ fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
 }
 
 fn duration_parser<'a>() -> impl Parser<'a, &'a str, (i64, chrono::Duration)> {
-    let year_month = year_month_parser().boxed();
-    let day_time = day_time_parser().boxed();
+    let year_month = year_month_fragment_parser().boxed();
+    let day_time = day_time_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(year_month.clone().or_not())
@@ -343,7 +345,7 @@ fn day_parser<'a>() -> impl Parser<'a, &'a str, u32> {
     })
 }
 
-fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
+fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
     let year = year_parser().boxed();
     let month = month_parser().boxed();
     let day = day_parser().boxed();
@@ -354,6 +356,10 @@ fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
         .try_map(|((year, month), day), _| {
             chrono::NaiveDate::from_ymd_opt(year, month, day).ok_or(EmptyErr::default())
         })
+}
+
+fn date_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
+    date_fragment_parser().then_ignore(end())
 }
 
 fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
@@ -374,6 +380,32 @@ fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32> {
             Ok(minute)
         }
     })
+}
+
+fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
+    let hour = hour_parser().boxed();
+    let minute = minute_parser().boxed();
+    let second = second_parser().boxed();
+    hour.then_ignore(just(':'))
+        .then(minute)
+        .then_ignore(just(':'))
+        .then(second)
+        .try_map(|((hour, minute), (second, millisecond)), _| {
+            chrono::NaiveTime::from_hms_milli_opt(hour, minute, second, millisecond)
+                .ok_or(EmptyErr::default())
+        })
+}
+
+fn time_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
+    time_fragment_parser().then_ignore(end())
+}
+
+fn date_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
+    let date = date_fragment_parser().boxed();
+    let time = time_fragment_parser().boxed();
+    date.then_ignore(just('T'))
+        .then(time)
+        .map(|(date, time)| date.and_time(time))
 }
 
 fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32> {
@@ -415,27 +447,27 @@ mod tests {
 
     #[test]
     fn test_year_month_parser() {
-        assert_eq!(year_month_parser().parse("1Y2M").unwrap(), 14);
+        assert_eq!(year_month_fragment_parser().parse("1Y2M").unwrap(), 14);
     }
 
     #[test]
     fn test_year_month_parser_missing_year() {
-        assert_eq!(year_month_parser().parse("2M").unwrap(), 2);
+        assert_eq!(year_month_fragment_parser().parse("2M").unwrap(), 2);
     }
 
     #[test]
     fn test_year_month_parser_missing_month() {
-        assert_eq!(year_month_parser().parse("1Y").unwrap(), 12);
+        assert_eq!(year_month_fragment_parser().parse("1Y").unwrap(), 12);
     }
 
     #[test]
     fn test_year_month_parser_zero_year() {
-        assert_eq!(year_month_parser().parse("0Y2M").unwrap(), 2);
+        assert_eq!(year_month_fragment_parser().parse("0Y2M").unwrap(), 2);
     }
 
     #[test]
     fn test_year_month_parser_leading_zero() {
-        assert_eq!(year_month_parser().parse("01Y02M").unwrap(), 14);
+        assert_eq!(year_month_fragment_parser().parse("01Y02M").unwrap(), 14);
     }
 
     #[test]
@@ -456,7 +488,7 @@ mod tests {
     #[test]
     fn test_day_time_parser() {
         assert_eq!(
-            day_time_parser().parse("1DT2H3M4S").unwrap(),
+            day_time_fragment_parser().parse("1DT2H3M4S").unwrap(),
             chrono::Duration::days(1)
                 + chrono::Duration::hours(2)
                 + chrono::Duration::minutes(3)
@@ -467,7 +499,7 @@ mod tests {
     #[test]
     fn test_day_time_parser_with_fraction_seconds() {
         assert_eq!(
-            day_time_parser().parse("1DT2H3M4.5S").unwrap(),
+            day_time_fragment_parser().parse("1DT2H3M4.5S").unwrap(),
             chrono::Duration::days(1)
                 + chrono::Duration::hours(2)
                 + chrono::Duration::minutes(3)
@@ -479,7 +511,7 @@ mod tests {
     #[test]
     fn test_day_time_parser_with_fraction_seconds_long() {
         assert_eq!(
-            day_time_parser().parse("1DT2H3M4.5678S").unwrap(),
+            day_time_fragment_parser().parse("1DT2H3M4.5678S").unwrap(),
             chrono::Duration::days(1)
                 + chrono::Duration::hours(2)
                 + chrono::Duration::minutes(3)
@@ -491,7 +523,7 @@ mod tests {
     #[test]
     fn test_day_time_parser_just_days() {
         assert_eq!(
-            day_time_parser().parse("1D").unwrap(),
+            day_time_fragment_parser().parse("1D").unwrap(),
             chrono::Duration::days(1)
         );
     }
@@ -499,7 +531,7 @@ mod tests {
     #[test]
     fn test_day_time_parser_just_time() {
         assert_eq!(
-            day_time_parser().parse("T2H3M4S").unwrap(),
+            day_time_fragment_parser().parse("T2H3M4S").unwrap(),
             chrono::Duration::hours(2)
                 + chrono::Duration::minutes(3)
                 + chrono::Duration::seconds(4)
@@ -509,19 +541,19 @@ mod tests {
     #[test]
     fn test_day_time_parser_just_seconds() {
         assert_eq!(
-            day_time_parser().parse("T4S").unwrap(),
+            day_time_fragment_parser().parse("T4S").unwrap(),
             chrono::Duration::seconds(4)
         );
     }
 
     #[test]
     fn test_day_time_parser_empty_fails() {
-        assert!(day_time_parser().parse("").has_errors());
+        assert!(day_time_fragment_parser().parse("").has_errors());
     }
 
     #[test]
     fn test_day_time_parser_just_t_fails() {
-        assert!(day_time_parser().parse("T").has_errors());
+        assert!(day_time_fragment_parser().parse("T").has_errors());
     }
 
     #[test]
@@ -604,6 +636,11 @@ mod tests {
     }
 
     #[test]
+    fn test_date_parser_junk_fails() {
+        assert!(date_parser().parse("2020-01-02flurb").has_errors());
+    }
+
+    #[test]
     fn test_tz_parser_utc() {
         assert_eq!(
             tz_parser().parse("Z").unwrap(),
@@ -653,5 +690,49 @@ mod tests {
     #[test]
     fn test_tz_parser_offset_wrong_minutes_fails() {
         assert!(tz_parser().parse("+01:60").has_errors());
+    }
+
+    #[test]
+    fn test_time_parser() {
+        assert_eq!(
+            time_parser().parse("01:02:03.456").unwrap(),
+            chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_time_parser_no_ms() {
+        assert_eq!(
+            time_parser().parse("01:02:03").unwrap(),
+            chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 0).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_time_parser_fails() {
+        assert!(time_parser().parse("25:00:00").has_errors());
+    }
+
+    #[test]
+    fn test_time_parser_junk_fails() {
+        assert!(time_parser().parse("01:02:03.456flurb").has_errors());
+    }
+
+    #[test]
+    fn test_date_time_parser() {
+        assert_eq!(
+            date_time_parser().parse("2020-01-02T01:02:03.456").unwrap(),
+            chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
+                .unwrap()
+                .and_hms_milli_opt(1, 2, 3, 456)
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_date_time_parser_junk_fails() {
+        assert!(date_time_parser()
+            .parse("2020-01-02T01:02:03.456flurb")
+            .has_errors());
     }
 }
