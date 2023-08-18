@@ -96,7 +96,7 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => todo!(),
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
             atomic::Atomic::Duration(_, _) => Ok(self.clone()),
             atomic::Atomic::YearMonthDuration(months) => Ok(atomic::Atomic::Duration(
                 months,
@@ -133,6 +133,16 @@ impl atomic::Atomic {
         }
     }
 
+    fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok((months, duration)) => Ok(atomic::Atomic::Duration(months, duration)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
     fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
@@ -165,6 +175,10 @@ fn number_parser<'a>() -> impl Parser<'a, &'a str, u32> {
     digits_parser().map(|s| s.parse().unwrap())
 }
 
+fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool> {
+    just('-').or_not().map(|sign| sign.is_some())
+}
+
 fn milliseconds_parser<'a>() -> impl Parser<'a, &'a str, u32> {
     let digits = digits_parser().boxed();
     let seconds_with_fraction = digits
@@ -184,7 +198,7 @@ fn milliseconds_parser<'a>() -> impl Parser<'a, &'a str, u32> {
     seconds_with_fraction.or(seconds_without_fraction)
 }
 
-fn year_month_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
+fn year_month_parser<'a>() -> impl Parser<'a, &'a str, i64> {
     let number = number_parser().boxed();
     let year_y = number.clone().then_ignore(just('Y')).boxed();
     let month_m = number.then_ignore(just('M')).boxed();
@@ -194,22 +208,16 @@ fn year_month_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
         .map(|(years, months)| (years, months)))
     .or(year_y.map(|years| (years, 0)))
     .or(month_m.map(|months| (0, months)))
+    .map(|(years, months)| years as i64 * 12 + months as i64)
 }
 
 fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, i64> {
     let year_month = year_month_parser().boxed();
-    let sign = just('-').or_not().map(|sign| sign.is_some());
+    let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(year_month.clone())
         .then_ignore(end())
-        .map(|(sign, (years, months))| {
-            let total = years as i64 * 12 + months as i64;
-            if sign {
-                -total
-            } else {
-                total
-            }
-        })
+        .map(|(sign, months)| if sign { -months } else { months })
 }
 
 fn day_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
@@ -249,11 +257,33 @@ fn day_time_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
 
 fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
     let day_time = day_time_parser().boxed();
-    let sign = just('-').or_not().map(|sign| sign.is_some());
+    let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(day_time.clone())
         .then_ignore(end())
         .map(|(sign, duration)| if sign { -duration } else { duration })
+}
+
+fn duration_parser<'a>() -> impl Parser<'a, &'a str, (i64, chrono::Duration)> {
+    let year_month = year_month_parser().boxed();
+    let day_time = day_time_parser().boxed();
+    let sign = sign_parser();
+    sign.then_ignore(just('P'))
+        .then(year_month.clone().or_not())
+        .then(day_time.clone().or_not())
+        .then_ignore(end())
+        .try_map(|((sign, months), duration), _| {
+            if months.is_none() && duration.is_none() {
+                return Err(EmptyErr::default());
+            }
+            let months = months.unwrap_or(0);
+            let duration = duration.unwrap_or(chrono::Duration::seconds(0));
+            if sign {
+                Ok((-months, -duration))
+            } else {
+                Ok((months, duration))
+            }
+        })
 }
 
 #[cfg(test)]
@@ -262,27 +292,27 @@ mod tests {
 
     #[test]
     fn test_year_month_parser() {
-        assert_eq!(year_month_parser().parse("1Y2M").unwrap(), (1, 2));
+        assert_eq!(year_month_parser().parse("1Y2M").unwrap(), 14);
     }
 
     #[test]
     fn test_year_month_parser_missing_year() {
-        assert_eq!(year_month_parser().parse("2M").unwrap(), (0, 2));
+        assert_eq!(year_month_parser().parse("2M").unwrap(), 2);
     }
 
     #[test]
     fn test_year_month_parser_missing_month() {
-        assert_eq!(year_month_parser().parse("1Y").unwrap(), (1, 0));
+        assert_eq!(year_month_parser().parse("1Y").unwrap(), 12);
     }
 
     #[test]
     fn test_year_month_parser_zero_year() {
-        assert_eq!(year_month_parser().parse("0Y2M").unwrap(), (0, 2));
+        assert_eq!(year_month_parser().parse("0Y2M").unwrap(), 2);
     }
 
     #[test]
     fn test_year_month_parser_leading_zero() {
-        assert_eq!(year_month_parser().parse("01Y02M").unwrap(), (1, 2));
+        assert_eq!(year_month_parser().parse("01Y02M").unwrap(), 14);
     }
 
     #[test]
@@ -369,5 +399,40 @@ mod tests {
     #[test]
     fn test_day_time_parser_just_t_fails() {
         assert!(day_time_parser().parse("T").has_errors());
+    }
+
+    #[test]
+    fn test_duration_parser() {
+        assert_eq!(
+            duration_parser().parse("P1Y2M3DT4H5M6S").unwrap(),
+            (
+                14,
+                chrono::Duration::days(3)
+                    + chrono::Duration::hours(4)
+                    + chrono::Duration::minutes(5)
+                    + chrono::Duration::seconds(6)
+            )
+        );
+    }
+
+    #[test]
+    fn test_duration_parser_just_months() {
+        assert_eq!(
+            duration_parser().parse("P1Y2M").unwrap(),
+            (14, chrono::Duration::seconds(0))
+        );
+    }
+
+    #[test]
+    fn test_duration_parser_just_days() {
+        assert_eq!(
+            duration_parser().parse("P1D").unwrap(),
+            (0, chrono::Duration::days(1))
+        );
+    }
+
+    #[test]
+    fn test_duration_parser_nothing() {
+        assert!(duration_parser().parse("P").has_errors());
     }
 }

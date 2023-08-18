@@ -103,7 +103,7 @@ impl atomic::Atomic {
             Xs::Double => self.cast_to_double(),
             Xs::Decimal => self.cast_to_decimal(),
             Xs::Integer => self.cast_to_integer(),
-            Xs::Duration => todo!(),
+            Xs::Duration => self.cast_to_duration(),
             Xs::YearMonthDuration => self.cast_to_year_month_duration(),
             Xs::DayTimeDuration => self.cast_to_day_time_duration(),
             Xs::DateTime => todo!(),

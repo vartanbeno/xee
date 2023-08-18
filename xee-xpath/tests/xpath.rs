@@ -996,6 +996,18 @@ fn test_cast_as_day_time_duration_back_to_string2() {
 }
 
 #[test]
+fn test_cast_duration_back_to_string() {
+    assert_debug_snapshot!(run(
+        "('P1Y2M3DT4H5M6S' cast as xs:duration) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_cast_duration_back_to_string2() {
+    assert_debug_snapshot!(run("('P20M' cast as xs:duration) cast as xs:string"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"('P20M' cast as xs:duration) cast as xs:string\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "P1Y8M",
+                ),
+            ),
+        ),
+    },
+)
