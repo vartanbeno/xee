@@ -79,8 +79,6 @@ fn test_concat() {
     Tests::all("fn/concat")
         // fn:upper-case
         .exclude("fn-concat-9")
-        // instance of
-        .exclude("K-ConcatFunc-4 K-ConcatFunc-5")
         .run()
 }
 
@@ -98,8 +96,8 @@ fn test_cast() {
         .include("casthc*")
         // canonical float representation rules
         .exclude("casthc17 casthc18")
-        // date, time
-        .exclude("casthc28 casthc29 casthc30 casthc31 casthc32 casthc33 casthc34 casthc35 casthc36")
+        // casting across different date/time types not supported yet
+        .exclude("casthc30 casthc31 casthc33")
         .run()
 }
 

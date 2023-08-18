@@ -165,13 +165,12 @@ impl atomic::Atomic {
         let seconds = seconds.abs();
         let hours = seconds / 3600;
         let minutes = (seconds % 3600) / 60;
-        let seconds = seconds % 60;
         if is_negative {
             s.push('-');
         } else {
             s.push('+');
         }
-        s.push_str(&format!("{:02}:{:02}:{02}", hours, minutes, seconds));
+        s.push_str(&format!("{:02}:{:02}", hours, minutes));
     }
 
     // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
