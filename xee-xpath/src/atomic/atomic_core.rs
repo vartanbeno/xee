@@ -18,6 +18,9 @@ use super::cast_datetime::{
 };
 use super::comparison;
 
+// We try to maintain this struct as size 16 as it's cloned a lot during normal
+// operation. Anything bigger we stuff in an Rc
+
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, Eq)]
 pub enum Atomic {

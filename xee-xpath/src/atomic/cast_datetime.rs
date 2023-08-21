@@ -411,9 +411,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = duration_parser();
         match parser.parse(&s).into_result() {
-            Ok((months, duration)) => Ok(atomic::Atomic::Duration(Rc::new(Duration::new(
-                months, duration,
-            )))),
+            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -490,6 +488,15 @@ impl atomic::Atomic {
             Err(_) => Err(error::Error::FORG0001),
         }
     }
+
+    // fn parse_g_year(s: &str) -> error::Result<atomic::Atomic> {
+    //     let s = whitespace_collapse(s);
+    //     let parser = year_parser();
+    //     match parser.parse(&s).into_result() {
+    //         Ok((year, tz)) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(year, tz)))),
+    //         Err(_) => Err(error::Error::FORG0001),
+    //     }
+    // }
 }
 
 fn digit_parser<'a>() -> impl Parser<'a, &'a str, char> {
@@ -596,7 +603,7 @@ fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
         .map(|(sign, duration)| if sign { -duration } else { duration })
 }
 
-fn duration_parser<'a>() -> impl Parser<'a, &'a str, (i64, chrono::Duration)> {
+fn duration_parser<'a>() -> impl Parser<'a, &'a str, Duration> {
     let year_month = year_month_fragment_parser().boxed();
     let day_time = day_time_fragment_parser().boxed();
     let sign = sign_parser();
@@ -611,9 +618,9 @@ fn duration_parser<'a>() -> impl Parser<'a, &'a str, (i64, chrono::Duration)> {
             let months = months.unwrap_or(0);
             let duration = duration.unwrap_or(chrono::Duration::seconds(0));
             if sign {
-                Ok((-months, -duration))
+                Ok(Duration::new(-months, -duration))
             } else {
-                Ok((months, duration))
+                Ok(Duration::new(months, duration))
             }
         })
 }
@@ -783,46 +790,10 @@ fn tz_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
     just('Z').to(chrono::offset::Utc.fix()).or(offset)
 }
 
-// pub(crate) struct DateTimeParsers<'input, 'parser: 'input> {
-//     pub(crate) duration: BoxedParser<'input, 'parser, (i64, chrono::Duration)>,
-//     pub(crate) year_month_duration: BoxedParser<'input, 'parser, i64>,
-//     pub(crate) day_time_duration: BoxedParser<'input, 'parser, chrono::Duration>,
-//     pub(crate) date_time:
-//         BoxedParser<'input, 'parser, (chrono::NaiveDateTime, Option<chrono::FixedOffset>)>,
-//     pub(crate) date_time_stamp: BoxedParser<'input, 'parser, chrono::DateTime<chrono::FixedOffset>>,
-//     pub(crate) time: BoxedParser<'input, 'parser, (chrono::NaiveTime, Option<chrono::FixedOffset>)>,
-//     pub(crate) date: BoxedParser<'input, 'parser, (chrono::NaiveDate, Option<chrono::FixedOffset>)>,
-// }
-
-// impl<'input, 'parser: 'input> DateTimeParsers<'input, 'parser> {
-//     pub(crate) fn new() -> DateTimeParsers<'input, 'parser> {
-//         let duration = duration_parser().boxed();
-//         let year_month_duration = year_month_duration_parser().boxed();
-//         let day_time_duration = day_time_duration_parser().boxed();
-//         let date_time = date_time_parser().boxed();
-//         let date_time_stamp = date_time_stamp_parser().boxed();
-//         let time = time_parser().boxed();
-//         let date = date_parser().boxed();
-//         Self {
-//             duration,
-//             year_month_duration,
-//             day_time_duration,
-//             date_time,
-//             date_time_stamp,
-//             time,
-//             date,
-//         }
-//     }
-
-//     fn parse_duration<'s: 'input>(&'parser self, s: &'s str) -> error::Result<atomic::Atomic> {
-//         let s = whitespace_collapse(s);
-//         self.duration.parse(&s);
-//         todo!();
-//         // match self.duration.parse(&s).into_result() {
-//         //     Ok((months, duration)) => Ok(atomic::Atomic::Duration(months, duration)),
-//         //     Err(_) => Err(error::Error::FORG0001),
-//         // }
-//     }
+// fn g_year_parser<'a>() -> impl Parser<'a, &'a str, (i32, Option<chrono::FixedOffset>)> {
+//     let year = year_parser().boxed();
+//     let tz = tz_parser().boxed();
+//     year.then(tz.or_not()).then_ignore(end())
 // }
 
 #[cfg(test)]
@@ -944,7 +915,7 @@ mod tests {
     fn test_duration_parser() {
         assert_eq!(
             duration_parser().parse("P1Y2M3DT4H5M6S").unwrap(),
-            (
+            Duration::new(
                 14,
                 chrono::Duration::days(3)
                     + chrono::Duration::hours(4)
@@ -958,7 +929,7 @@ mod tests {
     fn test_duration_parser_just_months() {
         assert_eq!(
             duration_parser().parse("P1Y2M").unwrap(),
-            (14, chrono::Duration::seconds(0))
+            Duration::new(14, chrono::Duration::seconds(0))
         );
     }
 
@@ -966,7 +937,7 @@ mod tests {
     fn test_duration_parser_just_days() {
         assert_eq!(
             duration_parser().parse("P1D").unwrap(),
-            (0, chrono::Duration::days(1))
+            Duration::new(0, chrono::Duration::days(1))
         );
     }
 
