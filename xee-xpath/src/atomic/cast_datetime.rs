@@ -1,11 +1,8 @@
-use std::cmp::Ordering;
-use std::rc::Rc;
-
-use chrono::Offset;
-use chrono::TimeZone;
-use chrono::Timelike;
+use chrono::{Datelike, Offset, TimeZone, Timelike};
 use chumsky::prelude::*;
 use rust_decimal::prelude::*;
+use std::cmp::Ordering;
+use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;
@@ -428,7 +425,16 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
             atomic::Atomic::DateTime(_) => Ok(self.clone()),
-            // TODO
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(
+                NaiveDateTimeWithOffset::new(date_time.naive_utc(), Some(date_time.offset().fix())),
+            ))),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::DateTime(Rc::new(
+                NaiveDateTimeWithOffset::new(
+                    date.date
+                        .and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
+                    date.offset,
+                ),
+            ))),
             _ => Err(error::Error::Type),
         }
     }
@@ -438,8 +444,17 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_date_time_stamp(&s)
             }
+            atomic::Atomic::DateTime(date_time) => {
+                if let Some(offset) = date_time.offset {
+                    Ok(atomic::Atomic::DateTimeStamp(Rc::new(
+                        chrono::DateTime::from_utc(date_time.date_time, offset),
+                    )))
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
             atomic::Atomic::DateTimeStamp(_) => Ok(self.clone()),
-            // TODO
+
             _ => Err(error::Error::Type),
         }
     }
@@ -447,8 +462,13 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Time(Rc::new(
+                NaiveTimeWithOffset::new(date_time.date_time.time(), date_time.offset),
+            ))),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::Time(Rc::new(
+                NaiveTimeWithOffset::new(date_time.time(), Some(date_time.offset().fix())),
+            ))),
             atomic::Atomic::Time(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -456,8 +476,16 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Date(Rc::new(
+                NaiveDateWithOffset::new(date_time.date_time.date(), date_time.offset),
+            ))),
+            atomic::Atomic::DateTimeStamp(date_time) => {
+                Ok(atomic::Atomic::Date(Rc::new(NaiveDateWithOffset::new(
+                    date_time.naive_utc().date(),
+                    Some(date_time.offset().fix()),
+                ))))
+            }
             atomic::Atomic::Date(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -467,8 +495,26 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_year_month(&s)
             }
+            atomic::Atomic::DateTime(date_time) => {
+                Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
+                    date_time.date_time.year(),
+                    date_time.date_time.month(),
+                    date_time.offset,
+                ))))
+            }
+            atomic::Atomic::DateTimeStamp(date_time) => {
+                Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
+                    date_time.year(),
+                    date_time.month(),
+                    Some(date_time.offset().fix()),
+                ))))
+            }
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
+                date.date.year(),
+                date.date.month(),
+                date.offset,
+            )))),
             atomic::Atomic::GYearMonth(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -476,8 +522,18 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_g_year(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_year(&s),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(
+                date_time.date_time.year(),
+                date_time.offset,
+            )))),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GYear(Rc::new(
+                GYear::new(date_time.year(), Some(date_time.offset().fix())),
+            ))),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(
+                date.date.year(),
+                date.offset,
+            )))),
             atomic::Atomic::GYear(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -487,8 +543,26 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_month_day(&s)
             }
+            atomic::Atomic::DateTime(date_time) => {
+                Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
+                    date_time.date_time.month(),
+                    date_time.date_time.day(),
+                    date_time.offset,
+                ))))
+            }
+            atomic::Atomic::DateTimeStamp(date_time) => {
+                Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
+                    date_time.month(),
+                    date_time.day(),
+                    Some(date_time.offset().fix()),
+                ))))
+            }
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
+                date.date.month(),
+                date.date.day(),
+                date.offset,
+            )))),
             atomic::Atomic::GMonthDay(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -496,8 +570,18 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_g_day(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_day(&s),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GDay(Rc::new(GDay::new(
+                date_time.date_time.day(),
+                date_time.offset,
+            )))),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GDay(Rc::new(
+                GDay::new(date_time.day(), Some(date_time.offset().fix())),
+            ))),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GDay(Rc::new(GDay::new(
+                date.date.day(),
+                date.offset,
+            )))),
             atomic::Atomic::GDay(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
@@ -505,19 +589,50 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_g_month(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_month(&s),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GMonth(Rc::new(
+                GMonth::new(date_time.date_time.month(), date_time.offset),
+            ))),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GMonth(Rc::new(
+                GMonth::new(date_time.month(), Some(date_time.offset().fix())),
+            ))),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonth(Rc::new(GMonth::new(
+                date.date.month(),
+                date.offset,
+            )))),
             atomic::Atomic::GMonth(_) => Ok(self.clone()),
-            // TODO
             _ => Err(error::Error::Type),
         }
     }
 
-    fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
+    fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
-        let parser = date_parser();
+        let parser = duration_parser();
         match parser.parse(&s).into_result() {
-            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
+            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = year_month_duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_day_time_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = day_time_duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -544,28 +659,6 @@ impl atomic::Atomic {
         }
     }
 
-    fn parse_day_time_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = day_time_duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
     fn parse_time(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
@@ -577,13 +670,22 @@ impl atomic::Atomic {
         }
     }
 
-    fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
+    fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
-        let parser = year_month_duration_parser();
+        let parser = date_parser();
         match parser.parse(&s).into_result() {
-            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
+            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_g_year_month(s: &str) -> error::Result<atomic::Atomic> {
+        let s = whitespace_collapse(s);
+        let parser = g_year_month_parser();
+        match parser.parse(&s).into_result() {
+            Ok(g_year_month) => Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -597,11 +699,11 @@ impl atomic::Atomic {
         }
     }
 
-    fn parse_g_month(s: &str) -> error::Result<atomic::Atomic> {
+    fn parse_g_month_day(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
-        let parser = g_month_parser();
+        let parser = g_month_day_parser();
         match parser.parse(&s).into_result() {
-            Ok(g_month) => Ok(atomic::Atomic::GMonth(Rc::new(g_month))),
+            Ok(g_month_day) => Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -615,20 +717,11 @@ impl atomic::Atomic {
         }
     }
 
-    fn parse_g_month_day(s: &str) -> error::Result<atomic::Atomic> {
+    fn parse_g_month(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
-        let parser = g_month_day_parser();
+        let parser = g_month_parser();
         match parser.parse(&s).into_result() {
-            Ok(g_month_day) => Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_g_year_month(s: &str) -> error::Result<atomic::Atomic> {
-        let s = whitespace_collapse(s);
-        let parser = g_year_month_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_year_month) => Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month))),
+            Ok(g_month) => Ok(atomic::Atomic::GMonth(Rc::new(g_month))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
