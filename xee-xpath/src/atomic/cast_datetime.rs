@@ -54,9 +54,19 @@ impl Duration {
     }
 }
 
-pub(crate) struct NaiveDateTimeWithOffset {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl NaiveDateTimeWithOffset {
+    pub(crate) fn new(
+        date_time: chrono::NaiveDateTime,
+        offset: Option<chrono::FixedOffset>,
+    ) -> Self {
+        Self { date_time, offset }
+    }
 }
 
 pub(crate) struct NaiveTimeWithOffset {
@@ -81,11 +91,11 @@ impl atomic::Atomic {
         s.push('P');
         if months != 0 && duration.num_milliseconds() != 0 {
             Self::push_canonical_year_month_duration_fragment(&mut s, months);
-            Self::push_canonical_day_time_duration_fragment(&mut s, duration);
+            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
         } else if months != 0 {
             Self::push_canonical_year_month_duration_fragment(&mut s, months);
         } else {
-            Self::push_canonical_day_time_duration_fragment(&mut s, duration);
+            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
         }
         s
     }
@@ -116,7 +126,7 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn canonical_day_time_duration(duration: chrono::Duration) -> String {
+    pub(crate) fn canonical_day_time_duration(duration: &chrono::Duration) -> String {
         let mut s = String::new();
         if duration.num_milliseconds() < 0 {
             s.push('-');
@@ -126,7 +136,7 @@ impl atomic::Atomic {
         s
     }
 
-    fn push_canonical_day_time_duration_fragment(v: &mut String, duration: chrono::Duration) {
+    fn push_canonical_day_time_duration_fragment(v: &mut String, duration: &chrono::Duration) {
         // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duDTCan
         let ss = duration.num_milliseconds().abs();
         let ss = (ss as f64) / 1000.0;
@@ -156,11 +166,10 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn canonical_date_time(
-        date_time: chrono::NaiveDateTime,
-        offset: Option<chrono::FixedOffset>,
-    ) -> String {
+    pub(crate) fn canonical_date_time(date_time: &NaiveDateTimeWithOffset) -> String {
         let mut s = String::new();
+        let offset = date_time.offset;
+        let date_time = date_time.date_time;
         s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
         let millis = date_time.timestamp_subsec_millis();
         if !millis.is_zero() {
@@ -242,7 +251,7 @@ impl atomic::Atomic {
                 Rc::new(Duration::from_year_month(year_month_duration)),
             )),
             atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_day_time(duration),
+                Duration::from_day_time(duration.as_ref().clone()),
             ))),
             _ => Err(error::Error::Type),
         }
@@ -270,11 +279,11 @@ impl atomic::Atomic {
                 Self::parse_day_time_duration(&s)
             }
             atomic::Atomic::Duration(duration) => {
-                Ok(atomic::Atomic::DayTimeDuration(duration.day_time))
+                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
             }
-            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(
-                chrono::Duration::seconds(0),
-            )),
+            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
+                chrono::Duration::zero(),
+            ))),
             atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
             _ => Err(error::Error::Type),
         }
@@ -283,7 +292,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_date_time(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
-            atomic::Atomic::DateTime(_, _) => Ok(self.clone()),
+            atomic::Atomic::DateTime(_) => Ok(self.clone()),
             // TODO
             _ => Err(error::Error::Type),
         }
@@ -349,7 +358,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = day_time_duration_parser();
         match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(duration)),
+            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -360,7 +369,9 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = date_time_parser();
         match parser.parse(&s).into_result() {
-            Ok((date_time, tz)) => Ok(atomic::Atomic::DateTime(date_time, tz)),
+            Ok((date_time, tz)) => Ok(atomic::Atomic::DateTime(Rc::new(
+                NaiveDateTimeWithOffset::new(date_time, tz),
+            ))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }

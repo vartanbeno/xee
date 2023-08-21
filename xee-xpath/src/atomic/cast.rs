@@ -52,11 +52,9 @@ impl atomic::Atomic {
                 Self::canonical_year_month_duration(year_month)
             }
             atomic::Atomic::DayTimeDuration(duration) => {
-                Self::canonical_day_time_duration(duration)
+                Self::canonical_day_time_duration(duration.as_ref())
             }
-            atomic::Atomic::DateTime(date_time, offset) => {
-                Self::canonical_date_time(date_time, offset)
-            }
+            atomic::Atomic::DateTime(date_time) => Self::canonical_date_time(date_time.as_ref()),
             atomic::Atomic::DateTimeStamp(date_time) => Self::canonical_date_time_stamp(date_time),
             atomic::Atomic::Time(time, offset) => Self::canonical_time(time, offset),
             atomic::Atomic::Date(date, offset) => Self::canonical_date(date, offset),

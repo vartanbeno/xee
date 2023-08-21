@@ -12,7 +12,7 @@ use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
 use super::arithmetic;
-use super::cast_datetime::{Duration, YearMonthDuration};
+use super::cast_datetime::{Duration, NaiveDateTimeWithOffset, YearMonthDuration};
 use super::comparison;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -26,8 +26,8 @@ pub enum Atomic {
     Integer(IntegerType, Rc<IBig>),
     Duration(Rc<Duration>),
     YearMonthDuration(YearMonthDuration),
-    DayTimeDuration(chrono::Duration),
-    DateTime(chrono::NaiveDateTime, Option<chrono::FixedOffset>),
+    DayTimeDuration(Rc<chrono::Duration>),
+    DateTime(Rc<NaiveDateTimeWithOffset>),
     DateTimeStamp(chrono::DateTime<chrono::FixedOffset>),
     Time(chrono::NaiveTime, Option<chrono::FixedOffset>),
     Date(chrono::NaiveDate, Option<chrono::FixedOffset>),
@@ -137,7 +137,7 @@ impl Atomic {
             Atomic::DayTimeDuration(_) => Xs::DayTimeDuration,
             Atomic::Time(_, _) => Xs::Time,
             Atomic::Date(_, _) => Xs::Date,
-            Atomic::DateTime(_, _) => Xs::DateTime,
+            Atomic::DateTime(_) => Xs::DateTime,
             Atomic::DateTimeStamp(_) => Xs::DateTimeStamp,
             Atomic::GYearMonth(_, _, _) => Xs::GYearMonth,
             Atomic::GYear(_, _) => Xs::GYear,

@@ -7,8 +7,10 @@ Ok(
         stack_value: One(
             Atomic(
                 DateTime(
-                    2019-01-01T00:00:00,
-                    None,
+                    NaiveDateTimeWithOffset {
+                        date_time: 2019-01-01T00:00:00,
+                        offset: None,
+                    },
                 ),
             ),
         ),
