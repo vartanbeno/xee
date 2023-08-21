@@ -55,7 +55,9 @@ impl atomic::Atomic {
                 Self::canonical_day_time_duration(duration.as_ref())
             }
             atomic::Atomic::DateTime(date_time) => Self::canonical_date_time(date_time.as_ref()),
-            atomic::Atomic::DateTimeStamp(date_time) => Self::canonical_date_time_stamp(date_time),
+            atomic::Atomic::DateTimeStamp(date_time) => {
+                Self::canonical_date_time_stamp(date_time.as_ref())
+            }
             atomic::Atomic::Time(time, offset) => Self::canonical_time(time, offset),
             atomic::Atomic::Date(date, offset) => Self::canonical_date(date, offset),
             atomic::Atomic::GYearMonth(_, _, _) => todo!(),

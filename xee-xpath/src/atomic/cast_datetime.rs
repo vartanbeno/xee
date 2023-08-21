@@ -182,7 +182,7 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn canonical_date_time_stamp(
-        date_time: chrono::DateTime<chrono::FixedOffset>,
+        date_time: &chrono::DateTime<chrono::FixedOffset>,
     ) -> String {
         let mut s = String::new();
         s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
@@ -382,7 +382,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = date_time_stamp_parser();
         match parser.parse(&s).into_result() {
-            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(date_time)),
+            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(Rc::new(date_time))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }

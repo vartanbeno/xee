@@ -28,7 +28,7 @@ pub enum Atomic {
     YearMonthDuration(YearMonthDuration),
     DayTimeDuration(Rc<chrono::Duration>),
     DateTime(Rc<NaiveDateTimeWithOffset>),
-    DateTimeStamp(chrono::DateTime<chrono::FixedOffset>),
+    DateTimeStamp(Rc<chrono::DateTime<chrono::FixedOffset>>),
     Time(chrono::NaiveTime, Option<chrono::FixedOffset>),
     Date(chrono::NaiveDate, Option<chrono::FixedOffset>),
     GYearMonth(i64, chrono::Month, Option<chrono::FixedOffset>),
