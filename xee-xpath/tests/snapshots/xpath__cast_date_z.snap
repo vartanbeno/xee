@@ -7,10 +7,12 @@ Ok(
         stack_value: One(
             Atomic(
                 Date(
-                    2019-01-01,
-                    Some(
-                        +00:00,
-                    ),
+                    NaiveDateWithOffset {
+                        date: 2019-01-01,
+                        offset: Some(
+                            +00:00,
+                        ),
+                    },
                 ),
             ),
         ),

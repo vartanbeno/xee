@@ -58,8 +58,8 @@ impl atomic::Atomic {
             atomic::Atomic::DateTimeStamp(date_time) => {
                 Self::canonical_date_time_stamp(date_time.as_ref())
             }
-            atomic::Atomic::Time(time, offset) => Self::canonical_time(time, offset),
-            atomic::Atomic::Date(date, offset) => Self::canonical_date(date, offset),
+            atomic::Atomic::Time(time) => Self::canonical_time(time.as_ref()),
+            atomic::Atomic::Date(date) => Self::canonical_date(date.as_ref()),
             atomic::Atomic::GYearMonth(_, _, _) => todo!(),
             atomic::Atomic::GYear(_, _) => todo!(),
             atomic::Atomic::GMonthDay(_, _, _) => todo!(),

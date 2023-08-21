@@ -12,7 +12,9 @@ use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
 use super::arithmetic;
-use super::cast_datetime::{Duration, NaiveDateTimeWithOffset, YearMonthDuration};
+use super::cast_datetime::{
+    Duration, NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
+};
 use super::comparison;
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
@@ -29,8 +31,8 @@ pub enum Atomic {
     DayTimeDuration(Rc<chrono::Duration>),
     DateTime(Rc<NaiveDateTimeWithOffset>),
     DateTimeStamp(Rc<chrono::DateTime<chrono::FixedOffset>>),
-    Time(chrono::NaiveTime, Option<chrono::FixedOffset>),
-    Date(chrono::NaiveDate, Option<chrono::FixedOffset>),
+    Time(Rc<NaiveTimeWithOffset>),
+    Date(Rc<NaiveDateWithOffset>),
     GYearMonth(i64, chrono::Month, Option<chrono::FixedOffset>),
     GYear(i64, Option<chrono::FixedOffset>),
     GMonthDay(chrono::Month, u8, Option<chrono::FixedOffset>),
@@ -135,8 +137,8 @@ impl Atomic {
             Atomic::Duration(_) => Xs::Duration,
             Atomic::YearMonthDuration(_) => Xs::YearMonthDuration,
             Atomic::DayTimeDuration(_) => Xs::DayTimeDuration,
-            Atomic::Time(_, _) => Xs::Time,
-            Atomic::Date(_, _) => Xs::Date,
+            Atomic::Time(_) => Xs::Time,
+            Atomic::Date(_) => Xs::Date,
             Atomic::DateTime(_) => Xs::DateTime,
             Atomic::DateTimeStamp(_) => Xs::DateTimeStamp,
             Atomic::GYearMonth(_, _, _) => Xs::GYearMonth,

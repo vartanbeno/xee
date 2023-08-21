@@ -69,14 +69,28 @@ impl NaiveDateTimeWithOffset {
     }
 }
 
-pub(crate) struct NaiveTimeWithOffset {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
-pub(crate) struct NaiveDateWithOffset {
+impl NaiveTimeWithOffset {
+    pub(crate) fn new(time: chrono::NaiveTime, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { time, offset }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
     pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl NaiveDateWithOffset {
+    pub(crate) fn new(date: chrono::NaiveDate, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { date, offset }
+    }
 }
 
 impl atomic::Atomic {
@@ -195,11 +209,10 @@ impl atomic::Atomic {
         s
     }
 
-    pub(crate) fn canonical_time(
-        time: chrono::NaiveTime,
-        offset: Option<chrono::FixedOffset>,
-    ) -> String {
+    pub(crate) fn canonical_time(time: &NaiveTimeWithOffset) -> String {
         let mut s = String::new();
+        let offset = time.offset;
+        let time = time.time;
         s.push_str(&time.format("%H:%M:%S").to_string());
         let millis = time.nanosecond() / 1_000_000;
         if !millis.is_zero() {
@@ -211,11 +224,10 @@ impl atomic::Atomic {
         s
     }
 
-    pub(crate) fn canonical_date(
-        date: chrono::NaiveDate,
-        offset: Option<chrono::FixedOffset>,
-    ) -> String {
+    pub(crate) fn canonical_date(date: &NaiveDateWithOffset) -> String {
         let mut s = String::new();
+        let offset = date.offset;
+        let date = date.date;
         s.push_str(&date.format("%Y-%m-%d").to_string());
         if let Some(offset) = offset {
             Self::push_canonical_time_zone_offset(&mut s, &offset);
@@ -312,7 +324,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
-            atomic::Atomic::Time(_, _) => Ok(self.clone()),
+            atomic::Atomic::Time(_) => Ok(self.clone()),
             // TODO
             _ => Err(error::Error::Type),
         }
@@ -321,7 +333,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
-            atomic::Atomic::Date(_, _) => Ok(self.clone()),
+            atomic::Atomic::Date(_) => Ok(self.clone()),
             // TODO
             _ => Err(error::Error::Type),
         }
@@ -393,7 +405,9 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = time_parser();
         match parser.parse(&s).into_result() {
-            Ok((time, tz)) => Ok(atomic::Atomic::Time(time, tz)),
+            Ok((time, tz)) => Ok(atomic::Atomic::Time(Rc::new(NaiveTimeWithOffset::new(
+                time, tz,
+            )))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -404,7 +418,9 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = date_parser();
         match parser.parse(&s).into_result() {
-            Ok((date, tz)) => Ok(atomic::Atomic::Date(date, tz)),
+            Ok((date, tz)) => Ok(atomic::Atomic::Date(Rc::new(NaiveDateWithOffset::new(
+                date, tz,
+            )))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }

@@ -7,8 +7,10 @@ Ok(
         stack_value: One(
             Atomic(
                 Time(
-                    00:00:00,
-                    None,
+                    NaiveTimeWithOffset {
+                        time: 00:00:00,
+                        offset: None,
+                    },
                 ),
             ),
         ),
