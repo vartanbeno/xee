@@ -48,8 +48,8 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Integer(_, i) => i.to_string(),
             atomic::Atomic::Duration(duration) => Self::canonical_duration(duration.as_ref()),
-            atomic::Atomic::YearMonthDuration(months) => {
-                Self::canonical_year_month_duration(months)
+            atomic::Atomic::YearMonthDuration(year_month) => {
+                Self::canonical_year_month_duration(year_month)
             }
             atomic::Atomic::DayTimeDuration(duration) => {
                 Self::canonical_day_time_duration(duration)

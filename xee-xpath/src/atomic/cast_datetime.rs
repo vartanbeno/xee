@@ -15,8 +15,14 @@ use super::cast::whitespace_collapse;
 pub(crate) type BoxedParser<'a, 'b, T> = Boxed<'a, 'b, &'a str, T, extra::Default>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct YearMonthDuration {
+pub struct YearMonthDuration {
     pub(crate) months: i64,
+}
+
+impl YearMonthDuration {
+    pub(crate) fn new(months: i64) -> Self {
+        Self { months }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,14 +39,14 @@ impl Duration {
         }
     }
 
-    pub(crate) fn from_months(months: i64) -> Self {
+    pub(crate) fn from_year_month(year_month_duration: YearMonthDuration) -> Self {
         Self {
-            year_month: YearMonthDuration { months },
+            year_month: year_month_duration,
             day_time: chrono::Duration::zero(),
         }
     }
 
-    pub(crate) fn from_chrono_duration(duration: chrono::Duration) -> Self {
+    pub(crate) fn from_day_time(duration: chrono::Duration) -> Self {
         Self {
             year_month: YearMonthDuration { months: 0 },
             day_time: duration,
@@ -84,8 +90,9 @@ impl atomic::Atomic {
         s
     }
 
-    pub(crate) fn canonical_year_month_duration(months: i64) -> String {
+    pub(crate) fn canonical_year_month_duration(year_month: YearMonthDuration) -> String {
         let mut s = String::new();
+        let months = year_month.months;
         if months < 0 {
             s.push('-');
         }
@@ -231,11 +238,11 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
             atomic::Atomic::Duration(_) => Ok(self.clone()),
-            atomic::Atomic::YearMonthDuration(months) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_months(months),
-            ))),
+            atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
+                Rc::new(Duration::from_year_month(year_month_duration)),
+            )),
             atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_chrono_duration(duration),
+                Duration::from_day_time(duration),
             ))),
             _ => Err(error::Error::Type),
         }
@@ -247,10 +254,12 @@ impl atomic::Atomic {
                 Self::parse_year_month_duration(&s)
             }
             atomic::Atomic::Duration(duration) => Ok(atomic::Atomic::YearMonthDuration(
-                duration.year_month.months,
+                duration.year_month.clone(),
             )),
             atomic::Atomic::YearMonthDuration(_) => Ok(self.clone()),
-            atomic::Atomic::DayTimeDuration(_) => Ok(atomic::Atomic::YearMonthDuration(0)),
+            atomic::Atomic::DayTimeDuration(_) => {
+                Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
+            }
             _ => Err(error::Error::Type),
         }
     }
@@ -327,7 +336,9 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = year_month_duration_parser();
         match parser.parse(&s).into_result() {
-            Ok(months) => Ok(atomic::Atomic::YearMonthDuration(months)),
+            Ok(months) => Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(
+                months,
+            ))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }

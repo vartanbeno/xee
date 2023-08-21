@@ -7,7 +7,9 @@ Ok(
         stack_value: One(
             Atomic(
                 YearMonthDuration(
-                    14,
+                    YearMonthDuration {
+                        months: 14,
+                    },
                 ),
             ),
         ),
