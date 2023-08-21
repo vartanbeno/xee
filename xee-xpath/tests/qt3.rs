@@ -167,10 +167,6 @@ fn test_instance_of_expr() {
     Tests::all("prod/InstanceofExpr")
         // xs:NMTOKENS
         .exclude("instanceof111")
-        // function types, higher order functions
-        .exclude(
-            "instanceof12? instanceof130 instanceof131 instanceof132 instanceof133 instanceof134",
-        )
         // various non-types which should error out
         .exclude("K-SeqExprInstanceOf-49 K-SeqExprInstanceOf-5?")
         .run()
