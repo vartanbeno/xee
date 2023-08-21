@@ -96,8 +96,6 @@ fn test_cast() {
         .include("casthc*")
         // canonical float representation rules
         .exclude("casthc17 casthc18")
-        // casting across different date/time types not supported yet
-        .exclude("casthc30 casthc31 casthc33")
         .run()
 }
 
