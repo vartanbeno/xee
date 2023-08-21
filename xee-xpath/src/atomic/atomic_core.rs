@@ -12,11 +12,11 @@ use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
 use super::arithmetic;
-use super::cast_datetime::{
+use super::comparison::{self, ComparisonOps};
+use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::comparison::{self, ComparisonOps};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc

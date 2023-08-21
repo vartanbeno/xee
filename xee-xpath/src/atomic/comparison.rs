@@ -7,8 +7,8 @@ use rust_decimal::prelude::*;
 use crate::atomic;
 use crate::error;
 
-use super::cast_datetime::YearMonthDuration;
 use super::cast_numeric::cast_numeric_binary;
+use super::datetime::YearMonthDuration;
 
 // simulate trait alias
 pub(crate) trait ComparisonOps:
