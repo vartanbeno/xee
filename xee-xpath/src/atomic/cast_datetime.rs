@@ -160,14 +160,44 @@ impl GMonth {
 }
 
 impl atomic::Atomic {
-    pub(crate) fn canonical_date(date: &NaiveDateWithOffset) -> String {
+    pub(crate) fn canonical_duration(duration: &Duration) -> String {
+        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-durationCanMap
         let mut s = String::new();
-        let offset = date.offset;
-        let date = date.date;
-        s.push_str(&date.format("%Y-%m-%d").to_string());
-        if let Some(offset) = offset {
-            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        let months = duration.year_month.months;
+        let duration = duration.day_time;
+        if months < 0 || duration.num_milliseconds() < 0 {
+            s.push('-');
         }
+        s.push('P');
+        if months != 0 && duration.num_milliseconds() != 0 {
+            Self::push_canonical_year_month_duration_fragment(&mut s, months);
+            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
+        } else if months != 0 {
+            Self::push_canonical_year_month_duration_fragment(&mut s, months);
+        } else {
+            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_year_month_duration(year_month: YearMonthDuration) -> String {
+        let mut s = String::new();
+        let months = year_month.months;
+        if months < 0 {
+            s.push('-');
+        }
+        s.push('P');
+        Self::push_canonical_year_month_duration_fragment(&mut s, months);
+        s
+    }
+
+    pub(crate) fn canonical_day_time_duration(duration: &chrono::Duration) -> String {
+        let mut s = String::new();
+        if duration.num_milliseconds() < 0 {
+            s.push('-');
+        }
+        s.push('P');
+        Self::push_canonical_day_time_duration_fragment(&mut s, duration);
         s
     }
 
@@ -200,36 +230,6 @@ impl atomic::Atomic {
         s
     }
 
-    pub(crate) fn canonical_day_time_duration(duration: &chrono::Duration) -> String {
-        let mut s = String::new();
-        if duration.num_milliseconds() < 0 {
-            s.push('-');
-        }
-        s.push('P');
-        Self::push_canonical_day_time_duration_fragment(&mut s, duration);
-        s
-    }
-
-    pub(crate) fn canonical_duration(duration: &Duration) -> String {
-        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-durationCanMap
-        let mut s = String::new();
-        let months = duration.year_month.months;
-        let duration = duration.day_time;
-        if months < 0 || duration.num_milliseconds() < 0 {
-            s.push('-');
-        }
-        s.push('P');
-        if months != 0 && duration.num_milliseconds() != 0 {
-            Self::push_canonical_year_month_duration_fragment(&mut s, months);
-            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
-        } else if months != 0 {
-            Self::push_canonical_year_month_duration_fragment(&mut s, months);
-        } else {
-            Self::push_canonical_day_time_duration_fragment(&mut s, &duration);
-        }
-        s
-    }
-
     pub(crate) fn canonical_time(time: &NaiveTimeWithOffset) -> String {
         let mut s = String::new();
         let offset = time.offset;
@@ -245,14 +245,14 @@ impl atomic::Atomic {
         s
     }
 
-    pub(crate) fn canonical_year_month_duration(year_month: YearMonthDuration) -> String {
+    pub(crate) fn canonical_date(date: &NaiveDateWithOffset) -> String {
         let mut s = String::new();
-        let months = year_month.months;
-        if months < 0 {
-            s.push('-');
+        let offset = date.offset;
+        let date = date.date;
+        s.push_str(&date.format("%Y-%m-%d").to_string());
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
         }
-        s.push('P');
-        Self::push_canonical_year_month_duration_fragment(&mut s, months);
         s
     }
 
@@ -376,11 +376,50 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
+    // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
+
+    pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
-            atomic::Atomic::Date(_) => Ok(self.clone()),
-            // TODO
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
+            atomic::Atomic::Duration(_) => Ok(self.clone()),
+            atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
+                Rc::new(Duration::from_year_month(year_month_duration)),
+            )),
+            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
+                Duration::from_day_time(*duration.as_ref()),
+            ))),
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_year_month_duration(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_year_month_duration(&s)
+            }
+            atomic::Atomic::Duration(duration) => Ok(atomic::Atomic::YearMonthDuration(
+                duration.year_month.clone(),
+            )),
+            atomic::Atomic::YearMonthDuration(_) => Ok(self.clone()),
+            atomic::Atomic::DayTimeDuration(_) => {
+                Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
+            }
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_day_time_duration(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_day_time_duration(&s)
+            }
+            atomic::Atomic::Duration(duration) => {
+                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
+            }
+            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
+                chrono::Duration::zero(),
+            ))),
+            atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
             _ => Err(error::Error::Type),
         }
     }
@@ -405,38 +444,6 @@ impl atomic::Atomic {
         }
     }
 
-    // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
-
-    pub(crate) fn cast_to_day_time_duration(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
-                Self::parse_day_time_duration(&s)
-            }
-            atomic::Atomic::Duration(duration) => {
-                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
-            }
-            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
-                chrono::Duration::zero(),
-            ))),
-            atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
-            atomic::Atomic::Duration(_) => Ok(self.clone()),
-            atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
-                Rc::new(Duration::from_year_month(year_month_duration)),
-            )),
-            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_day_time(*duration.as_ref()),
-            ))),
-            _ => Err(error::Error::Type),
-        }
-    }
-
     pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
@@ -446,18 +453,11 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn cast_to_year_month_duration(self) -> error::Result<atomic::Atomic> {
+    pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
-                Self::parse_year_month_duration(&s)
-            }
-            atomic::Atomic::Duration(duration) => Ok(atomic::Atomic::YearMonthDuration(
-                duration.year_month.clone(),
-            )),
-            atomic::Atomic::YearMonthDuration(_) => Ok(self.clone()),
-            atomic::Atomic::DayTimeDuration(_) => {
-                Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
-            }
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
+            atomic::Atomic::Date(_) => Ok(self.clone()),
+            // TODO
             _ => Err(error::Error::Type),
         }
     }
