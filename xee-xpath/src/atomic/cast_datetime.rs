@@ -95,13 +95,13 @@ impl NaiveDateWithOffset {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GYearMonth {
-    pub(crate) year: i64,
-    pub(crate) month: i64,
+    pub(crate) year: i32,
+    pub(crate) month: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
 impl GYearMonth {
-    pub(crate) fn new(year: i64, month: i64, offset: Option<chrono::FixedOffset>) -> Self {
+    pub(crate) fn new(year: i32, month: u32, offset: Option<chrono::FixedOffset>) -> Self {
         Self {
             year,
             month,
@@ -112,54 +112,104 @@ impl GYearMonth {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GYear {
-    pub(crate) year: i64,
+    pub(crate) year: i32,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
 impl GYear {
-    pub(crate) fn new(year: i64, offset: Option<chrono::FixedOffset>) -> Self {
+    pub(crate) fn new(year: i32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { year, offset }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GMonthDay {
-    pub(crate) month: i64,
-    pub(crate) day: u8,
+    pub(crate) month: u32,
+    pub(crate) day: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
 impl GMonthDay {
-    pub(crate) fn new(month: i64, day: u8, offset: Option<chrono::FixedOffset>) -> Self {
+    pub(crate) fn new(month: u32, day: u32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { month, day, offset }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GDay {
-    pub(crate) day: u8,
+    pub(crate) day: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
 impl GDay {
-    pub(crate) fn new(day: u8, offset: Option<chrono::FixedOffset>) -> Self {
+    pub(crate) fn new(day: u32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { day, offset }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GMonth {
-    pub(crate) month: i64,
+    pub(crate) month: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,
 }
 
 impl GMonth {
-    pub(crate) fn new(month: i64, offset: Option<chrono::FixedOffset>) -> Self {
+    pub(crate) fn new(month: u32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { month, offset }
     }
 }
 
 impl atomic::Atomic {
+    pub(crate) fn canonical_date(date: &NaiveDateWithOffset) -> String {
+        let mut s = String::new();
+        let offset = date.offset;
+        let date = date.date;
+        s.push_str(&date.format("%Y-%m-%d").to_string());
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_date_time(date_time: &NaiveDateTimeWithOffset) -> String {
+        let mut s = String::new();
+        let offset = date_time.offset;
+        let date_time = date_time.date_time;
+        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
+        let millis = date_time.timestamp_subsec_millis();
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_date_time_stamp(
+        date_time: &chrono::DateTime<chrono::FixedOffset>,
+    ) -> String {
+        let mut s = String::new();
+        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
+        let millis = date_time.timestamp_subsec_millis();
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        let offset = date_time.offset();
+        Self::push_canonical_time_zone_offset(&mut s, offset);
+        s
+    }
+
+    pub(crate) fn canonical_day_time_duration(duration: &chrono::Duration) -> String {
+        let mut s = String::new();
+        if duration.num_milliseconds() < 0 {
+            s.push('-');
+        }
+        s.push('P');
+        Self::push_canonical_day_time_duration_fragment(&mut s, duration);
+        s
+    }
+
     pub(crate) fn canonical_duration(duration: &Duration) -> String {
         // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-durationCanMap
         let mut s = String::new();
@@ -180,6 +230,21 @@ impl atomic::Atomic {
         s
     }
 
+    pub(crate) fn canonical_time(time: &NaiveTimeWithOffset) -> String {
+        let mut s = String::new();
+        let offset = time.offset;
+        let time = time.time;
+        s.push_str(&time.format("%H:%M:%S").to_string());
+        let millis = time.nanosecond() / 1_000_000;
+        if !millis.is_zero() {
+            s.push_str(&format!(".{:03}", millis));
+        }
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
     pub(crate) fn canonical_year_month_duration(year_month: YearMonthDuration) -> String {
         let mut s = String::new();
         let months = year_month.months;
@@ -191,29 +256,167 @@ impl atomic::Atomic {
         s
     }
 
-    fn push_canonical_year_month_duration_fragment(s: &mut String, months: i64) {
-        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duYMCan
-        let months = months.abs();
-        let years = months / 12;
-        let months = months % 12;
-        if years != 0 && months != 0 {
-            s.push_str(&format!("{}Y", years));
-            s.push_str(&format!("{}M", months));
-        } else if years != 0 {
-            s.push_str(&format!("{}Y", years));
-        } else {
-            s.push_str(&format!("{}M", months));
+    pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
+            atomic::Atomic::Date(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
         }
     }
 
-    pub(crate) fn canonical_day_time_duration(duration: &chrono::Duration) -> String {
-        let mut s = String::new();
-        if duration.num_milliseconds() < 0 {
-            s.push('-');
+    pub(crate) fn cast_to_date_time(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
+            atomic::Atomic::DateTime(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
         }
-        s.push('P');
-        Self::push_canonical_day_time_duration_fragment(&mut s, duration);
-        s
+    }
+
+    pub(crate) fn cast_to_date_time_stamp(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_date_time_stamp(&s)
+            }
+            atomic::Atomic::DateTimeStamp(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
+
+    pub(crate) fn cast_to_day_time_duration(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_day_time_duration(&s)
+            }
+            atomic::Atomic::Duration(duration) => {
+                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
+            }
+            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
+                chrono::Duration::zero(),
+            ))),
+            atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
+            atomic::Atomic::Duration(_) => Ok(self.clone()),
+            atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
+                Rc::new(Duration::from_year_month(year_month_duration)),
+            )),
+            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
+                Duration::from_day_time(*duration.as_ref()),
+            ))),
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
+            atomic::Atomic::Time(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_year_month_duration(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_year_month_duration(&s)
+            }
+            atomic::Atomic::Duration(duration) => Ok(atomic::Atomic::YearMonthDuration(
+                duration.year_month.clone(),
+            )),
+            atomic::Atomic::YearMonthDuration(_) => Ok(self.clone()),
+            atomic::Atomic::DayTimeDuration(_) => {
+                Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
+            }
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_parser();
+        match parser.parse(&s).into_result() {
+            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_date_time(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_time_parser();
+        match parser.parse(&s).into_result() {
+            Ok(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(date_time))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_date_time_stamp(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = date_time_stamp_parser();
+        match parser.parse(&s).into_result() {
+            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(Rc::new(date_time))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_day_time_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = day_time_duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_time(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = time_parser();
+        match parser.parse(&s).into_result() {
+            Ok(time) => Ok(atomic::Atomic::Time(Rc::new(time))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
+        // TODO: this has overhead I'd like to avoid
+        // https://github.com/zesterer/chumsky/issues/501
+        let s = whitespace_collapse(s);
+        let parser = year_month_duration_parser();
+        match parser.parse(&s).into_result() {
+            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
+            Err(_) => Err(error::Error::FORG0001),
+        }
     }
 
     fn push_canonical_day_time_duration_fragment(v: &mut String, duration: &chrono::Duration) {
@@ -246,61 +449,6 @@ impl atomic::Atomic {
         }
     }
 
-    pub(crate) fn canonical_date_time(date_time: &NaiveDateTimeWithOffset) -> String {
-        let mut s = String::new();
-        let offset = date_time.offset;
-        let date_time = date_time.date_time;
-        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
-        let millis = date_time.timestamp_subsec_millis();
-        if !millis.is_zero() {
-            s.push_str(&format!(".{:03}", millis));
-        }
-        if let Some(offset) = offset {
-            Self::push_canonical_time_zone_offset(&mut s, &offset);
-        }
-        s
-    }
-
-    pub(crate) fn canonical_date_time_stamp(
-        date_time: &chrono::DateTime<chrono::FixedOffset>,
-    ) -> String {
-        let mut s = String::new();
-        s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
-        let millis = date_time.timestamp_subsec_millis();
-        if !millis.is_zero() {
-            s.push_str(&format!(".{:03}", millis));
-        }
-        let offset = date_time.offset();
-        Self::push_canonical_time_zone_offset(&mut s, offset);
-        s
-    }
-
-    pub(crate) fn canonical_time(time: &NaiveTimeWithOffset) -> String {
-        let mut s = String::new();
-        let offset = time.offset;
-        let time = time.time;
-        s.push_str(&time.format("%H:%M:%S").to_string());
-        let millis = time.nanosecond() / 1_000_000;
-        if !millis.is_zero() {
-            s.push_str(&format!(".{:03}", millis));
-        }
-        if let Some(offset) = offset {
-            Self::push_canonical_time_zone_offset(&mut s, &offset);
-        }
-        s
-    }
-
-    pub(crate) fn canonical_date(date: &NaiveDateWithOffset) -> String {
-        let mut s = String::new();
-        let offset = date.offset;
-        let date = date.date;
-        s.push_str(&date.format("%Y-%m-%d").to_string());
-        if let Some(offset) = offset {
-            Self::push_canonical_time_zone_offset(&mut s, &offset);
-        }
-        s
-    }
-
     fn push_canonical_time_zone_offset(s: &mut String, offset: &chrono::FixedOffset) {
         let seconds = offset.local_minus_utc();
         if seconds == 0 {
@@ -319,177 +467,29 @@ impl atomic::Atomic {
         s.push_str(&format!("{:02}:{:02}", hours, minutes));
     }
 
-    // https://www.w3.org/TR/xpath-functions-31/#casting-to-durations
-
-    pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
-            atomic::Atomic::Duration(_) => Ok(self.clone()),
-            atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
-                Rc::new(Duration::from_year_month(year_month_duration)),
-            )),
-            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_day_time(duration.as_ref().clone()),
-            ))),
-            _ => Err(error::Error::Type),
+    fn push_canonical_year_month_duration_fragment(s: &mut String, months: i64) {
+        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duYMCan
+        let months = months.abs();
+        let years = months / 12;
+        let months = months % 12;
+        if years != 0 && months != 0 {
+            s.push_str(&format!("{}Y", years));
+            s.push_str(&format!("{}M", months));
+        } else if years != 0 {
+            s.push_str(&format!("{}Y", years));
+        } else {
+            s.push_str(&format!("{}M", months));
         }
     }
 
-    pub(crate) fn cast_to_year_month_duration(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
-                Self::parse_year_month_duration(&s)
-            }
-            atomic::Atomic::Duration(duration) => Ok(atomic::Atomic::YearMonthDuration(
-                duration.year_month.clone(),
-            )),
-            atomic::Atomic::YearMonthDuration(_) => Ok(self.clone()),
-            atomic::Atomic::DayTimeDuration(_) => {
-                Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
-            }
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_day_time_duration(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
-                Self::parse_day_time_duration(&s)
-            }
-            atomic::Atomic::Duration(duration) => {
-                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
-            }
-            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
-                chrono::Duration::zero(),
-            ))),
-            atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_date_time(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
-            atomic::Atomic::DateTime(_) => Ok(self.clone()),
-            // TODO
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_date_time_stamp(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
-                Self::parse_date_time_stamp(&s)
-            }
-            atomic::Atomic::DateTimeStamp(_) => Ok(self.clone()),
-            // TODO
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
-            atomic::Atomic::Time(_) => Ok(self.clone()),
-            // TODO
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
-        match self {
-            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
-            atomic::Atomic::Date(_) => Ok(self.clone()),
-            // TODO
-            _ => Err(error::Error::Type),
-        }
-    }
-
-    fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
+    fn parse_g_year(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
-        let parser = duration_parser();
+        let parser = g_year_parser();
         match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
+            Ok(g_year) => Ok(atomic::Atomic::GYear(Rc::new(g_year))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
-
-    fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = year_month_duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_day_time_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = day_time_duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_date_time(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = date_time_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(date_time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_date_time_stamp(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = date_time_stamp_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(Rc::new(date_time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_time(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = time_parser();
-        match parser.parse(&s).into_result() {
-            Ok(time) => Ok(atomic::Atomic::Time(Rc::new(time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
-        let s = whitespace_collapse(s);
-        let parser = date_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
-    }
-
-    // fn parse_g_year(s: &str) -> error::Result<atomic::Atomic> {
-    //     let s = whitespace_collapse(s);
-    //     let parser = year_parser();
-    //     match parser.parse(&s).into_result() {
-    //         Ok((year, tz)) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(year, tz)))),
-    //         Err(_) => Err(error::Error::FORG0001),
-    //     }
-    // }
 }
 
 fn digit_parser<'a>() -> impl Parser<'a, &'a str, char> {
@@ -788,11 +788,61 @@ fn tz_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
     just('Z').to(chrono::offset::Utc.fix()).or(offset)
 }
 
-// fn g_year_parser<'a>() -> impl Parser<'a, &'a str, (i32, Option<chrono::FixedOffset>)> {
-//     let year = year_parser().boxed();
-//     let tz = tz_parser().boxed();
-//     year.then(tz.or_not()).then_ignore(end())
-// }
+fn g_year_parser<'a>() -> impl Parser<'a, &'a str, GYear> {
+    let year = year_parser().boxed();
+    let tz = tz_parser().boxed();
+    year.then(tz.or_not())
+        .then_ignore(end())
+        .map(|(year, tz)| GYear::new(year, tz))
+}
+
+fn g_month_parser<'a>() -> impl Parser<'a, &'a str, GMonth> {
+    let month = month_parser().boxed();
+    let tz = tz_parser().boxed();
+    just('-')
+        .ignore_then(just('-'))
+        .ignore_then(month)
+        .then(tz.or_not())
+        .then_ignore(end())
+        .map(|(month, tz)| GMonth::new(month, tz))
+}
+
+fn g_day_parser<'a>() -> impl Parser<'a, &'a str, GDay> {
+    let day = day_parser().boxed();
+    let tz = tz_parser().boxed();
+    just('-')
+        .ignore_then(just('-'))
+        .ignore_then(just('-'))
+        .ignore_then(day)
+        .then(tz.or_not())
+        .then_ignore(end())
+        .map(|(day, tz)| GDay::new(day, tz))
+}
+
+fn g_month_day_parser<'a>() -> impl Parser<'a, &'a str, GMonthDay> {
+    let month = month_parser().boxed();
+    let day = day_parser().boxed();
+    let tz = tz_parser().boxed();
+    just('-')
+        .ignore_then(just('-'))
+        .ignore_then(month)
+        .then_ignore(just('-'))
+        .then(day)
+        .then(tz.or_not())
+        .then_ignore(end())
+        .map(|((month, day), tz)| GMonthDay::new(month, day, tz))
+}
+
+fn g_year_month_parser<'a>() -> impl Parser<'a, &'a str, GYearMonth> {
+    let year = year_parser().boxed();
+    let month = month_parser().boxed();
+    let tz = tz_parser().boxed();
+    year.then_ignore(just('-'))
+        .then(month)
+        .then(tz.or_not())
+        .then_ignore(end())
+        .map(|((year, month), tz)| GYearMonth::new(year, month, tz))
+}
 
 #[cfg(test)]
 mod tests {
@@ -1153,5 +1203,66 @@ mod tests {
         assert!(date_time_parser()
             .parse("2020-01-02T01:02:03.456flurb")
             .has_errors());
+    }
+
+    #[test]
+    fn test_g_year_parser() {
+        assert_eq!(
+            g_year_parser().parse("2020").unwrap(),
+            GYear::new(2020, None)
+        );
+    }
+
+    #[test]
+    fn test_g_year_parser_negative() {
+        assert_eq!(
+            g_year_parser().parse("-2020").unwrap(),
+            GYear::new(-2020, None)
+        );
+    }
+
+    #[test]
+    fn test_g_year_parser_longer() {
+        assert_eq!(
+            g_year_parser().parse("20200").unwrap(),
+            GYear::new(20200, None)
+        );
+    }
+
+    #[test]
+    fn test_g_year_parser_tz() {
+        assert_eq!(
+            g_year_parser().parse("2020Z").unwrap(),
+            GYear::new(2020, Some(chrono::offset::Utc.fix()))
+        );
+    }
+
+    #[test]
+    fn test_g_month_parser() {
+        assert_eq!(
+            g_month_parser().parse("--01").unwrap(),
+            GMonth::new(1, None)
+        );
+    }
+
+    #[test]
+    fn test_g_day_parser() {
+        assert_eq!(g_day_parser().parse("---01").unwrap(), GDay::new(1, None));
+    }
+
+    #[test]
+    fn test_g_month_day_parser() {
+        assert_eq!(
+            g_month_day_parser().parse("--04-12Z").unwrap(),
+            GMonthDay::new(4, 12, Some(chrono::offset::Utc.fix()))
+        );
+    }
+
+    #[test]
+    fn test_g_year_month_parser() {
+        assert_eq!(
+            g_year_month_parser().parse("2020-04Z").unwrap(),
+            GYearMonth::new(2020, 4, Some(chrono::offset::Utc.fix()))
+        );
     }
 }
