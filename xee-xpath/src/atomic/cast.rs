@@ -9,6 +9,8 @@ use crate::atomic;
 use crate::context;
 use crate::error;
 
+use super::cast_numeric::decimal_to_integer;
+
 impl atomic::Atomic {
     pub(crate) fn parse_atomic<V>(s: &str) -> error::Result<atomic::Atomic>
     where
@@ -40,7 +42,7 @@ impl atomic::Atomic {
             atomic::Atomic::Double(OrderedFloat(f)) => Self::canonical_float(f),
             atomic::Atomic::Decimal(d) => {
                 if d.is_integer() {
-                    let i = self.cast_to_integer_value::<IBig>().unwrap();
+                    let i: IBig = decimal_to_integer(d).unwrap();
                     i.to_string()
                 } else {
                     d.normalize().to_string()
@@ -60,11 +62,11 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Time(time) => Self::canonical_time(time.as_ref()),
             atomic::Atomic::Date(date) => Self::canonical_date(date.as_ref()),
-            atomic::Atomic::GYearMonth(_, _, _) => todo!(),
-            atomic::Atomic::GYear(_, _) => todo!(),
-            atomic::Atomic::GMonthDay(_, _, _) => todo!(),
-            atomic::Atomic::GDay(_, _) => todo!(),
-            atomic::Atomic::GMonth(_, _) => todo!(),
+            atomic::Atomic::GYearMonth(_) => todo!(),
+            atomic::Atomic::GYear(_) => todo!(),
+            atomic::Atomic::GMonthDay(_) => todo!(),
+            atomic::Atomic::GDay(_) => todo!(),
+            atomic::Atomic::GMonth(_) => todo!(),
             atomic::Atomic::Boolean(b) => {
                 if b {
                     "true".to_string()
@@ -284,27 +286,42 @@ mod tests {
 
     #[test]
     fn test_canonical_decimal_is_integer() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.0)).into_canonical(), "1");
+        assert_eq!(
+            atomic::Atomic::Decimal(Rc::new(dec!(1.0))).into_canonical(),
+            "1"
+        );
     }
 
     #[test]
     fn test_canonical_decimal_is_decimal() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.5)).into_canonical(), "1.5");
+        assert_eq!(
+            atomic::Atomic::Decimal(Rc::new(dec!(1.5))).into_canonical(),
+            "1.5"
+        );
     }
 
     #[test]
     fn test_canonical_decimal_no_trailing_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(1.50)).into_canonical(), "1.5");
+        assert_eq!(
+            atomic::Atomic::Decimal(Rc::new(dec!(1.50))).into_canonical(),
+            "1.5"
+        );
     }
 
     #[test]
     fn test_canonical_decimal_no_leading_zeroes() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(01.50)).into_canonical(), "1.5");
+        assert_eq!(
+            atomic::Atomic::Decimal(Rc::new(dec!(01.50))).into_canonical(),
+            "1.5"
+        );
     }
 
     #[test]
     fn test_canonical_decimal_single_leading_zero() {
-        assert_eq!(atomic::Atomic::Decimal(dec!(0.50)).into_canonical(), "0.5");
+        assert_eq!(
+            atomic::Atomic::Decimal(Rc::new(dec!(0.50))).into_canonical(),
+            "0.5"
+        );
     }
 
     #[test]

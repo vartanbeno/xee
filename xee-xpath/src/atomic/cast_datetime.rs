@@ -93,6 +93,72 @@ impl NaiveDateWithOffset {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GYearMonth {
+    pub(crate) year: i64,
+    pub(crate) month: i64,
+    pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl GYearMonth {
+    pub(crate) fn new(year: i64, month: i64, offset: Option<chrono::FixedOffset>) -> Self {
+        Self {
+            year,
+            month,
+            offset,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GYear {
+    pub(crate) year: i64,
+    pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl GYear {
+    pub(crate) fn new(year: i64, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { year, offset }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GMonthDay {
+    pub(crate) month: i64,
+    pub(crate) day: u8,
+    pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl GMonthDay {
+    pub(crate) fn new(month: i64, day: u8, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { month, day, offset }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GDay {
+    pub(crate) day: u8,
+    pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl GDay {
+    pub(crate) fn new(day: u8, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { day, offset }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GMonth {
+    pub(crate) month: i64,
+    pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl GMonth {
+    pub(crate) fn new(month: i64, offset: Option<chrono::FixedOffset>) -> Self {
+        Self { month, offset }
+    }
+}
+
 impl atomic::Atomic {
     pub(crate) fn canonical_duration(duration: &Duration) -> String {
         // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-durationCanMap

@@ -74,7 +74,7 @@ fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
 
 pub(crate) trait ComparisonOp {
     fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool;
-    fn decimal(a: Decimal, b: Decimal) -> bool;
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool;
     fn float<F>(a: F, b: F) -> bool
     where
         F: Float;
@@ -89,7 +89,7 @@ impl ComparisonOp for EqualOp {
         a == b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a == b
     }
 
@@ -116,7 +116,7 @@ impl ComparisonOp for NotEqualOp {
         a != b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a != b
     }
 
@@ -143,7 +143,7 @@ impl ComparisonOp for LessThanOp {
         a < b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a < b
     }
 
@@ -171,7 +171,7 @@ impl ComparisonOp for LessThanOrEqualOp {
         a <= b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a <= b
     }
 
@@ -199,7 +199,7 @@ impl ComparisonOp for GreaterThanOp {
         a > b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a > b
     }
 
@@ -227,7 +227,7 @@ impl ComparisonOp for GreaterThanOrEqualOp {
         a >= b
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> bool {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
         a >= b
     }
 

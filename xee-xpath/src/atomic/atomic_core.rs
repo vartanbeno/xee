@@ -13,7 +13,8 @@ use crate::error;
 
 use super::arithmetic;
 use super::cast_datetime::{
-    Duration, NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
+    Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
+    NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
 use super::comparison;
 
@@ -24,7 +25,7 @@ pub enum Atomic {
     String(StringType, Rc<String>),
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
-    Decimal(Decimal),
+    Decimal(Rc<Decimal>),
     Integer(IntegerType, Rc<IBig>),
     Duration(Rc<Duration>),
     YearMonthDuration(YearMonthDuration),
@@ -33,11 +34,11 @@ pub enum Atomic {
     DateTimeStamp(Rc<chrono::DateTime<chrono::FixedOffset>>),
     Time(Rc<NaiveTimeWithOffset>),
     Date(Rc<NaiveDateWithOffset>),
-    GYearMonth(i64, chrono::Month, Option<chrono::FixedOffset>),
-    GYear(i64, Option<chrono::FixedOffset>),
-    GMonthDay(chrono::Month, u8, Option<chrono::FixedOffset>),
-    GDay(u8, Option<chrono::FixedOffset>),
-    GMonth(chrono::Month, Option<chrono::FixedOffset>),
+    GYearMonth(Rc<GYearMonth>),
+    GYear(Rc<GYear>),
+    GMonthDay(Rc<GMonthDay>),
+    GDay(Rc<GDay>),
+    GMonth(Rc<GMonth>),
     Boolean(bool),
     Binary(BinaryType, Rc<Vec<u8>>),
     AnyURI(Rc<String>),
@@ -141,11 +142,11 @@ impl Atomic {
             Atomic::Date(_) => Xs::Date,
             Atomic::DateTime(_) => Xs::DateTime,
             Atomic::DateTimeStamp(_) => Xs::DateTimeStamp,
-            Atomic::GYearMonth(_, _, _) => Xs::GYearMonth,
-            Atomic::GYear(_, _) => Xs::GYear,
-            Atomic::GMonthDay(_, _, _) => Xs::GMonthDay,
-            Atomic::GMonth(_, _) => Xs::GMonth,
-            Atomic::GDay(_, _) => Xs::GDay,
+            Atomic::GYearMonth(_) => Xs::GYearMonth,
+            Atomic::GYear(_) => Xs::GYear,
+            Atomic::GMonthDay(_) => Xs::GMonthDay,
+            Atomic::GMonth(_) => Xs::GMonth,
+            Atomic::GDay(_) => Xs::GDay,
         }
     }
 
@@ -262,7 +263,7 @@ impl TryFrom<Atomic> for bool {
 
 impl From<Decimal> for Atomic {
     fn from(d: Decimal) -> Self {
-        Atomic::Decimal(d)
+        Atomic::Decimal(Rc::new(d))
     }
 }
 
@@ -271,7 +272,7 @@ impl TryFrom<Atomic> for Decimal {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Decimal(d) => Ok(d),
+            Atomic::Decimal(d) => Ok(d.as_ref().clone()),
             _ => Err(error::Error::Type),
         }
     }

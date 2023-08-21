@@ -348,6 +348,8 @@ impl<'a> Iterator for AtomizedManyIter<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use ibig::ibig;
     use rust_decimal::Decimal;
 
@@ -356,7 +358,7 @@ mod tests {
     #[test]
     fn test_integer_compares_with_decimal() {
         let a = atomic::Atomic::Integer(atomic::IntegerType::Integer, ibig!(1).into());
-        let b = atomic::Atomic::Decimal(Decimal::from(1));
+        let b = atomic::Atomic::Decimal(Rc::new(Decimal::from(1)));
         assert_eq!(a, b);
     }
 }

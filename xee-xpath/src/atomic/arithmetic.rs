@@ -69,7 +69,7 @@ pub(crate) trait ArithmeticOp {
     // where
     //     I: PrimInt;
     fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<Rc<IBig>>;
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal>;
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal>;
     fn float<F>(a: F, b: F) -> error::Result<F>
     where
         F: Float;
@@ -79,7 +79,7 @@ pub(crate) trait ArithmeticOp {
         Ok(v.into())
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
+    fn decimal_atomic(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
         let v = <Self as ArithmeticOp>::decimal(a, b)?;
         Ok(v.into())
     }
@@ -100,8 +100,9 @@ impl ArithmeticOp for AddOp {
         Ok(Rc::new(a.as_ref() + b.as_ref()))
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
-        a.checked_add(b).ok_or(error::Error::Overflow)
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
+        a.checked_add(b.as_ref().clone())
+            .ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -119,8 +120,9 @@ impl ArithmeticOp for SubtractOp {
         Ok(Rc::new(a.as_ref() - b.as_ref()))
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
-        a.checked_sub(b).ok_or(error::Error::Overflow)
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
+        a.checked_sub(b.as_ref().clone())
+            .ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -138,8 +140,9 @@ impl ArithmeticOp for MultiplyOp {
         Ok(Rc::new(a.as_ref() * b.as_ref()))
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
-        a.checked_mul(b).ok_or(error::Error::Overflow)
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
+        a.checked_mul(b.as_ref().clone())
+            .ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -158,7 +161,7 @@ impl ArithmeticOp for DivideOp {
         // xs:integer, then the return type is xs:decimal.
         let a: i128 = a.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
         let b: i128 = b.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
-        let v = <Self as ArithmeticOp>::decimal(a.into(), b.into())?;
+        let v = <Self as ArithmeticOp>::decimal(Rc::new(a.into()), Rc::new(b.into()))?;
         Ok(v.into())
     }
 
@@ -166,11 +169,12 @@ impl ArithmeticOp for DivideOp {
         unreachable!()
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(b).ok_or(error::Error::Overflow)
+        a.checked_div(b.as_ref().clone())
+            .ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -191,7 +195,7 @@ impl ArithmeticOp for IntegerDivideOp {
         Ok(Rc::new(a.as_ref() / b.as_ref()))
     }
 
-    fn decimal_atomic(a: Decimal, b: Decimal) -> error::Result<atomic::Atomic> {
+    fn decimal_atomic(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
         let v = <DivideOp as ArithmeticOp>::decimal(a, b)?;
 
         let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
@@ -199,7 +203,7 @@ impl ArithmeticOp for IntegerDivideOp {
         Ok(i.into())
     }
 
-    fn decimal(_a: Decimal, _b: Decimal) -> error::Result<Decimal> {
+    fn decimal(_a: Rc<Decimal>, _b: Rc<Decimal>) -> error::Result<Decimal> {
         unreachable!();
     }
 
@@ -234,11 +238,11 @@ impl ArithmeticOp for ModuloOp {
         Ok(Rc::new(a.as_ref() % b.as_ref()))
     }
 
-    fn decimal(a: Decimal, b: Decimal) -> error::Result<Decimal> {
+    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        Ok(a % b)
+        Ok(a.as_ref() % b.as_ref())
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -268,7 +272,7 @@ pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomi
             atomic::IntegerType::Integer,
             Rc::new(-(i.as_ref().clone())),
         )),
-        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(-d)),
+        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(Rc::new(-d.as_ref().clone()))),
         atomic::Atomic::Float(f) => Ok(atomic::Atomic::Float(-f)),
         atomic::Atomic::Double(d) => Ok(atomic::Atomic::Double(-d)),
         _ => Err(error::Error::Type),
