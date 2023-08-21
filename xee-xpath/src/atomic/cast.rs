@@ -47,9 +47,7 @@ impl atomic::Atomic {
                 }
             }
             atomic::Atomic::Integer(_, i) => i.to_string(),
-            atomic::Atomic::Duration(months, duration) => {
-                Self::canonical_duration(months, duration)
-            }
+            atomic::Atomic::Duration(duration) => Self::canonical_duration(duration.as_ref()),
             atomic::Atomic::YearMonthDuration(months) => {
                 Self::canonical_year_month_duration(months)
             }
