@@ -15,7 +15,8 @@ pub(crate) struct KnownDependencies {
 }
 
 impl KnownDependencies {
-    fn new(specs: FxIndexSet<qt::DependencySpec>) -> Self {
+    fn new(specs: &[qt::DependencySpec]) -> Self {
+        let specs = specs.iter().cloned().collect();
         Self { specs }
     }
 
@@ -31,12 +32,11 @@ impl KnownDependencies {
 
 impl Default for KnownDependencies {
     fn default() -> Self {
-        let mut specs = FxIndexSet::default();
-        specs.insert(qt::DependencySpec {
+        let specs = vec![qt::DependencySpec {
             type_: "spec".to_string(),
             value: "XP30+".to_string(),
-        });
-        Self::new(specs)
+        }];
+        Self::new(&specs)
     }
 }
 
@@ -93,6 +93,12 @@ impl qt::TestSet {
     pub(crate) fn file_path(&self, catalog: &qt::Catalog) -> &Path {
         self.full_path.strip_prefix(catalog.base_dir()).unwrap()
     }
+
+    pub(crate) fn test_case_by_name(&self, name: &str) -> Option<&qt::TestCase> {
+        self.test_cases
+            .iter()
+            .find(|test_case| test_case.name == name)
+    }
 }
 
 impl qt::Catalog {
@@ -102,18 +108,36 @@ impl qt::Catalog {
 }
 
 impl qt::TestCase {
+    // the spec is supported if any of the spec dependencies is supported
+    pub(crate) fn is_spec_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        for dependency in &self.dependencies {
+            if dependency.spec.type_ == "spec" && known_dependencies.is_supported(dependency) {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub(crate) fn is_feature_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        for dependency in &self.dependencies {
+            // if a listed feature dependency is not supported, we don't support this
+            if dependency.spec.type_ == "feature" && !known_dependencies.is_supported(dependency) {
+                return false;
+            }
+        }
+        true
+    }
+
     pub(crate) fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         // if we have no dependencies, we're always supported
         if self.dependencies.is_empty() {
             return true;
         }
-        // if any of the listed dependencies is supported, we're supported
-        for dependency in &self.dependencies {
-            if known_dependencies.is_supported(dependency) {
-                return true;
-            }
+        // if we don't support the spec, we don't support it
+        if !self.is_spec_supported(known_dependencies) {
+            return false;
         }
-        false
+        self.is_feature_supported(known_dependencies)
     }
 
     pub(crate) fn run(&self, run_context: &mut RunContext, test_set: &qt::TestSet) -> TestOutcome {
@@ -905,5 +929,185 @@ mod tests {
         let test_set = load(&mut xot, &test_cases_path);
 
         assert_eq!(run(xot, &test_set), TestOutcome::Passed);
+    }
+
+    #[test]
+    fn test_dependency_spec_supported() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("my/test.xml"),
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="test_case">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <dependency type="spec" value="XP30+" />
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let test_case = test_set.test_case_by_name("test_case").unwrap();
+
+        let specs = vec![qt::DependencySpec {
+            type_: "spec".to_string(),
+            value: "XP30+".to_string(),
+        }];
+
+        let known_dependencies = KnownDependencies::new(&specs);
+
+        assert!(test_case.is_supported(&known_dependencies));
+    }
+
+    #[test]
+    fn test_dependency_spec_supported2() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("my/test.xml"),
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="test_case">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <dependency type="spec" value="XP30+ XQ30+" />
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let test_case = test_set.test_case_by_name("test_case").unwrap();
+
+        let specs = vec![qt::DependencySpec {
+            type_: "spec".to_string(),
+            value: "XP30+".to_string(),
+        }];
+
+        let known_dependencies = KnownDependencies::new(&specs);
+
+        assert!(test_case.is_supported(&known_dependencies));
+    }
+
+    #[test]
+    fn test_dependency_feature_supported() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("my/test.xml"),
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="test_case">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <dependency type="spec" value="XP30+" />
+    <dependency type="feature" value="FOO" />
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let test_case = test_set.test_case_by_name("test_case").unwrap();
+
+        let specs = vec![qt::DependencySpec {
+            type_: "spec".to_string(),
+            value: "XP30+".to_string(),
+        }];
+
+        let known_dependencies = KnownDependencies::new(&specs);
+
+        assert!(!test_case.is_supported(&known_dependencies));
+    }
+
+    #[test]
+    fn test_dependency_feature_supported2() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("my/test.xml"),
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="test_case">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <dependency type="spec" value="XP30+" />
+    <dependency type="feature" value="FOO" />
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let test_case = test_set.test_case_by_name("test_case").unwrap();
+
+        let specs = vec![
+            qt::DependencySpec {
+                type_: "spec".to_string(),
+                value: "XP30+".to_string(),
+            },
+            qt::DependencySpec {
+                type_: "feature".to_string(),
+                value: "FOO".to_string(),
+            },
+        ];
+
+        let known_dependencies = KnownDependencies::new(&specs);
+
+        assert!(test_case.is_supported(&known_dependencies));
+    }
+
+    #[test]
+    fn test_dependency_feature_supported3() {
+        let mut xot = Xot::new();
+        let test_set = qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("my/test.xml"),
+            r#" 
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="test">
+  <test-case name="test_case">
+    <description>Description</description>
+    <created by="Martijn Faassen" on="2023-05-22"/>
+    <environment ref="empty"/>
+    <dependency type="spec" value="XP30+" />
+    <dependency type="feature" value="FOO BAR" />
+    <test>5</test>
+    <result>
+      <assert-eq>5</assert-eq>
+    </result>
+  </test-case>
+  </test-set>"#,
+        )
+        .unwrap();
+        let test_case = test_set.test_case_by_name("test_case").unwrap();
+
+        let specs = vec![
+            qt::DependencySpec {
+                type_: "spec".to_string(),
+                value: "XP30+".to_string(),
+            },
+            qt::DependencySpec {
+                type_: "feature".to_string(),
+                value: "FOO".to_string(),
+            },
+        ];
+
+        let known_dependencies = KnownDependencies::new(&specs);
+
+        assert!(!test_case.is_supported(&known_dependencies));
     }
 }
