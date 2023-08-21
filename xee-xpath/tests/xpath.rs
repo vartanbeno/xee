@@ -1117,6 +1117,91 @@ fn test_cast_date_z() {
 }
 
 #[test]
+fn test_cast_g_year_month() {
+    assert_debug_snapshot!(run("'2019-01' cast as xs:gYearMonth"));
+}
+
+#[test]
+fn test_cast_g_year_month_back_to_string() {
+    assert_debug_snapshot!(run("('2019-01' cast as xs:gYearMonth) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_year_month_tz() {
+    assert_debug_snapshot!(run("'2019-01Z' cast as xs:gYearMonth"));
+}
+
+#[test]
+fn test_cast_g_year() {
+    assert_debug_snapshot!(run("'2019' cast as xs:gYear"));
+}
+
+#[test]
+fn test_cast_g_year_back_to_string() {
+    assert_debug_snapshot!(run("('2019' cast as xs:gYear) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_year_tz() {
+    assert_debug_snapshot!(run("'2019Z' cast as xs:gYear"));
+}
+
+#[test]
+fn test_cast_g_year_longer() {
+    assert_debug_snapshot!(run("'20190' cast as xs:gYear"));
+}
+
+#[test]
+fn test_cast_g_year_longer_back_to_string() {
+    assert_debug_snapshot!(run("('20190' cast as xs:gYear) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_month_day() {
+    assert_debug_snapshot!(run("'--01-01' cast as xs:gMonthDay"));
+}
+
+#[test]
+fn test_cast_g_month_day_back_to_string() {
+    assert_debug_snapshot!(run("('--06-21' cast as xs:gMonthDay) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_month_day_tz() {
+    assert_debug_snapshot!(run("'--01-01Z' cast as xs:gMonthDay"));
+}
+
+#[test]
+fn test_cast_g_day() {
+    assert_debug_snapshot!(run("'---01' cast as xs:gDay"));
+}
+
+#[test]
+fn test_cast_g_day_back_to_string() {
+    assert_debug_snapshot!(run("('---01' cast as xs:gDay) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_day_tz() {
+    assert_debug_snapshot!(run("'---01Z' cast as xs:gDay"));
+}
+
+#[test]
+fn test_cast_g_month() {
+    assert_debug_snapshot!(run("'--01' cast as xs:gMonth"));
+}
+
+#[test]
+fn test_cast_g_month_back_to_string() {
+    assert_debug_snapshot!(run("('--01' cast as xs:gMonth) cast as xs:string"));
+}
+
+#[test]
+fn test_cast_g_month_tz() {
+    assert_debug_snapshot!(run("'--01Z' cast as xs:gMonth"));
+}
+
+#[test]
 fn test_castable_as_integer_success() {
     assert_debug_snapshot!(run("1 castable as xs:integer"));
 }

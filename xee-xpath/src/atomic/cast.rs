@@ -62,11 +62,13 @@ impl atomic::Atomic {
             }
             atomic::Atomic::Time(time) => Self::canonical_time(time.as_ref()),
             atomic::Atomic::Date(date) => Self::canonical_date(date.as_ref()),
-            atomic::Atomic::GYearMonth(_) => todo!(),
-            atomic::Atomic::GYear(_) => todo!(),
-            atomic::Atomic::GMonthDay(_) => todo!(),
-            atomic::Atomic::GDay(_) => todo!(),
-            atomic::Atomic::GMonth(_) => todo!(),
+            atomic::Atomic::GYearMonth(year_month) => {
+                Self::canonical_g_year_month(year_month.as_ref())
+            }
+            atomic::Atomic::GYear(year) => Self::canonical_g_year(year.as_ref()),
+            atomic::Atomic::GMonthDay(month_day) => Self::canonical_g_month_day(month_day.as_ref()),
+            atomic::Atomic::GDay(day) => Self::canonical_g_day(day.as_ref()),
+            atomic::Atomic::GMonth(month) => Self::canonical_g_month(month.as_ref()),
             atomic::Atomic::Boolean(b) => {
                 if b {
                     "true".to_string()
@@ -112,11 +114,11 @@ impl atomic::Atomic {
             Xs::DateTimeStamp => self.cast_to_date_time_stamp(),
             Xs::Time => self.cast_to_time(),
             Xs::Date => self.cast_to_date(),
-            Xs::GYearMonth => todo!(),
-            Xs::GYear => todo!(),
-            Xs::GMonthDay => todo!(),
-            Xs::GDay => todo!(),
-            Xs::GMonth => todo!(),
+            Xs::GYearMonth => self.cast_to_g_year_month(),
+            Xs::GYear => self.cast_to_g_year(),
+            Xs::GMonthDay => self.cast_to_g_month_day(),
+            Xs::GDay => self.cast_to_g_day(),
+            Xs::GMonth => self.cast_to_g_month(),
             Xs::Boolean => self.cast_to_boolean(),
             Xs::Base64Binary => self.cast_to_base64_binary(),
             Xs::HexBinary => self.cast_to_hex_binary(),

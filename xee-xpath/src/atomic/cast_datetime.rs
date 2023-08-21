@@ -256,6 +256,126 @@ impl atomic::Atomic {
         s
     }
 
+    pub(crate) fn canonical_g_year_month(g_year_month: &GYearMonth) -> String {
+        let mut s = String::new();
+        let offset = g_year_month.offset;
+        let year = g_year_month.year;
+        let month = g_year_month.month;
+        s.push_str(&format!("{:04}-{:02}", year, month));
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_g_year(g_year: &GYear) -> String {
+        let mut s = String::new();
+        let offset = g_year.offset;
+        let year = g_year.year;
+        s.push_str(&format!("{:04}", year));
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_g_month_day(g_month_day: &GMonthDay) -> String {
+        let mut s = String::new();
+        let offset = g_month_day.offset;
+        let month = g_month_day.month;
+        let day = g_month_day.day;
+        s.push_str(&format!("--{:02}-{:02}", month, day));
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_g_day(g_day: &GDay) -> String {
+        let mut s = String::new();
+        let offset = g_day.offset;
+        let day = g_day.day;
+        s.push_str(&format!("---{:02}", day));
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    pub(crate) fn canonical_g_month(g_month: &GMonth) -> String {
+        let mut s = String::new();
+        let offset = g_month.offset;
+        let month = g_month.month;
+        s.push_str(&format!("--{:02}", month));
+        if let Some(offset) = offset {
+            Self::push_canonical_time_zone_offset(&mut s, &offset);
+        }
+        s
+    }
+
+    fn push_canonical_day_time_duration_fragment(v: &mut String, duration: &chrono::Duration) {
+        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duDTCan
+        let ss = duration.num_milliseconds().abs();
+        let ss = (ss as f64) / 1000.0;
+        if ss.is_zero() {
+            v.push_str("T0S");
+            return;
+        }
+        let d = (ss / 86400.0) as u64;
+        let h = ((ss % 86400.0) / 3600.0) as u64;
+        let m = ((ss % 3600.0) / 60.0) as u16;
+        let s: Decimal = (ss % 60.0).try_into().unwrap_or(Decimal::from(0));
+
+        if d != 0 {
+            v.push_str(&format!("{}D", d));
+        }
+        if h != 0 || m != 0 || !s.is_zero() {
+            v.push('T');
+        }
+        if h != 0 {
+            v.push_str(&format!("{}H", h));
+        }
+        if m != 0 {
+            v.push_str(&format!("{}M", m));
+        }
+        if s != Decimal::from(0) {
+            v.push_str(&format!("{}S", s));
+        }
+    }
+
+    fn push_canonical_time_zone_offset(s: &mut String, offset: &chrono::FixedOffset) {
+        let seconds = offset.local_minus_utc();
+        if seconds == 0 {
+            s.push('Z');
+            return;
+        }
+        let is_negative = seconds < 0;
+        let seconds = seconds.abs();
+        let hours = seconds / 3600;
+        let minutes = (seconds % 3600) / 60;
+        if is_negative {
+            s.push('-');
+        } else {
+            s.push('+');
+        }
+        s.push_str(&format!("{:02}:{:02}", hours, minutes));
+    }
+
+    fn push_canonical_year_month_duration_fragment(s: &mut String, months: i64) {
+        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duYMCan
+        let months = months.abs();
+        let years = months / 12;
+        let months = months % 12;
+        if years != 0 && months != 0 {
+            s.push_str(&format!("{}Y", years));
+            s.push_str(&format!("{}M", months));
+        } else if years != 0 {
+            s.push_str(&format!("{}Y", years));
+        } else {
+            s.push_str(&format!("{}M", months));
+        }
+    }
+
     pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
@@ -342,6 +462,55 @@ impl atomic::Atomic {
         }
     }
 
+    pub(crate) fn cast_to_g_year_month(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_g_year_month(&s)
+            }
+            atomic::Atomic::GYearMonth(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_g_year(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_year(&s),
+            atomic::Atomic::GYear(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_g_month_day(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
+                Self::parse_g_month_day(&s)
+            }
+            atomic::Atomic::GMonthDay(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_g_day(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_day(&s),
+            atomic::Atomic::GDay(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn cast_to_g_month(self) -> error::Result<atomic::Atomic> {
+        match self {
+            atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_month(&s),
+            atomic::Atomic::GMonth(_) => Ok(self.clone()),
+            // TODO
+            _ => Err(error::Error::Type),
+        }
+    }
+
     fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
@@ -419,74 +588,47 @@ impl atomic::Atomic {
         }
     }
 
-    fn push_canonical_day_time_duration_fragment(v: &mut String, duration: &chrono::Duration) {
-        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duDTCan
-        let ss = duration.num_milliseconds().abs();
-        let ss = (ss as f64) / 1000.0;
-        if ss.is_zero() {
-            v.push_str("T0S");
-            return;
-        }
-        let d = (ss / 86400.0) as u64;
-        let h = ((ss % 86400.0) / 3600.0) as u64;
-        let m = ((ss % 3600.0) / 60.0) as u16;
-        let s: Decimal = (ss % 60.0).try_into().unwrap_or(Decimal::from(0));
-
-        if d != 0 {
-            v.push_str(&format!("{}D", d));
-        }
-        if h != 0 || m != 0 || !s.is_zero() {
-            v.push('T');
-        }
-        if h != 0 {
-            v.push_str(&format!("{}H", h));
-        }
-        if m != 0 {
-            v.push_str(&format!("{}M", m));
-        }
-        if s != Decimal::from(0) {
-            v.push_str(&format!("{}S", s));
-        }
-    }
-
-    fn push_canonical_time_zone_offset(s: &mut String, offset: &chrono::FixedOffset) {
-        let seconds = offset.local_minus_utc();
-        if seconds == 0 {
-            s.push('Z');
-            return;
-        }
-        let is_negative = seconds < 0;
-        let seconds = seconds.abs();
-        let hours = seconds / 3600;
-        let minutes = (seconds % 3600) / 60;
-        if is_negative {
-            s.push('-');
-        } else {
-            s.push('+');
-        }
-        s.push_str(&format!("{:02}:{:02}", hours, minutes));
-    }
-
-    fn push_canonical_year_month_duration_fragment(s: &mut String, months: i64) {
-        // https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/datatypes.html#f-duYMCan
-        let months = months.abs();
-        let years = months / 12;
-        let months = months % 12;
-        if years != 0 && months != 0 {
-            s.push_str(&format!("{}Y", years));
-            s.push_str(&format!("{}M", months));
-        } else if years != 0 {
-            s.push_str(&format!("{}Y", years));
-        } else {
-            s.push_str(&format!("{}M", months));
-        }
-    }
-
     fn parse_g_year(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_year_parser();
         match parser.parse(&s).into_result() {
             Ok(g_year) => Ok(atomic::Atomic::GYear(Rc::new(g_year))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_g_month(s: &str) -> error::Result<atomic::Atomic> {
+        let s = whitespace_collapse(s);
+        let parser = g_month_parser();
+        match parser.parse(&s).into_result() {
+            Ok(g_month) => Ok(atomic::Atomic::GMonth(Rc::new(g_month))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_g_day(s: &str) -> error::Result<atomic::Atomic> {
+        let s = whitespace_collapse(s);
+        let parser = g_day_parser();
+        match parser.parse(&s).into_result() {
+            Ok(g_day) => Ok(atomic::Atomic::GDay(Rc::new(g_day))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_g_month_day(s: &str) -> error::Result<atomic::Atomic> {
+        let s = whitespace_collapse(s);
+        let parser = g_month_day_parser();
+        match parser.parse(&s).into_result() {
+            Ok(g_month_day) => Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day))),
+            Err(_) => Err(error::Error::FORG0001),
+        }
+    }
+
+    fn parse_g_year_month(s: &str) -> error::Result<atomic::Atomic> {
+        let s = whitespace_collapse(s);
+        let parser = g_year_month_parser();
+        match parser.parse(&s).into_result() {
+            Ok(g_year_month) => Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
