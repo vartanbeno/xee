@@ -415,15 +415,14 @@ impl atomic::Atomic {
             Err(_) => Err(error::Error::FORG0001),
         }
     }
+
     fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
         // TODO: this has overhead I'd like to avoid
         // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = year_month_duration_parser();
         match parser.parse(&s).into_result() {
-            Ok(months) => Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(
-                months,
-            ))),
+            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -445,9 +444,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = date_time_parser();
         match parser.parse(&s).into_result() {
-            Ok((date_time, tz)) => Ok(atomic::Atomic::DateTime(Rc::new(
-                NaiveDateTimeWithOffset::new(date_time, tz),
-            ))),
+            Ok(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(date_time))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -469,9 +466,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = time_parser();
         match parser.parse(&s).into_result() {
-            Ok((time, tz)) => Ok(atomic::Atomic::Time(Rc::new(NaiveTimeWithOffset::new(
-                time, tz,
-            )))),
+            Ok(time) => Ok(atomic::Atomic::Time(Rc::new(time))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -482,9 +477,7 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = date_parser();
         match parser.parse(&s).into_result() {
-            Ok((date, tz)) => Ok(atomic::Atomic::Date(Rc::new(NaiveDateWithOffset::new(
-                date, tz,
-            )))),
+            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -548,13 +541,13 @@ fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64> {
     .map(|(years, months)| years as i64 * 12 + months as i64)
 }
 
-fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, i64> {
+fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, YearMonthDuration> {
     let year_month = year_month_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
         .then(year_month.clone())
         .then_ignore(end())
-        .map(|(sign, months)| if sign { -months } else { months })
+        .map(|(sign, months)| YearMonthDuration::new(if sign { -months } else { months }))
 }
 
 fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
@@ -688,10 +681,12 @@ fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
         })
 }
 
-fn date_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveDate, Option<chrono::FixedOffset>)> {
+fn date_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateWithOffset> {
     let date = date_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    date.then(tz.or_not()).then_ignore(end())
+    date.then(tz.or_not())
+        .then_ignore(end())
+        .map(|(date, offset)| NaiveDateWithOffset::new(date, offset))
 }
 
 fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
@@ -728,10 +723,12 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
         })
 }
 
-fn time_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveTime, Option<chrono::FixedOffset>)> {
+fn time_parser<'a>() -> impl Parser<'a, &'a str, NaiveTimeWithOffset> {
     let time = time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    time.then(tz.or_not()).then_ignore(end())
+    time.then(tz.or_not())
+        .then_ignore(end())
+        .map(|(time, offset)| NaiveTimeWithOffset::new(time, offset))
 }
 
 fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
@@ -742,11 +739,12 @@ fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate
         .map(|(date, time)| date.and_time(time))
 }
 
-fn date_time_parser<'a>(
-) -> impl Parser<'a, &'a str, (chrono::NaiveDateTime, Option<chrono::FixedOffset>)> {
+fn date_time_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateTimeWithOffset> {
     let date_time = date_time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
-    date_time.then(tz.or_not())
+    date_time
+        .then(tz.or_not())
+        .map(|(date_time, offset)| NaiveDateTimeWithOffset::new(date_time, offset))
 }
 
 fn date_time_stamp_parser<'a>() -> impl Parser<'a, &'a str, chrono::DateTime<chrono::FixedOffset>> {
@@ -827,12 +825,18 @@ mod tests {
 
     #[test]
     fn test_year_month_duration_parser() {
-        assert_eq!(year_month_duration_parser().parse("P1Y2M").unwrap(), 14);
+        assert_eq!(
+            year_month_duration_parser().parse("P1Y2M").unwrap(),
+            YearMonthDuration::new(14)
+        );
     }
 
     #[test]
     fn test_year_month_duration_parser_negative() {
-        assert_eq!(year_month_duration_parser().parse("-P1Y2M").unwrap(), -14);
+        assert_eq!(
+            year_month_duration_parser().parse("-P1Y2M").unwrap(),
+            YearMonthDuration::new(-14)
+        );
     }
 
     #[test]
@@ -950,7 +954,7 @@ mod tests {
     fn test_date_parser_4_digit_year() {
         assert_eq!(
             date_parser().parse("2020-01-02").unwrap(),
-            (chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap(), None)
+            NaiveDateWithOffset::new(chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap(), None)
         );
     }
 
@@ -958,7 +962,7 @@ mod tests {
     fn test_date_parser_more_digits_year() {
         assert_eq!(
             date_parser().parse("20200-01-02").unwrap(),
-            (chrono::NaiveDate::from_ymd_opt(20200, 1, 2).unwrap(), None)
+            NaiveDateWithOffset::new(chrono::NaiveDate::from_ymd_opt(20200, 1, 2).unwrap(), None)
         );
     }
 
@@ -966,7 +970,7 @@ mod tests {
     fn test_date_parser_year_with_zeros() {
         assert_eq!(
             date_parser().parse("0120-01-02").unwrap(),
-            (chrono::NaiveDate::from_ymd_opt(120, 1, 2).unwrap(), None)
+            NaiveDateWithOffset::new(chrono::NaiveDate::from_ymd_opt(120, 1, 2).unwrap(), None)
         );
     }
 
@@ -999,7 +1003,7 @@ mod tests {
     fn test_date_parser_utc() {
         assert_eq!(
             date_parser().parse("2020-01-02Z").unwrap(),
-            (
+            NaiveDateWithOffset::new(
                 chrono::NaiveDate::from_ymd_opt(2020, 1, 2).unwrap(),
                 Some(chrono::offset::Utc.fix())
             )
@@ -1059,7 +1063,7 @@ mod tests {
     fn test_time_parser() {
         assert_eq!(
             time_parser().parse("01:02:03.456").unwrap(),
-            (
+            NaiveTimeWithOffset::new(
                 chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap(),
                 None
             )
@@ -1070,7 +1074,7 @@ mod tests {
     fn test_time_parser_no_ms() {
         assert_eq!(
             time_parser().parse("01:02:03").unwrap(),
-            (
+            NaiveTimeWithOffset::new(
                 chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 0).unwrap(),
                 None
             )
@@ -1081,7 +1085,7 @@ mod tests {
     fn test_time_parser_utc() {
         assert_eq!(
             time_parser().parse("01:02:03.456Z").unwrap(),
-            (
+            NaiveTimeWithOffset::new(
                 chrono::NaiveTime::from_hms_milli_opt(1, 2, 3, 456).unwrap(),
                 Some(chrono::offset::Utc.fix())
             )
@@ -1102,7 +1106,7 @@ mod tests {
     fn test_date_time_parser() {
         assert_eq!(
             date_time_parser().parse("2020-01-02T01:02:03.456").unwrap(),
-            (
+            NaiveDateTimeWithOffset::new(
                 chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
                     .unwrap()
                     .and_hms_milli_opt(1, 2, 3, 456)
@@ -1118,7 +1122,7 @@ mod tests {
             date_time_parser()
                 .parse("2020-01-02T01:02:03.456Z")
                 .unwrap(),
-            (
+            NaiveDateTimeWithOffset::new(
                 chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
                     .unwrap()
                     .and_hms_milli_opt(1, 2, 3, 456)
@@ -1134,7 +1138,7 @@ mod tests {
             date_time_parser()
                 .parse("2020-01-02T01:02:03.456+01:00")
                 .unwrap(),
-            (
+            NaiveDateTimeWithOffset::new(
                 chrono::NaiveDate::from_ymd_opt(2020, 1, 2)
                     .unwrap()
                     .and_hms_milli_opt(1, 2, 3, 456)
