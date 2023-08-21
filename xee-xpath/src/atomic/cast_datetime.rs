@@ -11,7 +11,7 @@ use super::cast::whitespace_collapse;
 
 pub(crate) type BoxedParser<'a, 'b, T> = Boxed<'a, 'b, &'a str, T, extra::Default>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct YearMonthDuration {
     pub(crate) months: i64,
 }

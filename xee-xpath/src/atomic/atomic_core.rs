@@ -16,7 +16,7 @@ use super::cast_datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::comparison;
+use super::comparison::{self, ComparisonOps};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -172,7 +172,7 @@ impl Atomic {
     // value comparison as per XPath rules
     pub(crate) fn value_comparison<O>(self, other: Atomic) -> error::Result<bool>
     where
-        O: comparison::ComparisonOp,
+        O: ComparisonOps,
     {
         comparison::value_comparison_op::<O>(self, other)
     }
@@ -275,7 +275,7 @@ impl TryFrom<Atomic> for Decimal {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::Decimal(d) => Ok(d.as_ref().clone()),
+            Atomic::Decimal(d) => Ok(*d.as_ref()),
             _ => Err(error::Error::Type),
         }
     }

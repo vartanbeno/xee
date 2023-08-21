@@ -1,4 +1,5 @@
 use crate::atomic;
+use crate::atomic::ComparisonOps;
 use crate::context;
 use crate::error;
 
@@ -10,7 +11,7 @@ pub(crate) fn general_comparison<O>(
     context: &context::DynamicContext,
 ) -> error::Result<bool>
 where
-    O: atomic::ComparisonOp,
+    O: ComparisonOps,
 {
     let b_atoms = b_atoms.collect::<Vec<_>>();
     for a in a_atoms {

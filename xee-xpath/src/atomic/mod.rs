@@ -11,8 +11,9 @@ pub(crate) use arithmetic::{
     AddOp, ArithmeticOp, DivideOp, IntegerDivideOp, ModuloOp, MultiplyOp, SubtractOp,
 };
 pub use atomic_core::Atomic;
+pub use cast_datetime::YearMonthDuration;
 pub(crate) use comparison::{
-    ComparisonOp, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
+    ComparisonOps, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
     NotEqualOp,
 };
 pub use types::{BinaryType, IntegerType, StringType};

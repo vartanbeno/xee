@@ -1,40 +1,72 @@
 use std::rc::Rc;
 
 use ibig::IBig;
-use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 
 use crate::atomic;
 use crate::error;
 
+use super::cast_datetime::YearMonthDuration;
 use super::cast_numeric::cast_numeric_binary;
+
+// simulate trait alias
+pub(crate) trait ComparisonOps:
+    ComparisonOp<Rc<String>>
+    + ComparisonOp<bool>
+    + ComparisonOp<Rc<Decimal>>
+    + ComparisonOp<Rc<IBig>>
+    + ComparisonOp<OrderedFloat<f32>>
+    + ComparisonOp<OrderedFloat<f64>>
+    + ComparisonOp<YearMonthDuration>
+    + ComparisonOp<Rc<chrono::Duration>>
+{
+}
+
+impl<
+        T: ComparisonOp<Rc<String>>
+            + ComparisonOp<bool>
+            + ComparisonOp<Rc<Decimal>>
+            + ComparisonOp<Rc<IBig>>
+            + ComparisonOp<OrderedFloat<f32>>
+            + ComparisonOp<OrderedFloat<f64>>
+            + ComparisonOp<YearMonthDuration>
+            + ComparisonOp<Rc<chrono::Duration>>,
+    > ComparisonOps for T
+{
+}
 
 pub(crate) fn value_comparison_op<O>(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<bool>
 where
-    O: ComparisonOp,
+    O: ComparisonOps,
 {
     let (a, b) = cast(a, b)?;
 
     // cast guarantees both atomic types are the same concrete atomic
     Ok(match (a, b) {
         (atomic::Atomic::String(_, a), atomic::Atomic::String(_, b)) => {
-            <O as ComparisonOp>::string(&a, &b)
+            <O as ComparisonOp<Rc<String>>>::compare(a, b)
         }
         (atomic::Atomic::Boolean(a), atomic::Atomic::Boolean(b)) => {
-            <O as ComparisonOp>::boolean(a, b)
+            <O as ComparisonOp<bool>>::compare(a, b)
         }
         (atomic::Atomic::Decimal(a), atomic::Atomic::Decimal(b)) => {
-            <O as ComparisonOp>::decimal(a, b)
+            <O as ComparisonOp<Rc<Decimal>>>::compare(a, b)
         }
         (atomic::Atomic::Integer(_, a), atomic::Atomic::Integer(_, b)) => {
-            <O as ComparisonOp>::ibig(a, b)
+            <O as ComparisonOp<Rc<IBig>>>::compare(a, b)
         }
-        (atomic::Atomic::Float(OrderedFloat(a)), atomic::Atomic::Float(OrderedFloat(b))) => {
-            <O as ComparisonOp>::float(a, b)
+        (atomic::Atomic::Float(a), atomic::Atomic::Float(b)) => {
+            <O as ComparisonOp<OrderedFloat<f32>>>::compare(a, b)
         }
-        (atomic::Atomic::Double(OrderedFloat(a)), atomic::Atomic::Double(OrderedFloat(b))) => {
-            <O as ComparisonOp>::float(a, b)
+        (atomic::Atomic::Double(a), atomic::Atomic::Double(b)) => {
+            <O as ComparisonOp<OrderedFloat<f64>>>::compare(a, b)
+        }
+        (atomic::Atomic::YearMonthDuration(a), atomic::Atomic::YearMonthDuration(b)) => {
+            <O as ComparisonOp<YearMonthDuration>>::compare(a, b)
+        }
+        (atomic::Atomic::DayTimeDuration(a), atomic::Atomic::DayTimeDuration(b)) => {
+            <O as ComparisonOp<Rc<chrono::Duration>>>::compare(a, b)
         }
         _ => unreachable!("Both the atomics are not the same type or types aren't handled"),
     })
@@ -72,178 +104,74 @@ fn cast_untyped(value: atomic::Atomic) -> atomic::Atomic {
     }
 }
 
-pub(crate) trait ComparisonOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool;
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool;
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float;
-    fn string(a: &str, b: &str) -> bool;
-    fn boolean(a: bool, b: bool) -> bool;
+pub(crate) trait ComparisonOp<V>
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool;
 }
 
 pub(crate) struct EqualOp;
 
-impl ComparisonOp for EqualOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a == b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a == b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a == b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a == b
-    }
-
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for EqualOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a == b
     }
 }
 
 pub(crate) struct NotEqualOp;
 
-impl ComparisonOp for NotEqualOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a != b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a != b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a != b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a != b
-    }
-
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for NotEqualOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a != b
     }
 }
 
 pub(crate) struct LessThanOp;
 
-impl ComparisonOp for LessThanOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a < b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a < b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a < b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a < b
-    }
-
-    #[allow(clippy::bool_comparison)]
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for LessThanOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a < b
     }
 }
 
 pub(crate) struct LessThanOrEqualOp;
 
-impl ComparisonOp for LessThanOrEqualOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a <= b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a <= b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a <= b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a <= b
-    }
-
-    #[allow(clippy::bool_comparison)]
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for LessThanOrEqualOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a <= b
     }
 }
-
 pub(crate) struct GreaterThanOp;
 
-impl ComparisonOp for GreaterThanOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a > b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a > b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a > b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a > b
-    }
-
-    #[allow(clippy::bool_comparison)]
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for GreaterThanOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a > b
     }
 }
 
 pub(crate) struct GreaterThanOrEqualOp;
 
-impl ComparisonOp for GreaterThanOrEqualOp {
-    fn ibig(a: Rc<IBig>, b: Rc<IBig>) -> bool {
-        a >= b
-    }
-
-    fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> bool {
-        a >= b
-    }
-
-    fn float<F>(a: F, b: F) -> bool
-    where
-        F: Float,
-    {
-        a >= b
-    }
-
-    fn string(a: &str, b: &str) -> bool {
-        a >= b
-    }
-
-    #[allow(clippy::bool_comparison)]
-    fn boolean(a: bool, b: bool) -> bool {
+impl<V> ComparisonOp<V> for GreaterThanOrEqualOp
+where
+    V: Eq + Ord,
+{
+    fn compare(a: V, b: V) -> bool {
         a >= b
     }
 }

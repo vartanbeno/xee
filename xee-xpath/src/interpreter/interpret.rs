@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use xee_schema_type::Xs;
 
 use crate::atomic;
+use crate::atomic::ComparisonOps;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
@@ -518,7 +519,7 @@ impl<'a> Interpreter<'a> {
 
     fn value_compare<O>(&mut self) -> error::Result<()>
     where
-        O: atomic::ComparisonOp,
+        O: ComparisonOps,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -539,7 +540,7 @@ impl<'a> Interpreter<'a> {
 
     fn general_compare<O>(&mut self) -> error::Result<()>
     where
-        O: atomic::ComparisonOp,
+        O: ComparisonOps,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();

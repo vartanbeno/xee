@@ -8,6 +8,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::atomic::ComparisonOps;
 use crate::context;
 use crate::error;
 use crate::sequence;
@@ -95,7 +96,7 @@ impl Value {
         context: &context::DynamicContext,
     ) -> error::Result<bool>
     where
-        O: atomic::ComparisonOp,
+        O: ComparisonOps,
     {
         comparison::general_comparison::<O>(
             self.atomized(context.xot),

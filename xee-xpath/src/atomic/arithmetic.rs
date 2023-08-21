@@ -101,8 +101,7 @@ impl ArithmeticOp for AddOp {
     }
 
     fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
-        a.checked_add(b.as_ref().clone())
-            .ok_or(error::Error::Overflow)
+        a.checked_add(*b.as_ref()).ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -121,8 +120,7 @@ impl ArithmeticOp for SubtractOp {
     }
 
     fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
-        a.checked_sub(b.as_ref().clone())
-            .ok_or(error::Error::Overflow)
+        a.checked_sub(*b.as_ref()).ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -141,8 +139,7 @@ impl ArithmeticOp for MultiplyOp {
     }
 
     fn decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
-        a.checked_mul(b.as_ref().clone())
-            .ok_or(error::Error::Overflow)
+        a.checked_mul(*b.as_ref()).ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -173,8 +170,7 @@ impl ArithmeticOp for DivideOp {
         if b.is_zero() {
             return Err(error::Error::DivisionByZero);
         }
-        a.checked_div(b.as_ref().clone())
-            .ok_or(error::Error::Overflow)
+        a.checked_div(*b.as_ref()).ok_or(error::Error::Overflow)
     }
 
     fn float<F>(a: F, b: F) -> error::Result<F>
@@ -272,7 +268,7 @@ pub(crate) fn unary_minus(atomic: atomic::Atomic) -> error::Result<atomic::Atomi
             atomic::IntegerType::Integer,
             Rc::new(-(i.as_ref().clone())),
         )),
-        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(Rc::new(-d.as_ref().clone()))),
+        atomic::Atomic::Decimal(d) => Ok(atomic::Atomic::Decimal(Rc::new(-*d.as_ref()))),
         atomic::Atomic::Float(f) => Ok(atomic::Atomic::Float(-f)),
         atomic::Atomic::Double(d) => Ok(atomic::Atomic::Double(-d)),
         _ => Err(error::Error::Type),
