@@ -1,8 +1,7 @@
-use std::rc::Rc;
-
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;
@@ -111,6 +110,7 @@ where
     fn compare(a: V, b: V) -> bool;
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct EqualOp;
 
 impl<V> ComparisonOp<V> for EqualOp
@@ -122,6 +122,7 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct NotEqualOp;
 
 impl<V> ComparisonOp<V> for NotEqualOp
@@ -133,6 +134,7 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct LessThanOp;
 
 impl<V> ComparisonOp<V> for LessThanOp
@@ -144,6 +146,7 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct LessThanOrEqualOp;
 
 impl<V> ComparisonOp<V> for LessThanOrEqualOp
@@ -154,6 +157,8 @@ where
         a <= b
     }
 }
+
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct GreaterThanOp;
 
 impl<V> ComparisonOp<V> for GreaterThanOp
@@ -165,6 +170,7 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct GreaterThanOrEqualOp;
 
 impl<V> ComparisonOp<V> for GreaterThanOrEqualOp
