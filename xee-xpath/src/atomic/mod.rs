@@ -7,6 +7,7 @@ mod cast_string;
 mod comparison;
 mod datetime;
 mod op_add;
+mod op_subtract;
 mod types;
 
 pub(crate) use arithmetic::{

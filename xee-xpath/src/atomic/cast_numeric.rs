@@ -407,6 +407,33 @@ where
     }
 }
 
+pub(crate) fn cast_numeric(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
+    use atomic::Atomic::*;
+
+    match (&a, &b) {
+        // Cast a to a float
+        (Decimal(_), Float(_)) | (Integer(_, _), Float(_)) => Ok((a.cast_to_float()?, b)),
+        // Cast b to a float
+        (Float(_), Decimal(_)) | (Float(_), Integer(_, _)) => Ok((a, b.cast_to_float()?)),
+        // Cast a to a double
+        (Decimal(_), Double(_)) | (Integer(_, _), Double(_)) | (Float(_), Double(_)) => {
+            Ok((a.cast_to_double()?, b))
+        }
+        // Cast b to a double
+        (Double(_), Decimal(_)) | (Double(_), Integer(_, _)) | (Double(_), Float(_)) => {
+            Ok((a, b.cast_to_double()?))
+        }
+        // Cast integer to decimal
+        (Decimal(_), Integer(_, _)) => Ok((a, b.cast_to_decimal()?)),
+        (Integer(_, _), Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
+        // otherwise, we don't cast
+        _ => Ok((a, b)),
+    }
+}
+
 pub(crate) fn decimal_to_integer<V>(d: Rc<Decimal>) -> error::Result<V>
 where
     V: TryFrom<IBig>

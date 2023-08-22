@@ -79,7 +79,7 @@ impl NaiveDateTimeWithOffset {
         Self { date_time, offset }
     }
 
-    fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
+    pub(crate) fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or_else(|| chrono::offset::Utc.fix());
         chrono::DateTime::from_utc(self.date_time, offset)
     }
@@ -94,6 +94,15 @@ pub struct NaiveTimeWithOffset {
 impl NaiveTimeWithOffset {
     pub(crate) fn new(time: chrono::NaiveTime, offset: Option<chrono::FixedOffset>) -> Self {
         Self { time, offset }
+    }
+
+    pub(crate) fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
+        let offset = self.offset.unwrap_or_else(|| chrono::offset::Utc.fix());
+        // https://www.w3.org/TR/xpath-functions-31/#func-subtract-times
+        let date_time = chrono::NaiveDate::from_ymd_opt(1972, 12, 31)
+            .unwrap()
+            .and_time(self.time);
+        chrono::DateTime::from_utc(date_time, offset)
     }
 }
 
