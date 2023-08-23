@@ -7,14 +7,14 @@ use rust_decimal::Decimal;
 use crate::atomic;
 use crate::error;
 
-use super::cast_numeric::cast_numeric;
+use super::cast_binary::cast_binary_arithmetic;
 use super::cast_numeric::f64_to_i64;
 use super::datetime::YearMonthDuration;
 
 pub(crate) fn op_multiply(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic> {
     use atomic::Atomic;
 
-    let (a, b) = cast_numeric(a, b)?;
+    let (a, b) = cast_binary_arithmetic(a, b)?;
 
     match (a, b) {
         (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok(op_multiply_decimal(a, b)?),

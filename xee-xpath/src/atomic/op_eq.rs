@@ -2,7 +2,7 @@ use crate::atomic::BinaryType;
 use crate::error;
 use crate::Atomic;
 
-use super::cast_numeric::cast_numeric;
+use super::cast_binary::cast_binary_compare;
 use super::datetime::EqWithDefaultOffset;
 
 pub(crate) fn op_eq(
@@ -10,7 +10,7 @@ pub(crate) fn op_eq(
     b: Atomic,
     default_offset: chrono::FixedOffset,
 ) -> error::Result<bool> {
-    let (a, b) = cast_numeric(a, b)?;
+    let (a, b) = cast_binary_compare(a, b)?;
 
     use Atomic::*;
 
@@ -44,5 +44,66 @@ pub(crate) fn op_eq(
         (Binary(BinaryType::Base64, a), Binary(BinaryType::Base64, b)) => Ok(a == b),
         (QName(a), QName(b)) => Ok(a == b),
         _ => Err(error::Error::Type),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use chrono::Offset;
+    use rust_decimal_macros::dec;
+    use std::rc::Rc;
+
+    use crate::atomic;
+    use crate::atomic::op_ne;
+
+    fn default_offset() -> chrono::FixedOffset {
+        chrono::offset::Utc.fix()
+    }
+
+    #[test]
+    fn test_compare_bytes() {
+        let a: atomic::Atomic = 1i8.into();
+        let b: atomic::Atomic = 2i8.into();
+
+        assert!(!op_eq(a.clone(), b.clone(), default_offset()).unwrap());
+        assert!(op_ne(a, b, default_offset()).unwrap());
+    }
+
+    #[test]
+    fn test_compare_cast_untyped() {
+        let a: atomic::Atomic = "foo".into();
+        let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::new("foo".to_string()));
+
+        assert!(op_eq(a.clone(), b.clone(), default_offset()).unwrap());
+        assert!(!op_ne(a, b, default_offset()).unwrap());
+    }
+
+    #[test]
+    fn test_compare_cast_decimal_to_double() {
+        let a: atomic::Atomic = dec!(1.5).into();
+        let b: atomic::Atomic = 1.5f64.into();
+
+        assert!(op_eq(a.clone(), b.clone(), default_offset()).unwrap());
+        assert!(!op_ne(a, b, default_offset()).unwrap());
+    }
+
+    #[test]
+    fn test_compare_byte_and_integer() {
+        let a: atomic::Atomic = 1i8.into();
+        let b: atomic::Atomic = 1i64.into();
+
+        assert!(op_eq(a.clone(), b.clone(), default_offset()).unwrap());
+        assert!(!op_ne(a, b, default_offset()).unwrap());
+    }
+
+    #[test]
+    fn test_compare_integer_and_integer() {
+        let a: atomic::Atomic = 1i64.into();
+        let b: atomic::Atomic = 1i64.into();
+
+        assert!(op_eq(a.clone(), b.clone(), default_offset()).unwrap());
+        assert!(!op_ne(a, b, default_offset()).unwrap());
     }
 }
