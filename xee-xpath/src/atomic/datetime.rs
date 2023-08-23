@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use chrono::Offset;
 
-use crate::context::DynamicContext;
+use crate::atomic::Atomic;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct YearMonthDuration {
@@ -10,6 +12,12 @@ pub struct YearMonthDuration {
 impl YearMonthDuration {
     pub(crate) fn new(months: i64) -> Self {
         Self { months }
+    }
+}
+
+impl From<YearMonthDuration> for Atomic {
+    fn from(year_month_duration: YearMonthDuration) -> Self {
+        Atomic::YearMonthDuration(year_month_duration)
     }
 }
 
@@ -42,6 +50,12 @@ impl Duration {
     }
 }
 
+impl From<Duration> for Atomic {
+    fn from(duration: Duration) -> Self {
+        Atomic::Duration(Rc::new(duration))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
@@ -68,6 +82,12 @@ impl Ord for NaiveDateTimeWithOffset {
 impl PartialOrd for NaiveDateTimeWithOffset {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl From<NaiveDateTimeWithOffset> for Atomic {
+    fn from(date_time: NaiveDateTimeWithOffset) -> Self {
+        Atomic::DateTime(Rc::new(date_time))
     }
 }
 
@@ -106,6 +126,12 @@ impl NaiveTimeWithOffset {
     }
 }
 
+impl From<NaiveTimeWithOffset> for Atomic {
+    fn from(time: NaiveTimeWithOffset) -> Self {
+        Atomic::Time(Rc::new(time))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
@@ -138,6 +164,12 @@ impl PartialOrd for NaiveDateWithOffset {
     }
 }
 
+impl From<NaiveDateWithOffset> for Atomic {
+    fn from(date: NaiveDateWithOffset) -> Self {
+        Atomic::Date(Rc::new(date))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GYearMonth {
     pub(crate) year: i32,
@@ -155,6 +187,12 @@ impl GYearMonth {
     }
 }
 
+impl From<GYearMonth> for Atomic {
+    fn from(g_year_month: GYearMonth) -> Self {
+        Atomic::GYearMonth(Rc::new(g_year_month))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GYear {
     pub(crate) year: i32,
@@ -164,6 +202,12 @@ pub struct GYear {
 impl GYear {
     pub(crate) fn new(year: i32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { year, offset }
+    }
+}
+
+impl From<GYear> for Atomic {
+    fn from(g_year: GYear) -> Self {
+        Atomic::GYear(Rc::new(g_year))
     }
 }
 
@@ -180,6 +224,12 @@ impl GMonthDay {
     }
 }
 
+impl From<GMonthDay> for Atomic {
+    fn from(g_month_day: GMonthDay) -> Self {
+        Atomic::GMonthDay(Rc::new(g_month_day))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GDay {
     pub(crate) day: u32,
@@ -192,6 +242,12 @@ impl GDay {
     }
 }
 
+impl From<GDay> for Atomic {
+    fn from(g_day: GDay) -> Self {
+        Atomic::GDay(Rc::new(g_day))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GMonth {
     pub(crate) month: u32,
@@ -201,5 +257,23 @@ pub struct GMonth {
 impl GMonth {
     pub(crate) fn new(month: u32, offset: Option<chrono::FixedOffset>) -> Self {
         Self { month, offset }
+    }
+}
+
+impl From<GMonth> for Atomic {
+    fn from(g_month: GMonth) -> Self {
+        Atomic::GMonth(Rc::new(g_month))
+    }
+}
+
+impl From<chrono::Duration> for Atomic {
+    fn from(duration: chrono::Duration) -> Self {
+        Atomic::DayTimeDuration(Rc::new(duration))
+    }
+}
+
+impl From<chrono::DateTime<chrono::FixedOffset>> for Atomic {
+    fn from(date_time: chrono::DateTime<chrono::FixedOffset>) -> Self {
+        Atomic::DateTimeStamp(Rc::new(date_time))
     }
 }
