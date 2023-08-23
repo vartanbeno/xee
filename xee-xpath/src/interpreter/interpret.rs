@@ -245,22 +245,22 @@ impl<'a> Interpreter<'a> {
                     self.value_compare(op_ge)?;
                 }
                 EncodedInstruction::GenEq => {
-                    self.general_compare::<atomic::EqualOp>()?;
+                    self.general_compare(op_eq)?;
                 }
                 EncodedInstruction::GenNe => {
-                    self.general_compare::<atomic::NotEqualOp>()?;
+                    self.general_compare(op_ne)?;
                 }
                 EncodedInstruction::GenLt => {
-                    self.general_compare::<atomic::LessThanOp>()?;
+                    self.general_compare(op_lt)?;
                 }
                 EncodedInstruction::GenLe => {
-                    self.general_compare::<atomic::LessThanOrEqualOp>()?;
+                    self.general_compare(op_le)?;
                 }
                 EncodedInstruction::GenGt => {
-                    self.general_compare::<atomic::GreaterThanOp>()?;
+                    self.general_compare(op_gt)?;
                 }
                 EncodedInstruction::GenGe => {
-                    self.general_compare::<atomic::GreaterThanOrEqualOp>()?;
+                    self.general_compare(op_ge)?;
                 }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
@@ -542,13 +542,13 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn general_compare<O>(&mut self) -> error::Result<()>
+    fn general_compare<F>(&mut self, op: F) -> error::Result<()>
     where
-        O: ComparisonOps,
+        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
-        let value = a.general_comparison::<O>(b, self.dynamic_context)?.into();
+        let value = a.general_comparison(b, self.dynamic_context, op)?.into();
         self.stack.push(value);
         Ok(())
     }

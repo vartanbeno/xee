@@ -90,18 +90,20 @@ impl Value {
         }
     }
 
-    pub(crate) fn general_comparison<O>(
+    pub(crate) fn general_comparison<F>(
         &self,
         other: Value,
         context: &context::DynamicContext,
+        op: F,
     ) -> error::Result<bool>
     where
-        O: ComparisonOps,
+        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
     {
-        comparison::general_comparison::<O>(
+        comparison::general_comparison(
             self.atomized(context.xot),
             other.atomized(context.xot),
             context,
+            op,
         )
     }
 

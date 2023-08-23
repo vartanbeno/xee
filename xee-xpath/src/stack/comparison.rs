@@ -1,25 +1,26 @@
 use crate::atomic;
-use crate::atomic::ComparisonOps;
 use crate::context;
 use crate::error;
 
 // https://www.w3.org/TR/xpath-31/#id-general-comparisons
 // step 1, atomization, has already taken place
-pub(crate) fn general_comparison<O>(
+pub(crate) fn general_comparison<F>(
     a_atoms: impl Iterator<Item = error::Result<atomic::Atomic>>,
     b_atoms: impl Iterator<Item = error::Result<atomic::Atomic>> + std::clone::Clone,
     context: &context::DynamicContext,
+    op: F,
 ) -> error::Result<bool>
 where
-    O: ComparisonOps,
+    F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
 {
     let b_atoms = b_atoms.collect::<Vec<_>>();
+    let implicit_timezone = context.implicit_timezone();
     for a in a_atoms {
         let a = a?;
         for b in b_atoms.iter() {
             let (a, b) = cast(a.clone(), b.clone()?, context)?;
             // 2c do value comparison
-            if a.value_comparison::<O>(b)? {
+            if op(a, b, implicit_timezone)? {
                 return Ok(true);
             }
         }
