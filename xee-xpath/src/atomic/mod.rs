@@ -1,4 +1,3 @@
-mod arithmetic;
 mod atomic_core;
 mod cast;
 mod cast_datetime;

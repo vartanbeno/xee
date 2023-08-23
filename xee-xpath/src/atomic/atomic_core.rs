@@ -16,7 +16,7 @@ use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::{arithmetic, op_unary};
+use super::op_unary;
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -175,13 +175,6 @@ impl Atomic {
         O: ComparisonOps,
     {
         comparison::value_comparison_op::<O>(self, other)
-    }
-
-    pub(crate) fn arithmetic<O>(self, other: Atomic) -> error::Result<Atomic>
-    where
-        O: arithmetic::ArithmeticOp,
-    {
-        arithmetic::arithmetic_op::<O>(self, other)
     }
 
     pub(crate) fn plus(self) -> error::Result<Atomic> {
