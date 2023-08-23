@@ -33,9 +33,9 @@ pub(crate) fn op_subtract(
         }
         // op:subtract-dayTimeDuration-from-date(A, B) -> xs:date
         (Atomic::Date(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => {
-            Ok(op_subtract_day_time_duration_from_date(a, *b)?)
-        }
+        | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => Ok(
+            op_subtract_day_time_duration_from_date(a, *b, default_offset)?,
+        ),
         // op:subtract-times(A, B) -> xs:dayTimeDuration
         (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b, default_offset)?),
         // op:subtract-dayTimeDuration-from-time(A, B) -> xs:time
@@ -119,13 +119,13 @@ fn op_subtract_year_month_duration_from_date(
 fn op_subtract_day_time_duration_from_date(
     a: Rc<NaiveDateWithOffset>,
     b: chrono::Duration,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let new_date = a
-        .as_ref()
-        .date
-        .checked_sub_signed(b)
-        .ok_or(error::Error::Overflow)?;
-    Ok(NaiveDateWithOffset::new(new_date, a.as_ref().offset).into())
+    let offset = a.as_ref().offset;
+    let a = a.to_date_time_stamp(default_offset);
+    let a = a.checked_sub_signed(b).ok_or(error::Error::Overflow)?;
+    let new_date = a.date_naive();
+    Ok(NaiveDateWithOffset::new(new_date, offset).into())
 }
 
 fn op_subtract_times(

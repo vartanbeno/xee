@@ -181,8 +181,6 @@ fn test_add_day_time_duration_to_date() {
     Tests::all("op/add-dayTimeDuration-to-date")
         // fn:number
         .exclude("op-add-dayTimeDuration-to-date-6")
-        // TODO: we don't get one of the expected values
-        .bug("op-add-dayTimeDuration-to-date-8")
         .run()
 }
 

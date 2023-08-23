@@ -1266,3 +1266,17 @@ fn test_kind_test_in_path() -> Result<()> {
         },
     )
 }
+
+#[test]
+fn test_negative_result_when_adding_day_time_durations() {
+    assert_debug_snapshot!(run(
+        "(xs:date('0001-01-01Z') + xs:dayTimeDuration('-P11DT02H02M')) cast as xs:string"
+    ));
+}
+
+#[test]
+fn test_negative_result_when_subtracting_day_time_durations() {
+    assert_debug_snapshot!(run(
+        "(xs:date('0001-01-01Z') - xs:dayTimeDuration('P11DT02H02M')) cast as xs:string"
+    ));
+}

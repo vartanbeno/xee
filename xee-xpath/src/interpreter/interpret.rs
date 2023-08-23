@@ -106,7 +106,7 @@ impl<'a> Interpreter<'a> {
             let instruction = self.read_instruction();
             match instruction {
                 EncodedInstruction::Add => {
-                    self.arithmetic(op_add)?;
+                    self.arithmetic_with_offset(op_add)?;
                 }
                 EncodedInstruction::Sub => {
                     self.arithmetic_with_offset(op_subtract)?;

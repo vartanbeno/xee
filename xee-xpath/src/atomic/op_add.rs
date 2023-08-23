@@ -7,11 +7,16 @@ use crate::atomic;
 use crate::error;
 
 use super::cast_binary::cast_binary_arithmetic;
+use super::datetime::ToDateTimeStamp;
 use super::datetime::{
     NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
 
-pub(crate) fn op_add(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn op_add(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+    default_offset: chrono::FixedOffset,
+) -> error::Result<atomic::Atomic> {
     use atomic::Atomic;
 
     let (a, b) = cast_binary_arithmetic(a, b)?;
@@ -29,7 +34,7 @@ pub(crate) fn op_add(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
         // op:add-dayTimeDuration-to-date(A, B) -> xs:date
         (Atomic::Date(a), Atomic::DayTimeDuration(b))
         | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => {
-            Ok(op_add_day_time_duration_to_date(a, *b)?)
+            Ok(op_add_day_time_duration_to_date(a, *b, default_offset)?)
         }
         // op:add-dayTimeDuration-to-time(A, B) -> xs:time
         (Atomic::Time(a), Atomic::DayTimeDuration(b))
@@ -99,13 +104,13 @@ fn op_add_year_month_duration_to_date(
 fn op_add_day_time_duration_to_date(
     a: Rc<NaiveDateWithOffset>,
     b: chrono::Duration,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let new_date = a
-        .as_ref()
-        .date
-        .checked_add_signed(b)
-        .ok_or(error::Error::Overflow)?;
-    Ok(NaiveDateWithOffset::new(new_date, a.as_ref().offset).into())
+    let offset = a.as_ref().offset;
+    let a = a.to_date_time_stamp(default_offset);
+    let a = a.checked_add_signed(b).ok_or(error::Error::Overflow)?;
+    let new_date = a.date_naive();
+    Ok(NaiveDateWithOffset::new(new_date, offset).into())
 }
 
 fn op_add_day_time_duration_to_time(
@@ -203,12 +208,17 @@ fn op_add_day_time_durations(
 mod tests {
     use super::*;
 
+    use chrono::Offset;
     use rust_decimal_macros::dec;
+
+    fn default_offset() -> chrono::FixedOffset {
+        chrono::offset::Utc.fix()
+    }
 
     #[test]
     fn test_decimal_add() {
         assert_eq!(
-            op_add(dec!(1.5).into(), dec!(3.7).into()),
+            op_add(dec!(1.5).into(), dec!(3.7).into(), default_offset()),
             Ok(dec!(5.2).into())
         );
     }
@@ -217,35 +227,47 @@ mod tests {
     fn test_add_decimals_overflow() {
         let a = Decimal::MAX.into();
         let b = dec!(2.7).into();
-        let result = op_add(a, b);
+        let result = op_add(a, b, default_offset());
         assert_eq!(result, Err(error::Error::Overflow));
     }
 
     #[test]
     fn test_integer_add() {
-        assert_eq!(op_add(1i64.into(), 2i64.into()), Ok(3i64.into()));
+        assert_eq!(
+            op_add(1i64.into(), 2i64.into(), default_offset()),
+            Ok(3i64.into())
+        );
     }
 
     #[test]
     fn test_float_add() {
-        assert_eq!(op_add(1.5f32.into(), 2.5f32.into()), Ok(4.0f32.into()));
+        assert_eq!(
+            op_add(1.5f32.into(), 2.5f32.into(), default_offset()),
+            Ok(4.0f32.into())
+        );
     }
 
     #[test]
     fn test_double_add() {
-        assert_eq!(op_add(1.5f64.into(), 2.5f64.into()), Ok(4.0f64.into()));
+        assert_eq!(
+            op_add(1.5f64.into(), 2.5f64.into(), default_offset()),
+            Ok(4.0f64.into())
+        );
     }
 
     #[test]
     fn test_decimal_float_add() {
-        assert_eq!(op_add(dec!(1.5).into(), 2.5f32.into()), Ok(4.0f32.into()));
+        assert_eq!(
+            op_add(dec!(1.5).into(), 2.5f32.into(), default_offset()),
+            Ok(4.0f32.into())
+        );
     }
 
     #[test]
     fn test_add_integer_decimal() {
         let a = 1i64.into();
         let b = dec!(2.7).into();
-        let result = op_add(a, b).unwrap();
+        let result = op_add(a, b, default_offset()).unwrap();
         assert_eq!(result, dec!(3.7).into());
     }
 
@@ -253,7 +275,7 @@ mod tests {
     fn test_add_double_decimal() {
         let a = 1.5f64.into();
         let b = dec!(2.7).into();
-        let result = op_add(a, b).unwrap();
+        let result = op_add(a, b, default_offset()).unwrap();
         assert_eq!(result, dec!(4.2).into());
     }
 }
