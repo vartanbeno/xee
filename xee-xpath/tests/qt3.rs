@@ -213,8 +213,6 @@ fn test_add_year_month_duration_to_date() {
     Tests::all("op/add-yearMonthDuration-to-date")
         // fn:number
         .exclude("op-add-yearMonthDuration-to-date-6")
-        // type error expected, instead we got a value
-        .bug("K-DateAddYMD-3 K-DateAddYMD-4")
         .run()
 }
 

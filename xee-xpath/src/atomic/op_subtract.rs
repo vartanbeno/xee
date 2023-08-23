@@ -27,20 +27,17 @@ pub(crate) fn op_subtract(
         (Atomic::Float(a), Atomic::Float(b)) => Ok((a - b).into()),
         (Atomic::Double(a), Atomic::Double(b)) => Ok((a - b).into()),
         // op:subtract-yearMonthDuration-from-date(A, B) -> xs:date
-        (Atomic::Date(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::Date(a)) => {
+        (Atomic::Date(a), Atomic::YearMonthDuration(b)) => {
             Ok(op_subtract_year_month_duration_from_date(a, b)?)
         }
         // op:subtract-dayTimeDuration-from-date(A, B) -> xs:date
-        (Atomic::Date(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => Ok(
+        (Atomic::Date(a), Atomic::DayTimeDuration(b)) => Ok(
             op_subtract_day_time_duration_from_date(a, *b, default_offset)?,
         ),
         // op:subtract-times(A, B) -> xs:dayTimeDuration
         (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b, default_offset)?),
         // op:subtract-dayTimeDuration-from-time(A, B) -> xs:time
-        (Atomic::Time(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::Time(a)) => {
+        (Atomic::Time(a), Atomic::DayTimeDuration(b)) => {
             Ok(op_subtract_day_time_duration_from_time(a, *b)?)
         }
         // op:subtract_dateTimes(A, B) -> xs:dayTimeDuration
@@ -57,23 +54,19 @@ pub(crate) fn op_subtract(
             op_subtract_date_time_stamp_from_date_time(a, b, default_offset)?,
         ),
         // op:subtract-yearMonthDuration-from-dateTime(A, B) -> xs:dateTime
-        (Atomic::DateTime(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::DateTime(a)) => {
+        (Atomic::DateTime(a), Atomic::YearMonthDuration(b)) => {
             Ok(op_subtract_year_month_duration_from_date_time(a, b)?)
         }
         // op:subtract-yearMonthDuration-from-dateTimeStamp(A, B) -> xs:dateTimeStamp
-        (Atomic::DateTimeStamp(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::DateTimeStamp(a)) => {
+        (Atomic::DateTimeStamp(a), Atomic::YearMonthDuration(b)) => {
             Ok(op_subtract_year_month_duration_from_date_time_stamp(a, b)?)
         }
         // op:subtract-dayTimeDuration-from-dateTime(A, B) -> xs:dateTime
-        (Atomic::DateTime(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::DateTime(a)) => {
+        (Atomic::DateTime(a), Atomic::DayTimeDuration(b)) => {
             Ok(op_subtract_day_time_duration_from_date_time(a, *b)?)
         }
         // op:subtract-dayTimeDuration-from-dateTimeStamp(A, B) -> xs:dateTimeStamp
-        (Atomic::DateTimeStamp(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::DateTimeStamp(a)) => {
+        (Atomic::DateTimeStamp(a), Atomic::DayTimeDuration(b)) => {
             Ok(op_subtract_day_time_duration_from_date_time_stamp(a, *b)?)
         }
         // op:subtract-year-monthDurations(A, B) -> xs:yearMonthDuration
