@@ -161,6 +161,66 @@ fn test_op_numeric_add() {
 }
 
 #[test]
+fn test_add_day_time_durations() {
+    Tests::all("op/add-dayTimeDurations")
+        // fn:number
+        .exclude("op-add-dayTimeDurations-6")
+        .run()
+}
+
+#[test]
+fn test_add_day_time_duration_to_date_time() {
+    Tests::all("op/add-dayTimeDuration-to-dateTime").
+        // fn:number
+        exclude("op-add-dayTimeDuration-to-dateTime-6")
+        .run()
+}
+
+#[test]
+fn test_add_day_time_duration_to_date() {
+    Tests::all("op/add-dayTimeDuration-to-date")
+        // fn:number
+        .exclude("op-add-dayTimeDuration-to-date-6")
+        // TODO: we don't get one of the expected values
+        .bug("op-add-dayTimeDuration-to-date-8")
+        .run()
+}
+
+#[test]
+fn test_add_day_time_duration_to_time() {
+    Tests::all("op/add-dayTimeDuration-to-time").
+        // fn:number
+        exclude("op-add-dayTimeDuration-to-time-6").
+        run()
+}
+
+#[test]
+fn test_add_year_month_durations() {
+    Tests::all("op/add-yearMonthDurations")
+        // fn:number
+        .exclude("op-add-yearMonthDurations-6")
+        .run()
+}
+
+#[test]
+fn test_add_year_month_duration_to_date_time() {
+    Tests::all("op/add-yearMonthDuration-to-dateTime").
+        // fn:number
+        exclude("op-add-yearMonthDuration-to-dateTime-6").
+        run()
+}
+
+#[test]
+fn test_add_year_month_duration_to_date() {
+    Tests::all("op/add-yearMonthDuration-to-date")
+        // fn:number
+        .exclude("op-add-yearMonthDuration-to-date-6")
+        // type error expected, instead we got a value
+        .bug("K-DateAddYMD-3 K-DateAddYMD-4")
+        .run()
+}
+
+#[test]
 fn test_instance_of_expr() {
     Tests::all("prod/InstanceofExpr")
         // xs:NMTOKENS
