@@ -5,13 +5,11 @@ use std::cmp::Ordering;
 use xee_schema_type::Xs;
 
 use crate::atomic;
-use crate::atomic::op_add;
-use crate::atomic::op_div;
-use crate::atomic::op_idiv;
-use crate::atomic::op_mod;
-use crate::atomic::op_multiply;
-use crate::atomic::op_subtract;
 use crate::atomic::ComparisonOps;
+use crate::atomic::{
+    op_add, op_div, op_eq, op_ge, op_gt, op_idiv, op_le, op_lt, op_mod, op_multiply, op_ne,
+    op_subtract,
+};
 use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
@@ -231,20 +229,20 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::Eq => {
-                    self.value_compare::<atomic::EqualOp>()?;
+                    self.value_compare(op_eq)?;
                 }
-                EncodedInstruction::Ne => self.value_compare::<atomic::NotEqualOp>()?,
+                EncodedInstruction::Ne => self.value_compare(op_ne)?,
                 EncodedInstruction::Lt => {
-                    self.value_compare::<atomic::LessThanOp>()?;
+                    self.value_compare(op_lt)?;
                 }
                 EncodedInstruction::Le => {
-                    self.value_compare::<atomic::LessThanOrEqualOp>()?;
+                    self.value_compare(op_le)?;
                 }
                 EncodedInstruction::Gt => {
-                    self.value_compare::<atomic::GreaterThanOp>()?;
+                    self.value_compare(op_gt)?;
                 }
                 EncodedInstruction::Ge => {
-                    self.value_compare::<atomic::GreaterThanOrEqualOp>()?;
+                    self.value_compare(op_ge)?;
                 }
                 EncodedInstruction::GenEq => {
                     self.general_compare::<atomic::EqualOp>()?;
@@ -523,9 +521,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn value_compare<O>(&mut self) -> error::Result<()>
+    fn value_compare<F>(&mut self, op: F) -> error::Result<()>
     where
-        O: ComparisonOps,
+        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -539,7 +537,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = a.value_comparison::<O>(b)?;
+        let result = op(a, b, self.dynamic_context.implicit_timezone())?;
         self.stack.push(result.into());
         Ok(())
     }
