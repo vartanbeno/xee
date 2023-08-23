@@ -4,7 +4,6 @@ mod cast_binary;
 mod cast_datetime;
 mod cast_numeric;
 mod cast_string;
-mod comparison;
 mod datetime;
 mod op_add;
 mod op_div;
@@ -22,7 +21,6 @@ mod op_unary;
 mod types;
 
 pub use atomic_core::Atomic;
-pub(crate) use comparison::EqualOp;
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;
 pub(crate) use op_eq::op_eq;

@@ -1,3 +1,4 @@
+use chrono::Offset;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
@@ -7,16 +8,14 @@ use xee_xpath_ast::ast::Name;
 
 use xee_schema_type::Xs;
 
-use crate::atomic;
 use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
-use super::comparison::{self, ComparisonOps};
 use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::op_unary;
+use super::{op_eq, op_unary};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -169,14 +168,6 @@ impl Atomic {
         self.schema_type() == other.schema_type()
     }
 
-    // value comparison as per XPath rules
-    pub(crate) fn value_comparison<O>(self, other: Atomic) -> error::Result<bool>
-    where
-        O: ComparisonOps,
-    {
-        comparison::value_comparison_op::<O>(self, other)
-    }
-
     pub(crate) fn plus(self) -> error::Result<Atomic> {
         op_unary::unary_plus(self)
     }
@@ -188,9 +179,11 @@ impl Atomic {
 
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
-        self.clone()
-            .value_comparison::<atomic::EqualOp>(other.clone())
-            .unwrap_or(false)
+        // NOTE: we hardcode a fixed offset here. This means
+        // that PartialEq cannot be used in the interpreter implementation;
+        // we have to use `op_eq` directly. But it's so convenient for testing
+        // purposes, even for external libraries, we do implement this operation.
+        op_eq(self.clone(), other.clone(), chrono::offset::Utc.fix()).unwrap_or(false)
     }
 }
 
