@@ -18,54 +18,52 @@ pub(crate) fn op_div(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
     let (a, b) = cast_numeric(a, b)?;
 
     match (a, b) {
-        (Atomic::Decimal(a), Atomic::Decimal(b)) => {
-            Ok(Atomic::Decimal(Rc::new(op_div_decimal(a, b)?)))
-        }
+        (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok(op_div_decimal(a, b)?.into()),
         (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(op_div_integer(a, b)?),
-        (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float(op_div_float(a, b)?)),
-        (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double(op_div_float(a, b)?)),
+        (Atomic::Float(a), Atomic::Float(b)) => Ok(op_div_float(a, b)?.into()),
+        (Atomic::Double(a), Atomic::Double(b)) => Ok(op_div_float(a, b)?.into()),
         // op:divide-yearMonthDuration(A, B) -> xs:yearMonthDuration
         (Atomic::YearMonthDuration(a), b @ Atomic::Decimal(_))
-        | (b @ Atomic::Decimal(_), Atomic::YearMonthDuration(a)) => Ok(Atomic::YearMonthDuration(
-            op_divide_year_month_duration_by_atomic(a, b)?,
-        )),
+        | (b @ Atomic::Decimal(_), Atomic::YearMonthDuration(a)) => {
+            Ok(op_divide_year_month_duration_by_atomic(a, b)?)
+        }
         (Atomic::YearMonthDuration(a), b @ Atomic::Integer(_, _))
-        | (b @ Atomic::Integer(_, _), Atomic::YearMonthDuration(a)) => Ok(
-            Atomic::YearMonthDuration(op_divide_year_month_duration_by_atomic(a, b)?),
-        ),
+        | (b @ Atomic::Integer(_, _), Atomic::YearMonthDuration(a)) => {
+            Ok(op_divide_year_month_duration_by_atomic(a, b)?)
+        }
         (Atomic::YearMonthDuration(a), b @ Atomic::Float(_))
-        | (b @ Atomic::Float(_), Atomic::YearMonthDuration(a)) => Ok(Atomic::YearMonthDuration(
-            op_divide_year_month_duration_by_atomic(a, b)?,
-        )),
+        | (b @ Atomic::Float(_), Atomic::YearMonthDuration(a)) => {
+            Ok(op_divide_year_month_duration_by_atomic(a, b)?)
+        }
         (Atomic::YearMonthDuration(a), Atomic::Double(OrderedFloat(b)))
-        | (Atomic::Double(OrderedFloat(b)), Atomic::YearMonthDuration(a)) => Ok(
-            Atomic::YearMonthDuration(op_divide_year_month_duration_by_double(a, b)?),
-        ),
+        | (Atomic::Double(OrderedFloat(b)), Atomic::YearMonthDuration(a)) => {
+            Ok(op_divide_year_month_duration_by_double(a, b)?)
+        }
         // op:divide-dayTimeDuration(A, B) -> xs:dayTimeDuration
         (Atomic::DayTimeDuration(a), b @ Atomic::Decimal(_))
-        | (b @ Atomic::Decimal(_), Atomic::DayTimeDuration(a)) => Ok(Atomic::DayTimeDuration(
-            op_divide_day_time_duration_by_atomic(a, b)?,
-        )),
+        | (b @ Atomic::Decimal(_), Atomic::DayTimeDuration(a)) => {
+            Ok(op_divide_day_time_duration_by_atomic(a, b)?)
+        }
         (Atomic::DayTimeDuration(a), b @ Atomic::Integer(_, _))
-        | (b @ Atomic::Integer(_, _), Atomic::DayTimeDuration(a)) => Ok(Atomic::DayTimeDuration(
-            op_divide_day_time_duration_by_atomic(a, b)?,
-        )),
+        | (b @ Atomic::Integer(_, _), Atomic::DayTimeDuration(a)) => {
+            Ok(op_divide_day_time_duration_by_atomic(a, b)?)
+        }
         (Atomic::DayTimeDuration(a), b @ Atomic::Float(_))
-        | (b @ Atomic::Float(_), Atomic::DayTimeDuration(a)) => Ok(Atomic::DayTimeDuration(
-            op_divide_day_time_duration_by_atomic(a, b)?,
-        )),
+        | (b @ Atomic::Float(_), Atomic::DayTimeDuration(a)) => {
+            Ok(op_divide_day_time_duration_by_atomic(a, b)?)
+        }
         (Atomic::DayTimeDuration(a), Atomic::Double(OrderedFloat(b)))
-        | (Atomic::Double(OrderedFloat(b)), Atomic::DayTimeDuration(a)) => Ok(
-            Atomic::DayTimeDuration(op_divide_day_time_duration_by_double(a, b)?),
-        ),
+        | (Atomic::Double(OrderedFloat(b)), Atomic::DayTimeDuration(a)) => {
+            Ok(op_divide_day_time_duration_by_double(a, b)?)
+        }
         // op:divide-yearMonthDuration-by-yearMonthDuration (A, B) -> xs:decimal
-        (Atomic::YearMonthDuration(a), Atomic::YearMonthDuration(b)) => Ok(Atomic::Decimal(
-            Rc::new(op_divide_year_month_duration_by_year_month_duration(a, b)?),
-        )),
+        (Atomic::YearMonthDuration(a), Atomic::YearMonthDuration(b)) => {
+            Ok(op_divide_year_month_duration_by_year_month_duration(a, b)?)
+        }
         // op:divide-dayTimeDuration-by-dayTimeDuration (A, B) -> xs:decimal
-        (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => Ok(Atomic::Decimal(Rc::new(
-            op_divide_day_time_duration_by_day_time_duration(a, b)?,
-        ))),
+        (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => {
+            Ok(op_divide_day_time_duration_by_day_time_duration(a, b)?)
+        }
         _ => Err(error::Error::Type),
     }
 }
@@ -99,7 +97,7 @@ where
 fn op_divide_year_month_duration_by_atomic(
     a: YearMonthDuration,
     b: atomic::Atomic,
-) -> error::Result<YearMonthDuration> {
+) -> error::Result<atomic::Atomic> {
     let b = b.cast_to_double()?;
     let b = match b {
         atomic::Atomic::Double(OrderedFloat(b)) => b,
@@ -111,18 +109,18 @@ fn op_divide_year_month_duration_by_atomic(
 fn op_divide_year_month_duration_by_double(
     a: YearMonthDuration,
     b: f64,
-) -> error::Result<YearMonthDuration> {
+) -> error::Result<atomic::Atomic> {
     if b.is_nan() {
         return Err(error::Error::FOCA0005);
     }
     let total = f64_to_i64(a.months as f64 / b)?;
-    Ok(YearMonthDuration::new(total))
+    Ok(YearMonthDuration::new(total).into())
 }
 
 fn op_divide_day_time_duration_by_atomic(
     a: Rc<chrono::Duration>,
     b: atomic::Atomic,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let b = b.cast_to_double()?;
     let b = match b {
         atomic::Atomic::Double(OrderedFloat(b)) => b,
@@ -134,7 +132,7 @@ fn op_divide_day_time_duration_by_atomic(
 fn op_divide_day_time_duration_by_double(
     a: Rc<chrono::Duration>,
     b: f64,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     if b.is_nan() {
         return Err(error::Error::FOCA0005);
     }
@@ -143,25 +141,25 @@ fn op_divide_day_time_duration_by_double(
     }
     let a = a.num_milliseconds() as f64;
     let total = f64_to_i64(a / b)?;
-    Ok(Rc::new(chrono::Duration::milliseconds(total)))
+    Ok(chrono::Duration::milliseconds(total).into())
 }
 
 fn op_divide_year_month_duration_by_year_month_duration(
     a: YearMonthDuration,
     b: YearMonthDuration,
-) -> error::Result<Decimal> {
+) -> error::Result<atomic::Atomic> {
     if b.months == 0 {
         return Err(error::Error::FODT0002);
     }
     let a: Decimal = a.months.into();
     let b: Decimal = b.months.into();
-    Ok(a / b)
+    Ok((a / b).into())
 }
 
 fn op_divide_day_time_duration_by_day_time_duration(
     a: Rc<chrono::Duration>,
     b: Rc<chrono::Duration>,
-) -> error::Result<Decimal> {
+) -> error::Result<atomic::Atomic> {
     let a = a.num_milliseconds();
     let b = b.num_milliseconds();
     if b == 0 {
@@ -169,7 +167,7 @@ fn op_divide_day_time_duration_by_day_time_duration(
     }
     let a: Decimal = a.into();
     let b: Decimal = b.into();
-    Ok(a / b)
+    Ok((a / b).into())
 }
 
 #[cfg(test)]
