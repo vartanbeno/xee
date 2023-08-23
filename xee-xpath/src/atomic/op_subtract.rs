@@ -18,93 +18,85 @@ pub(crate) fn op_subtract(a: atomic::Atomic, b: atomic::Atomic) -> error::Result
     let (a, b) = cast_numeric(a, b)?;
 
     match (a, b) {
-        (Atomic::Decimal(a), Atomic::Decimal(b)) => {
-            Ok(Atomic::Decimal(op_substract_decimal(a, b)?))
-        }
-        (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(Atomic::Integer(
-            IntegerType::Integer,
-            op_substract_integer(a, b),
-        )),
-        (Atomic::Float(a), Atomic::Float(b)) => Ok(Atomic::Float(a - b)),
-        (Atomic::Double(a), Atomic::Double(b)) => Ok(Atomic::Double(a - b)),
+        (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok(op_substract_decimal(a, b)?),
+        (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(op_substract_integer(a, b)),
+        (Atomic::Float(a), Atomic::Float(b)) => Ok((a - b).into()),
+        (Atomic::Double(a), Atomic::Double(b)) => Ok((a - b).into()),
         // op:subtract-yearMonthDuration-from-date(A, B) -> xs:date
         (Atomic::Date(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::Date(a)) => Ok(Atomic::Date(
-            op_subtract_year_month_duration_from_date(a, b)?,
-        )),
+        | (Atomic::YearMonthDuration(b), Atomic::Date(a)) => {
+            Ok(op_subtract_year_month_duration_from_date(a, b)?)
+        }
         // op:subtract-dayTimeDuration-from-date(A, B) -> xs:date
         (Atomic::Date(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => Ok(Atomic::Date(
-            op_subtract_day_time_duration_from_date(a, *b)?,
-        )),
+        | (Atomic::DayTimeDuration(b), Atomic::Date(a)) => {
+            Ok(op_subtract_day_time_duration_from_date(a, *b)?)
+        }
         // op:subtract-times(A, B) -> xs:dayTimeDuration
-        (Atomic::Time(a), Atomic::Time(b)) => Ok(Atomic::DayTimeDuration(op_subtract_times(a, b)?)),
+        (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b)?),
         // op:subtract-dayTimeDuration-from-time(A, B) -> xs:time
         (Atomic::Time(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::Time(a)) => Ok(Atomic::Time(
-            op_subtract_day_time_duration_from_time(a, *b)?,
-        )),
-        // op:subtract_dateTimes(A, B) -> xs:dayTimeDuration
-        (Atomic::DateTime(a), Atomic::DateTime(b)) => {
-            Ok(Atomic::DayTimeDuration(op_subtract_date_times(a, b)?))
+        | (Atomic::DayTimeDuration(b), Atomic::Time(a)) => {
+            Ok(op_subtract_day_time_duration_from_time(a, *b)?)
         }
-        (Atomic::DateTimeStamp(a), Atomic::DateTimeStamp(b)) => Ok(Atomic::DayTimeDuration(
-            op_subtract_date_time_stamps(*a.as_ref(), *b.as_ref())?,
-        )),
-        (Atomic::DateTimeStamp(a), Atomic::DateTime(b)) => Ok(Atomic::DayTimeDuration(
-            op_subtract_date_time_from_date_time_stamp(a, b)?,
-        )),
-        (Atomic::DateTime(a), Atomic::DateTimeStamp(b)) => Ok(Atomic::DayTimeDuration(
-            op_subtract_date_time_stamp_from_date_time(a, b)?,
-        )),
+        // op:subtract_dateTimes(A, B) -> xs:dayTimeDuration
+        (Atomic::DateTime(a), Atomic::DateTime(b)) => Ok(op_subtract_date_times(a, b)?),
+        (Atomic::DateTimeStamp(a), Atomic::DateTimeStamp(b)) => {
+            Ok(op_subtract_date_time_stamps(*a.as_ref(), *b.as_ref())?)
+        }
+        (Atomic::DateTimeStamp(a), Atomic::DateTime(b)) => {
+            Ok(op_subtract_date_time_from_date_time_stamp(a, b)?)
+        }
+        (Atomic::DateTime(a), Atomic::DateTimeStamp(b)) => {
+            Ok(op_subtract_date_time_stamp_from_date_time(a, b)?)
+        }
         // op:subtract-yearMonthDuration-from-dateTime(A, B) -> xs:dateTime
         (Atomic::DateTime(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::DateTime(a)) => Ok(Atomic::DateTime(
-            op_subtract_year_month_duration_from_date_time(a, b)?,
-        )),
+        | (Atomic::YearMonthDuration(b), Atomic::DateTime(a)) => {
+            Ok(op_subtract_year_month_duration_from_date_time(a, b)?)
+        }
         // op:subtract-yearMonthDuration-from-dateTimeStamp(A, B) -> xs:dateTimeStamp
         (Atomic::DateTimeStamp(a), Atomic::YearMonthDuration(b))
-        | (Atomic::YearMonthDuration(b), Atomic::DateTimeStamp(a)) => Ok(Atomic::DateTimeStamp(
-            op_subtract_year_month_duration_from_date_time_stamp(a, b)?,
-        )),
+        | (Atomic::YearMonthDuration(b), Atomic::DateTimeStamp(a)) => {
+            Ok(op_subtract_year_month_duration_from_date_time_stamp(a, b)?)
+        }
         // op:subtract-dayTimeDuration-from-dateTime(A, B) -> xs:dateTime
         (Atomic::DateTime(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::DateTime(a)) => Ok(Atomic::DateTime(
-            op_subtract_day_time_duration_from_date_time(a, *b)?,
-        )),
+        | (Atomic::DayTimeDuration(b), Atomic::DateTime(a)) => {
+            Ok(op_subtract_day_time_duration_from_date_time(a, *b)?)
+        }
         // op:subtract-dayTimeDuration-from-dateTimeStamp(A, B) -> xs:dateTimeStamp
         (Atomic::DateTimeStamp(a), Atomic::DayTimeDuration(b))
-        | (Atomic::DayTimeDuration(b), Atomic::DateTimeStamp(a)) => Ok(Atomic::DateTimeStamp(
-            op_subtract_day_time_duration_from_date_time_stamp(a, *b)?,
-        )),
+        | (Atomic::DayTimeDuration(b), Atomic::DateTimeStamp(a)) => {
+            Ok(op_subtract_day_time_duration_from_date_time_stamp(a, *b)?)
+        }
         // op:subtract-year-monthDurations(A, B) -> xs:yearMonthDuration
-        (Atomic::YearMonthDuration(a), Atomic::YearMonthDuration(b)) => Ok(
-            Atomic::YearMonthDuration(op_subtract_year_month_durations(a, b)?),
-        ),
+        (Atomic::YearMonthDuration(a), Atomic::YearMonthDuration(b)) => {
+            Ok(op_subtract_year_month_durations(a, b)?)
+        }
         // op:subtract-dayTimeDurations(A, B) -> xs:dayTimeDuration
-        (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => Ok(Atomic::DayTimeDuration(
-            op_subtract_day_time_durations(a, b)?,
-        )),
+        (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => {
+            Ok(op_subtract_day_time_durations(a, b)?)
+        }
         _ => Err(error::Error::Type),
     }
 }
 
-fn op_substract_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Rc<Decimal>> {
-    Ok(Rc::new(
-        a.as_ref()
-            .checked_sub(*b.as_ref())
-            .ok_or(error::Error::Overflow)?,
-    ))
+fn op_substract_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
+    Ok(a.as_ref()
+        .checked_sub(*b.as_ref())
+        .ok_or(error::Error::Overflow)?
+        .into())
 }
 
-fn op_substract_integer(a: Rc<IBig>, b: Rc<IBig>) -> Rc<IBig> {
-    Rc::new(a.as_ref() - b.as_ref())
+fn op_substract_integer(a: Rc<IBig>, b: Rc<IBig>) -> atomic::Atomic {
+    (a.as_ref() - b.as_ref()).into()
 }
 
 fn op_subtract_year_month_duration_from_date(
     a: Rc<NaiveDateWithOffset>,
     b: YearMonthDuration,
-) -> error::Result<Rc<NaiveDateWithOffset>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.as_ref();
     let date = a.date;
     let new_date = if b.months >= 0 {
@@ -115,28 +107,25 @@ fn op_subtract_year_month_duration_from_date(
             .ok_or(error::Error::Overflow)
     }?;
 
-    Ok(Rc::new(NaiveDateWithOffset::new(new_date, a.offset)))
+    Ok(NaiveDateWithOffset::new(new_date, a.offset).into())
 }
 
 fn op_subtract_day_time_duration_from_date(
     a: Rc<NaiveDateWithOffset>,
     b: chrono::Duration,
-) -> error::Result<Rc<NaiveDateWithOffset>> {
+) -> error::Result<atomic::Atomic> {
     let new_date = a
         .as_ref()
         .date
         .checked_sub_signed(b)
         .ok_or(error::Error::Overflow)?;
-    Ok(Rc::new(NaiveDateWithOffset::new(
-        new_date,
-        a.as_ref().offset,
-    )))
+    Ok(NaiveDateWithOffset::new(new_date, a.as_ref().offset).into())
 }
 
 fn op_subtract_times(
     a: Rc<NaiveTimeWithOffset>,
     b: Rc<NaiveTimeWithOffset>,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.to_date_time_stamp();
     let b = b.to_date_time_stamp();
     op_subtract_date_time_stamps(a, b)
@@ -145,19 +134,16 @@ fn op_subtract_times(
 fn op_subtract_day_time_duration_from_time(
     a: Rc<NaiveTimeWithOffset>,
     b: chrono::Duration,
-) -> error::Result<Rc<NaiveTimeWithOffset>> {
+) -> error::Result<atomic::Atomic> {
     // this never fails, but wraps around
     let new_time = a.as_ref().time - b;
-    Ok(Rc::new(NaiveTimeWithOffset::new(
-        new_time,
-        a.as_ref().offset,
-    )))
+    Ok(NaiveTimeWithOffset::new(new_time, a.as_ref().offset).into())
 }
 
 fn op_subtract_date_times(
     a: Rc<NaiveDateTimeWithOffset>,
     b: Rc<NaiveDateTimeWithOffset>,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.to_date_time_stamp();
     let b = b.to_date_time_stamp();
     op_subtract_date_time_stamps(a, b)
@@ -166,14 +152,14 @@ fn op_subtract_date_times(
 fn op_subtract_date_time_stamps(
     a: chrono::DateTime<chrono::FixedOffset>,
     b: chrono::DateTime<chrono::FixedOffset>,
-) -> error::Result<Rc<chrono::Duration>> {
-    Ok(Rc::new(a - b))
+) -> error::Result<atomic::Atomic> {
+    Ok((a - b).into())
 }
 
 fn op_subtract_date_time_stamp_from_date_time(
     a: Rc<NaiveDateTimeWithOffset>,
     b: Rc<chrono::DateTime<chrono::FixedOffset>>,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.to_date_time_stamp();
     op_subtract_date_time_stamps(a, *b.as_ref())
 }
@@ -181,7 +167,7 @@ fn op_subtract_date_time_stamp_from_date_time(
 fn op_subtract_date_time_from_date_time_stamp(
     a: Rc<chrono::DateTime<chrono::FixedOffset>>,
     b: Rc<NaiveDateTimeWithOffset>,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let b = b.to_date_time_stamp();
     op_subtract_date_time_stamps(*a.as_ref(), b)
 }
@@ -189,7 +175,7 @@ fn op_subtract_date_time_from_date_time_stamp(
 fn op_subtract_year_month_duration_from_date_time(
     a: Rc<NaiveDateTimeWithOffset>,
     b: YearMonthDuration,
-) -> error::Result<Rc<NaiveDateTimeWithOffset>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.as_ref();
     let date_time = a.date_time;
     let new_date_time = if b.months >= 0 {
@@ -202,16 +188,13 @@ fn op_subtract_year_month_duration_from_date_time(
             .ok_or(error::Error::Overflow)
     }?;
 
-    Ok(Rc::new(NaiveDateTimeWithOffset::new(
-        new_date_time,
-        a.offset,
-    )))
+    Ok(NaiveDateTimeWithOffset::new(new_date_time, a.offset).into())
 }
 
 fn op_subtract_year_month_duration_from_date_time_stamp(
     a: Rc<chrono::DateTime<chrono::FixedOffset>>,
     b: YearMonthDuration,
-) -> error::Result<Rc<chrono::DateTime<chrono::FixedOffset>>> {
+) -> error::Result<atomic::Atomic> {
     let a = a.as_ref();
     let date_time = *a;
     let new_date_time = if b.months >= 0 {
@@ -224,52 +207,49 @@ fn op_subtract_year_month_duration_from_date_time_stamp(
             .ok_or(error::Error::Overflow)
     }?;
 
-    Ok(Rc::new(new_date_time))
+    Ok(new_date_time.into())
 }
 
 fn op_subtract_day_time_duration_from_date_time(
     a: Rc<NaiveDateTimeWithOffset>,
     b: chrono::Duration,
-) -> error::Result<Rc<NaiveDateTimeWithOffset>> {
+) -> error::Result<atomic::Atomic> {
     let new_date_time = a
         .as_ref()
         .date_time
         .checked_sub_signed(b)
         .ok_or(error::Error::Overflow)?;
-    Ok(Rc::new(NaiveDateTimeWithOffset::new(
-        new_date_time,
-        a.as_ref().offset,
-    )))
+    Ok(NaiveDateTimeWithOffset::new(new_date_time, a.as_ref().offset).into())
 }
 
 fn op_subtract_day_time_duration_from_date_time_stamp(
     a: Rc<chrono::DateTime<chrono::FixedOffset>>,
     b: chrono::Duration,
-) -> error::Result<Rc<chrono::DateTime<chrono::FixedOffset>>> {
+) -> error::Result<atomic::Atomic> {
     let new_date_time = (*a.as_ref())
         .checked_sub_signed(b)
         .ok_or(error::Error::Overflow)?;
-    Ok(Rc::new(new_date_time))
+    Ok(new_date_time.into())
 }
 
 fn op_subtract_year_month_durations(
     a: YearMonthDuration,
     b: YearMonthDuration,
-) -> error::Result<YearMonthDuration> {
+) -> error::Result<atomic::Atomic> {
     let new_months = a
         .months
         .checked_sub(b.months)
         .ok_or(error::Error::Overflow)?;
-    Ok(YearMonthDuration { months: new_months })
+    Ok(YearMonthDuration { months: new_months }.into())
 }
 
 fn op_subtract_day_time_durations(
     a: Rc<chrono::Duration>,
     b: Rc<chrono::Duration>,
-) -> error::Result<Rc<chrono::Duration>> {
+) -> error::Result<atomic::Atomic> {
     let new_duration = (*a.as_ref())
         .checked_sub(b.as_ref())
         .ok_or(error::Error::Overflow)?;
 
-    Ok(Rc::new(new_duration))
+    Ok(new_duration.into())
 }
