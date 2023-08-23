@@ -434,6 +434,20 @@ pub(crate) fn cast_numeric(
     }
 }
 
+// convert float to i64. If the result of the conversion
+// saturated, then we overflow
+pub(crate) fn f64_to_i64(x: f64) -> error::Result<i64> {
+    if x.is_infinite() {
+        return Err(error::Error::FODT0002);
+    }
+    let y = x.round() as i64;
+    if y as f64 == x {
+        Ok(y)
+    } else {
+        Err(error::Error::FODT0002)
+    }
+}
+
 pub(crate) fn decimal_to_integer<V>(d: Rc<Decimal>) -> error::Result<V>
 where
     V: TryFrom<IBig>

@@ -231,6 +231,14 @@ mod tests {
     }
 
     #[test]
+    fn test_add_decimals_overflow() {
+        let a = Decimal::MAX.into();
+        let b = dec!(2.7).into();
+        let result = op_add(a, b);
+        assert_eq!(result, Err(error::Error::Overflow));
+    }
+
+    #[test]
     fn test_integer_add() {
         assert_eq!(op_add(1i64.into(), 2i64.into()), Ok(3i64.into()));
     }
@@ -248,5 +256,21 @@ mod tests {
     #[test]
     fn test_decimal_float_add() {
         assert_eq!(op_add(dec!(1.5).into(), 2.5f32.into()), Ok(4.0f32.into()));
+    }
+
+    #[test]
+    fn test_add_integer_decimal() {
+        let a = 1i64.into();
+        let b = dec!(2.7).into();
+        let result = op_add(a, b).unwrap();
+        assert_eq!(result, dec!(3.7).into());
+    }
+
+    #[test]
+    fn test_add_double_decimal() {
+        let a = 1.5f64.into();
+        let b = dec!(2.7).into();
+        let result = op_add(a, b).unwrap();
+        assert_eq!(result, dec!(4.2).into());
     }
 }

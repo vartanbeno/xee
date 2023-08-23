@@ -55,3 +55,96 @@ where
     let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
     Ok(i.into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_numeric_integer_divide() {
+        let a = 5i64.into();
+        let b = 2i64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 2i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_float() {
+        let a = 5f64.into();
+        let b = 2f64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 2i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_10_by_3() {
+        let a = 10i64.into();
+        let b = 3i64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_minus_2() {
+        let a = 3i64.into();
+        let b = (-2i64).into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, (-1i64).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_2() {
+        let a = (-3i64).into();
+        let b = 2i64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, (-1i64).into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_minus_3_by_minus_2() {
+        let a = (-3i64).into();
+        let b = (-2i64).into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 1i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_9_point_0_by_3() {
+        let a = 9.0f64.into();
+        let b = 3i64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 3i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_4() {
+        let a = 3.0f32.into();
+        let b = 4i64.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 0i64.into());
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_by_0() {
+        let a = 3i64.into();
+        let b = 0i64.into();
+        let result = op_idiv(a, b);
+        assert_eq!(result, Err(error::Error::DivisionByZero));
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_0() {
+        let a = 3.0f64.into();
+        let b = 0i64.into();
+        let result = op_idiv(a, b);
+        assert_eq!(result, Err(error::Error::DivisionByZero));
+    }
+
+    #[test]
+    fn test_numeric_integer_divide_3_point_0_by_inf() {
+        let a = 3.0f64.into();
+        let b = f64::INFINITY.into();
+        let result = op_idiv(a, b).unwrap();
+        assert_eq!(result, 0i64.into());
+    }
+}

@@ -9,6 +9,7 @@ use crate::error;
 
 use super::cast_numeric::cast_numeric;
 
+use super::cast_numeric::f64_to_i64;
 use super::datetime::YearMonthDuration;
 use super::types::IntegerType;
 
@@ -120,18 +121,4 @@ fn op_multiply_day_time_duration_by_double(
     let a = a.num_milliseconds() as f64;
     let total = f64_to_i64(a * b)?;
     Ok(Rc::new(chrono::Duration::milliseconds(total)))
-}
-
-// convert float to i64. If the result of the conversion
-// saturated, then we overflow
-fn f64_to_i64(x: f64) -> error::Result<i64> {
-    if x.is_infinite() {
-        return Err(error::Error::FODT0002);
-    }
-    let y = x.round() as i64;
-    if y as f64 == x {
-        Ok(y)
-    } else {
-        Err(error::Error::FODT0002)
-    }
 }
