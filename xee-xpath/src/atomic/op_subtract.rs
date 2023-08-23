@@ -10,7 +10,6 @@ use super::cast_numeric::cast_numeric;
 use super::datetime::{
     NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::types::IntegerType;
 
 pub(crate) fn op_subtract(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic> {
     use atomic::Atomic;
