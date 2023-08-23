@@ -6,7 +6,8 @@ Ok(
     Sequence {
         stack_value: One(
             Atomic(
-                AnyURI(
+                String(
+                    AnyURI,
                     "http://example.com",
                 ),
             ),

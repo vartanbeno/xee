@@ -50,6 +50,8 @@ pub enum StringType {
     ID,
     IDREF,
     ENTITY,
+    // the qt3 tests make the assumption AnyURI is a type of string
+    AnyURI,
 }
 
 impl StringType {
@@ -65,6 +67,7 @@ impl StringType {
             StringType::ID => Xs::ID,
             StringType::IDREF => Xs::IDREF,
             StringType::ENTITY => Xs::ENTITY,
+            StringType::AnyURI => Xs::AnyURI,
         }
     }
 }

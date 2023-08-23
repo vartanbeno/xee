@@ -80,7 +80,6 @@ impl atomic::Atomic {
                 atomic::BinaryType::Base64 => Self::canonical_base64_binary(data.as_ref()),
                 atomic::BinaryType::Hex => Self::canonical_hex_binary(data.as_ref()),
             },
-            atomic::Atomic::AnyURI(s) => s.as_ref().clone(),
             atomic::Atomic::QName(name) => name.to_full_name(),
         }
     }

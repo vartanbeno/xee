@@ -43,7 +43,6 @@ pub enum Atomic {
     GMonth(Rc<GMonth>),
     Boolean(bool),
     Binary(BinaryType, Rc<Vec<u8>>),
-    AnyURI(Rc<String>),
     QName(Rc<Name>),
 }
 
@@ -55,7 +54,6 @@ impl Atomic {
             // point 4
             Atomic::String(_, s) => Ok(!s.is_empty()),
             Atomic::Untyped(s) => Ok(!s.is_empty()),
-            Atomic::AnyURI(s) => Ok(!s.is_empty()),
             // point 5
             Atomic::Integer(_, i) => Ok(!i.is_zero()),
             Atomic::Decimal(d) => Ok(!d.is_zero()),
@@ -129,7 +127,6 @@ impl Atomic {
         match self {
             Atomic::String(string_type, _) => string_type.schema_type(),
             Atomic::Untyped(_) => Xs::UntypedAtomic,
-            Atomic::AnyURI(_) => Xs::AnyURI,
             Atomic::Boolean(_) => Xs::Boolean,
             Atomic::Decimal(_) => Xs::Decimal,
             Atomic::Integer(integer_type, _) => integer_type.schema_type(),

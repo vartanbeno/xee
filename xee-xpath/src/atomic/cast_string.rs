@@ -9,6 +9,7 @@ use crate::context;
 use crate::error;
 
 use super::cast::{whitespace_collapse, whitespace_replace};
+use super::StringType;
 
 // https://www.w3.org/TR/xml11/#NT-Nmtoken
 // 	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
@@ -33,9 +34,10 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_any_uri(self) -> error::Result<atomic::Atomic> {
         // https://www.w3.org/TR/xpath-functions-31/#casting-to-anyuri
         match self {
-            atomic::Atomic::AnyURI(s) => Ok(atomic::Atomic::AnyURI(s.clone())),
-            atomic::Atomic::String(_, s) => Ok(atomic::Atomic::AnyURI(s.clone())),
-            atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::AnyURI(s.clone())),
+            atomic::Atomic::String(_, s) => {
+                Ok(atomic::Atomic::String(StringType::AnyURI, s.clone()))
+            }
+            atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(StringType::AnyURI, s.clone())),
             _ => Err(error::Error::Type),
         }
     }
