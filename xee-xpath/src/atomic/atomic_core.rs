@@ -11,12 +11,12 @@ use crate::atomic;
 use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
 
-use super::arithmetic;
 use super::comparison::{self, ComparisonOps};
 use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
+use super::{arithmetic, op_unary};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -185,11 +185,11 @@ impl Atomic {
     }
 
     pub(crate) fn plus(self) -> error::Result<Atomic> {
-        arithmetic::unary_plus(self)
+        op_unary::unary_plus(self)
     }
 
     pub(crate) fn minus(self) -> error::Result<Atomic> {
-        arithmetic::unary_minus(self)
+        op_unary::unary_minus(self)
     }
 }
 

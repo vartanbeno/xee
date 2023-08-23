@@ -12,6 +12,7 @@ mod op_idiv;
 mod op_mod;
 mod op_multiply;
 mod op_subtract;
+mod op_unary;
 mod types;
 
 pub use atomic_core::Atomic;
