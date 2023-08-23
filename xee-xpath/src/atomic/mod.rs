@@ -22,10 +22,7 @@ mod op_unary;
 mod types;
 
 pub use atomic_core::Atomic;
-pub(crate) use comparison::{
-    ComparisonOps, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
-    NotEqualOp,
-};
+pub(crate) use comparison::EqualOp;
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;
 pub(crate) use op_eq::op_eq;

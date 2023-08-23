@@ -8,7 +8,6 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
-use crate::atomic::ComparisonOps;
 use crate::context;
 use crate::error;
 use crate::sequence;

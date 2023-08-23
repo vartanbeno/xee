@@ -5,7 +5,6 @@ use std::cmp::Ordering;
 use xee_schema_type::Xs;
 
 use crate::atomic;
-use crate::atomic::ComparisonOps;
 use crate::atomic::{
     op_add, op_div, op_eq, op_ge, op_gt, op_idiv, op_le, op_lt, op_mod, op_multiply, op_ne,
     op_subtract,
