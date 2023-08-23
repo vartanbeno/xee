@@ -14,12 +14,15 @@ mod op_multiply;
 mod op_subtract;
 mod types;
 
-pub(crate) use arithmetic::{
-    AddOp, ArithmeticOp, DivideOp, IntegerDivideOp, ModuloOp, MultiplyOp, SubtractOp,
-};
 pub use atomic_core::Atomic;
 pub(crate) use comparison::{
     ComparisonOps, EqualOp, GreaterThanOp, GreaterThanOrEqualOp, LessThanOp, LessThanOrEqualOp,
     NotEqualOp,
 };
+pub(crate) use op_add::op_add;
+pub(crate) use op_div::op_div;
+pub(crate) use op_idiv::op_idiv;
+pub(crate) use op_mod::op_mod;
+pub(crate) use op_multiply::op_multiply;
+pub(crate) use op_subtract::op_subtract;
 pub use types::{BinaryType, IntegerType, StringType};

@@ -413,6 +413,17 @@ pub(crate) fn cast_numeric(
 ) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
     use atomic::Atomic::*;
 
+    // 3.5 arithmetic expressions
+    // https://www.w3.org/TR/xpath-31/#id-arithmetic
+
+    // We start in step 4, as the previous steps have been handled
+    // by the caller.
+
+    // 4: If an atomized operand of of type xs:untypedAtomic, it is cast
+    // to xs:double
+    let a = cast_untyped(a)?;
+    let b = cast_untyped(b)?;
+
     match (&a, &b) {
         // Cast a to a float
         (Decimal(_), Float(_)) | (Integer(_, _), Float(_)) => Ok((a.cast_to_float()?, b)),
@@ -431,6 +442,14 @@ pub(crate) fn cast_numeric(
         (Integer(_, _), Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
         // otherwise, we don't cast
         _ => Ok((a, b)),
+    }
+}
+
+fn cast_untyped(value: atomic::Atomic) -> error::Result<atomic::Atomic> {
+    if let atomic::Atomic::Untyped(s) = value {
+        atomic::Atomic::parse_atomic::<f64>(&s)
+    } else {
+        Ok(value)
     }
 }
 

@@ -5,6 +5,12 @@ use std::cmp::Ordering;
 use xee_schema_type::Xs;
 
 use crate::atomic;
+use crate::atomic::op_add;
+use crate::atomic::op_div;
+use crate::atomic::op_idiv;
+use crate::atomic::op_mod;
+use crate::atomic::op_multiply;
+use crate::atomic::op_subtract;
 use crate::atomic::ComparisonOps;
 use crate::context::DynamicContext;
 use crate::error;
@@ -103,22 +109,22 @@ impl<'a> Interpreter<'a> {
             let instruction = self.read_instruction();
             match instruction {
                 EncodedInstruction::Add => {
-                    self.arithmetic::<atomic::AddOp>()?;
+                    self.arithmetic(op_add)?;
                 }
                 EncodedInstruction::Sub => {
-                    self.arithmetic::<atomic::SubtractOp>()?;
+                    self.arithmetic(op_subtract)?;
                 }
                 EncodedInstruction::Mul => {
-                    self.arithmetic::<atomic::MultiplyOp>()?;
+                    self.arithmetic(op_multiply)?;
                 }
                 EncodedInstruction::Div => {
-                    self.arithmetic::<atomic::DivideOp>()?;
+                    self.arithmetic(op_div)?;
                 }
                 EncodedInstruction::IntDiv => {
-                    self.arithmetic::<atomic::IntegerDivideOp>()?;
+                    self.arithmetic(op_idiv)?;
                 }
                 EncodedInstruction::Mod => {
-                    self.arithmetic::<atomic::ModuloOp>()?;
+                    self.arithmetic(op_mod)?;
                 }
                 EncodedInstruction::Plus => {
                     self.unary_arithmetic(|a| a.plus())?;
@@ -549,9 +555,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn arithmetic<O>(&mut self) -> error::Result<()>
+    fn arithmetic<F>(&mut self, op: F) -> error::Result<()>
     where
-        O: atomic::ArithmeticOp,
+        F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<atomic::Atomic>,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -565,7 +571,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = a.arithmetic::<O>(b)?;
+        let result = op(a, b)?;
         self.stack.push(result.into());
         Ok(())
     }
