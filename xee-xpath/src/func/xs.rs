@@ -70,6 +70,31 @@ fn xs_date(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>>
     arg.map(|arg| arg.cast_to_date()).transpose()
 }
 
+#[xpath_fn("xs:gYearMonth($arg as xs:anyAtomicType?) as xs:gYearMonth?")]
+fn xs_g_year_month(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_g_year_month()).transpose()
+}
+
+#[xpath_fn("xs:gYear($arg as xs:anyAtomicType?) as xs:gYear?")]
+fn xs_g_year(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_g_year()).transpose()
+}
+
+#[xpath_fn("xs:gMonthDay($arg as xs:anyAtomicType?) as xs:gMonthDay?")]
+fn xs_g_month_day(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_g_month_day()).transpose()
+}
+
+#[xpath_fn("xs:gDay($arg as xs:anyAtomicType?) as xs:gDay?")]
+fn xs_g_day(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_g_day()).transpose()
+}
+
+#[xpath_fn("xs:gMonth($arg as xs:anyAtomicType?) as xs:gMonth?")]
+fn xs_g_month(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_g_month()).transpose()
+}
+
 #[xpath_fn("xs:boolean($arg as xs:anyAtomicType?) as xs:boolean?")]
 fn xs_boolean(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     arg.map(|arg| arg.cast_to_boolean()).transpose()
@@ -224,6 +249,11 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(xs_date_time_stamp),
         wrap_xpath_fn!(xs_time),
         wrap_xpath_fn!(xs_date),
+        wrap_xpath_fn!(xs_g_year_month),
+        wrap_xpath_fn!(xs_g_year),
+        wrap_xpath_fn!(xs_g_month_day),
+        wrap_xpath_fn!(xs_g_day),
+        wrap_xpath_fn!(xs_g_month),
         wrap_xpath_fn!(xs_boolean),
         wrap_xpath_fn!(xs_base64_binary),
         wrap_xpath_fn!(xs_hex_binary),
