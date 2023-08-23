@@ -645,6 +645,9 @@ pub enum Error {
     /// cannot handle such characters.
     #[error("XSLT output contains non-accepted characters")]
     FOXT0006,
+
+    #[error("Unsupported XPath feature")]
+    Unsupported,
 }
 
 impl<'a> From<xee_xpath_ast::Error<'a>> for Error {

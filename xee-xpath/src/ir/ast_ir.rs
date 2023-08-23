@@ -346,7 +346,7 @@ impl<'a> IrConverter<'a> {
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast, span),
             ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast, span),
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
-            _ => todo!("primary_expr: {:?}", ast),
+            _ => Err(Error::Unsupported),
         }
     }
 
@@ -383,7 +383,7 @@ impl<'a> IrConverter<'a> {
                     let binding = self.new_binding(expr, empty_span);
                     Ok(bindings.concat(arg_bindings).bind(binding))
                 }
-                _ => todo!(),
+                _ => Err(Error::Unsupported),
             }
         })
     }
@@ -585,9 +585,7 @@ impl<'a> IrConverter<'a> {
                 let binding = self.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
-            _ => {
-                todo!("ApplyOperator: {:?}", ast.operator)
-            }
+            _ => Err(Error::Unsupported),
         }
     }
 
