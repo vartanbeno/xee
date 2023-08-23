@@ -7,11 +7,16 @@ use crate::atomic;
 use crate::error;
 
 use super::cast_numeric::cast_numeric;
+use super::datetime::ToDateTimeStamp;
 use super::datetime::{
     NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
 
-pub(crate) fn op_subtract(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic> {
+pub(crate) fn op_subtract(
+    a: atomic::Atomic,
+    b: atomic::Atomic,
+    default_offset: chrono::FixedOffset,
+) -> error::Result<atomic::Atomic> {
     use atomic::Atomic;
 
     let (a, b) = cast_numeric(a, b)?;
@@ -32,23 +37,25 @@ pub(crate) fn op_subtract(a: atomic::Atomic, b: atomic::Atomic) -> error::Result
             Ok(op_subtract_day_time_duration_from_date(a, *b)?)
         }
         // op:subtract-times(A, B) -> xs:dayTimeDuration
-        (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b)?),
+        (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b, default_offset)?),
         // op:subtract-dayTimeDuration-from-time(A, B) -> xs:time
         (Atomic::Time(a), Atomic::DayTimeDuration(b))
         | (Atomic::DayTimeDuration(b), Atomic::Time(a)) => {
             Ok(op_subtract_day_time_duration_from_time(a, *b)?)
         }
         // op:subtract_dateTimes(A, B) -> xs:dayTimeDuration
-        (Atomic::DateTime(a), Atomic::DateTime(b)) => Ok(op_subtract_date_times(a, b)?),
+        (Atomic::DateTime(a), Atomic::DateTime(b)) => {
+            Ok(op_subtract_date_times(a, b, default_offset)?)
+        }
         (Atomic::DateTimeStamp(a), Atomic::DateTimeStamp(b)) => {
             Ok(op_subtract_date_time_stamps(*a.as_ref(), *b.as_ref())?)
         }
-        (Atomic::DateTimeStamp(a), Atomic::DateTime(b)) => {
-            Ok(op_subtract_date_time_from_date_time_stamp(a, b)?)
-        }
-        (Atomic::DateTime(a), Atomic::DateTimeStamp(b)) => {
-            Ok(op_subtract_date_time_stamp_from_date_time(a, b)?)
-        }
+        (Atomic::DateTimeStamp(a), Atomic::DateTime(b)) => Ok(
+            op_subtract_date_time_from_date_time_stamp(a, b, default_offset)?,
+        ),
+        (Atomic::DateTime(a), Atomic::DateTimeStamp(b)) => Ok(
+            op_subtract_date_time_stamp_from_date_time(a, b, default_offset)?,
+        ),
         // op:subtract-yearMonthDuration-from-dateTime(A, B) -> xs:dateTime
         (Atomic::DateTime(a), Atomic::YearMonthDuration(b))
         | (Atomic::YearMonthDuration(b), Atomic::DateTime(a)) => {
@@ -124,9 +131,10 @@ fn op_subtract_day_time_duration_from_date(
 fn op_subtract_times(
     a: Rc<NaiveTimeWithOffset>,
     b: Rc<NaiveTimeWithOffset>,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let a = a.to_date_time_stamp();
-    let b = b.to_date_time_stamp();
+    let a = a.to_date_time_stamp(default_offset);
+    let b = b.to_date_time_stamp(default_offset);
     op_subtract_date_time_stamps(a, b)
 }
 
@@ -142,9 +150,10 @@ fn op_subtract_day_time_duration_from_time(
 fn op_subtract_date_times(
     a: Rc<NaiveDateTimeWithOffset>,
     b: Rc<NaiveDateTimeWithOffset>,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let a = a.to_date_time_stamp();
-    let b = b.to_date_time_stamp();
+    let a = a.to_date_time_stamp(default_offset);
+    let b = b.to_date_time_stamp(default_offset);
     op_subtract_date_time_stamps(a, b)
 }
 
@@ -158,16 +167,18 @@ fn op_subtract_date_time_stamps(
 fn op_subtract_date_time_stamp_from_date_time(
     a: Rc<NaiveDateTimeWithOffset>,
     b: Rc<chrono::DateTime<chrono::FixedOffset>>,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let a = a.to_date_time_stamp();
+    let a = a.to_date_time_stamp(default_offset);
     op_subtract_date_time_stamps(a, *b.as_ref())
 }
 
 fn op_subtract_date_time_from_date_time_stamp(
     a: Rc<chrono::DateTime<chrono::FixedOffset>>,
     b: Rc<NaiveDateTimeWithOffset>,
+    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
-    let b = b.to_date_time_stamp();
+    let b = b.to_date_time_stamp(default_offset);
     op_subtract_date_time_stamps(*a.as_ref(), b)
 }
 

@@ -1,4 +1,5 @@
 use ahash::{HashMap, HashMapExt};
+use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use xot::Xot;
@@ -77,5 +78,9 @@ impl<'a> DynamicContext<'a> {
             arguments.push(items.clone());
         }
         Ok(arguments)
+    }
+
+    pub(crate) fn implicit_timezone(&self) -> chrono::FixedOffset {
+        chrono::offset::Utc.fix()
     }
 }

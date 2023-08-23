@@ -112,7 +112,7 @@ impl<'a> Interpreter<'a> {
                     self.arithmetic(op_add)?;
                 }
                 EncodedInstruction::Sub => {
-                    self.arithmetic(op_subtract)?;
+                    self.arithmetic_with_offset(op_subtract)?;
                 }
                 EncodedInstruction::Mul => {
                     self.arithmetic(op_multiply)?;
@@ -559,6 +559,13 @@ impl<'a> Interpreter<'a> {
     where
         F: Fn(atomic::Atomic, atomic::Atomic) -> error::Result<atomic::Atomic>,
     {
+        self.arithmetic_with_offset(|a, b, _| op(a, b))
+    }
+
+    fn arithmetic_with_offset<F>(&mut self, op: F) -> error::Result<()>
+    where
+        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<atomic::Atomic>,
+    {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
         // https://www.w3.org/TR/xpath-31/#id-arithmetic
@@ -571,7 +578,7 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = op(a, b)?;
+        let result = op(a, b, self.dynamic_context.implicit_timezone())?;
         self.stack.push(result.into());
         Ok(())
     }

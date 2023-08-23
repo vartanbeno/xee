@@ -4,6 +4,36 @@ use chrono::Offset;
 
 use crate::atomic::Atomic;
 
+pub(crate) trait EqWithDefaultOffset: ToDateTimeStamp {
+    fn eq_with_default_offset(&self, other: &Self, default_offset: chrono::FixedOffset) -> bool {
+        let self_date_time_stamp = self.to_date_time_stamp(default_offset);
+        let other_date_time_stamp = other.to_date_time_stamp(default_offset);
+        self_date_time_stamp == other_date_time_stamp
+    }
+}
+
+pub(crate) trait OrdWithDefaultOffset: ToDateTimeStamp {
+    fn cmp_with_default_offset(
+        &self,
+        other: &Self,
+        default_offset: chrono::FixedOffset,
+    ) -> std::cmp::Ordering {
+        let self_date_time_stamp = self.to_date_time_stamp(default_offset);
+        let other_date_time_stamp = other.to_date_time_stamp(default_offset);
+        self_date_time_stamp.cmp(&other_date_time_stamp)
+    }
+}
+
+pub(crate) trait ToDateTimeStamp {
+    fn to_date_time_stamp(
+        &self,
+        default_offset: chrono::FixedOffset,
+    ) -> chrono::DateTime<chrono::FixedOffset>;
+}
+
+impl<T> EqWithDefaultOffset for T where T: ToDateTimeStamp {}
+impl<T> OrdWithDefaultOffset for T where T: ToDateTimeStamp {}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct YearMonthDuration {
     pub(crate) months: i64,
@@ -56,7 +86,7 @@ impl From<Duration> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -71,23 +101,19 @@ impl From<NaiveDateTimeWithOffset> for chrono::DateTime<chrono::FixedOffset> {
     }
 }
 
-impl Ord for NaiveDateTimeWithOffset {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let self_date_time_stamp = self.to_date_time_stamp();
-        let other_date_time_stamp = other.to_date_time_stamp();
-        self_date_time_stamp.cmp(&other_date_time_stamp)
-    }
-}
-
-impl PartialOrd for NaiveDateTimeWithOffset {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 impl From<NaiveDateTimeWithOffset> for Atomic {
     fn from(date_time: NaiveDateTimeWithOffset) -> Self {
         Atomic::DateTime(Rc::new(date_time))
+    }
+}
+
+impl ToDateTimeStamp for NaiveDateTimeWithOffset {
+    fn to_date_time_stamp(
+        &self,
+        default_offset: chrono::FixedOffset,
+    ) -> chrono::DateTime<chrono::FixedOffset> {
+        let offset = self.offset.unwrap_or(default_offset);
+        chrono::DateTime::from_utc(self.date_time, offset)
     }
 }
 
@@ -98,14 +124,9 @@ impl NaiveDateTimeWithOffset {
     ) -> Self {
         Self { date_time, offset }
     }
-
-    pub(crate) fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
-        let offset = self.offset.unwrap_or_else(|| chrono::offset::Utc.fix());
-        chrono::DateTime::from_utc(self.date_time, offset)
-    }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -115,9 +136,14 @@ impl NaiveTimeWithOffset {
     pub(crate) fn new(time: chrono::NaiveTime, offset: Option<chrono::FixedOffset>) -> Self {
         Self { time, offset }
     }
+}
 
-    pub(crate) fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
-        let offset = self.offset.unwrap_or_else(|| chrono::offset::Utc.fix());
+impl ToDateTimeStamp for NaiveTimeWithOffset {
+    fn to_date_time_stamp(
+        &self,
+        default_offset: chrono::FixedOffset,
+    ) -> chrono::DateTime<chrono::FixedOffset> {
+        let offset = self.offset.unwrap_or(default_offset);
         // https://www.w3.org/TR/xpath-functions-31/#func-subtract-times
         let date_time = chrono::NaiveDate::from_ymd_opt(1972, 12, 31)
             .unwrap()
@@ -132,7 +158,7 @@ impl From<NaiveTimeWithOffset> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -142,25 +168,16 @@ impl NaiveDateWithOffset {
     pub(crate) fn new(date: chrono::NaiveDate, offset: Option<chrono::FixedOffset>) -> Self {
         Self { date, offset }
     }
+}
 
-    fn to_date_time_stamp(&self) -> chrono::DateTime<chrono::FixedOffset> {
-        let offset = self.offset.unwrap_or_else(|| chrono::offset::Utc.fix());
+impl ToDateTimeStamp for NaiveDateWithOffset {
+    fn to_date_time_stamp(
+        &self,
+        default_offset: chrono::FixedOffset,
+    ) -> chrono::DateTime<chrono::FixedOffset> {
+        let offset = self.offset.unwrap_or(default_offset);
         let date_time = self.date.and_hms_opt(0, 0, 0).unwrap();
         chrono::DateTime::from_utc(date_time, offset)
-    }
-}
-
-impl Ord for NaiveDateWithOffset {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let self_date_time_stamp = self.to_date_time_stamp();
-        let other_date_time_stamp = other.to_date_time_stamp();
-        self_date_time_stamp.cmp(&other_date_time_stamp)
-    }
-}
-
-impl PartialOrd for NaiveDateWithOffset {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
     }
 }
 

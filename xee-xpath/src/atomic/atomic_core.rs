@@ -22,7 +22,7 @@ use super::op_unary;
 // operation. Anything bigger we stuff in an Rc
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone)]
 pub enum Atomic {
     Untyped(Rc<String>),
     String(StringType, Rc<String>),
