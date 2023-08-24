@@ -483,3 +483,9 @@ impl TryFrom<Atomic> for f64 {
         }
     }
 }
+
+impl From<Name> for Atomic {
+    fn from(n: Name) -> Self {
+        Atomic::QName(Rc::new(n))
+    }
+}

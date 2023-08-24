@@ -222,6 +222,15 @@ fn concat(
     Ok(strings.concat().into())
 }
 
+// #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
+// fn node_name(context: &DynamicContext, arg: Option<xml::Node>) -> Option<ast::Name> {
+//     if let Some(node) = arg {
+//         Some(node.node_name(context.xot))
+//     } else {
+//         None
+//     }
+// }
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(my_function),
