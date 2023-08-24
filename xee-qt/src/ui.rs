@@ -120,7 +120,7 @@ impl Renderer for CharacterRenderer {
                 execute!(stdout, style::PrintStyledContent(".".green()))?;
             }
             TestOutcome::PassedWithUnexpectedError(_) => {
-                execute!(stdout, style::PrintStyledContent(".".green()))?;
+                execute!(stdout, style::PrintStyledContent("U".yellow()))?;
             }
             TestOutcome::Failed(_) => {
                 execute!(stdout, style::PrintStyledContent("F".red()))?;
