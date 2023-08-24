@@ -79,15 +79,17 @@ where
             check_reserved(&name, span)?;
             Ok((name, arity))
         })
-        .map_with_state(|(name, arity), span, state: &mut State| {
-            ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
+        .try_map_with_state(|(name, arity), span, state: &mut State| {
+            let arity: u8 = arity
+                .try_into()
+                .map_err(|_| Rich::custom(span, "Arity out of range".to_string()))?;
+            Ok(ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
                 name: name.map(|name| {
                     name.with_default_namespace(state.namespaces.default_function_namespace)
                 }),
-                // TODO: handle overflow
-                arity: arity.try_into().unwrap(),
+                arity,
             })
-            .with_span(span)
+            .with_span(span))
         })
         .boxed();
 

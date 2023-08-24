@@ -13,7 +13,7 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-xot = "0.13.5"
+xot = "0.14.0"
 miette = "5.8.0"
 clap = "4.2.7"
 ibig = "0.3.6"
