@@ -231,6 +231,18 @@ fn concat(
 //     }
 // }
 
+#[xpath_fn("fn:remove($target as item()*, $position as xs:integer) as item()*")]
+fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::Sequence> {
+    let position: usize = position.try_into().map_err(|_| error::Error::Overflow)?;
+    if position == 0 || position > target.len() {
+        // TODO: unfortunate we can't just copy sequence
+        return Ok(target.to_vec().into());
+    }
+    let mut target = target.to_vec();
+    target.remove(position - 1);
+    Ok(target.into())
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(my_function),
@@ -279,6 +291,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         },
         wrap_xpath_fn!(true_),
         wrap_xpath_fn!(false_),
+        wrap_xpath_fn!(remove),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the

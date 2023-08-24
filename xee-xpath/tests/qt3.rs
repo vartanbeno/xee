@@ -155,8 +155,8 @@ fn test_xs_any_uri() {
 #[test]
 fn test_op_numeric_add() {
     Tests::all("op/numeric-add")
-        // a bunch of tests use the remove() function or the subsequence function
-        .exclude("K-NumericAdd-5? K-NumericAdd-61 K-NumericAdd-62 K-NumericAdd-63 K-NumericAdd-64")
+        // depends on the subsequence function
+        .exclude("K-NumericAdd-63 K-NumericAdd-64")
         .run()
 }
 
@@ -261,6 +261,11 @@ fn test_eqname() {
         .bug("eqname-024")
         .run();
 }
+
+// #[test]
+// fn test_remove() {
+//     Tests::all("fn/remove").run()
+// }
 
 // This requires union type support
 // #[test]
