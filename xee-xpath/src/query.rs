@@ -296,15 +296,6 @@ impl ManyRecurseQuery {
     }
 }
 
-// fn error(xpath: &XPath, convert_error: ConvertError) -> Error {
-//     match convert_error {
-//         ConvertError::ValueError(value_error) => {
-//             Error::from_value_error(&xpath.program, (0, 0).into(), value_error)
-//         }
-//         ConvertError::Error(error) => error,
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use ibig::{ibig, IBig};
