@@ -90,20 +90,30 @@ impl TestOutcome {
     }
 }
 
+pub(crate) struct AssertContext<'a> {
+    xot: &'a Xot,
+    documents: &'a Documents,
+}
+
+impl<'a> AssertContext<'a> {
+    pub(crate) fn new(xot: &'a Xot, documents: &'a Documents) -> Self {
+        Self { xot, documents }
+    }
+}
+
 pub(crate) trait Assertable {
     fn assert_result(
         &self,
-        xot: &Xot,
-        documents: &Documents,
+        assert_context: &AssertContext<'_>,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match result {
-            Ok(sequence) => self.assert_value(xot, documents, sequence),
+            Ok(sequence) => self.assert_value(assert_context, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome;
+    fn assert_value(&self, assert_context: &AssertContext<'_>, sequence: &Sequence) -> TestOutcome;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -118,13 +128,12 @@ impl AssertAnyOf {
 impl Assertable for AssertAnyOf {
     fn assert_result(
         &self,
-        xot: &Xot,
-        documents: &Documents,
+        assert_context: &AssertContext,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(xot, documents, result);
+            let result = test_case_result.assert_result(assert_context, result);
             match result {
                 TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => return result,
                 _ => failed_test_results.push(result),
@@ -136,12 +145,7 @@ impl Assertable for AssertAnyOf {
         }
     }
 
-    fn assert_value(
-        &self,
-        _xot: &Xot,
-        _documents: &Documents,
-        _sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -158,12 +162,11 @@ impl AssertAllOf {
 impl Assertable for AssertAllOf {
     fn assert_result(
         &self,
-        xot: &Xot,
-        documents: &Documents,
+        assert_context: &AssertContext,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(xot, documents, result);
+            let result = test_case_result.assert_result(assert_context, result);
             match result {
                 TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => {}
                 _ => return result,
@@ -172,12 +175,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(
-        &self,
-        _xot: &Xot,
-        _documents: &Documents,
-        _sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -207,8 +205,8 @@ impl Assert {
 }
 
 impl Assertable for Assert {
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
-        let result_sequence = run_xpath_with_result(&self.0, sequence, xot, documents);
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
+        let result_sequence = run_xpath_with_result(&self.0, sequence, assert_context);
 
         match result_sequence {
             Ok(result_sequence) => match result_sequence.effective_boolean_value() {
@@ -236,8 +234,8 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, xot, documents);
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0, assert_context);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -262,7 +260,7 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(&self, _xot: &Xot, _documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         let found_len = sequence.len();
         if found_len == self.0 {
             TestOutcome::Passed
@@ -291,8 +289,8 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
-        let xml = serialize(xot, sequence);
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
+        let xml = serialize(assert_context.xot, sequence);
 
         let xml = if let Ok(xml) = xml {
             xml
@@ -331,7 +329,7 @@ impl AssertEmpty {
 }
 
 impl Assertable for AssertEmpty {
-    fn assert_value(&self, _xot: &Xot, _documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         if sequence.is_empty() {
             TestOutcome::Passed
         } else {
@@ -356,10 +354,10 @@ impl AssertType {
 }
 
 impl Assertable for AssertType {
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         // TODO: ugly unwrap in here; what if qt test has sequence type that cannot
         // be parsed?
-        if sequence.matches_type(&self.0, xot).unwrap() {
+        if sequence.matches_type(&self.0, assert_context.xot).unwrap() {
             TestOutcome::Passed
         } else {
             TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
@@ -377,7 +375,7 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(&self, _xot: &Xot, _documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -402,7 +400,7 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(&self, _xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -427,10 +425,10 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(&self, xot: &Xot, documents: &Documents, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         let strings = sequence
             .items()
-            .map(|item| item?.string_value(xot))
+            .map(|item| item?.string_value(assert_context.xot))
             .collect::<Result<Vec<_>>>();
         match strings {
             Ok(strings) => {
@@ -466,8 +464,7 @@ impl AssertError {
 impl Assertable for AssertError {
     fn assert_result(
         &self,
-        _xot: &Xot,
-        documents: &Documents,
+        _assert_context: &AssertContext,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match result {
@@ -491,7 +488,7 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &Xot, _documents: &Documents, _: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _assert_context: &AssertContext, _: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -573,23 +570,22 @@ pub(crate) enum TestCaseResult {
 impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
-        xot: &Xot,
-        documents: &Documents,
+        assert_context: &AssertContext,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match self {
-            TestCaseResult::AnyOf(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AllOf(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertEq(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertTrue(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertFalse(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertCount(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertStringValue(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertXml(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::Assert(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertError(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertEmpty(a) => a.assert_result(xot, documents, result),
-            TestCaseResult::AssertType(a) => a.assert_result(xot, documents, result),
+            TestCaseResult::AnyOf(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AllOf(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertEq(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertTrue(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertFalse(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertCount(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertStringValue(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertXml(a) => a.assert_result(assert_context, result),
+            TestCaseResult::Assert(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertError(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertEmpty(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertType(a) => a.assert_result(assert_context, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
@@ -716,19 +712,22 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr, xot: &Xot, documents: &Documents) -> Result<Sequence> {
+fn run_xpath(expr: &qt::XPathExpr, assert_context: &AssertContext) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let xpath = XPath::new(&static_context, &expr.0)?;
-    let dynamic_context = DynamicContext::with_documents(xot, &static_context, documents);
+    let dynamic_context = DynamicContext::with_documents(
+        assert_context.xot,
+        &static_context,
+        assert_context.documents,
+    );
     xpath.many(&dynamic_context, None)
 }
 
 fn run_xpath_with_result(
     expr: &qt::XPathExpr,
     sequence: &Sequence,
-    xot: &Xot,
-    documents: &Documents,
+    assert_context: &AssertContext,
 ) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let name = Name::unprefixed("result");
@@ -736,7 +735,11 @@ fn run_xpath_with_result(
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
     let xpath = XPath::new(&static_context, &expr.0)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
-    let dynamic_context =
-        DynamicContext::with_documents_and_variables(xot, &static_context, documents, &variables);
+    let dynamic_context = DynamicContext::with_documents_and_variables(
+        assert_context.xot,
+        &static_context,
+        assert_context.documents,
+        &variables,
+    );
     xpath.many(&dynamic_context, None)
 }

@@ -3,7 +3,7 @@ use std::path::Path;
 use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
 use xot::Xot;
 
-use crate::assert::{Assertable, TestOutcome};
+use crate::assert::{AssertContext, Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
 use crate::environment::EnvironmentSpecIterator;
 use crate::error::Result;
@@ -76,6 +76,10 @@ impl RunContext {
             .verbose(false)
             .build()
             .unwrap())
+    }
+
+    pub(crate) fn assert_context(&self) -> AssertContext {
+        AssertContext::new(&self.xot, &self.documents)
     }
 }
 
@@ -157,11 +161,7 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
-                    expected_error.assert_result(
-                        &run_context.xot,
-                        &run_context.documents,
-                        &Err(error),
-                    )
+                    expected_error.assert_result(&run_context.assert_context(), &Err(error))
                 } else {
                     TestOutcome::CompilationError(error)
                 }
@@ -182,7 +182,7 @@ impl qt::TestCase {
         );
         let result = xpath.many(&dynamic_context, context_item.as_ref());
         self.result
-            .assert_result(&run_context.xot, &run_context.documents, &result)
+            .assert_result(&run_context.assert_context(), &result)
     }
 
     fn environment_specs<'a>(
