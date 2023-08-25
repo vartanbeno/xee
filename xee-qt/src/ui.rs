@@ -5,8 +5,8 @@ use crossterm::{
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
-use crate::assert::TestOutcome;
 use crate::error::{Error, Result};
+use crate::outcome::TestOutcome;
 use crate::qt;
 use crate::run::RunContext;
 
@@ -61,6 +61,15 @@ trait Renderer {
         stdout: &mut Stdout,
         test_set: &qt::TestSet,
     ) -> crossterm::Result<()>;
+}
+
+struct TestSetOutcome<'a> {
+    test_case_outcomes: Vec<TestCaseOutcome<'a>>,
+}
+
+struct TestCaseOutcome<'a> {
+    test_case: &'a qt::TestCase,
+    outcome: TestOutcome,
 }
 
 fn run_test_set<R: Renderer>(

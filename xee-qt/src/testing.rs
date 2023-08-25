@@ -3,8 +3,8 @@ use std::env;
 use std::path::PathBuf;
 use xot::Xot;
 
-use crate::assert::{TestOutcome, TestOutcomes};
 use crate::error::{Error, Result};
+use crate::outcome::{TestOutcome, TestOutcomes};
 use crate::{path::paths, qt, run::RunContext, run::RunContextBuilder};
 
 pub struct Tests {

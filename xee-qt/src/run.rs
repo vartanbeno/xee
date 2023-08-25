@@ -3,10 +3,11 @@ use std::path::Path;
 use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
 use xot::Xot;
 
-use crate::assert::{AssertContext, Assertable, TestOutcome};
+use crate::assert::{AssertContext, Assertable};
 use crate::collection::FxIndexSet;
 use crate::environment::EnvironmentSpecIterator;
 use crate::error::Result;
+use crate::outcome::TestOutcome;
 use crate::qt;
 
 #[derive(Debug)]
@@ -245,7 +246,8 @@ mod tests {
     use xee_xpath::{Atomic, Error, Sequence};
 
     use crate::assert;
-    use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure, UnexpectedError};
+    use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure};
+    use crate::outcome::{TestOutcome, UnexpectedError};
 
     use super::*;
     const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");

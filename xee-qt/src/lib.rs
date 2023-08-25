@@ -5,6 +5,7 @@ mod collection;
 mod environment;
 mod error;
 mod load;
+mod outcome;
 mod path;
 mod qt;
 mod run;

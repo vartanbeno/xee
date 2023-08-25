@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::assert;
+use crate::outcome;
 use crate::qt;
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Test failures {0} {1}")]
-    TestFailures(PathBuf, assert::TestOutcomes),
+    TestFailures(PathBuf, outcome::TestOutcomes),
     #[error("catalog.xml cannot be found")]
     NoCatalogFound,
     #[error("File not found in catalog: {0}")]
