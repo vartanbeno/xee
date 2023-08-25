@@ -2,13 +2,17 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
+use miette::Diagnostic;
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
-use crate::error::{Error, Result};
-use crate::outcome::TestOutcome;
+use crate::outcome::{TestOutcome, UnexpectedError};
 use crate::qt;
 use crate::run::RunContext;
+use crate::{
+    error::{Error, Result},
+    outcome::TestOutcomes,
+};
 
 pub(crate) fn run(mut run_context: RunContext) -> Result<()> {
     let mut stdout = stdout();
@@ -211,5 +215,55 @@ impl Renderer for VerboseRenderer {
     ) -> crossterm::Result<()> {
         println!();
         Ok(())
+    }
+}
+
+impl std::fmt::Display for TestOutcomes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f)?;
+        for (name, test_outcome) in self.0.iter() {
+            writeln!(f, "{} ... {}", name, test_outcome)?;
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for TestOutcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TestOutcome::Passed => write!(f, "{}", "PASS".green()),
+            TestOutcome::PassedWithUnexpectedError(error) => match error {
+                UnexpectedError::Code(s) => write!(f, "{} code: {}", "PASS".green(), s),
+                UnexpectedError::Error(e) => write!(f, "{} error: {}", "PASS".green(), e),
+            },
+            TestOutcome::Failed(failure) => {
+                write!(f, "{} {}", "FAIL".red(), failure)
+            }
+            TestOutcome::RuntimeError(error) => match error.code() {
+                Some(code) => {
+                    write!(f, "{} {} {}", "RUNTIME ERROR".red(), code, error)
+                }
+                None => {
+                    write!(f, "{} {}", "RUNTIME ERROR".red(), error)
+                }
+            },
+            TestOutcome::CompilationError(error) => match error.code() {
+                Some(code) => {
+                    write!(f, "{} {} {}", "COMPILATION ERROR".red(), code, error)
+                }
+                None => {
+                    write!(f, "{} {}", "COMPILATION ERROR".red(), error)
+                }
+            },
+            TestOutcome::UnsupportedExpression(error) => {
+                write!(f, "{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error)
+            }
+            TestOutcome::Unsupported => {
+                write!(f, "{}", "UNSUPPORTED".red())
+            }
+            TestOutcome::EnvironmentError(error) => {
+                write!(f, "{} {}", "CONTEXT ITEM ERROR".red(), error)
+            }
+        }
     }
 }
