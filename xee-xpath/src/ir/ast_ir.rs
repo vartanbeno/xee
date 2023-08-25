@@ -696,10 +696,22 @@ impl<'a> IrConverter<'a> {
         // error in some circumstances, but we can live with that for now as it's
         // much more efficient
         if ast.name.value == self.fn_position {
-            assert!(arity == 0);
+            if arity != 0 {
+                return Err(Error::IncorrectFunctionNameOrWrongNumberOfArguments {
+                    advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
+                    src: self.src.to_string(),
+                    span: span::to_miette(span)
+                });
+            }
             return self.fn_position(span);
         } else if ast.name.value == self.fn_last {
-            assert!(arity == 0);
+            if arity != 0 {
+                return Err(Error::IncorrectFunctionNameOrWrongNumberOfArguments {
+                    advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
+                    src: self.src.to_string(),
+                    span: span::to_miette(span)
+                });
+            }
             return self.fn_last(span);
         }
 
