@@ -205,25 +205,31 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOperator::And => {
                 // XXX we don't do any short-circuiting of evaluation yet
                 let first_false = self.builder.emit_jump_forward(JumpCondition::False, span);
-                let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
+                let second_false = self.builder.emit_jump_forward(JumpCondition::False, span);
+                // both are true, so put true on stack and jump to end
+                self.builder.emit_constant(true.into(), span);
+                let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
                 self.builder.patch_jump(first_false);
                 // pop the second item on the stack
                 self.builder.emit(Instruction::Pop, span);
+                self.builder.patch_jump(second_false);
+                // now put false on the stack
                 self.builder.emit_constant(false.into(), span);
-                let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
-                self.builder.patch_jump(second_true);
-                self.builder.emit_constant(true.into(), span);
                 self.builder.patch_jump(end);
             }
             ir::BinaryOperator::Or => {
                 // XXX we don't do any short-circuiting of evaluation yet
                 let first_true = self.builder.emit_jump_forward(JumpCondition::True, span);
                 let second_true = self.builder.emit_jump_forward(JumpCondition::True, span);
-                // neither first nor second were true, so we return false
+                // both are false, so put false on stack and jump to end
                 self.builder.emit_constant(false.into(), span);
                 let end = self.builder.emit_jump_forward(JumpCondition::Always, span);
+                // if first is true, pop second
                 self.builder.patch_jump(first_true);
+                // pop the second item on the stack
+                self.builder.emit(Instruction::Pop, span);
                 self.builder.patch_jump(second_true);
+                // now put true on the stack
                 self.builder.emit_constant(true.into(), span);
                 self.builder.patch_jump(end);
             }
