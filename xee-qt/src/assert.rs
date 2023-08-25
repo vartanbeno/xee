@@ -90,14 +90,14 @@ impl TestOutcome {
 }
 
 pub(crate) trait Assertable {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
+    fn assert_result(&self, xot: &Xot, result: &Result<Sequence>) -> TestOutcome {
         match result {
             Ok(sequence) => self.assert_value(xot, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome;
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -110,7 +110,7 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
+    fn assert_result(&self, xot: &Xot, result: &Result<Sequence>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
@@ -125,7 +125,7 @@ impl Assertable for AssertAnyOf {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -140,7 +140,7 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
+    fn assert_result(&self, xot: &Xot, result: &Result<Sequence>) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(xot, result);
             match result {
@@ -151,7 +151,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -181,7 +181,7 @@ impl Assert {
 }
 
 impl Assertable for Assert {
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome {
         let result_sequence = run_xpath_with_result(&self.0, sequence, xot);
 
         match result_sequence {
@@ -210,7 +210,7 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome {
         let expected_sequence = run_xpath(&self.0, xot);
 
         match expected_sequence {
@@ -236,7 +236,7 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, sequence: &Sequence) -> TestOutcome {
         let found_len = sequence.len();
         if found_len == self.0 {
             TestOutcome::Passed
@@ -265,7 +265,7 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome {
         let xml = serialize(xot, sequence);
 
         let xml = if let Ok(xml) = xml {
@@ -279,16 +279,13 @@ impl Assertable for AssertXml {
         // also wrap expected XML in a sequence element
         let expected_xml = format!("<sequence>{}</sequence>", self.0);
 
+        let mut compare_xot = Xot::new();
         // now parse both with Xot
-        let found = xot.parse(&xml).unwrap();
-        let expected = xot.parse(&expected_xml).unwrap();
+        let found = compare_xot.parse(&xml).unwrap();
+        let expected = compare_xot.parse(&expected_xml).unwrap();
 
         // and compare
-        let c = xot.compare(expected, found);
-
-        // clean up
-        xot.remove(found).unwrap();
-        xot.remove(expected).unwrap();
+        let c = compare_xot.compare(expected, found);
 
         if c {
             TestOutcome::Passed
@@ -308,7 +305,7 @@ impl AssertEmpty {
 }
 
 impl Assertable for AssertEmpty {
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, sequence: &Sequence) -> TestOutcome {
         if sequence.is_empty() {
             TestOutcome::Passed
         } else {
@@ -333,7 +330,7 @@ impl AssertType {
 }
 
 impl Assertable for AssertType {
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome {
         // TODO: ugly unwrap in here; what if qt test has sequence type that cannot
         // be parsed?
         if sequence.matches_type(&self.0, xot).unwrap() {
@@ -354,7 +351,7 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -379,7 +376,7 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(&self, _xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -404,7 +401,7 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(&self, xot: &mut Xot, sequence: &Sequence) -> TestOutcome {
+    fn assert_value(&self, xot: &Xot, sequence: &Sequence) -> TestOutcome {
         let strings = sequence
             .items()
             .map(|item| item?.string_value(xot))
@@ -441,7 +438,7 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(&self, _xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
+    fn assert_result(&self, _xot: &Xot, result: &Result<Sequence>) -> TestOutcome {
         match result {
             Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
             Err(error) => {
@@ -463,7 +460,7 @@ impl Assertable for AssertError {
         }
     }
 
-    fn assert_value(&self, _xot: &mut Xot, _: &Sequence) -> TestOutcome {
+    fn assert_value(&self, _xot: &Xot, _: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -543,7 +540,7 @@ pub(crate) enum TestCaseResult {
 }
 
 impl TestCaseResult {
-    pub(crate) fn assert_result(&self, xot: &mut Xot, result: &Result<Sequence>) -> TestOutcome {
+    pub(crate) fn assert_result(&self, xot: &Xot, result: &Result<Sequence>) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(xot, result),
             TestCaseResult::AllOf(a) => a.assert_result(xot, result),
