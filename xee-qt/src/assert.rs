@@ -355,12 +355,16 @@ impl AssertType {
 
 impl Assertable for AssertType {
     fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
-        // TODO: ugly unwrap in here; what if qt test has sequence type that cannot
-        // be parsed?
-        if sequence.matches_type(&self.0, assert_context.xot).unwrap() {
-            TestOutcome::Passed
+        let matches = sequence.matches_type(&self.0, assert_context.xot);
+        if let Ok(matches) = matches {
+            if matches {
+                TestOutcome::Passed
+            } else {
+                TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
+            }
         } else {
-            TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
+            // TODO: we don't support this sequence type expression yet
+            TestOutcome::Unsupported
         }
     }
 }
