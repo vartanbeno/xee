@@ -35,14 +35,16 @@ pub(crate) fn kind_test(kind_test: &ast::KindTest, xot: &Xot, node: xml::Node) -
         }
         ast::KindTest::NamespaceNode => {
             // namespace-node() matches any namespace node
-            todo!();
+            // TODO
+            false
         }
         ast::KindTest::PI(pi_test) => {
             if let xml::Node::Xot(node) = node {
                 if let Some(_pi_test) = pi_test {
                     // processing-instruction N matches any processing-instruction node
                     // whose PITarget is equal to fn:normalize-space(N)
-                    todo!();
+                    // TODO
+                    false
                 } else {
                     // processing-instruction() matches any processing-instruction node
                     xot.value_type(node) == ValueType::ProcessingInstruction
