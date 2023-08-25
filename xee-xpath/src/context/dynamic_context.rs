@@ -29,6 +29,8 @@ impl<'a> Debug for DynamicContext<'a> {
 }
 
 impl<'a> DynamicContext<'a> {
+    // TODO: these constructor functions are ripe for refactoring.
+
     pub fn new(xot: &'a Xot, static_context: &'a StaticContext<'a>) -> Self {
         let documents = xml::Documents::new();
         Self {
@@ -36,6 +38,23 @@ impl<'a> DynamicContext<'a> {
             static_context,
             documents: Cow::Owned(documents),
             variables: HashMap::new(),
+        }
+    }
+
+    pub fn with_documents_and_variables(
+        xot: &'a Xot,
+        static_context: &'a StaticContext<'a>,
+        documents: &'a xml::Documents,
+        variables: &[(ast::Name, Vec<sequence::Item>)],
+    ) -> Self {
+        Self {
+            xot,
+            static_context,
+            documents: Cow::Borrowed(documents),
+            variables: variables
+                .iter()
+                .map(|(name, items)| (name.clone(), items.clone()))
+                .collect(),
         }
     }
 

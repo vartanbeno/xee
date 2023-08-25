@@ -157,7 +157,11 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
-                    expected_error.assert_result(&mut run_context.xot, &Err(error))
+                    expected_error.assert_result(
+                        &run_context.xot,
+                        &run_context.documents,
+                        &Err(error),
+                    )
                 } else {
                     TestOutcome::CompilationError(error)
                 }
@@ -170,10 +174,15 @@ impl qt::TestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let dynamic_context =
-            DynamicContext::with_variables(&run_context.xot, &static_context, &variables);
+        let dynamic_context = DynamicContext::with_documents_and_variables(
+            &run_context.xot,
+            &static_context,
+            &run_context.documents,
+            &variables,
+        );
         let result = xpath.many(&dynamic_context, context_item.as_ref());
-        self.result.assert_result(&mut run_context.xot, &result)
+        self.result
+            .assert_result(&run_context.xot, &run_context.documents, &result)
     }
 
     fn environment_specs<'a>(

@@ -46,7 +46,6 @@ impl Documents {
     }
 
     pub fn cleanup(&mut self, xot: &mut Xot) {
-        println!("Documents cleanup");
         for document in self.documents.values() {
             document.cleanup(xot);
         }
