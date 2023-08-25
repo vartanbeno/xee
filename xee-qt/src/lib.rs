@@ -4,6 +4,7 @@ mod cli;
 mod collection;
 mod environment;
 mod error;
+mod filter;
 mod load;
 mod outcome;
 mod path;

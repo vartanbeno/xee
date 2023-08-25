@@ -79,7 +79,7 @@ impl TestCaseOutcome {
 
 #[derive(Debug)]
 pub struct TestSetOutcomes {
-    test_set_name: String,
+    pub(crate) test_set_name: String,
     pub(crate) outcomes: Vec<TestCaseOutcome>,
 }
 
@@ -97,6 +97,14 @@ impl TestSetOutcomes {
 
     pub(crate) fn add_outcome(&mut self, test_case: &qt::TestCase, outcome: TestOutcome) {
         self.outcomes.push(TestCaseOutcome::new(test_case, outcome));
+    }
+
+    pub(crate) fn failing_names(&self) -> Vec<String> {
+        self.outcomes
+            .iter()
+            .filter(|outcome| !outcome.outcome.is_exactly_passed())
+            .map(|outcome| outcome.test_case_name.clone())
+            .collect()
     }
 }
 
