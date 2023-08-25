@@ -724,7 +724,8 @@ fn year_parser<'a>() -> impl Parser<'a, &'a str, i32> {
                 if digits.starts_with('0') {
                     Err(EmptyErr::default())
                 } else {
-                    Ok(digits.parse().unwrap())
+                    let d: i32 = digits.parse().map_err(|_| EmptyErr::default())?;
+                    Ok(d)
                 }
             }
             Ordering::Equal => Ok(digits.parse().unwrap()),
