@@ -1,10 +1,8 @@
 use fxhash::FxHashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::path::Path;
-use std::path::PathBuf;
-use xee_xpath::Name;
-use xee_xpath::{Item, Node};
+use std::path::{Path, PathBuf};
+use xee_xpath::{Documents, Item, Name, Node, Uri};
 use xot::Xot;
 
 use crate::collection::FxIndexMap;
@@ -17,11 +15,11 @@ impl EnvironmentSpec {
     pub(crate) fn context_item(
         &self,
         xot: &mut Xot,
-        source_cache: &mut SourceCache,
+        documents: &mut Documents,
     ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let qt::SourceRole::Context = source.role {
-                let node = source.node(xot, &self.base_dir, source_cache)?;
+                let node = source.node(xot, &self.base_dir, documents)?;
                 return Ok(Some(Item::from(node)));
             }
         }
@@ -31,13 +29,13 @@ impl EnvironmentSpec {
     pub(crate) fn variables(
         &self,
         xot: &mut Xot,
-        source_cache: &mut SourceCache,
+        documents: &mut Documents,
     ) -> Result<Vec<(Name, Vec<Item>)>> {
         let mut variables = Vec::new();
         for source in &self.sources {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
-                let node = source.node(xot, &self.base_dir, source_cache)?;
+                let node = source.node(xot, &self.base_dir, documents)?;
                 variables.push((Name::unprefixed(name), vec![Item::from(node)]));
             }
         }
@@ -129,22 +127,29 @@ impl Source {
         &self,
         xot: &mut Xot,
         base_dir: &Path,
-        source_cache: &mut SourceCache,
+        documents: &mut Documents,
     ) -> Result<Node> {
         let full_path = base_dir.join(&self.file);
-        let node = source_cache.nodes.get(&full_path);
-        if let Some(node) = node {
-            return Ok(*node);
+        // construct a Uri
+        // TODO: this is not really a proper URI but
+        // what matters is that it's unique here
+        let uri = Uri::new(&full_path.to_string_lossy());
+
+        // try to get the cached version of the document
+        let document = documents.get(&uri);
+        if let Some(document) = document {
+            let root = document.root();
+            return Ok(root);
         }
 
+        // could not get cached version, so load up document
         let xml_file = File::open(&full_path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
         buf_reader.read_to_string(&mut xml)?;
-        let root = xot.parse(&xml)?;
-        let node = Node::Xot(root);
 
-        source_cache.nodes.insert(full_path, node);
-        Ok(node)
+        documents.add(xot, &uri, &xml)?;
+        // now obtain what we just added
+        Ok(documents.get(&uri).unwrap().root())
     }
 }

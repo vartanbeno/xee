@@ -39,6 +39,11 @@ impl Annotations {
         }
     }
 
+    pub(crate) fn clear(&mut self) {
+        self.map.clear();
+        self.document_id = 0;
+    }
+
     pub(crate) fn add(&mut self, xot: &Xot, doc: xml::Node) {
         // if we already know this document, we are done
         if self.map.contains_key(&doc) {

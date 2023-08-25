@@ -21,6 +21,16 @@ pub struct Document {
     pub root: xot::Node,
 }
 
+impl Document {
+    pub fn root(&self) -> xml::Node {
+        xml::Node::Xot(self.root)
+    }
+
+    pub fn cleanup(&self, xot: &mut Xot) {
+        xot.remove(self.root).unwrap();
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Documents {
     pub(crate) annotations: Annotations,
@@ -35,6 +45,15 @@ impl Documents {
         }
     }
 
+    pub fn cleanup(&mut self, xot: &mut Xot) {
+        println!("Documents cleanup");
+        for document in self.documents.values() {
+            document.cleanup(xot);
+        }
+        self.annotations.clear();
+        self.documents.clear();
+    }
+
     pub fn add(&mut self, xot: &mut Xot, uri: &Uri, xml: &str) -> Result<(), xot::Error> {
         let root = xot.parse(xml)?;
         self.add_root(xot, uri, root);
@@ -42,13 +61,11 @@ impl Documents {
     }
 
     pub(crate) fn add_root(&mut self, xot: &Xot, uri: &Uri, root: xot::Node) {
-        self.documents.insert(
-            uri.clone(),
-            Document {
-                uri: uri.clone(),
-                root,
-            },
-        );
+        let document = Document {
+            uri: uri.clone(),
+            root,
+        };
+        self.documents.insert(uri.clone(), document);
         self.annotations.add(xot, xml::Node::Xot(root));
     }
 

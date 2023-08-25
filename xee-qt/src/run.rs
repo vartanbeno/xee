@@ -1,11 +1,11 @@
 use derive_builder::Builder;
 use std::path::Path;
-use xee_xpath::{DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
+use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
 use xot::Xot;
 
 use crate::assert::{Assertable, TestOutcome};
 use crate::collection::FxIndexSet;
-use crate::environment::{EnvironmentSpecIterator, SourceCache};
+use crate::environment::EnvironmentSpecIterator;
 use crate::error::Result;
 use crate::qt;
 
@@ -49,7 +49,7 @@ pub(crate) struct RunContext {
     pub(crate) xot: Xot,
     pub(crate) catalog: qt::Catalog,
     #[builder(default)]
-    pub(crate) source_cache: SourceCache,
+    pub(crate) documents: Documents,
     #[builder(default)]
     pub(crate) known_dependencies: KnownDependencies,
     #[builder(default)]
@@ -61,7 +61,7 @@ impl RunContext {
         Self {
             xot,
             catalog,
-            source_cache: SourceCache::new(),
+            documents: Documents::new(),
             known_dependencies: KnownDependencies::default(),
             verbose: false,
         }
@@ -81,7 +81,7 @@ impl RunContext {
 
 impl Drop for RunContext {
     fn drop(&mut self) {
-        self.source_cache.cleanup(&mut self.xot);
+        self.documents.cleanup(&mut self.xot);
     }
 }
 
@@ -198,9 +198,9 @@ impl qt::TestCase {
             .environment_specs(&run_context.catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
         let xot = &mut run_context.xot;
-        let source_cache = &mut run_context.source_cache;
+        let documents = &mut run_context.documents;
         for environment_spec in environment_specs {
-            let item = environment_spec.context_item(xot, source_cache)?;
+            let item = environment_spec.context_item(xot, documents)?;
             if let Some(item) = item {
                 return Ok(Some(item));
             }
@@ -218,7 +218,7 @@ impl qt::TestCase {
             .collect::<Result<Vec<_>>>()?;
         let mut variables = Vec::new();
         let xot = &mut run_context.xot;
-        let source_cache = &mut run_context.source_cache;
+        let source_cache = &mut run_context.documents;
         for environment_spec in environment_specs {
             variables.extend(environment_spec.variables(xot, source_cache)?);
         }
