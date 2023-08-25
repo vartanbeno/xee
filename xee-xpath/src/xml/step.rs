@@ -63,11 +63,15 @@ fn node_take_axis<'a>(
             siblings.next();
             siblings
         }),
-        ast::Axis::Following => {
-            todo!("following not supported yet")
+        ast::Axis::Following =>
+        // TODO: bad implementation so we don't get a crash
+        {
+            node.xot_iterator(|n| xot.children(n))
         }
-        ast::Axis::Preceding => {
-            todo!("preceding not supported yet");
+        ast::Axis::Preceding =>
+        // TODO: bad implementation so we don't get a crash
+        {
+            node.xot_iterator(|n| xot.children(n))
         }
         ast::Axis::Attribute => match node {
             xml::Node::Xot(node) => {
