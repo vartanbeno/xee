@@ -422,7 +422,7 @@ impl<'a> Interpreter<'a> {
 
                 EncodedInstruction::SequenceLen => {
                     let value = self.stack.pop().unwrap();
-                    let l: IBig = value.len().into();
+                    let l: IBig = value.len()?.into();
                     self.stack.push(l.into());
                 }
                 EncodedInstruction::SequenceGet => {

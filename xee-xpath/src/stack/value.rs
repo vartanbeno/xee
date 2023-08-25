@@ -25,12 +25,12 @@ pub(crate) enum Value {
 }
 
 impl Value {
-    pub(crate) fn len(self) -> usize {
+    pub(crate) fn len(self) -> error::Result<usize> {
         match self {
-            Value::Empty => 0,
-            Value::One(_) => 1,
-            Value::Many(items) => items.len(),
-            Value::Absent => panic!("Don't know how to handle absent"),
+            Value::Empty => Ok(0),
+            Value::One(_) => Ok(1),
+            Value::Many(items) => Ok(items.len()),
+            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
         }
     }
 

@@ -29,6 +29,7 @@ pub enum Error {
         span: SourceSpan,
     },
     #[error("Component absent in dynamic context")]
+    #[diagnostic(code(XPDY0002))]
     ComponentAbsentInDynamicContext,
     /// Parse error.
     ///
