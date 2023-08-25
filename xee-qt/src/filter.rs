@@ -44,7 +44,35 @@ impl TestFilter for ExcludedNamesFilter {
 // excluded_test_case_name
 // another # with a comment
 impl ExcludedNamesFilter {
-    pub(crate) fn parse(source: &str) -> Self {
+    pub(crate) fn new() -> Self {
+        Self {
+            names: FxHashMap::default(),
+            comments: FxHashMap::default(),
+        }
+    }
+
+    pub(crate) fn update_with_test_set_outcomes(&mut self, test_set_outcomes: &TestSetOutcomes) {
+        // remove the previous entry
+        self.names.remove(&test_set_outcomes.test_set_name);
+        let failing_names: FxHashSet<String> =
+            test_set_outcomes.failing_names().into_iter().collect();
+        self.names
+            .insert(test_set_outcomes.test_set_name.clone(), failing_names);
+        // there may be extra comments left for names that aren't relevant anymore,
+        // but that's okay: we won't serialize them later
+    }
+
+    pub(crate) fn update_with_catalog_outcomes(&mut self, catalog_outcomes: &[TestSetOutcomes]) {
+        for test_set_outcomes in catalog_outcomes {
+            self.update_with_test_set_outcomes(test_set_outcomes);
+        }
+    }
+}
+
+impl FromStr for ExcludedNamesFilter {
+    type Err = String;
+
+    fn from_str(source: &str) -> Result<Self, Self::Err> {
         let mut names = FxHashMap::default();
         let mut comments = FxHashMap::default();
         let mut test_set_name: Option<String> = None;
@@ -75,26 +103,7 @@ impl ExcludedNamesFilter {
             names.insert(test_set_name.clone(), test_case_names);
             comments.insert(test_set_name, test_case_comments);
         }
-        Self { names, comments }
-    }
-
-    pub(crate) fn update_with_test_set_outcomes(&mut self, test_set_outcomes: &TestSetOutcomes) {
-        // remove the previous entry
-        self.names.remove(&test_set_outcomes.test_set_name);
-        let failing_names: FxHashSet<String> =
-            test_set_outcomes.failing_names().into_iter().collect();
-        self.names
-            .insert(test_set_outcomes.test_set_name.clone(), failing_names);
-        // there may be extra comments left for names that aren't relevant anymore,
-        // but that's okay: we won't serialize them later
-    }
-}
-
-impl FromStr for ExcludedNamesFilter {
-    type Err = String;
-
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        Ok(Self::parse(source))
+        Ok(Self { names, comments })
     }
 }
 
@@ -140,7 +149,7 @@ test_case_2 # with a comment
 = test_set_2
 test_case_3
 "#;
-        let filter = ExcludedNamesFilter::parse(source);
+        let filter: ExcludedNamesFilter = source.parse().unwrap();
         assert_eq!(filter.names.len(), 2);
         assert!(filter.names.contains_key("test_set_1"));
         assert!(filter.names.contains_key("test_set_2"));
