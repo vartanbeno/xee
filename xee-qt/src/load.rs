@@ -127,7 +127,7 @@ fn metadata_query<'a>(
         }
     })?;
 
-    let change_query = queries.one("@change/string()", convert_string)?;
+    let change_query = queries.option("@change/string()", convert_string)?;
     let modified_query = queries.many("modified", move |session, item| {
         let attribution = qt::Attribution {
             by: by_query2.execute(session, item)?,
@@ -136,7 +136,7 @@ fn metadata_query<'a>(
         let description = change_query.execute(session, item)?;
         Ok(qt::Modification {
             attribution,
-            description,
+            description: description.unwrap_or("".to_string()),
         })
     })?;
 
