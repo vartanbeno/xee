@@ -7,7 +7,7 @@ use crate::qt;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Test failures {0} {1}")]
-    TestFailures(PathBuf, outcome::TestOutcomes),
+    TestFailures(PathBuf, outcome::TestSetOutcomes),
     #[error("catalog.xml cannot be found")]
     NoCatalogFound,
     #[error("File not found in catalog: {0}")]

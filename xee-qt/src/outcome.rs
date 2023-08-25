@@ -29,9 +29,6 @@ impl TestOutcome {
     }
 }
 
-#[derive(Debug)]
-pub struct TestOutcomes(pub Vec<(String, TestOutcome)>);
-
 trait Outcomes {
     fn outcomes(&self) -> Vec<&TestCaseOutcome>;
 
@@ -65,9 +62,10 @@ trait Outcomes {
     }
 }
 
+#[derive(Debug)]
 pub struct TestCaseOutcome {
-    test_case_name: String,
-    outcome: TestOutcome,
+    pub(crate) test_case_name: String,
+    pub(crate) outcome: TestOutcome,
 }
 
 impl TestCaseOutcome {
@@ -79,9 +77,10 @@ impl TestCaseOutcome {
     }
 }
 
+#[derive(Debug)]
 pub struct TestSetOutcomes {
     test_set_name: String,
-    outcomes: Vec<TestCaseOutcome>,
+    pub(crate) outcomes: Vec<TestCaseOutcome>,
 }
 
 impl TestSetOutcomes {
@@ -90,6 +89,10 @@ impl TestSetOutcomes {
             test_set_name: test_set.name.clone(),
             outcomes: Vec::new(),
         }
+    }
+
+    pub(crate) fn has_failures(&self) -> bool {
+        self.passed_with_unexpected_error() > 0 || self.failed() > 0 || self.erroring() > 0
     }
 
     pub(crate) fn add_outcome(&mut self, test_case: &qt::TestCase, outcome: TestOutcome) {

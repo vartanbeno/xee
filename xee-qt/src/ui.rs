@@ -6,13 +6,10 @@ use miette::Diagnostic;
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
+use crate::error::{Error, Result};
 use crate::outcome::{CatalogOutcomes, TestOutcome, TestSetOutcomes, UnexpectedError};
 use crate::qt;
 use crate::run::RunContext;
-use crate::{
-    error::{Error, Result},
-    outcome::TestOutcomes,
-};
 
 pub(crate) fn run(run_context: &mut RunContext) -> Result<CatalogOutcomes> {
     let mut stdout = stdout();
@@ -221,11 +218,18 @@ impl Renderer for VerboseRenderer {
     }
 }
 
-impl std::fmt::Display for TestOutcomes {
+impl std::fmt::Display for TestSetOutcomes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f)?;
-        for (name, test_outcome) in self.0.iter() {
-            writeln!(f, "{} ... {}", name, test_outcome)?;
+        for test_outcome in self.outcomes.iter() {
+            if test_outcome.outcome.is_exactly_passed() {
+                continue;
+            }
+            writeln!(
+                f,
+                "{} ... {}",
+                test_outcome.test_case_name, test_outcome.outcome
+            )?;
         }
         Ok(())
     }
