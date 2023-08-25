@@ -596,7 +596,7 @@ fn digits_parser<'a>() -> impl Parser<'a, &'a str, String> {
 }
 
 fn number_parser<'a>() -> impl Parser<'a, &'a str, u32> {
-    digits_parser().map(|s| s.parse().unwrap())
+    digits_parser().try_map(|s, _| s.parse().map_err(|_| EmptyErr::default()))
 }
 
 fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool> {
