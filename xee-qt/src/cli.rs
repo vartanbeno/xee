@@ -26,14 +26,14 @@ pub fn cli() -> Result<()> {
 
     let mut xot = Xot::new();
     let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
-    let run_context = RunContextBuilder::default()
+    let mut run_context = RunContextBuilder::default()
         .xot(xot)
         .catalog(catalog)
         .verbose(cli.verbose)
         .build()
         .unwrap();
     if relative_path.components().count() == 0 {
-        run(run_context)?;
+        run(&mut run_context)?;
     } else {
         run_path(run_context, &relative_path)?;
     }

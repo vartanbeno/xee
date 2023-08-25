@@ -6,7 +6,7 @@ use miette::Diagnostic;
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
-use crate::outcome::{TestOutcome, UnexpectedError};
+use crate::outcome::{CatalogOutcomes, TestOutcome, TestSetOutcomes, UnexpectedError};
 use crate::qt;
 use crate::run::RunContext;
 use crate::{
@@ -14,21 +14,30 @@ use crate::{
     outcome::TestOutcomes,
 };
 
-pub(crate) fn run(mut run_context: RunContext) -> Result<()> {
+pub(crate) fn run(run_context: &mut RunContext) -> Result<CatalogOutcomes> {
     let mut stdout = stdout();
+
+    let mut catalog_outcomes = CatalogOutcomes::new();
+
     // XXX annoying clone
     for file_path in &run_context.catalog.file_paths.clone() {
-        run_path_helper(&mut run_context, file_path, &mut stdout)?
+        let test_set_outcomes = run_path_helper(run_context, file_path, &mut stdout)?;
+        catalog_outcomes.add_outcomes(test_set_outcomes);
     }
-    Ok(())
+    Ok(catalog_outcomes)
 }
 
 pub(crate) fn run_path(mut run_context: RunContext, path: &Path) -> Result<()> {
     let mut stdout = stdout();
-    run_path_helper(&mut run_context, path, &mut stdout)
+    run_path_helper(&mut run_context, path, &mut stdout)?;
+    Ok(())
 }
 
-fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdout) -> Result<()> {
+fn run_path_helper(
+    run_context: &mut RunContext,
+    path: &Path,
+    stdout: &mut Stdout,
+) -> Result<TestSetOutcomes> {
     if !run_context.catalog.file_paths.contains(path) {
         return Err(Error::FileNotFoundInCatalog(path.to_path_buf()));
     }
@@ -36,11 +45,10 @@ fn run_path_helper(run_context: &mut RunContext, path: &Path, stdout: &mut Stdou
     let full_path = run_context.catalog.base_dir().join(path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
-        run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())?;
+        run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())
     } else {
-        run_test_set(run_context, &test_set, stdout, CharacterRenderer::new())?;
+        run_test_set(run_context, &test_set, stdout, CharacterRenderer::new())
     }
-    Ok(())
 }
 
 trait Renderer {
@@ -67,22 +75,16 @@ trait Renderer {
     ) -> crossterm::Result<()>;
 }
 
-struct TestSetOutcome<'a> {
-    test_case_outcomes: Vec<TestCaseOutcome<'a>>,
-}
-
-struct TestCaseOutcome<'a> {
-    test_case: &'a qt::TestCase,
-    outcome: TestOutcome,
-}
-
 fn run_test_set<R: Renderer>(
     run_context: &mut RunContext,
     test_set: &qt::TestSet,
     stdout: &mut Stdout,
     renderer: R,
-) -> Result<()> {
+) -> Result<TestSetOutcomes> {
     renderer.render_test_set(stdout, test_set, &run_context.catalog)?;
+
+    let mut test_set_outcomes = TestSetOutcomes::new(test_set);
+
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
         if !test_case.is_supported(&run_context.known_dependencies) {
@@ -91,9 +93,10 @@ fn run_test_set<R: Renderer>(
         renderer.render_test_case(stdout, test_case)?;
         let outcome = test_case.run(run_context, test_set);
         renderer.render_test_outcome(stdout, &outcome)?;
+        test_set_outcomes.add_outcome(test_case, outcome);
     }
     renderer.render_test_set_summary(stdout, test_set)?;
-    Ok(())
+    Ok(test_set_outcomes)
 }
 
 struct CharacterRenderer {}
