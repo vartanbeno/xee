@@ -36,7 +36,7 @@ pub(crate) trait Outcomes {
     fn filtered(&self) -> usize;
 
     fn total(&self) -> usize {
-        self.outcomes().len()
+        self.outcomes().len() + self.filtered()
     }
 
     fn count<F>(&self, f: F) -> usize
