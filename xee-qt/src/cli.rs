@@ -68,7 +68,8 @@ fn check(path: &Path, verbose: bool) -> Result<()> {
 
     if !path_info.filter_path.exists() {
         // we cannot check if we don't have a filter file yet
-        panic!("Cannot check without filter file");
+        println!("Cannot check without filter file");
+        return Ok(());
     }
 
     let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
@@ -116,7 +117,8 @@ fn update(path: &Path, verbose: bool) -> Result<()> {
 
     if !path_info.filter_path.exists() {
         // we cannot update if we don't have a filter file yet
-        panic!("Cannot update without filter file");
+        println!("Cannot update without filter file");
+        return Ok(());
     }
     let test_filter = IncludeAllFilter::new();
     let mut update_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
@@ -137,7 +139,8 @@ fn update(path: &Path, verbose: bool) -> Result<()> {
 fn initialize(path: &Path, verbose: bool) -> Result<()> {
     let path_info = paths(path)?;
     if path_info.filter_path.exists() {
-        panic!("Cannot reinitialize filters. Use update or delete filters file first");
+        println!("Cannot reinitialize filters. Use update or delete filters file first");
+        return Ok(());
     }
 
     let mut xot = Xot::new();
