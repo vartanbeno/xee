@@ -118,16 +118,18 @@ fn update(path: &Path, verbose: bool) -> Result<()> {
         // we cannot update if we don't have a filter file yet
         panic!("Cannot update without filter file");
     }
-    let mut test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
+    let test_filter = IncludeAllFilter::new();
+    let mut update_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
     if path_info.whole_catalog() {
         let catalog_outcomes = run(&mut run_context, &test_filter)?;
-        test_filter.update_with_catalog_outcomes(&catalog_outcomes);
+
+        update_filter.update_with_catalog_outcomes(&catalog_outcomes);
     } else {
         let test_set_outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
-        test_filter.update_with_test_set_outcomes(&test_set_outcomes);
+        update_filter.update_with_test_set_outcomes(&test_set_outcomes);
     }
 
-    let filter_data = test_filter.to_string();
+    let filter_data = update_filter.to_string();
     fs::write(&path_info.filter_path, filter_data)?;
     Ok(())
 }

@@ -106,6 +106,11 @@ impl ExcludedNamesFilter {
         let old_names = old_names.unwrap_or_default();
 
         if old_names.is_empty() {
+            // we add back old names so we don't remove the whole
+            // entry
+            self.names
+                .insert(test_set_outcomes.test_set_name.clone(), old_names);
+
             // we don't want to add any entries if there wasn't even
             // an entry for this test set name
             if failing_names.is_empty() {
