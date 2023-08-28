@@ -104,7 +104,7 @@ impl Tests {
         let exclude_glob_set = self.exclude_glob_set()?;
         let (path, mut run_context) = self.prepare()?;
         let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &path)?;
-        let mut test_set_outcomes = TestSetOutcomes::new(&test_set);
+        let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
         for test_case in &test_set.test_cases {
             if !test_case.is_supported(&run_context.known_dependencies) {
                 continue;
@@ -115,7 +115,7 @@ impl Tests {
                 continue;
             }
             let outcome = test_case.run(&mut run_context, &test_set);
-            test_set_outcomes.add_outcome(&test_case, outcome);
+            test_set_outcomes.add_outcome(&test_case.name, outcome);
         }
         if test_set_outcomes.has_failures() {
             Err(Error::TestFailures(path, test_set_outcomes))
@@ -151,14 +151,14 @@ fn try_test_all(path: &str) -> Result<()> {
         .unwrap();
     let full_path = run_context.catalog.base_dir().join(&relative_path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
-    let mut test_set_outcomes = TestSetOutcomes::new(&test_set);
+    let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
 
     for test_case in &test_set.test_cases {
         if !test_case.is_supported(&run_context.known_dependencies) {
             continue;
         }
         let outcome = test_case.run(&mut run_context, &test_set);
-        test_set_outcomes.add_outcome(test_case, outcome);
+        test_set_outcomes.add_outcome(&test_case.name, outcome);
     }
     if test_set_outcomes.has_failures() {
         Err(Error::TestFailures(path, test_set_outcomes))

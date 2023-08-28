@@ -1,6 +1,6 @@
 use xee_xpath::Error;
 
-use crate::{assert::Failure, qt};
+use crate::assert::Failure;
 
 #[derive(Debug, PartialEq)]
 pub enum UnexpectedError {
@@ -69,9 +69,9 @@ pub struct TestCaseOutcome {
 }
 
 impl TestCaseOutcome {
-    pub(crate) fn new(test_case: &qt::TestCase, outcome: TestOutcome) -> Self {
+    pub(crate) fn new(test_case_name: &str, outcome: TestOutcome) -> Self {
         Self {
-            test_case_name: test_case.name.clone(),
+            test_case_name: test_case_name.to_string(),
             outcome,
         }
     }
@@ -84,9 +84,9 @@ pub struct TestSetOutcomes {
 }
 
 impl TestSetOutcomes {
-    pub(crate) fn new(test_set: &qt::TestSet) -> Self {
+    pub(crate) fn new(test_set_name: &str) -> Self {
         Self {
-            test_set_name: test_set.name.clone(),
+            test_set_name: test_set_name.to_string(),
             outcomes: Vec::new(),
         }
     }
@@ -95,8 +95,9 @@ impl TestSetOutcomes {
         self.passed_with_unexpected_error() > 0 || self.failed() > 0 || self.erroring() > 0
     }
 
-    pub(crate) fn add_outcome(&mut self, test_case: &qt::TestCase, outcome: TestOutcome) {
-        self.outcomes.push(TestCaseOutcome::new(test_case, outcome));
+    pub(crate) fn add_outcome(&mut self, test_case_name: &str, outcome: TestOutcome) {
+        self.outcomes
+            .push(TestCaseOutcome::new(test_case_name, outcome));
     }
 
     pub(crate) fn failing_names(&self) -> Vec<String> {
@@ -115,7 +116,7 @@ impl Outcomes for TestSetOutcomes {
 }
 
 pub struct CatalogOutcomes {
-    outcomes: Vec<TestSetOutcomes>,
+    pub(crate) outcomes: Vec<TestSetOutcomes>,
 }
 
 impl CatalogOutcomes {

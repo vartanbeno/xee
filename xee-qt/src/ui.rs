@@ -80,7 +80,7 @@ fn run_test_set<R: Renderer>(
 ) -> Result<TestSetOutcomes> {
     renderer.render_test_set(stdout, test_set, &run_context.catalog)?;
 
-    let mut test_set_outcomes = TestSetOutcomes::new(test_set);
+    let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
 
     for test_case in &test_set.test_cases {
         // skip any test case we don't support
@@ -90,7 +90,7 @@ fn run_test_set<R: Renderer>(
         renderer.render_test_case(stdout, test_case)?;
         let outcome = test_case.run(run_context, test_set);
         renderer.render_test_outcome(stdout, &outcome)?;
-        test_set_outcomes.add_outcome(test_case, outcome);
+        test_set_outcomes.add_outcome(&test_case.name, outcome);
     }
     renderer.render_test_set_summary(stdout, test_set)?;
     Ok(test_set_outcomes)

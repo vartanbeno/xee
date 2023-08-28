@@ -1,8 +1,8 @@
+use fxhash::{FxHashMap, FxHashSet};
 use std::str::FromStr;
 
-use fxhash::{FxHashMap, FxHashSet};
-
-use crate::{outcome::TestSetOutcomes, qt};
+use crate::outcome::{CatalogOutcomes, TestSetOutcomes};
+use crate::qt;
 
 trait TestFilter {
     fn is_included(&self, test_set: &qt::TestSet, test_case: &qt::TestCase) -> bool;
@@ -38,9 +38,15 @@ impl TestFilter for ExcludedNamesFilter {
     }
 }
 
+#[derive(Debug)]
+pub(crate) enum UpdateResult {
+    NoChange,
+    Shrank,
+    NotSubset,
+}
+
 // The format to load exclude names filters is
 // = test_set_name
-// # any comment
 // excluded_test_case_name
 // another # with a comment
 impl ExcludedNamesFilter {
@@ -51,21 +57,74 @@ impl ExcludedNamesFilter {
         }
     }
 
-    pub(crate) fn update_with_test_set_outcomes(&mut self, test_set_outcomes: &TestSetOutcomes) {
-        // remove the previous entry
-        self.names.remove(&test_set_outcomes.test_set_name);
+    pub(crate) fn initialize_with_test_set_outcomes(
+        &mut self,
+        test_set_outcomes: &TestSetOutcomes,
+    ) {
         let failing_names: FxHashSet<String> =
             test_set_outcomes.failing_names().into_iter().collect();
         self.names
             .insert(test_set_outcomes.test_set_name.clone(), failing_names);
-        // there may be extra comments left for names that aren't relevant anymore,
-        // but that's okay: we won't serialize them later
     }
 
-    pub(crate) fn update_with_catalog_outcomes(&mut self, catalog_outcomes: &[TestSetOutcomes]) {
-        for test_set_outcomes in catalog_outcomes {
-            self.update_with_test_set_outcomes(test_set_outcomes);
+    pub(crate) fn update_with_test_set_outcomes(
+        &mut self,
+        test_set_outcomes: &TestSetOutcomes,
+    ) -> UpdateResult {
+        let failing_names: FxHashSet<String> =
+            test_set_outcomes.failing_names().into_iter().collect();
+        // remove the previous entry
+        let old_names = self.names.remove(&test_set_outcomes.test_set_name);
+        // normalize to set
+        let old_names = old_names.unwrap_or_default();
+
+        if old_names.is_empty() {
+            // we don't want to add any entries if there wasn't even
+            // an entry for this test set name
+            if failing_names.is_empty() {
+                return UpdateResult::NoChange;
+            } else {
+                return UpdateResult::NotSubset;
+            }
         }
+
+        if !failing_names.is_subset(&old_names) {
+            self.names
+                .insert(test_set_outcomes.test_set_name.clone(), old_names);
+            return UpdateResult::NotSubset;
+        }
+        self.names
+            .insert(test_set_outcomes.test_set_name.clone(), failing_names);
+        // there may be extra comments left for names that aren't relevant anymore,
+        // but that's okay: we won't serialize them later
+
+        // now we're done and shrank the amount of tests
+        UpdateResult::Shrank
+    }
+
+    pub(crate) fn initialize_with_catalog_outcomes(&mut self, catalog_outcomes: &CatalogOutcomes) {
+        for test_set_outcomes in catalog_outcomes.outcomes.iter() {
+            self.initialize_with_test_set_outcomes(test_set_outcomes);
+        }
+    }
+
+    pub(crate) fn update_with_catalog_outcomes(
+        &mut self,
+        catalog_outcomes: &CatalogOutcomes,
+    ) -> Vec<UpdateResult> {
+        let mut update_results = Vec::new();
+        for test_set_outcomes in catalog_outcomes.outcomes.iter() {
+            update_results.push(self.update_with_test_set_outcomes(test_set_outcomes));
+        }
+        update_results
+    }
+}
+
+impl From<CatalogOutcomes> for ExcludedNamesFilter {
+    fn from(catalog_outcomes: CatalogOutcomes) -> Self {
+        let mut filter = Self::new();
+        filter.update_with_catalog_outcomes(&catalog_outcomes);
+        filter
     }
 }
 
@@ -138,6 +197,8 @@ impl ToString for ExcludedNamesFilter {
 
 #[cfg(test)]
 mod tests {
+    use crate::outcome::TestOutcome;
+
     use super::*;
 
     #[test]
@@ -195,5 +256,54 @@ test_case_3
         let filter: ExcludedNamesFilter = source.parse().unwrap();
         let serialized = filter.to_string();
         assert_eq!(source, serialized);
+    }
+
+    #[test]
+    fn test_update_test_set() {
+        let mut filter = ExcludedNamesFilter::new();
+
+        let mut outcomes = TestSetOutcomes::new("test_set_1");
+        // unsupported is the easiest non-passed outcome we can construct
+        outcomes.add_outcome("test_case_1", TestOutcome::Unsupported);
+        outcomes.add_outcome("test_case_2", TestOutcome::Unsupported);
+        filter.initialize_with_test_set_outcomes(&outcomes);
+        // now one test passes
+        let mut outcomes = TestSetOutcomes::new("test_set_1");
+        outcomes.add_outcome("test_case_1", TestOutcome::Passed);
+        outcomes.add_outcome("test_case_2", TestOutcome::Unsupported);
+        // and we do an update
+        let r = filter.update_with_test_set_outcomes(&outcomes);
+        assert!(matches!(r, UpdateResult::Shrank));
+
+        let serialized = filter.to_string();
+        let expected = r#"
+= test_set_1
+test_case_2
+"#;
+        assert_eq!(serialized, expected.trim_start());
+    }
+
+    #[test]
+    fn test_update_test_set_not_subset() {
+        let mut filter = ExcludedNamesFilter::new();
+
+        let mut outcomes = TestSetOutcomes::new("test_set_1");
+        outcomes.add_outcome("test_case_1", TestOutcome::Passed);
+        outcomes.add_outcome("test_case_2", TestOutcome::Unsupported);
+        filter.initialize_with_test_set_outcomes(&outcomes);
+        // now one test passes
+        let mut outcomes = TestSetOutcomes::new("test_set_1");
+        outcomes.add_outcome("test_case_1", TestOutcome::Unsupported);
+        outcomes.add_outcome("test_case_2", TestOutcome::Unsupported);
+        // and we do an update
+        let r = filter.update_with_test_set_outcomes(&outcomes);
+        assert!(matches!(r, UpdateResult::NotSubset));
+
+        let serialized = filter.to_string();
+        let expected = r#"
+= test_set_1
+test_case_2
+"#;
+        assert_eq!(serialized, expected.trim_start());
     }
 }
