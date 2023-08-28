@@ -34,10 +34,9 @@ pub(crate) fn run_path(
     mut run_context: RunContext,
     test_filter: &impl TestFilter,
     path: &Path,
-) -> Result<()> {
+) -> Result<TestSetOutcomes> {
     let mut stdout = stdout();
-    run_path_helper(&mut run_context, test_filter, path, &mut stdout)?;
-    Ok(())
+    run_path_helper(&mut run_context, test_filter, path, &mut stdout)
 }
 
 fn run_path_helper(

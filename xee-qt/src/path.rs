@@ -28,3 +28,9 @@ pub(crate) fn paths(path: &Path) -> Result<PathInfo> {
     }
     Err(Error::NoCatalogFound)
 }
+
+impl PathInfo {
+    pub(crate) fn whole_catalog(&self) -> bool {
+        self.relative_path.components().count() == 0
+    }
+}

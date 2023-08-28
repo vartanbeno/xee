@@ -1,8 +1,10 @@
 use fxhash::{FxHashMap, FxHashSet};
+use std::fs;
+use std::path::Path;
 use std::str::FromStr;
 
 use crate::outcome::{CatalogOutcomes, TestSetOutcomes};
-use crate::qt;
+use crate::{qt, Error};
 
 pub(crate) trait TestFilter {
     fn is_included(&self, test_set: &qt::TestSet, test_case: &qt::TestCase) -> bool;
@@ -61,6 +63,25 @@ impl ExcludedNamesFilter {
             names: FxHashMap::default(),
             comments: FxHashMap::default(),
         }
+    }
+
+    pub(crate) fn load_from_file(filter_path: &Path) -> Result<Self, Error> {
+        if filter_path.exists() {
+            // we have an existing test filter file, we read it
+            // read file into string
+            let filter_data = fs::read_to_string(filter_path)?;
+            // parse string into filter
+            filter_data.parse()
+        } else {
+            // we don't have a test filter file yet
+            Ok(ExcludedNamesFilter::new())
+        }
+    }
+
+    pub(crate) fn from_outcomes(catalog_outcomes: &CatalogOutcomes) -> Self {
+        let mut filter = Self::new();
+        filter.initialize_with_catalog_outcomes(catalog_outcomes);
+        filter
     }
 
     pub(crate) fn initialize_with_test_set_outcomes(
@@ -126,16 +147,8 @@ impl ExcludedNamesFilter {
     }
 }
 
-impl From<CatalogOutcomes> for ExcludedNamesFilter {
-    fn from(catalog_outcomes: CatalogOutcomes) -> Self {
-        let mut filter = Self::new();
-        filter.update_with_catalog_outcomes(&catalog_outcomes);
-        filter
-    }
-}
-
 impl FromStr for ExcludedNamesFilter {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(source: &str) -> Result<Self, Self::Err> {
         let mut names = FxHashMap::default();
