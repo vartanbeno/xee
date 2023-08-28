@@ -62,16 +62,16 @@ impl Tests {
         let qt3tests_path = workspace_path.join("vendor/qt3tests");
         let path = qt3tests_path.join(&self.path);
         let path = path.with_extension("xml");
-        let (catalog_path, relative_path) = paths(&path)?;
+        let path_info = paths(&path)?;
         let mut xot = Xot::new();
-        let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
+        let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
         let run_context = RunContextBuilder::default()
             .xot(xot)
             .catalog(catalog)
             .verbose(false)
             .build()
             .unwrap();
-        let full_path = run_context.catalog.base_dir().join(relative_path);
+        let full_path = run_context.catalog.base_dir().join(path_info.relative_path);
         Ok((full_path, run_context))
     }
 
@@ -140,16 +140,19 @@ fn try_test_all(path: &str) -> Result<()> {
     let qt3tests_path = workspace_path.join("vendor/qt3tests");
     let path = qt3tests_path.join(path);
     let path = path.with_extension("xml");
-    let (catalog_path, relative_path) = paths(&path)?;
+    let path_info = paths(&path)?;
     let mut xot = Xot::new();
-    let catalog = qt::Catalog::load_from_file(&mut xot, &catalog_path)?;
+    let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
     let mut run_context = RunContextBuilder::default()
         .xot(xot)
         .catalog(catalog)
         .verbose(false)
         .build()
         .unwrap();
-    let full_path = run_context.catalog.base_dir().join(&relative_path);
+    let full_path = run_context
+        .catalog
+        .base_dir()
+        .join(&path_info.relative_path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
 

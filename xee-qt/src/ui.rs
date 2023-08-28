@@ -6,32 +6,43 @@ use miette::Diagnostic;
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
-use crate::error::{Error, Result};
 use crate::outcome::{CatalogOutcomes, TestOutcome, TestSetOutcomes, UnexpectedError};
 use crate::qt;
 use crate::run::RunContext;
+use crate::{
+    error::{Error, Result},
+    filter::TestFilter,
+};
 
-pub(crate) fn run(run_context: &mut RunContext) -> Result<CatalogOutcomes> {
+pub(crate) fn run(
+    run_context: &mut RunContext,
+    test_filter: &impl TestFilter,
+) -> Result<CatalogOutcomes> {
     let mut stdout = stdout();
 
     let mut catalog_outcomes = CatalogOutcomes::new();
 
     // XXX annoying clone
     for file_path in &run_context.catalog.file_paths.clone() {
-        let test_set_outcomes = run_path_helper(run_context, file_path, &mut stdout)?;
+        let test_set_outcomes = run_path_helper(run_context, test_filter, file_path, &mut stdout)?;
         catalog_outcomes.add_outcomes(test_set_outcomes);
     }
     Ok(catalog_outcomes)
 }
 
-pub(crate) fn run_path(mut run_context: RunContext, path: &Path) -> Result<()> {
+pub(crate) fn run_path(
+    mut run_context: RunContext,
+    test_filter: &impl TestFilter,
+    path: &Path,
+) -> Result<()> {
     let mut stdout = stdout();
-    run_path_helper(&mut run_context, path, &mut stdout)?;
+    run_path_helper(&mut run_context, test_filter, path, &mut stdout)?;
     Ok(())
 }
 
 fn run_path_helper(
     run_context: &mut RunContext,
+    test_filter: &impl TestFilter,
     path: &Path,
     stdout: &mut Stdout,
 ) -> Result<TestSetOutcomes> {
@@ -42,9 +53,21 @@ fn run_path_helper(
     let full_path = run_context.catalog.base_dir().join(path);
     let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &full_path)?;
     if verbose {
-        run_test_set(run_context, &test_set, stdout, VerboseRenderer::new())
+        run_test_set(
+            run_context,
+            test_filter,
+            &test_set,
+            stdout,
+            VerboseRenderer::new(),
+        )
     } else {
-        run_test_set(run_context, &test_set, stdout, CharacterRenderer::new())
+        run_test_set(
+            run_context,
+            test_filter,
+            &test_set,
+            stdout,
+            CharacterRenderer::new(),
+        )
     }
 }
 
@@ -74,6 +97,7 @@ trait Renderer {
 
 fn run_test_set<R: Renderer>(
     run_context: &mut RunContext,
+    test_filter: &impl TestFilter,
     test_set: &qt::TestSet,
     stdout: &mut Stdout,
     renderer: R,
@@ -83,6 +107,9 @@ fn run_test_set<R: Renderer>(
     let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
 
     for test_case in &test_set.test_cases {
+        if !test_filter.is_included(test_set, test_case) {
+            continue;
+        }
         // skip any test case we don't support
         if !test_case.is_supported(&run_context.known_dependencies) {
             continue;

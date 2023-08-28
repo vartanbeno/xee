@@ -4,11 +4,17 @@ use std::str::FromStr;
 use crate::outcome::{CatalogOutcomes, TestSetOutcomes};
 use crate::qt;
 
-trait TestFilter {
+pub(crate) trait TestFilter {
     fn is_included(&self, test_set: &qt::TestSet, test_case: &qt::TestCase) -> bool;
 }
 
 pub(crate) struct IncludeAllFilter {}
+
+impl IncludeAllFilter {
+    pub(crate) fn new() -> Self {
+        Self {}
+    }
+}
 
 impl TestFilter for IncludeAllFilter {
     fn is_included(&self, _test_set: &qt::TestSet, _test_case: &qt::TestCase) -> bool {
