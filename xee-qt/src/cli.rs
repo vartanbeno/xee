@@ -37,7 +37,7 @@ enum Commands {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
     },
-    NoFilters {
+    All {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
     },
@@ -50,7 +50,7 @@ pub fn cli() -> Result<()> {
         Commands::Initialize { path } => initialize(&path, cli.verbose),
         Commands::Check { path } => check(&path, cli.verbose),
         Commands::Update { path } => update(&path, cli.verbose),
-        Commands::NoFilters { path } => no_filters(&path, cli.verbose),
+        Commands::All { path } => all(&path, cli.verbose),
     }
 }
 
@@ -80,7 +80,7 @@ fn check(path: &Path, verbose: bool) -> Result<()> {
     Ok(())
 }
 
-fn no_filters(path: &Path, verbose: bool) -> Result<()> {
+fn all(path: &Path, verbose: bool) -> Result<()> {
     let path_info = paths(path)?;
     let mut xot = Xot::new();
     let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
