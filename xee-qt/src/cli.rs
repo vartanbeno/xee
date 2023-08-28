@@ -5,6 +5,7 @@ use xot::Xot;
 
 use crate::error::Result;
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter};
+use crate::outcome::Outcomes;
 use crate::path::paths;
 use crate::qt;
 use crate::run::RunContextBuilder;
@@ -13,9 +14,6 @@ use crate::ui::{run, run_path};
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Verbose mode
-    #[clap(short, long)]
-    verbose: bool,
     #[command(subcommand)]
     command: Commands,
 }
@@ -28,18 +26,30 @@ enum Commands {
     Initialize {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
+        /// Verbose mode
+        #[clap(short, long)]
+        verbose: bool,
     },
     Check {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
+        /// Verbose mode
+        #[clap(short, long)]
+        verbose: bool,
     },
     Update {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
+        /// Verbose mode
+        #[clap(short, long)]
+        verbose: bool,
     },
     All {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
+        /// Verbose mode
+        #[clap(short, long)]
+        verbose: bool,
     },
 }
 
@@ -47,10 +57,10 @@ pub fn cli() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Initialize { path } => initialize(&path, cli.verbose),
-        Commands::Check { path } => check(&path, cli.verbose),
-        Commands::Update { path } => update(&path, cli.verbose),
-        Commands::All { path } => all(&path, cli.verbose),
+        Commands::Initialize { path, verbose } => initialize(&path, verbose),
+        Commands::Check { path, verbose } => check(&path, verbose),
+        Commands::Update { path, verbose } => update(&path, verbose),
+        Commands::All { path, verbose } => all(&path, verbose),
     }
 }
 
@@ -74,9 +84,11 @@ fn check(path: &Path, verbose: bool) -> Result<()> {
 
     let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
     if path_info.whole_catalog() {
-        let _ = run(&mut run_context, &test_filter)?;
+        let outcomes = run(&mut run_context, &test_filter)?;
+        println!("{}", outcomes.display());
     } else {
-        let _ = run_path(run_context, &test_filter, &path_info.relative_path)?;
+        let outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
+        println!("{}", outcomes.display());
     }
     Ok(())
 }
@@ -96,9 +108,11 @@ fn all(path: &Path, verbose: bool) -> Result<()> {
     let test_filter = IncludeAllFilter::new();
 
     if path_info.whole_catalog() {
-        let _ = run(&mut run_context, &test_filter)?;
+        let outcomes = run(&mut run_context, &test_filter)?;
+        println!("{}", outcomes.display());
     } else {
-        let _ = run_path(run_context, &test_filter, &path_info.relative_path)?;
+        let outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
+        println!("{}", outcomes.display());
     }
     Ok(())
 }

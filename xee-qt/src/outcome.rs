@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use xee_xpath::Error;
 
 use crate::assert::Failure;
@@ -29,8 +31,13 @@ impl TestOutcome {
     }
 }
 
-trait Outcomes {
+pub(crate) trait Outcomes {
     fn outcomes(&self) -> Vec<&TestCaseOutcome>;
+    fn filtered(&self) -> usize;
+
+    fn total(&self) -> usize {
+        self.outcomes().len()
+    }
 
     fn count<F>(&self, f: F) -> usize
     where
@@ -60,6 +67,16 @@ trait Outcomes {
             )
         })
     }
+
+    fn display(&self) -> String {
+        let mut s = String::new();
+        write!(s, "Total: {}", self.total()).unwrap();
+        write!(s, " Passed: {}", self.passed()).unwrap();
+        write!(s, " Failed: {}", self.failed()).unwrap();
+        write!(s, " Error: {}", self.erroring()).unwrap();
+        write!(s, " Filtered: {}", self.filtered()).unwrap();
+        s
+    }
 }
 
 #[derive(Debug)]
@@ -81,6 +98,7 @@ impl TestCaseOutcome {
 pub struct TestSetOutcomes {
     pub(crate) test_set_name: String,
     pub(crate) outcomes: Vec<TestCaseOutcome>,
+    pub(crate) filtered: usize,
 }
 
 impl TestSetOutcomes {
@@ -88,6 +106,7 @@ impl TestSetOutcomes {
         Self {
             test_set_name: test_set_name.to_string(),
             outcomes: Vec::new(),
+            filtered: 0,
         }
     }
 
@@ -98,6 +117,10 @@ impl TestSetOutcomes {
     pub(crate) fn add_outcome(&mut self, test_case_name: &str, outcome: TestOutcome) {
         self.outcomes
             .push(TestCaseOutcome::new(test_case_name, outcome));
+    }
+
+    pub(crate) fn add_filtered(&mut self) {
+        self.filtered += 1;
     }
 
     pub(crate) fn failing_names(&self) -> Vec<String> {
@@ -112,6 +135,9 @@ impl TestSetOutcomes {
 impl Outcomes for TestSetOutcomes {
     fn outcomes(&self) -> Vec<&TestCaseOutcome> {
         self.outcomes.iter().collect()
+    }
+    fn filtered(&self) -> usize {
+        self.filtered
     }
 }
 
@@ -137,5 +163,12 @@ impl Outcomes for CatalogOutcomes {
             .iter()
             .flat_map(|test_set_outcome| test_set_outcome.outcomes())
             .collect()
+    }
+
+    fn filtered(&self) -> usize {
+        self.outcomes
+            .iter()
+            .map(|test_set_outcome| test_set_outcome.filtered())
+            .sum()
     }
 }

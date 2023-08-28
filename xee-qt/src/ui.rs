@@ -107,6 +107,7 @@ fn run_test_set<R: Renderer>(
 
     for test_case in &test_set.test_cases {
         if !test_filter.is_included(test_set, test_case) {
+            test_set_outcomes.add_filtered();
             continue;
         }
         // skip any test case we don't support
@@ -266,8 +267,10 @@ impl std::fmt::Display for TestOutcome {
         match self {
             TestOutcome::Passed => write!(f, "{}", "PASS".green()),
             TestOutcome::PassedWithUnexpectedError(error) => match error {
-                UnexpectedError::Code(s) => write!(f, "{} code: {}", "PASS".green(), s),
-                UnexpectedError::Error(e) => write!(f, "{} error: {}", "PASS".green(), e),
+                UnexpectedError::Code(s) => write!(f, "{} code: {}", "WRONG ERROR".yellow(), s),
+                UnexpectedError::Error(e) => {
+                    write!(f, "{} error: {}", "WRONG ERROR".yellow(), e)
+                }
             },
             TestOutcome::Failed(failure) => {
                 write!(f, "{} {}", "FAIL".red(), failure)
