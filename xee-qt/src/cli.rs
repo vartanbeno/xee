@@ -20,9 +20,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initialize the filter filter.
-    /// This runs all tests, and saves the test outcomes to
-    /// a filter file.
+    /// Initialize the filter.
+    ///
+    /// Runs all tests, and saves the test outcomes to a `filters` file in the
+    /// directory of the `catalog.xml`.
     Initialize {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
@@ -30,22 +31,40 @@ enum Commands {
         #[clap(short, long)]
         verbose: bool,
     },
+    /// Check with filters engaged.
+    ///
+    /// Runs tests that are not excluded by the `filters` file. This can be
+    /// used to check for regressions after making changes.
     Check {
-        /// A path to a qttests directory or individual test file
+        /// A path to a qttests directory or individual test file.
+        ///
+        /// If individual test file, it runs only the tests in that file,
+        /// otherwise it runs the tests in the `catalog.xml`.
         path: PathBuf,
         /// Verbose mode
         #[clap(short, long)]
         verbose: bool,
     },
+    /// Update the filters.
+    ///
+    /// This runs all the tests on the path, and then updates the `filters`
+    /// file if more tests pass in this run. If not, the filters file is not
+    /// updated, so that you can't accidentally introduce a regression.
     Update {
-        /// A path to a qttests directory or individual test file
+        /// A path to a qttests directory or individual test file.
+        ///
+        /// If individual test file, it updates only the tests in that file,
+        /// otherwise it updates tests in the `catalog.xml`.
         path: PathBuf,
         /// Verbose mode
         #[clap(short, long)]
         verbose: bool,
     },
+    /// Run all tests.
+    ///
+    /// Do not use filters, simply run all the tests indicated by path.
     All {
-        /// A path to a qttests directory or individual test file
+        /// A path to a qttests directory or individual test file.
         path: PathBuf,
         /// Verbose mode
         #[clap(short, long)]
