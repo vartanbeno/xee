@@ -20,6 +20,8 @@ ibig = "0.3.6"
 ordered-float = "3.7.0"
 rust_decimal = "1.30.0"
 chumsky = "1.0.0-alpha.4"
+icu = "1.2.0"
+serde = "1"
 
 [profile.test.package.xot]
 opt-level = 3

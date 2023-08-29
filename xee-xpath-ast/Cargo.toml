@@ -29,4 +29,4 @@ insta = { version = "1.29.0", features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = "1.29.1"
 ron = "0.8.0"
-serde = { version = "1", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
