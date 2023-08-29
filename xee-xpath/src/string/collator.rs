@@ -204,6 +204,7 @@ impl Collators {
                 let collator = if let Some(locale) = locale {
                     let locale = locale.into();
                     let options = query.into();
+
                     Collator::try_new_with_buffer_provider(provider, &locale, options).ok()
                 } else {
                     None
@@ -270,5 +271,14 @@ mod tests {
                 numeric: YesNo::No,
             }
         )
+    }
+
+    #[test]
+    fn test_load_collator() {
+        let provider = provider();
+        let mut collators = Collators::new();
+        let query: CollatorQuery = "lang=se".parse().unwrap();
+        let collator = collators.load(&provider, &query);
+        assert!(collator.is_some());
     }
 }

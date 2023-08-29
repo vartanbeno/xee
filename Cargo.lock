@@ -1048,6 +1048,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "icu_provider_adapters"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4ae1e2bd0c41728b77e7c46e9afdec5e2127d1eedacc684724667d50c126bd3"
+dependencies = [
+ "icu_locid",
+ "icu_provider",
+ "tinystr",
+ "yoke",
+ "zerovec",
+]
+
+[[package]]
 name = "icu_provider_blob"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2735,6 +2748,7 @@ dependencies = [
  "hex",
  "ibig",
  "icu",
+ "icu_provider_adapters",
  "icu_provider_blob",
  "insta",
  "lexical",
