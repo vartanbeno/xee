@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+cargo test
+cargo run --release --bin xee-qt -- check vendor/qt3tests/
