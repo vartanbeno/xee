@@ -282,11 +282,29 @@ impl Xs {
             AnyAtomicType => None,
             UntypedAtomic => Some(RustInfo::as_ref("String")),
             String => Some(RustInfo::as_ref("String")),
-            Boolean => Some(RustInfo::new("bool")),
             Float => Some(RustInfo::new("f32")),
             Double => Some(RustInfo::new("f64")),
             Decimal => Some(RustInfo::new("rust_decimal::Decimal")),
             Integer => Some(RustInfo::new("ibig::IBig")),
+            Duration => Some(RustInfo::new("xee_xpath::atomic::Duration")),
+            YearMonthDuration => Some(RustInfo::new("xee_xpath::atomic::YearMonthDuration")),
+            DayTimeDuration => Some(RustInfo::new("chrono::Duration")),
+            DateTime => Some(RustInfo::new("xee_xpath::atomic::NaiveDateTimeWithOffset")),
+            DateTimeStamp => Some(RustInfo::new("chrono::DateTime<chrono::FixedOffset>>")),
+            Time => Some(RustInfo::new("xee_xpath::atomic::NaiveTimeWithOffset")),
+            Date => Some(RustInfo::new("chrono::NaiveDateWithOffset")),
+            GYearMonth => Some(RustInfo::new("xee_xpath::atomic::GYearMonth")),
+            GYear => Some(RustInfo::new("xee_xpath::atomic::GYear")),
+            GMonthDay => Some(RustInfo::new("xee_xpath::atomic::GMonthDay")),
+            GDay => Some(RustInfo::new("xee_xpath::atomic::GDay")),
+            GMonth => Some(RustInfo::new("xee_xpath::atomic::GMonth")),
+            Boolean => Some(RustInfo::new("bool")),
+            Base64Binary => Some(RustInfo::as_ref("Vec<u8>")),
+            HexBinary => Some(RustInfo::as_ref("Vec<u8>")),
+            QName => Some(RustInfo::new("xee_xpath_ast::ast::Name")),
+            Notation => None,
+
+            // integer types; are these correct or should we use ibig everywhere?
             NonPositiveInteger => Some(RustInfo::new("i64")),
             NegativeInteger => Some(RustInfo::new("i64")),
             Long => Some(RustInfo::new("i64")),
@@ -299,9 +317,18 @@ impl Xs {
             UnsignedInt => Some(RustInfo::new("u32")),
             UnsignedShort => Some(RustInfo::new("u16")),
             UnsignedByte => Some(RustInfo::new("u8")),
-            Notation => None,
-            // TODO: need to find rust representation for the missing atomic types
-            _ => None,
+
+            // string types (and AnyURI)
+            NormalizedString => Some(RustInfo::as_ref("String")),
+            Token => Some(RustInfo::as_ref("String")),
+            Language => Some(RustInfo::as_ref("String")),
+            NMTOKEN => Some(RustInfo::as_ref("String")),
+            Name => Some(RustInfo::as_ref("String")),
+            NCName => Some(RustInfo::as_ref("String")),
+            ID => Some(RustInfo::as_ref("String")),
+            IDREF => Some(RustInfo::as_ref("String")),
+            ENTITY => Some(RustInfo::as_ref("String")),
+            AnyURI => Some(RustInfo::as_ref("String")),
         }
     }
 }

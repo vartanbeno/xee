@@ -21,6 +21,10 @@ mod op_unary;
 mod types;
 
 pub use atomic_core::Atomic;
+pub use datetime::{
+    Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
+    NaiveTimeWithOffset, YearMonthDuration,
+};
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;
 pub(crate) use op_eq::op_eq;
