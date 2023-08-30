@@ -1055,6 +1055,7 @@ checksum = "f4ae1e2bd0c41728b77e7c46e9afdec5e2127d1eedacc684724667d50c126bd3"
 dependencies = [
  "icu_locid",
  "icu_provider",
+ "serde",
  "tinystr",
  "yoke",
  "zerovec",

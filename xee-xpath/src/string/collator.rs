@@ -1,6 +1,8 @@
 use ahash::{HashMap, HashMapExt};
 use icu::collator::{self, Collator};
 use icu::locid::Locale;
+use icu_provider_adapters::either::EitherProvider;
+use icu_provider_adapters::fallback::LocaleFallbackProvider;
 use icu_provider_blob::BlobDataProvider;
 use serde::Deserialize;
 use serde_querystring::{from_str, ParseMode};
@@ -189,13 +191,20 @@ impl Collators {
 
     pub(crate) fn load(
         &mut self,
-        provider: &BlobDataProvider,
+        provider: BlobDataProvider,
         query: &CollatorQuery,
     ) -> Option<&Collator> {
         // try to find cached collator.
         match self.collators.entry(query.clone()) {
             Entry::Occupied(entry) => entry.into_mut().as_ref(),
             Entry::Vacant(entry) => {
+                let provider = if query.fallback == YesNo::Yes {
+                    EitherProvider::A(
+                        LocaleFallbackProvider::try_new_with_buffer_provider(provider).unwrap(),
+                    )
+                } else {
+                    EitherProvider::B(provider)
+                };
                 let locale = if let Some(lang) = &query.lang {
                     Locale::try_from_bytes(lang.as_bytes()).ok()
                 } else {
@@ -205,7 +214,7 @@ impl Collators {
                     let locale = locale.into();
                     let options = query.into();
 
-                    Collator::try_new_with_buffer_provider(provider, &locale, options).ok()
+                    Collator::try_new_with_buffer_provider(&provider, &locale, options).ok()
                 } else {
                     None
                 };
@@ -277,8 +286,28 @@ mod tests {
     fn test_load_collator() {
         let provider = provider();
         let mut collators = Collators::new();
-        let query: CollatorQuery = "lang=se".parse().unwrap();
-        let collator = collators.load(&provider, &query);
+        let query: CollatorQuery = "lang=se&fallback=no".parse().unwrap();
+        let collator = collators.load(provider, &query);
         assert!(collator.is_some());
+    }
+
+    #[test]
+    fn test_load_collator_with_fallback() {
+        let provider = provider();
+        let mut collators = Collators::new();
+        // fallback is the default, but make it explicit
+        let query: CollatorQuery = "lang=en-US&fallback=yes".parse().unwrap();
+        let collator = collators.load(provider, &query);
+        assert!(collator.is_some());
+    }
+
+    #[test]
+    fn test_load_collator_without_fails() {
+        let provider = provider();
+        let mut collators = Collators::new();
+        // without fallback we can't find en-US
+        let query: CollatorQuery = "lang=en-US&fallback=no".parse().unwrap();
+        let collator = collators.load(provider, &query);
+        assert!(collator.is_none());
     }
 }
