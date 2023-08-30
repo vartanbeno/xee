@@ -416,7 +416,7 @@ mod tests {
     }
 
     #[test]
-    fn test_load_uri_collation() {
+    fn test_load_uca_collation() {
         let provider = provider();
         let mut collations = Collations::new();
         let collation = collations.load(
@@ -425,6 +425,30 @@ mod tests {
             "http://www.w3.org/2013/collation/UCA?lang=se&fallback=no",
         );
         assert!(collation.is_ok());
+    }
+
+    #[test]
+    fn test_load_uca_collation_fallback() {
+        let provider = provider();
+        let mut collations = Collations::new();
+        let collation = collations.load(
+            provider,
+            None,
+            "http://www.w3.org/2013/collation/UCA?lang=en-US&fallback=yes",
+        );
+        assert!(collation.is_ok());
+    }
+
+    #[test]
+    fn test_load_uca_collation_no_fallback() {
+        let provider = provider();
+        let mut collations = Collations::new();
+        let collation = collations.load(
+            provider,
+            None,
+            "http://www.w3.org/2013/collation/UCA?lang=en-US&fallback=no",
+        );
+        assert!(collation.is_err());
     }
 
     #[test]
@@ -450,24 +474,4 @@ mod tests {
         );
         assert!(collation.is_ok());
     }
-
-    // #[test]
-    // fn test_load_collator_with_fallback() {
-    //     let provider = provider();
-    //     let mut collators = Collators::new();
-    //     // fallback is the default, but make it explicit
-    //     let query: CollatorQuery = "lang=en-US&fallback=yes".parse().unwrap();
-    //     let collator = collators.load(provider, &query);
-    //     assert!(collator.is_some());
-    // }
-
-    // #[test]
-    // fn test_load_collator_without_fails() {
-    //     let provider = provider();
-    //     let mut collators = Collators::new();
-    //     // without fallback we can't find en-US
-    //     let query: CollatorQuery = "lang=en-US&fallback=no".parse().unwrap();
-    //     let collator = collators.load(provider, &query);
-    //     assert!(collator.is_none());
-    // }
 }
