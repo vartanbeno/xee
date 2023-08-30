@@ -53,4 +53,12 @@ impl<'a> StaticContext<'a> {
             .load(self.provider.clone(), &collator_query)
             .unwrap()
     }
+
+    pub fn default_collator_qs(&self) -> &str {
+        "http://www.w3.org/2013/collation/UCA"
+    }
+
+    pub fn get_collator(&self, uri: &str) -> Option<Rc<Collator>> {
+        todo!()
+    }
 }

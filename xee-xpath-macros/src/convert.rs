@@ -44,7 +44,7 @@ fn convert_item(
         }
         ast::Occurrence::Option => {
             let as_ref = if borrow {
-                quote!(let #name = #name.as_deref())
+                quote!(let #name = #name.as_deref();)
             } else {
                 quote!()
             };

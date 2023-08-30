@@ -324,7 +324,7 @@ impl<'a> InterpreterCompiler<'a> {
                 let context_names = context_names.unwrap();
                 self.compile_variable(&context_names.last, span)?
             }
-            None => {}
+            Some(ContextRule::Collation) | None => {}
         }
         self.builder.emit(
             Instruction::StaticClosure(static_function_id.as_u16()),

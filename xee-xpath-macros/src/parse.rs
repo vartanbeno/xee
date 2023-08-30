@@ -19,6 +19,7 @@ mod kw {
     syn::custom_keyword!(context_last);
     syn::custom_keyword!(position);
     syn::custom_keyword!(size);
+    syn::custom_keyword!(collation);
 }
 
 impl Parse for XPathFnOptions {
@@ -72,6 +73,8 @@ impl Parse for XPathFnOption {
             XPathFnOption::Kind("position".to_string())
         } else if lookahead.peek(kw::size) {
             XPathFnOption::Kind("size".to_string())
+        } else if lookahead.peek(kw::collation) {
+            XPathFnOption::Kind("collation".to_string())
         } else if lookahead.peek(LitStr) {
             let string_literal: LitStr = input.parse()?;
             let signature = string_literal.value();

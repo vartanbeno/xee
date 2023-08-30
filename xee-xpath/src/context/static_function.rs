@@ -22,6 +22,9 @@ pub(crate) enum FunctionKind {
     Position,
     // this function takes size as the implicit only argument
     Size,
+    // generate a function with one less arity that takes the collation
+    // as the last argument
+    Collation,
 }
 
 impl FunctionKind {
@@ -32,6 +35,7 @@ impl FunctionKind {
             "context_last" => Some(FunctionKind::ItemLast),
             "position" => Some(FunctionKind::Position),
             "size" => Some(FunctionKind::Size),
+            "collation" => Some(FunctionKind::Collation),
             _ => panic!("Unknown function kind {}", s),
         }
     }
@@ -137,6 +141,22 @@ impl StaticFunctionDescription {
                         func: self.func,
                     }]
                 }
+                FunctionKind::Collation => {
+                    vec![
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity - 1,
+                            context_rule: Some(ContextRule::Collation),
+                            func: self.func,
+                        },
+                        StaticFunction {
+                            name: self.name.clone(),
+                            arity: self.arity,
+                            context_rule: None,
+                            func: self.func,
+                        },
+                    ]
+                }
             }
         } else {
             vec![StaticFunction {
@@ -155,6 +175,7 @@ pub(crate) enum ContextRule {
     ItemLast,
     PositionFirst,
     SizeFirst,
+    Collation,
 }
 
 pub(crate) struct StaticFunction {
@@ -195,6 +216,13 @@ impl StaticFunction {
                 ContextRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
+                    let new_arguments = into_sequences(&new_arguments);
+                    (self.func)(context, &new_arguments)
+                }
+                ContextRule::Collation => {
+                    let mut new_arguments = arguments.to_vec();
+                    // the default collation query
+                    new_arguments.push(context.static_context.default_collator_qs().into());
                     let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }

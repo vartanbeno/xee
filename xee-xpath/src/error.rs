@@ -281,6 +281,7 @@ pub enum Error {
     /// Raised by any function that uses a collation if the requested collation
     /// is not recognized.
     #[error("Unsupported collation")]
+    #[diagnostic(code(FOCH0002))]
     FOCH0002,
     /// Unsupported normalization form.
     ///

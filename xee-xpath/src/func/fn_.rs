@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use ibig::IBig;
 use xee_xpath_ast::{ast, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
@@ -241,6 +243,34 @@ fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::
     let mut target = target.to_vec();
     target.remove(position - 1);
     Ok(target.into())
+}
+
+#[xpath_fn(
+    "fn:compare($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:integer?",
+    context_first
+)]
+fn compare(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<Option<IBig>> {
+    if let (Some(arg1), Some(arg2)) = (arg1, arg2) {
+        let collator = context
+            .static_context
+            .get_collator(collation)
+            .ok_or(error::Error::FOCH0002)?;
+        Ok(Some(
+            match collator.compare(arg1, arg2) {
+                Ordering::Equal => 0,
+                Ordering::Less => -1,
+                Ordering::Greater => 1,
+            }
+            .into(),
+        ))
+    } else {
+        Ok(None)
+    }
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
