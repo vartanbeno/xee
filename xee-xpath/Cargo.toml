@@ -39,6 +39,7 @@ icu_provider_adapters = { version = "1.2.0", features = ["serde"] }
 icu_provider_blob = "1.2"
 serde-querystring = "0.2.1"
 serde = { workspace = true, features = ["derive"] }
+url = "2.4.1"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
