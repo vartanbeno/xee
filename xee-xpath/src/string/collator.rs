@@ -235,10 +235,6 @@ fn provider() -> BlobDataProvider {
         .expect("Deserialization should succeed")
 }
 
-// fn collabor(provider: &BlobDataProvider, locale: &Locale) -> Collator {
-//     Collator::try_new_with_buffer_provider(provider, &locale.into(), options).unwrap()
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
