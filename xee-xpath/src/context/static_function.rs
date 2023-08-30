@@ -222,7 +222,7 @@ impl StaticFunction {
                 ContextRule::Collation => {
                     let mut new_arguments = arguments.to_vec();
                     // the default collation query
-                    new_arguments.push(context.static_context.default_collator_qs().into());
+                    new_arguments.push(context.static_context.default_collation_uri().into());
                     let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }

@@ -2,15 +2,14 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use icu::collator::Collator;
 use icu_provider_blob::BlobDataProvider;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 
 use super::static_function::StaticFunctions;
+use crate::error;
 use crate::string::provider;
-use crate::string::CollatorQuery;
-use crate::string::Collators;
+use crate::string::{Collation, Collations};
 
 #[derive(Debug)]
 pub struct StaticContext<'a> {
@@ -19,7 +18,7 @@ pub struct StaticContext<'a> {
     pub(crate) variables: Vec<ast::Name>,
     pub(crate) functions: StaticFunctions,
     provider: BlobDataProvider,
-    pub(crate) collators: RefCell<Collators>,
+    pub(crate) collations: RefCell<Collations>,
 }
 
 impl<'a> StaticContext<'a> {
@@ -28,7 +27,7 @@ impl<'a> StaticContext<'a> {
             namespaces,
             variables: Vec::new(),
             functions: StaticFunctions::new(),
-            collators: RefCell::new(Collators::new()),
+            collations: RefCell::new(Collations::new()),
             provider: provider(),
         }
     }
@@ -38,27 +37,23 @@ impl<'a> StaticContext<'a> {
             namespaces,
             variables: variables.to_vec(),
             functions: StaticFunctions::new(),
-            collators: RefCell::new(Collators::new()),
+            collations: RefCell::new(Collations::new()),
             provider: provider(),
         }
     }
 
-    pub fn default_collator(&self) -> Rc<Collator> {
-        let collator_query = CollatorQuery {
-            lang: None, // the implies the default, undefined collator
-            ..Default::default()
-        };
-        let mut collators = self.collators.borrow_mut();
-        collators
-            .load(self.provider.clone(), &collator_query)
-            .unwrap()
+    pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
+        self.collation(self.default_collation_uri())
     }
 
-    pub fn default_collator_qs(&self) -> &str {
-        "http://www.w3.org/2013/collation/UCA"
+    pub(crate) fn default_collation_uri(&self) -> &str {
+        "http://www.w3.org/2005/xpath-functions/collation/codepoint"
     }
 
-    pub fn get_collator(&self, uri: &str) -> Option<Rc<Collator>> {
-        todo!()
+    pub(crate) fn collation(&self, uri: &str) -> error::Result<Rc<Collation>> {
+        // TODO: supply static base URI
+        self.collations
+            .borrow_mut()
+            .load(self.provider.clone(), None, uri)
     }
 }

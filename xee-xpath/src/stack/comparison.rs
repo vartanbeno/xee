@@ -15,7 +15,7 @@ where
     O: AtomicCompare,
 {
     let b_atoms = b_atoms.collect::<Vec<_>>();
-    let collator = context.static_context.default_collator();
+    let collation = context.static_context.default_collation()?;
     let implicit_timezone = context.implicit_timezone();
     for a in a_atoms {
         let a = a?;
@@ -25,7 +25,7 @@ where
             if O::atomic_compare(
                 a,
                 b,
-                |a: &str, b: &str| collator.compare(a, b),
+                |a: &str, b: &str| collation.compare(a, b),
                 implicit_timezone,
             )? {
                 return Ok(true);

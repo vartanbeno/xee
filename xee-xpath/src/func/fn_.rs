@@ -256,10 +256,7 @@ fn compare(
     collation: &str,
 ) -> error::Result<Option<IBig>> {
     if let (Some(arg1), Some(arg2)) = (arg1, arg2) {
-        let collator = context
-            .static_context
-            .get_collator(collation)
-            .ok_or(error::Error::FOCH0002)?;
+        let collator = context.static_context.collation(collation)?;
         Ok(Some(
             match collator.compare(arg1, arg2) {
                 Ordering::Equal => 0,

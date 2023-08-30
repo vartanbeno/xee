@@ -536,15 +536,11 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
+        let collation = self.dynamic_context.static_context.default_collation()?;
         let result = O::atomic_compare(
             a,
             b,
-            |a: &str, b: &str| {
-                self.dynamic_context
-                    .static_context
-                    .default_collator()
-                    .compare(a, b)
-            },
+            |a: &str, b: &str| collation.compare(a, b),
             self.dynamic_context.implicit_timezone(),
         )?;
         self.stack.push(result.into());

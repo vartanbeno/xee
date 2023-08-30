@@ -1,4 +1,3 @@
-mod collator;
-mod collator2;
+mod collation;
 
-pub(crate) use collator::{provider, CollatorQuery, Collators};
+pub(crate) use collation::{provider, Collation, Collations};

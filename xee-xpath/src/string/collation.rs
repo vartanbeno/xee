@@ -1,6 +1,7 @@
 use std::borrow::Cow;
+use std::cmp::Ordering;
+use std::collections::hash_map::Entry;
 use std::rc::Rc;
-use std::{collections::hash_map::Entry, str::FromStr};
 
 use ahash::{HashMap, HashMapExt};
 use icu::collator::{BackwardSecondLevel, CaseLevel, Numeric};
@@ -12,7 +13,7 @@ use icu_provider_adapters::{either::EitherProvider, fallback::LocaleFallbackProv
 use icu_provider_blob::BlobDataProvider;
 use url::Url;
 
-use crate::{error, DynamicContext, Error};
+use crate::error;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct CollatorQuery {
@@ -100,14 +101,14 @@ impl CollatorQuery {
             Ok(CollatorQuery {
                 fallback,
                 lang: lang.map(|s| s.to_string()),
-                strength: strength.ok_or(Error::FOCH0002)?,
-                max_variable: max_variable.ok_or(Error::FOCH0002)?,
-                alternate: alternate.ok_or(Error::FOCH0002)?,
-                backwards: backwards.ok_or(Error::FOCH0002)?,
-                normalization: normalization.ok_or(Error::FOCH0002)?,
-                case_level: case_level.ok_or(Error::FOCH0002)?,
-                case_first: case_first.ok_or(Error::FOCH0002)?,
-                numeric: numeric.ok_or(Error::FOCH0002)?,
+                strength: strength.ok_or(error::Error::FOCH0002)?,
+                max_variable: max_variable.ok_or(error::Error::FOCH0002)?,
+                alternate: alternate.ok_or(error::Error::FOCH0002)?,
+                backwards: backwards.ok_or(error::Error::FOCH0002)?,
+                normalization: normalization.ok_or(error::Error::FOCH0002)?,
+                case_level: case_level.ok_or(error::Error::FOCH0002)?,
+                case_first: case_first.ok_or(error::Error::FOCH0002)?,
+                numeric: numeric.ok_or(error::Error::FOCH0002)?,
             })
         }
     }
@@ -135,12 +136,12 @@ impl Collation {
         }
         let path = url.path();
         Ok(match path {
-            "/xpath-functions/collation/codepoint" => Collation::CodePoint,
+            "/2005/xpath-functions/collation/codepoint" => Collation::CodePoint,
             "/2013/collation/UCA" => {
                 let collator_query = CollatorQuery::from_url(&url)?;
                 Collation::Uca(Box::new(Self::uca_collator(provider, collator_query)?))
             }
-            "/xpath-functions/collation/html-ascii-case-insensitive" => Collation::HtmlAscii,
+            "/2005/xpath-functions/collation/html-ascii-case-insensitive" => Collation::HtmlAscii,
             _ => return Err(error::Error::FOCH0002),
         })
     }
@@ -179,6 +180,14 @@ impl Collation {
 
         Collator::try_new_with_buffer_provider(&provider, &locale, options)
             .map_err(|_| error::Error::FOCH0002)
+    }
+
+    pub(crate) fn compare(&self, a: &str, b: &str) -> Ordering {
+        match self {
+            Collation::CodePoint => a.cmp(b),
+            Collation::Uca(collator) => collator.compare(a, b),
+            Collation::HtmlAscii => a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase()),
+        }
     }
 }
 
@@ -289,22 +298,22 @@ mod tests {
     #[test]
     fn test_base_url() {
         let base = Url::parse("http://www.w3.org/").unwrap();
-        let path = "/xpath-functions/collation/codepoint";
+        let path = "/2005/xpath-functions/collation/codepoint";
         let url = base.join(path).unwrap();
         assert_eq!(
             url.as_str(),
-            "http://www.w3.org/xpath-functions/collation/codepoint"
+            "http://www.w3.org/2005/xpath-functions/collation/codepoint"
         );
     }
 
     #[test]
     fn test_base_url_with_full_url() {
         let base = Url::parse("http://www.another.org/").unwrap();
-        let path = "http://www.w3.org/xpath-functions/collation/codepoint";
+        let path = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
         let url = base.join(path).unwrap();
         assert_eq!(
             url.as_str(),
-            "http://www.w3.org/xpath-functions/collation/codepoint"
+            "http://www.w3.org/2005/xpath-functions/collation/codepoint"
         );
     }
 
@@ -458,7 +467,7 @@ mod tests {
         let collation = collations.load(
             provider,
             None,
-            "http://www.w3.org/xpath-functions/collation/codepoint",
+            "http://www.w3.org/2005/xpath-functions/collation/codepoint",
         );
         assert!(collation.is_ok());
     }
@@ -470,7 +479,7 @@ mod tests {
         let collation = collations.load(
             provider,
             None,
-            "http://www.w3.org/xpath-functions/collation/html-ascii-case-insensitive",
+            "http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive",
         );
         assert!(collation.is_ok());
     }
