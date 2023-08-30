@@ -159,9 +159,11 @@ fn update(path: &Path, verbose: bool) -> Result<()> {
         let catalog_outcomes = run(&mut run_context, &test_filter)?;
 
         update_filter.update_with_catalog_outcomes(&catalog_outcomes);
+        println!("{}", catalog_outcomes.display());
     } else {
         let test_set_outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
         update_filter.update_with_test_set_outcomes(&test_set_outcomes);
+        println!("{}", test_set_outcomes.display());
     }
 
     let filter_data = update_filter.to_string();
