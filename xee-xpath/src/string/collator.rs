@@ -9,8 +9,9 @@ use serde_querystring::{from_str, ParseMode};
 use std::collections::hash_map::Entry;
 use std::str::FromStr;
 
-// annoying re-implementations of various icu4x types because we need
-// hashing
+// Re-implementations of various icu4x types because we need
+// hashing. But they also help us define the query string API, so
+// it's not really a loss.
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -208,6 +209,8 @@ impl Collators {
                 let locale = if let Some(lang) = &query.lang {
                     Locale::try_from_bytes(lang.as_bytes()).ok()
                 } else {
+                    // this is implementation defined according to the XPath spec
+                    // we choose to use the undefined locale
                     Some(Locale::UND)
                 };
                 let collator = if let Some(locale) = locale {
