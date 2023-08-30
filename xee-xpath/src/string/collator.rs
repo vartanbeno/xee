@@ -7,6 +7,7 @@ use icu_provider_blob::BlobDataProvider;
 use serde::Deserialize;
 use serde_querystring::{from_str, ParseMode};
 use std::collections::hash_map::Entry;
+use std::rc::Rc;
 use std::str::FromStr;
 
 // Re-implementations of various icu4x types because we need
@@ -15,7 +16,7 @@ use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum Strength {
+pub(crate) enum Strength {
     Primary,
     Secondary,
     Tertiary,
@@ -37,7 +38,7 @@ impl From<Strength> for collator::Strength {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum MaxVariable {
+pub(crate) enum MaxVariable {
     Punctuation,
     Symbol,
     Currency,
@@ -57,7 +58,7 @@ impl From<MaxVariable> for collator::MaxVariable {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum AlternateHandling {
+pub(crate) enum AlternateHandling {
     NonIgnorable,
     Shifted,
 }
@@ -73,7 +74,7 @@ impl From<AlternateHandling> for collator::AlternateHandling {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum CaseFirst {
+pub(crate) enum CaseFirst {
     Off,
     Lower,
     Upper,
@@ -91,7 +92,7 @@ impl From<CaseFirst> for collator::CaseFirst {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum YesNo {
+pub(crate) enum YesNo {
     Yes,
     No,
 }
@@ -126,16 +127,16 @@ impl From<YesNo> for collator::BackwardSecondLevel {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(default)]
 pub(crate) struct CollatorQuery {
-    fallback: YesNo,
-    lang: Option<String>,
-    strength: Strength,
-    max_variable: MaxVariable,
-    alternate: AlternateHandling,
-    backwards: YesNo,
-    normalization: YesNo,
-    case_level: YesNo,
-    case_first: CaseFirst,
-    numeric: YesNo,
+    pub(crate) fallback: YesNo,
+    pub(crate) lang: Option<String>,
+    pub(crate) strength: Strength,
+    pub(crate) max_variable: MaxVariable,
+    pub(crate) alternate: AlternateHandling,
+    pub(crate) backwards: YesNo,
+    pub(crate) normalization: YesNo,
+    pub(crate) case_level: YesNo,
+    pub(crate) case_first: CaseFirst,
+    pub(crate) numeric: YesNo,
     // both version and reorder are not supported at this point, as
     // they don't seem to have equivalents in icu4x
 }
@@ -179,8 +180,9 @@ impl From<&CollatorQuery> for collator::CollatorOptions {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Collators {
-    collators: HashMap<CollatorQuery, Option<Collator>>,
+    collators: HashMap<CollatorQuery, Option<Rc<Collator>>>,
 }
 
 impl Collators {
@@ -194,10 +196,10 @@ impl Collators {
         &mut self,
         provider: BlobDataProvider,
         query: &CollatorQuery,
-    ) -> Option<&Collator> {
+    ) -> Option<Rc<Collator>> {
         // try to find cached collator.
         match self.collators.entry(query.clone()) {
-            Entry::Occupied(entry) => entry.into_mut().as_ref(),
+            Entry::Occupied(entry) => entry.into_mut().clone(),
             Entry::Vacant(entry) => {
                 let provider = if query.fallback == YesNo::Yes {
                     EitherProvider::A(
@@ -221,13 +223,13 @@ impl Collators {
                 } else {
                     None
                 };
-                entry.insert(collator).as_ref()
+                entry.insert(collator.map(Rc::new)).clone()
             }
         }
     }
 }
 
-fn provider() -> BlobDataProvider {
+pub(crate) fn provider() -> BlobDataProvider {
     let blob = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/buffer_data.postcard",))
         .expect("Pre-computed postcard buffer should exist");
 

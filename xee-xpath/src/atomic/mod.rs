@@ -4,6 +4,7 @@ mod cast_binary;
 mod cast_datetime;
 mod cast_numeric;
 mod cast_string;
+mod compare;
 mod datetime;
 mod op_add;
 mod op_div;
@@ -21,20 +22,21 @@ mod op_unary;
 mod types;
 
 pub use atomic_core::Atomic;
+pub(crate) use compare::AtomicCompare;
 pub use datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveTimeWithOffset, YearMonthDuration,
 };
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;
-pub(crate) use op_eq::op_eq;
-pub(crate) use op_ge::op_ge;
-pub(crate) use op_gt::op_gt;
+pub(crate) use op_eq::OpEq;
+pub(crate) use op_ge::OpGe;
+pub(crate) use op_gt::OpGt;
 pub(crate) use op_idiv::op_idiv;
-pub(crate) use op_le::op_le;
-pub(crate) use op_lt::op_lt;
+pub(crate) use op_le::OpLe;
+pub(crate) use op_lt::OpLt;
 pub(crate) use op_mod::op_mod;
 pub(crate) use op_multiply::op_multiply;
-pub(crate) use op_ne::op_ne;
+pub(crate) use op_ne::OpNe;
 pub(crate) use op_subtract::op_subtract;
 pub use types::{BinaryType, IntegerType, StringType};

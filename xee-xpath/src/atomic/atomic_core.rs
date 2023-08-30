@@ -15,7 +15,8 @@ use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::{op_eq, op_unary};
+use super::AtomicCompare;
+use super::{op_unary, OpEq};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -176,11 +177,18 @@ impl Atomic {
 
 impl PartialEq for Atomic {
     fn eq(&self, other: &Self) -> bool {
-        // NOTE: we hardcode a fixed offset here. This means
-        // that PartialEq cannot be used in the interpreter implementation;
-        // we have to use `op_eq` directly. But it's so convenient for testing
-        // purposes, even for external libraries, we do implement this operation.
-        op_eq(self.clone(), other.clone(), chrono::offset::Utc.fix()).unwrap_or(false)
+        // NOTE: we hardcode a fixed string compare and offset here. This means that
+        // PartialEq cannot be used in the interpreter implementation; we have
+        // to use `op_eq` directly. But it's so convenient for testing
+        // purposes, even for external libraries like xee-qt, we do implement
+        // this operation.
+        OpEq::atomic_compare(
+            self.clone(),
+            other.clone(),
+            str::cmp,
+            chrono::offset::Utc.fix(),
+        )
+        .unwrap_or(false)
     }
 }
 

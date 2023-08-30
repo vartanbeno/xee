@@ -10997,6 +10997,7 @@ cbcl-string-less-than-001
 cbcl-string-less-than-002
 cbcl-string-less-than-003
 cbcl-string-less-than-004
+K2-StringLT-1
 = op-subtract-dateTimes
 cbcl-subtract-dateTimes-001
 cbcl-subtract-dateTimes-002

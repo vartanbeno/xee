@@ -2,12 +2,13 @@
 // empty sequence, sequence with a single item, and sequence with multiple
 // items. This partitioning makes it easier to optimize various common cases
 // and keeps the code cleaner.
+use std::rc::Rc;
 
 use ahash::{HashSet, HashSetExt};
-use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::atomic::AtomicCompare;
 use crate::context;
 use crate::error;
 use crate::sequence;
@@ -89,14 +90,14 @@ impl Value {
         }
     }
 
-    pub(crate) fn general_comparison<F>(
+    pub(crate) fn general_comparison<O>(
         &self,
         other: Value,
         context: &context::DynamicContext,
-        op: F,
+        op: O,
     ) -> error::Result<bool>
     where
-        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
+        O: AtomicCompare,
     {
         comparison::general_comparison(
             self.atomized(context.xot),

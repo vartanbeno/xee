@@ -1,13 +1,13 @@
+use std::cmp::Ordering;
+
 use arrayvec::ArrayVec;
 use ibig::IBig;
 use miette::SourceSpan;
-use std::cmp::Ordering;
 use xee_schema_type::Xs;
 
-use crate::atomic;
+use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
-    op_add, op_div, op_eq, op_ge, op_gt, op_idiv, op_le, op_lt, op_mod, op_multiply, op_ne,
-    op_subtract,
+    op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
 use crate::context::DynamicContext;
 use crate::error;
@@ -228,38 +228,38 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 EncodedInstruction::Eq => {
-                    self.value_compare(op_eq)?;
+                    self.value_compare(OpEq)?;
                 }
-                EncodedInstruction::Ne => self.value_compare(op_ne)?,
+                EncodedInstruction::Ne => self.value_compare(OpNe)?,
                 EncodedInstruction::Lt => {
-                    self.value_compare(op_lt)?;
+                    self.value_compare(OpLt)?;
                 }
                 EncodedInstruction::Le => {
-                    self.value_compare(op_le)?;
+                    self.value_compare(OpLe)?;
                 }
                 EncodedInstruction::Gt => {
-                    self.value_compare(op_gt)?;
+                    self.value_compare(OpGt)?;
                 }
                 EncodedInstruction::Ge => {
-                    self.value_compare(op_ge)?;
+                    self.value_compare(OpGe)?;
                 }
                 EncodedInstruction::GenEq => {
-                    self.general_compare(op_eq)?;
+                    self.general_compare(OpEq)?;
                 }
                 EncodedInstruction::GenNe => {
-                    self.general_compare(op_ne)?;
+                    self.general_compare(OpNe)?;
                 }
                 EncodedInstruction::GenLt => {
-                    self.general_compare(op_lt)?;
+                    self.general_compare(OpLt)?;
                 }
                 EncodedInstruction::GenLe => {
-                    self.general_compare(op_le)?;
+                    self.general_compare(OpLe)?;
                 }
                 EncodedInstruction::GenGt => {
-                    self.general_compare(op_gt)?;
+                    self.general_compare(OpGt)?;
                 }
                 EncodedInstruction::GenGe => {
-                    self.general_compare(op_ge)?;
+                    self.general_compare(OpGe)?;
                 }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
@@ -520,9 +520,9 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn value_compare<F>(&mut self, op: F) -> error::Result<()>
+    fn value_compare<O>(&mut self, _op: O) -> error::Result<()>
     where
-        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
+        O: AtomicCompare,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
@@ -536,14 +536,24 @@ impl<'a> Interpreter<'a> {
         let mut atomized_b = b.atomized(self.dynamic_context.xot);
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = op(a, b, self.dynamic_context.implicit_timezone())?;
+        let result = O::atomic_compare(
+            a,
+            b,
+            |a: &str, b: &str| {
+                self.dynamic_context
+                    .static_context
+                    .default_collator()
+                    .compare(a, b)
+            },
+            self.dynamic_context.implicit_timezone(),
+        )?;
         self.stack.push(result.into());
         Ok(())
     }
 
-    fn general_compare<F>(&mut self, op: F) -> error::Result<()>
+    fn general_compare<O>(&mut self, op: O) -> error::Result<()>
     where
-        F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<bool>,
+        O: AtomicCompare,
     {
         let b = self.stack.pop().unwrap();
         let a = self.stack.pop().unwrap();
