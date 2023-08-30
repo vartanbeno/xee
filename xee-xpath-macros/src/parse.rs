@@ -68,12 +68,16 @@ impl Parse for XPathFnOption {
             let _eat: kw::context_first = input.parse()?;
             XPathFnOption::Kind("context_first".to_string())
         } else if lookahead.peek(kw::context_last) {
+            let _eat: kw::context_last = input.parse()?;
             XPathFnOption::Kind("context_last".to_string())
         } else if lookahead.peek(kw::position) {
+            let _eat: kw::position = input.parse()?;
             XPathFnOption::Kind("position".to_string())
         } else if lookahead.peek(kw::size) {
+            let _eat: kw::size = input.parse()?;
             XPathFnOption::Kind("size".to_string())
         } else if lookahead.peek(kw::collation) {
+            let _eat: kw::collation = input.parse()?;
             XPathFnOption::Kind("collation".to_string())
         } else if lookahead.peek(LitStr) {
             let string_literal: LitStr = input.parse()?;

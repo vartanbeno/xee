@@ -247,7 +247,7 @@ fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::
 
 #[xpath_fn(
     "fn:compare($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:integer?",
-    context_first
+    collation
 )]
 fn compare(
     context: &DynamicContext,
