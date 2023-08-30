@@ -46,4 +46,3 @@ rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = "1.29.1"
-xee-qt = { path = "../xee-qt" }
