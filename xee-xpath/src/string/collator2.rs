@@ -124,8 +124,12 @@ pub(crate) enum Collation {
 }
 
 impl Collation {
-    fn new(provider: BlobDataProvider, base_uri: &Url, uri: &str) -> error::Result<Self> {
-        let url = base_uri.join(uri).map_err(|_| error::Error::FOCH0002)?;
+    fn new(provider: BlobDataProvider, base_uri: Option<&Url>, uri: &str) -> error::Result<Self> {
+        let url = if let Some(base_uri) = base_uri {
+            base_uri.join(uri).map_err(|_| error::Error::FOCH0002)?
+        } else {
+            Url::parse(uri).map_err(|_| error::Error::FOCH0002)?
+        };
         if url.scheme() != "http" || url.host_str() != Some("www.w3.org") {
             return Err(error::Error::FOCH0002);
         }
@@ -180,7 +184,7 @@ impl Collation {
 
 #[derive(Debug)]
 pub(crate) struct Collations {
-    collations: HashMap<String, Option<Rc<Collation>>>,
+    collations: HashMap<String, Rc<Collation>>,
 }
 
 impl Collations {
@@ -193,18 +197,26 @@ impl Collations {
     pub(crate) fn load(
         &mut self,
         provider: BlobDataProvider,
-        base_uri: &Url,
+        base_uri: Option<&Url>,
         uri: &str,
-    ) -> Option<Rc<Collation>> {
+    ) -> error::Result<Rc<Collation>> {
         // try to find cached collator. we cache by uri
         match self.collations.entry(uri.to_string()) {
-            Entry::Occupied(entry) => entry.into_mut().clone(),
+            Entry::Occupied(entry) => Ok(entry.into_mut().clone()),
             Entry::Vacant(entry) => {
-                let collation = Collation::new(provider, base_uri, uri).ok();
-                entry.insert(collation.map(Rc::new)).clone()
+                let collation = Collation::new(provider, base_uri, uri)?;
+                Ok(entry.insert(Rc::new(collation)).clone())
             }
         }
     }
+}
+
+pub(crate) fn provider() -> BlobDataProvider {
+    let blob = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/buffer_data.postcard",))
+        .expect("Pre-computed postcard buffer should exist");
+
+    BlobDataProvider::try_new_from_blob(blob.into_boxed_slice())
+        .expect("Deserialization should succeed")
 }
 
 fn yes_no_query_parameter(value: Option<Cow<str>>, default: bool) -> Option<bool> {
@@ -403,14 +415,41 @@ mod tests {
         )
     }
 
-    // #[test]
-    // fn test_load_collator() {
-    //     let provider = provider();
-    //     let mut collators = Collators::new();
-    //     let query: CollatorQuery = "lang=se&fallback=no".parse().unwrap();
-    //     let collator = collators.load(provider, &query);
-    //     assert!(collator.is_some());
-    // }
+    #[test]
+    fn test_load_uri_collation() {
+        let provider = provider();
+        let mut collations = Collations::new();
+        let collation = collations.load(
+            provider,
+            None,
+            "http://www.w3.org/2013/collation/UCA?lang=se&fallback=no",
+        );
+        assert!(collation.is_ok());
+    }
+
+    #[test]
+    fn test_load_codepoint_collation() {
+        let provider = provider();
+        let mut collations = Collations::new();
+        let collation = collations.load(
+            provider,
+            None,
+            "http://www.w3.org/xpath-functions/collation/codepoint",
+        );
+        assert!(collation.is_ok());
+    }
+
+    #[test]
+    fn test_load_html_ascii_collation() {
+        let provider = provider();
+        let mut collations = Collations::new();
+        let collation = collations.load(
+            provider,
+            None,
+            "http://www.w3.org/xpath-functions/collation/html-ascii-case-insensitive",
+        );
+        assert!(collation.is_ok());
+    }
 
     // #[test]
     // fn test_load_collator_with_fallback() {
