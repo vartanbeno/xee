@@ -305,7 +305,7 @@ where
             .map(|(slash_span, steps)| {
                 let root_step = root_step(slash_span);
                 if let Some(steps) = steps {
-                    let all_steps = once(root_step).chain(steps.into_iter()).collect();
+                    let all_steps = once(root_step).chain(steps).collect();
                     ast::PathExpr { steps: all_steps }
                 } else {
                     ast::PathExpr {
@@ -328,7 +328,7 @@ where
                 .with_span(double_slash_span);
                 if let Some(steps) = steps {
                     let all_steps = once(root_step)
-                        .chain(once(descendant_step).chain(steps.into_iter()))
+                        .chain(once(descendant_step).chain(steps))
                         .collect();
                     ast::PathExpr { steps: all_steps }
                 } else {
