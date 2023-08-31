@@ -10274,7 +10274,6 @@ xqhof9
 surrogates08
 surrogates08a
 = misc-UCACollation
-UCA-collation-001
 UCA-collation-002
 UCA-collation-003
 UCA-collation-004
@@ -10285,15 +10284,10 @@ UCA-collation-008
 UCA-collation-010
 UCA-collation-024
 UCA-maxVariable-001
-UCA-maxVariable-002
 UCA-maxVariable-003
-UCA-maxVariable-004
-UCA-maxVariable-005
 UCA-maxVariable-006
 UCA-maxVariable-007
 UCA-maxVariable-008
-UCA-maxVariable-009
-UCA-maxVariable-010
 UCA-maxVariable-011
 UCA-maxVariable-012
 UCA-maxVariable-013
@@ -10301,52 +10295,29 @@ UCA-maxVariable-014
 UCA-maxVariable-015
 UCA-maxVariable-016
 UCA-misc-lang-001
-UCA-misc-lang-002
 UCA-misc-lang-003
 UCA-misc-lang-004
 UCA-params-001
 UCA-params-002
-UCA-params-003
-UCA-params-004
-UCA-params-005
 UCA-params-006
 UCA-params-007
-UCA-params-008
-UCA-params-009
-UCA-params-010
 UCA-params-011
 UCA-params-012
 UCA-params-013
-UCA-params-014
-UCA-params-015
 UCA-params-016
-UCA-params-017
 UCA-params-018
-UCA-params-019
-UCA-params-020
-UCA-params-021
 UCA-params-022
 UCA-params-023
 UCA-params-024
 UCA-params-025
-UCA-params-026
-UCA-params-027
-UCA-params-028
-UCA-params-029
 UCA-params-030
-UCA-params-031
 UCA-params-032
-UCA-params-033
 UCA-params-034
 UCA-reorder-codes-001
-UCA-reorder-codes-004
 UCA-reorder-codes-005
-UCA-reorder-codes-006
 UCA-reorder-codes-007
-UCA-reorder-codes-008
 UCA-reorder-codes-009
 UCA-reorder-codes-010
-UCA-reorder-codes-011
 = misc-XMLEdition
 = op-NOTATION-equal
 = op-QName-equal

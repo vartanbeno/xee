@@ -2,7 +2,10 @@ use fxhash::FxHashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use xee_xpath::{Documents, Item, Name, Node, Uri};
+use xee_xpath::{
+    Documents, DynamicContext, Item, Name, Namespaces, Node, Result as XPathResult, StaticContext,
+    Uri, XPath,
+};
 use xot::Xot;
 
 use crate::collection::FxIndexMap;
@@ -38,6 +41,21 @@ impl EnvironmentSpec {
                 let node = source.node(xot, &self.base_dir, documents)?;
                 variables.push((Name::unprefixed(name), vec![Item::from(node)]));
             }
+        }
+        for param in &self.params {
+            let namespaces = Namespaces::default();
+            let static_context = StaticContext::new(&namespaces);
+            let select = (param.select.as_ref()).expect("param: missing select not supported");
+            let xpath = XPath::new(&static_context, select);
+            if xpath.is_err() {
+                println!("param: select xpath parse failed: {}", select);
+                continue;
+            }
+            let xpath = xpath.unwrap();
+            let dynamic_context = DynamicContext::new(xot, &static_context);
+            let result = xpath.many(&dynamic_context, None)?;
+            let result = result.items().collect::<XPathResult<Vec<Item>>>().unwrap();
+            variables.push((param.name.clone(), result));
         }
         Ok(variables)
     }
