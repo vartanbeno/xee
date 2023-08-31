@@ -3,6 +3,8 @@ use std::{
     path::PathBuf,
 };
 
+use xee_xpath::Name;
+
 pub(crate) use crate::assert::TestCaseResult;
 use crate::collection::FxIndexSet;
 use crate::environment::SharedEnvironments;
@@ -129,7 +131,13 @@ pub(crate) struct Source {
 pub(crate) struct Resource {}
 
 #[derive(Debug, Clone)]
-pub(crate) struct Param {}
+pub(crate) struct Param {
+    pub(crate) name: Name,
+    pub(crate) select: Option<String>,
+    pub(crate) as_: Option<String>,
+    pub(crate) source: Option<String>,
+    pub(crate) declared: bool,
+}
 
 #[derive(Debug, Clone)]
 pub(crate) struct ContextItem {}

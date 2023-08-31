@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog"
+          name="misc-UCACollation" covers="uca-collation">
+  <description>Params</description>
+
+  <link type="spec"
+         document="http://www.w3.org/TR/2013/WD-xslt-30-20131212/#uca-collations"/>
+  <dependency type="spec" value="XP31+ XQ31+ XT30+"/>
+
+
+  <environment name="UCA-collation">
+      <param name="collation" select="'http://www.w3.org/2013/collation/UCA?'"/>
+  </environment>
+  <environment name="UCA-collation.en">
+      <param name="collation"
+             select="'http://www.w3.org/2013/collation/UCA?lang=en;'"/>
+  </environment>
+  <environment name="UCA-collation.en.primary">
+      <param name="collation"
+             select="'http://www.w3.org/2013/collation/UCA?lang=en;strength=primary;'"/>
+  </environment>
+
+
+  <test-case name="UCA-collation-001">
+      <description>unknown fallback</description>
+      <created by="John Lumley" on="2014-05-02"/>
+      <modified by="Michael Kay" on="2015-12-02" change="allow success: effect of unknown values is implementation-defined. Bug 29308."/>
+      <environment ref="UCA-collation"/>
+      <test>compare('abc','aBC',concat($collation,'fallback=unknown'))</test>
+      <result>
+         <any-of>
+            <error code="FOCH0002"/>
+            <assert-eq>0</assert-eq>
+            <assert-eq>-1</assert-eq>
+            <assert-eq>1</assert-eq>
+         </any-of>        
+      </result>
+   </test-case>
+
+</test-set>

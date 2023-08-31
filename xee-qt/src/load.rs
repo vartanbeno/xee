@@ -3,6 +3,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
+use xee_xpath::Name;
 use xee_xpath::Recurse;
 use xee_xpath::Session;
 use xee_xpath::{DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
@@ -365,6 +366,33 @@ fn environment_spec_query<'a>(
         Ok(sources)
     })?;
 
+    let name_query = queries.one("@name/string()", convert_string)?;
+    let select_query = queries.option("@select/string()", convert_string)?;
+    let as_query = queries.option("@as/string()", convert_string)?;
+    let source_query = queries.option("@source/string()", convert_string)?;
+    let declared_query = queries.option("@declared/string()", convert_string)?;
+
+    let params_query = queries.many("param", move |session, item| {
+        let name = name_query.execute(session, item)?;
+        let select = select_query.execute(session, item)?;
+        let as_ = as_query.execute(session, item)?;
+        let source = source_query.execute(session, item)?;
+        let declared = declared_query.execute(session, item)?;
+
+        let declared = declared.map(|declared| declared == "true").unwrap_or(false);
+
+        // TODO: do not handle prefixes yet
+        let name = Name::unprefixed(&name);
+
+        Ok(qt::Param {
+            name,
+            select,
+            as_,
+            source,
+            declared,
+        })
+    })?;
+
     // the environment base_dir is the same as the catalog/test set path,
     // but without the file name
     let path = path.parent().unwrap();
@@ -372,11 +400,14 @@ fn environment_spec_query<'a>(
         let sources = sources_query.execute(session, item)?;
         // we need to flatten sources
         let sources = sources.into_iter().flatten().collect::<Vec<qt::Source>>();
+        let params = params_query.execute(session, item)?;
         let environment_spec = qt::EnvironmentSpec {
             base_dir: path.to_path_buf(),
             sources,
+            params,
             ..Default::default()
         };
+
         Ok(environment_spec)
     })?;
 
@@ -444,6 +475,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     const ROOT_FIXTURE: &str = include_str!("fixtures/root.xml");
+    const PARAMS_FIXTURE: &str = include_str!("fixtures/params.xml");
     const CATALOG_FIXTURE: &str = include_str!("fixtures/catalog.xml");
 
     #[test]
@@ -453,6 +485,17 @@ mod tests {
             &mut xot,
             &PathBuf::from("qt/fn/test.xml"),
             ROOT_FIXTURE
+        )
+        .unwrap());
+    }
+
+    #[test]
+    fn test_load_params() {
+        let mut xot = Xot::new();
+        assert_debug_snapshot!(qt::TestSet::load_from_xml(
+            &mut xot,
+            &PathBuf::from("qt/fn/test.xml"),
+            PARAMS_FIXTURE
         )
         .unwrap());
     }
