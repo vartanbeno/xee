@@ -43,10 +43,6 @@ functx-fn-ceiling-4
 functx-fn-ceiling-5
 functx-fn-ceiling-6
 functx-fn-ceiling-all
-functx-fn-codepoint-equal-1
-functx-fn-codepoint-equal-2
-functx-fn-codepoint-equal-3
-functx-fn-codepoint-equal-all
 functx-fn-compare-6
 functx-fn-compare-all
 functx-fn-contains-1
@@ -1226,9 +1222,6 @@ fo-test-fn-avg-003
 fo-test-fn-avg-004
 fo-test-fn-ceiling-001
 fo-test-fn-ceiling-002
-fo-test-fn-codepoint-equal-001
-fo-test-fn-codepoint-equal-002
-fo-test-fn-codepoint-equal-003
 fo-test-fn-codepoint-equal-004
 fo-test-fn-codepoint-equal-005
 fo-test-fn-codepoints-to-string-001
@@ -2532,34 +2525,13 @@ K2-CodepointEqual-3
 K2-CodepointEqual-4
 K2-CodepointEqual-5
 K2-CodepointEqual-6
-fn-codepoint-equal-10
-fn-codepoint-equal-11
-fn-codepoint-equal-12
 fn-codepoint-equal-13
 fn-codepoint-equal-14
-fn-codepoint-equal-15
-fn-codepoint-equal-16
-fn-codepoint-equal-17
-fn-codepoint-equal-18
-fn-codepoint-equal-19
-fn-codepoint-equal-2
-fn-codepoint-equal-20
-fn-codepoint-equal-21
 fn-codepoint-equal-22
-fn-codepoint-equal-2a
-fn-codepoint-equal-2b
-fn-codepoint-equal-3
-fn-codepoint-equal-4
-fn-codepoint-equal-5
-fn-codepoint-equal-6
-fn-codepoint-equal-7
-fn-codepoint-equal-8
-fn-codepoint-equal-9
 = fn-codepoints-to-string
 K-CodepointToStringFunc-24
 K-CodepointToStringFunc-25
 K-CodepointToStringFunc-7
-cbcl-codepoints-to-string-005
 cbcl-codepoints-to-string-008
 cbcl-codepoints-to-string-009
 cbcl-codepoints-to-string-011
@@ -2618,10 +2590,6 @@ fn-collection-2
 fn-collection-3
 fn-collection-7
 = fn-compare
-K-compareFunc-4
-K-compareFunc-5
-K-compareFunc-6
-K-compareFunc-7
 K2-CompareFunc-4
 K2-CompareFunc-5
 K2-CompareFunc-6
@@ -12624,8 +12592,6 @@ function-literal-085
 function-literal-086
 function-literal-087
 function-literal-088
-function-literal-097
-function-literal-098
 function-literal-105
 function-literal-106
 function-literal-107

@@ -21,7 +21,7 @@ use super::builder::Program;
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
 const FRAMES_MAX: usize = 64;
-const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(32);
+const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
 struct Frame {

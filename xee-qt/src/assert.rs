@@ -562,7 +562,7 @@ impl fmt::Display for Failure {
                             writeln!(f, "  {}", failure)?;
                         }
                         _ => {
-                            unreachable!()
+                            writeln!(f, "  Unexpected test outcome {}", outcome)?;
                         }
                     }
                 }

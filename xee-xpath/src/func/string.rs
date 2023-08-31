@@ -57,6 +57,17 @@ fn compare(
     }
 }
 
+#[xpath_fn(
+    "fn:codepoint-equal($comparand1 as xs:string?, $comparand2 as xs:string?) as xs:boolean?"
+)]
+fn codepoint_equal(comparand1: Option<&str>, comparand2: Option<&str>) -> Option<bool> {
+    if let (Some(comparand1), Some(comparand2)) = (comparand1, comparand2) {
+        Some(comparand1 == comparand2)
+    } else {
+        None
+    }
+}
+
 // concat cannot be written using the macro system, as it
 // takes an arbitrary amount of arguments. This is the only
 // function that does this. We're going to define a general
@@ -115,6 +126,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(codepoints_to_string),
         wrap_xpath_fn!(string_to_codepoints),
         wrap_xpath_fn!(compare),
+        wrap_xpath_fn!(codepoint_equal),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
         wrap_xpath_fn!(string_length),
