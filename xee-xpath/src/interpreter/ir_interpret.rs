@@ -1,7 +1,7 @@
 use ibig::ibig;
 use miette::SourceSpan;
 
-use crate::context::{ContextRule, StaticContext};
+use crate::context::{FunctionRule, StaticContext};
 use crate::error::{Error, Result};
 use crate::ir;
 use crate::span;
@@ -303,28 +303,28 @@ impl<'a> InterpreterCompiler<'a> {
             .static_context
             .functions
             .get_by_index(static_function_id);
-        match static_function.context_rule {
-            Some(ContextRule::ItemFirst) => {
+        match static_function.function_rule {
+            Some(FunctionRule::ItemFirst) => {
                 // XXX optional context names; what if context is absent?
                 let context_names = context_names.unwrap();
                 self.compile_variable(&context_names.item, span)?
             }
-            Some(ContextRule::ItemLast) => {
+            Some(FunctionRule::ItemLast) => {
                 let context_names = context_names.unwrap();
                 self.compile_variable(&context_names.item, span)?
             }
-            Some(ContextRule::PositionFirst) => self.compile_variable(
+            Some(FunctionRule::PositionFirst) => self.compile_variable(
                 {
                     let context_names = context_names.unwrap();
                     &context_names.position
                 },
                 span,
             )?,
-            Some(ContextRule::SizeFirst) => {
+            Some(FunctionRule::SizeFirst) => {
                 let context_names = context_names.unwrap();
                 self.compile_variable(&context_names.last, span)?
             }
-            Some(ContextRule::Collation) | None => {}
+            Some(FunctionRule::Collation) | None => {}
         }
         self.builder.emit(
             Instruction::StaticClosure(static_function_id.as_u16()),

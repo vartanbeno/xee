@@ -98,13 +98,13 @@ impl StaticFunctionDescription {
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity - 1,
-                            context_rule: Some(ContextRule::ItemFirst),
+                            function_rule: Some(FunctionRule::ItemFirst),
                             func: self.func,
                         },
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity,
-                            context_rule: None,
+                            function_rule: None,
                             func: self.func,
                         },
                     ]
@@ -114,13 +114,13 @@ impl StaticFunctionDescription {
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity - 1,
-                            context_rule: Some(ContextRule::ItemLast),
+                            function_rule: Some(FunctionRule::ItemLast),
                             func: self.func,
                         },
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity,
-                            context_rule: None,
+                            function_rule: None,
                             func: self.func,
                         },
                     ]
@@ -129,7 +129,7 @@ impl StaticFunctionDescription {
                     vec![StaticFunction {
                         name: self.name.clone(),
                         arity: self.arity,
-                        context_rule: Some(ContextRule::PositionFirst),
+                        function_rule: Some(FunctionRule::PositionFirst),
                         func: self.func,
                     }]
                 }
@@ -137,7 +137,7 @@ impl StaticFunctionDescription {
                     vec![StaticFunction {
                         name: self.name.clone(),
                         arity: self.arity,
-                        context_rule: Some(ContextRule::SizeFirst),
+                        function_rule: Some(FunctionRule::SizeFirst),
                         func: self.func,
                     }]
                 }
@@ -146,13 +146,13 @@ impl StaticFunctionDescription {
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity - 1,
-                            context_rule: Some(ContextRule::Collation),
+                            function_rule: Some(FunctionRule::Collation),
                             func: self.func,
                         },
                         StaticFunction {
                             name: self.name.clone(),
                             arity: self.arity,
-                            context_rule: None,
+                            function_rule: None,
                             func: self.func,
                         },
                     ]
@@ -162,7 +162,7 @@ impl StaticFunctionDescription {
             vec![StaticFunction {
                 name: self.name.clone(),
                 arity: self.arity,
-                context_rule: None,
+                function_rule: None,
                 func: self.func,
             }]
         }
@@ -170,7 +170,7 @@ impl StaticFunctionDescription {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub(crate) enum ContextRule {
+pub(crate) enum FunctionRule {
     ItemFirst,
     ItemLast,
     PositionFirst,
@@ -181,7 +181,7 @@ pub(crate) enum ContextRule {
 pub(crate) struct StaticFunction {
     name: ast::Name,
     arity: usize,
-    pub(crate) context_rule: Option<ContextRule>,
+    pub(crate) function_rule: Option<FunctionRule>,
     func: StaticFunctionType,
 }
 
@@ -190,12 +190,19 @@ impl Debug for StaticFunction {
         f.debug_struct("StaticFunction")
             .field("name", &self.name)
             .field("arity", &self.arity)
-            .field("context_rule", &self.context_rule)
+            .field("function_rule", &self.function_rule)
             .finish()
     }
 }
 
 impl StaticFunction {
+    pub(crate) fn needs_context(&self) -> bool {
+        match self.function_rule {
+            None | Some(FunctionRule::Collation) => false,
+            Some(_) => true,
+        }
+    }
+
     pub(crate) fn invoke(
         &self,
         context: &DynamicContext,
@@ -205,21 +212,21 @@ impl StaticFunction {
         if arguments.len() != self.arity {
             return Err(error::Error::Type);
         }
-        if let Some(context_rule) = &self.context_rule {
-            match context_rule {
-                ContextRule::ItemFirst | ContextRule::PositionFirst | ContextRule::SizeFirst => {
+        if let Some(function_rule) = &self.function_rule {
+            match function_rule {
+                FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
                     new_arguments.extend_from_slice(arguments);
                     let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
-                ContextRule::ItemLast => {
+                FunctionRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
                     let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
-                ContextRule::Collation => {
+                FunctionRule::Collation => {
                     let mut new_arguments = arguments.to_vec();
                     // the default collation query
                     new_arguments.push(context.static_context.default_collation_uri().into());

@@ -9,7 +9,7 @@ use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
     op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
-use crate::context::{ContextRule, DynamicContext};
+use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
 use crate::occurrence::Occurrence;
@@ -166,14 +166,12 @@ impl<'a> Interpreter<'a> {
                         .functions
                         .get_by_index(stack::StaticFunctionId(static_function_id as usize));
                     // get any context value from the stack if needed
-                    let values = match static_function.context_rule {
-                        None | Some(ContextRule::Collation) => {
-                            vec![]
-                        }
-                        Some(_) => {
-                            vec![self.stack.pop().unwrap()]
-                        }
+                    let values = if static_function.needs_context() {
+                        vec![self.stack.pop().unwrap()]
+                    } else {
+                        vec![]
                     };
+
                     self.stack.push(
                         stack::Closure {
                             function_id: stack::ClosureFunctionId::Static(stack::StaticFunctionId(
