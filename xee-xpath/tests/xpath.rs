@@ -1286,9 +1286,9 @@ fn test_compare_same() {
     assert_debug_snapshot!(run("compare('str', 'str') instance of xs:integer"));
 }
 
-// #[test]
-// fn test_compare_complex_collation_argument() {
-//     assert_debug_snapshot!(run(
-//         "compare('a', 'a', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"
-//     ));
-// }
+#[test]
+fn test_compare_complex_collation_argument() {
+    assert_debug_snapshot!(run(
+        "compare('a', 'b', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"
+    ));
+}

@@ -9,7 +9,7 @@ use crate::span;
 use crate::stack;
 use crate::xml;
 
-use super::ir_core as ir;
+use super::{ir_core as ir, AtomS};
 
 #[derive(Debug, Clone)]
 struct Binding {
@@ -61,29 +61,6 @@ impl Bindings {
             }),
             last_binding.span,
         )
-    }
-
-    // for function arguments turn all bindings into atoms; remove those
-    // that are atoms already
-    fn args(&mut self, arity: usize) -> Vec<ir::AtomS> {
-        let mut atoms = vec![];
-        let prev_bindings = &self.bindings[..self.bindings.len() - arity];
-        let arg_bindings = &self.bindings[self.bindings.len() - arity..];
-        let mut new_bindings = vec![];
-        for binding in arg_bindings {
-            match &binding.expr {
-                ir::Expr::Atom(atom) => atoms.push(atom.clone()),
-                _ => {
-                    new_bindings.push(binding.clone());
-                    atoms.push(Spanned::new(
-                        ir::Atom::Variable(binding.name.clone()),
-                        binding.span,
-                    ));
-                }
-            }
-        }
-        self.bindings = [prev_bindings, &new_bindings].concat();
-        atoms
     }
 
     fn bind(&self, binding: Binding) -> Self {
@@ -375,9 +352,8 @@ impl<'a> IrConverter<'a> {
                 }
                 ast::Postfix::ArgumentList(exprs) => {
                     let atom = bindings.atom();
-                    let mut arg_bindings = self.args(exprs)?;
-                    let args = arg_bindings.args(exprs.len());
-                    let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
+                    let (arg_bindings, atoms) = self.args(exprs)?;
+                    let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args: atoms });
                     // TODO should be able to get span for postfix
                     let empty_span = (0..0).into();
                     let binding = self.new_binding(expr, empty_span);
@@ -729,9 +705,8 @@ impl<'a> IrConverter<'a> {
         let mut static_function_ref_bindings =
             self.static_function_ref(static_function_id, empty_span);
         let atom = static_function_ref_bindings.atom();
-        let mut arg_bindings = self.args(&ast.arguments)?;
-        let args = arg_bindings.args(ast.arguments.len());
-        let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args });
+        let (arg_bindings, atoms) = self.args(&ast.arguments)?;
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args: atoms });
         let binding = self.new_binding(expr, span);
         Ok(static_function_ref_bindings
             .concat(arg_bindings)
@@ -765,18 +740,21 @@ impl<'a> IrConverter<'a> {
         Bindings::from_vec(vec![binding])
     }
 
-    fn args(&mut self, args: &[ast::ExprSingleS]) -> Result<Bindings> {
+    fn args(&mut self, args: &[ast::ExprSingleS]) -> Result<(Bindings, Vec<AtomS>)> {
         if args.is_empty() {
-            return Ok(Bindings::from_vec(vec![]));
+            return Ok((Bindings::from_vec(vec![]), vec![]));
         }
         let first = &args[0];
         let rest = &args[1..];
-        let bindings = self.expr_single(first);
-        rest.iter().fold(bindings, |bindings, arg| {
-            let bindings = bindings?;
-            let arg_bindings = self.expr_single(arg)?;
-            Ok(bindings.concat(arg_bindings))
-        })
+        let mut bindings = self.expr_single(first)?;
+        let atoms = vec![bindings.atom()];
+        rest.iter()
+            .try_fold((bindings, atoms), |(bindings, atoms), arg| {
+                let mut arg_bindings = self.expr_single(arg)?;
+                let mut atoms = atoms.clone();
+                atoms.push(arg_bindings.atom());
+                Ok((bindings.concat(arg_bindings), atoms))
+            })
     }
 }
 
@@ -1044,5 +1022,12 @@ mod tests {
     #[test]
     fn test_instance_of_kind_test() {
         assert_debug_snapshot!(convert_expr_single("1 instance of node()"));
+    }
+
+    #[test]
+    fn test_function_call_with_sequence() {
+        assert_debug_snapshot!(
+            convert_expr_single(
+                "compare('a', 'b', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"));
     }
 }
