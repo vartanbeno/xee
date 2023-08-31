@@ -252,17 +252,6 @@ functx-fn-subsequence-4
 functx-fn-subsequence-5
 functx-fn-subsequence-6
 functx-fn-subsequence-all
-functx-fn-substring-1
-functx-fn-substring-10
-functx-fn-substring-11
-functx-fn-substring-2
-functx-fn-substring-3
-functx-fn-substring-4
-functx-fn-substring-5
-functx-fn-substring-6
-functx-fn-substring-7
-functx-fn-substring-8
-functx-fn-substring-9
 functx-fn-substring-after-1
 functx-fn-substring-after-2
 functx-fn-substring-after-3
@@ -270,7 +259,6 @@ functx-fn-substring-after-4
 functx-fn-substring-after-5
 functx-fn-substring-after-6
 functx-fn-substring-after-all
-functx-fn-substring-all
 functx-fn-substring-before-1
 functx-fn-substring-before-2
 functx-fn-substring-before-3
@@ -5533,7 +5521,6 @@ fn-load-xquery-module-915
 fn-local-name-13a
 fn-local-name-58
 fn-local-name-59
-fn-local-name-63
 fn-local-name-74
 fn-local-name-75
 fn-local-name-76
@@ -8987,50 +8974,14 @@ fn-subsequence-mix-args-024
 = fn-substring
 K-SubstringFunc-10
 K-SubstringFunc-11
-K-SubstringFunc-12
 K-SubstringFunc-13
 K-SubstringFunc-14
-K-SubstringFunc-15
-K-SubstringFunc-3
-K-SubstringFunc-4
-K-SubstringFunc-5
-K-SubstringFunc-6
-K-SubstringFunc-7
-K-SubstringFunc-8
-K-SubstringFunc-9
-cbcl-substring-001
-cbcl-substring-002
-fn-substring-1
 fn-substring-10
 fn-substring-11
-fn-substring-12
-fn-substring-13
-fn-substring-14
-fn-substring-15
-fn-substring-16
-fn-substring-17
 fn-substring-18
-fn-substring-19
-fn-substring-2
-fn-substring-20
-fn-substring-21
 fn-substring-22
-fn-substring-23
-fn-substring-24
-fn-substring-25
-fn-substring-26
-fn-substring-27
-fn-substring-28
-fn-substring-29
-fn-substring-3
-fn-substring-30
-fn-substring-31
-fn-substring-4
-fn-substring-5
-fn-substring-6
 fn-substring-7
 fn-substring-8
-fn-substring-9
 = fn-substring-after
 K-SubstringAfterFunc-10
 K-SubstringAfterFunc-11
@@ -10599,8 +10550,6 @@ xqhof9
 = misc-JsonTestSuite
 = misc-StaticContext
 = misc-Surrogates
-surrogates02a
-surrogates03a
 surrogates04a
 surrogates05a
 surrogates06a
@@ -10611,7 +10560,6 @@ surrogates12a
 surrogates13a
 surrogates14a
 surrogates15a
-surrogates16a
 = misc-UCACollation
 UCA-params-034
 = misc-XMLEdition
@@ -13207,10 +13155,6 @@ function-literal-085
 function-literal-086
 function-literal-087
 function-literal-088
-function-literal-105
-function-literal-106
-function-literal-107
-function-literal-108
 function-literal-110
 function-literal-114
 function-literal-117

@@ -128,6 +128,43 @@ fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
     Ok(arg1.concat())
 }
 
+#[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double) as xs:string")]
+fn substring2(source_string: Option<&str>, start: f64) -> String {
+    substring_with_length(source_string, start, usize::MAX)
+}
+
+#[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double, $length as xs:double) as xs:string")]
+fn substring3(source_string: Option<&str>, start: f64, length: f64) -> String {
+    let length = length.round();
+    if length < 0.0 {
+        return "".to_string();
+    }
+    substring_with_length(source_string, start, length as usize)
+}
+
+fn substring_with_length(source_string: Option<&str>, start: f64, length: usize) -> String {
+    let start = start.round();
+    let start = start as i64 - 1;
+    // substract any negative start from the length
+    let (start, length) = if start < 0 {
+        (0, length - start.unsigned_abs() as usize)
+    } else {
+        (start as usize, length)
+    };
+    if let Some(source_string) = source_string {
+        if source_string.is_empty() {
+            return "".to_string();
+        }
+        source_string
+            .chars()
+            .skip(start)
+            .take(length)
+            .collect::<String>()
+    } else {
+        "".to_string()
+    }
+}
+
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
 fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String> {
     let arg1 = arg1
@@ -183,6 +220,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(contains_token),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
+        wrap_xpath_fn!(substring2),
+        wrap_xpath_fn!(substring3),
         wrap_xpath_fn!(string_length),
         wrap_xpath_fn!(normalize_space),
         wrap_xpath_fn!(tokenize1),

@@ -464,6 +464,11 @@ impl TryFrom<Atomic> for f32 {
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
             Atomic::Float(f) => Ok(f.into_inner()),
+            // type promotion
+            Atomic::Decimal(_) | Atomic::Integer(_, _) => {
+                let f: f32 = a.cast_to_float()?.try_into()?;
+                Ok(f)
+            }
             _ => Err(error::Error::Type),
         }
     }
@@ -487,6 +492,12 @@ impl TryFrom<Atomic> for f64 {
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
             Atomic::Double(f) => Ok(f.into_inner()),
+            // type promotion
+            Atomic::Float(f) => Ok(f.into_inner() as f64),
+            Atomic::Decimal(_) | Atomic::Integer(_, _) => {
+                let f: f64 = a.cast_to_double()?.try_into()?;
+                Ok(f)
+            }
             _ => Err(error::Error::Type),
         }
     }
