@@ -1,6 +1,13 @@
 mod fn_;
+mod string;
 mod xpath_fn;
 mod xs;
+use crate::context::StaticFunctionDescription;
 
-pub(crate) use fn_::static_function_descriptions as fn_static_function_descriptions;
-pub(crate) use xs::static_function_descriptions as xs_static_function_descriptions;
+pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
+    let mut descriptions = Vec::new();
+    descriptions.extend(fn_::static_function_descriptions());
+    descriptions.extend(string::static_function_descriptions());
+    descriptions.extend(xs::static_function_descriptions());
+    descriptions
+}
