@@ -43,8 +43,6 @@ functx-fn-ceiling-4
 functx-fn-ceiling-5
 functx-fn-ceiling-6
 functx-fn-ceiling-all
-functx-fn-compare-6
-functx-fn-compare-all
 functx-fn-contains-1
 functx-fn-contains-2
 functx-fn-contains-3
@@ -122,10 +120,6 @@ functx-fn-local-name-from-QName-1
 functx-fn-local-name-from-QName-2
 functx-fn-local-name-from-QName-3
 functx-fn-local-name-from-QName-all
-functx-fn-lower-case-1
-functx-fn-lower-case-2
-functx-fn-lower-case-3
-functx-fn-lower-case-all
 functx-fn-matches-1
 functx-fn-matches-10
 functx-fn-matches-11
@@ -299,11 +293,6 @@ functx-fn-translate-5
 functx-fn-translate-6
 functx-fn-translate-7
 functx-fn-translate-all
-functx-fn-upper-case-1
-functx-fn-upper-case-2
-functx-fn-upper-case-3
-functx-fn-upper-case-4
-functx-fn-upper-case-all
 functx-fn-year-from-date-1
 functx-fn-year-from-dateTime-1
 functx-fn-years-from-duration-1
@@ -2512,8 +2501,6 @@ K2-CodepointEqual-3
 K2-CodepointEqual-4
 K2-CodepointEqual-5
 K2-CodepointEqual-6
-fn-codepoint-equal-13
-fn-codepoint-equal-14
 fn-codepoint-equal-22
 = fn-codepoints-to-string
 K-CodepointToStringFunc-24
@@ -2527,10 +2514,8 @@ cbcl-codepoints-to-string-016
 cbcl-codepoints-to-string-021
 cbcl-codepoints-to-string-027
 fn-codepoints-to-string-1
-fn-codepoints-to-string-10
 fn-codepoints-to-string-12
 fn-codepoints-to-string-14
-fn-codepoints-to-string-9
 = fn-collation-key
 collation-key-001
 collation-key-002
@@ -2585,7 +2570,6 @@ K2-CompareFunc-8
 K2-CompareFunc-9
 compare-013
 = fn-concat
-fn-concat-9
 = fn-contains
 K-ContainsFunc-10
 K-ContainsFunc-11
@@ -5519,8 +5503,6 @@ fn-load-xquery-module-074
 fn-load-xquery-module-915
 = fn-local-name
 fn-local-name-13a
-fn-local-name-58
-fn-local-name-59
 fn-local-name-74
 fn-local-name-75
 fn-local-name-76
@@ -5550,31 +5532,8 @@ fn-local-name-from-qname-022
 fn-local-name-from-qname-023
 fn-local-name-from-qname-024
 = fn-lower-case
-K-LowerCaseFunc-3
-K-LowerCaseFunc-4
-fn-lower-case-1
-fn-lower-case-10
-fn-lower-case-11
-fn-lower-case-12
-fn-lower-case-13
-fn-lower-case-14
-fn-lower-case-15
-fn-lower-case-16
-fn-lower-case-17
 fn-lower-case-18
-fn-lower-case-2
-fn-lower-case-20
 fn-lower-case-21
-fn-lower-case-3
-fn-lower-case-4
-fn-lower-case-5
-fn-lower-case-6
-fn-lower-case-7
-fn-lower-case-8
-fn-lower-case-9
-fn-lower-case1args-1
-fn-lower-case1args-2
-fn-lower-case1args-3
 = fn-matches
 K-MatchesFunc-1
 K-MatchesFunc-3
@@ -9659,32 +9618,9 @@ fn-unparsed-text-lines-053
 fn-unparsed-text-lines-054
 fn-unparsed-text-lines-055
 = fn-upper-case
-K-UpperCaseFunc-3
-K-UpperCaseFunc-4
-fn-upper-case-1
-fn-upper-case-10
-fn-upper-case-11
-fn-upper-case-12
-fn-upper-case-13
-fn-upper-case-14
-fn-upper-case-15
-fn-upper-case-16
-fn-upper-case-17
 fn-upper-case-18
-fn-upper-case-2
-fn-upper-case-20
 fn-upper-case-21
 fn-upper-case-22
-fn-upper-case-3
-fn-upper-case-4
-fn-upper-case-5
-fn-upper-case-6
-fn-upper-case-7
-fn-upper-case-8
-fn-upper-case-9
-fn-upper-case1args-1
-fn-upper-case1args-2
-fn-upper-case1args-3
 = fn-uri-collection
 K2-SeqUriCollectionFunc-1
 K2-SeqUriCollectionFunc-2
@@ -10471,7 +10407,6 @@ XPTY0004_05
 XPTY0004_06
 XPTY0004_07
 XPTY0004_09
-XPTY0004_10
 XPTY0004_12a
 XPTY0004_20
 XPTY0004_21
@@ -10698,7 +10633,6 @@ op-concat-19
 op-concat-2
 op-concat-20
 op-concat-3
-op-concat-9
 op-concatdbl2args-1
 op-concatdbl2args-2
 op-concatdbl2args-3
@@ -13161,10 +13095,6 @@ function-literal-117
 function-literal-118
 function-literal-119
 function-literal-120
-function-literal-121
-function-literal-122
-function-literal-123
-function-literal-124
 function-literal-125
 function-literal-126
 function-literal-127

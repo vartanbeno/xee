@@ -128,6 +128,15 @@ fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
     Ok(arg1.concat())
 }
 
+#[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
+fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String> {
+    let arg1 = arg1
+        .iter()
+        .map(|a| a.string_value())
+        .collect::<error::Result<Vec<String>>>()?;
+    Ok(arg1.join(arg2))
+}
+
 #[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double) as xs:string")]
 fn substring2(source_string: Option<&str>, start: f64) -> String {
     substring_with_length(source_string, start, usize::MAX)
@@ -165,15 +174,6 @@ fn substring_with_length(source_string: Option<&str>, start: f64, length: usize)
     }
 }
 
-#[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
-fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String> {
-    let arg1 = arg1
-        .iter()
-        .map(|a| a.string_value())
-        .collect::<error::Result<Vec<String>>>()?;
-    Ok(arg1.join(arg2))
-}
-
 #[xpath_fn("fn:string-length($arg as xs:string?) as xs:integer", context_first)]
 fn string_length(arg: Option<&str>) -> IBig {
     if let Some(arg) = arg {
@@ -188,6 +188,26 @@ fn string_length(arg: Option<&str>) -> IBig {
 fn normalize_space(arg: Option<&str>) -> String {
     if let Some(arg) = arg {
         arg.split_whitespace().collect::<Vec<_>>().join(" ")
+    } else {
+        "".to_string()
+    }
+}
+
+// TODO: fn:normalize-unicode
+
+#[xpath_fn("fn:upper-case($arg as xs:string?) as xs:string")]
+fn upper_case(arg: Option<&str>) -> String {
+    if let Some(arg) = arg {
+        arg.to_uppercase()
+    } else {
+        "".to_string()
+    }
+}
+
+#[xpath_fn("fn:lower-case($arg as xs:string?) as xs:string")]
+fn lower_case(arg: Option<&str>) -> String {
+    if let Some(arg) = arg {
+        arg.to_lowercase()
     } else {
         "".to_string()
     }
@@ -224,6 +244,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(substring3),
         wrap_xpath_fn!(string_length),
         wrap_xpath_fn!(normalize_space),
+        wrap_xpath_fn!(upper_case),
+        wrap_xpath_fn!(lower_case),
         wrap_xpath_fn!(tokenize1),
         wrap_xpath_fn!(tokenize2),
     ];
