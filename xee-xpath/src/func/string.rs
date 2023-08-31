@@ -11,6 +11,26 @@ use crate::{atomic, error, sequence, wrap_xpath_fn, Occurrence};
 // of greater than this
 const MAX_CONCAT_ARITY: usize = 32;
 
+#[xpath_fn("fn:codepoints-to-string($arg as xs:integer*) as xs:string")]
+fn codepoints_to_string(arg: &[IBig]) -> error::Result<String> {
+    arg.iter()
+        .map(|c| {
+            let c: u32 = c.try_into().map_err(|_| error::Error::FOCH0001)?;
+            char::from_u32(c).ok_or(error::Error::FOCH0001)
+        })
+        .collect::<error::Result<String>>()
+}
+
+#[xpath_fn("fn:string-to-codepoints($arg as xs:string?) as xs:integer*")]
+fn string_to_codepoints(arg: Option<&str>) -> error::Result<Vec<IBig>> {
+    if let Some(arg) = arg {
+        Ok(arg.chars().map(|c| c as u32).map(IBig::from).collect())
+    } else {
+        // empty sequence
+        Ok(Vec::new())
+    }
+}
+
 // https://www.w3.org/TR/xpath-functions-31/#string-functions
 #[xpath_fn(
     "fn:compare($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:integer?",
@@ -92,6 +112,8 @@ fn string_length(arg: Option<&str>) -> IBig {
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
+        wrap_xpath_fn!(codepoints_to_string),
+        wrap_xpath_fn!(string_to_codepoints),
         wrap_xpath_fn!(compare),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),

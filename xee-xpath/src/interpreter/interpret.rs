@@ -21,6 +21,7 @@ use super::builder::Program;
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
 const FRAMES_MAX: usize = 64;
+const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(32);
 
 #[derive(Debug, Clone)]
 struct Frame {
@@ -412,6 +413,9 @@ impl<'a> Interpreter<'a> {
                         Ordering::Greater => self.stack.push(stack::Value::Empty),
                         Ordering::Equal => self.stack.push(a.into()),
                         Ordering::Less => {
+                            if (b - a) > MAXIMUM_RANGE_SIZE {
+                                return Err(error::Error::XPDY0130);
+                            }
                             let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
                             self.stack.push(items.into())
                         }

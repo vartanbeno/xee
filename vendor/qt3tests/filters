@@ -47,10 +47,6 @@ functx-fn-codepoint-equal-1
 functx-fn-codepoint-equal-2
 functx-fn-codepoint-equal-3
 functx-fn-codepoint-equal-all
-functx-fn-codepoints-to-string-1
-functx-fn-codepoints-to-string-2
-functx-fn-codepoints-to-string-3
-functx-fn-codepoints-to-string-all
 functx-fn-compare-6
 functx-fn-compare-all
 functx-fn-contains-1
@@ -263,10 +259,6 @@ functx-fn-starts-with-8
 functx-fn-starts-with-all
 functx-fn-string-length-3
 functx-fn-string-length-all
-functx-fn-string-to-codepoints-1
-functx-fn-string-to-codepoints-2
-functx-fn-string-to-codepoints-3
-functx-fn-string-to-codepoints-all
 functx-fn-subsequence-1
 functx-fn-subsequence-2
 functx-fn-subsequence-3
@@ -2564,68 +2556,22 @@ fn-codepoint-equal-7
 fn-codepoint-equal-8
 fn-codepoint-equal-9
 = fn-codepoints-to-string
-K-CodepointToStringFunc-10
-K-CodepointToStringFunc-14
-K-CodepointToStringFunc-15
-K-CodepointToStringFunc-16
-K-CodepointToStringFunc-17
-K-CodepointToStringFunc-18
-K-CodepointToStringFunc-19
-K-CodepointToStringFunc-20
-K-CodepointToStringFunc-21
-K-CodepointToStringFunc-22
-K-CodepointToStringFunc-23
 K-CodepointToStringFunc-24
 K-CodepointToStringFunc-25
-K-CodepointToStringFunc-26
-K-CodepointToStringFunc-27
-K-CodepointToStringFunc-28
-K-CodepointToStringFunc-29
-K-CodepointToStringFunc-3
-K-CodepointToStringFunc-4
-K-CodepointToStringFunc-5
-K-CodepointToStringFunc-6
 K-CodepointToStringFunc-7
-K-CodepointToStringFunc-9
 cbcl-codepoints-to-string-005
-cbcl-codepoints-to-string-006
-cbcl-codepoints-to-string-007
 cbcl-codepoints-to-string-008
 cbcl-codepoints-to-string-009
-cbcl-codepoints-to-string-010
 cbcl-codepoints-to-string-011
-cbcl-codepoints-to-string-012
-cbcl-codepoints-to-string-013
-cbcl-codepoints-to-string-014
 cbcl-codepoints-to-string-015
 cbcl-codepoints-to-string-016
-cbcl-codepoints-to-string-017
-cbcl-codepoints-to-string-019
-cbcl-codepoints-to-string-020
 cbcl-codepoints-to-string-021
-cbcl-codepoints-to-string-022
-cbcl-codepoints-to-string-025
-cbcl-codepoints-to-string-026
 cbcl-codepoints-to-string-027
 fn-codepoints-to-string-1
 fn-codepoints-to-string-10
-fn-codepoints-to-string-11
 fn-codepoints-to-string-12
-fn-codepoints-to-string-13
 fn-codepoints-to-string-14
-fn-codepoints-to-string-15
-fn-codepoints-to-string-16
-fn-codepoints-to-string-2
-fn-codepoints-to-string-3
-fn-codepoints-to-string-4
-fn-codepoints-to-string-5
-fn-codepoints-to-string-6
-fn-codepoints-to-string-7
-fn-codepoints-to-string-8
 fn-codepoints-to-string-9
-fn-codepoints-to-string1args-1
-fn-codepoints-to-string1args-2
-fn-codepoints-to-string1args-3
 = fn-collation-key
 collation-key-001
 collation-key-002
@@ -8599,46 +8545,20 @@ fn-string-8
 fn-string-length-24
 = fn-string-to-codepoints
 K-StringToCodepointFunc-10
-K-StringToCodepointFunc-11
 K-StringToCodepointFunc-12
-K-StringToCodepointFunc-13
-K-StringToCodepointFunc-14
-K-StringToCodepointFunc-15
-K-StringToCodepointFunc-16
-K-StringToCodepointFunc-17
-K-StringToCodepointFunc-18
-K-StringToCodepointFunc-19
-K-StringToCodepointFunc-20
-K-StringToCodepointFunc-21
-K-StringToCodepointFunc-3
-K-StringToCodepointFunc-4
-K-StringToCodepointFunc-5
-K-StringToCodepointFunc-6
-K-StringToCodepointFunc-7
-K-StringToCodepointFunc-8
 K-StringToCodepointFunc-9
-fn-string-to-codepoints-1
 fn-string-to-codepoints-10
-fn-string-to-codepoints-11
-fn-string-to-codepoints-12
-fn-string-to-codepoints-13
-fn-string-to-codepoints-14
 fn-string-to-codepoints-15
-fn-string-to-codepoints-2
 fn-string-to-codepoints-3
 fn-string-to-codepoints-4
 fn-string-to-codepoints-5
 fn-string-to-codepoints-6
 fn-string-to-codepoints-7
 fn-string-to-codepoints-8
-fn-string-to-codepoints-9
 fn-string-to-codepoints1args-1
 fn-string-to-codepoints1args-2
 fn-string-to-codepoints1args-3
 fn-string-to-codepoints1args-4
-fn-string-to-codepoints1args-5
-fn-string-to-codepoints1args-6
-fn-string-to-codepoints1args-7
 = fn-subsequence
 K-SeqSubsequenceFunc-10
 K-SeqSubsequenceFunc-11
@@ -10269,8 +10189,6 @@ xqhof9
 = misc-JsonTestSuite
 = misc-StaticContext
 = misc-Surrogates
-surrogates08
-surrogates08a
 = misc-UCACollation
 UCA-params-034
 = misc-XMLEdition
@@ -11499,7 +11417,6 @@ K2-SeqExprCast-488
 K2-SeqExprCast-49
 K2-SeqExprCast-499
 K2-SeqExprCast-500
-K2-SeqExprCast-504
 K2-SeqExprCast-51
 K2-SeqExprCast-52
 K2-SeqExprCast-53
@@ -12455,7 +12372,6 @@ K-GenCompEq-20
 K-GenCompEq-21
 K-GenCompEq-22
 K-GenCompEq-23
-K2-GenCompEq-7
 = prod-GeneralComp.ge
 K-GenCompGTEQ-5
 = prod-GeneralComp.gt
@@ -12708,10 +12624,6 @@ function-literal-085
 function-literal-086
 function-literal-087
 function-literal-088
-function-literal-089
-function-literal-090
-function-literal-091
-function-literal-092
 function-literal-097
 function-literal-098
 function-literal-105
@@ -13917,8 +13829,6 @@ whereClause-8
 = prod-WindowClause
 = xs-anyURI
 = xs-base64Binary
-base64-908
-base64-909
 = xs-dateTimeStamp
 xs-dateTimeStamp-1
 xs-dateTimeStamp-2

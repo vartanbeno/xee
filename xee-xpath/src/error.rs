@@ -198,6 +198,7 @@ pub enum Error {
     ///
     /// An implementation-dependent limit has been exceeded.
     #[error("Implementation-dependent limit exceeded")]
+    #[diagnostic(code(XPDY0130))]
     XPDY0130,
     /// Namespace axis not supported.
     ///
@@ -275,6 +276,7 @@ pub enum Error {
     ///
     /// Raised by fn:codepoints-to-string if the input contains an integer that is not the codepoint of a valid XML character.
     #[error("Codepoint not valid")]
+    #[diagnostic(code(FOCH0001))]
     FOCH0001,
     /// Unsupported collation.
     ///
