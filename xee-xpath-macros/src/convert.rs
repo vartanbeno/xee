@@ -33,7 +33,7 @@ fn convert_item(
     Ok(match &item.occurrence {
         ast::Occurrence::One => {
             let as_ref = if borrow {
-                quote!(let #name = #name.as_ref())
+                quote!(let #name = #name.as_ref();)
             } else {
                 quote!()
             };

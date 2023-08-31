@@ -34,9 +34,14 @@ impl TestOutcome {
 pub(crate) trait Outcomes {
     fn outcomes(&self) -> Vec<&TestCaseOutcome>;
     fn filtered(&self) -> usize;
+    fn unsupported(&self) -> usize;
+
+    fn supported(&self) -> usize {
+        self.outcomes().len() + self.filtered()
+    }
 
     fn total(&self) -> usize {
-        self.outcomes().len() + self.filtered()
+        self.outcomes().len() + self.filtered() + self.unsupported()
     }
 
     fn count<F>(&self, f: F) -> usize
@@ -71,10 +76,12 @@ pub(crate) trait Outcomes {
     fn display(&self) -> String {
         let mut s = String::new();
         write!(s, "Total: {}", self.total()).unwrap();
+        write!(s, " Supported: {}", self.supported()).unwrap();
         write!(s, " Passed: {}", self.passed()).unwrap();
         write!(s, " Failed: {}", self.failed()).unwrap();
         write!(s, " Error: {}", self.erroring()).unwrap();
         write!(s, " Filtered: {}", self.filtered()).unwrap();
+        write!(s, " Unsupported: {}", self.unsupported()).unwrap();
         s
     }
 }
@@ -99,6 +106,7 @@ pub struct TestSetOutcomes {
     pub(crate) test_set_name: String,
     pub(crate) outcomes: Vec<TestCaseOutcome>,
     pub(crate) filtered: usize,
+    pub(crate) unsupported: usize,
 }
 
 impl TestSetOutcomes {
@@ -107,6 +115,7 @@ impl TestSetOutcomes {
             test_set_name: test_set_name.to_string(),
             outcomes: Vec::new(),
             filtered: 0,
+            unsupported: 0,
         }
     }
 
@@ -121,6 +130,10 @@ impl TestSetOutcomes {
 
     pub(crate) fn add_filtered(&mut self) {
         self.filtered += 1;
+    }
+
+    pub(crate) fn add_unsupported(&mut self) {
+        self.unsupported += 1;
     }
 
     pub(crate) fn failing_names(&self) -> Vec<String> {
@@ -138,6 +151,9 @@ impl Outcomes for TestSetOutcomes {
     }
     fn filtered(&self) -> usize {
         self.filtered
+    }
+    fn unsupported(&self) -> usize {
+        self.unsupported
     }
 }
 
@@ -169,6 +185,13 @@ impl Outcomes for CatalogOutcomes {
         self.outcomes
             .iter()
             .map(|test_set_outcome| test_set_outcome.filtered())
+            .sum()
+    }
+
+    fn unsupported(&self) -> usize {
+        self.outcomes
+            .iter()
+            .map(|test_set_outcome| test_set_outcome.unsupported())
             .sum()
     }
 }

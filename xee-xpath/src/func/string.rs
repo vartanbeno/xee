@@ -43,9 +43,9 @@ fn compare(
     collation: &str,
 ) -> error::Result<Option<IBig>> {
     if let (Some(arg1), Some(arg2)) = (arg1, arg2) {
-        let collator = context.static_context.collation(collation)?;
+        let collation = context.static_context.collation(collation)?;
         Ok(Some(
-            match collator.compare(arg1, arg2) {
+            match collation.compare(arg1, arg2) {
                 Ordering::Equal => 0,
                 Ordering::Less => -1,
                 Ordering::Greater => 1,
@@ -66,6 +66,32 @@ fn codepoint_equal(comparand1: Option<&str>, comparand2: Option<&str>) -> Option
     } else {
         None
     }
+}
+
+#[xpath_fn(
+    "fn:contains-token($input as xs:string*, $token as xs:string, $collation as xs:string) as xs:boolean",
+    collation
+)]
+fn contains_token(
+    context: &DynamicContext,
+    input: &[&str],
+    token: &str,
+    collation: &str,
+) -> error::Result<bool> {
+    if input.is_empty() {
+        return Ok(false);
+    }
+    let collation = context.static_context.collation(collation)?;
+    let token = token.trim();
+    for s in input {
+        // if any token in s, tokenized, is token, then we return true
+        if s.split_whitespace()
+            .any(|t| collation.compare(t, token).is_eq())
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 // concat cannot be written using the macro system, as it
@@ -139,16 +165,28 @@ fn tokenize1(input: Option<&str>) -> error::Result<Vec<String>> {
     }
 }
 
+#[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
+fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
+    if let Some(input) = input {
+        Ok(input.split(pattern).map(|s| s.to_string()).collect())
+    } else {
+        Ok(Vec::new())
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
         wrap_xpath_fn!(string_to_codepoints),
         wrap_xpath_fn!(compare),
         wrap_xpath_fn!(codepoint_equal),
+        wrap_xpath_fn!(contains_token),
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
         wrap_xpath_fn!(string_length),
         wrap_xpath_fn!(normalize_space),
+        wrap_xpath_fn!(tokenize1),
+        wrap_xpath_fn!(tokenize2),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the

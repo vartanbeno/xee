@@ -33,10 +33,20 @@ impl KnownDependencies {
 
 impl Default for KnownDependencies {
     fn default() -> Self {
-        let specs = vec![qt::DependencySpec {
-            type_: "spec".to_string(),
-            value: "XP30+".to_string(),
-        }];
+        let specs = vec![
+            qt::DependencySpec {
+                type_: "spec".to_string(),
+                value: "XP20+".to_string(),
+            },
+            qt::DependencySpec {
+                type_: "spec".to_string(),
+                value: "XP30+".to_string(),
+            },
+            qt::DependencySpec {
+                type_: "spec".to_string(),
+                value: "XP31+".to_string(),
+            },
+        ];
         Self::new(&specs)
     }
 }

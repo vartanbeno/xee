@@ -104,7 +104,6 @@ fn run_test_set<R: Renderer>(
     renderer.render_test_set(stdout, test_set, &run_context.catalog)?;
 
     let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
-
     for test_case in &test_set.test_cases {
         if !test_filter.is_included(test_set, test_case) {
             test_set_outcomes.add_filtered();
@@ -112,6 +111,7 @@ fn run_test_set<R: Renderer>(
         }
         // skip any test case we don't support
         if !test_case.is_supported(&run_context.known_dependencies) {
+            test_set_outcomes.add_unsupported();
             continue;
         }
         renderer.render_test_case(stdout, test_case)?;
