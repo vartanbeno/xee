@@ -319,6 +319,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(true_),
         wrap_xpath_fn!(false_),
         wrap_xpath_fn!(remove),
+        wrap_xpath_fn!(compare),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the

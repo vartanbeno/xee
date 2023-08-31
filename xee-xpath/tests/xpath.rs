@@ -1280,3 +1280,15 @@ fn test_negative_result_when_subtracting_day_time_durations() {
         "(xs:date('0001-01-01Z') - xs:dayTimeDuration('P11DT02H02M')) cast as xs:string"
     ));
 }
+
+#[test]
+fn test_compare_same() {
+    assert_debug_snapshot!(run("compare('str', 'str') instance of xs:integer"));
+}
+
+// #[test]
+// fn test_compare_complex_collation_argument() {
+//     assert_debug_snapshot!(run(
+//         "compare('a', 'a', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"
+//     ));
+// }
