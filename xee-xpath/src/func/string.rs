@@ -121,6 +121,24 @@ fn string_length(arg: Option<&str>) -> IBig {
     }
 }
 
+#[xpath_fn("fn:normalize-space($arg as xs:string?) as xs:string", context_first)]
+fn normalize_space(arg: Option<&str>) -> String {
+    if let Some(arg) = arg {
+        arg.split_whitespace().collect::<Vec<_>>().join(" ")
+    } else {
+        "".to_string()
+    }
+}
+
+#[xpath_fn("fn:tokenize($input as xs:string?) as xs:string*")]
+fn tokenize1(input: Option<&str>) -> error::Result<Vec<String>> {
+    if let Some(input) = input {
+        Ok(input.split_whitespace().map(|s| s.to_string()).collect())
+    } else {
+        Ok(Vec::new())
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -130,6 +148,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(string_join),
         wrap_xpath_fn!(string_join_sep),
         wrap_xpath_fn!(string_length),
+        wrap_xpath_fn!(normalize_space),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the
