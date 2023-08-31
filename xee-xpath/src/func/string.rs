@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
@@ -231,6 +232,38 @@ fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
     }
 }
 
+#[xpath_fn("fn:translate($arg as xs:string?, $mapString as xs:string, $transString as xs:string) as xs:string")]
+fn translate(arg: Option<&str>, map_string: &str, trans_string: &str) -> String {
+    if let Some(arg) = arg {
+        let mut map = HashMap::new();
+        let mut ignore_set = HashSet::new();
+        let map_string_chars = map_string.chars();
+        let mut trans_string_chars = trans_string.chars();
+        for char in map_string_chars {
+            let trans = trans_string_chars.next();
+            if let Some(trans) = trans {
+                map.insert(char, trans);
+            } else {
+                ignore_set.insert(char);
+            }
+        }
+        let mut o = String::with_capacity(arg.len());
+        for c in arg.chars() {
+            match map.get(&c) {
+                Some(rep) => o.push(*rep),
+                None => {
+                    if !ignore_set.contains(&c) {
+                        o.push(c)
+                    }
+                }
+            }
+        }
+        o
+    } else {
+        "".to_string()
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -246,6 +279,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(normalize_space),
         wrap_xpath_fn!(upper_case),
         wrap_xpath_fn!(lower_case),
+        wrap_xpath_fn!(translate),
         wrap_xpath_fn!(tokenize1),
         wrap_xpath_fn!(tokenize2),
     ];
