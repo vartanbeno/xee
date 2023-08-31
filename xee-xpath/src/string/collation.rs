@@ -60,7 +60,15 @@ impl From<CollatorQuery> for collator::CollatorOptions {
 }
 
 impl CollatorQuery {
-    fn from_url(url: &Url) -> error::Result<Self> {
+    fn from_url(mut url: Url) -> error::Result<Self> {
+        // the spec doesn't use normal query parameters but
+        // semi-colon separated parameters, probably because semicolons are
+        // already used in XML. Modify the query string so we replace any
+        // ; with a & so we can normally parse. This should be safe as no semi-colons
+        // are expected as part of the query parameters
+        let new_query = url.query().map(|s| s.replace(';', "&"));
+        url.set_query(new_query.as_deref());
+
         // this should let the last query parameter win in case of duplicates
         let query = url.query_pairs().collect::<HashMap<_, _>>();
         Self::from_query_hashmap(query)
@@ -138,7 +146,7 @@ impl Collation {
         Ok(match path {
             "/2005/xpath-functions/collation/codepoint" => Collation::CodePoint,
             "/2013/collation/UCA" => {
-                let collator_query = CollatorQuery::from_url(&url)?;
+                let collator_query = CollatorQuery::from_url(url)?;
                 Collation::Uca(Box::new(Self::uca_collator(provider, collator_query)?))
             }
             "/2005/xpath-functions/collation/html-ascii-case-insensitive" => Collation::HtmlAscii,
@@ -330,8 +338,8 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_string() {
-        let url = "http://www.w3.org/2013/collation/UCA?fallback=yes&lang=en&strength=primary&max_variable=punctuation&alternate=non-ignorable&backwards=no&normalization=no&caseLevel=no&caseFirst=upper&numeric=no";
-        let query = CollatorQuery::from_url(&Url::parse(url).unwrap()).unwrap();
+        let url = "http://www.w3.org/2013/collation/UCA?fallback=yes;lang=en;strength=primary;max_variable=punctuation;alternate=non-ignorable;backwards=no;normalization=no;caseLevel=no;caseFirst=upper;numeric=no";
+        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -352,7 +360,7 @@ mod tests {
     #[test]
     fn test_deserialize_query_string_default() {
         let url = "http://www.w3.org/2013/collation/UCA?lang=en";
-        let query = CollatorQuery::from_url(&Url::parse(url).unwrap()).unwrap();
+        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -372,20 +380,20 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_no_fallback_reject_wrong_value() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=no&strength=nonsense";
-        assert!(CollatorQuery::from_url(&Url::parse(url).unwrap()).is_err());
+        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;strength=nonsense";
+        assert!(CollatorQuery::from_url(Url::parse(url).unwrap()).is_err());
     }
 
     #[test]
     fn test_deserialize_query_no_fallback_reject_extra_param() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=no&extra=nonsense";
-        assert!(CollatorQuery::from_url(&Url::parse(url).unwrap()).is_err());
+        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;extra=nonsense";
+        assert!(CollatorQuery::from_url(Url::parse(url).unwrap()).is_err());
     }
 
     #[test]
     fn test_deserialize_query_yes_fallback_default_for_wrong_value() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=yes&strength=nonsense";
-        let query = CollatorQuery::from_url(&Url::parse(url).unwrap()).unwrap();
+        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=yes;strength=nonsense";
+        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -405,8 +413,8 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_yes_fallback_ignore_extra_parameter() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=yes&extra=nonsense";
-        let query = CollatorQuery::from_url(&Url::parse(url).unwrap()).unwrap();
+        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=yes;extra=nonsense";
+        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -431,7 +439,7 @@ mod tests {
         let collation = collations.load(
             provider,
             None,
-            "http://www.w3.org/2013/collation/UCA?lang=se&fallback=no",
+            "http://www.w3.org/2013/collation/UCA?lang=se;fallback=no",
         );
         assert!(collation.is_ok());
     }
@@ -443,7 +451,7 @@ mod tests {
         let collation = collations.load(
             provider,
             None,
-            "http://www.w3.org/2013/collation/UCA?lang=en-US&fallback=yes",
+            "http://www.w3.org/2013/collation/UCA?lang=en-US;fallback=yes",
         );
         assert!(collation.is_ok());
     }
@@ -455,7 +463,7 @@ mod tests {
         let collation = collations.load(
             provider,
             None,
-            "http://www.w3.org/2013/collation/UCA?lang=en-US&fallback=no",
+            "http://www.w3.org/2013/collation/UCA?lang=en-US;fallback=no",
         );
         assert!(collation.is_err());
     }
