@@ -10,6 +10,7 @@ use crate::atomic;
 use crate::error;
 
 use super::cast::Parsed;
+use super::StringType;
 
 impl atomic::Atomic {
     pub(crate) fn canonical_float<F>(f: F) -> String
@@ -108,6 +109,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),
+            atomic::Atomic::String(StringType::AnyURI, _) => Err(error::Error::Type),
             atomic::Atomic::String(_, s) => Self::parse_atomic::<f32>(&s),
             atomic::Atomic::Float(_) => Ok(self.clone()),
             // TODO: this should implement the rule in 19.1.2.1
@@ -139,8 +141,9 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_double(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(&s),
-            atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(&s),
+            atomic::Atomic::Untyped(s) => Self::parse_atomic::<f64>(s.trim()),
+            atomic::Atomic::String(StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(_, s) => Self::parse_atomic::<f64>(s.trim()),
             atomic::Atomic::Float(OrderedFloat(f)) => {
                 Ok(atomic::Atomic::Double(OrderedFloat(f as f64)))
             }
@@ -162,6 +165,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_decimal(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<Decimal>(&s),
+            atomic::Atomic::String(StringType::AnyURI, _) => Err(error::Error::Type),
             atomic::Atomic::String(_, s) => Self::parse_atomic::<Decimal>(&s),
             atomic::Atomic::Float(OrderedFloat(f)) => {
                 if f.is_nan() || f.is_infinite() {
@@ -329,6 +333,7 @@ impl atomic::Atomic {
     {
         match self {
             atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
+            atomic::Atomic::String(StringType::AnyURI, _) => Err(error::Error::Type),
             atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
             atomic::Atomic::Float(OrderedFloat(f)) => {
                 if f.is_nan() | f.is_infinite() {

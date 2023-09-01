@@ -194,6 +194,18 @@ fn round_f64_ties_to_positive_infinity(x: f64) -> f64 {
     }
 }
 
+#[xpath_fn("fn:number($arg as xs:anyAtomicType?) as xs:double", context_first)]
+fn number(arg: Option<Atomic>) -> error::Result<Atomic> {
+    if let Some(arg) = arg {
+        match arg.cast_to_double() {
+            Ok(d) => Ok(d),
+            Err(_) => Ok(f64::NAN.into()),
+        }
+    } else {
+        Ok(f64::NAN.into())
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(abs),
@@ -201,5 +213,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(floor),
         wrap_xpath_fn!(round1),
         wrap_xpath_fn!(round2),
+        wrap_xpath_fn!(number),
     ]
 }
