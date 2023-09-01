@@ -47,6 +47,10 @@ impl YearMonthDuration {
     pub(crate) fn years(&self) -> i64 {
         self.months / 12
     }
+
+    pub(crate) fn months(&self) -> i64 {
+        self.months % 12
+    }
 }
 
 impl From<YearMonthDuration> for Atomic {
