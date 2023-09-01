@@ -78,15 +78,6 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
     }
 }
 
-#[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(context: &DynamicContext, arg: Option<sequence::Item>) -> error::Result<String> {
-    if let Some(arg) = arg {
-        arg.string_value(context.xot)
-    } else {
-        Ok("".to_string())
-    }
-}
-
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
 fn exists(arg: &[sequence::Item]) -> bool {
     !arg.is_empty()
@@ -138,15 +129,6 @@ fn error(
     Err(error::Error::FOER0000)
 }
 
-// #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
-// fn node_name(context: &DynamicContext, arg: Option<xml::Node>) -> Option<ast::Name> {
-//     if let Some(node) = arg {
-//         Some(node.node_name(context.xot))
-//     } else {
-//         None
-//     }
-// }
-
 #[xpath_fn("fn:remove($target as item()*, $position as xs:integer) as item()*")]
 fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::Sequence> {
     let position: usize = position.try_into().map_err(|_| error::Error::Overflow)?;
@@ -178,7 +160,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(namespace_uri),
         wrap_xpath_fn!(count),
         wrap_xpath_fn!(root),
-        wrap_xpath_fn!(string),
         wrap_xpath_fn!(exists),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(empty),
