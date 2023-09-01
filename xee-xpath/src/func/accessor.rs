@@ -25,6 +25,15 @@ fn string(context: &DynamicContext, arg: Option<sequence::Item>) -> error::Resul
     }
 }
 
+#[xpath_fn("fn:data($arg as item()*) as xs:anyAtomicType*", context_first)]
+fn data(context: &DynamicContext, arg: &sequence::Sequence) -> error::Result<Vec<sequence::Item>> {
+    let data = arg
+        .atomized(context.xot)
+        .map(|atom| atom.map(|a| a.into()))
+        .collect::<error::Result<Vec<sequence::Item>>>()?;
+    Ok(data)
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
-    vec![wrap_xpath_fn!(string)]
+    vec![wrap_xpath_fn!(string), wrap_xpath_fn!(data)]
 }

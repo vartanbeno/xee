@@ -34,12 +34,7 @@ functx-fn-base-uri-3
 functx-fn-base-uri-all
 functx-fn-count-3
 functx-fn-count-all
-functx-fn-data-1
-functx-fn-data-2
-functx-fn-data-3
-functx-fn-data-4
 functx-fn-data-5
-functx-fn-data-6
 functx-fn-data-all
 functx-fn-dateTime-1
 functx-fn-day-from-date-1
@@ -1128,7 +1123,6 @@ fo-test-fn-count-006
 fo-test-fn-data-001
 fo-test-fn-data-002
 fo-test-fn-data-003
-fo-test-fn-data-006
 fo-test-fn-dateTime-001
 fo-test-fn-dateTime-002
 fo-test-fn-day-from-date-001
@@ -2340,56 +2334,12 @@ fn-current-time-6
 fn-current-time-7
 fn-current-time-9
 = fn-data
-K-DataFunc-3
-K-DataFunc-4
-K2-DataFunc-1
-K2-DataFunc-4
 K2-DataFunc-6
-cbcl-data-001
 fn-data-2
 fn-data-3
 fn-data-5
 fn-data-6
 fn-data-7
-fn-datadbl1args-1
-fn-datadbl1args-2
-fn-datadbl1args-3
-fn-datadec1args-1
-fn-datadec1args-2
-fn-datadec1args-3
-fn-dataflt1args-1
-fn-dataflt1args-2
-fn-dataflt1args-3
-fn-dataint1args-1
-fn-dataint1args-2
-fn-dataint1args-3
-fn-dataintg1args-1
-fn-dataintg1args-2
-fn-dataintg1args-3
-fn-datalng1args-1
-fn-datalng1args-2
-fn-datalng1args-3
-fn-datanint1args-1
-fn-datanint1args-2
-fn-datanint1args-3
-fn-datanni1args-1
-fn-datanni1args-2
-fn-datanni1args-3
-fn-datanpi1args-1
-fn-datanpi1args-2
-fn-datanpi1args-3
-fn-datapint1args-1
-fn-datapint1args-2
-fn-datapint1args-3
-fn-datasht1args-1
-fn-datasht1args-2
-fn-datasht1args-3
-fn-dataulng1args-1
-fn-dataulng1args-2
-fn-dataulng1args-3
-fn-datausht1args-1
-fn-datausht1args-2
-fn-datausht1args-3
 = fn-dateTime
 K-DateTimeFunc-10
 K-DateTimeFunc-11
@@ -11641,7 +11591,6 @@ group-023
 group-024
 = prod-IfExpr
 CondExpr017
-CondExpr018
 CondExpr022
 K-CondExpr-10
 K-CondExpr-11
@@ -11663,7 +11612,6 @@ inline-fn-025
 inline-fn-027
 inline-fn-028
 inline-fn-029
-inline-fn-030
 inline-fn-032
 inline-fn-033
 = prod-InstanceofExpr
@@ -11865,10 +11813,6 @@ function-literal-005
 function-literal-006
 function-literal-007
 function-literal-008
-function-literal-013
-function-literal-014
-function-literal-015
-function-literal-016
 function-literal-017
 function-literal-018
 function-literal-019
@@ -12361,8 +12305,6 @@ K-FilterExpr-92
 K-FilterExpr-93
 K-FilterExpr-94
 K2-Predicates-1
-predicates-30
-predicates-31
 predicates-33
 predicates-34
 predicates-35
@@ -12382,9 +12324,7 @@ quantExpr-8
 quantexpr-38
 = prod-ReturnClause
 K2-ReturnExpr-1
-ReturnExpr006
 ReturnExpr011
-ReturnExpr020
 = prod-SchemaImport
 cbcl-default-attribute-1
 cbcl-default-attribute-2

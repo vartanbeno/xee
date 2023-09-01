@@ -64,14 +64,17 @@ fn make_wrapper(
     let mut conversions = Vec::new();
     let mut conversion_names = Vec::new();
     let context_ident = get_context_ident(ast)?;
-    if let Some(context_ident) = context_ident {
+    let adjust = if let Some(context_ident) = context_ident {
         conversion_names.push(context_ident);
-    }
+        1
+    } else {
+        0
+    };
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.local_name(), Span::call_site());
         conversion_names.push(name.clone());
         let arg = quote!(arguments[#i]);
-        let fn_arg = &ast.sig.inputs[i];
+        let fn_arg = &ast.sig.inputs[i + adjust];
         conversions.push(convert_sequence_type(
             &param.type_,
             fn_arg,
