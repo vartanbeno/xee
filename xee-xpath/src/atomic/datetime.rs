@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use chrono::Offset;
 
-use crate::atomic::Atomic;
+use crate::{atomic::Atomic, error};
 
 pub(crate) trait EqWithDefaultOffset: ToDateTimeStamp {
     fn eq_with_default_offset(&self, other: &Self, default_offset: chrono::FixedOffset) -> bool {
@@ -42,6 +42,10 @@ pub struct YearMonthDuration {
 impl YearMonthDuration {
     pub(crate) fn new(months: i64) -> Self {
         Self { months }
+    }
+
+    pub(crate) fn years(&self) -> i64 {
+        self.months / 12
     }
 }
 
@@ -83,6 +87,19 @@ impl Duration {
 impl From<Duration> for Atomic {
     fn from(duration: Duration) -> Self {
         Atomic::Duration(Rc::new(duration))
+    }
+}
+
+impl TryFrom<Atomic> for Duration {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Duration(d) => Ok(d.as_ref().clone()),
+            Atomic::YearMonthDuration(d) => Ok(Duration::from_year_month(d)),
+            Atomic::DayTimeDuration(d) => Ok(Duration::from_day_time(*d)),
+            _ => Err(error::Error::Type),
+        }
     }
 }
 

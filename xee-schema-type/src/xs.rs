@@ -300,7 +300,7 @@ impl Xs {
             Double => Some(RustInfo::new("f64")),
             Decimal => Some(RustInfo::new("rust_decimal::Decimal")),
             Integer => Some(RustInfo::new("ibig::IBig")),
-            Duration => Some(RustInfo::new("xee_xpath::atomic::Duration")),
+            Duration => Some(RustInfo::new("crate::Duration")),
             YearMonthDuration => Some(RustInfo::new("xee_xpath::atomic::YearMonthDuration")),
             DayTimeDuration => Some(RustInfo::new("chrono::Duration")),
             DateTime => Some(RustInfo::new("xee_xpath::atomic::NaiveDateTimeWithOffset")),

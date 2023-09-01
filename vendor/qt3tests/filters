@@ -213,12 +213,6 @@ functx-fn-tokenize-9
 functx-fn-tokenize-all
 functx-fn-year-from-date-1
 functx-fn-year-from-dateTime-1
-functx-fn-years-from-duration-1
-functx-fn-years-from-duration-2
-functx-fn-years-from-duration-3
-functx-fn-years-from-duration-4
-functx-fn-years-from-duration-5
-functx-fn-years-from-duration-all
 functx-fn-zero-or-one-1
 functx-fn-zero-or-one-2
 functx-fn-zero-or-one-all
@@ -8768,35 +8762,7 @@ fn-year-from-dateTime1args-3
 fn-year-from-dateTimeNew-14
 fn-year-from-dateTimeNew-15
 = fn-years-from-duration
-K-YearsFromDurationFunc-3
-K-YearsFromDurationFunc-4
-K-YearsFromDurationFunc-5
-K-YearsFromDurationFunc-6
-K-YearsFromDurationFunc-7
-cbcl-years-from-duration-001
-fn-years-from-duration-1
-fn-years-from-duration-10
-fn-years-from-duration-11
-fn-years-from-duration-12
-fn-years-from-duration-13
-fn-years-from-duration-14
-fn-years-from-duration-15
-fn-years-from-duration-16
-fn-years-from-duration-17
-fn-years-from-duration-18
-fn-years-from-duration-19
-fn-years-from-duration-2
-fn-years-from-duration-20
-fn-years-from-duration-3
-fn-years-from-duration-4
-fn-years-from-duration-5
-fn-years-from-duration-6
 fn-years-from-duration-7
-fn-years-from-duration-8
-fn-years-from-duration-9
-fn-years-from-duration1args-1
-fn-years-from-duration1args-2
-fn-years-from-duration1args-3
 = fn-zero-or-one
 K-SeqZeroOrOneFunc-3
 K-SeqZeroOrOneFunc-4
@@ -11879,8 +11845,6 @@ function-literal-169
 function-literal-170
 function-literal-171
 function-literal-172
-function-literal-181
-function-literal-182
 function-literal-183
 function-literal-184
 function-literal-185
