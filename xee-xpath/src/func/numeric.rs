@@ -1,8 +1,8 @@
+// https://www.w3.org/TR/xpath-functions-31/#numeric-functions
 use std::cmp::Ordering;
 
-use ibig::IBig;
-// https://www.w3.org/TR/xpath-functions-31/#numeric-functions
 use ibig::ops::Abs;
+use ibig::IBig;
 use num_traits::{Float, Zero};
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;

@@ -1418,7 +1418,6 @@ fo-test-math-cos-008
 fo-test-math-cos-009
 fo-test-math-exp-001
 fo-test-math-exp-002
-fo-test-math-exp-003
 fo-test-math-exp-004
 fo-test-math-exp-005
 fo-test-math-exp-006
@@ -9159,83 +9158,11 @@ math-cos-007
 math-cos-008
 math-cos-009
 = math-exp
-math-exp-001
-math-exp-002
-math-exp-003
-math-exp-004
-math-exp-005
-math-exp-006
-math-exp-007
-math-exp-008
-math-exp-009
 = math-exp10
-math-exp10-001
-math-exp10-002
-math-exp10-003
-math-exp10-004
-math-exp10-005
-math-exp10-006
-math-exp10-007
-math-exp10-008
 = math-log
-math-log-001
-math-log-002
-math-log-003
-math-log-004
-math-log-005
-math-log-006
-math-log-007
-math-log-008
-math-log-009
 = math-log10
-math-log10-001
-math-log10-002
-math-log10-003
-math-log10-004
-math-log10-005
-math-log10-006
-math-log10-007
-math-log10-008
-math-log10-009
 = math-pi
-math-pi-001
-math-pi-002
-math-pi-003
 = math-pow
-math-pow-001
-math-pow-002
-math-pow-003
-math-pow-004
-math-pow-005
-math-pow-006
-math-pow-007
-math-pow-008
-math-pow-009
-math-pow-010
-math-pow-011
-math-pow-012
-math-pow-013
-math-pow-014
-math-pow-015
-math-pow-016
-math-pow-017
-math-pow-018
-math-pow-019
-math-pow-020
-math-pow-021
-math-pow-022
-math-pow-023
-math-pow-024
-math-pow-025
-math-pow-026
-math-pow-027
-math-pow-028
-math-pow-029
-math-pow-030
-math-pow-031
-math-pow-032
-math-pow-033
-math-pow-034
 = math-sin
 math-sin-001
 math-sin-002
@@ -9247,15 +9174,6 @@ math-sin-007
 math-sin-008
 math-sin-009
 = math-sqrt
-math-sqrt-001
-math-sqrt-002
-math-sqrt-003
-math-sqrt-004
-math-sqrt-005
-math-sqrt-006
-math-sqrt-007
-math-sqrt-008
-math-sqrt-010
 = math-tan
 math-tan-001
 math-tan-002
@@ -11502,7 +11420,6 @@ eqname-024
 eqname-025
 eqname-026
 eqname-027
-eqname-029p
 eqname-032
 eqname-033
 eqname-910
@@ -12068,20 +11985,7 @@ function-literal-057
 function-literal-058
 function-literal-059
 function-literal-060
-function-literal-061
-function-literal-062
-function-literal-063
 function-literal-064
-function-literal-065
-function-literal-066
-function-literal-067
-function-literal-068
-function-literal-069
-function-literal-070
-function-literal-071
-function-literal-072
-function-literal-073
-function-literal-074
 function-literal-075
 function-literal-076
 function-literal-077
