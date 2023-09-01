@@ -1,4 +1,4 @@
-// https://www.w3.org/TR/xpath-functions-31/#trigonometry
+// https://www.w3.org/TR/xpath-functions-31/#boolean-functions
 use xee_xpath_macros::xpath_fn;
 
 use crate::context::StaticFunctionDescription;
