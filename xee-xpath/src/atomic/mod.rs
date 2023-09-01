@@ -25,7 +25,7 @@ pub use atomic_core::Atomic;
 pub(crate) use compare::AtomicCompare;
 pub use datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
-    NaiveTimeWithOffset, YearMonthDuration,
+    NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;

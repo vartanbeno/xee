@@ -24,7 +24,10 @@ pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::Namespaces;
 
 pub use crate::atomic::Atomic;
-pub use crate::atomic::Duration;
+pub use crate::atomic::{
+    Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
+    NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
+};
 pub use crate::context::{DynamicContext, StaticContext};
 pub use crate::error::{Error, Result};
 pub use crate::occurrence::Occurrence;

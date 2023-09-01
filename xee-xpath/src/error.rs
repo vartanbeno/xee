@@ -522,6 +522,7 @@ pub enum Error {
     /// Raised by fn:dateTime if the two arguments both have timezones and the
     /// timezones are different.
     #[error("The two arguments to fn:dateTime have inconsistent timezones")]
+    #[diagnostic(code(FORG0008))]
     FORG0008,
     /// Error in resolving a relative URI against a base URI in fn:resolve-uri.
     ///

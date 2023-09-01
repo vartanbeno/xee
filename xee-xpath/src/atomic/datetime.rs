@@ -122,9 +122,27 @@ impl From<NaiveDateTimeWithOffset> for chrono::DateTime<chrono::FixedOffset> {
     }
 }
 
+impl From<chrono::DateTime<chrono::FixedOffset>> for NaiveDateTimeWithOffset {
+    fn from(date_time: chrono::DateTime<chrono::FixedOffset>) -> Self {
+        NaiveDateTimeWithOffset::new(date_time.naive_utc(), Some(date_time.offset().clone()))
+    }
+}
+
 impl From<NaiveDateTimeWithOffset> for Atomic {
     fn from(date_time: NaiveDateTimeWithOffset) -> Self {
         Atomic::DateTime(Rc::new(date_time))
+    }
+}
+
+impl TryFrom<Atomic> for NaiveDateTimeWithOffset {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::DateTime(d) => Ok(d.as_ref().clone()),
+            Atomic::DateTimeStamp(d) => Ok((*d.as_ref()).into()),
+            _ => Err(error::Error::Type),
+        }
     }
 }
 
@@ -151,6 +169,17 @@ impl NaiveDateTimeWithOffset {
 pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl TryFrom<Atomic> for NaiveTimeWithOffset {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Time(d) => Ok(d.as_ref().clone()),
+            _ => Err(error::Error::Type),
+        }
+    }
 }
 
 impl NaiveTimeWithOffset {
@@ -183,6 +212,17 @@ impl From<NaiveTimeWithOffset> for Atomic {
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
     pub(crate) offset: Option<chrono::FixedOffset>,
+}
+
+impl TryFrom<Atomic> for NaiveDateWithOffset {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::Date(d) => Ok(d.as_ref().clone()),
+            _ => Err(error::Error::Type),
+        }
+    }
 }
 
 impl NaiveDateWithOffset {
