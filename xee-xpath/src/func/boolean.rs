@@ -16,7 +16,6 @@ fn false_() -> bool {
     false
 }
 
-// TODO: we can now use a Sequence argument
 #[xpath_fn("fn:not($argt as item()*) as xs:boolean")]
 fn not(arg: &sequence::Sequence) -> error::Result<bool> {
     arg.effective_boolean_value().map(|b| !b)
