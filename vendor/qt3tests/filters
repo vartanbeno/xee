@@ -43,14 +43,6 @@ functx-fn-ceiling-4
 functx-fn-ceiling-5
 functx-fn-ceiling-6
 functx-fn-ceiling-all
-functx-fn-contains-1
-functx-fn-contains-2
-functx-fn-contains-3
-functx-fn-contains-4
-functx-fn-contains-5
-functx-fn-contains-6
-functx-fn-contains-7
-functx-fn-contains-all
 functx-fn-count-3
 functx-fn-count-all
 functx-fn-data-1
@@ -1188,9 +1180,6 @@ fo-test-fn-concat-003
 fo-test-fn-concat-004
 fo-test-fn-concat-005
 fo-test-fn-concat-006
-fo-test-fn-contains-001
-fo-test-fn-contains-002
-fo-test-fn-contains-003
 fo-test-fn-contains-004
 fo-test-fn-contains-005
 fo-test-fn-contains-006
@@ -2563,35 +2552,16 @@ K2-CompareFunc-9
 compare-013
 = fn-concat
 = fn-contains
-K-ContainsFunc-10
-K-ContainsFunc-11
-K-ContainsFunc-4
-K-ContainsFunc-5
-K-ContainsFunc-6
-K-ContainsFunc-7
-K-ContainsFunc-8
-K-ContainsFunc-9
 K2-ContainsFunc-1
 K2-ContainsFunc-2
 K2-ContainsFunc-3
 K2-ContainsFunc-4
 K2-ContainsFunc-5
 K2-ContainsFunc-6
-cbcl-contains-001
-cbcl-contains-002
 cbcl-contains-003
-fn-contains-1
-fn-contains-10
-fn-contains-11
-fn-contains-12
-fn-contains-13
-fn-contains-14
-fn-contains-15
-fn-contains-16
 fn-contains-17
 fn-contains-18
 fn-contains-19
-fn-contains-2
 fn-contains-20
 fn-contains-22
 fn-contains-24
@@ -2600,25 +2570,10 @@ fn-contains-26
 fn-contains-27
 fn-contains-28
 fn-contains-29
-fn-contains-3
 fn-contains-30
 fn-contains-31
 fn-contains-35
 fn-contains-37
-fn-contains-4
-fn-contains-5
-fn-contains-6
-fn-contains-7
-fn-contains-8
-fn-contains-9
-fn-contains2args-1
-fn-contains2args-2
-fn-contains2args-3
-fn-contains2args-4
-fn-contains2args-5
-liam-contains-001
-liam-contains-002
-liam-contains-003
 liam-contains-004
 = fn-contains-token
 fn-contains-token-20
@@ -3439,7 +3394,6 @@ K-SeqExistsFunc-14
 K-SeqExistsFunc-9
 cbcl-exists-005
 = fn-false
-fn-false-20
 = fn-filter
 filter-001
 filter-002
@@ -7339,7 +7293,6 @@ fn-normalize-unicode2args-6
 = fn-not
 K-NotFunc-10
 cbcl-not-003
-fn-not-20
 = fn-number
 K-NodeNumberFunc-10
 K-NodeNumberFunc-11
@@ -8790,7 +8743,6 @@ fn-string-24
 fn-string-25
 fn-string-26
 fn-string-29
-fn-string-30
 fn-string-31
 fn-string-32
 fn-string-33
@@ -8929,7 +8881,6 @@ K-SubstringFunc-13
 K-SubstringFunc-14
 fn-substring-10
 fn-substring-11
-fn-substring-18
 fn-substring-22
 fn-substring-7
 fn-substring-8
@@ -9391,7 +9342,6 @@ fn-trace-9
 fn-translate-21
 fn-translate-22
 = fn-true
-fn-true-20
 = fn-unordered
 K-SeqUnorderedFunc-3
 K-SeqUnorderedFunc-4
@@ -10416,7 +10366,6 @@ function-item-9
 hof-023
 hof-024
 hof-025
-hof-027
 hof-032
 hof-033
 hof-916
@@ -11782,17 +11731,14 @@ cbcl-cast-name-002
 cbcl-cast-ncname-002
 cbcl-cast-negativeInteger-001
 cbcl-cast-negativeInteger-002
-cbcl-cast-nmtoken-001b
 cbcl-cast-nonNegativeInteger-001
 cbcl-cast-nonNegativeInteger-002
 cbcl-cast-nonPositiveInteger-001
 cbcl-cast-nonPositiveInteger-002
-cbcl-cast-normalizedString-001b
 cbcl-cast-positiveInteger-001
 cbcl-cast-positiveInteger-002
 cbcl-cast-short-001
 cbcl-cast-short-002
-cbcl-cast-token-001b
 cbcl-cast-unsignedByte-001
 cbcl-cast-unsignedByte-002
 cbcl-cast-unsignedByte-005
@@ -13046,10 +12992,6 @@ function-literal-117
 function-literal-118
 function-literal-119
 function-literal-120
-function-literal-127
-function-literal-128
-function-literal-129
-function-literal-130
 function-literal-131
 function-literal-132
 function-literal-133

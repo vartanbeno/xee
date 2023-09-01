@@ -296,6 +296,7 @@ pub enum Error {
     /// Raised by functions such as fn:contains if the requested collation does
     /// not operate on a character-by-character basis.
     #[error("Collation does not support collation units")]
+    #[diagnostic(code(FOCH0004))]
     FOCH0004,
     /// No context document.
     ///

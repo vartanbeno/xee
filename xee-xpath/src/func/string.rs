@@ -6,6 +6,7 @@ use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
 use crate::context::{DynamicContext, StaticFunctionDescription};
+use crate::string::Collation;
 use crate::{atomic, error, sequence, wrap_xpath_fn, Occurrence};
 
 // we don't accept concat() invocations with an arity
@@ -264,6 +265,38 @@ fn translate(arg: Option<&str>, map_string: &str, trans_string: &str) -> String 
     }
 }
 
+#[xpath_fn(
+    "fn:contains($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:boolean",
+    collation
+)]
+fn contains(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<bool> {
+    let arg1 = arg1.unwrap_or("");
+    let arg2 = arg2.unwrap_or("");
+    if arg2.is_empty() {
+        return Ok(true);
+    }
+    if arg1.is_empty() {
+        return Ok(false);
+    }
+    let collation = context.static_context.collation(collation)?;
+    match collation.as_ref() {
+        Collation::CodePoint => Ok(arg1.contains(arg2)),
+        Collation::HtmlAscii => {
+            let arg1 = arg1.to_lowercase();
+            let arg2 = arg2.to_lowercase();
+            Ok(arg1.contains(&arg2))
+        }
+        // for now, icu4x does not yet support collation units (actually named collation elements)
+        // https://github.com/unicode-org/icu4x/discussions/3981
+        Collation::Uca(_) => Err(error::Error::FOCH0004),
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -280,6 +313,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(upper_case),
         wrap_xpath_fn!(lower_case),
         wrap_xpath_fn!(translate),
+        wrap_xpath_fn!(contains),
         wrap_xpath_fn!(tokenize1),
         wrap_xpath_fn!(tokenize2),
     ];
