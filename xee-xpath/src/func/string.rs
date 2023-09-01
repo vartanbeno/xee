@@ -297,6 +297,135 @@ fn contains(
     }
 }
 
+#[xpath_fn("fn:starts-with($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:boolean", collation)]
+fn starts_with(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<bool> {
+    let arg1 = arg1.unwrap_or("");
+    let arg2 = arg2.unwrap_or("");
+    if arg2.is_empty() {
+        return Ok(true);
+    }
+    if arg1.is_empty() {
+        return Ok(false);
+    }
+    let collation = context.static_context.collation(collation)?;
+    match collation.as_ref() {
+        Collation::CodePoint => Ok(arg1.starts_with(arg2)),
+        Collation::HtmlAscii => {
+            let arg1 = arg1.to_lowercase();
+            let arg2 = arg2.to_lowercase();
+            Ok(arg1.starts_with(&arg2))
+        }
+        // for now, icu4x does not yet support collation units (actually named collation elements)
+        // https://github.com/unicode-org/icu4x/discussions/3981
+        Collation::Uca(_) => Err(error::Error::FOCH0004),
+    }
+}
+
+#[xpath_fn(
+    "fn:ends-with($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:boolean",
+    collation
+)]
+fn ends_with(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<bool> {
+    let arg1 = arg1.unwrap_or("");
+    let arg2 = arg2.unwrap_or("");
+    if arg2.is_empty() {
+        return Ok(true);
+    }
+    if arg1.is_empty() {
+        return Ok(false);
+    }
+    let collation = context.static_context.collation(collation)?;
+    match collation.as_ref() {
+        Collation::CodePoint => Ok(arg1.ends_with(arg2)),
+        Collation::HtmlAscii => {
+            let arg1 = arg1.to_lowercase();
+            let arg2 = arg2.to_lowercase();
+            Ok(arg1.ends_with(&arg2))
+        }
+        // for now, icu4x does not yet support collation units (actually named collation elements)
+        // https://github.com/unicode-org/icu4x/discussions/3981
+        Collation::Uca(_) => Err(error::Error::FOCH0004),
+    }
+}
+
+#[xpath_fn("fn:substring-before($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:string", collation)]
+fn substring_before(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<String> {
+    let arg1 = arg1.unwrap_or("");
+    let arg2 = arg2.unwrap_or("");
+    if arg2.is_empty() {
+        return Ok("".to_string());
+    }
+    // find substring in arg1 that comes before arg2
+    let collation = context.static_context.collation(collation)?;
+    match collation.as_ref() {
+        Collation::CodePoint => {
+            let idx = arg1.find(arg2).unwrap_or(0);
+            Ok(arg1[..idx].to_string())
+        }
+        Collation::HtmlAscii => {
+            let arg1_l = arg1.to_lowercase();
+            let arg2_l = arg2.to_lowercase();
+            let idx = arg1_l.find(&arg2_l).unwrap_or(0);
+            Ok(arg1[..idx].to_string())
+        }
+        // for now, icu4x does not yet support collation units (actually named collation elements)
+        // https://github.com/unicode-org/icu4x/discussions/3981
+        Collation::Uca(_) => Err(error::Error::FOCH0004),
+    }
+}
+
+#[xpath_fn("fn:substring-after($arg1 as xs:string?, $arg2 as xs:string?, $collation as xs:string) as xs:string", collation)]
+fn substring_after(
+    context: &DynamicContext,
+    arg1: Option<&str>,
+    arg2: Option<&str>,
+    collation: &str,
+) -> error::Result<String> {
+    let arg1 = arg1.unwrap_or("");
+    let arg2 = arg2.unwrap_or("");
+    if arg2.is_empty() {
+        return Ok(arg1.to_string());
+    }
+    // find substring in arg1 that comes before arg2
+    let collation = context.static_context.collation(collation)?;
+    match collation.as_ref() {
+        Collation::CodePoint => {
+            if let Some(idx) = arg1.find(arg2) {
+                Ok(arg1[(idx + arg2.len())..].to_string())
+            } else {
+                Ok("".to_string())
+            }
+        }
+        Collation::HtmlAscii => {
+            let arg1_l = arg1.to_lowercase();
+            let arg2_l = arg2.to_lowercase();
+            if let Some(idx) = arg1_l.find(&arg2_l) {
+                Ok(arg1[(idx + arg2.len())..].to_string())
+            } else {
+                Ok("".to_string())
+            }
+        }
+        // for now, icu4x does not yet support collation units (actually named collation elements)
+        // https://github.com/unicode-org/icu4x/discussions/3981
+        Collation::Uca(_) => Err(error::Error::FOCH0004),
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -314,6 +443,10 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(lower_case),
         wrap_xpath_fn!(translate),
         wrap_xpath_fn!(contains),
+        wrap_xpath_fn!(starts_with),
+        wrap_xpath_fn!(ends_with),
+        wrap_xpath_fn!(substring_before),
+        wrap_xpath_fn!(substring_after),
         wrap_xpath_fn!(tokenize1),
         wrap_xpath_fn!(tokenize2),
     ];
