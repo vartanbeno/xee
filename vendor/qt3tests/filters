@@ -1372,10 +1372,7 @@ fo-test-map-merge-002
 fo-test-map-size-001
 fo-test-map-size-002
 fo-test-math-acos-001
-fo-test-math-acos-002
-fo-test-math-acos-003
 fo-test-math-acos-004
-fo-test-math-acos-005
 fo-test-math-acos-006
 fo-test-math-acos-007
 fo-test-math-acos-008
@@ -1383,8 +1380,6 @@ fo-test-math-acos-009
 fo-test-math-asin-001
 fo-test-math-asin-002
 fo-test-math-asin-003
-fo-test-math-asin-004
-fo-test-math-asin-005
 fo-test-math-asin-006
 fo-test-math-asin-007
 fo-test-math-asin-008
@@ -1392,11 +1387,7 @@ fo-test-math-asin-009
 fo-test-math-atan-001
 fo-test-math-atan-002
 fo-test-math-atan-003
-fo-test-math-atan-004
-fo-test-math-atan-005
 fo-test-math-atan-006
-fo-test-math-atan-007
-fo-test-math-atan-008
 fo-test-math-atan2-001
 fo-test-math-atan2-002
 fo-test-math-atan2-003
@@ -1410,9 +1401,6 @@ fo-test-math-atan2-010
 fo-test-math-cos-001
 fo-test-math-cos-002
 fo-test-math-cos-003
-fo-test-math-cos-004
-fo-test-math-cos-005
-fo-test-math-cos-006
 fo-test-math-cos-007
 fo-test-math-cos-008
 fo-test-math-cos-009
@@ -1489,9 +1477,6 @@ fo-test-math-pow-035
 fo-test-math-sin-001
 fo-test-math-sin-002
 fo-test-math-sin-003
-fo-test-math-sin-004
-fo-test-math-sin-005
-fo-test-math-sin-006
 fo-test-math-sin-007
 fo-test-math-sin-008
 fo-test-math-sin-009
@@ -1507,11 +1492,6 @@ fo-test-math-sqrt-009
 fo-test-math-tan-001
 fo-test-math-tan-002
 fo-test-math-tan-003
-fo-test-math-tan-004
-fo-test-math-tan-005
-fo-test-math-tan-006
-fo-test-math-tan-007
-fo-test-math-tan-008
 fo-test-math-tan-009
 fo-test-math-tan-010
 fo-test-math-tan-011
@@ -9107,56 +9087,10 @@ map-size-013
 map-size-014
 map-size-015
 = math-acos
-math-acos-001
-math-acos-002
-math-acos-003
-math-acos-004
-math-acos-005
-math-acos-006
-math-acos-007
-math-acos-008
-math-acos-009
 = math-asin
-math-asin-001
-math-asin-002
-math-asin-003
-math-asin-004
-math-asin-005
-math-asin-006
-math-asin-007
-math-asin-08
-math-asin-09
 = math-atan
-math-atan-001
-math-atan-002
-math-atan-003
-math-atan-004
-math-atan-005
-math-atan-006
-math-atan-007
-math-atan-008
-math-atan-009
 = math-atan2
-math-atan2-001
-math-atan2-002
-math-atan2-003
-math-atan2-004
-math-atan2-005
-math-atan2-006
-math-atan2-007
-math-atan2-008
-math-atan2-009
-math-atan2-010
 = math-cos
-math-cos-001
-math-cos-002
-math-cos-003
-math-cos-004
-math-cos-005
-math-cos-006
-math-cos-007
-math-cos-008
-math-cos-009
 = math-exp
 = math-exp10
 = math-log
@@ -9164,28 +9098,8 @@ math-cos-009
 = math-pi
 = math-pow
 = math-sin
-math-sin-001
-math-sin-002
-math-sin-003
-math-sin-004
-math-sin-005
-math-sin-006
-math-sin-007
-math-sin-008
-math-sin-009
 = math-sqrt
 = math-tan
-math-tan-001
-math-tan-002
-math-tan-003
-math-tan-004
-math-tan-005
-math-tan-006
-math-tan-007
-math-tan-008
-math-tan-009
-math-tan-010
-math-tan-011
 = method-adaptive
 = method-html
 = method-json
@@ -11986,19 +11900,10 @@ function-literal-058
 function-literal-059
 function-literal-060
 function-literal-064
-function-literal-075
 function-literal-076
-function-literal-077
 function-literal-078
-function-literal-079
-function-literal-080
-function-literal-081
 function-literal-082
-function-literal-083
-function-literal-084
-function-literal-085
 function-literal-086
-function-literal-087
 function-literal-088
 function-literal-110
 function-literal-114

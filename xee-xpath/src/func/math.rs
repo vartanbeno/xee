@@ -82,6 +82,65 @@ fn sqrt(arg: Option<f64>) -> error::Result<Option<f64>> {
     }
 }
 
+#[xpath_fn("math:sin($arg as xs:double?) as xs:double?")]
+fn sin(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.sin()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:cos($arg as xs:double?) as xs:double?")]
+fn cos(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.cos()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:tan($arg as xs:double?) as xs:double?")]
+fn tan(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.tan()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:asin($arg as xs:double?) as xs:double?")]
+fn asin(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.asin()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:acos($arg as xs:double?) as xs:double?")]
+fn acos(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.acos()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:atan($arg as xs:double?) as xs:double?")]
+fn atan(arg: Option<f64>) -> error::Result<Option<f64>> {
+    if let Some(arg) = arg {
+        Ok(Some(arg.atan()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[xpath_fn("math:atan2($y as xs:double, $x as xs:double) as xs:double?")]
+fn atan2(y: f64, x: f64) -> error::Result<Option<f64>> {
+    Ok(Some(y.atan2(x)))
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(pi),
@@ -91,5 +150,12 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(log10),
         wrap_xpath_fn!(pow),
         wrap_xpath_fn!(sqrt),
+        wrap_xpath_fn!(sin),
+        wrap_xpath_fn!(cos),
+        wrap_xpath_fn!(tan),
+        wrap_xpath_fn!(asin),
+        wrap_xpath_fn!(acos),
+        wrap_xpath_fn!(atan),
+        wrap_xpath_fn!(atan2),
     ]
 }
