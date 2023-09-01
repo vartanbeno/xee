@@ -1,3 +1,4 @@
+mod boolean;
 mod fn_;
 mod math;
 mod numeric;
@@ -14,5 +15,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(xs::static_function_descriptions());
     descriptions.extend(numeric::static_function_descriptions());
     descriptions.extend(math::static_function_descriptions());
+    descriptions.extend(boolean::static_function_descriptions());
     descriptions
 }

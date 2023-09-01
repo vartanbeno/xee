@@ -106,23 +106,6 @@ fn empty(arg: &[sequence::Item]) -> bool {
     arg.is_empty()
 }
 
-#[xpath_fn("fn:boolean($arg as item()*) as xs:boolean")]
-fn boolean(arg: &sequence::Sequence) -> error::Result<bool> {
-    arg.effective_boolean_value()
-}
-
-// TODO: we can now use a Sequence argument
-fn not(
-    _context: &DynamicContext,
-    arguments: &[sequence::Sequence],
-) -> error::Result<sequence::Sequence> {
-    let a = &arguments[0];
-    let b = a.effective_boolean_value()?;
-    Ok(sequence::Sequence::from(vec![sequence::Item::from(
-        atomic::Atomic::from(!b),
-    )]))
-}
-
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
 fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     if let Some(arg) = arg {
@@ -153,16 +136,6 @@ fn error(
     _arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     Err(error::Error::FOER0000)
-}
-
-#[xpath_fn("fn:true() as xs:boolean")]
-fn true_() -> bool {
-    true
-}
-
-#[xpath_fn("fn:false() as xs:boolean")]
-fn false_() -> bool {
-    false
 }
 
 // #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
@@ -209,14 +182,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(exists),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(empty),
-        wrap_xpath_fn!(boolean),
         wrap_xpath_fn!(generate_id),
-        StaticFunctionDescription {
-            name: ast::Name::new("not".to_string(), Some(FN_NAMESPACE.to_string())),
-            arity: 1,
-            function_kind: None,
-            func: not,
-        },
         StaticFunctionDescription {
             name: ast::Name::new("untypedAtomic".to_string(), Some(XS_NAMESPACE.to_string())),
             arity: 1,
@@ -229,8 +195,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             function_kind: None,
             func: error,
         },
-        wrap_xpath_fn!(true_),
-        wrap_xpath_fn!(false_),
         wrap_xpath_fn!(remove),
     ]
 }
