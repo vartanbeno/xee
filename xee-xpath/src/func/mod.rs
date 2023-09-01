@@ -1,4 +1,5 @@
 mod fn_;
+mod numeric;
 mod string;
 mod xpath_fn;
 mod xs;
@@ -9,5 +10,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(fn_::static_function_descriptions());
     descriptions.extend(string::static_function_descriptions());
     descriptions.extend(xs::static_function_descriptions());
+    descriptions.extend(numeric::static_function_descriptions());
     descriptions
 }

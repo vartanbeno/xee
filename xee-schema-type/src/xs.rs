@@ -6,6 +6,7 @@ pub enum Xs {
     AnySimpleType,
     Untyped,
     AnyAtomicType,
+    Numeric,
     String,
     UntypedAtomic,
     Boolean,
@@ -99,6 +100,7 @@ impl Xs {
             "anySimpleType" => AnySimpleType,
             "untyped" => Untyped,
             "anyAtomicType" => AnyAtomicType,
+            "numeric" => Numeric,
             "string" => String,
             "untypedAtomic" => UntypedAtomic,
             "boolean" => Boolean,
@@ -160,6 +162,7 @@ impl Xs {
             AnySimpleType => "anySimpleType",
             Untyped => "untyped",
             AnyAtomicType => "anyAtomicType",
+            Numeric => "numeric",
             String => "string",
             UntypedAtomic => "untypedAtomic",
             Boolean => "boolean",
@@ -216,6 +219,7 @@ impl Xs {
             Untyped => Some(AnyType),
             AnyAtomicType => Some(AnySimpleType),
             UntypedAtomic => Some(AnyAtomicType),
+            Numeric => Some(AnySimpleType),
             String => Some(AnyAtomicType),
             Boolean => Some(AnyAtomicType),
             Float => Some(AnyAtomicType),
@@ -273,6 +277,15 @@ impl Xs {
         }
     }
 
+    pub fn matches(&self, other: Xs) -> bool {
+        if other != Xs::Numeric {
+            return self == &other;
+        }
+        self.derives_from(Xs::Double)
+            || self.derives_from(Xs::Float)
+            || self.derives_from(Xs::Decimal)
+    }
+
     pub fn rust_info(&self) -> Option<RustInfo> {
         use Xs::*;
         match self {
@@ -281,6 +294,7 @@ impl Xs {
             Untyped => None,
             AnyAtomicType => None,
             UntypedAtomic => Some(RustInfo::as_ref("String")),
+            Numeric => None,
             String => Some(RustInfo::as_ref("String")),
             Float => Some(RustInfo::new("f32")),
             Double => Some(RustInfo::new("f64")),

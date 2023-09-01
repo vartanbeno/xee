@@ -44,7 +44,7 @@ impl Parse for XPathFnOptions {
                 }
             }
         }
-        let signature_string = signature.unwrap();
+        let signature_string = signature.expect("Signature not found");
         let namespaces = Namespaces::default();
         let signature = Signature::parse(&signature_string, &namespaces)
             .map_err(|e| input.error(format!("{:?}", e)))?;

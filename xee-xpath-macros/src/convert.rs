@@ -98,15 +98,17 @@ fn convert_atomic_or_union_type(
     // TODO: instead of unwrap we should return an error. But this requires
     // having access to the ParseStream at this point to call error, which
     // seems to require a major refactoring.
-    let xs = Xs::by_name(name.namespace(), name.local_name()).unwrap();
+    let xs = Xs::by_name(name.namespace(), name.local_name()).expect("Xs type not found");
 
-    if xs == Xs::AnyAtomicType {
+    if xs == Xs::AnyAtomicType || xs == Xs::Numeric {
         return Ok((quote!(#arg.atomized(context.xot)), false));
     }
 
     // TODO: another unwrap that should really be "we cannot create a rust wrapper
     // for this type" error
-    let rust_info = xs.rust_info().unwrap();
+    let rust_info = xs
+        .rust_info()
+        .expect("Rust wrapper for this type not found");
     let type_name = rust_info.rust_name();
     let type_name = syn::parse_str::<syn::Type>(type_name)?;
     let convert = quote!(std::convert::TryInto::<#type_name>::try_into(atomic));

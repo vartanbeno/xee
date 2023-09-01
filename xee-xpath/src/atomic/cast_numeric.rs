@@ -83,6 +83,28 @@ impl atomic::Atomic {
             .map_err(|_| error::Error::FORG0001)
     }
 
+    pub(crate) fn cast_to_numeric(self) -> error::Result<atomic::Atomic> {
+        // https://www.w3.org/TR/xpath-functions-31/#casting-to-union
+        match self {
+            atomic::Atomic::String(_, _) | atomic::Atomic::Untyped(_) => {
+                // the type numeric is defined as (in order) xs:double, xs:float, and xs:decimal.
+                // and then xs:integer
+                // but since we can cast any numeric to double, we shouldn't
+                // need to fall back at all.
+                self.cast_to_double()
+            }
+            atomic::Atomic::Float(_)
+            | atomic::Atomic::Double(_)
+            | atomic::Atomic::Decimal(_)
+            | atomic::Atomic::Integer(_, _) => Ok(self),
+            // 19.3.5 castable to the union type, which is only xs:boolean
+            // we know xs:boolean is castable to double, so we don't even
+            // try the other options
+            atomic::Atomic::Boolean(_) => self.cast_to_double(),
+            _ => Err(error::Error::FORG0001),
+        }
+    }
+
     pub(crate) fn cast_to_float(self) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::Untyped(s) => Self::parse_atomic::<f32>(&s),

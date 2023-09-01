@@ -10,6 +10,11 @@ fn xs_untyped_atomic(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic
     Ok(arg.map(|arg| arg.cast_to_untyped_atomic()))
 }
 
+#[xpath_fn("xs:numeric($arg as xs:anyAtomicType?) as xs:numeric?")]
+fn xs_numeric(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
+    arg.map(|arg| arg.cast_to_numeric()).transpose()
+}
+
 #[xpath_fn("xs:string($arg as xs:anyAtomicType?) as xs:string?")]
 fn xs_string(arg: Option<atomic::Atomic>) -> error::Result<Option<atomic::Atomic>> {
     Ok(arg.map(|arg| arg.cast_to_string()))
@@ -237,6 +242,7 @@ fn xs_positive_integer(arg: Option<atomic::Atomic>) -> error::Result<Option<atom
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(xs_untyped_atomic),
+        wrap_xpath_fn!(xs_numeric),
         wrap_xpath_fn!(xs_string),
         wrap_xpath_fn!(xs_float),
         wrap_xpath_fn!(xs_double),

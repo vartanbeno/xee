@@ -1,3 +1,5 @@
+// https://www.w3.org/TR/xpath-functions-31/#string-functions
+
 use std::cmp::Ordering;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};

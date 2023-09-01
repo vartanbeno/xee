@@ -177,7 +177,8 @@ impl atomic::Atomic {
         // XXX error should be detectable statically, earlier
         let xs = Xs::by_name(name.namespace(), name.local_name())
             .ok_or(error::Error::UndefinedTypeReference)?;
-        if self.schema_type().derives_from(xs) {
+        let schema_type = self.schema_type();
+        if schema_type.derives_from(xs) || schema_type.matches(xs) {
             Ok(())
         } else {
             Err(error::Error::Type)

@@ -93,14 +93,15 @@ impl atomic::Atomic {
         if xs == Xs::AnyAtomicType {
             return Ok(self);
         }
-        if !xs.derives_from(Xs::AnyAtomicType) {
-            todo!("We can only cast to atomic types right now")
+        if !xs.derives_from(Xs::AnyAtomicType) && xs != Xs::Numeric {
+            todo!("We can only cast to atomic types or numeric types right now")
         }
         if self.schema_type() == xs {
             return Ok(self.clone());
         }
         match xs {
             Xs::UntypedAtomic => Ok(self.cast_to_untyped_atomic()),
+            Xs::Numeric => self.cast_to_numeric(),
             Xs::String => Ok(self.cast_to_string()),
             Xs::Float => self.cast_to_float(),
             Xs::Double => self.cast_to_double(),
