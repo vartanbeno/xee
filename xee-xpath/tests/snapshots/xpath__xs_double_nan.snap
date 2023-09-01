@@ -1,0 +1,17 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"xs:double('NaN')\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Double(
+                    OrderedFloat(
+                        NaN,
+                    ),
+                ),
+            ),
+        ),
+    },
+)

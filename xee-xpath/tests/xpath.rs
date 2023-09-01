@@ -1292,3 +1292,38 @@ fn test_compare_complex_collation_argument() {
         "compare('a', 'b', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"
     ));
 }
+
+#[test]
+fn test_xs_double_nan() {
+    assert_debug_snapshot!(run("xs:double('NaN')"));
+}
+
+#[test]
+fn test_xs_double_nan_ne_to_itself() {
+    assert_debug_snapshot!(run("xs:double('NaN') ne xs:double('NaN')"));
+}
+
+#[test]
+fn test_round_1_1() {
+    assert_debug_snapshot!(run("round(1.1)"));
+}
+
+#[test]
+fn test_negative_round_integer() {
+    assert_debug_snapshot!(run("round(123, -2)"));
+}
+
+#[test]
+fn test_negative_round_integer2() {
+    assert_debug_snapshot!(run("round(151, -2)"));
+}
+
+#[test]
+fn test_negative_round_integer3() {
+    assert_debug_snapshot!(run("round(-123, -2)"));
+}
+
+#[test]
+fn test_negative_round_integer4() {
+    assert_debug_snapshot!(run("round(-151, -2)"));
+}
