@@ -23,6 +23,7 @@ mod types;
 
 pub use atomic_core::Atomic;
 pub(crate) use compare::AtomicCompare;
+pub(crate) use datetime::ToDateTimeStamp;
 pub use datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,

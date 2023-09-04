@@ -209,6 +209,9 @@ impl ToDateTimeStamp for NaiveTimeWithOffset {
         let date_time = chrono::NaiveDate::from_ymd_opt(1972, 12, 31)
             .unwrap()
             .and_time(self.time);
+        // we need to get rid of the offset as we are going to add it
+        // back next
+        let date_time = date_time - offset;
         chrono::DateTime::from_utc(date_time, offset)
     }
 }
