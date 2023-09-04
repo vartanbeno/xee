@@ -82,6 +82,47 @@ fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::
     Ok(target.into())
 }
 
+#[xpath_fn("fn:reverse($arg as item()*) as item()*")]
+fn reverse(arg: &[sequence::Item]) -> sequence::Sequence {
+    let mut items = arg.to_vec();
+    items.reverse();
+    items.into()
+}
+
+#[xpath_fn("fn:subsequence($sourceSeq as item()*, $startingLoc as xs:double) as item()*")]
+fn subsequence2(source_seq: &[sequence::Item], starting_loc: f64) -> Vec<sequence::Item> {
+    if starting_loc.is_nan() {
+        return Vec::new();
+    }
+    let starting_loc = starting_loc - 1.0;
+    let starting_loc = starting_loc.clamp(0.0, (source_seq.len()) as f64);
+    let starting_loc = starting_loc as usize;
+    source_seq[starting_loc..].to_vec()
+}
+
+#[xpath_fn(
+    "fn:subsequence($sourceSeq as item()*, $startingLoc as xs:double, $length as xs:double) as item()*"
+)]
+fn subsequence3(
+    source_seq: &[sequence::Item],
+    starting_loc: f64,
+    length: f64,
+) -> Vec<sequence::Item> {
+    let starting_loc = starting_loc.round();
+    let starting_loc = starting_loc - 1.0;
+    let length = length.round();
+    let end = starting_loc + length;
+    if end.is_nan() {
+        return Vec::new();
+    }
+    let starting_loc = starting_loc.clamp(0.0, (source_seq.len()) as f64);
+    let end = end.clamp(starting_loc, (source_seq.len()) as f64);
+    let starting_loc = starting_loc as usize;
+    let end = end as usize;
+
+    source_seq[starting_loc..end].to_vec()
+}
+
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
 fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
@@ -104,6 +145,9 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(tail),
         wrap_xpath_fn!(insert_before),
         wrap_xpath_fn!(remove),
+        wrap_xpath_fn!(reverse),
+        wrap_xpath_fn!(subsequence2),
+        wrap_xpath_fn!(subsequence3),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
     ]
