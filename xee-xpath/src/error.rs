@@ -502,16 +502,19 @@ pub enum Error {
     ///
     /// Raised by fn:zero-or-one if the supplied value contains more than one item.
     #[error("fn:zero-or-one called with a sequence containing more than one item")]
+    #[diagnostic(code(FORG0003))]
     FORG0003,
     /// fn:one-or-more called with a sequence containing no items.
     ///
     /// Raised by fn:one-or-more if the supplied value is an empty sequence.
     #[error("fn:one-or-more called with a sequence containing no items")]
+    #[diagnostic(code(FORG0004))]
     FORG0004,
     /// fn:exactly-one called with a sequence containing zero or more than one item.
     ///
     /// Raised by fn:exactly-one if the supplied value is not a singleton sequence.
     #[error("fn:exactly-one called with a sequence containing zero or more than one item")]
+    #[diagnostic(code(FORG0005))]
     FORG0005,
     /// Invalid argument type.
     ///

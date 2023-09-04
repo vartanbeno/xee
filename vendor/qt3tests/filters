@@ -69,9 +69,6 @@ functx-fn-namespace-uri-from-QName-all
 functx-fn-normalize-unicode-1
 functx-fn-normalize-unicode-2
 functx-fn-normalize-unicode-all
-functx-fn-one-or-more-1
-functx-fn-one-or-more-2
-functx-fn-one-or-more-all
 functx-fn-replace-1
 functx-fn-replace-10
 functx-fn-replace-11
@@ -117,9 +114,6 @@ functx-fn-tokenize-7
 functx-fn-tokenize-8
 functx-fn-tokenize-9
 functx-fn-tokenize-all
-functx-fn-zero-or-one-1
-functx-fn-zero-or-one-2
-functx-fn-zero-or-one-all
 = app-FunctxFunctx
 functx-functx-add-attributes-1
 functx-functx-add-attributes-2
@@ -2580,7 +2574,6 @@ K-ErrorFunc-9
 K2-ErrorFunc-3
 cbcl-error-026
 cbcl-error-027
-cbcl-error-034
 cbcl-error-035
 fn-error-10
 fn-error-11
@@ -2663,9 +2656,6 @@ fn-escape-html-uri1args-3
 fn-escape-html-uri1args-4
 fn-escape-html-uri1args-5
 = fn-exactly-one
-K-SeqExactlyOneFunc-3
-K-SeqExactlyOneFunc-9
-fn-exactly-one-1
 = fn-exists
 K-SeqExistsFunc-10
 K-SeqExistsFunc-11
@@ -6198,57 +6188,7 @@ fn-numberint1args-1
 fn-numberint1args-2
 fn-numberint1args-3
 = fn-one-or-more
-K-SeqOneOrMoreFunc-3
-K-SeqOneOrMoreFunc-4
-K-SeqOneOrMoreFunc-5
-K-SeqOneOrMoreFunc-6
-K-SeqOneOrMoreFunc-7
-K-SeqOneOrMoreFunc-8
-K2-SeqOneOrMoreFunc-1
 cbcl-one-or-more-004
-cbcl-one-or-more-005
-cbcl-one-or-more-006
-cbcl-one-or-more-007
-fn-one-or-more-1
-fn-one-or-moredbl1args-1
-fn-one-or-moredbl1args-2
-fn-one-or-moredbl1args-3
-fn-one-or-moredec1args-1
-fn-one-or-moredec1args-2
-fn-one-or-moredec1args-3
-fn-one-or-moreflt1args-1
-fn-one-or-moreflt1args-2
-fn-one-or-moreflt1args-3
-fn-one-or-moreint1args-1
-fn-one-or-moreint1args-2
-fn-one-or-moreint1args-3
-fn-one-or-moreintg1args-1
-fn-one-or-moreintg1args-2
-fn-one-or-moreintg1args-3
-fn-one-or-morelng1args-1
-fn-one-or-morelng1args-2
-fn-one-or-morelng1args-3
-fn-one-or-morenint1args-1
-fn-one-or-morenint1args-2
-fn-one-or-morenint1args-3
-fn-one-or-morenni1args-1
-fn-one-or-morenni1args-2
-fn-one-or-morenni1args-3
-fn-one-or-morenpi1args-1
-fn-one-or-morenpi1args-2
-fn-one-or-morenpi1args-3
-fn-one-or-morepint1args-1
-fn-one-or-morepint1args-2
-fn-one-or-morepint1args-3
-fn-one-or-moresht1args-1
-fn-one-or-moresht1args-2
-fn-one-or-moresht1args-3
-fn-one-or-moreulng1args-1
-fn-one-or-moreulng1args-2
-fn-one-or-moreulng1args-3
-fn-one-or-moreusht1args-1
-fn-one-or-moreusht1args-2
-fn-one-or-moreusht1args-3
 = fn-outermost
 fn-outermost-006
 fn-outermost-009
@@ -7487,7 +7427,6 @@ K2-TokenizeFunc-4
 K2-TokenizeFunc-5
 K2-TokenizeFunc-6
 K2-TokenizeFunc-7
-cbcl-fn-tokenize-001
 cbcl-fn-tokenize-002
 fn-tokenize-1
 fn-tokenize-11
@@ -7826,53 +7765,6 @@ fn-year-from-dateTime-4
 = fn-years-from-duration
 fn-years-from-duration-7
 = fn-zero-or-one
-K-SeqZeroOrOneFunc-3
-K-SeqZeroOrOneFunc-4
-K-SeqZeroOrOneFunc-5
-K-SeqZeroOrOneFunc-6
-K-SeqZeroOrOneFunc-7
-K-SeqZeroOrOneFunc-8
-cbcl-if-not-empty-001
-fn-zero-or-one-1
-fn-zero-or-onedbl1args-1
-fn-zero-or-onedbl1args-2
-fn-zero-or-onedbl1args-3
-fn-zero-or-onedec1args-1
-fn-zero-or-onedec1args-2
-fn-zero-or-onedec1args-3
-fn-zero-or-oneflt1args-1
-fn-zero-or-oneflt1args-2
-fn-zero-or-oneflt1args-3
-fn-zero-or-oneint1args-1
-fn-zero-or-oneint1args-2
-fn-zero-or-oneint1args-3
-fn-zero-or-oneintg1args-1
-fn-zero-or-oneintg1args-2
-fn-zero-or-oneintg1args-3
-fn-zero-or-onelng1args-1
-fn-zero-or-onelng1args-2
-fn-zero-or-onelng1args-3
-fn-zero-or-onenint1args-1
-fn-zero-or-onenint1args-2
-fn-zero-or-onenint1args-3
-fn-zero-or-onenni1args-1
-fn-zero-or-onenni1args-2
-fn-zero-or-onenni1args-3
-fn-zero-or-onenpi1args-1
-fn-zero-or-onenpi1args-2
-fn-zero-or-onenpi1args-3
-fn-zero-or-onepint1args-1
-fn-zero-or-onepint1args-2
-fn-zero-or-onepint1args-3
-fn-zero-or-onesht1args-1
-fn-zero-or-onesht1args-2
-fn-zero-or-onesht1args-3
-fn-zero-or-oneulng1args-1
-fn-zero-or-oneulng1args-2
-fn-zero-or-oneulng1args-3
-fn-zero-or-oneusht1args-1
-fn-zero-or-oneusht1args-2
-fn-zero-or-oneusht1args-3
 = map-contains
 map-contains-001
 map-contains-002
@@ -8259,9 +8151,6 @@ FODT0002-9
 FONS0004-2
 FORG0001
 FORG0002
-FORG0003
-FORG0004
-FORG0005
 FORG0006_02
 FORG0006_03
 FORG0006_04
@@ -10571,8 +10460,6 @@ K-CondExpr-4
 K-CondExpr-5
 K-CondExpr-6
 K-CondExpr-7
-cbcl-condexpr-001
-cbcl-condexpr-002
 = prod-InlineFunctionExpr
 inline-fn-004
 inline-fn-014
@@ -10910,10 +10797,6 @@ function-literal-323
 function-literal-324
 function-literal-325
 function-literal-326
-function-literal-327
-function-literal-328
-function-literal-329
-function-literal-330
 function-literal-335
 function-literal-336
 function-literal-337
