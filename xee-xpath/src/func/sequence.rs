@@ -7,6 +7,8 @@ use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::sequence;
 use crate::wrap_xpath_fn;
+use crate::Atomic;
+use crate::DynamicContext;
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
 fn empty(arg: &[sequence::Item]) -> bool {
@@ -131,6 +133,34 @@ fn unordered(source_seq: &sequence::Sequence) -> sequence::Sequence {
     source_seq.clone()
 }
 
+// #[xpath_fn(
+//     "fn:distinct-values($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType*",
+//     collation
+// )]
+// fn distinct_values(arg: &[Atomic], collation: &str) -> Atomic {
+//     todo!();
+// }
+
+#[xpath_fn("fn:index-of($seq as xs:anyAtomicType*, $search as xs:anyAtomicType, $collation as xs:string) as xs:integer*", collation)]
+fn index_of(
+    context: &DynamicContext,
+    seq: &[Atomic],
+    search: Atomic,
+    collation: &str,
+) -> error::Result<Vec<IBig>> {
+    let collation = context.static_context.collation(collation)?;
+    let default_offset = context.implicit_timezone();
+    // TODO: annoying that we have to clone both atoms here
+    let indices = seq.iter().enumerate().filter_map(|(i, atom)| {
+        if atom.equal(&search, &collation, default_offset) {
+            Some((i + 1).into())
+        } else {
+            None
+        }
+    });
+    Ok(indices.collect::<Vec<_>>())
+}
+
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
 fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
@@ -157,6 +187,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(subsequence2),
         wrap_xpath_fn!(subsequence3),
         wrap_xpath_fn!(unordered),
+        wrap_xpath_fn!(index_of),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
     ]

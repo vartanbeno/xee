@@ -8,7 +8,9 @@ use crate::error;
 use crate::occurrence;
 use crate::sequence;
 use crate::stack;
+use crate::string::Collation;
 use crate::xml;
+use crate::Item;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sequence {
@@ -83,6 +85,40 @@ impl Sequence {
         self.stack_value
             .effective_boolean_value()
             .map_err(|_| error::Error::FORG0006)
+    }
+
+    pub(crate) fn deep_equal(
+        &self,
+        other: &Sequence,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+    ) -> error::Result<bool> {
+        // https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
+        if self.is_empty() && other.is_empty() {
+            return Ok(true);
+        }
+        if self.len() != other.len() {
+            return Ok(false);
+        }
+        for (a, b) in self.items().zip(other.items()) {
+            let a = a?;
+            let b = b?;
+            match (a, b) {
+                (Item::Atomic(a), Item::Atomic(b)) => {
+                    if !a.equal(&b, collation, default_offset) {
+                        return Ok(false);
+                    }
+                }
+                (Item::Node(_a), Item::Node(_b)) => {
+                    // need a collation aware deep-equal on Xot
+                    return Ok(false);
+                }
+                _ => {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
     }
 }
 

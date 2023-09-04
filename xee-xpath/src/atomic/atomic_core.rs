@@ -10,6 +10,7 @@ use xee_schema_type::Xs;
 
 use crate::atomic::types::{BinaryType, IntegerType, StringType};
 use crate::error;
+use crate::string::Collation;
 
 use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
@@ -172,6 +173,28 @@ impl Atomic {
 
     pub(crate) fn minus(self) -> error::Result<Atomic> {
         op_unary::unary_minus(self)
+    }
+
+    // use eq to compare for equality, with explicit collation and
+    // default offset (implicit timezone)
+    pub(crate) fn equal(
+        &self,
+        other: &Atomic,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+    ) -> bool {
+        // TODO: clone is annoying
+        let equal = OpEq::atomic_compare(
+            self.clone(),
+            other.clone(),
+            |a, b| collation.compare(a, b),
+            default_offset,
+        );
+        if let Ok(equal) = equal {
+            equal
+        } else {
+            false
+        }
     }
 }
 
