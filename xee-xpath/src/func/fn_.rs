@@ -55,11 +55,6 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     }
 }
 
-#[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[sequence::Item]) -> IBig {
-    arg.len().into()
-}
-
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
     if let Some(arg) = arg {
@@ -76,25 +71,6 @@ fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
     } else {
         None
     }
-}
-
-#[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[sequence::Item]) -> bool {
-    !arg.is_empty()
-}
-
-#[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
-fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
-    if arg.len() == 1 {
-        Ok(arg[0].clone())
-    } else {
-        Err(error::Error::FORG0005)
-    }
-}
-
-#[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[sequence::Item]) -> bool {
-    arg.is_empty()
 }
 
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
@@ -158,11 +134,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         },
         wrap_xpath_fn!(local_name),
         wrap_xpath_fn!(namespace_uri),
-        wrap_xpath_fn!(count),
         wrap_xpath_fn!(root),
-        wrap_xpath_fn!(exists),
-        wrap_xpath_fn!(exactly_one),
-        wrap_xpath_fn!(empty),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
             name: ast::Name::new("untypedAtomic".to_string(), Some(XS_NAMESPACE.to_string())),
@@ -176,6 +148,5 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             function_kind: None,
             func: error,
         },
-        wrap_xpath_fn!(remove),
     ]
 }

@@ -5,6 +5,7 @@ mod duration;
 mod fn_;
 mod math;
 mod numeric;
+mod sequence;
 mod string;
 mod xpath_fn;
 mod xs;
@@ -22,5 +23,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(accessor::static_function_descriptions());
     descriptions.extend(duration::static_function_descriptions());
     descriptions.extend(datetime::static_function_descriptions());
+    descriptions.extend(sequence::static_function_descriptions());
     descriptions
 }
