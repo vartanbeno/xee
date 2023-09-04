@@ -7613,21 +7613,9 @@ fn-translate-21
 fn-translate-22
 = fn-true
 = fn-unordered
-K-SeqUnorderedFunc-3
-K-SeqUnorderedFunc-4
 K-SeqUnorderedFunc-5
-K-SeqUnorderedFunc-6
 K-SeqUnorderedFunc-7
-K-SeqUnorderedFunc-8
-cbcl-fn-unordered-001
-cbcl-fn-unordered-003
-fn-unordered-101
 fn-unordered-102
-fn-unordered-103
-fn-unordered-104
-fn-unordered-105
-fn-unordered-106
-fn-unordered-107
 fn-unordered-mix-args-001
 fn-unordered-mix-args-002
 fn-unordered-mix-args-003
@@ -10967,8 +10955,6 @@ function-literal-291
 function-literal-292
 function-literal-293
 function-literal-294
-function-literal-313
-function-literal-314
 function-literal-315
 function-literal-316
 function-literal-317

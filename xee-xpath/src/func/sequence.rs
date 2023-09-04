@@ -123,6 +123,14 @@ fn subsequence3(
     source_seq[starting_loc..end].to_vec()
 }
 
+#[xpath_fn("fn:unordered($sourceSeq as item()*) as item()*")]
+fn unordered(source_seq: &sequence::Sequence) -> sequence::Sequence {
+    // TODO: annoying that a clone is needed there.
+    // would be better if we could get an Rc of sequence so the clone is
+    // much more cheap
+    source_seq.clone()
+}
+
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
 fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
@@ -148,6 +156,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(reverse),
         wrap_xpath_fn!(subsequence2),
         wrap_xpath_fn!(subsequence3),
+        wrap_xpath_fn!(unordered),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
     ]
