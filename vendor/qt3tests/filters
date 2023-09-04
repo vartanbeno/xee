@@ -34,13 +34,6 @@ functx-fn-index-of-3
 functx-fn-index-of-4
 functx-fn-index-of-5
 functx-fn-index-of-6
-functx-fn-insert-before-1
-functx-fn-insert-before-2
-functx-fn-insert-before-3
-functx-fn-insert-before-4
-functx-fn-insert-before-5
-functx-fn-insert-before-6
-functx-fn-insert-before-all
 functx-fn-iri-to-uri-1
 functx-fn-local-name-from-QName-1
 functx-fn-local-name-from-QName-2
@@ -4094,11 +4087,8 @@ fn-has-children-035
 fn-has-children-036
 fn-has-children-037
 = fn-head
-head-001
 head-002
-head-003
 head-004
-head-005
 head-006
 = fn-hours-from-dateTime
 = fn-hours-from-duration
@@ -4257,26 +4247,11 @@ fn-innermost-053
 fn-innermost-054
 fn-innermost-059
 = fn-insert-before
-K-SeqInsertBeforeFunc-10
-K-SeqInsertBeforeFunc-11
-K-SeqInsertBeforeFunc-12
-K-SeqInsertBeforeFunc-13
-K-SeqInsertBeforeFunc-14
-K-SeqInsertBeforeFunc-15
-K-SeqInsertBeforeFunc-16
 K-SeqInsertBeforeFunc-17
 K-SeqInsertBeforeFunc-18
 K-SeqInsertBeforeFunc-19
 K-SeqInsertBeforeFunc-20
 K-SeqInsertBeforeFunc-21
-K-SeqInsertBeforeFunc-4
-K-SeqInsertBeforeFunc-5
-K-SeqInsertBeforeFunc-6
-K-SeqInsertBeforeFunc-7
-K-SeqInsertBeforeFunc-8
-K-SeqInsertBeforeFunc-9
-cbcl-fn-insert-before-001
-cbcl-fn-insert-before-002
 fn-insert-before-mix-args-001
 fn-insert-before-mix-args-002
 fn-insert-before-mix-args-003
@@ -6798,7 +6773,6 @@ K-SeqRemoveFunc-21
 K-SeqRemoveFunc-22
 K-SeqRemoveFunc-23
 K-SeqRemoveFunc-24
-K-SeqRemoveFunc-4
 fn-remove-mix-args-001
 fn-remove-mix-args-002
 fn-remove-mix-args-003
@@ -7678,8 +7652,6 @@ fn-sumusht3args-7
 = fn-tail
 tail-001
 tail-002
-tail-003
-tail-004
 tail-005
 = fn-timezone-from-date
 cbcl-timezone-from-date-001
@@ -11167,12 +11139,6 @@ function-literal-291
 function-literal-292
 function-literal-293
 function-literal-294
-function-literal-299
-function-literal-300
-function-literal-301
-function-literal-302
-function-literal-303
-function-literal-304
 function-literal-307
 function-literal-308
 function-literal-309
