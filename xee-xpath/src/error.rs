@@ -363,18 +363,21 @@ pub enum Error {
     /// Raised when casting to date/time datatypes, or performing arithmetic
     /// with date/time values, if arithmetic overflow or underflow occurs.
     #[error("Overflow/underflow in date/time operation")]
+    #[diagnostic(code(FODT0001))]
     FODT0001,
     /// err:FODT0002, Overflow/underflow in duration operation.
     ///
     /// Raised when casting to duration datatypes, or performing arithmetic
     /// with duration values, if arithmetic overflow or underflow occurs.
     #[error("Overflow/underflow in duration operation")]
+    #[diagnostic(code(FODT0002))]
     FODT0002,
     /// Invalid timezone value.
     ///
     /// Raised by adjust-date-to-timezone and related functions if the supplied
     /// timezone is invalid.
     #[error("Invalid timezone value")]
+    #[diagnostic(code(FODT0003))]
     FODT0003,
     /// Unidentified error.
     ///

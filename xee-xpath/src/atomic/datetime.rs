@@ -107,6 +107,17 @@ impl TryFrom<Atomic> for Duration {
     }
 }
 
+impl TryFrom<Atomic> for chrono::Duration {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::DayTimeDuration(d) => Ok(*d.as_ref()),
+            _ => Err(error::Error::Type),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,

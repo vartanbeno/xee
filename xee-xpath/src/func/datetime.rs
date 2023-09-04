@@ -162,6 +162,39 @@ fn timezone_from_time(arg: Option<NaiveTimeWithOffset>) -> error::Result<Option<
     }
 }
 
+#[xpath_fn("fn:adjust-dateTime-to-timezone($arg as xs:dateTime?, $timezone as xs:dayTimeDuration?) as xs:dateTime?")]
+fn adjust_date_time_to_timezone2(
+    arg: Option<NaiveDateTimeWithOffset>,
+    timezone: Option<chrono::Duration>,
+) -> error::Result<Option<NaiveDateTimeWithOffset>> {
+    match (arg, timezone) {
+        (Some(arg), Some(timezone)) => {
+            if timezone > chrono::Duration::hours(14)
+                || timezone < chrono::Duration::hours(-14)
+                || timezone.num_seconds() % (60 * 60) != 0
+            {
+                return Err(error::Error::FODT0003);
+            }
+            let offset = chrono::FixedOffset::east_opt(
+                timezone
+                    .num_seconds()
+                    .try_into()
+                    .expect("too many seconds to convert"),
+            )
+            .unwrap();
+            let date_time = if let Some(arg_offset) = arg.offset {
+                arg.date_time - arg_offset + offset
+            } else {
+                arg.date_time
+            };
+            // let date_time = date_time + offset;
+            Ok(Some(NaiveDateTimeWithOffset::new(date_time, Some(offset))))
+        }
+        (Some(arg), None) => Ok(Some(NaiveDateTimeWithOffset::new(arg.date_time, None))),
+        (None, _) => Ok(None),
+    }
+}
+
 fn seconds(time: impl Timelike + SubsecRound + Copy) -> Decimal {
     let nanoseconds: Decimal = time.round_subsecs(3).nanosecond().into();
     let seconds: Decimal = time.second().into();
@@ -190,5 +223,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(minutes_from_time),
         wrap_xpath_fn!(seconds_from_time),
         wrap_xpath_fn!(timezone_from_time),
+        wrap_xpath_fn!(adjust_date_time_to_timezone2),
     ]
 }
