@@ -37,24 +37,6 @@ fn bound_last(
     Ok(arguments[0].clone())
 }
 
-#[xpath_fn("fn:local-name($arg as node()?) as xs:string", context_first)]
-fn local_name(context: &DynamicContext, arg: Option<xml::Node>) -> String {
-    if let Some(arg) = arg {
-        arg.local_name(context.xot)
-    } else {
-        "".to_string()
-    }
-}
-
-#[xpath_fn("fn:namespace-uri($arg as node()?) as xs:anyURI", context_first)]
-fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> String {
-    if let Some(arg) = arg {
-        arg.namespace_uri(context.xot)
-    } else {
-        "".to_string()
-    }
-}
-
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
     if let Some(arg) = arg {
@@ -120,8 +102,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },
-        wrap_xpath_fn!(local_name),
-        wrap_xpath_fn!(namespace_uri),
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {

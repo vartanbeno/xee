@@ -6057,7 +6057,6 @@ fn-months-from-duration-7
 = fn-name
 fn-name-28
 = fn-namespace-uri
-fn-namespace-uri-16
 = fn-namespace-uri-for-prefix
 = fn-namespace-uri-from-QName
 K-NamespaceURIFromQNameFunc-3
