@@ -37,24 +37,6 @@ fn bound_last(
     Ok(arguments[0].clone())
 }
 
-#[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
-fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
-    if let Some(arg) = arg {
-        let xot_node = match arg {
-            xml::Node::Xot(node) => node,
-            xml::Node::Attribute(node, _) => node,
-            xml::Node::Namespace(node, _) => node,
-        };
-        // XXX there should be a xot.root() to obtain this in one step
-        let top = context.xot.top_element(xot_node);
-        let root = context.xot.parent(top).unwrap();
-
-        Some(xml::Node::Xot(root))
-    } else {
-        None
-    }
-}
-
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
 fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
     if let Some(arg) = arg {
@@ -102,7 +84,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },
-        wrap_xpath_fn!(root),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
             name: ast::Name::new(

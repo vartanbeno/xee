@@ -44,10 +44,43 @@ fn namespace_uri(context: &DynamicContext, arg: Option<xml::Node>) -> atomic::At
     }
 }
 
+#[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
+fn root(context: &DynamicContext, arg: Option<xml::Node>) -> Option<xml::Node> {
+    if let Some(arg) = arg {
+        let xot_node = match arg {
+            xml::Node::Xot(node) => node,
+            xml::Node::Attribute(node, _) => node,
+            xml::Node::Namespace(node, _) => node,
+        };
+        // XXX there should be a xot.root() to obtain this in one step
+        let top = context.xot.top_element(xot_node);
+        let root = context.xot.parent(top).unwrap();
+
+        Some(xml::Node::Xot(root))
+    } else {
+        None
+    }
+}
+
+#[xpath_fn("fn:has-children($node as node()?) as xs:boolean", context_first)]
+fn has_children(context: &DynamicContext, node: Option<xml::Node>) -> bool {
+    if let Some(node) = node {
+        match node {
+            xml::Node::Xot(node) => context.xot.first_child(node).is_some(),
+            xml::Node::Attribute(_, _) => false,
+            xml::Node::Namespace(_, _) => false,
+        }
+    } else {
+        false
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(name),
         wrap_xpath_fn!(local_name),
         wrap_xpath_fn!(namespace_uri),
+        wrap_xpath_fn!(root),
+        wrap_xpath_fn!(has_children),
     ]
 }

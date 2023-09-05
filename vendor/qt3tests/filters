@@ -4025,33 +4025,6 @@ generate-id-006
 generate-id-010
 generate-id-019
 = fn-has-children
-fn-has-children-005
-fn-has-children-006
-fn-has-children-007
-fn-has-children-009
-fn-has-children-011
-fn-has-children-014
-fn-has-children-015
-fn-has-children-016
-fn-has-children-017
-fn-has-children-018
-fn-has-children-019
-fn-has-children-022
-fn-has-children-023
-fn-has-children-024
-fn-has-children-025
-fn-has-children-026
-fn-has-children-027
-fn-has-children-028
-fn-has-children-029
-fn-has-children-030
-fn-has-children-031
-fn-has-children-032
-fn-has-children-033
-fn-has-children-034
-fn-has-children-035
-fn-has-children-036
-fn-has-children-037
 = fn-head
 head-002
 head-006
@@ -10718,10 +10691,6 @@ function-literal-283
 function-literal-284
 function-literal-285
 function-literal-286
-function-literal-287
-function-literal-288
-function-literal-289
-function-literal-290
 function-literal-291
 function-literal-292
 function-literal-293
