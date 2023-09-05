@@ -135,14 +135,14 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
                     xml::Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
-                            let (_, name_str) = xot.name_ns_str(name_id);
+                            let (name_str, _) = xot.name_ns_str(name_id);
                             name_str == local_name
                         } else {
                             false
                         }
                     }
                     xml::Node::Attribute(_, attr_name) => {
-                        let (_, name_str) = xot.name_ns_str(attr_name);
+                        let (name_str, _) = xot.name_ns_str(attr_name);
                         name_str == local_name
                     }
                     xml::Node::Namespace(..) => false,
@@ -151,14 +151,14 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xml::
                     xml::Node::Xot(node) => {
                         if let Some(element) = xot.element(node) {
                             let name_id = element.name();
-                            let (namespace_str, _) = xot.name_ns_str(name_id);
+                            let (_, namespace_str) = xot.name_ns_str(name_id);
                             namespace_str == uri
                         } else {
                             false
                         }
                     }
                     xml::Node::Attribute(_, attr_name) => {
-                        let (namespace_str, _) = xot.name_ns_str(attr_name);
+                        let (_, namespace_str) = xot.name_ns_str(attr_name);
                         namespace_str == uri
                     }
                     xml::Node::Namespace(..) => false,

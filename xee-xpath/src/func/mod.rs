@@ -4,6 +4,7 @@ mod datetime;
 mod duration;
 mod fn_;
 mod math;
+mod node;
 mod numeric;
 mod sequence;
 mod string;
@@ -24,5 +25,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(duration::static_function_descriptions());
     descriptions.extend(datetime::static_function_descriptions());
     descriptions.extend(sequence::static_function_descriptions());
+    descriptions.extend(node::static_function_descriptions());
     descriptions
 }

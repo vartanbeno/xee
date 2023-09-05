@@ -149,10 +149,17 @@ impl Name {
 
     pub fn to_full_name(&self) -> String {
         if let Some(prefix) = &self.prefix {
-            format!("{}:{}", prefix, self.name)
+            if !prefix.is_empty() {
+                format!("{}:{}", prefix, self.name)
+            } else {
+                self.name.clone()
+            }
         } else if let Some(namespace) = &self.namespace {
-            // TODO: needs some kind of test
-            format!("Q{{{}}}{}", namespace, self.name)
+            if !namespace.is_empty() {
+                format!("Q{{{}}}{}", namespace, self.name)
+            } else {
+                self.name.clone()
+            }
         } else {
             self.name.clone()
         }

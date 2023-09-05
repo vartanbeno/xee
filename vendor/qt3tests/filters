@@ -1941,7 +1941,6 @@ fn-base-uri-3
 = fn-boolean
 K-SeqBooleanFunc-16
 K-SeqBooleanFunc-32
-boolean-001
 boolean-010
 boolean-010b
 boolean-011
@@ -4055,7 +4054,6 @@ fn-has-children-036
 fn-has-children-037
 = fn-head
 head-002
-head-004
 head-006
 = fn-hours-from-dateTime
 = fn-hours-from-duration
@@ -4491,14 +4489,7 @@ fn-load-xquery-module-073
 fn-load-xquery-module-074
 fn-load-xquery-module-915
 = fn-local-name
-fn-local-name-13a
-fn-local-name-74
-fn-local-name-75
-fn-local-name-76
 fn-local-name-78
-fn-local-name-79
-fn-local-name-80
-fn-local-name-81
 = fn-local-name-from-QName
 K-LocalNameFromQNameFunc-3
 K-LocalNameFromQNameFunc-4
@@ -6064,36 +6055,7 @@ fn-month-from-dateTime-4
 = fn-months-from-duration
 fn-months-from-duration-7
 = fn-name
-K-NameFunc-2
-K-NameFunc-3
-fn-name-1
-fn-name-10
-fn-name-11
-fn-name-12
-fn-name-13
-fn-name-14
-fn-name-15
-fn-name-16
-fn-name-17
-fn-name-18
-fn-name-2
-fn-name-21
-fn-name-22
-fn-name-23
-fn-name-24
-fn-name-25
-fn-name-26
 fn-name-28
-fn-name-29
-fn-name-3
-fn-name-30
-fn-name-31
-fn-name-4
-fn-name-5
-fn-name-6
-fn-name-7
-fn-name-8
-fn-name-9
 = fn-namespace-uri
 fn-namespace-uri-16
 = fn-namespace-uri-for-prefix
@@ -7089,10 +7051,6 @@ K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
 K-StringFunc-5
-fn-string-24
-fn-string-25
-fn-string-26
-fn-string-29
 fn-string-31
 fn-string-32
 fn-string-33
@@ -10649,13 +10607,8 @@ K2-NameTest-83
 K2-NameTest-84
 K2-NameTest-85
 K2-NameTest-86
-NodeTest003
-nametest-12
 nametest-14
-nametest-17
 = prod-NamedFunctionRef
-function-literal-002
-function-literal-004
 function-literal-005
 function-literal-006
 function-literal-007
@@ -10758,10 +10711,6 @@ function-literal-259
 function-literal-260
 function-literal-261
 function-literal-262
-function-literal-263
-function-literal-264
-function-literal-265
-function-literal-266
 function-literal-275
 function-literal-276
 function-literal-277
@@ -11009,7 +10958,6 @@ orderdecl-14
 orderdecl-5
 orderdecl-6
 = prod-ParenthesizedExpr
-Parenexpr-19
 = prod-PathExpr
 PathExpr-10
 PathExpr-15
