@@ -52,3 +52,19 @@ impl Default for Namespaces<'_> {
         Self::new(None, Some(FN_NAMESPACE))
     }
 }
+
+pub trait NamespaceLookup {
+    fn by_prefix(&self, prefix: &str) -> Option<&str>;
+}
+
+impl NamespaceLookup for Namespaces<'_> {
+    fn by_prefix(&self, prefix: &str) -> Option<&str> {
+        self.namespaces.get(prefix).copied()
+    }
+}
+
+impl<T: NamespaceLookup> NamespaceLookup for &T {
+    fn by_prefix(&self, prefix: &str) -> Option<&str> {
+        (**self).by_prefix(prefix)
+    }
+}

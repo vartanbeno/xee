@@ -105,29 +105,17 @@ fn error(
     Err(error::Error::FOER0000)
 }
 
-#[xpath_fn("fn:remove($target as item()*, $position as xs:integer) as item()*")]
-fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::Sequence> {
-    let position: usize = position.try_into().map_err(|_| error::Error::Overflow)?;
-    if position == 0 || position > target.len() {
-        // TODO: unfortunate we can't just copy sequence
-        return Ok(target.to_vec().into());
-    }
-    let mut target = target.to_vec();
-    target.remove(position - 1);
-    Ok(target.into())
-}
-
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(my_function),
         StaticFunctionDescription {
-            name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
+            name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string()), None),
             arity: 0,
             function_kind: Some(FunctionKind::Position),
             func: bound_position,
         },
         StaticFunctionDescription {
-            name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string())),
+            name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
             arity: 0,
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
@@ -137,13 +125,17 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
-            name: ast::Name::new("untypedAtomic".to_string(), Some(XS_NAMESPACE.to_string())),
+            name: ast::Name::new(
+                "untypedAtomic".to_string(),
+                Some(XS_NAMESPACE.to_string()),
+                None,
+            ),
             arity: 1,
             function_kind: None,
             func: untyped_atomic,
         },
         StaticFunctionDescription {
-            name: ast::Name::new("error".to_string(), Some(FN_NAMESPACE.to_string())),
+            name: ast::Name::new("error".to_string(), Some(FN_NAMESPACE.to_string()), None),
             arity: 0,
             function_kind: None,
             func: error,

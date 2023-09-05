@@ -6129,16 +6129,7 @@ fn-nilled-28
 fn-nilled-3
 fn-nilled-30
 = fn-node-name
-K-NodeNameFunc-1a
-K-NodeNameFunc-3
-K2-NodeNameFunc-2
-K2-NodeNameFunc-3
-K3-NodeNameFunc-1
-fn-node-name-1
-fn-node-name-2
 fn-node-name-3
-fn-node-name-30
-fn-node-name-32
 = fn-normalize-space
 K-NormalizeSpaceFunc-9
 fn-normalize-space0args-1
@@ -10663,9 +10654,7 @@ nametest-12
 nametest-14
 nametest-17
 = prod-NamedFunctionRef
-function-literal-001
 function-literal-002
-function-literal-003
 function-literal-004
 function-literal-005
 function-literal-006

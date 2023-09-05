@@ -4,11 +4,9 @@ use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use xot::Xot;
 
+use crate::namespaces::NamespaceLookup;
 pub use crate::operator::BinaryOperator;
-use crate::{
-    namespaces::Namespaces,
-    span::{Spanned, WithSpan},
-};
+use crate::span::{Spanned, WithSpan};
 
 pub type Span = SimpleSpan;
 
@@ -91,15 +89,15 @@ impl PartialEq for Name {
 }
 
 impl Name {
-    pub fn new(name: String, namespace: Option<String>) -> Self {
+    pub fn new(name: String, namespace: Option<String>, prefix: Option<String>) -> Self {
         Name {
             name,
             namespace,
-            prefix: None,
+            prefix,
         }
     }
 
-    pub fn prefixed(prefix: &str, name: &str, namespaces: &Namespaces) -> Option<Self> {
+    pub fn prefixed(prefix: &str, name: &str, namespaces: impl NamespaceLookup) -> Option<Self> {
         let namespace = namespaces.by_prefix(prefix)?;
         Some(Name {
             name: name.to_string(),

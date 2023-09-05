@@ -101,8 +101,12 @@ impl<'a> IrConverter<'a> {
             context_scope: Vec::new(),
             src,
             static_context,
-            fn_position: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string())),
-            fn_last: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string())),
+            fn_position: ast::Name::new(
+                "position".to_string(),
+                Some(FN_NAMESPACE.to_string()),
+                None,
+            ),
+            fn_last: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
         }
     }
 

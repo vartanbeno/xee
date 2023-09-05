@@ -457,7 +457,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     // spec https://www.w3.org/TR/xpath-functions-31/#func-concat
     for arity in 2..MAX_CONCAT_ARITY {
         r.push(StaticFunctionDescription {
-            name: ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string())),
+            name: ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None),
             arity,
             function_kind: None,
             func: concat,

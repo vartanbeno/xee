@@ -736,7 +736,7 @@ fn root_step(span: Span) -> ast::StepExprS {
 
     ast::StepExpr::PrimaryExpr(
         ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string()))
+            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string()), None)
                 .with_empty_span(),
             arguments: vec![path_arg],
         })

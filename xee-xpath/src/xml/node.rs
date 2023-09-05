@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::vec;
 use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 use xot::Xot;
 
 use crate::atomic;
@@ -42,7 +43,7 @@ impl Node {
         }
     }
 
-    pub(crate) fn node_name(&self, xot: &Xot) -> Option<xot::NameId> {
+    pub(crate) fn node_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         match self {
             Node::Xot(node) => match xot.value(*node) {
                 xot::Value::Element(element) => Some(element.name()),
@@ -60,8 +61,21 @@ impl Node {
         }
     }
 
+    pub(crate) fn node_name(&self, xot: &Xot) -> Option<ast::Name> {
+        let name_id = self.node_name_id(xot)?;
+        let namespace_id = xot.namespace_for_name(name_id);
+        let (local_name, uri) = xot.name_ns_str(name_id);
+        let prefix_id = xot.prefix_for_namespace(self.xot_node(), namespace_id);
+        let prefix = prefix_id.map(|id| xot.prefix_str(id).to_string());
+        Some(ast::Name::new(
+            local_name.to_string(),
+            Some(uri.to_string()),
+            prefix,
+        ))
+    }
+
     pub(crate) fn local_name(&self, xot: &Xot) -> String {
-        if let Some(name) = self.node_name(xot) {
+        if let Some(name) = self.node_name_id(xot) {
             let (local_name, _uri) = xot.name_ns_str(name);
             local_name.to_string()
         } else {
@@ -70,7 +84,7 @@ impl Node {
     }
 
     pub(crate) fn namespace_uri(&self, xot: &Xot) -> String {
-        if let Some(name) = self.node_name(xot) {
+        if let Some(name) = self.node_name_id(xot) {
             let (_local_name, uri) = xot.name_ns_str(name);
             uri.to_string()
         } else {
