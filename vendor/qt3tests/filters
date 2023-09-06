@@ -1963,8 +1963,6 @@ K-CodepointToStringFunc-7
 cbcl-codepoints-to-string-008
 cbcl-codepoints-to-string-009
 cbcl-codepoints-to-string-011
-cbcl-codepoints-to-string-015
-cbcl-codepoints-to-string-016
 cbcl-codepoints-to-string-021
 cbcl-codepoints-to-string-027
 fn-codepoints-to-string-1
@@ -2148,67 +2146,13 @@ fn-day-from-dateTime-4
 = fn-days-from-duration
 fn-days-from-duration-7
 = fn-deep-equal
-K-SeqDeepEqualFunc-10
-K-SeqDeepEqualFunc-11
-K-SeqDeepEqualFunc-12
-K-SeqDeepEqualFunc-13
-K-SeqDeepEqualFunc-14
-K-SeqDeepEqualFunc-15
-K-SeqDeepEqualFunc-16
 K-SeqDeepEqualFunc-17
-K-SeqDeepEqualFunc-18
-K-SeqDeepEqualFunc-19
-K-SeqDeepEqualFunc-20
 K-SeqDeepEqualFunc-21
-K-SeqDeepEqualFunc-22
-K-SeqDeepEqualFunc-23
-K-SeqDeepEqualFunc-24
-K-SeqDeepEqualFunc-25
-K-SeqDeepEqualFunc-26
-K-SeqDeepEqualFunc-27
-K-SeqDeepEqualFunc-28
-K-SeqDeepEqualFunc-29
-K-SeqDeepEqualFunc-30
-K-SeqDeepEqualFunc-31
-K-SeqDeepEqualFunc-32
-K-SeqDeepEqualFunc-33
-K-SeqDeepEqualFunc-34
-K-SeqDeepEqualFunc-35
-K-SeqDeepEqualFunc-36
-K-SeqDeepEqualFunc-37
-K-SeqDeepEqualFunc-38
-K-SeqDeepEqualFunc-39
-K-SeqDeepEqualFunc-4
-K-SeqDeepEqualFunc-40
-K-SeqDeepEqualFunc-41
-K-SeqDeepEqualFunc-42
-K-SeqDeepEqualFunc-43
-K-SeqDeepEqualFunc-44
-K-SeqDeepEqualFunc-45
-K-SeqDeepEqualFunc-46
-K-SeqDeepEqualFunc-47
-K-SeqDeepEqualFunc-48
-K-SeqDeepEqualFunc-49
-K-SeqDeepEqualFunc-5
-K-SeqDeepEqualFunc-50
-K-SeqDeepEqualFunc-51
-K-SeqDeepEqualFunc-52
-K-SeqDeepEqualFunc-53
-K-SeqDeepEqualFunc-54
-K-SeqDeepEqualFunc-55
-K-SeqDeepEqualFunc-6
-K-SeqDeepEqualFunc-64
-K-SeqDeepEqualFunc-65
-K-SeqDeepEqualFunc-7
-K-SeqDeepEqualFunc-8
-K-SeqDeepEqualFunc-9
 K2-SeqDeepEqualFunc-1
-K2-SeqDeepEqualFunc-35
 K2-SeqDeepEqualFunc-4
 K2-SeqDeepEqualFunc-40
 K2-SeqDeepEqualFunc-43
 cbcl-deep-equal-007
-cbcl-deep-equal-008
 fn-deep-equal-arrays-1
 fn-deep-equal-arrays-11
 fn-deep-equal-arrays-12
@@ -2240,102 +2184,8 @@ fn-deep-equal-maps-6
 fn-deep-equal-maps-7
 fn-deep-equal-maps-8
 fn-deep-equal-maps-9
-fn-deep-equal-mix-args-001
-fn-deep-equal-mix-args-002
-fn-deep-equal-mix-args-003
-fn-deep-equal-mix-args-004
-fn-deep-equal-mix-args-005
-fn-deep-equal-mix-args-006
-fn-deep-equal-mix-args-007
-fn-deep-equal-mix-args-008
-fn-deep-equal-mix-args-009
-fn-deep-equal-mix-args-010
-fn-deep-equal-mix-args-011
-fn-deep-equal-mix-args-012
-fn-deep-equal-mix-args-013
-fn-deep-equal-mix-args-014
-fn-deep-equal-mix-args-015
-fn-deep-equal-mix-args-016
-fn-deep-equal-mix-args-017
-fn-deep-equal-mix-args-018
-fn-deep-equal-mix-args-019
-fn-deep-equal-mix-args-020
-fn-deep-equal-mix-args-021
-fn-deep-equal-mix-args-022
 fn-deep-equal-mix-args-023
-fn-deep-equal-mix-args-024
-fn-deep-equal-mix-args-025
 fn-deep-equal-mix-args-026
-fn-deep-equal-mix-args-027
-fn-deep-equal-mix-args-028
-fn-deep-equal-mix-args-029
-fn-deep-equal-mix-args-030
-fn-deep-equal-mix-args-031
-fn-deep-equaldbl2args-1
-fn-deep-equaldbl2args-2
-fn-deep-equaldbl2args-3
-fn-deep-equaldbl2args-4
-fn-deep-equaldbl2args-5
-fn-deep-equaldec2args-1
-fn-deep-equaldec2args-2
-fn-deep-equaldec2args-3
-fn-deep-equaldec2args-4
-fn-deep-equaldec2args-5
-fn-deep-equalflt2args-1
-fn-deep-equalflt2args-2
-fn-deep-equalflt2args-3
-fn-deep-equalflt2args-4
-fn-deep-equalflt2args-5
-fn-deep-equalint2args-1
-fn-deep-equalint2args-2
-fn-deep-equalint2args-3
-fn-deep-equalint2args-4
-fn-deep-equalint2args-5
-fn-deep-equalintg2args-1
-fn-deep-equalintg2args-2
-fn-deep-equalintg2args-3
-fn-deep-equalintg2args-4
-fn-deep-equalintg2args-5
-fn-deep-equallng2args-1
-fn-deep-equallng2args-2
-fn-deep-equallng2args-3
-fn-deep-equallng2args-4
-fn-deep-equallng2args-5
-fn-deep-equalnint2args-1
-fn-deep-equalnint2args-2
-fn-deep-equalnint2args-3
-fn-deep-equalnint2args-4
-fn-deep-equalnint2args-5
-fn-deep-equalnni2args-1
-fn-deep-equalnni2args-2
-fn-deep-equalnni2args-3
-fn-deep-equalnni2args-4
-fn-deep-equalnni2args-5
-fn-deep-equalnpi2args-1
-fn-deep-equalnpi2args-2
-fn-deep-equalnpi2args-3
-fn-deep-equalnpi2args-4
-fn-deep-equalnpi2args-5
-fn-deep-equalpint2args-1
-fn-deep-equalpint2args-2
-fn-deep-equalpint2args-3
-fn-deep-equalpint2args-4
-fn-deep-equalpint2args-5
-fn-deep-equalsht2args-1
-fn-deep-equalsht2args-2
-fn-deep-equalsht2args-3
-fn-deep-equalsht2args-4
-fn-deep-equalsht2args-5
-fn-deep-equalulng2args-1
-fn-deep-equalulng2args-2
-fn-deep-equalulng2args-3
-fn-deep-equalulng2args-4
-fn-deep-equalulng2args-5
-fn-deep-equalusht2args-1
-fn-deep-equalusht2args-2
-fn-deep-equalusht2args-3
-fn-deep-equalusht2args-4
-fn-deep-equalusht2args-5
 = fn-default-collation
 K-ContextDefaultCollationFunc-3
 cbcl-default-collation-001
@@ -4094,49 +3944,31 @@ fn-in-scope-prefixes-24
 fn-in-scope-prefixes-25
 fn-in-scope-prefixes-26
 = fn-index-of
-K-SeqIndexOfFunc-15
-K-SeqIndexOfFunc-18
-K-SeqIndexOfFunc-20
-K-SeqIndexOfFunc-21
 = fn-innermost
-fn-innermost-006
 fn-innermost-009
-fn-innermost-012
 fn-innermost-013
-fn-innermost-014
 fn-innermost-015
 fn-innermost-016
-fn-innermost-023
 fn-innermost-024
 fn-innermost-025
-fn-innermost-026
 fn-innermost-027
 fn-innermost-028
-fn-innermost-029
 fn-innermost-030
 fn-innermost-031
-fn-innermost-032
 fn-innermost-033
 fn-innermost-034
-fn-innermost-035
 fn-innermost-036
-fn-innermost-037
 fn-innermost-038
-fn-innermost-039
 fn-innermost-040
-fn-innermost-041
 fn-innermost-042
-fn-innermost-043
 fn-innermost-044
 fn-innermost-045
 fn-innermost-046
-fn-innermost-047
 fn-innermost-048
 fn-innermost-049
 fn-innermost-050
 fn-innermost-051
 fn-innermost-052
-fn-innermost-053
 fn-innermost-054
 fn-innermost-059
 = fn-insert-before
@@ -4389,8 +4221,6 @@ K-ContextLastFunc-24
 K-ContextLastFunc-25
 K-ContextLastFunc-26
 K-ContextLastFunc-27
-K-ContextLastFunc-3
-K-ContextLastFunc-4
 K-ContextLastFunc-5
 K-ContextLastFunc-6
 K-ContextLastFunc-7
@@ -6107,7 +5937,6 @@ fn-normalize-unicode2args-6
 K-NotFunc-10
 cbcl-not-003
 = fn-number
-K-NodeNumberFunc-16
 fn-number-7
 fn-numberint1args-1
 fn-numberint1args-2
@@ -6563,7 +6392,6 @@ fn-random-number-generator-7
 fn-random-number-generator-8
 fn-random-number-generator-9
 = fn-remove
-K-SeqRemoveFunc-16
 K-SeqRemoveFunc-19
 K-SeqRemoveFunc-20
 K-SeqRemoveFunc-21
@@ -6721,10 +6549,6 @@ fn-resolve-uri-7
 fn-resolve-uri-8
 fn-resolve-uri-9
 = fn-reverse
-K-SeqReverseFunc-12
-K-SeqReverseFunc-13
-K-SeqReverseFunc-14
-K-SeqReverseFunc-19
 K-SeqReverseFunc-20
 K-SeqReverseFunc-21
 K-SeqReverseFunc-8
@@ -7040,11 +6864,7 @@ fn-string-join-29
 = fn-string-length
 fn-string-length-24
 = fn-string-to-codepoints
-K-StringToCodepointFunc-10
-K-StringToCodepointFunc-12
-K-StringToCodepointFunc-9
 fn-string-to-codepoints-10
-fn-string-to-codepoints-15
 fn-string-to-codepoints-3
 fn-string-to-codepoints-4
 fn-string-to-codepoints-5
@@ -7422,7 +7242,6 @@ fn-translate-22
 = fn-true
 = fn-unordered
 K-SeqUnorderedFunc-5
-K-SeqUnorderedFunc-7
 fn-unordered-102
 fn-unordered-mix-args-001
 fn-unordered-mix-args-002
@@ -8038,7 +7857,6 @@ FOCA0005_2
 FOCA0005_3
 FOCA0005_4
 FOCH0001
-FOCH0002_2
 FOCH0002_3
 FOCH0002_6
 FOCH0002_7
@@ -8179,7 +7997,6 @@ surrogates15a
 UCA-misc-lang-003 # ICU doesn't seem to support this
 UCA-params-034
 = misc-XMLEdition
-line-ending-P002
 = op-NOTATION-equal
 = op-QName-equal
 K-QNameEQ-1
@@ -8369,7 +8186,6 @@ op-concatusht2args-3
 op-concatusht2args-4
 op-concatusht2args-5
 = op-concatenate
-K-commaOp-1
 constSeq-1
 constSeq-10
 constSeq-11
@@ -8780,9 +8596,6 @@ cbcl-time-less-than-005
 cbcl-time-less-than-009
 cbcl-time-less-than-010
 = op-to
-K-RangeExpr-19
-K-RangeExpr-20
-K-RangeExpr-21
 K-RangeExpr-31
 K-RangeExpr-32
 RangeExpr-406
@@ -8999,7 +8812,6 @@ following-13
 following-15
 following-16
 following-19
-following-20
 following-22
 following-3
 following-4
@@ -9028,7 +8840,6 @@ preceding-13
 preceding-15
 preceding-16
 preceding-19
-preceding-20
 preceding-3
 preceding-4
 preceding-8
@@ -10147,8 +9958,6 @@ ForExpr012
 ForExpr013
 ForExpr015
 ForExpr016
-K-ForExprWithout-10
-K-ForExprWithout-11
 K-ForExprWithout-18
 K-ForExprWithout-20
 K-ForExprWithout-22
@@ -10157,7 +9966,6 @@ K-ForExprWithout-27
 K-ForExprWithout-30
 K-ForExprWithout-33
 K-ForExprWithout-49
-K-ForExprWithout-5
 K-ForExprWithout-55
 K-ForExprWithout-56
 K2-ForExprWithout-40
@@ -10652,18 +10460,12 @@ function-literal-283
 function-literal-284
 function-literal-285
 function-literal-286
-function-literal-291
-function-literal-292
 function-literal-293
 function-literal-294
 function-literal-315
 function-literal-316
 function-literal-317
 function-literal-318
-function-literal-323
-function-literal-324
-function-literal-325
-function-literal-326
 function-literal-335
 function-literal-336
 function-literal-337
@@ -10923,32 +10725,12 @@ K-ForExprPositionalVar-9
 K2-ForExprPositionalVar-1
 K2-ForExprPositionalVar-4
 = prod-Predicate
-K-FilterExpr-31
-K-FilterExpr-32
-K-FilterExpr-33
-K-FilterExpr-34
 K-FilterExpr-36
-K-FilterExpr-37
 K-FilterExpr-38
-K-FilterExpr-39
 K-FilterExpr-40
-K-FilterExpr-44
-K-FilterExpr-50
 K-FilterExpr-51
 K-FilterExpr-52
 K-FilterExpr-59
-K-FilterExpr-60
-K-FilterExpr-61
-K-FilterExpr-62
-K-FilterExpr-63
-K-FilterExpr-64
-K-FilterExpr-65
-K-FilterExpr-69
-K-FilterExpr-70
-K-FilterExpr-71
-K-FilterExpr-72
-K-FilterExpr-81
-K-FilterExpr-83
 K-FilterExpr-86
 K-FilterExpr-87
 K-FilterExpr-88
@@ -10966,7 +10748,6 @@ K-QuantExprWithout-1
 K-QuantExprWithout-2
 K-QuantExprWithout-7
 K-QuantExprWithout-8
-K-QuantExprWithout-93
 K-QuantExprWithout-94
 K-QuantExprWithout-95
 K-QuantExprWithout-96

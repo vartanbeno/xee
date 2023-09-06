@@ -196,6 +196,19 @@ impl Atomic {
             false
         }
     }
+
+    // like equal, but NaN compare equal as well
+    pub(crate) fn deep_equal(
+        &self,
+        other: &Atomic,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+    ) -> bool {
+        if self.is_nan() && other.is_nan() {
+            return true;
+        }
+        self.equal(other, collation, default_offset)
+    }
 }
 
 impl PartialEq for Atomic {

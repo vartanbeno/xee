@@ -161,6 +161,18 @@ fn index_of(
     Ok(indices.collect::<Vec<_>>())
 }
 
+#[xpath_fn("fn:deep-equal($parameter1 as item()*, $parameter2 as item()*, $collation as xs:string) as xs:boolean", collation)]
+fn deep_equal(
+    context: &DynamicContext,
+    parameter1: &sequence::Sequence,
+    parameter2: &sequence::Sequence,
+    collation: &str,
+) -> error::Result<bool> {
+    let collation = context.static_context.collation(collation)?;
+    let default_offset = context.implicit_timezone();
+    parameter1.deep_equal(parameter2, &collation, default_offset)
+}
+
 #[xpath_fn("fn:zero-or-one($arg as item()*) as item()?")]
 fn zero_or_one(arg: &[sequence::Item]) -> error::Result<Option<sequence::Item>> {
     match arg.len() {
@@ -206,6 +218,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(subsequence3),
         wrap_xpath_fn!(unordered),
         wrap_xpath_fn!(index_of),
+        wrap_xpath_fn!(deep_equal),
         wrap_xpath_fn!(zero_or_one),
         wrap_xpath_fn!(one_or_more),
         wrap_xpath_fn!(exactly_one),

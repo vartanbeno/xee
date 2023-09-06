@@ -5,6 +5,7 @@ use xee_xpath_ast::ast;
 use xot::Xot;
 
 use crate::atomic;
+use crate::string::Collation;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Node {
@@ -119,6 +120,63 @@ impl Node {
             Node::Namespace(..) => {
                 todo!("not yet: return the value of the uri property")
             }
+        }
+    }
+
+    pub(crate) fn deep_equal(&self, other: &Node, xot: &Xot, collation: &Collation) -> bool {
+        // https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
+        match (self, other) {
+            (Node::Xot(a), Node::Xot(b)) => Self::deep_equal_xot(a, b, xot, collation),
+            (Node::Attribute(a, a_name), Node::Attribute(b, b_name)) => {
+                if a_name != b_name {
+                    return false;
+                }
+                let a_element = xot.element(*a).unwrap();
+                let a_value = a_element.get_attribute(*a_name).unwrap().to_string();
+                let b_element = xot.element(*b).unwrap();
+                let b_value = b_element.get_attribute(*b_name).unwrap().to_string();
+                collation.compare(&a_value, &b_value).is_eq()
+            }
+            _ => false,
+        }
+    }
+
+    fn deep_equal_xot(a: &xot::Node, b: &xot::Node, xot: &Xot, collation: &Collation) -> bool {
+        // the top level comparison needs to compare the node, even if processing instruction or a comment, though for elements,
+        // we want to compare the structure and filter comments and processing instructions out.
+        use xot::ValueType::*;
+        match (xot.value_type(*a), xot.value_type(*b)) {
+            (Element, Element) | (Root, Root) => xot.advanced_compare(
+                *a,
+                *b,
+                |node| xot.is_element(node) || xot.is_text(node),
+                |a, b| collation.compare(a, b).is_eq(),
+            ),
+            (Text, Text) => {
+                let a = xot.text_str(*a).unwrap();
+                let b = xot.text_str(*b).unwrap();
+                collation.compare(a, b).is_eq()
+            }
+            (Comment, Comment) => {
+                let a = xot.comment_str(*a).unwrap();
+                let b = xot.comment_str(*b).unwrap();
+                collation.compare(a, b).is_eq()
+            }
+            (ProcessingInstruction, ProcessingInstruction) => {
+                let a = xot.processing_instruction(*a).unwrap();
+                let b = xot.processing_instruction(*b).unwrap();
+                let a_data = a.data();
+                let b_data = b.data();
+                if a.target() != b.target() {
+                    return false;
+                }
+                match (a_data, b_data) {
+                    (Some(a_data), Some(b_data)) => collation.compare(a_data, b_data).is_eq(),
+                    (None, None) => true,
+                    _ => false,
+                }
+            }
+            _ => false,
         }
     }
 }

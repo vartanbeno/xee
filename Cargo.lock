@@ -2886,9 +2886,9 @@ checksum = "4d25c75bf9ea12c4040a97f829154768bbbce366287e2dc044af160cd79a13fd"
 
 [[package]]
 name = "xot"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c87f5acd64c726f097006a03db8d5b1b8cee70589b320125e93a864cc3e3fd15"
+checksum = "d381d735d1c708b03aa96a098809cb39e4f1d805f22d9a9dc37f179ddeaff330"
 dependencies = [
  "ahash 0.8.3",
  "encoding_rs",

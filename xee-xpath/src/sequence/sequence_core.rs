@@ -105,7 +105,7 @@ impl Sequence {
             let b = b?;
             match (a, b) {
                 (Item::Atomic(a), Item::Atomic(b)) => {
-                    if !a.equal(&b, collation, default_offset) {
+                    if !a.deep_equal(&b, collation, default_offset) {
                         return Ok(false);
                     }
                 }
