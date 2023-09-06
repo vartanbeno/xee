@@ -544,3 +544,14 @@ impl From<Name> for Atomic {
         Atomic::QName(Rc::new(n))
     }
 }
+
+impl TryFrom<Atomic> for Name {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, Self::Error> {
+        match a {
+            Atomic::QName(n) => Ok(n.as_ref().clone()),
+            _ => Err(error::Error::Type),
+        }
+    }
+}

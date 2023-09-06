@@ -65,6 +65,22 @@ impl Sequence {
         }
     }
 
+    pub fn elements<'a>(
+        &self,
+        xot: &'a Xot,
+    ) -> impl Iterator<Item = error::Result<xml::Node>> + 'a {
+        self.nodes().map(|n| match n {
+            Ok(n) => {
+                if n.is_element(xot) {
+                    Ok(n)
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
+            Err(n) => Err(n),
+        })
+    }
+
     pub fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
         self.stack_value.atomized(xot)
     }

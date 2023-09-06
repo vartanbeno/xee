@@ -86,7 +86,7 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
         }
         ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),
         _ => {
-            todo!("Not yet")
+            todo!("Unsupported item type")
         }
     }
 }
@@ -123,8 +123,14 @@ fn convert_atomic_or_union_type(
 fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result<TokenStream> {
     match kind_test {
         ast::KindTest::Any => Ok(quote!(#arg.nodes())),
+        ast::KindTest::Element(element_test) => {
+            if element_test.is_some() {
+                unreachable!("Unsupported element test")
+            }
+            Ok(quote!(#arg.elements(context.xot)))
+        }
         _ => {
-            todo!("Not yet")
+            todo!("Unsupported kind test")
         }
     }
 }

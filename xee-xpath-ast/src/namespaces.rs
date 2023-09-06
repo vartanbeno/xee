@@ -38,11 +38,23 @@ impl<'a> Namespaces<'a> {
         }
     }
 
+    pub fn from_namespaces(namespace_pairs: &[(&'a str, &'a str)]) -> Self {
+        let mut namespaces = HashMap::new();
+        for (prefix, uri) in namespace_pairs {
+            namespaces.insert(*prefix, *uri);
+        }
+        Self {
+            namespaces,
+            default_element_namespace: None,
+            default_function_namespace: None,
+        }
+    }
+
     pub fn with_default_element_namespace(uri: &'a str) -> Self {
         Self::new(Some(uri), Some(FN_NAMESPACE))
     }
 
-    pub(crate) fn by_prefix(&self, prefix: &str) -> Option<&str> {
+    pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).copied()
     }
 }

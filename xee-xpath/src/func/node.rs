@@ -1,4 +1,4 @@
-// https://www.w3.org/TR/xpath-functions-31/#accessors
+// https://www.w3.org/TR/xpath-functions-31/#node-functions
 
 use ahash::HashSet;
 use ahash::HashSetExt;

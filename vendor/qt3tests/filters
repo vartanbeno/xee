@@ -2,10 +2,6 @@
 = app-Demos
 = app-Duplicates
 = app-FunctxFn
-functx-fn-QName-1
-functx-fn-QName-2
-functx-fn-QName-3
-functx-fn-QName-all
 functx-fn-avg-1
 functx-fn-avg-2
 functx-fn-avg-3
@@ -29,10 +25,6 @@ functx-fn-escape-html-uri-1
 functx-fn-escape-html-uri-2
 functx-fn-escape-html-uri-all
 functx-fn-iri-to-uri-1
-functx-fn-local-name-from-QName-1
-functx-fn-local-name-from-QName-2
-functx-fn-local-name-from-QName-3
-functx-fn-local-name-from-QName-all
 functx-fn-matches-1
 functx-fn-matches-10
 functx-fn-matches-11
@@ -63,8 +55,6 @@ functx-fn-min-3
 functx-fn-min-4
 functx-fn-min-all
 functx-fn-namespace-uri-from-QName-1
-functx-fn-namespace-uri-from-QName-2
-functx-fn-namespace-uri-from-QName-3
 functx-fn-namespace-uri-from-QName-all
 functx-fn-normalize-unicode-1
 functx-fn-normalize-unicode-2
@@ -1559,25 +1549,6 @@ array-tail-703
 array-tail-704
 array-tail-705
 = fn-QName
-ExpandedQNameConstructFunc005
-ExpandedQNameConstructFunc006
-ExpandedQNameConstructFunc007
-ExpandedQNameConstructFunc008
-ExpandedQNameConstructFunc009
-ExpandedQNameConstructFunc010
-ExpandedQNameConstructFunc011
-ExpandedQNameConstructFunc012
-ExpandedQNameConstructFunc015
-ExpandedQNameConstructFunc016
-K-ExpandedQNameConstructFunc-10
-K-ExpandedQNameConstructFunc-4
-K-ExpandedQNameConstructFunc-5
-K-ExpandedQNameConstructFunc-6
-K-ExpandedQNameConstructFunc-7
-K-ExpandedQNameConstructFunc-8
-K-ExpandedQNameConstructFunc-9
-K2-ExpandedQNameConstructFunc-1
-cbcl-qname-001
 = fn-abs
 fn-abs-more-args-023
 fn-abs-more-args-024
@@ -2146,8 +2117,6 @@ fn-day-from-dateTime-4
 = fn-days-from-duration
 fn-days-from-duration-7
 = fn-deep-equal
-K-SeqDeepEqualFunc-17
-K-SeqDeepEqualFunc-21
 K2-SeqDeepEqualFunc-1
 K2-SeqDeepEqualFunc-4
 K2-SeqDeepEqualFunc-40
@@ -4294,26 +4263,16 @@ fn-load-xquery-module-915
 = fn-local-name
 fn-local-name-78
 = fn-local-name-from-QName
-K-LocalNameFromQNameFunc-3
-K-LocalNameFromQNameFunc-4
 LocalNameFromQNameFunc001
 LocalNameFromQNameFunc002
 LocalNameFromQNameFunc003
 LocalNameFromQNameFunc004
 LocalNameFromQNameFunc005
-LocalNameFromQNameFunc006
-LocalNameFromQNameFunc007
-LocalNameFromQNameFunc009
 LocalNameFromQNameFunc010
 LocalNameFromQNameFunc015a
-LocalNameFromQNameFunc016
-LocalNameFromQNameFunc017
 LocalNameFromQNameFunc018
 LocalNameFromQNameFunc019
 LocalNameFromQNameFunc020
-fn-local-name-from-qname-022
-fn-local-name-from-qname-023
-fn-local-name-from-qname-024
 = fn-lower-case
 fn-lower-case-18
 fn-lower-case-21
@@ -5862,21 +5821,13 @@ fn-name-28
 = fn-namespace-uri
 = fn-namespace-uri-for-prefix
 = fn-namespace-uri-from-QName
-K-NamespaceURIFromQNameFunc-3
-K-NamespaceURIFromQNameFunc-4
-K-NamespaceURIFromQNameFunc-5
 NamespaceURIFromQNameFunc001
 NamespaceURIFromQNameFunc002
 NamespaceURIFromQNameFunc003
 NamespaceURIFromQNameFunc004
 NamespaceURIFromQNameFunc005
-NamespaceURIFromQNameFunc006
-NamespaceURIFromQNameFunc007
-NamespaceURIFromQNameFunc009
 NamespaceURIFromQNameFunc010
 NamespaceURIFromQNameFunc015a
-NamespaceURIFromQNameFunc016
-NamespaceURIFromQNameFunc017
 NamespaceURIFromQNameFunc018
 NamespaceURIFromQNameFunc019
 NamespaceURIFromQNameFunc020
@@ -5893,7 +5844,6 @@ fn-nilled-28
 fn-nilled-3
 fn-nilled-30
 = fn-node-name
-fn-node-name-3
 = fn-normalize-space
 K-NormalizeSpaceFunc-9
 fn-normalize-space0args-1
@@ -6325,8 +6275,6 @@ position-22
 position-24
 position-8
 = fn-prefix-from-QName
-K-PrefixFromQName-3
-K-PrefixFromQName-4
 fn-prefix-from-qname-10
 fn-prefix-from-qname-11
 fn-prefix-from-qname-12
@@ -6337,16 +6285,9 @@ fn-prefix-from-qname-16
 fn-prefix-from-qname-17
 fn-prefix-from-qname-18
 fn-prefix-from-qname-19
-fn-prefix-from-qname-2
 fn-prefix-from-qname-20
-fn-prefix-from-qname-21
-fn-prefix-from-qname-22
-fn-prefix-from-qname-23
-fn-prefix-from-qname-3
-fn-prefix-from-qname-4
 fn-prefix-from-qname-5
 fn-prefix-from-qname-6
-fn-prefix-from-qname-7
 fn-prefix-from-qname-8
 fn-prefix-from-qname-9
 = fn-random-number-generator
@@ -6506,11 +6447,7 @@ fn-replaceErr-1
 fn-replaceErr-2
 fn-replaceErr-3
 = fn-resolve-QName
-K-ResolveQNameConstructFunc-4
-fn-resolve-qname-23
-fn-resolve-qname-24
 fn-resolve-qname-25
-fn-resolve-qname-26
 = fn-resolve-uri
 K-ResolveURIFunc-3
 K-ResolveURIFunc-4
@@ -6858,7 +6795,6 @@ fn-string-38
 fn-string-4
 fn-string-5
 fn-string-6
-fn-string-8
 = fn-string-join
 fn-string-join-29
 = fn-string-length
@@ -7846,12 +7782,6 @@ annex-7
 FOAR0001_9
 FOAR0002-5
 FOAR0002_3
-FOCA0002_1
-FOCA0002_2
-FOCA0002_3
-FOCA0002_4
-FOCA0002_5
-FOCA0002_6
 FOCA0005_1
 FOCA0005_2
 FOCA0005_3
@@ -7999,40 +7929,12 @@ UCA-params-034
 = misc-XMLEdition
 = op-NOTATION-equal
 = op-QName-equal
-K-QNameEQ-1
-K-QNameEQ-10
-K-QNameEQ-2
-K-QNameEQ-3
-K-QNameEQ-4
-K-QNameEQ-5
-K-QNameEQ-6
-K-QNameEQ-7
-K-QNameEQ-8
-K-QNameEQ-9
-op-qname-equal-1
-op-qname-equal-10
-op-qname-equal-11
-op-qname-equal-12
-op-qname-equal-13
-op-qname-equal-14
 op-qname-equal-15
 op-qname-equal-16
 op-qname-equal-17
 op-qname-equal-18
-op-qname-equal-19
-op-qname-equal-2
-op-qname-equal-20
-op-qname-equal-21
-op-qname-equal-22
-op-qname-equal-23
-op-qname-equal-24
 op-qname-equal-3
 op-qname-equal-4
-op-qname-equal-5
-op-qname-equal-6
-op-qname-equal-7
-op-qname-equal-8
-op-qname-equal-9
 = op-add-dayTimeDuration-to-date
 = op-add-dayTimeDuration-to-dateTime
 = op-add-dayTimeDuration-to-time
@@ -8938,12 +8840,8 @@ CastAs133
 CastAs137
 CastAs153
 CastAs177
-CastAs180
 CastAs201
 CastAs212
-CastAs213
-CastAs217
-CastAs218
 CastAs423
 CastAs449
 CastAs472
@@ -9041,105 +8939,12 @@ K2-SeqExprCast-208
 K2-SeqExprCast-214
 K2-SeqExprCast-221
 K2-SeqExprCast-223
-K2-SeqExprCast-242
-K2-SeqExprCast-243
-K2-SeqExprCast-244
-K2-SeqExprCast-245
-K2-SeqExprCast-246
-K2-SeqExprCast-247
-K2-SeqExprCast-248
-K2-SeqExprCast-249
-K2-SeqExprCast-250
-K2-SeqExprCast-251
-K2-SeqExprCast-252
-K2-SeqExprCast-253
-K2-SeqExprCast-254
-K2-SeqExprCast-255
-K2-SeqExprCast-256
-K2-SeqExprCast-257
-K2-SeqExprCast-258
-K2-SeqExprCast-259
-K2-SeqExprCast-260
-K2-SeqExprCast-261
-K2-SeqExprCast-262
-K2-SeqExprCast-263
-K2-SeqExprCast-264
-K2-SeqExprCast-265
-K2-SeqExprCast-266
-K2-SeqExprCast-267
-K2-SeqExprCast-268
-K2-SeqExprCast-269
-K2-SeqExprCast-270
-K2-SeqExprCast-271
-K2-SeqExprCast-272
-K2-SeqExprCast-273
-K2-SeqExprCast-274
-K2-SeqExprCast-275
-K2-SeqExprCast-276
-K2-SeqExprCast-277
-K2-SeqExprCast-278
-K2-SeqExprCast-279
 K2-SeqExprCast-28
-K2-SeqExprCast-280
-K2-SeqExprCast-281
-K2-SeqExprCast-282
-K2-SeqExprCast-283
-K2-SeqExprCast-284
-K2-SeqExprCast-285
-K2-SeqExprCast-286
-K2-SeqExprCast-287
-K2-SeqExprCast-288
-K2-SeqExprCast-289
 K2-SeqExprCast-29
-K2-SeqExprCast-290
-K2-SeqExprCast-291
-K2-SeqExprCast-292
-K2-SeqExprCast-293
-K2-SeqExprCast-294
-K2-SeqExprCast-295
-K2-SeqExprCast-296
-K2-SeqExprCast-297
-K2-SeqExprCast-298
-K2-SeqExprCast-299
 K2-SeqExprCast-30
-K2-SeqExprCast-300
-K2-SeqExprCast-301
-K2-SeqExprCast-302
-K2-SeqExprCast-303
-K2-SeqExprCast-304
-K2-SeqExprCast-305
-K2-SeqExprCast-306
-K2-SeqExprCast-307
-K2-SeqExprCast-308
-K2-SeqExprCast-309
-K2-SeqExprCast-310
-K2-SeqExprCast-311
-K2-SeqExprCast-312
-K2-SeqExprCast-313
-K2-SeqExprCast-314
-K2-SeqExprCast-315
-K2-SeqExprCast-316
-K2-SeqExprCast-317
-K2-SeqExprCast-318
-K2-SeqExprCast-319
-K2-SeqExprCast-320
-K2-SeqExprCast-321
-K2-SeqExprCast-322
-K2-SeqExprCast-323
-K2-SeqExprCast-324
-K2-SeqExprCast-325
-K2-SeqExprCast-326
-K2-SeqExprCast-327
-K2-SeqExprCast-328
-K2-SeqExprCast-329
-K2-SeqExprCast-330
-K2-SeqExprCast-331
 K2-SeqExprCast-420
-K2-SeqExprCast-425
-K2-SeqExprCast-426
 K2-SeqExprCast-459
 K2-SeqExprCast-480
-K2-SeqExprCast-488
 K2-SeqExprCast-49
 K2-SeqExprCast-499
 K2-SeqExprCast-500
@@ -9289,8 +9094,6 @@ CastableAs664
 K-SeqExprCastable-14
 K-SeqExprCastable-15
 K-SeqExprCastable-16
-K-SeqExprCastable-17
-K-SeqExprCastable-18
 K-SeqExprCastable-23
 K-SeqExprCastable-34
 K-SeqExprCastable-38
@@ -10099,7 +9902,6 @@ GenCompEq-9
 K-GenCompEq-20
 K-GenCompEq-21
 K-GenCompEq-22
-K-GenCompEq-23
 = prod-GeneralComp.ge
 K-GenCompGTEQ-5
 = prod-GeneralComp.gt
@@ -10438,18 +10240,6 @@ function-literal-245
 function-literal-246
 function-literal-247
 function-literal-248
-function-literal-249
-function-literal-250
-function-literal-251
-function-literal-252
-function-literal-253
-function-literal-254
-function-literal-255
-function-literal-256
-function-literal-257
-function-literal-258
-function-literal-259
-function-literal-260
 function-literal-261
 function-literal-262
 function-literal-275
@@ -10621,8 +10411,6 @@ K-LogicExpr-41
 K-LogicExpr-42
 K-LogicExpr-43
 K-LogicExpr-44
-K-LogicExpr-45
-K-LogicExpr-46
 = prod-OrderByClause
 K2-OrderbyExprWithout-1
 K2-OrderbyExprWithout-10
@@ -10744,8 +10532,6 @@ predicates-34
 predicates-35
 predicates-36
 = prod-QuantifiedExpr
-K-QuantExprWithout-1
-K-QuantExprWithout-2
 K-QuantExprWithout-7
 K-QuantExprWithout-8
 K-QuantExprWithout-94

@@ -23,6 +23,14 @@ impl Node {
         }
     }
 
+    pub(crate) fn is_element(&self, xot: &Xot) -> bool {
+        match self {
+            Node::Xot(node) => xot.is_element(*node),
+            Node::Attribute(..) => false,
+            Node::Namespace(..) => false,
+        }
+    }
+
     pub fn xot_node(&self) -> xot::Node {
         match self {
             Node::Xot(node) => *node,

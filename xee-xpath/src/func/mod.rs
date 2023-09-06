@@ -6,6 +6,7 @@ mod fn_;
 mod math;
 mod node;
 mod numeric;
+mod qname;
 mod sequence;
 mod string;
 mod xpath_fn;
@@ -26,5 +27,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(datetime::static_function_descriptions());
     descriptions.extend(sequence::static_function_descriptions());
     descriptions.extend(node::static_function_descriptions());
+    descriptions.extend(qname::static_function_descriptions());
     descriptions
 }

@@ -251,6 +251,7 @@ pub enum Error {
     /// have the lexical form of a QName or URI respectively; and when casting
     /// to decimal, if the supplied value is NaN or Infinity.
     #[error("Invalid lexical value")]
+    #[diagnostic(code(FOCA0002))]
     FOCA0002,
     /// Input too large for integer.
     ///
