@@ -8789,7 +8789,6 @@ CastAs023
 CastAs024
 CastAs025
 CastAs026
-CastAs028
 CastAs051
 CastAs055
 CastAs071
@@ -8800,7 +8799,6 @@ CastAs105
 CastAs106
 CastAs107
 CastAs108
-CastAs110
 CastAs133
 CastAs137
 CastAs153
@@ -8845,14 +8843,7 @@ K-SeqExprCast-1410
 K-SeqExprCast-1414
 K-SeqExprCast-143
 K-SeqExprCast-1491
-K-SeqExprCast-163
-K-SeqExprCast-165
-K-SeqExprCast-167
 K-SeqExprCast-17
-K-SeqExprCast-186
-K-SeqExprCast-187
-K-SeqExprCast-189
-K-SeqExprCast-191
 K-SeqExprCast-21
 K-SeqExprCast-25
 K-SeqExprCast-295

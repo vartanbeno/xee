@@ -180,7 +180,10 @@ impl atomic::Atomic {
         let d = (ss / 86400.0) as u64;
         let h = ((ss % 86400.0) / 3600.0) as u64;
         let m = ((ss % 3600.0) / 60.0) as u16;
-        let s: Decimal = (ss % 60.0).try_into().unwrap_or(Decimal::from(0));
+        let s: Decimal = (ss % 60.0)
+            .try_into()
+            .unwrap_or(Decimal::from(0))
+            .round_dp(3);
 
         if d != 0 {
             v.push_str(&format!("{}D", d));
