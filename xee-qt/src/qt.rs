@@ -146,7 +146,10 @@ pub(crate) struct ContextItem {}
 pub(crate) struct DecimalFormat {}
 
 #[derive(Debug, Clone)]
-pub(crate) struct Namespace {}
+pub(crate) struct Namespace {
+    pub(crate) prefix: String,
+    pub(crate) uri: String,
+}
 
 #[derive(Debug, Clone)]
 pub(crate) struct FunctionLibrary {}

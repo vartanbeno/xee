@@ -331,6 +331,15 @@ fn environment_spec_query<'a>(
     let uri_query = queries.option("@uri/string()", convert_string)?;
     let (mut queries, metadata_query) = metadata_query(xot, queries)?;
 
+    let prefix_query = queries.one("@prefix/string()", convert_string)?;
+    let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
+
+    let namespaces_query = queries.many("namespace", move |session, item| {
+        let prefix = prefix_query.execute(session, item)?;
+        let uri = namespace_uri_query.execute(session, item)?;
+        Ok(qt::Namespace { prefix, uri })
+    })?;
+
     let sources_query = queries.many("source", move |session, item| {
         let file = PathBuf::from(file_query.execute(session, item)?);
         let role = role_query.execute(session, item)?;
@@ -401,10 +410,12 @@ fn environment_spec_query<'a>(
         // we need to flatten sources
         let sources = sources.into_iter().flatten().collect::<Vec<qt::Source>>();
         let params = params_query.execute(session, item)?;
+        let namespaces = namespaces_query.execute(session, item)?;
         let environment_spec = qt::EnvironmentSpec {
             base_dir: path.to_path_buf(),
             sources,
             params,
+            namespaces,
             ..Default::default()
         };
 

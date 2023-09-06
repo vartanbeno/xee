@@ -65,7 +65,12 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "atomic",
+                        uri: "http://www.w3.org/XQueryTest",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -289,7 +294,32 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "ma",
+                        uri: "http://www.example.com/AuctionWatch",
+                    },
+                    Namespace {
+                        prefix: "xlink",
+                        uri: "http://www.w3.org/1999/xlink",
+                    },
+                    Namespace {
+                        prefix: "anyzone",
+                        uri: "http://www.example.com/auctioneers#anyzone",
+                    },
+                    Namespace {
+                        prefix: "eachbay",
+                        uri: "http://www.example.com/auctioneers#eachbay",
+                    },
+                    Namespace {
+                        prefix: "yabadoo",
+                        uri: "http://www.example.com/auctioneers#yabadoo",
+                    },
+                    Namespace {
+                        prefix: "map",
+                        uri: "http://www.w3.org/2005/xpath-functions/map",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -320,7 +350,12 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "",
+                        uri: "http://www.example.com/QNameXSD",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -334,7 +369,12 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "math",
+                        uri: "http://www.w3.org/2005/xpath-functions/math",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -348,7 +388,12 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "array",
+                        uri: "http://www.w3.org/2005/xpath-functions/array",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -362,7 +407,12 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "map",
+                        uri: "http://www.w3.org/2005/xpath-functions/map",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
@@ -376,7 +426,16 @@ Catalog {
                 params: [],
                 context_items: [],
                 decimal_formats: [],
-                namespaces: [],
+                namespaces: [
+                    Namespace {
+                        prefix: "array",
+                        uri: "http://www.w3.org/2005/xpath-functions/array",
+                    },
+                    Namespace {
+                        prefix: "map",
+                        uri: "http://www.w3.org/2005/xpath-functions/map",
+                    },
+                ],
                 function_libraries: [],
                 collections: [],
                 static_base_uris: [],
