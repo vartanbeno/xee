@@ -266,6 +266,18 @@ impl<'a> Interpreter<'a> {
                     let combined = a.union(b, &self.dynamic_context.documents.annotations)?;
                     self.stack.push(combined);
                 }
+                EncodedInstruction::Intersect => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let combined = a.intersect(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(combined);
+                }
+                EncodedInstruction::Except => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    let combined = a.except(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(combined);
+                }
                 EncodedInstruction::Dup => {
                     let value = self.stack.pop().unwrap();
                     self.stack.push(value.clone());

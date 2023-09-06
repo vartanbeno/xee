@@ -8492,20 +8492,9 @@ distinct-duration-equal-2
 op-duration-equal-26
 op-duration-equal-27
 = op-except
-K2-SeqExcept-1
-fn-except-node-args-001
-fn-except-node-args-002
-fn-except-node-args-003
-fn-except-node-args-004
-fn-except-node-args-005
 fn-except-node-args-006
-fn-except-node-args-007
-fn-except-node-args-008
 fn-except-node-args-009
 fn-except-node-args-010
-fn-except-node-args-011
-fn-except-node-args-012
-fn-except-node-args-013
 fn-except-node-args-015
 fn-except-node-args-016
 fn-except-node-args-017
@@ -8513,8 +8502,6 @@ fn-except-node-args-018
 fn-except-node-args-019
 fn-except-node-args-020
 fn-except-node-args-021
-fn-except-node-args-022
-fn-except-node-args-023
 = op-gDay-equal
 cbcl-gDay-equal-002
 cbcl-gDay-equal-003
@@ -8578,23 +8565,8 @@ hexBinary-gt-14
 = op-hexBinary-less-than
 hexBinary-lt-14
 = op-intersect
-K2-SeqIntersect-1
-K2-SeqIntersect-39
-K2-SeqIntersect-40
-K2-SeqIntersect-43
-K2-SeqIntersect-44
-K2-SeqIntersect-45
-K2-SeqIntersect-47
-K2-SeqIntersect-48
-fn-intersect-node-args-001
-fn-intersect-node-args-003
-fn-intersect-node-args-004
 fn-intersect-node-args-005
 fn-intersect-node-args-006
-fn-intersect-node-args-008
-fn-intersect-node-args-009
-fn-intersect-node-args-010
-fn-intersect-node-args-011
 fn-intersect-node-args-015
 fn-intersect-node-args-016
 fn-intersect-node-args-017
@@ -8999,9 +8971,6 @@ abbreviatedSyntax-2
 = prod-AxisStep.ancestor
 ancestor-1
 ancestor-10
-ancestor-13
-ancestor-14
-ancestor-15
 ancestor-20
 ancestor-3
 ancestor-4
@@ -9013,9 +8982,6 @@ ancestor-9
 = prod-AxisStep.ancestor-or-self
 ancestorself-1
 ancestorself-10
-ancestorself-13
-ancestorself-14
-ancestorself-15
 ancestorself-20
 ancestorself-3
 ancestorself-4
@@ -9045,8 +9011,6 @@ following-9
 = prod-AxisStep.following-sibling
 followingsibling-1
 followingsibling-10
-followingsibling-14
-followingsibling-15
 followingsibling-20
 followingsibling-3
 followingsibling-4
@@ -9072,8 +9036,6 @@ preceding-9
 = prod-AxisStep.preceding-sibling
 preceding-sibling-1
 preceding-sibling-10
-preceding-sibling-14
-preceding-sibling-15
 preceding-sibling-20
 preceding-sibling-3
 preceding-sibling-4
@@ -10579,7 +10541,6 @@ K2-NameTest-83
 K2-NameTest-84
 K2-NameTest-85
 K2-NameTest-86
-nametest-14
 = prod-NamedFunctionRef
 function-literal-005
 function-literal-006

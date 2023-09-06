@@ -141,22 +141,55 @@ impl Value {
     ) -> error::Result<stack::Value> {
         let mut s = HashSet::new();
         for item in self.items() {
-            let node = match item? {
-                sequence::Item::Node(node) => node,
-                sequence::Item::Atomic(..) => return Err(error::Error::Type),
-                sequence::Item::Function(..) => return Err(error::Error::Type),
-            };
+            let node = item?.to_node()?;
             s.insert(node);
         }
         for item in other.items() {
-            let node = match item? {
-                sequence::Item::Node(node) => node,
-                sequence::Item::Atomic(..) => return Err(error::Error::Type),
-                sequence::Item::Function(..) => return Err(error::Error::Type),
-            };
+            let node = item?.to_node()?;
             s.insert(node);
         }
 
+        Ok(Self::process_set_result(s, annotations))
+    }
+
+    pub(crate) fn intersect(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<stack::Value> {
+        let mut s = HashSet::new();
+        let mut r = HashSet::new();
+        for item in self.items() {
+            let node = item?.to_node()?;
+            s.insert(node);
+        }
+        for item in other.items() {
+            let node = item?.to_node()?;
+            if s.contains(&node) {
+                r.insert(node);
+            }
+        }
+        Ok(Self::process_set_result(r, annotations))
+    }
+
+    pub(crate) fn except(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<stack::Value> {
+        let mut s = HashSet::new();
+        for item in self.items() {
+            let node = item?.to_node()?;
+            s.insert(node);
+        }
+        for item in other.items() {
+            let node = item?.to_node()?;
+            s.remove(&node);
+        }
+        Ok(Self::process_set_result(s, annotations))
+    }
+
+    fn process_set_result(s: HashSet<xml::Node>, annotations: &xml::Annotations) -> stack::Value {
         // sort nodes by document order
         let mut nodes = s.into_iter().collect::<Vec<_>>();
         nodes.sort_by_key(|n| annotations.document_order(*n));
@@ -165,7 +198,7 @@ impl Value {
             .into_iter()
             .map(sequence::Item::Node)
             .collect::<Vec<_>>();
-        Ok(items.into())
+        items.into()
     }
 }
 

@@ -34,6 +34,8 @@ pub(crate) enum Instruction {
     GenGt,
     GenGe,
     Union,
+    Intersect,
+    Except,
     Jump(i16),
     JumpIfTrue(i16),
     JumpIfFalse(i16),
@@ -89,6 +91,8 @@ pub(crate) enum EncodedInstruction {
     GenGt,
     GenGe,
     Union,
+    Intersect,
+    Except,
     Jump,
     JumpIfTrue,
     JumpIfFalse,
@@ -164,6 +168,8 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::GenGt => (Instruction::GenGt, 1),
         EncodedInstruction::GenGe => (Instruction::GenGe, 1),
         EncodedInstruction::Union => (Instruction::Union, 1),
+        EncodedInstruction::Intersect => (Instruction::Intersect, 1),
+        EncodedInstruction::Except => (Instruction::Except, 1),
         EncodedInstruction::Jump => {
             let displacement = i16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Jump(displacement), 3)
@@ -276,6 +282,8 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::GenGt => bytes.push(EncodedInstruction::GenGt.to_u8().unwrap()),
         Instruction::GenGe => bytes.push(EncodedInstruction::GenGe.to_u8().unwrap()),
         Instruction::Union => bytes.push(EncodedInstruction::Union.to_u8().unwrap()),
+        Instruction::Intersect => bytes.push(EncodedInstruction::Intersect.to_u8().unwrap()),
+        Instruction::Except => bytes.push(EncodedInstruction::Except.to_u8().unwrap()),
         Instruction::Jump(displacement) => {
             bytes.push(EncodedInstruction::Jump.to_u8().unwrap());
             bytes.extend_from_slice(&displacement.to_le_bytes());
@@ -362,6 +370,8 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::GenGt
         | Instruction::GenGe
         | Instruction::Union
+        | Instruction::Intersect
+        | Instruction::Except
         | Instruction::Return
         | Instruction::Dup
         | Instruction::Pop

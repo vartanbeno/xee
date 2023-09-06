@@ -1,5 +1,7 @@
 // https://www.w3.org/TR/xpath-functions-31/#accessors
 
+use ahash::HashSet;
+use ahash::HashSetExt;
 use std::rc::Rc;
 use xee_xpath_macros::xpath_fn;
 
@@ -75,6 +77,28 @@ fn has_children(context: &DynamicContext, node: Option<xml::Node>) -> bool {
     }
 }
 
+#[xpath_fn("fn:innermost($nodes as node()*) as node()*")]
+fn innermost(context: &DynamicContext, nodes: &[xml::Node]) -> Vec<xml::Node> {
+    // get sequence of ancestors
+    let mut ancestors = HashSet::new();
+    for node in nodes {
+        let mut parent_node = *node;
+        // insert all parents into ancestors
+        while let Some(parent) = parent_node.parent(context.xot) {
+            ancestors.insert(parent);
+            parent_node = parent;
+        }
+    }
+    // now find all nodes that are not in ancestors
+    let mut innermost = Vec::new();
+    for node in nodes {
+        if !ancestors.contains(node) {
+            innermost.push(*node);
+        }
+    }
+    innermost
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(name),
@@ -82,5 +106,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(namespace_uri),
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(has_children),
+        wrap_xpath_fn!(innermost),
     ]
 }

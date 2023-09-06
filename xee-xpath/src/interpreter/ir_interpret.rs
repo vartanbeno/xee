@@ -196,6 +196,12 @@ impl<'a> InterpreterCompiler<'a> {
             ir::BinaryOperator::Union => {
                 self.builder.emit(Instruction::Union, span);
             }
+            ir::BinaryOperator::Intersect => {
+                self.builder.emit(Instruction::Intersect, span);
+            }
+            ir::BinaryOperator::Except => {
+                self.builder.emit(Instruction::Except, span);
+            }
             ir::BinaryOperator::Range => {
                 self.builder.emit(Instruction::Range, span);
             }
