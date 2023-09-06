@@ -59,6 +59,13 @@ impl EnvironmentSpec {
         }
         Ok(variables)
     }
+
+    pub(crate) fn namespace_pairs(&self) -> Vec<(&str, &str)> {
+        self.namespaces
+            .iter()
+            .map(|ns| (ns.prefix.as_ref(), ns.uri.as_ref()))
+            .collect()
+    }
 }
 
 #[derive(Debug, Default, Clone)]

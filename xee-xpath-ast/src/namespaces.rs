@@ -54,6 +54,12 @@ impl<'a> Namespaces<'a> {
         Self::new(Some(uri), Some(FN_NAMESPACE))
     }
 
+    pub fn add(&mut self, namespace_pairs: &[(&'a str, &'a str)]) {
+        for (prefix, uri) in namespace_pairs {
+            self.namespaces.insert(*prefix, *uri);
+        }
+    }
+
     pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).copied()
     }

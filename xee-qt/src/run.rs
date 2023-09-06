@@ -156,12 +156,24 @@ impl qt::TestCase {
     }
 
     pub(crate) fn run(&self, run_context: &mut RunContext, test_set: &qt::TestSet) -> TestOutcome {
-        let namespaces = Namespaces::default();
         let variables = self.variables(run_context, test_set);
         let variables = match variables {
             Ok(variables) => variables,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
+
+        let context_item = self.context_item(run_context, test_set);
+        let context_item = match context_item {
+            Ok(context_item) => context_item,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+
+        let namespaces = self.namespaces(run_context, test_set);
+        let namespaces = match namespaces {
+            Ok(namespaces) => namespaces,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+
         let variable_names = variables
             .iter()
             .map(|(name, _)| name.clone())
@@ -177,12 +189,6 @@ impl qt::TestCase {
                     TestOutcome::CompilationError(error)
                 }
             }
-        };
-
-        let context_item = self.context_item(run_context, test_set);
-        let context_item = match context_item {
-            Ok(context_item) => context_item,
-            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
         let dynamic_context = DynamicContext::with_documents_and_variables(
@@ -243,6 +249,21 @@ impl qt::TestCase {
             variables.extend(environment_spec.variables(xot, source_cache)?);
         }
         Ok(variables)
+    }
+
+    fn namespaces<'a>(
+        &'a self,
+        run_context: &'a RunContext,
+        test_set: &'a qt::TestSet,
+    ) -> Result<Namespaces<'a>> {
+        let environment_specs = self
+            .environment_specs(&run_context.catalog, test_set)
+            .collect::<Result<Vec<_>>>()?;
+        let mut namespaces = Namespaces::default();
+        for environment_spec in environment_specs {
+            namespaces.add(&environment_spec.namespace_pairs())
+        }
+        Ok(namespaces)
     }
 }
 

@@ -3861,6 +3861,7 @@ K2-SeqIDFunc-14
 K2-SeqIDFunc-15
 K2-SeqIDFunc-2
 K2-SeqIDFunc-3
+fn-id-1
 fn-id-2
 fn-id-22
 fn-id-3
@@ -3872,6 +3873,7 @@ fn-id-dtd-6
 K2-SeqIDREFFunc-1
 K2-SeqIDREFFunc-2
 K2-SeqIDREFFunc-3
+fn-idref-1
 fn-idref-2
 fn-idref-22
 fn-idref-3
@@ -6275,21 +6277,7 @@ position-22
 position-24
 position-8
 = fn-prefix-from-QName
-fn-prefix-from-qname-10
-fn-prefix-from-qname-11
-fn-prefix-from-qname-12
-fn-prefix-from-qname-13
-fn-prefix-from-qname-14
-fn-prefix-from-qname-15
-fn-prefix-from-qname-16
-fn-prefix-from-qname-17
-fn-prefix-from-qname-18
-fn-prefix-from-qname-19
-fn-prefix-from-qname-20
-fn-prefix-from-qname-5
-fn-prefix-from-qname-6
 fn-prefix-from-qname-8
-fn-prefix-from-qname-9
 = fn-random-number-generator
 fn-random-number-generator-1
 fn-random-number-generator-10
@@ -8213,13 +8201,6 @@ op-duration-equal-27
 fn-except-node-args-006
 fn-except-node-args-009
 fn-except-node-args-010
-fn-except-node-args-015
-fn-except-node-args-016
-fn-except-node-args-017
-fn-except-node-args-018
-fn-except-node-args-019
-fn-except-node-args-020
-fn-except-node-args-021
 = op-gDay-equal
 cbcl-gDay-equal-002
 cbcl-gDay-equal-003
@@ -8285,14 +8266,6 @@ hexBinary-lt-14
 = op-intersect
 fn-intersect-node-args-005
 fn-intersect-node-args-006
-fn-intersect-node-args-015
-fn-intersect-node-args-016
-fn-intersect-node-args-017
-fn-intersect-node-args-018
-fn-intersect-node-args-019
-fn-intersect-node-args-020
-fn-intersect-node-args-021
-fn-intersect-node-args-022
 = op-is-same-node
 K-NodeSame-1
 K-NodeSame-3
@@ -8566,14 +8539,6 @@ rangeExpr-42
 = op-union
 fn-union-node-args-006
 fn-union-node-args-010
-fn-union-node-args-015
-fn-union-node-args-016
-fn-union-node-args-017
-fn-union-node-args-018
-fn-union-node-args-019
-fn-union-node-args-020
-fn-union-node-args-021
-fn-union-node-args-022
 = op-yearMonthDuration-greater-than
 = op-yearMonthDuration-less-than
 = prod-AllowingEmpty
@@ -8914,7 +8879,6 @@ K-SeqExprCast-63
 K-SeqExprCast-64
 K-SeqExprCast-69
 K-SeqExprCast-8
-K2-SeqExprCast-1
 K2-SeqExprCast-100
 K2-SeqExprCast-105
 K2-SeqExprCast-106
@@ -9120,10 +9084,6 @@ K-XQueryComment-5
 K-XQueryComment-6
 K-XQueryComment-7
 K-XQueryComment-9
-XQueryComment002
-XQueryComment009
-XQueryComment010
-XQueryComment011
 = prod-CompAttrConstructor
 Constr-compattr-compname-1
 Constr-compattr-compname-10
@@ -11009,7 +10969,6 @@ K-ValCompTypeChecking-33
 K-ValCompTypeChecking-34
 value-comparison-10
 value-comparison-11
-value-comparison-12
 value-comparison-5
 value-comparison-6
 value-comparison-7
