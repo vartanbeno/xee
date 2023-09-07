@@ -240,9 +240,14 @@ impl<'a> InterpreterCompiler<'a> {
                 self.builder.emit_constant(true.into(), span);
                 self.builder.patch_jump(end);
             }
-            _ => {
-                // TODO: do not generate anything for now, so the tests keep running
-                // todo!("operator not supported yet: {:?}", binary.op),
+            ir::BinaryOperator::Is => {
+                self.builder.emit(Instruction::Is, span);
+            }
+            ir::BinaryOperator::Precedes => {
+                self.builder.emit(Instruction::Precedes, span);
+            }
+            ir::BinaryOperator::Follows => {
+                self.builder.emit(Instruction::Follows, span);
             }
         }
         Ok(())

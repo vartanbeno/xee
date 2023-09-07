@@ -260,6 +260,36 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::GenGe => {
                     self.general_compare(OpGe)?;
                 }
+                EncodedInstruction::Is => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if a.is_empty_sequence() || b.is_empty_sequence() {
+                        self.stack.push(stack::Value::Empty);
+                        continue;
+                    }
+                    let result = a.is(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(result.into());
+                }
+                EncodedInstruction::Precedes => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if a.is_empty_sequence() || b.is_empty_sequence() {
+                        self.stack.push(stack::Value::Empty);
+                        continue;
+                    }
+                    let result = a.precedes(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(result.into());
+                }
+                EncodedInstruction::Follows => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if a.is_empty_sequence() || b.is_empty_sequence() {
+                        self.stack.push(stack::Value::Empty);
+                        continue;
+                    }
+                    let result = a.follows(b, &self.dynamic_context.documents.annotations)?;
+                    self.stack.push(result.into());
+                }
                 EncodedInstruction::Union => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();

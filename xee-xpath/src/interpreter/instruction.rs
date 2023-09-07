@@ -33,6 +33,9 @@ pub(crate) enum Instruction {
     GenLe,
     GenGt,
     GenGe,
+    Is,
+    Precedes,
+    Follows,
     Union,
     Intersect,
     Except,
@@ -91,6 +94,9 @@ pub(crate) enum EncodedInstruction {
     GenLe,
     GenGt,
     GenGe,
+    Is,
+    Precedes,
+    Follows,
     Union,
     Intersect,
     Except,
@@ -169,6 +175,9 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::GenLe => (Instruction::GenLe, 1),
         EncodedInstruction::GenGt => (Instruction::GenGt, 1),
         EncodedInstruction::GenGe => (Instruction::GenGe, 1),
+        EncodedInstruction::Is => (Instruction::Is, 1),
+        EncodedInstruction::Precedes => (Instruction::Precedes, 1),
+        EncodedInstruction::Follows => (Instruction::Follows, 1),
         EncodedInstruction::Union => (Instruction::Union, 1),
         EncodedInstruction::Intersect => (Instruction::Intersect, 1),
         EncodedInstruction::Except => (Instruction::Except, 1),
@@ -284,6 +293,9 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
         Instruction::GenLe => bytes.push(EncodedInstruction::GenLe.to_u8().unwrap()),
         Instruction::GenGt => bytes.push(EncodedInstruction::GenGt.to_u8().unwrap()),
         Instruction::GenGe => bytes.push(EncodedInstruction::GenGe.to_u8().unwrap()),
+        Instruction::Is => bytes.push(EncodedInstruction::Is.to_u8().unwrap()),
+        Instruction::Precedes => bytes.push(EncodedInstruction::Precedes.to_u8().unwrap()),
+        Instruction::Follows => bytes.push(EncodedInstruction::Follows.to_u8().unwrap()),
         Instruction::Union => bytes.push(EncodedInstruction::Union.to_u8().unwrap()),
         Instruction::Intersect => bytes.push(EncodedInstruction::Intersect.to_u8().unwrap()),
         Instruction::Except => bytes.push(EncodedInstruction::Except.to_u8().unwrap()),
@@ -375,6 +387,9 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::GenLe
         | Instruction::GenGt
         | Instruction::GenGe
+        | Instruction::Is
+        | Instruction::Precedes
+        | Instruction::Follows
         | Instruction::Union
         | Instruction::Intersect
         | Instruction::Except

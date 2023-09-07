@@ -63,16 +63,8 @@ fn node_take_axis<'a>(
             siblings.next();
             siblings
         }),
-        ast::Axis::Following =>
-        // TODO: bad implementation so we don't get a crash
-        {
-            node.xot_iterator(|n| xot.children(n))
-        }
-        ast::Axis::Preceding =>
-        // TODO: bad implementation so we don't get a crash
-        {
-            node.xot_iterator(|n| xot.children(n))
-        }
+        ast::Axis::Following => node.xot_iterator(|n| xot.following(n)),
+        ast::Axis::Preceding => node.xot_iterator(|n| xot.preceding(n)),
         ast::Axis::Attribute => match node {
             xml::Node::Xot(node) => {
                 let element = xot.element(node);

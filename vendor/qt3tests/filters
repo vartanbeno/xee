@@ -3846,7 +3846,6 @@ generate-id-019
 = fn-has-children
 = fn-head
 head-002
-head-006
 = fn-hours-from-dateTime
 = fn-hours-from-duration
 fn-hours-from-duration-7
@@ -3922,8 +3921,6 @@ fn-innermost-024
 fn-innermost-027
 fn-innermost-030
 fn-innermost-033
-fn-innermost-045
-fn-innermost-049
 fn-innermost-059
 = fn-insert-before
 K-SeqInsertBeforeFunc-17
@@ -4187,8 +4184,6 @@ last-21
 last-22
 last-23
 last-3
-last-6
-last-7
 last-8
 = fn-load-xquery-module
 fn-load-xquery-module-001
@@ -5884,8 +5879,6 @@ fn-outermost-015
 fn-outermost-024
 fn-outermost-027
 fn-outermost-030
-fn-outermost-045
-fn-outermost-049
 = fn-parse-ietf-date
 parse-ietf-date-0
 parse-ietf-date-1
@@ -7116,7 +7109,6 @@ fn-translate-22
 = fn-true
 = fn-unordered
 K-SeqUnorderedFunc-5
-fn-unordered-102
 fn-unordered-mix-args-001
 fn-unordered-mix-args-002
 fn-unordered-mix-args-003
@@ -7782,8 +7774,6 @@ XPTY0004_06
 XPTY0004_07
 XPTY0004_09
 XPTY0004_12a
-XPTY0004_20
-XPTY0004_21
 XPTY0004_41
 XPTY0004_48
 XQDY0026
@@ -7815,7 +7805,6 @@ XQST0087
 XQST0089
 combined-errors-1
 combined-errors-2
-combined-errors-4
 = misc-ErrorsAndOptimization
 errors-and-optimization-1
 errors-and-optimization-7
@@ -7829,7 +7818,6 @@ function-item-14
 function-item-15
 function-item-16
 function-item-17
-function-item-3
 function-item-7
 function-item-8
 function-item-9
@@ -8217,19 +8205,7 @@ hexBinary-lt-14
 fn-intersect-node-args-005
 fn-intersect-node-args-006
 = op-is-same-node
-K-NodeSame-1
-K-NodeSame-3
 cbcl-is-same-node-002
-nodeexpression11
-nodeexpression12
-nodeexpression13
-nodeexpression15
-nodeexpression16
-nodeexpression9
-nodeexpressionhc2
-nodeexpressionhc3
-nodeexpressionhc4
-nodeexpressionhc5
 = op-multiply-dayTimeDuration
 K-DayTimeDurationMultiply-9
 = op-multiply-yearMonthDuration
@@ -8240,33 +8216,7 @@ op-multiply-yearMonthDuration-1
 op-multiply-yearMonthDuration-19
 op-multiply-yearMonthDuration-20
 = op-node-after
-K-NodeAfter-1
-K-NodeAfter-3
-nodeexpression41
-nodeexpression43
-nodeexpression44
-nodeexpression45
-nodeexpression47
-nodeexpression48
-nodeexpressionhc11
-nodeexpressionhc12
-nodeexpressionhc13
-nodeexpressionhc14
-nodeexpressionhc15
 = op-node-before
-K-NodeBefore-1
-K-NodeBefore-3
-nodeexpression25
-nodeexpression27
-nodeexpression28
-nodeexpression29
-nodeexpression31
-nodeexpression32
-nodeexpressionhc10
-nodeexpressionhc6
-nodeexpressionhc7
-nodeexpressionhc8
-nodeexpressionhc9
 = op-numeric-add
 = op-numeric-divide
 K2-NumericDivide-10
@@ -8597,71 +8547,16 @@ statictypingaxis-6
 abbreviatedSyntax-2
 = prod-AxisStep.ancestor
 ancestor-1
-ancestor-10
-ancestor-3
-ancestor-4
-ancestor-5
-ancestor-6
-ancestor-7
-ancestor-8
-ancestor-9
 = prod-AxisStep.ancestor-or-self
 ancestorself-1
-ancestorself-10
-ancestorself-3
-ancestorself-4
-ancestorself-5
-ancestorself-6
-ancestorself-7
-ancestorself-8
-ancestorself-9
 = prod-AxisStep.following
 following-1
-following-10
-following-11
-following-12
-following-13
-following-15
-following-16
-following-19
-following-22
-following-3
-following-4
-following-5
-following-6
-following-7
-following-8
-following-9
 = prod-AxisStep.following-sibling
 followingsibling-1
-followingsibling-10
-followingsibling-3
-followingsibling-4
-followingsibling-5
-followingsibling-6
-followingsibling-7
-followingsibling-8
-followingsibling-9
 = prod-AxisStep.preceding
 preceding-1
-preceding-10
-preceding-11
-preceding-12
-preceding-13
-preceding-15
-preceding-16
-preceding-19
-preceding-3
-preceding-4
-preceding-8
-preceding-9
 = prod-AxisStep.preceding-sibling
 preceding-sibling-1
-preceding-sibling-10
-preceding-sibling-3
-preceding-sibling-4
-preceding-sibling-8
-preceding-sibling-9
 = prod-AxisStep.static-typing
 ST-Axes001
 ST-Axes002

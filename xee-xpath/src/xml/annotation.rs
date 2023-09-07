@@ -15,7 +15,7 @@ impl DocumentOrder {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Annotation {
-    document_order: DocumentOrder,
+    pub(crate) document_order: DocumentOrder,
 }
 
 impl Annotation {

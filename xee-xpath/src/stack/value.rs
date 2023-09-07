@@ -134,6 +134,49 @@ impl Value {
         }
     }
 
+    fn one_node(self) -> error::Result<xml::Node> {
+        match self {
+            Value::One(item) => item.to_node(),
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub(crate) fn is(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        let a = self.one_node()?;
+        let b = other.one_node()?;
+        let a_annotation = annotations.get(a).unwrap();
+        let b_annotation = annotations.get(b).unwrap();
+        Ok(a_annotation.document_order == b_annotation.document_order)
+    }
+
+    pub(crate) fn precedes(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        let a = self.one_node()?;
+        let b = other.one_node()?;
+        let a_annotation = annotations.get(a).unwrap();
+        let b_annotation = annotations.get(b).unwrap();
+        Ok(a_annotation.document_order < b_annotation.document_order)
+    }
+
+    pub(crate) fn follows(
+        self,
+        other: stack::Value,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        let a = self.one_node()?;
+        let b = other.one_node()?;
+        let a_annotation = annotations.get(a).unwrap();
+        let b_annotation = annotations.get(b).unwrap();
+        Ok(a_annotation.document_order > b_annotation.document_order)
+    }
+
     pub(crate) fn union(
         self,
         other: stack::Value,
