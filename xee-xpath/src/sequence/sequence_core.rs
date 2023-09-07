@@ -108,6 +108,7 @@ impl Sequence {
         other: &Sequence,
         collation: &Collation,
         default_offset: chrono::FixedOffset,
+        xot: &Xot,
     ) -> error::Result<bool> {
         // https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
         if self.is_empty() && other.is_empty() {
@@ -125,9 +126,10 @@ impl Sequence {
                         return Ok(false);
                     }
                 }
-                (Item::Node(_a), Item::Node(_b)) => {
-                    // need a collation aware deep-equal on Xot
-                    return Ok(false);
+                (Item::Node(a), Item::Node(b)) => {
+                    if !a.deep_equal(&b, collation, xot) {
+                        return Ok(false);
+                    }
                 }
                 _ => {
                     return Ok(false);

@@ -131,7 +131,7 @@ impl Node {
         }
     }
 
-    pub(crate) fn deep_equal(&self, other: &Node, xot: &Xot, collation: &Collation) -> bool {
+    pub(crate) fn deep_equal(&self, other: &Node, collation: &Collation, xot: &Xot) -> bool {
         // https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
         match (self, other) {
             (Node::Xot(a), Node::Xot(b)) => Self::deep_equal_xot(a, b, xot, collation),

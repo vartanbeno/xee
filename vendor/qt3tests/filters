@@ -3917,27 +3917,14 @@ fn-in-scope-prefixes-26
 = fn-index-of
 = fn-innermost
 fn-innermost-009
-fn-innermost-013
 fn-innermost-015
-fn-innermost-016
 fn-innermost-024
-fn-innermost-025
 fn-innermost-027
-fn-innermost-028
 fn-innermost-030
-fn-innermost-031
 fn-innermost-033
-fn-innermost-034
-fn-innermost-036
-fn-innermost-038
-fn-innermost-040
-fn-innermost-042
 fn-innermost-044
 fn-innermost-045
-fn-innermost-046
-fn-innermost-048
 fn-innermost-049
-fn-innermost-050
 fn-innermost-051
 fn-innermost-052
 fn-innermost-054
@@ -8651,7 +8638,6 @@ abbreviatedSyntax-2
 = prod-AxisStep.ancestor
 ancestor-1
 ancestor-10
-ancestor-20
 ancestor-3
 ancestor-4
 ancestor-5
@@ -8662,7 +8648,6 @@ ancestor-9
 = prod-AxisStep.ancestor-or-self
 ancestorself-1
 ancestorself-10
-ancestorself-20
 ancestorself-3
 ancestorself-4
 ancestorself-5
@@ -8690,7 +8675,6 @@ following-9
 = prod-AxisStep.following-sibling
 followingsibling-1
 followingsibling-10
-followingsibling-20
 followingsibling-3
 followingsibling-4
 followingsibling-5
@@ -8714,7 +8698,6 @@ preceding-9
 = prod-AxisStep.preceding-sibling
 preceding-sibling-1
 preceding-sibling-10
-preceding-sibling-20
 preceding-sibling-3
 preceding-sibling-4
 preceding-sibling-8

@@ -1327,3 +1327,8 @@ fn test_negative_round_integer3() {
 fn test_negative_round_integer4() {
     assert_debug_snapshot!(run("round(-151, -2)"));
 }
+
+#[test]
+fn test_deep_equal_equal_to_itself() {
+    assert_debug_snapshot!(run_xml(r#"<doc><a/></doc>"#, "deep-equal(/, /)",));
+}
