@@ -110,6 +110,27 @@ impl AssertNot {
     }
 }
 
+impl Assertable for AssertNot {
+    fn assert_result(
+        &self,
+        assert_context: &AssertContext,
+        result: &Result<Sequence>,
+    ) -> TestOutcome {
+        let result = self.0.assert_result(assert_context, result);
+        match result {
+            TestOutcome::Passed => {
+                TestOutcome::Failed(Failure::Not(self.clone(), Box::new(result)))
+            }
+            TestOutcome::Failed(_) => TestOutcome::Passed,
+            _ => result,
+        }
+    }
+
+    fn assert_value(&self, _assert_context: &AssertContext, _sequence: &Sequence) -> TestOutcome {
+        unreachable!();
+    }
+}
+
 impl fmt::Debug for AssertNot {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "AssertNot({:?})", self.0)
@@ -532,6 +553,7 @@ impl TestCaseResult {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(assert_context, result),
             TestCaseResult::AllOf(a) => a.assert_result(assert_context, result),
+            TestCaseResult::Not(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertEq(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertDeepEq(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertTrue(a) => a.assert_result(assert_context, result),

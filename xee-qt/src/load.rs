@@ -262,6 +262,7 @@ fn test_cases_query<'a>(
     })?;
 
     let any_all_recurse = queries.many_recurse("*")?;
+    let not_recurse = queries.one_recurse("*")?;
 
     // we use a local-name query here as it's the easiest way support this:
     // there is a single entry in the "result" element, but this may be
@@ -278,6 +279,9 @@ fn test_cases_query<'a>(
             } else if local_name == "all-of" {
                 let contents = any_all_recurse.execute(session, item, recurse)?;
                 qt::TestCaseResult::AllOf(assert::AssertAllOf::new(contents))
+            } else if local_name == "not" {
+                let contents = not_recurse.execute(session, item, recurse)?;
+                qt::TestCaseResult::Not(assert::AssertNot::new(contents))
             } else if local_name == "error" {
                 error_query.execute(session, item)?
             } else if local_name == "assert-true" {
