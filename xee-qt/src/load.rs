@@ -108,6 +108,10 @@ fn convert_string(_: &Session, item: &Item) -> xee_xpath::Result<String> {
     item.to_atomic()?.try_into()
 }
 
+fn convert_boolean(session: &Session, item: &Item) -> xee_xpath::Result<bool> {
+    Ok(convert_string(session, item)? == "true")
+}
+
 fn metadata_query<'a>(
     _xot: &'a Xot,
     mut queries: Queries<'a>,
@@ -240,10 +244,16 @@ fn test_cases_query<'a>(
         )))
     })?;
 
-    let assert_string_value_query = queries.one("string()", |_, item| {
-        let string_value: String = item.to_atomic()?.try_into()?;
+    let string_value_contents = queries.one("string()", convert_string)?;
+    let normalize_space_query = queries.option("@normalize-space/string()", convert_boolean)?;
+
+    let assert_string_value_query = queries.one(".", move |session, item| {
+        let string_value = string_value_contents.execute(session, item)?;
+        let normalize_space = normalize_space_query
+            .execute(session, item)?
+            .unwrap_or(false);
         Ok(qt::TestCaseResult::AssertStringValue(
-            assert::AssertStringValue::new(string_value),
+            assert::AssertStringValue::new(string_value, normalize_space),
         ))
     })?;
 

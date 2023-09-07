@@ -393,11 +393,11 @@ impl Assertable for AssertFalse {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct AssertStringValue(String);
+pub struct AssertStringValue(String, bool);
 
 impl AssertStringValue {
-    pub(crate) fn new(string: String) -> Self {
-        Self(string)
+    pub(crate) fn new(string: String, normalize_space: bool) -> Self {
+        Self(string, normalize_space)
     }
 }
 
@@ -410,6 +410,12 @@ impl Assertable for AssertStringValue {
         match strings {
             Ok(strings) => {
                 let joined = strings.join(" ");
+                let joined = if self.1 {
+                    // normalize space
+                    joined.split_whitespace().collect::<Vec<_>>().join(" ")
+                } else {
+                    joined
+                };
                 if joined == self.0 {
                     TestOutcome::Passed
                 } else {

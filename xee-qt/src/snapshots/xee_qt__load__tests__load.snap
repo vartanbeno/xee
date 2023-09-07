@@ -660,6 +660,7 @@ TestSet {
             result: AssertStringValue(
                 AssertStringValue(
                     "A text Node",
+                    false,
                 ),
             ),
         },
@@ -692,6 +693,7 @@ TestSet {
             result: AssertStringValue(
                 AssertStringValue(
                     "a text Node",
+                    false,
                 ),
             ),
         },
@@ -1243,6 +1245,7 @@ TestSet {
             result: AssertStringValue(
                 AssertStringValue(
                     "text node",
+                    false,
                 ),
             ),
         },
@@ -1275,6 +1278,7 @@ TestSet {
             result: AssertStringValue(
                 AssertStringValue(
                     "text node",
+                    false,
                 ),
             ),
         },

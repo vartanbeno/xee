@@ -14,8 +14,6 @@ functx-fn-base-uri-3
 functx-fn-base-uri-all
 functx-fn-count-3
 functx-fn-count-all
-functx-fn-data-5
-functx-fn-data-all
 functx-fn-default-collation-1
 functx-fn-doc-available-1
 functx-fn-encode-for-uri-1
@@ -8119,7 +8117,6 @@ statictypingaxis-4
 statictypingaxis-5
 statictypingaxis-6
 = prod-AxisStep.abbr
-abbreviatedSyntax-2
 = prod-AxisStep.ancestor
 ancestor-1
 = prod-AxisStep.ancestor-or-self
@@ -8149,7 +8146,6 @@ ST-Axes013
 ST-Axes014
 ST-Axes015
 = prod-AxisStep.unabbr
-unabbreviatedSyntax-3
 unabbreviatedSyntax-5
 = prod-BaseURIDecl
 K-BaseURIProlog-1

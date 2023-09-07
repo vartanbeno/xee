@@ -730,7 +730,7 @@ mod tests {
         assert_eq!(
             run(xot, &test_set),
             TestOutcome::Failed(Failure::StringValue(
-                assert::AssertStringValue::new("foo2".to_string()),
+                assert::AssertStringValue::new("foo2".to_string(), false),
                 AssertStringValueFailure::WrongStringValue("foo".to_string())
             ))
         );
