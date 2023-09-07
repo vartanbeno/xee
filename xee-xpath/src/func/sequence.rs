@@ -4,6 +4,7 @@ use ibig::IBig;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::op_add;
+use crate::atomic::op_div;
 use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::sequence;
@@ -206,6 +207,16 @@ fn count(arg: &[sequence::Item]) -> IBig {
     arg.len().into()
 }
 
+#[xpath_fn("fn:avg($arg as xs:anyAtomicType*) as xs:anyAtomicType?")]
+fn avg(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Option<Atomic>> {
+    if arg.is_empty() {
+        return Ok(None);
+    }
+    let total = sum_atoms(arg[0].clone(), &arg[1..], context.implicit_timezone())?;
+    let count: IBig = arg.len().into();
+    Ok(Some(op_div(total, count.into())?))
+}
+
 #[xpath_fn("fn:sum($arg as xs:anyAtomicType*) as xs:anyAtomicType")]
 fn sum1(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Atomic> {
     if arg.is_empty() {
@@ -277,6 +288,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(one_or_more),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
+        wrap_xpath_fn!(avg),
         wrap_xpath_fn!(sum1),
         wrap_xpath_fn!(sum2),
     ]

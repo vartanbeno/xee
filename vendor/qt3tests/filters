@@ -2,12 +2,6 @@
 = app-Demos
 = app-Duplicates
 = app-FunctxFn
-functx-fn-avg-1
-functx-fn-avg-2
-functx-fn-avg-3
-functx-fn-avg-4
-functx-fn-avg-5
-functx-fn-avg-all
 functx-fn-base-uri-1
 functx-fn-base-uri-2
 functx-fn-base-uri-3
@@ -956,8 +950,6 @@ fo-test-fn-adjust-time-to-timezone-002
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
-fo-test-fn-avg-003
-fo-test-fn-avg-004
 fo-test-fn-codepoints-to-string-004
 fo-test-fn-compare-002
 fo-test-fn-compare-004
@@ -1394,242 +1386,15 @@ fn-available-environment-variables-008
 fn-available-environment-variables-010
 fn-available-environment-variables-011
 = fn-avg
-K-SeqAVGFunc-10
-K-SeqAVGFunc-11
-K-SeqAVGFunc-12
-K-SeqAVGFunc-13
-K-SeqAVGFunc-14
-K-SeqAVGFunc-15
-K-SeqAVGFunc-16
-K-SeqAVGFunc-17
-K-SeqAVGFunc-18
-K-SeqAVGFunc-19
-K-SeqAVGFunc-20
-K-SeqAVGFunc-21
-K-SeqAVGFunc-22
-K-SeqAVGFunc-23
-K-SeqAVGFunc-24
-K-SeqAVGFunc-25
-K-SeqAVGFunc-26
-K-SeqAVGFunc-27
-K-SeqAVGFunc-28
-K-SeqAVGFunc-29
-K-SeqAVGFunc-3
-K-SeqAVGFunc-30
-K-SeqAVGFunc-31
-K-SeqAVGFunc-32
-K-SeqAVGFunc-33
-K-SeqAVGFunc-34
-K-SeqAVGFunc-35
-K-SeqAVGFunc-36
-K-SeqAVGFunc-37
-K-SeqAVGFunc-38
-K-SeqAVGFunc-39
-K-SeqAVGFunc-4
-K-SeqAVGFunc-40
-K-SeqAVGFunc-41
-K-SeqAVGFunc-42
-K-SeqAVGFunc-43
-K-SeqAVGFunc-5
-K-SeqAVGFunc-6
-K-SeqAVGFunc-7
-K-SeqAVGFunc-8
-K-SeqAVGFunc-9
-K2-SeqAVGFunc-1
-K2-SeqAVGFunc-2
-K2-SeqAVGFunc-3
 cbcl-avg-001
 cbcl-avg-002
 cbcl-avg-003
-cbcl-avg-004
-cbcl-avg-005
-cbcl-avg-006
-cbcl-avg-007
-cbcl-avg-009
 cbcl-avg-010
 cbcl-avg-011
 cbcl-avg-012
-cbcl-avg-013
-fn-avg-1
 fn-avg-10
-fn-avg-2
-fn-avg-3
-fn-avg-4
-fn-avg-5
-fn-avg-6
-fn-avg-7
-fn-avg-8
-fn-avg-9
-fn-avg-mix-args-001
-fn-avg-mix-args-002
-fn-avg-mix-args-003
-fn-avg-mix-args-004
-fn-avg-mix-args-005
-fn-avg-mix-args-006
-fn-avg-mix-args-007
-fn-avg-mix-args-008
-fn-avg-mix-args-009
-fn-avg-mix-args-010
-fn-avg-mix-args-011
-fn-avg-mix-args-012
-fn-avg-mix-args-013
-fn-avg-mix-args-014
-fn-avg-mix-args-015
-fn-avg-mix-args-016
-fn-avg-mix-args-017
-fn-avg-mix-args-018
-fn-avg-mix-args-019
-fn-avg-mix-args-020
-fn-avg-mix-args-021
-fn-avg-mix-args-022
-fn-avg-mix-args-023
-fn-avg-mix-args-024
-fn-avg-mix-args-025
-fn-avg-mix-args-026
-fn-avg-mix-args-027
-fn-avg-mix-args-028
-fn-avg-mix-args-029
-fn-avg-mix-args-030
-fn-avg-mix-args-031
-fn-avg-mix-args-032
-fn-avg-mix-args-033
-fn-avg-mix-args-034
-fn-avg-mix-args-035
-fn-avg-mix-args-036
-fn-avg-mix-args-037
-fn-avg-mix-args-038
-fn-avg-mix-args-039
-fn-avg-mix-args-040
-fn-avg-mix-args-041
-fn-avg-mix-args-042
-fn-avg-mix-args-043
-fn-avg-mix-args-044
-fn-avg-mix-args-045
-fn-avg-mix-args-046
-fn-avg-mix-args-047
-fn-avg-mix-args-048
-fn-avg-mix-args-049
-fn-avg-mix-args-050
-fn-avg-mix-args-051
-fn-avg-mix-args-052
-fn-avg-mix-args-053
-fn-avg-mix-args-054
-fn-avg-mix-args-055
-fn-avg-mix-args-056
-fn-avg-mix-args-057
-fn-avg-mix-args-058
-fn-avg-mix-args-059
-fn-avg-mix-args-060
 fn-avg-mix-args-061
-fn-avg-mix-args-062
-fn-avg-mix-args-063
-fn-avg-mix-args-064
-fn-avg-mix-args-065
 fn-avg-mix-args-066
-fn-avgdbl1args-1
-fn-avgdbl1args-2
-fn-avgdbl1args-3
-fn-avgdbl2args-1
-fn-avgdbl2args-2
-fn-avgdbl2args-3
-fn-avgdbl2args-4
-fn-avgdbl2args-5
-fn-avgdec1args-1
-fn-avgdec1args-2
-fn-avgdec1args-3
-fn-avgdec2args-1
-fn-avgdec2args-2
-fn-avgdec2args-3
-fn-avgdec2args-4
-fn-avgdec2args-5
-fn-avgflt1args-1
-fn-avgflt1args-2
-fn-avgflt1args-3
-fn-avgflt2args-1
-fn-avgflt2args-2
-fn-avgflt2args-3
-fn-avgflt2args-4
-fn-avgflt2args-5
-fn-avgint1args-1
-fn-avgint1args-2
-fn-avgint1args-3
-fn-avgint2args-1
-fn-avgint2args-2
-fn-avgint2args-3
-fn-avgint2args-4
-fn-avgint2args-5
-fn-avgintg1args-1
-fn-avgintg1args-2
-fn-avgintg1args-3
-fn-avgintg2args-1
-fn-avgintg2args-2
-fn-avgintg2args-3
-fn-avgintg2args-4
-fn-avgintg2args-5
-fn-avglng1args-1
-fn-avglng1args-2
-fn-avglng1args-3
-fn-avglng2args-1
-fn-avglng2args-2
-fn-avglng2args-3
-fn-avglng2args-4
-fn-avglng2args-5
-fn-avgnint1args-1
-fn-avgnint1args-2
-fn-avgnint1args-3
-fn-avgnint2args-1
-fn-avgnint2args-2
-fn-avgnint2args-3
-fn-avgnint2args-4
-fn-avgnint2args-5
-fn-avgnni1args-1
-fn-avgnni1args-2
-fn-avgnni1args-3
-fn-avgnni2args-1
-fn-avgnni2args-2
-fn-avgnni2args-3
-fn-avgnni2args-4
-fn-avgnni2args-5
-fn-avgnpi1args-1
-fn-avgnpi1args-2
-fn-avgnpi1args-3
-fn-avgnpi2args-1
-fn-avgnpi2args-2
-fn-avgnpi2args-3
-fn-avgnpi2args-4
-fn-avgnpi2args-5
-fn-avgpint1args-1
-fn-avgpint1args-2
-fn-avgpint1args-3
-fn-avgpint2args-1
-fn-avgpint2args-2
-fn-avgpint2args-3
-fn-avgpint2args-4
-fn-avgpint2args-5
-fn-avgsht1args-1
-fn-avgsht1args-2
-fn-avgsht1args-3
-fn-avgsht2args-1
-fn-avgsht2args-2
-fn-avgsht2args-3
-fn-avgsht2args-4
-fn-avgsht2args-5
-fn-avgulng1args-1
-fn-avgulng1args-2
-fn-avgulng1args-3
-fn-avgulng2args-1
-fn-avgulng2args-2
-fn-avgulng2args-3
-fn-avgulng2args-4
-fn-avgulng2args-5
-fn-avgusht1args-1
-fn-avgusht1args-2
-fn-avgusht1args-3
-fn-avgusht2args-1
-fn-avgusht2args-2
-fn-avgusht2args-3
-fn-avgusht2args-4
-fn-avgusht2args-5
 = fn-base-uri
 K-BaseURIFunc-2
 fn-base-uri-2
@@ -1660,7 +1425,6 @@ cbcl-codepoints-to-string-009
 cbcl-codepoints-to-string-011
 cbcl-codepoints-to-string-021
 fn-codepoints-to-string-1
-fn-codepoints-to-string-12
 = fn-collation-key
 collation-key-001
 collation-key-002
@@ -1833,11 +1597,8 @@ cbcl-dateTime-001
 cbcl-dateTime-002
 fn-dateTime-2
 = fn-day-from-date
-fn-day-from-date-7
 = fn-day-from-dateTime
-fn-day-from-dateTime-4
 = fn-days-from-duration
-fn-days-from-duration-7
 = fn-deep-equal
 K2-SeqDeepEqualFunc-1
 K2-SeqDeepEqualFunc-4
@@ -3569,7 +3330,6 @@ generate-id-019
 head-002
 = fn-hours-from-dateTime
 = fn-hours-from-duration
-fn-hours-from-duration-7
 = fn-hours-from-time
 = fn-id
 K2-SeqIDFunc-1
@@ -5477,14 +5237,10 @@ fn-minusht2args-4
 fn-minusht2args-5
 = fn-minutes-from-dateTime
 = fn-minutes-from-duration
-fn-minutes-from-duration-7
 = fn-minutes-from-time
-fn-minutes-from-time-4
 = fn-month-from-date
 = fn-month-from-dateTime
-fn-month-from-dateTime-4
 = fn-months-from-duration
-fn-months-from-duration-7
 = fn-name
 fn-name-28
 = fn-namespace-uri
@@ -6214,11 +5970,8 @@ fn-round-half-to-evenusht1args-1
 fn-round-half-to-evenusht1args-2
 fn-round-half-to-evenusht1args-3
 = fn-seconds-from-dateTime
-fn-seconds-from-dateTime-2
 = fn-seconds-from-duration
-fn-seconds-from-duration-7
 = fn-seconds-from-time
-fn-seconds-from-time-4
 = fn-serialize
 serialize-adaptive-001
 serialize-adaptive-002
@@ -6392,7 +6145,6 @@ fn-string-join-29
 = fn-string-length
 fn-string-length-24
 = fn-string-to-codepoints
-fn-string-to-codepoints-10
 = fn-subsequence
 K-SeqSubsequenceFunc-31
 K-SeqSubsequenceFunc-32
@@ -6774,9 +6526,7 @@ xml-to-json-D-510
 xml-to-json-D-511
 = fn-year-from-date
 = fn-year-from-dateTime
-fn-year-from-dateTime-4
 = fn-years-from-duration
-fn-years-from-duration-7
 = fn-zero-or-one
 = map-contains
 map-contains-001
@@ -7157,7 +6907,6 @@ FODT0002-9
 FONS0004-2
 FORG0001
 FORG0002
-FORG0006_02
 FORG0006_03
 FORG0006_04
 FORG0009
@@ -7443,8 +7192,6 @@ K-DayTimeDurationDivide-4
 K-DayTimeDurationDivide-5
 K-DayTimeDurationDivide-6
 cbcl-divide-dayTimeDuration-003
-op-divide-dayTimeDuration2args-2
-op-divide-dayTimeDuration2args-3
 = op-divide-dayTimeDuration-by-dayTimeDuration
 cbcl-divide-dayTimeDuration-by-dayTimeDuration-001
 cbcl-divide-dayTimeDuration-by-dayTimeDuration-002
@@ -7767,7 +7514,6 @@ rangeExpr-13
 rangeExpr-14
 rangeExpr-15
 rangeExpr-16
-rangeExpr-17
 rangeExpr-28
 rangeExpr-29
 rangeExpr-30
@@ -8585,12 +8331,10 @@ externalcontextitem-11
 externalcontextitem-16
 externalcontextitem-17
 externalcontextitem-18
-externalcontextitem-19
 externalcontextitem-20
 externalcontextitem-21
 externalcontextitem-7
 externalcontextitem-8
-internalcontextitem-19
 internalcontextitem-20
 internalcontextitem-21
 = prod-CopyNamespacesDecl
@@ -9380,8 +9124,6 @@ function-literal-315
 function-literal-316
 function-literal-317
 function-literal-318
-function-literal-335
-function-literal-336
 function-literal-337
 function-literal-338
 function-literal-339
@@ -9659,8 +9401,6 @@ K-QuantExprWithout-95
 K-QuantExprWithout-96
 K-QuantExprWithout-97
 K2-QuantExprWithout-4
-quantExpr-8
-quantexpr-38
 = prod-ReturnClause
 K2-ReturnExpr-1
 = prod-SchemaImport

@@ -8,7 +8,7 @@ use crate::atomic;
 use crate::error;
 
 use super::cast_binary::cast_binary_arithmetic;
-use super::cast_numeric::f64_to_i64;
+use super::cast_numeric::duration_i64;
 use super::datetime::YearMonthDuration;
 
 pub(crate) fn op_multiply(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atomic::Atomic> {
@@ -89,7 +89,7 @@ fn op_multiply_year_month_duration_by_double(
     if b.is_nan() {
         return Err(error::Error::FOCA0005);
     }
-    let total = f64_to_i64(a.months as f64 * b)?;
+    let total = duration_i64(a.months as f64 * b)?;
     Ok(YearMonthDuration::new(total).into())
 }
 
@@ -113,6 +113,6 @@ fn op_multiply_day_time_duration_by_double(
         return Err(error::Error::FOCA0005);
     }
     let a = a.num_milliseconds() as f64;
-    let total = f64_to_i64(a * b)?;
+    let total = duration_i64(a * b)?;
     Ok(chrono::Duration::milliseconds(total).into())
 }
