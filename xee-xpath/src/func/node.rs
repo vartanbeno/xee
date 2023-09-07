@@ -99,6 +99,25 @@ fn innermost(context: &DynamicContext, nodes: &[xml::Node]) -> Vec<xml::Node> {
     innermost
 }
 
+#[xpath_fn("fn:outermost($nodes as node()*) as node()*")]
+fn outermost(context: &DynamicContext, nodes: &[xml::Node]) -> Vec<xml::Node> {
+    let node_set = nodes.iter().collect::<HashSet<_>>();
+    // now find all nodes that don't have an ancestor in the set
+    let mut outermost = Vec::new();
+    'outer: for node in nodes {
+        let mut parent_node = *node;
+        // if we find an ancestor in node_set, then we don't add this node
+        while let Some(parent) = parent_node.parent(context.xot) {
+            if node_set.contains(&parent) {
+                continue 'outer;
+            }
+            parent_node = parent;
+        }
+        outermost.push(*node);
+    }
+    outermost
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(name),
@@ -107,5 +126,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(has_children),
         wrap_xpath_fn!(innermost),
+        wrap_xpath_fn!(outermost),
     ]
 }

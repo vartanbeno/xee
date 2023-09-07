@@ -5879,45 +5879,13 @@ fn-numberint1args-3
 = fn-one-or-more
 cbcl-one-or-more-004
 = fn-outermost
-fn-outermost-006
 fn-outermost-009
-fn-outermost-012
-fn-outermost-013
-fn-outermost-014
 fn-outermost-015
-fn-outermost-016
-fn-outermost-023
 fn-outermost-024
-fn-outermost-025
-fn-outermost-026
 fn-outermost-027
-fn-outermost-028
-fn-outermost-029
 fn-outermost-030
-fn-outermost-031
-fn-outermost-032
-fn-outermost-033
-fn-outermost-034
-fn-outermost-035
-fn-outermost-036
-fn-outermost-037
-fn-outermost-038
-fn-outermost-039
-fn-outermost-040
-fn-outermost-041
-fn-outermost-042
-fn-outermost-043
-fn-outermost-044
 fn-outermost-045
-fn-outermost-046
-fn-outermost-047
-fn-outermost-048
 fn-outermost-049
-fn-outermost-050
-fn-outermost-051
-fn-outermost-052
-fn-outermost-053
-fn-outermost-054
 = fn-parse-ietf-date
 parse-ietf-date-0
 parse-ietf-date-1
@@ -10173,8 +10141,6 @@ function-literal-283
 function-literal-284
 function-literal-285
 function-literal-286
-function-literal-293
-function-literal-294
 function-literal-315
 function-literal-316
 function-literal-317
