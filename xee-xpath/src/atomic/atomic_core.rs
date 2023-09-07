@@ -117,12 +117,28 @@ impl Atomic {
         )
     }
 
+    pub(crate) fn is_addable(&self) -> bool {
+        matches!(
+            self,
+            Atomic::Float(_)
+                | Atomic::Double(_)
+                | Atomic::Decimal(_)
+                | Atomic::Integer(_, _)
+                | Atomic::DayTimeDuration(_)
+                | Atomic::YearMonthDuration(_)
+        )
+    }
+
     pub(crate) fn is_true(&self) -> bool {
         if let Atomic::Boolean(b) = self {
             *b
         } else {
             false
         }
+    }
+
+    pub(crate) fn is_untyped(&self) -> bool {
+        matches!(self, Atomic::Untyped(_))
     }
 
     pub(crate) fn schema_type(&self) -> Xs {

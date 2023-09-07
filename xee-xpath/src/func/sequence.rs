@@ -3,6 +3,7 @@
 use ibig::IBig;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic::op_add;
 use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::sequence;
@@ -205,6 +206,59 @@ fn count(arg: &[sequence::Item]) -> IBig {
     arg.len().into()
 }
 
+#[xpath_fn("fn:sum($arg as xs:anyAtomicType*) as xs:anyAtomicType")]
+fn sum1(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Atomic> {
+    if arg.is_empty() {
+        return Ok(0.into());
+    }
+    sum_atoms(arg[0].clone(), &arg[1..], context.implicit_timezone())
+}
+
+#[xpath_fn("fn:sum($arg as xs:anyAtomicType*, $zero as xs:anyAtomicType?) as xs:anyAtomicType")]
+fn sum2(
+    context: &DynamicContext,
+    arg: &[Atomic],
+    zero: Option<Atomic>,
+) -> error::Result<Option<Atomic>> {
+    if arg.is_empty() {
+        return Ok(zero);
+    }
+    Ok(Some(sum_atoms(
+        arg[0].clone(),
+        &arg[1..],
+        context.implicit_timezone(),
+    )?))
+}
+
+fn sum_atoms(
+    total: Atomic,
+    arg: &[Atomic],
+    default_offset: chrono::FixedOffset,
+) -> error::Result<Atomic> {
+    let mut total = if total.is_untyped() {
+        total
+            .clone()
+            .cast_to_double()
+            .map_err(|_| error::Error::FORG0006)?
+    } else {
+        total.clone()
+    };
+    if arg.is_empty() && !total.is_addable() {
+        return Err(error::Error::FORG0006);
+    }
+    for atom in arg {
+        let atom = if atom.is_untyped() {
+            atom.clone()
+                .cast_to_double()
+                .map_err(|_| error::Error::FORG0006)?
+        } else {
+            atom.clone()
+        };
+        total = op_add(total, atom, default_offset).map_err(|_| error::Error::FORG0006)?;
+    }
+    Ok(total)
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(empty),
@@ -223,5 +277,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(one_or_more),
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
+        wrap_xpath_fn!(sum1),
+        wrap_xpath_fn!(sum2),
     ]
 }
