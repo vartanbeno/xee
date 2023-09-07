@@ -5,11 +5,16 @@ use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::op_add;
 use crate::atomic::op_div;
+use crate::atomic::AtomicCompare;
+use crate::atomic::OpGt;
+use crate::atomic::OpLt;
+use crate::atomic::StringType;
 use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::Atomic;
+use crate::Collation;
 use crate::DynamicContext;
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
@@ -217,6 +222,121 @@ fn avg(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Option<Atomic>
     Ok(Some(op_div(total, count.into())?))
 }
 
+#[xpath_fn(
+    "fn:max($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType?",
+    collation
+)]
+fn max(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Result<Option<Atomic>> {
+    min_or_max(
+        context,
+        arg,
+        collation,
+        |atom, max, collation, default_offset| {
+            OpGt::atomic_compare(
+                atom.clone(),
+                max.clone(),
+                |a, b| collation.compare(a, b),
+                default_offset,
+            )
+        },
+    )
+}
+
+#[xpath_fn(
+    "fn:min($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType?",
+    collation
+)]
+fn min(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Result<Option<Atomic>> {
+    min_or_max(
+        context,
+        arg,
+        collation,
+        |atom, min, collation, default_offset| {
+            OpLt::atomic_compare(
+                atom.clone(),
+                min.clone(),
+                |a, b| collation.compare(a, b),
+                default_offset,
+            )
+        },
+    )
+}
+
+fn min_or_max<F>(
+    context: &DynamicContext,
+    arg: &[Atomic],
+    collation: &str,
+    compare: F,
+) -> error::Result<Option<Atomic>>
+where
+    F: Fn(Atomic, Atomic, &Collation, chrono::offset::FixedOffset) -> error::Result<bool>,
+{
+    if !arg.is_empty() {
+        let collation = context.static_context.collation(collation)?;
+        let default_offset = context.implicit_timezone();
+        let mut float_seen: bool = false;
+        let mut double_seen: bool = false;
+        let mut any_uri_seen: bool = false;
+        let mut string_seen: bool = false;
+        let mut arg_iter = arg.iter().map(|atom| {
+            let atom = if atom.is_untyped() {
+                atom.clone().cast_to_double()
+            } else {
+                Ok(atom.clone())
+            };
+            match atom {
+                Ok(Atomic::Float(_)) => float_seen = true,
+                Ok(Atomic::Double(_)) => double_seen = true,
+                Ok(Atomic::String(StringType::AnyURI, _)) => any_uri_seen = true,
+                Ok(Atomic::String(StringType::String, _)) => string_seen = true,
+                _ => {}
+            }
+            atom
+        });
+        // unwrap is safe as we know it's not empty
+        let mut extreme = arg_iter.next().unwrap()?;
+        // if we know we don't have any more items, and max is
+        // not comparable, then we fail
+        if arg.len() == 1 && !extreme.is_comparable() {
+            return Err(error::Error::FORG0006);
+        }
+
+        for atom in arg_iter {
+            let atom = atom?;
+            // we want to handle NaN specifically; we do
+            // want to record it so we can't bail out early,
+            // as we need to see whether we need to cast in the end.
+            // However, once a NaN has been found, further comparisons
+            // should not take place.
+            if (atom.is_nan()
+                || compare(
+                    atom.clone(),
+                    extreme.clone(),
+                    collation.as_ref(),
+                    default_offset,
+                )
+                .map_err(|_| error::Error::FORG0006)?)
+                && !extreme.is_nan()
+            {
+                extreme = atom;
+            }
+        }
+        if double_seen {
+            Ok(Some(extreme.cast_to_double()?))
+        } else if float_seen {
+            Ok(Some(extreme.cast_to_float()?))
+        } else if any_uri_seen && string_seen {
+            // this will only cast any AnyURI max to string,
+            // otherwise the max is already string
+            Ok(Some(extreme.cast_to_string()))
+        } else {
+            Ok(Some(extreme))
+        }
+    } else {
+        Ok(None)
+    }
+}
+
 #[xpath_fn("fn:sum($arg as xs:anyAtomicType*) as xs:anyAtomicType")]
 fn sum1(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Atomic> {
     if arg.is_empty() {
@@ -247,10 +367,7 @@ fn sum_atoms(
     default_offset: chrono::FixedOffset,
 ) -> error::Result<Atomic> {
     let mut total = if total.is_untyped() {
-        total
-            .clone()
-            .cast_to_double()
-            .map_err(|_| error::Error::FORG0006)?
+        total.clone().cast_to_double()?
     } else {
         total.clone()
     };
@@ -289,6 +406,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(exactly_one),
         wrap_xpath_fn!(count),
         wrap_xpath_fn!(avg),
+        wrap_xpath_fn!(max),
+        wrap_xpath_fn!(min),
         wrap_xpath_fn!(sum1),
         wrap_xpath_fn!(sum2),
     ]

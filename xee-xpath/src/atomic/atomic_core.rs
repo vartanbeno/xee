@@ -129,6 +129,25 @@ impl Atomic {
         )
     }
 
+    pub(crate) fn is_comparable(&self) -> bool {
+        matches!(
+            self,
+            Atomic::String(_, _)
+                | Atomic::Float(_)
+                | Atomic::Double(_)
+                | Atomic::Decimal(_)
+                | Atomic::Integer(_, _)
+                | Atomic::YearMonthDuration(_)
+                | Atomic::DayTimeDuration(_)
+                | Atomic::DateTime(_)
+                | Atomic::DateTimeStamp(_)
+                | Atomic::Time(_)
+                | Atomic::Date(_)
+                | Atomic::Boolean(_)
+                | Atomic::Binary(_, _)
+        )
+    }
+
     pub(crate) fn is_true(&self) -> bool {
         if let Atomic::Boolean(b) = self {
             *b
