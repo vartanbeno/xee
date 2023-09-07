@@ -189,6 +189,33 @@ impl Value {
         Ok(Self::process_set_result(s, annotations))
     }
 
+    // https://www.w3.org/TR/xpath-31/#id-path-operator
+    pub(crate) fn deduplicate(self, annotations: &xml::Annotations) -> error::Result<stack::Value> {
+        let mut s = HashSet::new();
+        let mut non_node_seen = false;
+        for item in self.items() {
+            match item? {
+                sequence::Item::Node(n) => {
+                    if non_node_seen {
+                        return Err(error::Error::Type);
+                    }
+                    s.insert(n);
+                }
+                _ => {
+                    if !s.is_empty() {
+                        return Err(error::Error::Type);
+                    }
+                    non_node_seen = true;
+                }
+            }
+        }
+        if non_node_seen {
+            Ok(self)
+        } else {
+            Ok(Self::process_set_result(s, annotations))
+        }
+    }
+
     fn process_set_result(s: HashSet<xml::Node>, annotations: &xml::Annotations) -> stack::Value {
         // sort nodes by document order
         let mut nodes = s.into_iter().collect::<Vec<_>>();

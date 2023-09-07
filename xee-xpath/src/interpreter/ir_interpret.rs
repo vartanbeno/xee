@@ -33,6 +33,7 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_function_call(function_call, span)
             }
             ir::Expr::Step(step) => self.compile_step(step, span),
+            ir::Expr::Deduplicate(expr) => self.compile_deduplicate(expr, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
@@ -357,6 +358,12 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&step.context)?;
         let step_id = self.builder.add_step(step.step.clone());
         self.builder.emit(Instruction::Step(step_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_deduplicate(&mut self, expr: &ir::ExprS, span: SourceSpan) -> Result<()> {
+        self.compile_expr(expr)?;
+        self.builder.emit(Instruction::Deduplicate, span);
         Ok(())
     }
 

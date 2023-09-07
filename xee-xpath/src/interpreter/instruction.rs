@@ -41,6 +41,7 @@ pub(crate) enum Instruction {
     JumpIfFalse(i16),
     Call(u8),
     Step(u16),
+    Deduplicate,
     Return,
     ReturnConvert(u16),
     Dup,
@@ -98,6 +99,7 @@ pub(crate) enum EncodedInstruction {
     JumpIfFalse,
     Call,
     Step,
+    Deduplicate,
     Return,
     ReturnConvert,
     Dup,
@@ -190,6 +192,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             let step = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Step(step), 3)
         }
+        EncodedInstruction::Deduplicate => (Instruction::Deduplicate, 1),
         EncodedInstruction::Cast => {
             let type_id = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Cast(type_id), 3)
@@ -304,6 +307,9 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(EncodedInstruction::Step.to_u8().unwrap());
             bytes.extend_from_slice(&step_id.to_le_bytes());
         }
+        Instruction::Deduplicate => {
+            bytes.push(EncodedInstruction::Deduplicate.to_u8().unwrap());
+        }
         Instruction::Return => bytes.push(EncodedInstruction::Return.to_u8().unwrap()),
         Instruction::ReturnConvert(sequence_type_id) => {
             bytes.push(EncodedInstruction::ReturnConvert.to_u8().unwrap());
@@ -383,6 +389,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::BuildPush
         | Instruction::BuildComplete
         | Instruction::IsNumeric
+        | Instruction::Deduplicate
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,

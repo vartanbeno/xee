@@ -301,7 +301,11 @@ impl<'a> IrConverter<'a> {
                     var_atom: step_atom,
                     return_expr: Box::new(return_bindings.expr()),
                 });
-                let binding = self.new_binding(expr, step_expr.span);
+                // wrap this in a deduplicate step
+                let deduplicate_expr =
+                    ir::Expr::Deduplicate(Box::new(Spanned::new(expr, step_expr.span)));
+
+                let binding = self.new_binding(deduplicate_expr, step_expr.span);
                 Ok(step_bindings.bind(binding))
             })
     }

@@ -315,6 +315,11 @@ impl<'a> Interpreter<'a> {
                     let value = xml::resolve_step(step, node, self.dynamic_context.xot);
                     self.stack.push(value);
                 }
+                EncodedInstruction::Deduplicate => {
+                    let value = self.stack.pop().unwrap();
+                    let value = value.deduplicate(&self.dynamic_context.documents.annotations)?;
+                    self.stack.push(value);
+                }
                 EncodedInstruction::Return => {
                     let return_value = self.stack.pop().unwrap();
 

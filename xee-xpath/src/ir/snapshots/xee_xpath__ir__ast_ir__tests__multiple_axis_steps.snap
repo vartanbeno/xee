@@ -64,57 +64,62 @@ Ok(
                                 span: 0..8,
                             },
                             return_expr: Spanned {
-                                value: Map(
-                                    Map {
-                                        context_names: ContextNames {
-                                            item: Name(
-                                                "v4",
-                                            ),
-                                            position: Name(
-                                                "v5",
-                                            ),
-                                            last: Name(
-                                                "v6",
-                                            ),
-                                        },
-                                        var_atom: Spanned {
-                                            value: Variable(
-                                                Name(
-                                                    "v3",
-                                                ),
-                                            ),
-                                            span: 0..8,
-                                        },
-                                        return_expr: Spanned {
-                                            value: Step(
-                                                Step {
-                                                    step: Step {
-                                                        axis: Child,
-                                                        node_test: NameTest(
-                                                            Name(
-                                                                Spanned {
-                                                                    value: Name {
-                                                                        name: "b",
-                                                                        prefix: None,
-                                                                        namespace: None,
-                                                                    },
-                                                                    span: 16..17,
-                                                                },
-                                                            ),
-                                                        ),
-                                                    },
-                                                    context: Spanned {
-                                                        value: Variable(
-                                                            Name(
-                                                                "v4",
-                                                            ),
-                                                        ),
-                                                        span: 0..0,
-                                                    },
+                                value: Deduplicate(
+                                    Spanned {
+                                        value: Map(
+                                            Map {
+                                                context_names: ContextNames {
+                                                    item: Name(
+                                                        "v4",
+                                                    ),
+                                                    position: Name(
+                                                        "v5",
+                                                    ),
+                                                    last: Name(
+                                                        "v6",
+                                                    ),
                                                 },
-                                            ),
-                                            span: 9..17,
-                                        },
+                                                var_atom: Spanned {
+                                                    value: Variable(
+                                                        Name(
+                                                            "v3",
+                                                        ),
+                                                    ),
+                                                    span: 0..8,
+                                                },
+                                                return_expr: Spanned {
+                                                    value: Step(
+                                                        Step {
+                                                            step: Step {
+                                                                axis: Child,
+                                                                node_test: NameTest(
+                                                                    Name(
+                                                                        Spanned {
+                                                                            value: Name {
+                                                                                name: "b",
+                                                                                prefix: None,
+                                                                                namespace: None,
+                                                                            },
+                                                                            span: 16..17,
+                                                                        },
+                                                                    ),
+                                                                ),
+                                                            },
+                                                            context: Spanned {
+                                                                value: Variable(
+                                                                    Name(
+                                                                        "v4",
+                                                                    ),
+                                                                ),
+                                                                span: 0..0,
+                                                            },
+                                                        },
+                                                    ),
+                                                    span: 9..17,
+                                                },
+                                            },
+                                        ),
+                                        span: 9..17,
                                     },
                                 ),
                                 span: 9..17,

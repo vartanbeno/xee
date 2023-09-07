@@ -3922,12 +3922,8 @@ fn-innermost-024
 fn-innermost-027
 fn-innermost-030
 fn-innermost-033
-fn-innermost-044
 fn-innermost-045
 fn-innermost-049
-fn-innermost-051
-fn-innermost-052
-fn-innermost-054
 fn-innermost-059
 = fn-insert-before
 K-SeqInsertBeforeFunc-17
@@ -6465,7 +6461,6 @@ K-SeqReverseFunc-20
 K-SeqReverseFunc-21
 K-SeqReverseFunc-8
 reverse-001
-reverse-003
 = fn-root
 = fn-round
 fn-round-1
@@ -8608,10 +8603,7 @@ ArrowPostfix-108
 ArrowPostfix-109
 ArrowPostfix-110
 = prod-AxisStep
-Axes036-2
 Axes041-1
-Axes081-4
-Axes084-4
 K2-Axes-16
 K2-Axes-34
 K2-Axes-35
@@ -9691,10 +9683,7 @@ statictyping-7
 statictyping-8
 statictyping-9
 = prod-ForClause
-ForExpr012
 ForExpr013
-ForExpr015
-ForExpr016
 K-ForExprWithout-18
 K-ForExprWithout-20
 K-ForExprWithout-22
@@ -10477,7 +10466,6 @@ quantExpr-8
 quantexpr-38
 = prod-ReturnClause
 K2-ReturnExpr-1
-ReturnExpr011
 = prod-SchemaImport
 cbcl-default-attribute-1
 cbcl-default-attribute-2

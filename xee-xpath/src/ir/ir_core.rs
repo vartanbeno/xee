@@ -25,6 +25,7 @@ pub(crate) enum Expr {
     FunctionDefinition(FunctionDefinition),
     FunctionCall(FunctionCall),
     Step(Step),
+    Deduplicate(Box<ExprS>),
     Map(Map),
     Filter(Filter),
     Quantified(Quantified),
