@@ -15,13 +15,14 @@ homepage = "https://github.com/Paligo/xee"
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
-miette = { workspace = true, features = ["fancy"]}
+miette = { workspace = true, features = ["fancy"] }
 fxhash = "0.2.1"
 indexmap = "1.9.3"
-clap = { workspace = true, features = ["derive"]}
+clap = { workspace = true, features = ["derive"] }
 crossterm = "0.26.1"
 derive_builder = "0.12.0"
 globset = "0.4.10"
+chrono = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

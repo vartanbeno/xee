@@ -1,3 +1,4 @@
 mod collation;
 
-pub(crate) use collation::{provider, Collation, Collations};
+pub use collation::Collation;
+pub(crate) use collation::{provider, Collations};

@@ -22,6 +22,7 @@ rust_decimal = "1.30.0"
 chumsky = "1.0.0-alpha.4"
 icu = "1.2.0"
 serde = "1"
+chrono = "0.4.26"
 
 [profile.test.package.xot]
 opt-level = 3

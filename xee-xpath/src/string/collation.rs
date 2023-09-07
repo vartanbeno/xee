@@ -123,7 +123,7 @@ impl CollatorQuery {
 }
 
 #[derive(Debug)]
-pub(crate) enum Collation {
+pub enum Collation {
     // 5.3.2
     CodePoint,
     // 5.3.3

@@ -233,6 +233,13 @@ fn test_cases_query<'a>(
         )))
     })?;
 
+    let assert_deep_eq_query = queries.one("string()", |_, item| {
+        let eq: String = item.to_atomic()?.try_into()?;
+        Ok(qt::TestCaseResult::AssertDeepEq(assert::AssertDeepEq::new(
+            qt::XPathExpr(eq),
+        )))
+    })?;
+
     let assert_string_value_query = queries.one("string()", |_, item| {
         let string_value: String = item.to_atomic()?.try_into()?;
         Ok(qt::TestCaseResult::AssertStringValue(
@@ -283,6 +290,8 @@ fn test_cases_query<'a>(
                 assert_xml_query.execute(session, item)?
             } else if local_name == "assert-eq" {
                 assert_eq_query.execute(session, item)?
+            } else if local_name == "assert-deep-eq" {
+                assert_deep_eq_query.execute(session, item)?
             } else if local_name == "assert-string-value" {
                 assert_string_value_query.execute(session, item)?
             } else if local_name == "assert" {

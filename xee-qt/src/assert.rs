@@ -1,7 +1,9 @@
+use chrono::Offset;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    Documents, DynamicContext, Name, Namespaces, Occurrence, Result, Sequence, StaticContext, XPath,
+    Collation, Documents, DynamicContext, Name, Namespaces, Occurrence, Result, Sequence,
+    StaticContext, XPath,
 };
 use xot::Xot;
 
@@ -170,6 +172,40 @@ impl Assertable for AssertEq {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct AssertDeepEq(qt::XPathExpr);
+
+impl AssertDeepEq {
+    pub(crate) fn new(expr: qt::XPathExpr) -> Self {
+        Self(expr)
+    }
+}
+
+impl Assertable for AssertDeepEq {
+    fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0, assert_context);
+
+        match expected_sequence {
+            Ok(expected_sequence) => {
+                if expected_sequence
+                    .deep_equal(
+                        sequence,
+                        &Collation::CodePoint,
+                        chrono::offset::Utc.fix(),
+                        assert_context.xot,
+                    )
+                    .unwrap_or(false)
+                {
+                    TestOutcome::Passed
+                } else {
+                    TestOutcome::Failed(Failure::DeepEq(self.clone(), sequence.clone()))
+                }
+            }
+            Err(error) => TestOutcome::UnsupportedExpression(error),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct AssertCount(usize);
 
 impl AssertCount {
@@ -191,9 +227,6 @@ impl Assertable for AssertCount {
         }
     }
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct AssertDeepEq(qt::XPathExpr);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertPermutation(qt::XPathExpr);
@@ -429,14 +462,14 @@ pub(crate) enum TestCaseResult {
     // or numeric literal) which must be equal to the result of the test case
     // under the rules of the XPath 'eq' operator.
     AssertEq(AssertEq),
-    // Asserts that the result must be a sequence containing a given number of
-    // items. The value of the element is an integer giving the expected length
-    // of the sequence.
-    AssertCount(AssertCount),
     // Asserts that the result must be a sequence of atomic values that is
     // deep-equal to the supplied sequence under the rules of the deep-equal()
     // function.
     AssertDeepEq(AssertDeepEq),
+    // Asserts that the result must be a sequence containing a given number of
+    // items. The value of the element is an integer giving the expected length
+    // of the sequence.
+    AssertCount(AssertCount),
     //  Asserts that the result must be a sequence of atomic values that has
     //  some permutation (reordering) that is deep-equal to the supplied
     //  sequence under the rules of the deep-equal() function.
@@ -500,6 +533,7 @@ impl TestCaseResult {
             TestCaseResult::AnyOf(a) => a.assert_result(assert_context, result),
             TestCaseResult::AllOf(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertEq(a) => a.assert_result(assert_context, result),
+            TestCaseResult::AssertDeepEq(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertTrue(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertFalse(a) => a.assert_result(assert_context, result),
             TestCaseResult::AssertCount(a) => a.assert_result(assert_context, result),
@@ -540,6 +574,7 @@ pub enum Failure {
     AnyOf(AssertAnyOf, Vec<TestOutcome>),
     Not(AssertNot, Box<TestOutcome>),
     Eq(AssertEq, Sequence),
+    DeepEq(AssertDeepEq, Sequence),
     True(AssertTrue, Sequence),
     False(AssertFalse, Sequence),
     Count(AssertCount, AssertCountFailure),
@@ -575,6 +610,12 @@ impl fmt::Display for Failure {
             }
             Failure::Eq(a, value) => {
                 writeln!(f, "eq:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::DeepEq(a, value) => {
+                writeln!(f, "deep-eq:")?;
                 writeln!(f, "  expected: {:?}", a.0)?;
                 writeln!(f, "  actual: {:?}", value)?;
                 Ok(())

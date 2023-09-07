@@ -33,7 +33,7 @@ ibig = "0.3.6"
 regex = "1.9.3"
 hex = "0.4.3"
 base64 = "0.21.2"
-chrono = "0.4.26"
+chrono = { workspace = true }
 icu = { workspace = true, features = ["serde"] }
 icu_provider_adapters = { version = "1.2.0", features = ["serde"] }
 icu_provider_blob = "1.2"

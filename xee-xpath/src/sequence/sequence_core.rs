@@ -103,7 +103,7 @@ impl Sequence {
             .map_err(|_| error::Error::FORG0006)
     }
 
-    pub(crate) fn deep_equal(
+    pub fn deep_equal(
         &self,
         other: &Sequence,
         collation: &Collation,
