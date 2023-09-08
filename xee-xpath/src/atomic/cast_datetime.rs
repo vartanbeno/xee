@@ -632,13 +632,14 @@ fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool> {
     just('-').or_not().map(|sign| sign.is_some())
 }
 
-fn second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
-    let digits = digits_parser().boxed();
-    let seconds_with_fraction = digits
+fn duration_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
+    let seconds_digits = digits_parser().boxed();
+    let ms_digits = digits_parser().boxed();
+    seconds_digits
         .clone()
-        .then_ignore(just('.'))
-        .then(digits.clone())
+        .then(just('.').ignore_then(ms_digits).or_not())
         .map(|(a, b)| {
+            let b = b.unwrap_or("0".to_string());
             // ignore anything below milliseconds
             let b = if b.len() > 3 { &b[..3] } else { &b };
             let l = b.len();
@@ -646,9 +647,24 @@ fn second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
             let a = a.parse::<u32>().unwrap();
             let b = b.parse::<u32>().unwrap();
             (a, b * 10u32.pow(3 - l as u32))
-        });
-    let seconds_without_fraction = digits.map(|s| (s.parse::<u32>().unwrap(), 0));
-    seconds_with_fraction.or(seconds_without_fraction)
+        })
+}
+
+fn time_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
+    let seconds_digits = two_digit_parser().boxed();
+    let ms_digits = digits_parser().boxed();
+    seconds_digits
+        .clone()
+        .then(just('.').ignore_then(ms_digits).or_not())
+        .map(|(a, b)| {
+            let b = b.unwrap_or("0".to_string());
+            // ignore anything below milliseconds
+            let b = if b.len() > 3 { &b[..3] } else { &b };
+            let l = b.len();
+
+            let b = b.parse::<u32>().unwrap();
+            (a, b * 10u32.pow(3 - l as u32))
+        })
 }
 
 fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64> {
@@ -678,7 +694,7 @@ fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
     let day_d = number.clone().then_ignore(just('D')).boxed();
     let hour_h = number.clone().then_ignore(just('H')).boxed();
     let minute_m = number.clone().then_ignore(just('M')).boxed();
-    let second_s = second_parser().then_ignore(just('S')).boxed();
+    let second_s = duration_second_parser().then_ignore(just('S')).boxed();
 
     let time = just('T')
         .ignore_then(hour_h.or_not())
@@ -836,7 +852,7 @@ fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32> {
 fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
     let hour = hour_parser().boxed();
     let minute = minute_parser().boxed();
-    let second = second_parser().boxed();
+    let second = time_second_parser().boxed();
     hour.then_ignore(just(':'))
         .then(minute)
         .then_ignore(just(':'))
