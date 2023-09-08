@@ -144,7 +144,6 @@ impl atomic::Atomic {
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 // https://www.w3.org/TR/xpath-functions-31/#constructor-qname-notation
                 let namespaces = dynamic_context.static_context.namespaces;
-
                 let name = ast::Name::parse(&s, namespaces);
                 match name {
                     Ok(name) => {
@@ -154,7 +153,9 @@ impl atomic::Atomic {
                             // legal for xs:QName
                             Err(error::Error::FORG0001)
                         } else {
-                            Ok(atomic::Atomic::QName(Rc::new(name)))
+                            Ok(atomic::Atomic::QName(Rc::new(name.with_default_namespace(
+                                namespaces.default_element_namespace(),
+                            ))))
                         }
                     }
                     // TODO: We really want to distinguish between parse errors

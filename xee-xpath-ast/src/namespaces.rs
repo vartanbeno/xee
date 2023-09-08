@@ -56,12 +56,20 @@ impl<'a> Namespaces<'a> {
 
     pub fn add(&mut self, namespace_pairs: &[(&'a str, &'a str)]) {
         for (prefix, uri) in namespace_pairs {
-            self.namespaces.insert(*prefix, *uri);
+            if prefix.is_empty() {
+                self.default_element_namespace = Some(uri);
+            } else {
+                self.namespaces.insert(*prefix, *uri);
+            }
         }
     }
 
     pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).copied()
+    }
+
+    pub fn default_element_namespace(&self) -> Option<&str> {
+        self.default_element_namespace
     }
 }
 

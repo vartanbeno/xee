@@ -3568,16 +3568,7 @@ fn-load-xquery-module-915
 = fn-local-name
 fn-local-name-78
 = fn-local-name-from-QName
-LocalNameFromQNameFunc001
-LocalNameFromQNameFunc002
-LocalNameFromQNameFunc003
-LocalNameFromQNameFunc004
-LocalNameFromQNameFunc005
-LocalNameFromQNameFunc010
 LocalNameFromQNameFunc015a
-LocalNameFromQNameFunc018
-LocalNameFromQNameFunc019
-LocalNameFromQNameFunc020
 = fn-lower-case
 = fn-matches
 K-MatchesFunc-1
@@ -4752,16 +4743,7 @@ fn-name-28
 = fn-namespace-uri
 = fn-namespace-uri-for-prefix
 = fn-namespace-uri-from-QName
-NamespaceURIFromQNameFunc001
-NamespaceURIFromQNameFunc002
-NamespaceURIFromQNameFunc003
-NamespaceURIFromQNameFunc004
-NamespaceURIFromQNameFunc005
-NamespaceURIFromQNameFunc010
 NamespaceURIFromQNameFunc015a
-NamespaceURIFromQNameFunc018
-NamespaceURIFromQNameFunc019
-NamespaceURIFromQNameFunc020
 = fn-nilled
 K-NilledFunc-3
 K-NilledFunc-4
@@ -7168,7 +7150,6 @@ K2-SeqExprCast-156
 K2-SeqExprCast-177
 K2-SeqExprCast-178
 K2-SeqExprCast-179
-K2-SeqExprCast-201
 K2-SeqExprCast-208
 K2-SeqExprCast-221
 K2-SeqExprCast-223
