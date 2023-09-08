@@ -24,6 +24,26 @@ impl TestFilter for IncludeAllFilter {
     }
 }
 
+pub(crate) struct NameFilter {
+    name_filter: Option<String>,
+}
+
+impl NameFilter {
+    pub(crate) fn new(name_filter: Option<String>) -> Self {
+        Self { name_filter }
+    }
+}
+
+impl TestFilter for NameFilter {
+    fn is_included(&self, _test_set: &qt::TestSet, test_case: &qt::TestCase) -> bool {
+        if let Some(name_filter) = &self.name_filter {
+            test_case.name.contains(name_filter)
+        } else {
+            true
+        }
+    }
+}
+
 struct ExcludedName {
     name: String,
     comment: Option<String>,

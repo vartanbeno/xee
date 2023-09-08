@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use xot::Xot;
 
 use crate::error::Result;
-use crate::filter::{ExcludedNamesFilter, IncludeAllFilter};
+use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter};
 use crate::outcome::Outcomes;
 use crate::path::paths;
 use crate::qt;
@@ -66,6 +66,8 @@ enum Commands {
     All {
         /// A path to a qttests directory or individual test file.
         path: PathBuf,
+        /// Name filter, only test-cases that contain this name are found.
+        name_filter: Option<String>,
         /// Verbose mode
         #[clap(short, long)]
         verbose: bool,
@@ -79,7 +81,11 @@ pub fn cli() -> Result<()> {
         Commands::Initialize { path, verbose } => initialize(&path, verbose),
         Commands::Check { path, verbose } => check(&path, verbose),
         Commands::Update { path, verbose } => update(&path, verbose),
-        Commands::All { path, verbose } => all(&path, verbose),
+        Commands::All {
+            path,
+            verbose,
+            name_filter,
+        } => all(&path, verbose, name_filter),
     }
 }
 
@@ -112,7 +118,7 @@ fn check(path: &Path, verbose: bool) -> Result<()> {
     Ok(())
 }
 
-fn all(path: &Path, verbose: bool) -> Result<()> {
+fn all(path: &Path, verbose: bool, name_filter: Option<String>) -> Result<()> {
     let path_info = paths(path)?;
     let mut xot = Xot::new();
     let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
@@ -124,7 +130,7 @@ fn all(path: &Path, verbose: bool) -> Result<()> {
         .build()
         .unwrap();
 
-    let test_filter = IncludeAllFilter::new();
+    let test_filter = NameFilter::new(name_filter);
 
     if path_info.whole_catalog() {
         let outcomes = run(&mut run_context, &test_filter)?;
