@@ -309,7 +309,7 @@ impl atomic::Atomic {
             atomic::Atomic::DateTime(date_time) => {
                 if let Some(offset) = date_time.offset {
                     Ok(atomic::Atomic::DateTimeStamp(Rc::new(
-                        chrono::DateTime::from_utc(date_time.date_time, offset),
+                        chrono::DateTime::from_naive_utc_and_offset(date_time.date_time, offset),
                     )))
                 } else {
                     Err(error::Error::Type)

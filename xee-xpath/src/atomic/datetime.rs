@@ -129,7 +129,7 @@ impl From<NaiveDateTimeWithOffset> for chrono::DateTime<chrono::FixedOffset> {
         let offset = naive_date_time_with_offset
             .offset
             .unwrap_or_else(|| chrono::offset::Utc.fix());
-        chrono::DateTime::from_utc(naive_date_time_with_offset.date_time, offset)
+        chrono::DateTime::from_naive_utc_and_offset(naive_date_time_with_offset.date_time, offset)
     }
 }
 
@@ -163,7 +163,7 @@ impl ToDateTimeStamp for NaiveDateTimeWithOffset {
         default_offset: chrono::FixedOffset,
     ) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or(default_offset);
-        chrono::DateTime::from_utc(self.date_time, offset)
+        chrono::DateTime::from_naive_utc_and_offset(self.date_time, offset)
     }
 }
 
@@ -212,7 +212,7 @@ impl ToDateTimeStamp for NaiveTimeWithOffset {
         // we need to get rid of the offset as we are going to add it
         // back next
         let date_time = date_time - offset;
-        chrono::DateTime::from_utc(date_time, offset)
+        chrono::DateTime::from_naive_utc_and_offset(date_time, offset)
     }
 }
 
@@ -252,7 +252,7 @@ impl ToDateTimeStamp for NaiveDateWithOffset {
     ) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or(default_offset);
         let date_time = self.date.and_hms_opt(0, 0, 0).unwrap();
-        chrono::DateTime::from_utc(date_time, offset)
+        chrono::DateTime::from_naive_utc_and_offset(date_time, offset)
     }
 }
 
