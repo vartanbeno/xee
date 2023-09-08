@@ -80,6 +80,7 @@ pub(crate) trait Outcomes {
         write!(s, " Passed: {}", self.passed()).unwrap();
         write!(s, " Failed: {}", self.failed()).unwrap();
         write!(s, " Error: {}", self.erroring()).unwrap();
+        write!(s, " WrongE: {}", self.passed_with_unexpected_error()).unwrap();
         write!(s, " Filtered: {}", self.filtered()).unwrap();
         write!(s, " Unsupported: {}", self.unsupported()).unwrap();
         s
