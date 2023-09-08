@@ -1,5 +1,6 @@
 // https://www.w3.org/TR/xpath-functions-31/#sequence-functions
 
+use ahash::HashMap;
 use ibig::IBig;
 use xee_xpath_macros::xpath_fn;
 
@@ -140,13 +141,50 @@ fn unordered(source_seq: &sequence::Sequence) -> sequence::Sequence {
     source_seq.clone()
 }
 
-// #[xpath_fn(
-//     "fn:distinct-values($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType*",
-//     collation
-// )]
-// fn distinct_values(arg: &[Atomic], collation: &str) -> Atomic {
-//     todo!();
-// }
+#[xpath_fn(
+    "fn:distinct-values($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType*",
+    collation
+)]
+fn distinct_values(
+    context: &DynamicContext,
+    arg: &[Atomic],
+    collation: &str,
+) -> error::Result<Vec<Atomic>> {
+    if arg.is_empty() {
+        return Ok(Vec::new());
+    }
+    let collation = context.static_context.collation(collation)?;
+    let default_offset = context.implicit_timezone();
+    // we use a HashMap first to remove items to compare. It removes easy
+    // duplicates. It can't generate false positives as the default
+    // string compare is in use. We store the order in the value.
+    let distinct_set = arg
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(i, atom)| (atom, i))
+        .collect::<HashMap<_, _>>();
+
+    // now we use an exhaustive, and expensive, deep-equal check to filter out
+    // more duplicates
+    let mut distinct = Vec::new();
+    'outer: for (atom, order) in distinct_set {
+        for (_, seen) in &distinct {
+            if atom.deep_equal(seen, &collation, default_offset) {
+                continue 'outer;
+            }
+        }
+        distinct.push((order, atom))
+    }
+    // now we sort by the order we saw them in and remove order
+    // from final vec
+    distinct.sort_by_key(|(order, _)| *order);
+    let distinct = distinct
+        .into_iter()
+        .map(|(_, atom)| atom)
+        .collect::<Vec<_>>();
+    Ok(distinct)
+}
 
 #[xpath_fn("fn:index-of($seq as xs:anyAtomicType*, $search as xs:anyAtomicType, $collation as xs:string) as xs:integer*", collation)]
 fn index_of(
@@ -399,6 +437,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(subsequence2),
         wrap_xpath_fn!(subsequence3),
         wrap_xpath_fn!(unordered),
+        wrap_xpath_fn!(distinct_values),
         wrap_xpath_fn!(index_of),
         wrap_xpath_fn!(deep_equal),
         wrap_xpath_fn!(zero_or_one),

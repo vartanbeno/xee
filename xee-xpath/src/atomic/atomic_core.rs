@@ -23,7 +23,7 @@ use super::{op_unary, OpEq};
 // operation. Anything bigger we stuff in an Rc
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub enum Atomic {
     Untyped(Rc<String>),
     String(StringType, Rc<String>),
@@ -253,6 +253,8 @@ impl PartialEq for Atomic {
         // to use `op_eq` directly. But it's so convenient for testing
         // purposes, even for external libraries like xee-qt, we do implement
         // this operation.
+        // It's also used by fn:distinct-values which uses
+        // as hashing algorithm to pre-filter
         OpEq::atomic_compare(
             self.clone(),
             other.clone(),
@@ -262,6 +264,8 @@ impl PartialEq for Atomic {
         .unwrap_or(false)
     }
 }
+
+impl Eq for Atomic {}
 
 impl fmt::Display for Atomic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -34,7 +34,7 @@ pub(crate) trait ToDateTimeStamp {
 impl<T> EqWithDefaultOffset for T where T: ToDateTimeStamp {}
 impl<T> OrdWithDefaultOffset for T where T: ToDateTimeStamp {}
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct YearMonthDuration {
     pub(crate) months: i64,
 }
@@ -59,7 +59,7 @@ impl From<YearMonthDuration> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Duration {
     pub(crate) year_month: YearMonthDuration,
     pub(crate) day_time: chrono::Duration,
@@ -118,7 +118,7 @@ impl TryFrom<Atomic> for chrono::Duration {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -176,7 +176,7 @@ impl NaiveDateTimeWithOffset {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -222,7 +222,7 @@ impl From<NaiveTimeWithOffset> for Atomic {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -262,7 +262,7 @@ impl From<NaiveDateWithOffset> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GYearMonth {
     pub(crate) year: i32,
     pub(crate) month: u32,
@@ -285,7 +285,7 @@ impl From<GYearMonth> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GYear {
     pub(crate) year: i32,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -303,7 +303,7 @@ impl From<GYear> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GMonthDay {
     pub(crate) month: u32,
     pub(crate) day: u32,
@@ -322,7 +322,7 @@ impl From<GMonthDay> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GDay {
     pub(crate) day: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -340,7 +340,7 @@ impl From<GDay> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GMonth {
     pub(crate) month: u32,
     pub(crate) offset: Option<chrono::FixedOffset>,

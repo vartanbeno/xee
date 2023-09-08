@@ -1,6 +1,6 @@
 use xee_schema_type::Xs;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum IntegerType {
     Integer,
     NonPositiveInteger,
@@ -38,7 +38,7 @@ impl IntegerType {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StringType {
     String,
     NormalizedString,
@@ -72,7 +72,7 @@ impl StringType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinaryType {
     Base64,
     Hex,
