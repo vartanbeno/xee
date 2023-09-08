@@ -8,7 +8,8 @@ use xee_xpath_macros::xpath_fn;
 use crate::atomic::ToDateTimeStamp;
 use crate::context::StaticFunctionDescription;
 use crate::{
-    error, wrap_xpath_fn, NaiveDateTimeWithOffset, NaiveDateWithOffset, NaiveTimeWithOffset,
+    error, wrap_xpath_fn, DynamicContext, NaiveDateTimeWithOffset, NaiveDateWithOffset,
+    NaiveTimeWithOffset,
 };
 
 #[xpath_fn("fn:dateTime($arg1 as xs:date?, $arg2 as xs:time?) as xs:dateTime?")]
@@ -163,14 +164,28 @@ fn timezone_from_time(arg: Option<NaiveTimeWithOffset>) -> error::Result<Option<
     }
 }
 
+#[xpath_fn("fn:adjust-dateTime-to-timezone($arg as xs:dateTime?) as xs:dateTime?")]
+fn adjust_date_time_to_timezone1(
+    context: &DynamicContext,
+    arg: Option<NaiveDateTimeWithOffset>,
+) -> error::Result<Option<NaiveDateTimeWithOffset>> {
+    adjust_date_time_to_timezone(arg, Some(context.implicit_timezone()))
+}
+
 #[xpath_fn("fn:adjust-dateTime-to-timezone($arg as xs:dateTime?, $timezone as xs:dayTimeDuration?) as xs:dateTime?")]
 fn adjust_date_time_to_timezone2(
     arg: Option<NaiveDateTimeWithOffset>,
     timezone: Option<chrono::Duration>,
 ) -> error::Result<Option<NaiveDateTimeWithOffset>> {
-    match (arg, timezone) {
-        (Some(arg), Some(timezone)) => {
-            let offset = duration_to_offset(timezone)?;
+    adjust_date_time_to_timezone(arg, duration_to_offset(timezone)?)
+}
+
+fn adjust_date_time_to_timezone(
+    arg: Option<NaiveDateTimeWithOffset>,
+    offset: Option<chrono::FixedOffset>,
+) -> error::Result<Option<NaiveDateTimeWithOffset>> {
+    match (arg, offset) {
+        (Some(arg), Some(offset)) => {
             let date_time = if let Some(arg_offset) = arg.offset {
                 arg.date_time - arg_offset + offset
             } else {
@@ -183,6 +198,14 @@ fn adjust_date_time_to_timezone2(
     }
 }
 
+#[xpath_fn("fn:adjust-date-to-timezone($arg as xs:date?) as xs:date?")]
+fn adjust_date_to_timezone1(
+    context: &crate::context::DynamicContext,
+    arg: Option<NaiveDateWithOffset>,
+) -> error::Result<Option<NaiveDateWithOffset>> {
+    adjust_date_to_timezone(context, arg, Some(context.implicit_timezone()))
+}
+
 #[xpath_fn(
     "fn:adjust-date-to-timezone($arg as xs:date?, $timezone as xs:dayTimeDuration?) as xs:date?"
 )]
@@ -191,9 +214,16 @@ fn adjust_date_to_timezone2(
     arg: Option<NaiveDateWithOffset>,
     timezone: Option<chrono::Duration>,
 ) -> error::Result<Option<NaiveDateWithOffset>> {
-    match (arg, timezone) {
-        (Some(arg), Some(timezone)) => {
-            let offset = duration_to_offset(timezone)?;
+    adjust_date_to_timezone(context, arg, duration_to_offset(timezone)?)
+}
+
+fn adjust_date_to_timezone(
+    context: &crate::context::DynamicContext,
+    arg: Option<NaiveDateWithOffset>,
+    offset: Option<chrono::FixedOffset>,
+) -> error::Result<Option<NaiveDateWithOffset>> {
+    match (arg, offset) {
+        (Some(arg), Some(offset)) => {
             let stamp = arg.to_date_time_stamp(context.implicit_timezone());
             let stamp = if let Some(arg_offset) = arg.offset {
                 stamp - arg_offset + offset
@@ -210,6 +240,14 @@ fn adjust_date_to_timezone2(
     }
 }
 
+#[xpath_fn("fn:adjust-time-to-timezone($arg as xs:time?) as xs:time?")]
+fn adjust_time_to_timezone1(
+    context: &crate::context::DynamicContext,
+    arg: Option<NaiveTimeWithOffset>,
+) -> error::Result<Option<NaiveTimeWithOffset>> {
+    adjust_time_to_timezone(context, arg, Some(context.implicit_timezone()))
+}
+
 #[xpath_fn(
     "fn:adjust-time-to-timezone($arg as xs:time?, $timezone as xs:dayTimeDuration?) as xs:time?"
 )]
@@ -218,9 +256,16 @@ fn adjust_time_to_timezone2(
     arg: Option<NaiveTimeWithOffset>,
     timezone: Option<chrono::Duration>,
 ) -> error::Result<Option<NaiveTimeWithOffset>> {
-    match (arg, timezone) {
-        (Some(arg), Some(timezone)) => {
-            let offset = duration_to_offset(timezone)?;
+    adjust_time_to_timezone(context, arg, duration_to_offset(timezone)?)
+}
+
+fn adjust_time_to_timezone(
+    context: &crate::context::DynamicContext,
+    arg: Option<NaiveTimeWithOffset>,
+    offset: Option<chrono::FixedOffset>,
+) -> error::Result<Option<NaiveTimeWithOffset>> {
+    match (arg, offset) {
+        (Some(arg), Some(offset)) => {
             let stamp = arg.to_date_time_stamp(context.implicit_timezone());
             let stamp = if let Some(_arg_offset) = arg.offset {
                 // the arg offset is already processed when we do
@@ -250,20 +295,28 @@ fn offset_to_duration(offset: Option<chrono::FixedOffset>) -> Option<chrono::Dur
     offset.map(|offset| chrono::Duration::seconds(offset.local_minus_utc() as i64))
 }
 
-fn duration_to_offset(duration: chrono::Duration) -> error::Result<chrono::FixedOffset> {
-    if duration > chrono::Duration::hours(14)
-        || duration < chrono::Duration::hours(-14)
-        || duration.num_seconds() % (60 * 60) != 0
-    {
-        return Err(error::Error::FODT0003);
+fn duration_to_offset(
+    duration: Option<chrono::Duration>,
+) -> error::Result<Option<chrono::FixedOffset>> {
+    if let Some(duration) = duration {
+        if duration > chrono::Duration::hours(14)
+            || duration < chrono::Duration::hours(-14)
+            || duration.num_seconds() % (60 * 60) != 0
+        {
+            return Err(error::Error::FODT0003);
+        }
+        Ok(Some(
+            chrono::FixedOffset::east_opt(
+                duration
+                    .num_seconds()
+                    .try_into()
+                    .expect("too many seconds to convert"),
+            )
+            .unwrap(),
+        ))
+    } else {
+        Ok(None)
     }
-    Ok(chrono::FixedOffset::east_opt(
-        duration
-            .num_seconds()
-            .try_into()
-            .expect("too many seconds to convert"),
-    )
-    .unwrap())
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
@@ -284,8 +337,11 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(minutes_from_time),
         wrap_xpath_fn!(seconds_from_time),
         wrap_xpath_fn!(timezone_from_time),
+        wrap_xpath_fn!(adjust_date_time_to_timezone1),
         wrap_xpath_fn!(adjust_date_time_to_timezone2),
+        wrap_xpath_fn!(adjust_date_to_timezone1),
         wrap_xpath_fn!(adjust_date_to_timezone2),
+        wrap_xpath_fn!(adjust_time_to_timezone1),
         wrap_xpath_fn!(adjust_time_to_timezone2),
     ]
 }

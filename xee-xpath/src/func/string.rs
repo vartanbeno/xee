@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
+use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
 use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
@@ -194,6 +195,65 @@ fn normalize_space(arg: Option<&str>) -> String {
         arg.split_whitespace().collect::<Vec<_>>().join(" ")
     } else {
         "".to_string()
+    }
+}
+
+#[xpath_fn("fn:normalize-unicode($arg as xs:string?) as xs:string")]
+fn normalize_unicode1(context: &DynamicContext, arg: Option<&str>) -> error::Result<String> {
+    normalize_unicode(context, arg, "NFC")
+}
+
+#[xpath_fn(
+    "fn:normalize-unicode($arg as xs:string?, $normalizationForm as xs:string) as xs:string"
+)]
+fn normalize_unicode2(
+    context: &DynamicContext,
+    arg: Option<&str>,
+    normalization_form: &str,
+) -> error::Result<String> {
+    normalize_unicode(context, arg, normalization_form)
+}
+
+fn normalize_unicode(
+    context: &DynamicContext,
+    arg: Option<&str>,
+    normalization_form: &str,
+) -> error::Result<String> {
+    if let Some(arg) = arg {
+        let normalization_form = normalization_form
+            .split_whitespace()
+            .collect::<String>()
+            .to_uppercase();
+        if normalization_form.is_empty() {
+            return Ok(arg.to_string());
+        }
+        let provider = context.static_context.icu_provider();
+        match normalization_form.as_ref() {
+            "NFC" => {
+                let normalizer = ComposingNormalizer::try_new_nfc_with_buffer_provider(provider)
+                    .map_err(|_| error::Error::FOCH0003)?;
+                Ok(normalizer.normalize(arg))
+            }
+            "NFD" => {
+                let normalizer = DecomposingNormalizer::try_new_nfd_with_buffer_provider(provider)
+                    .map_err(|_| error::Error::FOCH0003)?;
+                Ok(normalizer.normalize(arg))
+            }
+            "NFKC" => {
+                let normalizer = ComposingNormalizer::try_new_nfkc_with_buffer_provider(provider)
+                    .map_err(|_| error::Error::FOCH0003)?;
+                Ok(normalizer.normalize(arg))
+            }
+            "NFKD" => {
+                let normalizer = DecomposingNormalizer::try_new_nfkd_with_buffer_provider(provider)
+                    .map_err(|_| error::Error::FOCH0003)?;
+                Ok(normalizer.normalize(arg))
+            }
+            // TODO: FULLY-NORMALIZED
+            _ => Err(error::Error::FOCH0003),
+        }
+    } else {
+        Ok("".to_string())
     }
 }
 
@@ -441,6 +501,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(substring3),
         wrap_xpath_fn!(string_length),
         wrap_xpath_fn!(normalize_space),
+        wrap_xpath_fn!(normalize_unicode1),
+        wrap_xpath_fn!(normalize_unicode2),
         wrap_xpath_fn!(upper_case),
         wrap_xpath_fn!(lower_case),
         wrap_xpath_fn!(translate),

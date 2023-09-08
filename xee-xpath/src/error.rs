@@ -291,6 +291,7 @@ pub enum Error {
     /// Raised by fn:normalize-unicode if the requested normalization form is
     /// not supported by the implementation.
     #[error("Unsupported normalization form")]
+    #[diagnostic(code(FOCH0003))]
     FOCH0003,
     /// Collation does not support collation units.
     ///

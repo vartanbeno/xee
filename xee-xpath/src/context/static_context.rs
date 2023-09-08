@@ -56,4 +56,8 @@ impl<'a> StaticContext<'a> {
             .borrow_mut()
             .load(self.provider.clone(), None, uri)
     }
+
+    pub(crate) fn icu_provider(&self) -> &BlobDataProvider {
+        &self.provider
+    }
 }
