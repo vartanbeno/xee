@@ -1611,7 +1611,6 @@ default-language-001
 default-language-002
 default-language-003
 = fn-distinct-values
-K-SeqDistinctValuesFunc-10
 K-SeqDistinctValuesFunc-13
 K-SeqDistinctValuesFunc-15
 fn-distinct-values-2
@@ -7173,8 +7172,6 @@ CastAs023
 CastAs024
 CastAs025
 CastAs026
-CastAs051
-CastAs055
 CastAs071
 CastAs092
 CastAs097
@@ -7183,15 +7180,10 @@ CastAs105
 CastAs106
 CastAs107
 CastAs108
-CastAs133
-CastAs137
 CastAs153
 CastAs177
 CastAs201
 CastAs212
-CastAs423
-CastAs449
-CastAs472
 CastAs632
 CastAs633
 CastAs634
