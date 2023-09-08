@@ -556,7 +556,15 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = g_year_month_parser();
         match parser.parse(&s).into_result() {
-            Ok(g_year_month) => Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month))),
+            Ok(g_year_month) => {
+                let date =
+                    chrono::NaiveDate::from_ymd_opt(g_year_month.year, g_year_month.month, 1);
+                if date.is_some() {
+                    Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month)))
+                } else {
+                    Err(error::Error::FORG0001)
+                }
+            }
             Err(_) => Err(error::Error::FORG0001),
         }
     }
@@ -574,7 +582,16 @@ impl atomic::Atomic {
         let s = whitespace_collapse(s);
         let parser = g_month_day_parser();
         match parser.parse(&s).into_result() {
-            Ok(g_month_day) => Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day))),
+            Ok(g_month_day) => {
+                // pick leap year 2000
+                let date =
+                    chrono::NaiveDate::from_ymd_opt(2000, g_month_day.month, g_month_day.day);
+                if date.is_some() {
+                    Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day)))
+                } else {
+                    Err(error::Error::FORG0001)
+                }
+            }
             Err(_) => Err(error::Error::FORG0001),
         }
     }
