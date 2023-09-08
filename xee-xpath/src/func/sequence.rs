@@ -165,24 +165,25 @@ fn distinct_values(
         .map(|(i, atom)| (atom, i))
         .collect::<HashMap<_, _>>();
 
+    // now we sort the distinct set by the order
+    let mut distinct_set = distinct_set.into_iter().collect::<Vec<_>>();
+    distinct_set.sort_by_key(|(_, order)| *order);
+    let distinct_values = distinct_set
+        .into_iter()
+        .map(|(atom, _)| atom)
+        .collect::<Vec<_>>();
+
     // now we use an exhaustive, and expensive, deep-equal check to filter out
     // more duplicates
     let mut distinct = Vec::new();
-    'outer: for (atom, order) in distinct_set {
-        for (_, seen) in &distinct {
+    'outer: for atom in distinct_values {
+        for seen in &distinct {
             if atom.deep_equal(seen, &collation, default_offset) {
                 continue 'outer;
             }
         }
-        distinct.push((order, atom))
+        distinct.push(atom)
     }
-    // now we sort by the order we saw them in and remove order
-    // from final vec
-    distinct.sort_by_key(|(order, _)| *order);
-    let distinct = distinct
-        .into_iter()
-        .map(|(_, atom)| atom)
-        .collect::<Vec<_>>();
     Ok(distinct)
 }
 

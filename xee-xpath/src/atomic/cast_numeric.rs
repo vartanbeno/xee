@@ -1,8 +1,10 @@
+use std::num::NonZeroI32;
+use std::rc::Rc;
+
 use ibig::{ibig, IBig};
 use num_traits::Float;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
-use std::rc::Rc;
 
 use xee_schema_type::Xs;
 
@@ -43,6 +45,8 @@ impl atomic::Atomic {
             let options = lexical::WriteFloatOptionsBuilder::new()
                 .exponent(b'E')
                 .inf_string(Some(b"INF"))
+                .positive_exponent_break(NonZeroI32::new(1))
+                .negative_exponent_break(NonZeroI32::new(-1))
                 .build()
                 .unwrap();
             lexical::to_string_with_options::<_, { lexical::format::XML }>(f, &options)

@@ -4799,9 +4799,6 @@ K-NotFunc-10
 cbcl-not-003
 = fn-number
 fn-number-7
-fn-numberint1args-1
-fn-numberint1args-2
-fn-numberint1args-3
 = fn-one-or-more
 cbcl-one-or-more-004
 = fn-outermost
@@ -7165,16 +7162,12 @@ boundary-space-021
 boundary-space-022
 boundaryspacedeclerr-1
 = prod-CastExpr
-CastAs010
-CastAs015
 CastAs022
 CastAs023
 CastAs024
 CastAs025
 CastAs026
 CastAs071
-CastAs092
-CastAs097
 CastAs104
 CastAs105
 CastAs106
@@ -7182,7 +7175,6 @@ CastAs107
 CastAs108
 CastAs153
 CastAs177
-CastAs201
 CastAs212
 CastAs632
 CastAs633
@@ -7266,7 +7258,6 @@ K2-SeqExprCast-178
 K2-SeqExprCast-179
 K2-SeqExprCast-201
 K2-SeqExprCast-208
-K2-SeqExprCast-214
 K2-SeqExprCast-221
 K2-SeqExprCast-223
 K2-SeqExprCast-28
@@ -7300,8 +7291,6 @@ K2-SeqExprCast-88
 K2-SeqExprCast-89
 K2-SeqExprCast-94
 K2-SeqExprCast-95
-casthc17
-casthc18
 = prod-CastExpr.derived
 cbcl-cast-byte-001
 cbcl-cast-byte-002
@@ -8294,11 +8283,6 @@ instanceof111
 K2-Literals-37
 K2-Literals-38
 K2-Literals-6
-Literals016
-Literals017
-Literals025
-Literals027
-Literals028
 = prod-Lookup
 Lookup-001
 Lookup-002
