@@ -421,7 +421,10 @@ impl Assertable for AssertStringValue {
                 let joined = strings.join(" ");
                 let joined = if self.1 {
                     // normalize space
-                    joined.split_whitespace().collect::<Vec<_>>().join(" ")
+                    joined
+                        .split_ascii_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ")
                 } else {
                     joined
                 };

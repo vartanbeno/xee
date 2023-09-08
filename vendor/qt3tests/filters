@@ -1275,8 +1275,6 @@ fn-abs-more-args-061
 fn-abs-more-args-062
 fn-abs-more-args-063
 fn-abs-more-args-064
-fn-abs-more-args-079
-fn-abs-more-args-080
 = fn-adjust-date-to-timezone
 cbcl-adjust-date-to-timezone-001
 cbcl-adjust-date-to-timezone-002
@@ -1358,7 +1356,6 @@ cbcl-avg-010
 cbcl-avg-011
 cbcl-avg-012
 fn-avg-10
-fn-avg-mix-args-061
 = fn-base-uri
 K-BaseURIFunc-2
 fn-base-uri-2
@@ -1467,9 +1464,7 @@ fn-contains-37
 liam-contains-004
 = fn-contains-token
 fn-contains-token-20
-fn-contains-token-21
 fn-contains-token-50
-fn-contains-token-51
 = fn-count
 K-SeqCountFunc-18
 cbcl-count-003
@@ -1599,8 +1594,6 @@ fn-deep-equal-maps-6
 fn-deep-equal-maps-7
 fn-deep-equal-maps-8
 fn-deep-equal-maps-9
-fn-deep-equal-mix-args-023
-fn-deep-equal-mix-args-026
 = fn-default-collation
 K-ContextDefaultCollationFunc-3
 cbcl-default-collation-001
@@ -1619,10 +1612,7 @@ fn-distinct-values-mixed-args-006
 fn-distinct-values-mixed-args-009
 fn-distinct-values-mixed-args-010
 fn-distinct-values-mixed-args-011
-fn-distinct-values-mixed-args-012
 fn-distinct-values-mixed-args-018
-fn-distinct-values-mixed-args-030
-fn-distinct-values-mixed-args-031
 fn-distinct-values-mixed-args-032
 = fn-doc
 K2-SeqDocFunc-1
@@ -3291,8 +3281,6 @@ K-SeqInsertBeforeFunc-18
 K-SeqInsertBeforeFunc-19
 K-SeqInsertBeforeFunc-20
 K-SeqInsertBeforeFunc-21
-fn-insert-before-mix-args-014
-fn-insert-before-mix-args-015
 = fn-iri-to-uri
 K-IRIToURIfunc-3
 K-IRIToURIfunc-4
@@ -5189,8 +5177,6 @@ K-SeqRemoveFunc-21
 K-SeqRemoveFunc-22
 K-SeqRemoveFunc-23
 K-SeqRemoveFunc-24
-fn-remove-mix-args-016
-fn-remove-mix-args-017
 = fn-replace
 K-ReplaceFunc-1
 K-ReplaceFunc-2
@@ -5645,8 +5631,6 @@ K-SeqSubsequenceFunc-43
 K-SeqSubsequenceFunc-44
 K2-SeqSubsequenceFunc-1
 cbcl-subsequence-006
-fn-subsequence-mix-args-017
-fn-subsequence-mix-args-018
 = fn-substring
 K-SubstringFunc-10
 K-SubstringFunc-11
@@ -5714,7 +5698,6 @@ fn-tokenize-38
 fn-tokenize-4
 fn-tokenize-5
 fn-tokenize-50
-fn-tokenize-51
 fn-tokenize-6
 fn-tokenize-8
 fn-tokenize-9
@@ -6503,56 +6486,8 @@ op-qname-equal-4
 = op-base64Binary-less-than
 = op-boolean-equal
 op-boolean-equal-18
-op-boolean-equal-more-args-002
-op-boolean-equal-more-args-003
-op-boolean-equal-more-args-004
-op-boolean-equal-more-args-005
-op-boolean-equal-more-args-010
-op-boolean-equal-more-args-011
-op-boolean-equal-more-args-012
-op-boolean-equal-more-args-013
-op-boolean-equal-more-args-014
-op-boolean-equal-more-args-015
-op-boolean-equal-more-args-016
-op-boolean-equal-more-args-017
-op-boolean-equal2args-2
-op-boolean-equal2args-3
-op-boolean-equal2args-4
-op-boolean-equal2args-5
 = op-boolean-greater-than
-op-boolean-greater-than-more-args-002
-op-boolean-greater-than-more-args-003
-op-boolean-greater-than-more-args-004
-op-boolean-greater-than-more-args-005
-op-boolean-greater-than-more-args-009
-op-boolean-greater-than-more-args-010
-op-boolean-greater-than-more-args-011
-op-boolean-greater-than-more-args-012
-op-boolean-greater-than2args-10
-op-boolean-greater-than2args-2
-op-boolean-greater-than2args-3
-op-boolean-greater-than2args-4
-op-boolean-greater-than2args-5
-op-boolean-greater-than2args-7
-op-boolean-greater-than2args-8
-op-boolean-greater-than2args-9
 = op-boolean-less-than
-op-boolean-less-than-more-args-002
-op-boolean-less-than-more-args-003
-op-boolean-less-than-more-args-004
-op-boolean-less-than-more-args-005
-op-boolean-less-than-more-args-009
-op-boolean-less-than-more-args-010
-op-boolean-less-than-more-args-011
-op-boolean-less-than-more-args-012
-op-boolean-less-than2args-10
-op-boolean-less-than2args-2
-op-boolean-less-than2args-3
-op-boolean-less-than2args-4
-op-boolean-less-than2args-5
-op-boolean-less-than2args-7
-op-boolean-less-than2args-8
-op-boolean-less-than2args-9
 = op-concat
 K-ConcatOp-5
 K-ConcatOp-6
@@ -6629,8 +6564,6 @@ op-concatusht2args-3
 op-concatusht2args-4
 op-concatusht2args-5
 = op-concatenate
-op-concatenate-mix-args-011
-op-concatenate-mix-args-012
 = op-date-equal
 cbcl-date-eq-001
 cbcl-date-equal-004
@@ -7167,13 +7100,11 @@ CastAs023
 CastAs024
 CastAs025
 CastAs026
-CastAs071
 CastAs104
 CastAs105
 CastAs106
 CastAs107
 CastAs108
-CastAs153
 CastAs177
 CastAs212
 CastAs632
@@ -7190,7 +7121,6 @@ CastAs642
 CastAs643
 CastAs644
 CastAs645
-CastAs678
 K-SeqExprCast-1212
 K-SeqExprCast-1384
 K-SeqExprCast-1386
@@ -7200,7 +7130,6 @@ K-SeqExprCast-1392
 K-SeqExprCast-1394
 K-SeqExprCast-1396
 K-SeqExprCast-1398
-K-SeqExprCast-14
 K-SeqExprCast-1400
 K-SeqExprCast-1402
 K-SeqExprCast-1404
@@ -7210,9 +7139,6 @@ K-SeqExprCast-1410
 K-SeqExprCast-1414
 K-SeqExprCast-143
 K-SeqExprCast-1491
-K-SeqExprCast-17
-K-SeqExprCast-21
-K-SeqExprCast-25
 K-SeqExprCast-295
 K-SeqExprCast-297
 K-SeqExprCast-298
@@ -7227,8 +7153,6 @@ K-SeqExprCast-370
 K-SeqExprCast-372
 K-SeqExprCast-373
 K-SeqExprCast-374
-K-SeqExprCast-39
-K-SeqExprCast-40
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
@@ -7406,8 +7330,6 @@ user-defined-7
 user-defined-8
 user-defined-9
 = prod-CastableExpr
-CastableAs071
-CastableAs153
 CastableAs663
 CastableAs664
 K-SeqExprCastable-14
@@ -8611,7 +8533,6 @@ function-literal-429
 function-literal-430
 function-literal-431
 function-literal-432
-function-literal-512
 function-literal-523
 function-literal-524
 function-literal-525

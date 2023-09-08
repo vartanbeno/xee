@@ -90,7 +90,7 @@ fn contains_token(
     let token = token.trim();
     for s in input {
         // if any token in s, tokenized, is token, then we return true
-        if s.split_whitespace()
+        if s.split_ascii_whitespace()
             .any(|t| collation.compare(t, token).is_eq())
         {
             return Ok(true);
@@ -192,7 +192,7 @@ fn string_length(arg: Option<&str>) -> IBig {
 #[xpath_fn("fn:normalize-space($arg as xs:string?) as xs:string", context_first)]
 fn normalize_space(arg: Option<&str>) -> String {
     if let Some(arg) = arg {
-        arg.split_whitespace().collect::<Vec<_>>().join(" ")
+        arg.split_ascii_whitespace().collect::<Vec<_>>().join(" ")
     } else {
         "".to_string()
     }
@@ -221,7 +221,7 @@ fn normalize_unicode(
 ) -> error::Result<String> {
     if let Some(arg) = arg {
         let normalization_form = normalization_form
-            .split_whitespace()
+            .split_ascii_whitespace()
             .collect::<String>()
             .to_uppercase();
         if normalization_form.is_empty() {
@@ -280,7 +280,10 @@ fn lower_case(arg: Option<&str>) -> String {
 #[xpath_fn("fn:tokenize($input as xs:string?) as xs:string*")]
 fn tokenize1(input: Option<&str>) -> error::Result<Vec<String>> {
     if let Some(input) = input {
-        Ok(input.split_whitespace().map(|s| s.to_string()).collect())
+        Ok(input
+            .split_ascii_whitespace()
+            .map(|s| s.to_string())
+            .collect())
     } else {
         Ok(Vec::new())
     }

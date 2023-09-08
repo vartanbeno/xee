@@ -29,6 +29,8 @@ impl atomic::Atomic {
         match s {
             "true" => Ok(true),
             "false" => Ok(false),
+            "1" => Ok(true),
+            "0" => Ok(false),
             _ => Err(error::Error::FORG0001),
         }
     }
@@ -268,7 +270,7 @@ pub(crate) fn whitespace_collapse(s: &str) -> String {
     // space character. Any space characters at the start or end of string
     // are then removed.
     whitespace_replace(s)
-        .split_whitespace()
+        .split_ascii_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -397,5 +399,11 @@ mod tests {
             atomic::Atomic::Double(OrderedFloat(15.5)).into_canonical(),
             "15.5"
         );
+    }
+
+    #[test]
+    fn test_whitespace_collapse() {
+        let s = "\u{20}\u{09}\u{30}\u{0D}\u{0A}\u{30}\u{A0}\u{20}\u{20}";
+        assert_eq!(whitespace_collapse(s), "0 0\u{A0}");
     }
 }
