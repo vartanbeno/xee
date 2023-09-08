@@ -118,7 +118,7 @@ impl TryFrom<Atomic> for chrono::Duration {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -176,7 +176,7 @@ impl NaiveDateTimeWithOffset {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
     pub(crate) offset: Option<chrono::FixedOffset>,
@@ -222,7 +222,7 @@ impl From<NaiveTimeWithOffset> for Atomic {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
     pub(crate) offset: Option<chrono::FixedOffset>,

@@ -269,6 +269,7 @@ impl qt::TestCase {
 
 #[cfg(test)]
 mod tests {
+    use ibig::ibig;
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
@@ -569,7 +570,7 @@ mod tests {
             run(xot, &test_set),
             TestOutcome::Failed(Failure::Eq(
                 assert::AssertEq::new(qt::XPathExpr("6".to_string())),
-                Sequence::from(vec![Item::from(Atomic::from(5i64))])
+                Sequence::from(vec![Item::from(Atomic::from(ibig!(5)))])
             ))
         );
     }

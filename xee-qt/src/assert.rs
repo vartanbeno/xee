@@ -179,9 +179,18 @@ impl Assertable for AssertEq {
     fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         let expected_sequence = run_xpath(&self.0, assert_context);
 
+        let atom = sequence
+            .atomized(assert_context.xot)
+            .one()
+            .expect("Single atom in sequence");
+
         match expected_sequence {
             Ok(expected_sequence) => {
-                if &expected_sequence == sequence {
+                let expected_atom = expected_sequence
+                    .atomized(assert_context.xot)
+                    .one()
+                    .expect("Multiple atoms in sequence");
+                if expected_atom.simple_equal(&atom) {
                     TestOutcome::Passed
                 } else {
                     TestOutcome::Failed(Failure::Eq(self.clone(), sequence.clone()))

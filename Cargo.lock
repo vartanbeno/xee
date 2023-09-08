@@ -2787,6 +2787,7 @@ dependencies = [
  "derive_builder",
  "fxhash",
  "globset",
+ "ibig",
  "indexmap",
  "insta",
  "miette",

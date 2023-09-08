@@ -23,6 +23,7 @@ crossterm = "0.26.1"
 derive_builder = "0.12.0"
 globset = "0.4.10"
 chrono = { workspace = true }
+ibig = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

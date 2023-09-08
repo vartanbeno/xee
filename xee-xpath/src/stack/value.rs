@@ -465,6 +465,6 @@ mod tests {
     fn test_integer_compares_with_decimal() {
         let a = atomic::Atomic::Integer(atomic::IntegerType::Integer, ibig!(1).into());
         let b = atomic::Atomic::Decimal(Rc::new(Decimal::from(1)));
-        assert_eq!(a, b);
+        assert!(a.simple_equal(&b));
     }
 }

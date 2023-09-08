@@ -23,7 +23,7 @@ use super::{op_unary, OpEq};
 // operation. Anything bigger we stuff in an Rc
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Atomic {
     Untyped(Rc<String>),
     String(StringType, Rc<String>),
@@ -210,9 +210,21 @@ impl Atomic {
         op_unary::unary_minus(self)
     }
 
-    // use eq to compare for equality, with explicit collation and
-    // default offset (implicit timezone)
-    pub(crate) fn equal(
+    /// Compare atoms using XPath rules.
+    ///
+    /// This means for instance that an integer can compare the same as a
+    /// decimal. This is different from the Eq implemented for the atom itself,
+    /// which compares the actual data, and different types are always distinct
+    /// in that case.
+    ///
+    /// simple equal uses a comparison with the codepoint collation UTC as the
+    /// timezone.
+    pub fn simple_equal(&self, other: &Atomic) -> bool {
+        self.equal(other, &Collation::CodePoint, chrono::offset::Utc.fix())
+    }
+
+    /// Compare atoms using XPath rules, with explicit collation and offset.
+    pub fn equal(
         &self,
         other: &Atomic,
         collation: &Collation,
@@ -232,7 +244,9 @@ impl Atomic {
         }
     }
 
-    // like equal, but NaN compare equal as well
+    /// Deep-equal comparison.
+    ///
+    /// This is like equal, but NaN compare equal as well
     pub(crate) fn deep_equal(
         &self,
         other: &Atomic,
@@ -245,27 +259,6 @@ impl Atomic {
         self.equal(other, collation, default_offset)
     }
 }
-
-impl PartialEq for Atomic {
-    fn eq(&self, other: &Self) -> bool {
-        // NOTE: we hardcode a fixed string compare and offset here. This means that
-        // PartialEq cannot be used in the interpreter implementation; we have
-        // to use `op_eq` directly. But it's so convenient for testing
-        // purposes, even for external libraries like xee-qt, we do implement
-        // this operation.
-        // It's also used by fn:distinct-values which uses
-        // as hashing algorithm to pre-filter
-        OpEq::atomic_compare(
-            self.clone(),
-            other.clone(),
-            str::cmp,
-            chrono::offset::Utc.fix(),
-        )
-        .unwrap_or(false)
-    }
-}
-
-impl Eq for Atomic {}
 
 impl fmt::Display for Atomic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

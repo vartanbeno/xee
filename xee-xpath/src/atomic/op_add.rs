@@ -209,6 +209,7 @@ mod tests {
     use super::*;
 
     use chrono::Offset;
+    use ibig::ibig;
     use rust_decimal_macros::dec;
 
     fn default_offset() -> chrono::FixedOffset {
@@ -235,7 +236,7 @@ mod tests {
     fn test_integer_add() {
         assert_eq!(
             op_add(1i64.into(), 2i64.into(), default_offset()),
-            Ok(3i64.into())
+            Ok(ibig!(3).into())
         );
     }
 
@@ -276,6 +277,6 @@ mod tests {
         let a = 1.5f64.into();
         let b = dec!(2.7).into();
         let result = op_add(a, b, default_offset()).unwrap();
-        assert_eq!(result, dec!(4.2).into());
+        assert_eq!(result, 4.2.into());
     }
 }

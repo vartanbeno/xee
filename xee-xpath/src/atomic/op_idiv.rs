@@ -56,12 +56,14 @@ where
 mod tests {
     use super::*;
 
+    use ibig::ibig;
+
     #[test]
     fn test_numeric_integer_divide() {
         let a = 5i64.into();
         let b = 2i64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 2i64.into());
+        assert_eq!(result, ibig!(2).into());
     }
 
     #[test]
@@ -69,7 +71,7 @@ mod tests {
         let a = 5f64.into();
         let b = 2f64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 2i64.into());
+        assert_eq!(result, ibig!(2).into());
     }
 
     #[test]
@@ -77,7 +79,7 @@ mod tests {
         let a = 10i64.into();
         let b = 3i64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 3i64.into());
+        assert_eq!(result, ibig!(3).into());
     }
 
     #[test]
@@ -85,7 +87,7 @@ mod tests {
         let a = 3i64.into();
         let b = (-2i64).into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, (-1i64).into());
+        assert_eq!(result, (ibig!(-1)).into());
     }
 
     #[test]
@@ -93,7 +95,7 @@ mod tests {
         let a = (-3i64).into();
         let b = 2i64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, (-1i64).into());
+        assert_eq!(result, (ibig!(-1)).into());
     }
 
     #[test]
@@ -101,7 +103,7 @@ mod tests {
         let a = (-3i64).into();
         let b = (-2i64).into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 1i64.into());
+        assert_eq!(result, ibig!(1).into());
     }
 
     #[test]
@@ -109,7 +111,7 @@ mod tests {
         let a = 9.0f64.into();
         let b = 3i64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 3i64.into());
+        assert_eq!(result, ibig!(3).into());
     }
 
     #[test]
@@ -117,7 +119,7 @@ mod tests {
         let a = 3.0f32.into();
         let b = 4i64.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 0i64.into());
+        assert_eq!(result, ibig!(0).into());
     }
 
     #[test]
@@ -141,6 +143,6 @@ mod tests {
         let a = 3.0f64.into();
         let b = f64::INFINITY.into();
         let result = op_idiv(a, b).unwrap();
-        assert_eq!(result, 0i64.into());
+        assert_eq!(result, ibig!(0).into());
     }
 }

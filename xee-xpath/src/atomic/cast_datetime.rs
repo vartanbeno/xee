@@ -948,24 +948,6 @@ mod tests {
 
     use super::*;
 
-    // implement these for testing purposes fixing default offset so we
-    // can use assert_eq and friends
-    impl PartialEq for NaiveDateTimeWithOffset {
-        fn eq(&self, other: &Self) -> bool {
-            eq(self, other)
-        }
-    }
-    impl PartialEq for NaiveTimeWithOffset {
-        fn eq(&self, other: &Self) -> bool {
-            eq(self, other)
-        }
-    }
-    impl PartialEq for NaiveDateWithOffset {
-        fn eq(&self, other: &Self) -> bool {
-            eq(self, other)
-        }
-    }
-
     fn eq<T: ToDateTimeStamp>(a: &T, b: &T) -> bool {
         a.to_date_time_stamp(chrono::offset::Utc.fix())
             == b.to_date_time_stamp(chrono::offset::Utc.fix())
