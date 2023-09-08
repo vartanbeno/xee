@@ -117,7 +117,12 @@ impl atomic::Atomic {
         let offset = g_year_month.offset;
         let year = g_year_month.year;
         let month = g_year_month.month;
-        s.push_str(&format!("{:04}-{:02}", year, month));
+        if year >= 0 {
+            s.push_str(&format!("{:04}", year));
+        } else {
+            s.push_str(&format!("-{:04}", year.abs()));
+        }
+        s.push_str(&format!("-{:02}", month));
         if let Some(offset) = offset {
             Self::push_canonical_time_zone_offset(&mut s, &offset);
         }
@@ -128,7 +133,11 @@ impl atomic::Atomic {
         let mut s = String::new();
         let offset = g_year.offset;
         let year = g_year.year;
-        s.push_str(&format!("{:04}", year));
+        if year >= 0 {
+            s.push_str(&format!("{:04}", year));
+        } else {
+            s.push_str(&format!("-{:04}", year.abs()));
+        }
         if let Some(offset) = offset {
             Self::push_canonical_time_zone_offset(&mut s, &offset);
         }
