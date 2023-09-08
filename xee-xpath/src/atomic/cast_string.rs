@@ -34,9 +34,10 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_any_uri(self) -> error::Result<atomic::Atomic> {
         // https://www.w3.org/TR/xpath-functions-31/#casting-to-anyuri
         match self {
-            atomic::Atomic::String(_, s) => {
-                Ok(atomic::Atomic::String(StringType::AnyURI, s.clone()))
-            }
+            atomic::Atomic::String(_, s) => Ok(atomic::Atomic::String(
+                StringType::AnyURI,
+                Rc::new(whitespace_collapse(&s)),
+            )),
             atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(StringType::AnyURI, s.clone())),
             _ => Err(error::Error::Type),
         }
