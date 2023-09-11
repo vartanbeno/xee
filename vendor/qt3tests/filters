@@ -943,7 +943,6 @@ fo-test-fn-format-number-010
 fo-test-fn-head-004
 fo-test-fn-hours-from-dateTime-005
 fo-test-fn-hours-from-time-005
-fo-test-fn-index-of-004
 fo-test-fn-index-of-005
 fo-test-fn-iri-to-uri-001
 fo-test-fn-iri-to-uri-002
@@ -952,9 +951,7 @@ fo-test-fn-json-to-xml-002
 fo-test-fn-json-to-xml-003
 fo-test-fn-json-to-xml-004
 fo-test-fn-max-002
-fo-test-fn-max-004
 fo-test-fn-min-002
-fo-test-fn-min-004
 fo-test-fn-namespace-uri-from-QName-001
 fo-test-fn-parse-ietf-date-001
 fo-test-fn-parse-ietf-date-002
@@ -1221,17 +1218,9 @@ fn-abs-more-args-062
 fn-abs-more-args-063
 fn-abs-more-args-064
 = fn-adjust-date-to-timezone
-cbcl-adjust-date-to-timezone-001
 cbcl-adjust-date-to-timezone-002
 cbcl-adjust-date-to-timezone-003
-cbcl-adjust-date-to-timezone-004
-fn-adjust-date-to-timezone-10
-fn-adjust-date-to-timezone-18
-fn-adjust-date-to-timezone-19
-fn-adjust-date-to-timezone-21
-fn-adjust-date-to-timezone-9
 = fn-adjust-dateTime-to-timezone
-K-AdjDateTimeToTimezoneFunc-6
 K2-AdjDateTimeToTimezoneFunc-1
 cbcl-adjust-dateTime-to-timezone-001
 cbcl-adjust-dateTime-to-timezone-002
@@ -1241,9 +1230,6 @@ fn-adjust-dateTime-to-timezone-18
 fn-adjust-dateTime-to-timezone-19
 fn-adjust-dateTime-to-timezone-24
 = fn-adjust-time-to-timezone
-K-AdjTimeToTimezoneFunc-9
-cbcl-adjust-time-to-timezone-001
-fn-adjust-time-to-timezone-21
 = fn-analyze-string
 analyzeString-001
 analyzeString-002
@@ -1297,9 +1283,6 @@ fn-available-environment-variables-011
 cbcl-avg-001
 cbcl-avg-002
 cbcl-avg-003
-cbcl-avg-010
-cbcl-avg-011
-cbcl-avg-012
 fn-avg-10
 = fn-base-uri
 K-BaseURIFunc-2
@@ -1307,7 +1290,6 @@ fn-base-uri-2
 fn-base-uri-3
 = fn-boolean
 K-SeqBooleanFunc-16
-K-SeqBooleanFunc-32
 boolean-010
 boolean-010b
 boolean-011
@@ -1315,12 +1297,6 @@ boolean-013
 boolean-014
 = fn-ceiling
 = fn-codepoint-equal
-K2-CodepointEqual-1
-K2-CodepointEqual-2
-K2-CodepointEqual-3
-K2-CodepointEqual-4
-K2-CodepointEqual-5
-K2-CodepointEqual-6
 = fn-codepoints-to-string
 K-CodepointToStringFunc-24
 K-CodepointToStringFunc-25
@@ -1411,82 +1387,9 @@ liam-contains-004
 fn-contains-token-20
 fn-contains-token-50
 = fn-count
-K-SeqCountFunc-18
-cbcl-count-003
 = fn-current-date
-K-ContextCurrentDateFunc-2
-fn-current-date-1
-fn-current-date-10
-fn-current-date-11
-fn-current-date-12
-fn-current-date-13
-fn-current-date-14
-fn-current-date-15
-fn-current-date-16
-fn-current-date-17
-fn-current-date-18
-fn-current-date-19
-fn-current-date-2
-fn-current-date-20
-fn-current-date-21
-fn-current-date-22
-fn-current-date-23
-fn-current-date-3
-fn-current-date-4
-fn-current-date-5
-fn-current-date-6
-fn-current-date-7
-fn-current-date-9
-fn-current-time-24
 = fn-current-dateTime
-K-ContextCurrentDatetimeFunc-2
-fn-current-dateTime-1
-fn-current-dateTime-10
-fn-current-dateTime-11
-fn-current-dateTime-12
-fn-current-dateTime-13
-fn-current-dateTime-14
-fn-current-dateTime-15
-fn-current-dateTime-16
-fn-current-dateTime-17
-fn-current-dateTime-18
-fn-current-dateTime-19
-fn-current-dateTime-2
-fn-current-dateTime-20
-fn-current-dateTime-21
-fn-current-dateTime-22
-fn-current-dateTime-23
-fn-current-dateTime-24
-fn-current-dateTime-25
-fn-current-dateTime-3
-fn-current-dateTime-4
-fn-current-dateTime-5
-fn-current-dateTime-6
-fn-current-dateTime-9
-fn-current-datetime-7
 = fn-current-time
-K-ContextCurrentTimeFunc-2
-fn-current-time-1
-fn-current-time-10
-fn-current-time-11
-fn-current-time-12
-fn-current-time-13
-fn-current-time-14
-fn-current-time-15
-fn-current-time-16
-fn-current-time-17
-fn-current-time-18
-fn-current-time-19
-fn-current-time-2
-fn-current-time-20
-fn-current-time-21
-fn-current-time-22
-fn-current-time-3
-fn-current-time-4
-fn-current-time-5
-fn-current-time-6
-fn-current-time-7
-fn-current-time-9
 = fn-data
 K2-DataFunc-6
 fn-data-2
@@ -1497,17 +1400,12 @@ fn-data-7
 = fn-dateTime
 K-DateTimeFunc-12
 cbcl-dateTime-001
-cbcl-dateTime-002
 fn-dateTime-2
 = fn-day-from-date
 = fn-day-from-dateTime
 = fn-days-from-duration
 = fn-deep-equal
-K2-SeqDeepEqualFunc-1
-K2-SeqDeepEqualFunc-4
 K2-SeqDeepEqualFunc-40
-K2-SeqDeepEqualFunc-43
-cbcl-deep-equal-007
 fn-deep-equal-arrays-1
 fn-deep-equal-arrays-11
 fn-deep-equal-arrays-12
@@ -1549,8 +1447,6 @@ default-language-001
 default-language-002
 default-language-003
 = fn-distinct-values
-K-SeqDistinctValuesFunc-13
-K-SeqDistinctValuesFunc-15
 fn-distinct-values-2
 fn-distinct-values-mixed-args-005
 fn-distinct-values-mixed-args-006
@@ -1644,7 +1540,6 @@ fn-element-with-id-3
 fn-element-with-id-4
 fn-element-with-id-5
 = fn-empty
-K-SeqEmptyFunc-9
 = fn-encode-for-uri
 K-EncodeURIfunc-3
 K-EncodeURIfunc-4
@@ -1695,8 +1590,6 @@ K-ErrorFunc-6
 K-ErrorFunc-7
 K-ErrorFunc-9
 K2-ErrorFunc-3
-cbcl-error-026
-cbcl-error-027
 cbcl-error-035
 fn-error-10
 fn-error-11
@@ -1780,11 +1673,6 @@ fn-escape-html-uri1args-4
 fn-escape-html-uri1args-5
 = fn-exactly-one
 = fn-exists
-K-SeqExistsFunc-10
-K-SeqExistsFunc-11
-K-SeqExistsFunc-12
-K-SeqExistsFunc-13
-K-SeqExistsFunc-14
 = fn-false
 = fn-filter
 filter-001
@@ -3148,7 +3036,6 @@ generate-id-006
 generate-id-019
 = fn-has-children
 = fn-head
-head-002
 = fn-hours-from-dateTime
 = fn-hours-from-duration
 = fn-hours-from-time
@@ -3182,31 +3069,10 @@ fn-idref-dtd-10
 fn-idref-dtd-11
 fn-idref-dtd-6
 = fn-implicit-timezone
-K-ContextImplicitTimezoneFunc-2
-K-ContextImplicitTimezoneFunc-3
 fn-implicit-timezone-10
 fn-implicit-timezone-11
 fn-implicit-timezone-12
-fn-implicit-timezone-13
-fn-implicit-timezone-14
-fn-implicit-timezone-15
-fn-implicit-timezone-16
-fn-implicit-timezone-17
-fn-implicit-timezone-18
-fn-implicit-timezone-19
-fn-implicit-timezone-2
-fn-implicit-timezone-20
-fn-implicit-timezone-21
-fn-implicit-timezone-22
-fn-implicit-timezone-23
-fn-implicit-timezone-24
-fn-implicit-timezone-3
-fn-implicit-timezone-4
-fn-implicit-timezone-5
 fn-implicit-timezone-6
-fn-implicit-timezone-7
-fn-implicit-timezone-8
-fn-implicit-timezone-9
 = fn-in-scope-prefixes
 fn-in-scope-prefixes-2
 fn-in-scope-prefixes-21
@@ -3217,7 +3083,6 @@ fn-in-scope-prefixes-25
 fn-in-scope-prefixes-26
 = fn-index-of
 = fn-innermost
-fn-innermost-009
 fn-innermost-024
 fn-innermost-059
 = fn-insert-before
@@ -3225,7 +3090,6 @@ K-SeqInsertBeforeFunc-17
 K-SeqInsertBeforeFunc-18
 K-SeqInsertBeforeFunc-19
 K-SeqInsertBeforeFunc-20
-K-SeqInsertBeforeFunc-21
 = fn-iri-to-uri
 K-IRIToURIfunc-3
 K-IRIToURIfunc-4
@@ -3432,29 +3296,11 @@ fn-lang1args-1
 fn-lang1args-2
 fn-lang1args-3
 = fn-last
-K-ContextLastFunc-10
-K-ContextLastFunc-11
-K-ContextLastFunc-12
-K-ContextLastFunc-13
-K-ContextLastFunc-14
-K-ContextLastFunc-15
-K-ContextLastFunc-16
-K-ContextLastFunc-17
-K-ContextLastFunc-18
-K-ContextLastFunc-19
-K-ContextLastFunc-20
-K-ContextLastFunc-21
-K-ContextLastFunc-22
-K-ContextLastFunc-23
 K-ContextLastFunc-24
 K-ContextLastFunc-25
 K-ContextLastFunc-26
 K-ContextLastFunc-27
 K-ContextLastFunc-5
-K-ContextLastFunc-6
-K-ContextLastFunc-7
-K-ContextLastFunc-8
-K-ContextLastFunc-9
 = fn-load-xquery-module
 fn-load-xquery-module-001
 fn-load-xquery-module-002
@@ -4109,7 +3955,6 @@ re01001
 re01002
 re01003
 = fn-max
-K-SeqMAXFunc-55
 fn-max-19
 = fn-min
 fn-min-19
@@ -4139,18 +3984,13 @@ fn-nilled-3
 fn-nilled-30
 = fn-node-name
 = fn-normalize-space
-K-NormalizeSpaceFunc-9
 fn-normalize-space0args-1
 = fn-normalize-unicode
 = fn-not
 K-NotFunc-10
-cbcl-not-003
 = fn-number
-fn-number-7
 = fn-one-or-more
-cbcl-one-or-more-004
 = fn-outermost
-fn-outermost-009
 fn-outermost-024
 = fn-parse-ietf-date
 parse-ietf-date-0
@@ -4445,47 +4285,10 @@ path010
 path015
 path020
 = fn-position
-K-ContextPositionFunc-10
-K-ContextPositionFunc-11
-K-ContextPositionFunc-12
-K-ContextPositionFunc-13
-K-ContextPositionFunc-14
-K-ContextPositionFunc-15
-K-ContextPositionFunc-16
-K-ContextPositionFunc-17
-K-ContextPositionFunc-18
-K-ContextPositionFunc-19
 K-ContextPositionFunc-20
 K-ContextPositionFunc-21
 K-ContextPositionFunc-22
 K-ContextPositionFunc-23
-K-ContextPositionFunc-24
-K-ContextPositionFunc-25
-K-ContextPositionFunc-26
-K-ContextPositionFunc-27
-K-ContextPositionFunc-28
-K-ContextPositionFunc-29
-K-ContextPositionFunc-3
-K-ContextPositionFunc-30
-K-ContextPositionFunc-31
-K-ContextPositionFunc-32
-K-ContextPositionFunc-33
-K-ContextPositionFunc-34
-K-ContextPositionFunc-35
-K-ContextPositionFunc-36
-K-ContextPositionFunc-37
-K-ContextPositionFunc-38
-K-ContextPositionFunc-39
-K-ContextPositionFunc-4
-K-ContextPositionFunc-40
-K-ContextPositionFunc-41
-K-ContextPositionFunc-42
-K-ContextPositionFunc-43
-K-ContextPositionFunc-5
-K-ContextPositionFunc-6
-K-ContextPositionFunc-7
-K-ContextPositionFunc-8
-K-ContextPositionFunc-9
 = fn-prefix-from-QName
 fn-prefix-from-qname-8
 = fn-random-number-generator
@@ -4531,12 +4334,6 @@ fn-random-number-generator-7
 fn-random-number-generator-8
 fn-random-number-generator-9
 = fn-remove
-K-SeqRemoveFunc-19
-K-SeqRemoveFunc-20
-K-SeqRemoveFunc-21
-K-SeqRemoveFunc-22
-K-SeqRemoveFunc-23
-K-SeqRemoveFunc-24
 = fn-replace
 K-ReplaceFunc-6
 K-ReplaceFunc-7
@@ -4606,9 +4403,6 @@ fn-resolve-uri-7
 fn-resolve-uri-8
 fn-resolve-uri-9
 = fn-reverse
-K-SeqReverseFunc-20
-K-SeqReverseFunc-21
-K-SeqReverseFunc-8
 = fn-root
 = fn-round
 = fn-round-half-to-even
@@ -4897,7 +4691,6 @@ K2-StartsWithFunc-6
 K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
-K-StringFunc-5
 fn-string-31
 fn-string-32
 fn-string-33
@@ -4906,31 +4699,14 @@ fn-string-35
 fn-string-36
 fn-string-37
 fn-string-38
-fn-string-4
 fn-string-5
 fn-string-6
 = fn-string-join
-fn-string-join-29
 = fn-string-length
 fn-string-length-24
 = fn-string-to-codepoints
 = fn-subsequence
-K-SeqSubsequenceFunc-31
-K-SeqSubsequenceFunc-32
-K-SeqSubsequenceFunc-33
-K-SeqSubsequenceFunc-34
-K-SeqSubsequenceFunc-35
-K-SeqSubsequenceFunc-36
-K-SeqSubsequenceFunc-37
-K-SeqSubsequenceFunc-38
-K-SeqSubsequenceFunc-39
-K-SeqSubsequenceFunc-40
-K-SeqSubsequenceFunc-41
-K-SeqSubsequenceFunc-42
-K-SeqSubsequenceFunc-43
-K-SeqSubsequenceFunc-44
 K2-SeqSubsequenceFunc-1
-cbcl-subsequence-006
 = fn-substring
 K-SubstringFunc-10
 K-SubstringFunc-11
@@ -4947,61 +4723,25 @@ fn-substring-after-23
 fn-substring-before-23
 = fn-sum
 fn-sum-11
-fn-sum-12
-fn-sum-13
-fn-sum-14
 = fn-tail
 = fn-timezone-from-date
-cbcl-timezone-from-date-001
 = fn-timezone-from-dateTime
 = fn-timezone-from-time
 = fn-tokenize
-fn-tokenize-7
-fn-tokenize-34
-K-TokenizeFunc-3
-K-TokenizeFunc-4
 K2-TokenizeFunc-1
 K2-TokenizeFunc-2
 K2-TokenizeFunc-3
 K2-TokenizeFunc-4
-K2-TokenizeFunc-5
-K2-TokenizeFunc-7
-cbcl-fn-tokenize-002
 fn-tokenize-1
-fn-tokenize-11
-fn-tokenize-12
-fn-tokenize-13
-fn-tokenize-14
-fn-tokenize-15
-fn-tokenize-16
-fn-tokenize-17
-fn-tokenize-18
-fn-tokenize-19
-fn-tokenize-2
-fn-tokenize-20
-fn-tokenize-21
-fn-tokenize-22
-fn-tokenize-23
-fn-tokenize-24
-fn-tokenize-25
-fn-tokenize-26
-fn-tokenize-27
-fn-tokenize-28
-fn-tokenize-29
-fn-tokenize-30
 fn-tokenize-31
 fn-tokenize-32
-fn-tokenize-33
-fn-tokenize-35
+fn-tokenize-34
 fn-tokenize-36
 fn-tokenize-37
 fn-tokenize-38
-fn-tokenize-4
-fn-tokenize-5
 fn-tokenize-50
-fn-tokenize-6
+fn-tokenize-7
 fn-tokenize-8
-fn-tokenize-9
 = fn-trace
 K-TraceFunc-4
 K-TraceFunc-5
@@ -5035,7 +4775,6 @@ fn-translate-21
 fn-translate-22
 = fn-true
 = fn-unordered
-K-SeqUnorderedFunc-5
 fn-unordered-mix-args-001
 fn-unordered-mix-args-002
 fn-unordered-mix-args-003
@@ -5737,7 +5476,6 @@ function-item-9
 hof-023
 hof-024
 hof-025
-hof-032
 hof-033
 hof-916
 inline-function-1
@@ -5861,21 +5599,11 @@ op-concatusht2args-5
 = op-concatenate
 = op-date-equal
 cbcl-date-eq-001
-cbcl-date-equal-004
-cbcl-date-equal-005
-cbcl-date-equal-009
-cbcl-date-equal-010
 cbcl-date-ne-001
 = op-date-greater-than
-cbcl-date-greater-equal-005
-cbcl-date-greater-equal-010
 cbcl-date-gt-001
-op-date-greater-than-1
 = op-date-less-than
 cbcl-date-ge-001
-cbcl-date-less-than-005
-cbcl-date-less-than-009
-op-date-less-than-1
 = op-dateTime-equal
 cbcl-dateTime-equal-004
 cbcl-dateTime-equal-005
@@ -5934,62 +5662,18 @@ fn-except-node-args-006
 fn-except-node-args-009
 fn-except-node-args-010
 = op-gDay-equal
-cbcl-gDay-equal-002
-cbcl-gDay-equal-003
-cbcl-gDay-equal-004
-cbcl-gDay-equal-005
-cbcl-gDay-equal-007
-cbcl-gDay-equal-008
-cbcl-gDay-equal-009
-cbcl-gDay-equal-010
 cbcl-gDay-equal-015
 cbcl-gDay-equal-016
 cbcl-gDay-equal-017
 cbcl-gDay-equal-018
-cbcl-gDay-equal-019
-cbcl-gDay-equal-020
 = op-gMonth-equal
-cbcl-gMonth-equal-002
-cbcl-gMonth-equal-003
-cbcl-gMonth-equal-004
-cbcl-gMonth-equal-005
-cbcl-gMonth-equal-007
-cbcl-gMonth-equal-008
-cbcl-gMonth-equal-009
-cbcl-gMonth-equal-010
 = op-gMonthDay-equal
-cbcl-gMonthDay-equal-002
-cbcl-gMonthDay-equal-003
-cbcl-gMonthDay-equal-004
-cbcl-gMonthDay-equal-005
-cbcl-gMonthDay-equal-007
-cbcl-gMonthDay-equal-008
-cbcl-gMonthDay-equal-009
-cbcl-gMonthDay-equal-010
 cbcl-gMonthDay-equal-015
 cbcl-gMonthDay-equal-016
 cbcl-gMonthDay-equal-017
 cbcl-gMonthDay-equal-018
-cbcl-gMonthDay-equal-019
-cbcl-gMonthDay-equal-020
 = op-gYear-equal
-cbcl-gYear-equal-002
-cbcl-gYear-equal-003
-cbcl-gYear-equal-004
-cbcl-gYear-equal-005
-cbcl-gYear-equal-007
-cbcl-gYear-equal-008
-cbcl-gYear-equal-009
-cbcl-gYear-equal-010
 = op-gYearMonth-equal
-cbcl-gYearMonth-equal-002
-cbcl-gYearMonth-equal-003
-cbcl-gYearMonth-equal-004
-cbcl-gYearMonth-equal-005
-cbcl-gYearMonth-equal-007
-cbcl-gYearMonth-equal-008
-cbcl-gYearMonth-equal-009
-cbcl-gYearMonth-equal-010
 = op-hexBinary-equal
 = op-hexBinary-greater-than
 = op-hexBinary-less-than
@@ -6040,18 +5724,12 @@ op-numeric-dividepint2args-4
 op-numeric-dividesht2args-2
 op-numeric-dividesht2args-4
 = op-numeric-equal
-K-NumericEqual-41
-K-NumericEqual-42
-K-NumericEqual-43
 K-NumericEqual-45
 = op-numeric-greater-than
 K-NumericGT-13
 K-NumericGT-14
 K-NumericGT-15
 K-NumericGT-16
-K-NumericGT-21
-K-NumericGT-22
-K-NumericGT-23
 K2-NumericGT-4
 = op-numeric-integer-divide
 op-numeric-integer-divide-1
@@ -6060,8 +5738,6 @@ K-NumericLT-17
 K-NumericLT-18
 K-NumericLT-19
 K-NumericLT-20
-K-NumericLT-21
-K-NumericLT-22
 = op-numeric-mod
 = op-numeric-multiply
 = op-numeric-subtract
@@ -6071,9 +5747,6 @@ K-NumericSubtract-32
 K-NumericSubtract-33
 K-NumericSubtract-34
 K-NumericSubtract-35
-K-NumericSubtract-36
-K-NumericSubtract-37
-K-NumericSubtract-38
 = op-numeric-unary-minus
 = op-numeric-unary-plus
 = op-same-key
@@ -6088,20 +5761,8 @@ same-key-022
 same-key-027
 same-key-028
 = op-string-equal
-cbcl-string-equal-001
-cbcl-string-equal-002
-cbcl-string-equal-003
-cbcl-string-equal-004
 = op-string-greater-than
-cbcl-string-greater-than-001
-cbcl-string-greater-than-002
-cbcl-string-greater-than-003
-cbcl-string-greater-than-004
 = op-string-less-than
-cbcl-string-less-than-001
-cbcl-string-less-than-002
-cbcl-string-less-than-003
-cbcl-string-less-than-004
 = op-subtract-dateTimes
 cbcl-subtract-dateTimes-001
 cbcl-subtract-dateTimes-002
@@ -6109,58 +5770,19 @@ cbcl-subtract-dateTimes-003
 cbcl-subtract-dateTimes-004
 op-subtract-dateTimes-yielding-DTD-1
 = op-subtract-dates
-K-DatesSubtract-1
-K-DatesSubtract-2
 cbcl-subtract-dates-001
 cbcl-subtract-dates-002
-cbcl-subtract-dates-003
-cbcl-subtract-dates-004
-op-subtract-dates-yielding-DTD-1
-op-subtract-dates-yielding-DTD-10
-op-subtract-dates-yielding-DTD-11
-op-subtract-dates-yielding-DTD-12
-op-subtract-dates-yielding-DTD-13
-op-subtract-dates-yielding-DTD-14
-op-subtract-dates-yielding-DTD-15
-op-subtract-dates-yielding-DTD-16
-op-subtract-dates-yielding-DTD-17
-op-subtract-dates-yielding-DTD-18
-op-subtract-dates-yielding-DTD-19
-op-subtract-dates-yielding-DTD-2
-op-subtract-dates-yielding-DTD-20
-op-subtract-dates-yielding-DTD-3
-op-subtract-dates-yielding-DTD-4
-op-subtract-dates-yielding-DTD-5
-op-subtract-dates-yielding-DTD-6
-op-subtract-dates-yielding-DTD-7
-op-subtract-dates-yielding-DTD-8
-op-subtract-dates-yielding-DTD-9
 = op-subtract-dayTimeDuration-from-date
 = op-subtract-dayTimeDuration-from-dateTime
 = op-subtract-dayTimeDuration-from-time
 = op-subtract-dayTimeDurations
-K2-DayTimeDurationSubtract-1
-K2-DayTimeDurationSubtract-2
 = op-subtract-times
-cbcl-subtract-times-001
-cbcl-subtract-times-002
-cbcl-subtract-times-003
-cbcl-subtract-times-004
 = op-subtract-yearMonthDuration-from-date
 = op-subtract-yearMonthDuration-from-dateTime
 = op-subtract-yearMonthDurations
 = op-time-equal
-cbcl-time-equal-019
 = op-time-greater-than
-cbcl-time-greater-than-004
-cbcl-time-greater-than-005
-cbcl-time-greater-than-009
-cbcl-time-greater-than-010
 = op-time-less-than
-cbcl-time-less-than-004
-cbcl-time-less-than-005
-cbcl-time-less-than-009
-cbcl-time-less-than-010
 = op-to
 K-RangeExpr-31
 K-RangeExpr-32
@@ -6176,25 +5798,6 @@ RangeExpr-411b
 RangeExpr-411c
 RangeExpr-411d
 RangeExpr-411e
-RangeExpr-413
-RangeExpr-413a
-RangeExpr-413b
-RangeExpr-413c
-RangeExpr-413d
-RangeExpr-413e
-RangeExpr-414
-RangeExpr-414a
-RangeExpr-414b
-RangeExpr-414c
-RangeExpr-414d
-RangeExpr-415
-RangeExpr-415a
-RangeExpr-415b
-RangeExpr-416
-RangeExpr-416a
-RangeExpr-416b
-RangeExpr-600
-RangeExpr-601
 rangeExpr-28
 rangeExpr-29
 rangeExpr-30
@@ -6202,12 +5805,6 @@ rangeExpr-31
 rangeExpr-32
 rangeExpr-33
 rangeExpr-34
-rangeExpr-36
-rangeExpr-37
-rangeExpr-38
-rangeExpr-39
-rangeExpr-40
-rangeExpr-42
 = op-union
 fn-union-node-args-006
 fn-union-node-args-010
@@ -6460,9 +6057,6 @@ K2-SeqExprCast-145
 K2-SeqExprCast-146
 K2-SeqExprCast-151
 K2-SeqExprCast-156
-K2-SeqExprCast-177
-K2-SeqExprCast-178
-K2-SeqExprCast-179
 K2-SeqExprCast-221
 K2-SeqExprCast-223
 K2-SeqExprCast-28
@@ -6470,8 +6064,6 @@ K2-SeqExprCast-29
 K2-SeqExprCast-30
 K2-SeqExprCast-480
 K2-SeqExprCast-49
-K2-SeqExprCast-499
-K2-SeqExprCast-500
 K2-SeqExprCast-51
 K2-SeqExprCast-52
 K2-SeqExprCast-53
@@ -6507,17 +6099,12 @@ cbcl-cast-dayTimeDuration-001
 cbcl-cast-dayTimeDuration-002
 cbcl-cast-duration-001
 cbcl-cast-duration-002
-cbcl-cast-entity-002
 cbcl-cast-gYear-001
 cbcl-cast-gYearMonth-001
-cbcl-cast-id-002
-cbcl-cast-idref-002
 cbcl-cast-int-001
 cbcl-cast-int-002
 cbcl-cast-long-001
 cbcl-cast-long-002
-cbcl-cast-name-002
-cbcl-cast-ncname-002
 cbcl-cast-negativeInteger-001
 cbcl-cast-negativeInteger-002
 cbcl-cast-nonNegativeInteger-001
@@ -6619,8 +6206,6 @@ K-SeqExprCastable-34
 K-SeqExprCastable-38
 K2-SeqExprCastable-1
 K2-SeqExprCastable-2
-cbcl-castable-name-002
-cbcl-castable-ncname-002
 cbcl-castable-unsignedByte-005
 cbcl-castable-unsignedInt-005
 cbcl-castable-unsignedLong-005
@@ -7267,16 +6852,10 @@ statictyping-8
 statictyping-9
 = prod-ForClause
 ForExpr013
-K-ForExprWithout-18
-K-ForExprWithout-20
-K-ForExprWithout-22
-K-ForExprWithout-23
 K-ForExprWithout-27
 K-ForExprWithout-30
 K-ForExprWithout-33
 K-ForExprWithout-49
-K-ForExprWithout-55
-K-ForExprWithout-56
 K2-ForExprWithout-40
 K2-ForExprWithout-41
 K2-ForExprWithout-45
@@ -7405,14 +6984,8 @@ GenCompEq-24
 GenCompEq-7
 GenCompEq-8
 GenCompEq-9
-K-GenCompEq-20
-K-GenCompEq-21
-K-GenCompEq-22
 = prod-GeneralComp.ge
-K-GenCompGTEQ-5
 = prod-GeneralComp.gt
-K-GenCompGT-18
-K-GenCompGT-19
 = prod-GeneralComp.le
 = prod-GeneralComp.lt
 GenCompLT-10
@@ -7420,10 +6993,7 @@ GenCompLT-11
 GenCompLT-12
 GenCompLT-13
 GenCompLT-9
-K-GenCompLT-18
-K-GenCompLT-19
 = prod-GeneralComp.ne
-K-GenCompNE-13
 = prod-GroupByClause
 group-001
 group-001a
@@ -7451,14 +7021,10 @@ group-023
 group-024
 = prod-IfExpr
 CondExpr022
-K-CondExpr-10
-K-CondExpr-11
 K-CondExpr-12
 K-CondExpr-3
 K-CondExpr-4
-K-CondExpr-5
 K-CondExpr-6
-K-CondExpr-7
 = prod-InlineFunctionExpr
 inline-fn-014
 inline-fn-021
@@ -7774,14 +7340,6 @@ function-literal-397
 function-literal-398
 function-literal-399
 function-literal-400
-function-literal-405
-function-literal-406
-function-literal-407
-function-literal-408
-function-literal-409
-function-literal-410
-function-literal-411
-function-literal-412
 function-literal-413
 function-literal-414
 function-literal-415
@@ -7850,23 +7408,11 @@ optiondeclprolog-2
 = prod-OrExpr
 K-LogicExpr-14
 K-LogicExpr-15
-K-LogicExpr-16
-K-LogicExpr-17
-K-LogicExpr-18
-K-LogicExpr-19
-K-LogicExpr-20
-K-LogicExpr-21
-K-LogicExpr-22
-K-LogicExpr-23
-K-LogicExpr-24
 K-LogicExpr-25
 K-LogicExpr-26
 K-LogicExpr-27
 K-LogicExpr-32
 K-LogicExpr-33
-K-LogicExpr-39
-K-LogicExpr-40
-K-LogicExpr-41
 K-LogicExpr-42
 K-LogicExpr-43
 K-LogicExpr-44
@@ -7972,21 +7518,14 @@ K-ForExprPositionalVar-9
 K2-ForExprPositionalVar-1
 K2-ForExprPositionalVar-4
 = prod-Predicate
-K-FilterExpr-36
 K-FilterExpr-38
 K-FilterExpr-40
 K-FilterExpr-51
 K-FilterExpr-52
-K-FilterExpr-59
-K-FilterExpr-86
-K-FilterExpr-87
-K-FilterExpr-88
-K-FilterExpr-89
 K-FilterExpr-92
 K-FilterExpr-93
 K-FilterExpr-94
 K2-Predicates-1
-predicates-33
 predicates-34
 predicates-35
 predicates-36
@@ -8460,9 +7999,6 @@ validateexpr-sc-7
 validateexpr-sc-8
 validateexpr-sc-9
 = prod-ValueComp
-K-ValCompTypeChecking-32
-K-ValCompTypeChecking-33
-K-ValCompTypeChecking-34
 value-comparison-10
 value-comparison-11
 value-comparison-5
@@ -8719,7 +8255,6 @@ whereClause-8
 = xs-anyURI
 = xs-base64Binary
 = xs-dateTimeStamp
-xs-dateTimeStamp-1
 xs-dateTimeStamp-4
 xs-dateTimeStamp-5
 xs-dateTimeStamp-6

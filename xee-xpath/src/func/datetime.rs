@@ -1,6 +1,6 @@
 // https://www.w3.org/TR/xpath-functions-31/#dates-times
 
-use chrono::{Datelike, SubsecRound, Timelike};
+use chrono::{Datelike, Offset, SubsecRound, Timelike};
 use ibig::IBig;
 use rust_decimal::Decimal;
 use xee_xpath_macros::xpath_fn;
@@ -95,7 +95,7 @@ fn timezone_from_date_time(
     arg: Option<NaiveDateTimeWithOffset>,
 ) -> error::Result<Option<chrono::Duration>> {
     match arg {
-        Some(arg) => Ok(offset_to_duration(arg.offset)),
+        Some(arg) => Ok(offset_to_duration_option(arg.offset)),
         None => Ok(None),
     }
 }
@@ -127,7 +127,7 @@ fn day_from_date(arg: Option<NaiveDateWithOffset>) -> error::Result<Option<IBig>
 #[xpath_fn("fn:timezone-from-date($arg as xs:date?) as xs:time?")]
 fn timezone_from_date(arg: Option<NaiveDateWithOffset>) -> error::Result<Option<chrono::Duration>> {
     match arg {
-        Some(arg) => Ok(offset_to_duration(arg.offset)),
+        Some(arg) => Ok(offset_to_duration_option(arg.offset)),
         None => Ok(None),
     }
 }
@@ -159,7 +159,7 @@ fn seconds_from_time(arg: Option<NaiveTimeWithOffset>) -> error::Result<Option<D
 #[xpath_fn("fn:timezone-from-time($arg as xs:time?) as xs:dayTimeDuration?")]
 fn timezone_from_time(arg: Option<NaiveTimeWithOffset>) -> error::Result<Option<chrono::Duration>> {
     match arg {
-        Some(arg) => Ok(offset_to_duration(arg.offset)),
+        Some(arg) => Ok(offset_to_duration_option(arg.offset)),
         None => Ok(None),
     }
 }
@@ -203,30 +203,28 @@ fn adjust_date_to_timezone1(
     context: &crate::context::DynamicContext,
     arg: Option<NaiveDateWithOffset>,
 ) -> error::Result<Option<NaiveDateWithOffset>> {
-    adjust_date_to_timezone(context, arg, Some(context.implicit_timezone()))
+    adjust_date_to_timezone(arg, Some(context.implicit_timezone()))
 }
 
 #[xpath_fn(
     "fn:adjust-date-to-timezone($arg as xs:date?, $timezone as xs:dayTimeDuration?) as xs:date?"
 )]
 fn adjust_date_to_timezone2(
-    context: &crate::context::DynamicContext,
     arg: Option<NaiveDateWithOffset>,
     timezone: Option<chrono::Duration>,
 ) -> error::Result<Option<NaiveDateWithOffset>> {
-    adjust_date_to_timezone(context, arg, duration_to_offset(timezone)?)
+    adjust_date_to_timezone(arg, duration_to_offset(timezone)?)
 }
 
 fn adjust_date_to_timezone(
-    context: &crate::context::DynamicContext,
     arg: Option<NaiveDateWithOffset>,
     offset: Option<chrono::FixedOffset>,
 ) -> error::Result<Option<NaiveDateWithOffset>> {
     match (arg, offset) {
         (Some(arg), Some(offset)) => {
-            let stamp = arg.to_date_time_stamp(context.implicit_timezone());
-            let stamp = if let Some(arg_offset) = arg.offset {
-                stamp - arg_offset + offset
+            let stamp = arg.to_date_time_stamp(chrono::offset::Utc.fix());
+            let stamp = if arg.offset.is_some() {
+                stamp + offset
             } else {
                 stamp
             };
@@ -245,28 +243,26 @@ fn adjust_time_to_timezone1(
     context: &crate::context::DynamicContext,
     arg: Option<NaiveTimeWithOffset>,
 ) -> error::Result<Option<NaiveTimeWithOffset>> {
-    adjust_time_to_timezone(context, arg, Some(context.implicit_timezone()))
+    adjust_time_to_timezone(arg, Some(context.implicit_timezone()))
 }
 
 #[xpath_fn(
     "fn:adjust-time-to-timezone($arg as xs:time?, $timezone as xs:dayTimeDuration?) as xs:time?"
 )]
 fn adjust_time_to_timezone2(
-    context: &crate::context::DynamicContext,
     arg: Option<NaiveTimeWithOffset>,
     timezone: Option<chrono::Duration>,
 ) -> error::Result<Option<NaiveTimeWithOffset>> {
-    adjust_time_to_timezone(context, arg, duration_to_offset(timezone)?)
+    adjust_time_to_timezone(arg, duration_to_offset(timezone)?)
 }
 
 fn adjust_time_to_timezone(
-    context: &crate::context::DynamicContext,
     arg: Option<NaiveTimeWithOffset>,
     offset: Option<chrono::FixedOffset>,
 ) -> error::Result<Option<NaiveTimeWithOffset>> {
     match (arg, offset) {
         (Some(arg), Some(offset)) => {
-            let stamp = arg.to_date_time_stamp(context.implicit_timezone());
+            let stamp = arg.to_date_time_stamp(chrono::offset::Utc.fix());
             let stamp = if let Some(_arg_offset) = arg.offset {
                 // the arg offset is already processed when we do
                 // to_date_time_stamp, but the offset still needs to be
@@ -291,8 +287,12 @@ fn seconds(time: impl Timelike + SubsecRound + Copy) -> Decimal {
     seconds + (nanoseconds / Decimal::from(1_000_000_000))
 }
 
-fn offset_to_duration(offset: Option<chrono::FixedOffset>) -> Option<chrono::Duration> {
-    offset.map(|offset| chrono::Duration::seconds(offset.local_minus_utc() as i64))
+fn offset_to_duration_option(offset: Option<chrono::FixedOffset>) -> Option<chrono::Duration> {
+    offset.map(offset_to_duration)
+}
+
+pub(crate) fn offset_to_duration(offset: chrono::FixedOffset) -> chrono::Duration {
+    chrono::Duration::seconds(offset.local_minus_utc() as i64)
 }
 
 fn duration_to_offset(

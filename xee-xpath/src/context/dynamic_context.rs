@@ -1,5 +1,4 @@
 use ahash::{HashMap, HashMapExt};
-use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use xot::Xot;
@@ -17,6 +16,7 @@ pub struct DynamicContext<'a> {
     pub static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
     pub(crate) variables: HashMap<ast::Name, Vec<sequence::Item>>,
+    current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
 impl<'a> Debug for DynamicContext<'a> {
@@ -38,6 +38,7 @@ impl<'a> DynamicContext<'a> {
             static_context,
             documents: Cow::Owned(documents),
             variables: HashMap::new(),
+            current_datetime: Self::create_current_datetime(),
         }
     }
 
@@ -55,6 +56,7 @@ impl<'a> DynamicContext<'a> {
                 .iter()
                 .map(|(name, items)| (name.clone(), items.clone()))
                 .collect(),
+            current_datetime: Self::create_current_datetime(),
         }
     }
 
@@ -68,6 +70,7 @@ impl<'a> DynamicContext<'a> {
             static_context,
             documents: Cow::Borrowed(documents),
             variables: HashMap::new(),
+            current_datetime: Self::create_current_datetime(),
         }
     }
 
@@ -84,7 +87,12 @@ impl<'a> DynamicContext<'a> {
                 .iter()
                 .map(|(name, items)| (name.clone(), items.clone()))
                 .collect(),
+            current_datetime: Self::create_current_datetime(),
         }
+    }
+
+    fn create_current_datetime() -> chrono::DateTime<chrono::offset::FixedOffset> {
+        chrono::offset::Local::now().into()
     }
 
     pub(crate) fn arguments(&self) -> Result<Vec<Vec<sequence::Item>>, Error> {
@@ -99,7 +107,11 @@ impl<'a> DynamicContext<'a> {
         Ok(arguments)
     }
 
+    pub(crate) fn current_datetime(&self) -> chrono::DateTime<chrono::offset::FixedOffset> {
+        self.current_datetime
+    }
+
     pub(crate) fn implicit_timezone(&self) -> chrono::FixedOffset {
-        chrono::offset::Utc.fix()
+        self.current_datetime.timezone()
     }
 }

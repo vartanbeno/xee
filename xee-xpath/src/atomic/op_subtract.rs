@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use chrono::Offset;
 use ibig::IBig;
 use rust_decimal::Decimal;
 
@@ -26,14 +27,16 @@ pub(crate) fn op_subtract(
         (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(op_substract_integer(a, b)),
         (Atomic::Float(a), Atomic::Float(b)) => Ok((a - b).into()),
         (Atomic::Double(a), Atomic::Double(b)) => Ok((a - b).into()),
+        // op:subtract-dates(A, B) -> xs:date
+        (Atomic::Date(a), Atomic::Date(b)) => Ok(op_subtract_dates(a, b, default_offset)?),
         // op:subtract-yearMonthDuration-from-date(A, B) -> xs:date
         (Atomic::Date(a), Atomic::YearMonthDuration(b)) => {
             Ok(op_subtract_year_month_duration_from_date(a, b)?)
         }
         // op:subtract-dayTimeDuration-from-date(A, B) -> xs:date
-        (Atomic::Date(a), Atomic::DayTimeDuration(b)) => Ok(
-            op_subtract_day_time_duration_from_date(a, *b, default_offset)?,
-        ),
+        (Atomic::Date(a), Atomic::DayTimeDuration(b)) => {
+            Ok(op_subtract_day_time_duration_from_date(a, *b)?)
+        }
         // op:subtract-times(A, B) -> xs:dayTimeDuration
         (Atomic::Time(a), Atomic::Time(b)) => Ok(op_subtract_times(a, b, default_offset)?),
         // op:subtract-dayTimeDuration-from-time(A, B) -> xs:time
@@ -92,6 +95,16 @@ fn op_substract_integer(a: Rc<IBig>, b: Rc<IBig>) -> atomic::Atomic {
     (a.as_ref() - b.as_ref()).into()
 }
 
+fn op_subtract_dates(
+    a: Rc<NaiveDateWithOffset>,
+    b: Rc<NaiveDateWithOffset>,
+    default_offset: chrono::FixedOffset,
+) -> error::Result<atomic::Atomic> {
+    let a = a.to_date_time_stamp(default_offset);
+    let b = b.to_date_time_stamp(default_offset);
+    op_subtract_date_time_stamps(a, b)
+}
+
 fn op_subtract_year_month_duration_from_date(
     a: Rc<NaiveDateWithOffset>,
     b: YearMonthDuration,
@@ -112,10 +125,9 @@ fn op_subtract_year_month_duration_from_date(
 fn op_subtract_day_time_duration_from_date(
     a: Rc<NaiveDateWithOffset>,
     b: chrono::Duration,
-    default_offset: chrono::FixedOffset,
 ) -> error::Result<atomic::Atomic> {
     let offset = a.as_ref().offset;
-    let a = a.to_date_time_stamp(default_offset);
+    let a = a.to_date_time_stamp(chrono::offset::Utc.fix());
     let a = a.checked_sub_signed(b).ok_or(error::Error::Overflow)?;
     let new_date = a.date_naive();
     Ok(NaiveDateWithOffset::new(new_date, offset).into())

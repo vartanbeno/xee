@@ -252,6 +252,8 @@ impl ToDateTimeStamp for NaiveDateWithOffset {
     ) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or(default_offset);
         let date_time = self.date.and_hms_opt(0, 0, 0).unwrap();
+        // subtract offset as we're going to add it explicitly again
+        let date_time = date_time - offset;
         chrono::DateTime::from_naive_utc_and_offset(date_time, offset)
     }
 }
