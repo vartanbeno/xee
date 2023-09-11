@@ -32,11 +32,6 @@ functx-fn-round-half-to-even-3
 functx-fn-round-half-to-even-4
 functx-fn-round-half-to-even-5
 functx-fn-round-half-to-even-all
-functx-fn-tokenize-12
-functx-fn-tokenize-2
-functx-fn-tokenize-7
-functx-fn-tokenize-8
-functx-fn-tokenize-9
 functx-fn-tokenize-all
 = app-FunctxFunctx
 functx-functx-add-attributes-1
@@ -1004,10 +999,6 @@ fo-test-fn-substring-before-007
 fo-test-fn-sum-008
 fo-test-fn-sum-009
 fo-test-fn-tail-005
-fo-test-fn-tokenize-002
-fo-test-fn-tokenize-003
-fo-test-fn-tokenize-004
-fo-test-fn-tokenize-006
 fo-test-fn-unordered-001
 fo-test-fn-year-from-dateTime-004
 fo-test-map-contains-003
@@ -4965,6 +4956,8 @@ cbcl-timezone-from-date-001
 = fn-timezone-from-dateTime
 = fn-timezone-from-time
 = fn-tokenize
+fn-tokenize-7
+fn-tokenize-34
 K-TokenizeFunc-3
 K-TokenizeFunc-4
 K2-TokenizeFunc-1
@@ -7701,8 +7694,6 @@ function-literal-086
 function-literal-088
 function-literal-110
 function-literal-114
-function-literal-157
-function-literal-158
 function-literal-159
 function-literal-160
 function-literal-161

@@ -289,14 +289,14 @@ fn tokenize1(input: Option<&str>) -> error::Result<Vec<String>> {
     }
 }
 
-#[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
-fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
-    if let Some(input) = input {
-        Ok(input.split(pattern).map(|s| s.to_string()).collect())
-    } else {
-        Ok(Vec::new())
-    }
-}
+// #[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
+// fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
+//     if let Some(input) = input {
+//         Ok(input.split(pattern).map(|s| s.to_string()).collect())
+//     } else {
+//         Ok(Vec::new())
+//     }
+// }
 
 #[xpath_fn("fn:translate($arg as xs:string?, $mapString as xs:string, $transString as xs:string) as xs:string")]
 fn translate(arg: Option<&str>, map_string: &str, trans_string: &str) -> String {
@@ -538,6 +538,27 @@ fn replace(
     Ok(output.into_owned())
 }
 
+#[xpath_fn(
+    "fn:tokenize($input as xs:string?, $pattern as xs:string, $flags as xs:string) as xs:string*"
+)]
+fn tokenize3(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
+    tokenize(input, pattern, flags)
+}
+
+#[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
+fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
+    tokenize(input, pattern, "")
+}
+
+fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
+    let input = input.unwrap_or("");
+    let pattern = add_flags(pattern, flags)?;
+    // we are not using fancy_regex here as it doesn't have a split...
+    let regex = regex::Regex::new(&pattern).map_err(|_| error::Error::FORX0002)?;
+    let output = regex.split(input);
+    Ok(output.map(|s| s.to_string()).collect())
+}
+
 const ALLOWED_FLAGS: [char; 5] = ['s', 'm', 'i', 'x', 'q'];
 
 fn validate_flags(flags: &str) -> error::Result<()> {
@@ -582,11 +603,12 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(substring_before),
         wrap_xpath_fn!(substring_after),
         wrap_xpath_fn!(tokenize1),
-        wrap_xpath_fn!(tokenize2),
         wrap_xpath_fn!(matches2),
         wrap_xpath_fn!(matches3),
         wrap_xpath_fn!(replace3),
         wrap_xpath_fn!(replace4),
+        wrap_xpath_fn!(tokenize3),
+        wrap_xpath_fn!(tokenize2),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the

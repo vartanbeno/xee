@@ -179,17 +179,17 @@ impl Assertable for AssertEq {
     fn assert_value(&self, assert_context: &AssertContext, sequence: &Sequence) -> TestOutcome {
         let expected_sequence = run_xpath(&self.0, assert_context);
 
-        let atom = sequence
-            .atomized(assert_context.xot)
-            .one()
-            .expect("Single atom in sequence");
-
         match expected_sequence {
             Ok(expected_sequence) => {
+                let atom = sequence.atomized(assert_context.xot).one();
+                let atom = match atom {
+                    Ok(atom) => atom,
+                    Err(error) => return TestOutcome::RuntimeError(error),
+                };
                 let expected_atom = expected_sequence
                     .atomized(assert_context.xot)
                     .one()
-                    .expect("Multiple atoms in sequence");
+                    .expect("Should get single atom in sequence");
                 if expected_atom.simple_equal(&atom) {
                     TestOutcome::Passed
                 } else {
