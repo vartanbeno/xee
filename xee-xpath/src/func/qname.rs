@@ -14,24 +14,6 @@ use crate::wrap_xpath_fn;
 use crate::xml;
 use crate::DynamicContext;
 
-// struct XotNamespaceLookup<'a> {
-//     xot: &'a Xot,
-//     node: xot::Node,
-// }
-
-// impl<'a> NamespaceLookup for XotNamespaceLookup<'a> {
-//     fn by_prefix(&self, prefix: &str) -> Option<&str> {
-//         let target_prefix_id = self.xot.prefix(prefix)?;
-
-//         for (prefix_id, namespace_id) in self.xot.namespaces(self.node) {
-//             if target_prefix_id == prefix_id {
-//                 return Some(self.xot.namespace_str(namespace_id));
-//             }
-//         }
-//         None
-//     }
-// }
-
 #[xpath_fn("fn:resolve-QName($qname as xs:string?, $element as element()) as xs:QName?")]
 fn resolve_qname(
     context: &DynamicContext,
