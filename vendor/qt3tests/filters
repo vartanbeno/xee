@@ -6,7 +6,6 @@ functx-fn-base-uri-1
 functx-fn-base-uri-2
 functx-fn-base-uri-3
 functx-fn-base-uri-all
-functx-fn-default-collation-1
 functx-fn-doc-available-1
 functx-fn-encode-for-uri-1
 functx-fn-encode-for-uri-2
@@ -1438,10 +1437,6 @@ fn-deep-equal-maps-7
 fn-deep-equal-maps-8
 fn-deep-equal-maps-9
 = fn-default-collation
-K-ContextDefaultCollationFunc-3
-cbcl-default-collation-001
-cbcl-default-collation-002
-fn-default-collation-2
 = fn-default-language
 default-language-001
 default-language-002
@@ -7340,8 +7335,6 @@ function-literal-397
 function-literal-398
 function-literal-399
 function-literal-400
-function-literal-413
-function-literal-414
 function-literal-415
 function-literal-416
 function-literal-417
