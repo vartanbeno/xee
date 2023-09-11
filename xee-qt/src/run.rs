@@ -122,7 +122,7 @@ impl qt::Catalog {
     }
 }
 
-impl qt::TestCase {
+impl qt::Dependencies {
     // the spec is supported if any of the spec dependencies is supported
     pub(crate) fn is_spec_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         for dependency in &self.dependencies {
@@ -154,7 +154,9 @@ impl qt::TestCase {
         }
         self.is_feature_supported(known_dependencies)
     }
+}
 
+impl qt::TestCase {
     pub(crate) fn run(&self, run_context: &mut RunContext, test_set: &qt::TestSet) -> TestOutcome {
         let variables = self.variables(run_context, test_set);
         let variables = match variables {
@@ -1004,7 +1006,7 @@ mod tests {
 
         let known_dependencies = KnownDependencies::new(&specs);
 
-        assert!(test_case.is_supported(&known_dependencies));
+        assert!(test_case.dependencies.is_supported(&known_dependencies));
     }
 
     #[test]
@@ -1037,7 +1039,7 @@ mod tests {
 
         let known_dependencies = KnownDependencies::new(&specs);
 
-        assert!(test_case.is_supported(&known_dependencies));
+        assert!(test_case.dependencies.is_supported(&known_dependencies));
     }
 
     #[test]
@@ -1071,7 +1073,7 @@ mod tests {
 
         let known_dependencies = KnownDependencies::new(&specs);
 
-        assert!(!test_case.is_supported(&known_dependencies));
+        assert!(!test_case.dependencies.is_supported(&known_dependencies));
     }
 
     #[test]
@@ -1111,7 +1113,7 @@ mod tests {
 
         let known_dependencies = KnownDependencies::new(&specs);
 
-        assert!(test_case.is_supported(&known_dependencies));
+        assert!(test_case.dependencies.is_supported(&known_dependencies));
     }
 
     #[test]
@@ -1151,6 +1153,6 @@ mod tests {
 
         let known_dependencies = KnownDependencies::new(&specs);
 
-        assert!(!test_case.is_supported(&known_dependencies));
+        assert!(!test_case.dependencies.is_supported(&known_dependencies));
     }
 }

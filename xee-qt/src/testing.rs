@@ -106,7 +106,10 @@ impl Tests {
         let test_set = qt::TestSet::load_from_file(&mut run_context.xot, &path)?;
         let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
         for test_case in &test_set.test_cases {
-            if !test_case.is_supported(&run_context.known_dependencies) {
+            if !test_case
+                .dependencies
+                .is_supported(&run_context.known_dependencies)
+            {
                 continue;
             }
             if !include_glob_set.is_match(&test_case.name)
@@ -157,7 +160,10 @@ fn try_test_all(path: &str) -> Result<()> {
     let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
 
     for test_case in &test_set.test_cases {
-        if !test_case.is_supported(&run_context.known_dependencies) {
+        if !test_case
+            .dependencies
+            .is_supported(&run_context.known_dependencies)
+        {
             continue;
         }
         let outcome = test_case.run(&mut run_context, &test_set);

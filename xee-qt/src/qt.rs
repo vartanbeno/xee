@@ -24,9 +24,20 @@ pub(crate) struct TestSet {
     pub(crate) full_path: PathBuf,
     pub(crate) name: String,
     pub(crate) descriptions: Vec<String>,
-    pub(crate) dependencies: Vec<Dependency>,
+    pub(crate) dependencies: Dependencies,
     pub(crate) shared_environments: SharedEnvironments,
     pub(crate) test_cases: Vec<TestCase>,
+}
+
+#[derive(Debug)]
+pub(crate) struct Dependencies {
+    pub(crate) dependencies: Vec<Dependency>,
+}
+
+impl Dependencies {
+    pub(crate) fn new(dependencies: Vec<Dependency>) -> Self {
+        Self { dependencies }
+    }
 }
 
 #[derive(Debug)]
@@ -48,7 +59,7 @@ pub(crate) struct TestCase {
     pub(crate) metadata: Metadata,
     // environments can be a reference by name, or a locally defined environment
     pub(crate) environments: Vec<TestCaseEnvironment>,
-    pub(crate) dependencies: Vec<Dependency>,
+    pub(crate) dependencies: Dependencies,
     pub(crate) modules: Vec<Module>,
     pub(crate) test: String,
     pub(crate) result: TestCaseResult,

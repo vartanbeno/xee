@@ -85,18 +85,21 @@ fn test_set_query<'a>(
 ) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
     let name_query = queries.one("@name/string()", convert_string)?;
     let descriptions_query = queries.many("description/string()", convert_string)?;
+
     let (queries, shared_environments_query) = shared_environments_query(xot, path, queries)?;
+    let (queries, dependency_query) = dependency_query(xot, queries)?;
     let (mut queries, test_cases_query) = test_cases_query(xot, path, queries)?;
     let test_set_query = queries.one("/test-set", move |session, item| {
         let name = name_query.execute(session, item)?;
         let descriptions = descriptions_query.execute(session, item)?;
+        let dependencies = dependency_query.execute(session, item)?;
         let shared_environments = shared_environments_query.execute(session, item)?;
         let test_cases = test_cases_query.execute(session, item)?;
         Ok(qt::TestSet {
             full_path: path.to_path_buf(),
             name,
             descriptions,
-            dependencies: Vec::new(),
+            dependencies: qt::Dependencies::new(dependencies.into_iter().flatten().collect()),
             shared_environments,
             test_cases,
         })
@@ -159,18 +162,14 @@ fn metadata_query<'a>(
     Ok((queries, metadata_query))
 }
 
-fn test_cases_query<'a>(
-    xot: &'a Xot,
-    path: &'a Path,
+fn dependency_query<'a>(
+    _xot: &'a Xot,
     mut queries: Queries<'a>,
-) -> Result<(Queries<'a>, impl Query<Vec<qt::TestCase>> + 'a)> {
-    let name_query = queries.one("@name/string()", convert_string)?;
-    let (mut queries, metadata_query) = metadata_query(xot, queries)?;
-    let test_query = queries.one("test/string()", convert_string)?;
-
+) -> Result<(Queries<'a>, impl Query<Vec<Vec<qt::Dependency>>> + 'a)> {
+    let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
     let type_query = queries.one("@type/string()", convert_string)?;
     let value_query = queries.one("@value/string()", convert_string)?;
-    let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
+
     let dependency_query = queries.many("dependency", move |session, item| {
         let satisfied = satisfied_query.execute(session, item)?;
         let satisfied = if let Some(satisfied) = satisfied {
@@ -195,8 +194,20 @@ fn test_cases_query<'a>(
                 },
                 satisfied,
             })
-            .collect::<Vec<_>>())
+            .collect::<Vec<qt::Dependency>>())
     })?;
+    Ok((queries, dependency_query))
+}
+
+fn test_cases_query<'a>(
+    xot: &'a Xot,
+    path: &'a Path,
+    mut queries: Queries<'a>,
+) -> Result<(Queries<'a>, impl Query<Vec<qt::TestCase>> + 'a)> {
+    let name_query = queries.one("@name/string()", convert_string)?;
+    let (mut queries, metadata_query) = metadata_query(xot, queries)?;
+    let test_query = queries.one("test/string()", convert_string)?;
+
     let ref_query = queries.option("@ref/string()", convert_string)?;
     let (mut queries, environment_query) = environment_spec_query(xot, path, queries)?;
     let local_environment_query = queries.many("environment", move |session, item| {
@@ -325,16 +336,20 @@ fn test_cases_query<'a>(
         recurse.execute(session, item)
     })?;
 
+    let (mut queries, dependency_query) = dependency_query(xot, queries)?;
+
     let test_query = queries.many("test-case", move |session, item| {
         Ok(qt::TestCase {
             name: name_query.execute(session, item)?,
             metadata: metadata_query.execute(session, item)?,
             environments: local_environment_query.execute(session, item)?,
-            dependencies: dependency_query
-                .execute(session, item)?
-                .into_iter()
-                .flatten()
-                .collect(),
+            dependencies: qt::Dependencies::new(
+                dependency_query
+                    .execute(session, item)?
+                    .into_iter()
+                    .flatten()
+                    .collect(),
+            ),
             modules: Vec::new(),
             test: test_query.execute(session, item)?,
             result: result_query.execute(session, item)?,

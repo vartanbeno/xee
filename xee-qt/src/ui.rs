@@ -109,8 +109,15 @@ fn run_test_set<R: Renderer>(
             test_set_outcomes.add_filtered();
             continue;
         }
-        // skip any test case we don't support
-        if !test_case.is_supported(&run_context.known_dependencies) {
+        // skip any test case we don't support, either on test set or
+        // test case level
+        if !test_set
+            .dependencies
+            .is_supported(&run_context.known_dependencies)
+            || !test_case
+                .dependencies
+                .is_supported(&run_context.known_dependencies)
+        {
             test_set_outcomes.add_unsupported();
             continue;
         }
