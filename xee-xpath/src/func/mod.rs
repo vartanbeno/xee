@@ -1,5 +1,6 @@
 mod accessor;
 mod boolean;
+mod context;
 mod datetime;
 mod duration;
 mod fn_;
@@ -28,5 +29,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(sequence::static_function_descriptions());
     descriptions.extend(node::static_function_descriptions());
     descriptions.extend(qname::static_function_descriptions());
+    descriptions.extend(context::static_function_descriptions());
     descriptions
 }
