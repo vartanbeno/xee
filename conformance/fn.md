@@ -18,9 +18,9 @@
 - [x] contains
 - [x] contains-token
 - [x] count
-- [ ] current-date
-- [ ] current-dateTime
-- [ ] current-time
+- [x] current-date
+- [x] current-dateTime
+- [x] current-time
 - [x] data
 - [x] dateTime
 - [x] day-from-date
@@ -65,7 +65,7 @@
 - [x] hours-from-time
 - [ ] id
 - [ ] idref
-- [ ] implicit-timezone
+- [x] implicit-timezone
 - [x] index-of
 - [x] innermost
 - [ ] in-scope-prefixes
