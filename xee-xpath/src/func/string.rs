@@ -491,6 +491,42 @@ fn substring_after(
     }
 }
 
+#[xpath_fn(
+    "fn:matches($input as xs:string?, $pattern as xs:string, $flags as xs:string) as xs:boolean"
+)]
+fn matches3(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<bool> {
+    matches(input, pattern, flags)
+}
+
+#[xpath_fn("fn:matches($input as xs:string?, $pattern as xs:string) as xs:boolean")]
+fn matches2(input: Option<&str>, pattern: &str) -> error::Result<bool> {
+    matches(input, pattern, "")
+}
+
+const ALLOWED_FLAGS: [char; 5] = ['s', 'm', 'i', 'x', 'q'];
+
+fn validate_flags(flags: &str) -> error::Result<()> {
+    for c in flags.chars() {
+        if !ALLOWED_FLAGS.contains(&c) {
+            return Err(error::Error::FORX0001);
+        }
+    }
+    Ok(())
+}
+
+fn matches(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<bool> {
+    validate_flags(flags)?;
+    let input = input.unwrap_or("");
+    let pattern = if flags.is_empty() {
+        pattern.to_string()
+    } else {
+        format!("(?{}){}", flags, pattern)
+    };
+    // println!("pattern: {}", pattern);
+    let regex = fancy_regex::Regex::new(&pattern).map_err(|_| error::Error::FORX0002)?;
+    regex.is_match(input).map_err(|_| error::Error::FORX0002)
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -516,6 +552,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(substring_after),
         wrap_xpath_fn!(tokenize1),
         wrap_xpath_fn!(tokenize2),
+        wrap_xpath_fn!(matches2),
+        wrap_xpath_fn!(matches3),
     ];
     // register concat for a variety of arities
     // it's stupid that we have to do this, but it's in the

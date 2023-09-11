@@ -552,12 +552,14 @@ pub enum Error {
     /// fn:replace if the regular expression flags contain a character other
     /// than i, m, q, s, or x.
     #[error("Invalid regular expression flags")]
+    #[diagnostic(code(FORX0001))]
     FORX0001,
     /// Invalid regular expression.
     ///
     /// Raised by regular expression functions such as fn:matches and
     /// fn:replace if the regular expression is syntactically invalid.
     #[error("Invalid regular expression")]
+    #[diagnostic(code(FORX0002))]
     FORX0002,
     /// Regular expression matches zero-length string.
     ///
@@ -565,11 +567,13 @@ pub enum Error {
     /// the supplied regular expression is capable of matching a zero length
     /// string.
     #[error("Regular expression matches zero-length string")]
+    #[diagnostic(code(FORX0003))]
     FORX0003,
     /// Invalid replacement string.
     ///
     /// Raised by fn:replace to report errors in the replacement string.
     #[error("Invalid replacement string")]
+    #[diagnostic(code(FORX0004))]
     FORX0004,
     /// Argument to fn:data() contains a node that does not have a typed value.
     ///
