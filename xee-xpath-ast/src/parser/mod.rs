@@ -727,6 +727,25 @@ mod tests {
         assert_ron_snapshot!(parse_xpath_simple("*:if"))
     }
 
+    #[test]
+    fn test_any_function_type() {
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(ast::SequenceType::parse("function(*)", &namespaces));
+    }
+
+    #[test]
+    fn test_typed_function_type() {
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(ast::SequenceType::parse(
+            "function(xs:integer) as xs:integer",
+            &namespaces
+        ));
+    }
+
+    // #[test]
+    // fn test_function_that_takes_function_parameter() {
+    //     assert_ron_snapshot!(parse_xpath_simple("filter(1, function($item) { true() })"))
+    // }
     // #[test]
     // fn test_symbol_as_name_test_with_localname_wildcard() {
     //     assert_ron_snapshot!(parse_xpath_simple("if:*"))

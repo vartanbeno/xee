@@ -573,8 +573,8 @@ pub enum FunctionTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypedFunctionTest {
-    parameter_types: Vec<SequenceType>,
-    return_type: SequenceType,
+    pub parameter_types: Vec<SequenceType>,
+    pub return_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

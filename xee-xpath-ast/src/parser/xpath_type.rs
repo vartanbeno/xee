@@ -43,37 +43,72 @@ where
         .to(ast::ItemType::Item)
         .boxed();
     let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
-    let item_type = recursive(|item_type| {
-        let parenthesized_item_type =
-            item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
-        item_type_empty
-            .or(item_type_kind_test)
-            .or(item_type_atomic_or_union)
-            .or(parenthesized_item_type)
+
+    let any_function_test = just(Token::Function)
+        .ignore_then(
+            just(Token::Asterisk).delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        )
+        .to(ast::FunctionTest::AnyFunctionTest)
+        .boxed();
+
+    let sequence_type = recursive(|sequence_type| {
+        let item_type = recursive(|item_type| {
+            let typed_function_param_list = sequence_type
+                .clone()
+                .separated_by(just(Token::Comma))
+                .collect::<Vec<_>>()
+                .boxed();
+            let typed_function_test = just(Token::Function)
+                .ignore_then(
+                    typed_function_param_list
+                        .delimited_by(just(Token::LeftParen), just(Token::RightParen))
+                        .then_ignore(just(Token::As))
+                        .then(sequence_type)
+                        .map_with_span(|(parameter_types, return_type), _span| {
+                            ast::FunctionTest::TypedFunctionTest(ast::TypedFunctionTest {
+                                parameter_types,
+                                return_type,
+                            })
+                        }),
+                )
+                .boxed();
+            let item_type_function_test = typed_function_test
+                .or(any_function_test)
+                .map(|function_test| ast::ItemType::FunctionTest(Box::new(function_test)));
+
+            let parenthesized_item_type =
+                item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
+            item_type_empty
+                .or(item_type_function_test)
+                .or(item_type_kind_test)
+                .or(item_type_atomic_or_union)
+                .or(parenthesized_item_type)
+        })
+        .boxed();
+
+        let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
+            .map(|c| match c {
+                Token::QuestionMark => ast::Occurrence::Option,
+                Token::Asterisk => ast::Occurrence::Many,
+                Token::Plus => ast::Occurrence::NonEmpty,
+                _ => unreachable!(),
+            })
+            .or_not()
+            .map(|o| o.unwrap_or(ast::Occurrence::One))
+            .boxed();
+
+        let item = item_type
+            .clone()
+            .then(occurrence)
+            .map(|(item_type, occurrence)| ast::Item {
+                item_type,
+                occurrence,
+            })
+            .boxed();
+
+        empty.or(item.map(ast::SequenceType::Item)).boxed()
     })
     .boxed();
-
-    let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
-        .map(|c| match c {
-            Token::QuestionMark => ast::Occurrence::Option,
-            Token::Asterisk => ast::Occurrence::Many,
-            Token::Plus => ast::Occurrence::NonEmpty,
-            _ => unreachable!(),
-        })
-        .or_not()
-        .map(|o| o.unwrap_or(ast::Occurrence::One))
-        .boxed();
-
-    let item = item_type
-        .clone()
-        .then(occurrence)
-        .map(|(item_type, occurrence)| ast::Item {
-            item_type,
-            occurrence,
-        })
-        .boxed();
-
-    let sequence_type = empty.or(item.map(ast::SequenceType::Item)).boxed();
 
     ParserTypeOutput {
         sequence_type,
