@@ -8,7 +8,31 @@ TestSet {
     descriptions: [
         "Params",
     ],
-    dependencies: [],
+    dependencies: Dependencies {
+        dependencies: [
+            Dependency {
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XP31+",
+                },
+                satisfied: true,
+            },
+            Dependency {
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XQ31+",
+                },
+                satisfied: true,
+            },
+            Dependency {
+                spec: DependencySpec {
+                    type_: "spec",
+                    value: "XT30+",
+                },
+                satisfied: true,
+            },
+        ],
+    },
     shared_environments: SharedEnvironments {
         environments: {
             "UCA-collation": EnvironmentSpec {
@@ -141,7 +165,9 @@ TestSet {
                     },
                 ),
             ],
-            dependencies: [],
+            dependencies: Dependencies {
+                dependencies: [],
+            },
             modules: [],
             test: "compare('abc','aBC',concat($collation,'fallback=unknown'))",
             result: AnyOf(
