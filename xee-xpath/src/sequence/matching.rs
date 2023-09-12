@@ -43,6 +43,7 @@ impl Sequence {
                 let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
                 Ok(sequence)
             },
+            |sequence, _| Ok(sequence),
             xot,
         )
     }
@@ -71,6 +72,7 @@ impl Sequence {
                 }
                 Ok(Sequence::from(items))
             },
+            |sequence, _function_test| Ok(sequence),
             context.xot,
         )
     }
@@ -78,7 +80,8 @@ impl Sequence {
     fn sequence_type_matching_convert(
         self,
         t: &ast::SequenceType,
-        convert: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        convert_function: impl Fn(Sequence, &ast::FunctionTest) -> error::Result<Sequence>,
         xot: &Xot,
     ) -> error::Result<Self> {
         match t {
@@ -89,25 +92,31 @@ impl Sequence {
                     Err(error::Error::Type)
                 }
             }
-            ast::SequenceType::Item(occurrence_item) => {
-                self.occurrence_item_matching(occurrence_item, convert, xot)
-            }
+            ast::SequenceType::Item(occurrence_item) => self.occurrence_item_matching(
+                occurrence_item,
+                convert_atomic,
+                convert_function,
+                xot,
+            ),
         }
     }
 
     fn occurrence_item_matching(
         self,
         occurrence_item: &ast::Item,
-        convert: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        convert_function: impl Fn(Sequence, &ast::FunctionTest) -> error::Result<Sequence>,
         xot: &Xot,
     ) -> error::Result<Self> {
-        let sequence = if let ast::ItemType::AtomicOrUnionType(name) = &occurrence_item.item_type {
-            let name = &name.value;
-            let xs = Xs::by_name(name.namespace(), name.local_name())
-                .ok_or(error::Error::UndefinedTypeReference)?;
-            convert(&self, xs)?
-        } else {
-            self
+        let sequence = match &occurrence_item.item_type {
+            ast::ItemType::AtomicOrUnionType(name) => {
+                let name = &name.value;
+                let xs = Xs::by_name(name.namespace(), name.local_name())
+                    .ok_or(error::Error::UndefinedTypeReference)?;
+                convert_atomic(&self, xs)?
+            }
+            ast::ItemType::FunctionTest(function_test) => convert_function(self, function_test)?,
+            _ => self,
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
@@ -188,12 +197,17 @@ impl atomic::Atomic {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
     use ibig::ibig;
 
     use xee_xpath_ast::ast;
     use xee_xpath_ast::Namespaces;
 
+    use crate::stack;
+    use crate::stack::ClosureFunctionId;
+    use crate::stack::StaticFunctionId;
     use crate::xml;
 
     #[test]
@@ -470,4 +484,25 @@ mod tests {
             ]))
         );
     }
+
+    // #[test]
+    // fn test_one_function() {
+    //     let namespaces = Namespaces::default();
+    //     let sequence_type =
+    //         ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+
+    //     let closure = stack::Closure {
+    //         function_id: ClosureFunctionId::Static(StaticFunctionId(1)),
+    //         values: vec![],
+    //     };
+
+    //     let right_sequence = Sequence::from(vec![Item::Function(Rc::new(closure))]);
+
+    //     let xot = Xot::new();
+
+    //     let right_result = right_sequence
+    //         .clone()
+    //         .sequence_type_matching(&sequence_type, &xot);
+    //     assert_eq!(&right_result.unwrap(), &right_sequence);
+    // }
 }
