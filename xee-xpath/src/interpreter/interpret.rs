@@ -500,7 +500,10 @@ impl<'a> Interpreter<'a> {
         // TODO: check that arity of function matches arity of call
 
         let closure: Rc<stack::Closure> = value.try_into()?;
+        self.call_closure(closure, arity)
+    }
 
+    fn call_closure(&mut self, closure: Rc<stack::Closure>, arity: u8) -> Result<(), Error> {
         match closure.function_id {
             stack::ClosureFunctionId::Static(static_function_id) => {
                 self.call_static(static_function_id, arity, &closure.values)
