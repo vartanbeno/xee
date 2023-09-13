@@ -85,6 +85,9 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
             Ok((token_stream, borrow))
         }
         ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),
+        // we don't do anything special for higher order functions at this point;
+        // the implementation is supposed to manually unpack the items
+        ast::ItemType::FunctionTest(_) => Ok((quote!(#arg.items()), false)),
         _ => {
             todo!("Unsupported item type")
         }

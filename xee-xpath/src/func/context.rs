@@ -1,5 +1,6 @@
 // https://www.w3.org/TR/2017/REC-xpath-functions-31-20170321/#context
 
+use crate::interpreter;
 use crate::wrap_xpath_fn;
 use crate::NaiveDateWithOffset;
 use crate::NaiveTimeWithOffset;
@@ -17,6 +18,7 @@ use super::datetime::offset_to_duration;
 
 fn bound_position(
     _context: &DynamicContext,
+    _interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     if arguments[0].is_absent() {
@@ -28,6 +30,7 @@ fn bound_position(
 
 fn bound_last(
     _context: &DynamicContext,
+    _interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     if arguments[0].is_absent() {

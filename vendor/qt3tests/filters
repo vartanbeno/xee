@@ -163,9 +163,6 @@ fo-test-fn-fold-left-008
 fo-test-fn-fold-right-001
 fo-test-fn-fold-right-002
 fo-test-fn-fold-right-003
-fo-test-fn-for-each-001
-fo-test-fn-for-each-002
-fo-test-fn-for-each-003
 fo-test-fn-for-each-pair-001
 fo-test-fn-for-each-pair-002
 fo-test-fn-for-each-pair-003
@@ -1024,21 +1021,9 @@ fold-right-018
 fold-right-019
 fold-right-020
 = fn-for-each
-for-each-001
-for-each-002
-for-each-003
-for-each-004
-for-each-005
-for-each-007
-for-each-008
-for-each-009
 for-each-010
-for-each-011
 for-each-013
 for-each-014
-for-each-901
-for-each-902
-for-each-903
 = fn-for-each-pair
 fn-for-each-pair-007
 fn-for-each-pair-008
@@ -5741,8 +5726,6 @@ function-literal-419
 function-literal-420
 function-literal-421
 function-literal-422
-function-literal-423
-function-literal-424
 function-literal-425
 function-literal-426
 function-literal-427

@@ -10,7 +10,7 @@ use xee_xpath_macros::xpath_fn;
 
 use crate::context::{DynamicContext, StaticFunctionDescription};
 use crate::string::Collation;
-use crate::{atomic, error, sequence, wrap_xpath_fn, Occurrence};
+use crate::{atomic, error, interpreter, sequence, wrap_xpath_fn, Occurrence};
 
 // we don't accept concat() invocations with an arity
 // of greater than this
@@ -106,6 +106,7 @@ fn contains_token(
 // of arities
 fn concat(
     context: &DynamicContext,
+    _interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     debug_assert!(arguments.len() >= 2);

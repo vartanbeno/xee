@@ -63,13 +63,17 @@ fn make_wrapper(
 ) -> syn::Result<proc_macro2::TokenStream> {
     let mut conversions = Vec::new();
     let mut conversion_names = Vec::new();
-    let context_ident = get_context_ident(ast)?;
-    let adjust = if let Some(context_ident) = context_ident {
+    let mut adjust = 0;
+    let context_ident = get_argument_ident(ast, "context")?;
+    if let Some(context_ident) = context_ident {
         conversion_names.push(context_ident);
-        1
-    } else {
-        0
-    };
+        adjust += 1
+    }
+    let interpreter_ident = get_argument_ident(ast, "interpreter")?;
+    if let Some(interpreter_ident) = interpreter_ident {
+        conversion_names.push(interpreter_ident);
+        adjust += 1;
+    }
     for (i, param) in signature.params.iter().enumerate() {
         let name = Ident::new(param.name.local_name(), Span::call_site());
         conversion_names.push(name.clone());
@@ -94,18 +98,18 @@ fn make_wrapper(
     };
 
     Ok(
-        quote!(fn #wrapper_name(context: &crate::DynamicContext, arguments: &[crate::Sequence]) -> Result<crate::Sequence, crate::error::Error> {
+        quote!(fn #wrapper_name(context: &crate::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::Sequence]) -> Result<crate::Sequence, crate::error::Error> {
             #body
         }),
     )
 }
 
-fn get_context_ident(ast: &ItemFn) -> syn::Result<Option<Ident>> {
+fn get_argument_ident(ast: &ItemFn, name: &str) -> syn::Result<Option<Ident>> {
     if !ast.sig.inputs.is_empty() {
         let maybe_context_arg = &ast.sig.inputs[0];
         match &maybe_context_arg {
             syn::FnArg::Typed(pat_type) => match &*pat_type.pat {
-                syn::Pat::Ident(ident) => Ok(if ident.ident == "context" {
+                syn::Pat::Ident(ident) => Ok(if ident.ident == name {
                     Some(ident.ident.clone())
                 } else {
                     None

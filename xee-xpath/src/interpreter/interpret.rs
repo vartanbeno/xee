@@ -84,9 +84,9 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn run(&mut self) -> Result<(), Error> {
+    pub(crate) fn run(&mut self, start_base: usize) -> Result<(), Error> {
         // annotate run with detailed error information
-        self.run_actual().map_err(|e| self.err(e))
+        self.run_actual(start_base).map_err(|e| self.err(e))
     }
 
     fn frame(&self) -> &Frame {
@@ -101,7 +101,7 @@ impl<'a> Interpreter<'a> {
         &self.program.functions[self.frame().function.0]
     }
 
-    pub(crate) fn run_actual(&mut self) -> error::Result<()> {
+    pub(crate) fn run_actual(&mut self, start_base: usize) -> error::Result<()> {
         // we can make this an infinite loop as all functions end
         // with the return instruction
         loop {
@@ -347,11 +347,12 @@ impl<'a> Interpreter<'a> {
                     // push back return value
                     self.stack.push(return_value);
 
+                    // if this frame is the same as the frame we started
+                    // at, we are done
+                    let base = self.frames.last().unwrap().base;
                     // now pop off the frame
                     self.frames.pop();
-
-                    if self.frames.is_empty() {
-                        // we can't return any further, so we're done
+                    if base == start_base {
                         break;
                     }
                 }
@@ -502,6 +503,28 @@ impl<'a> Interpreter<'a> {
         self.call_closure(closure, arity)
     }
 
+    pub(crate) fn call_closure_with_arguments(
+        &mut self,
+        closure: Rc<stack::Closure>,
+        arguments: &[sequence::Sequence],
+    ) -> error::Result<sequence::Sequence> {
+        // put closure onto the stack
+        self.stack.push(closure.clone().into());
+        // then arguments
+        let arity = arguments.len() as u8;
+        for arg in arguments.iter().rev() {
+            self.stack.push(arg.clone().into());
+        }
+        self.call_closure(closure.clone(), arity)?;
+        if matches!(closure.as_ref(), stack::Closure::Inline { .. }) {
+            // run interpreter until we return to the base
+            // we started in
+            self.run(self.frames.last().unwrap().base)?;
+        }
+        let value = self.stack.pop().unwrap().into();
+        Ok(value)
+    }
+
     fn call_closure(&mut self, closure: Rc<stack::Closure>, arity: u8) -> Result<(), Error> {
         match closure.as_ref() {
             stack::Closure::Static {
@@ -515,19 +538,24 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    pub(crate) fn arguments(&self, arity: u8) -> &[stack::Value] {
+        &self.stack[self.stack.len() - (arity as usize)..]
+    }
+
     fn call_static(
         &mut self,
         static_function_id: stack::StaticFunctionId,
         arity: u8,
         closure_sequences: &[sequence::Sequence],
     ) -> error::Result<()> {
-        let static_function = &self
+        let static_function = self
             .dynamic_context
             .static_context
             .functions
             .get_by_index(static_function_id);
-        let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(self.dynamic_context, arguments, closure_sequences)?;
+
+        let result =
+            static_function.invoke(self.dynamic_context, self, closure_sequences, arity)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result.into());

@@ -7,6 +7,7 @@ use crate::error;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
+use crate::interpreter;
 
 #[xpath_fn("fn:my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
 fn my_function(a: IBig, b: IBig) -> IBig {
@@ -26,6 +27,7 @@ fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
 
 fn error(
     _context: &DynamicContext,
+    _interpreter: &mut interpreter::Interpreter,
     _arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     Err(error::Error::FOER0000)

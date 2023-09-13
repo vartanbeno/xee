@@ -5,6 +5,7 @@ use xee_xpath_ast::Namespaces;
 
 use crate::error;
 use crate::func::static_function_descriptions;
+use crate::interpreter;
 use crate::sequence;
 use crate::stack;
 
@@ -43,6 +44,7 @@ impl FunctionKind {
 
 pub(crate) type StaticFunctionType = fn(
     context: &DynamicContext,
+    interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence>;
 
@@ -206,9 +208,11 @@ impl StaticFunction {
     pub(crate) fn invoke(
         &self,
         context: &DynamicContext,
-        arguments: &[stack::Value],
+        interpreter: &mut interpreter::Interpreter,
         closure_values: &[sequence::Sequence],
+        arity: u8,
     ) -> error::Result<sequence::Sequence> {
+        let arguments = &interpreter.arguments(arity);
         if arguments.len() != self.arity {
             return Err(error::Error::Type);
         }
@@ -218,22 +222,22 @@ impl StaticFunction {
                 FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
                     new_arguments.extend_from_slice(&arguments);
-                    (self.func)(context, &new_arguments)
+                    (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
-                    (self.func)(context, &new_arguments)
+                    (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::Collation => {
                     let mut new_arguments = arguments.to_vec();
                     // the default collation query
                     new_arguments.push(context.static_context.default_collation_uri().into());
-                    (self.func)(context, &new_arguments)
+                    (self.func)(context, interpreter, &new_arguments)
                 }
             }
         } else {
-            (self.func)(context, &arguments)
+            (self.func)(context, interpreter, &arguments)
         }
     }
 }
