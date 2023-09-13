@@ -27,9 +27,9 @@ impl Item {
         }
     }
 
-    pub fn to_function(&self) -> error::Result<&stack::Closure> {
+    pub fn to_function(&self) -> error::Result<Rc<stack::Closure>> {
         match self {
-            Item::Function(f) => Ok(f.as_ref()),
+            Item::Function(f) => Ok(f.clone()),
             _ => Err(error::Error::Type),
         }
     }
@@ -75,6 +75,12 @@ impl From<xml::Node> for Item {
 impl From<stack::Closure> for Item {
     fn from(f: stack::Closure) -> Self {
         Self::Function(Rc::new(f))
+    }
+}
+
+impl From<Rc<stack::Closure>> for Item {
+    fn from(f: Rc<stack::Closure>) -> Self {
+        Self::Function(f)
     }
 }
 

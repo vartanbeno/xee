@@ -46,9 +46,10 @@ pub(crate) struct InlineFunction {
     pub(crate) spans: Vec<SourceSpan>,
 }
 
-pub(crate) struct Coercion {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Signature {
     pub(crate) parameter_types: Vec<ast::SequenceType>,
-    pub(crate) return_type: Vec<ast::SequenceType>,
+    pub(crate) return_type: ast::SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq)]

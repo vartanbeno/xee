@@ -1332,3 +1332,12 @@ fn test_negative_round_integer4() {
 fn test_deep_equal_equal_to_itself() {
     assert_debug_snapshot!(run_xml(r#"<doc><a/></doc>"#, "deep-equal(/, /)",));
 }
+
+#[test]
+fn test_function_parameters() {
+    assert_debug_snapshot!(run(
+        "let $apply := function($x as xs:integer, $f as function(xs:integer) as xs:integer) as xs:integer {
+            $f($x)
+         } return $apply(3, function($x) { $x + 1 })"
+    ))
+}

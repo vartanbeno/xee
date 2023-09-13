@@ -57,7 +57,10 @@ impl Sequence {
         self.sequence_type_matching_convert(
             sequence_type,
             |sequence, xs| Self::convert_atomic(sequence, xs, context),
-            |sequence, _function_test| Ok(sequence),
+            // I can't think of a way that failing to do coercion will
+            // not work, and the qt3 test suite seems to agree with me,
+            // so don't do function coercion at all
+            |sequence, _| Ok(sequence),
             context.xot,
         )
     }
@@ -82,19 +85,6 @@ impl Sequence {
         }
         Ok(Sequence::from(items))
     }
-
-    // fn convert_function(
-    //     sequence: Sequence,
-    //     function_test: &ast::FunctionTest,
-    // ) -> error::Result<Sequence> {
-    //     for item in sequence.items() {
-    //         let function = item?.to_function()?;
-    //         // given a function test, create a new dynamic function
-    //         // that forwards all calls, and takes on params and return
-    //         // type of the function test
-    //     }
-    //     todo!();
-    // }
 
     fn sequence_type_matching_convert(
         self,
@@ -179,6 +169,10 @@ impl Item {
                 self.to_atomic()?.atomic_type_matching(&name.value)
             }
             ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
+            // we accept any function tests, as function test matching
+            // is deferred until later during runtime in coerced functions
+            // TODO: we should check for arity
+            ast::ItemType::FunctionTest(..) => Ok(()),
             _ => {
                 todo!("not yet")
             }
