@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 use arrayvec::ArrayVec;
 use ibig::IBig;
@@ -196,7 +197,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     // the closure is always just below the base
-                    let closure: &stack::Closure =
+                    let closure: Rc<stack::Closure> =
                         (&self.stack[self.frame().base - 1]).try_into()?;
                     // and we push the value we need onto the stack
                     self.stack.push(closure.values[index as usize].clone());
@@ -498,13 +499,11 @@ impl<'a> Interpreter<'a> {
 
         // TODO: check that arity of function matches arity of call
 
-        let closure: &stack::Closure = value.try_into()?;
+        let closure: Rc<stack::Closure> = value.try_into()?;
 
         match closure.function_id {
             stack::ClosureFunctionId::Static(static_function_id) => {
-                // XXX wish I didn't need to clone
-                let closure_values = &closure.values.clone();
-                self.call_static(static_function_id, arity, closure_values)
+                self.call_static(static_function_id, arity, &closure.values)
             }
             stack::ClosureFunctionId::Inline(function_id) => self.call_inline(function_id, arity),
         }

@@ -293,12 +293,12 @@ impl From<Vec<sequence::Item>> for Value {
     }
 }
 
-impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
+impl TryFrom<&stack::Value> for Rc<stack::Closure> {
     type Error = error::Error;
 
-    fn try_from(value: &'a stack::Value) -> error::Result<&'a stack::Closure> {
+    fn try_from(value: &stack::Value) -> error::Result<Self> {
         match value {
-            stack::Value::One(sequence::Item::Function(c)) => Ok(c),
+            stack::Value::One(sequence::Item::Function(c)) => Ok(c.clone()),
             _ => Err(error::Error::Type),
         }
     }
