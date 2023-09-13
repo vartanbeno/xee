@@ -318,25 +318,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Call => {
                     let arity = self.read_u8();
-                    // XXX check that arity of function matches arity of call
-
-                    // get callable from stack, by peeking back
-                    let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
-
-                    if let Ok(closure) = callable.try_into() as error::Result<&stack::Closure> {
-                        match closure.function_id {
-                            stack::ClosureFunctionId::Inline(function_id) => {
-                                self.call_inline(function_id, arity)?;
-                            }
-                            stack::ClosureFunctionId::Static(static_function_id) => {
-                                // XXX wish I didn't need to clone
-                                let closure_values = &closure.values.clone();
-                                self.call_static(static_function_id, arity, closure_values)?;
-                            }
-                        }
-                    } else {
-                        return Err(error::Error::Type);
-                    }
+                    self.call(arity)?;
                 }
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
@@ -508,6 +490,28 @@ impl<'a> Interpreter<'a> {
             }
         }
         Ok(())
+    }
+
+    fn call(&mut self, arity: u8) -> Result<(), Error> {
+        // get callable from stack, by peeking back
+        let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
+
+        // XXX check that arity of function matches arity of call
+
+        if let Ok(closure) = callable.try_into() as error::Result<&stack::Closure> {
+            match closure.function_id {
+                stack::ClosureFunctionId::Static(static_function_id) => {
+                    // XXX wish I didn't need to clone
+                    let closure_values = &closure.values.clone();
+                    self.call_static(static_function_id, arity, closure_values)
+                }
+                stack::ClosureFunctionId::Inline(function_id) => {
+                    self.call_inline(function_id, arity)
+                }
+            }
+        } else {
+            Err(error::Error::Type)
+        }
     }
 
     fn call_static(
