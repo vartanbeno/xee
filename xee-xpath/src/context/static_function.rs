@@ -207,35 +207,32 @@ impl StaticFunction {
         &self,
         context: &DynamicContext,
         arguments: &[stack::Value],
-        closure_values: &[stack::Value],
+        closure_values: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
         if arguments.len() != self.arity {
             return Err(error::Error::Type);
         }
+        let arguments = into_sequences(arguments);
         if let Some(function_rule) = &self.function_rule {
             match function_rule {
                 FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
                     let mut new_arguments = vec![closure_values[0].clone()];
-                    new_arguments.extend_from_slice(arguments);
-                    let new_arguments = into_sequences(&new_arguments);
+                    new_arguments.extend_from_slice(&arguments);
                     (self.func)(context, &new_arguments)
                 }
                 FunctionRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
-                    let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
                 FunctionRule::Collation => {
                     let mut new_arguments = arguments.to_vec();
                     // the default collation query
                     new_arguments.push(context.static_context.default_collation_uri().into());
-                    let new_arguments = into_sequences(&new_arguments);
                     (self.func)(context, &new_arguments)
                 }
             }
         } else {
-            let arguments = into_sequences(arguments);
             (self.func)(context, &arguments)
         }
     }

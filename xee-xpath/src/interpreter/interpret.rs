@@ -145,17 +145,15 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
-                    let mut values = Vec::new();
+                    let mut sequences = Vec::new();
                     let closure_function = &self.program.functions[function_id as usize];
                     for _ in 0..closure_function.closure_names.len() {
-                        values.push(self.stack.pop().unwrap());
+                        sequences.push(self.stack.pop().unwrap().into());
                     }
                     self.stack.push(
-                        stack::Closure {
-                            function_id: stack::ClosureFunctionId::Inline(stack::InlineFunctionId(
-                                function_id as usize,
-                            )),
-                            values,
+                        stack::Closure::Inline {
+                            inline_function_id: stack::InlineFunctionId(function_id as usize),
+                            sequences,
                         }
                         .into(),
                     );
@@ -168,18 +166,18 @@ impl<'a> Interpreter<'a> {
                         .functions
                         .get_by_index(stack::StaticFunctionId(static_function_id as usize));
                     // get any context value from the stack if needed
-                    let values = if static_function.needs_context() {
-                        vec![self.stack.pop().unwrap()]
+                    let sequences = if static_function.needs_context() {
+                        vec![self.stack.pop().unwrap().into()]
                     } else {
                         vec![]
                     };
 
                     self.stack.push(
-                        stack::Closure {
-                            function_id: stack::ClosureFunctionId::Static(stack::StaticFunctionId(
+                        stack::Closure::Static {
+                            static_function_id: stack::StaticFunctionId(
                                 static_function_id as usize,
-                            )),
-                            values,
+                            ),
+                            sequences,
                         }
                         .into(),
                     );
@@ -199,8 +197,9 @@ impl<'a> Interpreter<'a> {
                     // the closure is always just below the base
                     let closure: Rc<stack::Closure> =
                         (&self.stack[self.frame().base - 1]).try_into()?;
+                    let sequences = closure.sequences();
                     // and we push the value we need onto the stack
-                    self.stack.push(closure.values[index as usize].clone());
+                    self.stack.push(sequences[index as usize].clone().into());
                 }
                 EncodedInstruction::Comma => {
                     let b = self.stack.pop().unwrap();
@@ -504,11 +503,15 @@ impl<'a> Interpreter<'a> {
     }
 
     fn call_closure(&mut self, closure: Rc<stack::Closure>, arity: u8) -> Result<(), Error> {
-        match closure.function_id {
-            stack::ClosureFunctionId::Static(static_function_id) => {
-                self.call_static(static_function_id, arity, &closure.values)
-            }
-            stack::ClosureFunctionId::Inline(function_id) => self.call_inline(function_id, arity),
+        match closure.as_ref() {
+            stack::Closure::Static {
+                static_function_id,
+                sequences,
+            } => self.call_static(*static_function_id, arity, sequences),
+            stack::Closure::Inline {
+                inline_function_id,
+                sequences: _,
+            } => self.call_inline(*inline_function_id, arity),
         }
     }
 
@@ -516,7 +519,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: stack::StaticFunctionId,
         arity: u8,
-        closure_values: &[stack::Value],
+        closure_sequences: &[sequence::Sequence],
     ) -> error::Result<()> {
         let static_function = &self
             .dynamic_context
@@ -524,7 +527,7 @@ impl<'a> Interpreter<'a> {
             .functions
             .get_by_index(static_function_id);
         let arguments = &self.stack[self.stack.len() - (arity as usize)..];
-        let result = static_function.invoke(self.dynamic_context, arguments, closure_values)?;
+        let result = static_function.invoke(self.dynamic_context, arguments, closure_sequences)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result.into());

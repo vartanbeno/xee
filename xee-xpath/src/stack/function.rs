@@ -3,11 +3,12 @@ use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
 use crate::ir;
+use crate::sequence;
 use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) struct InlineFunctionId(pub(crate) usize);
+pub struct InlineFunctionId(pub(crate) usize);
 
 impl InlineFunctionId {
     pub(crate) fn as_u16(&self) -> u16 {
@@ -16,7 +17,7 @@ impl InlineFunctionId {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) struct StaticFunctionId(pub(crate) usize);
+pub struct StaticFunctionId(pub(crate) usize);
 
 impl StaticFunctionId {
     pub(crate) fn as_u16(&self) -> u16 {
@@ -45,14 +46,28 @@ pub(crate) struct InlineFunction {
     pub(crate) spans: Vec<SourceSpan>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum ClosureFunctionId {
-    Static(StaticFunctionId),
-    Inline(InlineFunctionId),
+pub(crate) struct Coercion {
+    pub(crate) parameter_types: Vec<ast::SequenceType>,
+    pub(crate) return_type: Vec<ast::SequenceType>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Closure {
-    pub(crate) function_id: ClosureFunctionId,
-    pub(crate) values: Vec<stack::Value>,
+pub enum Closure {
+    Static {
+        static_function_id: StaticFunctionId,
+        sequences: Vec<sequence::Sequence>,
+    },
+    Inline {
+        inline_function_id: InlineFunctionId,
+        sequences: Vec<sequence::Sequence>,
+    },
+}
+
+impl Closure {
+    pub(crate) fn sequences(&self) -> &[sequence::Sequence] {
+        match self {
+            Self::Static { sequences, .. } => sequences,
+            Self::Inline { sequences, .. } => sequences,
+        }
+    }
 }
