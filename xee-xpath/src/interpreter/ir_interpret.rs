@@ -317,23 +317,23 @@ impl<'a> InterpreterCompiler<'a> {
             .get_by_index(static_function_id);
         match static_function.function_rule {
             Some(FunctionRule::ItemFirst) => {
-                // XXX optional context names; what if context is absent?
-                let context_names = context_names.unwrap();
+                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::ItemLast) => {
-                let context_names = context_names.unwrap();
+                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::PositionFirst) => self.compile_variable(
                 {
-                    let context_names = context_names.unwrap();
+                    let context_names =
+                        context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
                     &context_names.position
                 },
                 span,
             )?,
             Some(FunctionRule::SizeFirst) => {
-                let context_names = context_names.unwrap();
+                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
                 self.compile_variable(&context_names.last, span)?
             }
             Some(FunctionRule::Collation) | None => {}

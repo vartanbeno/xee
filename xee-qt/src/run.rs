@@ -46,6 +46,10 @@ impl Default for KnownDependencies {
                 type_: "spec".to_string(),
                 value: "XP31+".to_string(),
             },
+            qt::DependencySpec {
+                type_: "feature".to_string(),
+                value: "higherOrderFunctions".to_string(),
+            },
         ];
         Self::new(&specs)
     }
@@ -125,12 +129,18 @@ impl qt::Catalog {
 impl qt::Dependencies {
     // the spec is supported if any of the spec dependencies is supported
     pub(crate) fn is_spec_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        let mut spec_dependency_seen: bool = false;
         for dependency in &self.dependencies {
-            if dependency.spec.type_ == "spec" && known_dependencies.is_supported(dependency) {
-                return true;
+            if dependency.spec.type_ == "spec" {
+                spec_dependency_seen = true;
+                if known_dependencies.is_supported(dependency) {
+                    return true;
+                }
             }
         }
-        false
+        // if we haven't seen any spec dependencies, then we're supported
+        // otherwise, we aren't
+        !spec_dependency_seen
     }
 
     pub(crate) fn is_feature_supported(&self, known_dependencies: &KnownDependencies) -> bool {
