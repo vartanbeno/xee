@@ -450,10 +450,10 @@ pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
 }
 
 #[cfg(test)]
-use crate::stack::Function;
+use crate::stack::InlineFunction;
 
 #[cfg(test)]
-impl Function {
+impl InlineFunction {
     pub(crate) fn decoded(&self) -> Vec<Instruction> {
         decode_instructions(&self.chunk)
     }

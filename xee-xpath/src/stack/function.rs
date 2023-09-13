@@ -7,9 +7,9 @@ use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub(crate) struct FunctionId(pub(crate) usize);
+pub(crate) struct InlineFunctionId(pub(crate) usize);
 
-impl FunctionId {
+impl InlineFunctionId {
     pub(crate) fn as_u16(&self) -> u16 {
         self.0 as u16
     }
@@ -31,7 +31,7 @@ pub(crate) struct CastType {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Function {
+pub(crate) struct InlineFunction {
     pub(crate) name: String,
     pub(crate) params: Vec<ir::Param>,
     // things referenced by instructions (by index)
@@ -48,7 +48,7 @@ pub(crate) struct Function {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) enum ClosureFunctionId {
     Static(StaticFunctionId),
-    Dynamic(FunctionId),
+    Inline(InlineFunctionId),
 }
 
 #[derive(Debug, Clone, PartialEq)]

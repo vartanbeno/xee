@@ -56,26 +56,45 @@ impl Sequence {
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            |sequence, xs| {
-                let atomized = sequence.atomized(context.xot);
-                let mut items = Vec::new();
-                for atom in atomized {
-                    let atom = atom?;
-                    let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-                        atom.cast_to_schema_type(xs, context)?
-                    } else {
-                        atom
-                    };
-                    let atom = atom.type_promote(xs)?;
-                    let item = Item::from(atom);
-                    items.push(item);
-                }
-                Ok(Sequence::from(items))
-            },
+            |sequence, xs| Self::convert_atomic(sequence, xs, context),
             |sequence, _function_test| Ok(sequence),
             context.xot,
         )
     }
+
+    fn convert_atomic(
+        sequence: &Sequence,
+        xs: Xs,
+        context: &context::DynamicContext,
+    ) -> error::Result<Sequence> {
+        let atomized = sequence.atomized(context.xot);
+        let mut items = Vec::new();
+        for atom in atomized {
+            let atom = atom?;
+            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
+                atom.cast_to_schema_type(xs, context)?
+            } else {
+                atom
+            };
+            let atom = atom.type_promote(xs)?;
+            let item = Item::from(atom);
+            items.push(item);
+        }
+        Ok(Sequence::from(items))
+    }
+
+    // fn convert_function(
+    //     sequence: Sequence,
+    //     function_test: &ast::FunctionTest,
+    // ) -> error::Result<Sequence> {
+    //     for item in sequence.items() {
+    //         let function = item?.to_function()?;
+    //         // given a function test, create a new dynamic function
+    //         // that forwards all calls, and takes on params and return
+    //         // type of the function test
+    //     }
+    //     todo!();
+    // }
 
     fn sequence_type_matching_convert(
         self,
@@ -197,7 +216,7 @@ impl atomic::Atomic {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    // use std::rc::Rc;
 
     use super::*;
     use ibig::ibig;
@@ -205,9 +224,9 @@ mod tests {
     use xee_xpath_ast::ast;
     use xee_xpath_ast::Namespaces;
 
-    use crate::stack;
-    use crate::stack::ClosureFunctionId;
-    use crate::stack::StaticFunctionId;
+    // use crate::stack;
+    // use crate::stack::ClosureFunctionId;
+    // use crate::stack::StaticFunctionId;
     use crate::xml;
 
     #[test]

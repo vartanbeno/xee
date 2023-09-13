@@ -13,7 +13,7 @@ use crate::xml;
 #[derive(Debug)]
 pub struct XPath {
     pub(crate) program: Program,
-    main: stack::FunctionId,
+    main: stack::InlineFunctionId,
 }
 
 impl XPath {
@@ -34,7 +34,7 @@ impl XPath {
         compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
-        let inline_id = stack::FunctionId(program.functions.len() - 1);
+        let inline_id = stack::InlineFunctionId(program.functions.len() - 1);
         Ok(Self {
             program,
             main: inline_id,

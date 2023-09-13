@@ -11,7 +11,7 @@ use super::instruction::{encode_instruction, instruction_size, Instruction};
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
     pub(crate) src: String,
-    pub(crate) functions: Vec<stack::Function>,
+    pub(crate) functions: Vec<stack::InlineFunction>,
 }
 
 impl Program {
@@ -22,21 +22,24 @@ impl Program {
         }
     }
 
-    pub(crate) fn add_function(&mut self, function: stack::Function) -> stack::FunctionId {
+    pub(crate) fn add_function(
+        &mut self,
+        function: stack::InlineFunction,
+    ) -> stack::InlineFunctionId {
         let id = self.functions.len();
         if id > u16::MAX as usize {
             panic!("too many functions");
         }
         self.functions.push(function);
 
-        stack::FunctionId(id)
+        stack::InlineFunctionId(id)
     }
 
-    pub(crate) fn get_function(&self, index: usize) -> &stack::Function {
+    pub(crate) fn get_function(&self, index: usize) -> &stack::InlineFunction {
         &self.functions[index]
     }
 
-    pub(crate) fn get_function_by_id(&self, id: stack::FunctionId) -> &stack::Function {
+    pub(crate) fn get_function_by_id(&self, id: stack::InlineFunctionId) -> &stack::InlineFunction {
         self.get_function(id.0)
     }
 }
@@ -217,7 +220,7 @@ impl<'a> FunctionBuilder<'a> {
         name: String,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
-    ) -> stack::Function {
+    ) -> stack::InlineFunction {
         if let Some(return_type) = &function_definition.return_type {
             let sequence_type_id = self.add_sequence_type(return_type.clone());
             if sequence_type_id > (u16::MAX as usize) {
@@ -226,7 +229,7 @@ impl<'a> FunctionBuilder<'a> {
             self.emit(Instruction::ReturnConvert(sequence_type_id as u16), span);
         }
         self.emit(Instruction::Return, span);
-        stack::Function {
+        stack::InlineFunction {
             name,
             params: function_definition.params.clone(),
             chunk: self.compiled,
@@ -243,7 +246,10 @@ impl<'a> FunctionBuilder<'a> {
         FunctionBuilder::new(self.program)
     }
 
-    pub(crate) fn add_function(&mut self, function: stack::Function) -> stack::FunctionId {
+    pub(crate) fn add_function(
+        &mut self,
+        function: stack::InlineFunction,
+    ) -> stack::InlineFunctionId {
         self.program.add_function(function)
     }
 }

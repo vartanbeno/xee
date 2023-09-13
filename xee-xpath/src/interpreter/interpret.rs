@@ -25,7 +25,7 @@ const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
 struct Frame {
-    function: stack::FunctionId,
+    function: stack::InlineFunctionId,
     ip: usize,
     base: usize,
 }
@@ -56,7 +56,7 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn start(
         &mut self,
-        function_id: stack::FunctionId,
+        function_id: stack::InlineFunctionId,
         context_item: Option<&sequence::Item>,
         arguments: Vec<Vec<sequence::Item>>,
     ) {
@@ -96,7 +96,7 @@ impl<'a> Interpreter<'a> {
         self.frames.last_mut().unwrap()
     }
 
-    pub(crate) fn function(&self) -> &stack::Function {
+    pub(crate) fn function(&self) -> &stack::InlineFunction {
         &self.program.functions[self.frame().function.0]
     }
 
@@ -151,7 +151,7 @@ impl<'a> Interpreter<'a> {
                     }
                     self.stack.push(
                         stack::Closure {
-                            function_id: stack::ClosureFunctionId::Dynamic(stack::FunctionId(
+                            function_id: stack::ClosureFunctionId::Inline(stack::InlineFunctionId(
                                 function_id as usize,
                             )),
                             values,
@@ -325,8 +325,8 @@ impl<'a> Interpreter<'a> {
 
                     if let Ok(closure) = callable.try_into() as error::Result<&stack::Closure> {
                         match closure.function_id {
-                            stack::ClosureFunctionId::Dynamic(function_id) => {
-                                self.call_closure(function_id, arity)?;
+                            stack::ClosureFunctionId::Inline(function_id) => {
+                                self.call_inline(function_id, arity)?;
                             }
                             stack::ClosureFunctionId::Static(static_function_id) => {
                                 // XXX wish I didn't need to clone
@@ -529,7 +529,11 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_closure(&mut self, function_id: stack::FunctionId, arity: u8) -> error::Result<()> {
+    fn call_inline(
+        &mut self,
+        function_id: stack::InlineFunctionId,
+        arity: u8,
+    ) -> error::Result<()> {
         // look up the function in order to access the parameters information
         let function = self.program.get_function_by_id(function_id);
         let params = &function.params;
@@ -537,7 +541,7 @@ impl<'a> Interpreter<'a> {
         // TODO: fast path if no sequence types exist for parameters
 
         // now pop everything off the stack to do type matching, along
-        // with sequence type conversion
+        // with sequence type conversion, function coercion
         let mut arguments = Vec::with_capacity(arity as usize);
         for param in params.iter().rev() {
             let value = self.stack.pop().unwrap();
