@@ -299,8 +299,6 @@ impl<'a> TryFrom<&'a stack::Value> for &'a stack::Closure {
     fn try_from(value: &'a stack::Value) -> error::Result<&'a stack::Closure> {
         match value {
             stack::Value::One(sequence::Item::Function(c)) => Ok(c),
-            // TODO: not handling this correctly yet
-            // stack::Value::Sequence(s) => s.borrow().singleton().and_then(|n| n.to_function()),
             _ => Err(error::Error::Type),
         }
     }

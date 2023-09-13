@@ -494,23 +494,19 @@ impl<'a> Interpreter<'a> {
 
     fn call(&mut self, arity: u8) -> Result<(), Error> {
         // get callable from stack, by peeking back
-        let callable = &self.stack[self.stack.len() - (arity as usize + 1)];
+        let value = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-        // XXX check that arity of function matches arity of call
+        // TODO: check that arity of function matches arity of call
 
-        if let Ok(closure) = callable.try_into() as error::Result<&stack::Closure> {
-            match closure.function_id {
-                stack::ClosureFunctionId::Static(static_function_id) => {
-                    // XXX wish I didn't need to clone
-                    let closure_values = &closure.values.clone();
-                    self.call_static(static_function_id, arity, closure_values)
-                }
-                stack::ClosureFunctionId::Inline(function_id) => {
-                    self.call_inline(function_id, arity)
-                }
+        let closure: &stack::Closure = value.try_into()?;
+
+        match closure.function_id {
+            stack::ClosureFunctionId::Static(static_function_id) => {
+                // XXX wish I didn't need to clone
+                let closure_values = &closure.values.clone();
+                self.call_static(static_function_id, arity, closure_values)
             }
-        } else {
-            Err(error::Error::Type)
+            stack::ClosureFunctionId::Inline(function_id) => self.call_inline(function_id, arity),
         }
     }
 
