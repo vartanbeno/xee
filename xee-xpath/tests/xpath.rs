@@ -1341,3 +1341,21 @@ fn test_function_parameters() {
          } return $apply(3, function($x) { $x + 1 })"
     ))
 }
+
+#[test]
+fn test_qname_without_prefix() {
+    assert_debug_snapshot!(run("QName('http://example.com', 'foo')"));
+}
+
+#[test]
+fn test_run_focus_independent_function_on_focus() {
+    assert_debug_snapshot!(run_xml(r#"<doc><a/></doc>"#, "doc/a/default-collation()"));
+}
+
+#[test]
+fn test_run_function_lookup_on_focus() {
+    assert_debug_snapshot!(run_xml(
+        r#"<root/>"#,
+        "/root/function-lookup(fn:QName('http://www.w3.org/2005/xpath-functions', 'node-name'), 0)()"
+    ));
+}

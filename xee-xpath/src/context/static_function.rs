@@ -19,6 +19,9 @@ pub(crate) enum FunctionKind {
     // generate a function with one less arity that takes the item
     // as the last argument
     ItemLast,
+    // generate just one function, but it takes an additional last
+    // argument that contains an option of the context item
+    ItemLastOptional,
     // this function takes position as the implicit only argument
     Position,
     // this function takes size as the implicit only argument
@@ -34,6 +37,7 @@ impl FunctionKind {
             "" => None,
             "context_first" => Some(FunctionKind::ItemFirst),
             "context_last" => Some(FunctionKind::ItemLast),
+            "context_last_optional" => Some(FunctionKind::ItemLastOptional),
             "position" => Some(FunctionKind::Position),
             "size" => Some(FunctionKind::Size),
             "collation" => Some(FunctionKind::Collation),
@@ -127,6 +131,14 @@ impl StaticFunctionDescription {
                         },
                     ]
                 }
+                FunctionKind::ItemLastOptional => {
+                    vec![StaticFunction {
+                        name: self.name.clone(),
+                        arity: self.arity - 1,
+                        function_rule: Some(FunctionRule::ItemLastOptional),
+                        func: self.func,
+                    }]
+                }
                 FunctionKind::Position => {
                     vec![StaticFunction {
                         name: self.name.clone(),
@@ -175,6 +187,7 @@ impl StaticFunctionDescription {
 pub(crate) enum FunctionRule {
     ItemFirst,
     ItemLast,
+    ItemLastOptional,
     PositionFirst,
     SizeFirst,
     Collation,
@@ -227,6 +240,16 @@ impl StaticFunction {
                 FunctionRule::ItemLast => {
                     let mut new_arguments = arguments.to_vec();
                     new_arguments.push(closure_values[0].clone());
+                    (self.func)(context, interpreter, &new_arguments)
+                }
+                FunctionRule::ItemLastOptional => {
+                    let mut new_arguments = arguments.to_vec();
+                    let value = if !closure_values.is_empty() && !closure_values[0].is_absent() {
+                        closure_values[0].clone()
+                    } else {
+                        sequence::Sequence::empty()
+                    };
+                    new_arguments.push(value);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::Collation => {

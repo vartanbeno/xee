@@ -1,5 +1,7 @@
 // https://www.w3.org/TR/xpath-functions-31/#higher-order-functions
 
+use ibig::IBig;
+use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
@@ -9,7 +11,37 @@ use crate::error;
 use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
+use crate::xml;
 use crate::Occurrence;
+
+// we use the special marker context_last_optional here. The last node
+// argument, $arg, is not part of the official signature, but it is
+// required to create a static closure from the context, bind it to
+// a context if supplied. The context is also optional; the resulting
+// function won't be bound to any context if the context isn't present.
+#[xpath_fn(
+    "fn:function-lookup($name as xs:QName, $arity as xs:integer, $arg as node()?) as function(*)?",
+    context_last_optional
+)]
+fn function_lookup(
+    context: &context::DynamicContext,
+    interpreter: &mut Interpreter,
+    name: ast::Name,
+    arity: IBig,
+    arg: Option<xml::Node>,
+) -> Option<sequence::Item> {
+    let arity: u8 = if let Ok(arity) = arity.try_into() {
+        arity
+    } else {
+        return None;
+    };
+    let static_function_id = context.static_context.functions.get_by_name(&name, arity);
+    static_function_id.map(|static_function_id| {
+        interpreter
+            .create_static_closure_from_context(static_function_id, arg)
+            .into()
+    })
+}
 
 #[xpath_fn("fn:for-each($seq as item()*, $action as function(item()) as item()*) as item()*")]
 fn for_each(
@@ -200,6 +232,7 @@ where
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
+        wrap_xpath_fn!(function_lookup),
         wrap_xpath_fn!(for_each),
         wrap_xpath_fn!(filter),
         wrap_xpath_fn!(fold_left),

@@ -1,0 +1,21 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run_xml(r#\"<root/>\"#,\n    \"/root/function-lookup(fn:QName('http://www.w3.org/2005/xpath-functions', 'node-name'), 0)()\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                QName(
+                    Name {
+                        name: "root",
+                        prefix: None,
+                        namespace: Some(
+                            "",
+                        ),
+                    },
+                ),
+            ),
+        ),
+    },
+)

@@ -158,12 +158,6 @@ impl Name {
             } else {
                 self.name.clone()
             }
-        } else if let Some(namespace) = &self.namespace {
-            if !namespace.is_empty() {
-                format!("Q{{{}}}{}", namespace, self.name)
-            } else {
-                self.name.clone()
-            }
         } else {
             self.name.clone()
         }

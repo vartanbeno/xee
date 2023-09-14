@@ -324,6 +324,13 @@ impl<'a> InterpreterCompiler<'a> {
                 let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
                 self.compile_variable(&context_names.item, span)?
             }
+            Some(FunctionRule::ItemLastOptional) => {
+                if let Some(context_names) = context_names {
+                    self.compile_variable(&context_names.item, span)?;
+                } else {
+                    self.builder.emit_constant(stack::Value::Empty, span);
+                }
+            }
             Some(FunctionRule::PositionFirst) => self.compile_variable(
                 {
                     let context_names =

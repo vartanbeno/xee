@@ -160,27 +160,9 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::StaticClosure => {
                     let static_function_id = self.read_u16();
-                    let static_function = &self
-                        .dynamic_context
-                        .static_context
-                        .functions
-                        .get_by_index(stack::StaticFunctionId(static_function_id as usize));
-                    // get any context value from the stack if needed
-                    let sequences = if static_function.needs_context() {
-                        vec![self.stack.pop().unwrap().into()]
-                    } else {
-                        vec![]
-                    };
-
-                    self.stack.push(
-                        stack::Closure::Static {
-                            static_function_id: stack::StaticFunctionId(
-                                static_function_id as usize,
-                            ),
-                            sequences,
-                        }
-                        .into(),
-                    );
+                    let static_function_id = stack::StaticFunctionId(static_function_id as usize);
+                    let static_closure = self.create_static_closure_from_stack(static_function_id);
+                    self.stack.push(static_closure.into());
                 }
                 EncodedInstruction::Var => {
                     let index = self.read_u16();
@@ -491,6 +473,54 @@ impl<'a> Interpreter<'a> {
             }
         }
         Ok(())
+    }
+
+    pub(crate) fn create_static_closure_from_stack(
+        &mut self,
+        static_function_id: stack::StaticFunctionId,
+    ) -> stack::Closure {
+        Self::create_static_closure(self.dynamic_context, static_function_id, || {
+            Some(self.stack.pop().unwrap())
+        })
+    }
+
+    pub(crate) fn create_static_closure_from_context(
+        &mut self,
+        static_function_id: stack::StaticFunctionId,
+        arg: Option<xml::Node>,
+    ) -> stack::Closure {
+        Self::create_static_closure(self.dynamic_context, static_function_id, || {
+            arg.map(|n| n.into())
+        })
+    }
+
+    pub(crate) fn create_static_closure<F>(
+        context: &DynamicContext,
+        static_function_id: stack::StaticFunctionId,
+        mut get: F,
+    ) -> stack::Closure
+    where
+        F: FnMut() -> Option<stack::Value>,
+    {
+        let static_function = &context
+            .static_context
+            .functions
+            .get_by_index(static_function_id);
+        // get any context value from the stack if needed
+        let sequences = if static_function.needs_context() {
+            let value = get();
+            if let Some(value) = value {
+                vec![value.into()]
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        };
+        stack::Closure::Static {
+            static_function_id,
+            sequences,
+        }
     }
 
     fn call(&mut self, arity: u8) -> Result<(), Error> {

@@ -72,7 +72,13 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
     let name = ast::Name::parse(param_qname, &namespaces)
         .map_err(|_| error::Error::FOCA0002)?
         .value;
-    Ok(name.into())
+    // TODO: the parser should do this already
+    // put in default namespace if required
+    if name.namespace().is_none() && !param_uri.is_empty() {
+        Ok(name.with_default_namespace(Some(param_uri)).into())
+    } else {
+        Ok(name.into())
+    }
 }
 
 #[xpath_fn("fn:prefix-from-QName($arg as xs:QName?) as xs:NCName?")]

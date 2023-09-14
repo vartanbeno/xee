@@ -17,6 +17,7 @@ pub(crate) struct XPathFnOptions {
 mod kw {
     syn::custom_keyword!(context_first);
     syn::custom_keyword!(context_last);
+    syn::custom_keyword!(context_last_optional);
     syn::custom_keyword!(position);
     syn::custom_keyword!(size);
     syn::custom_keyword!(collation);
@@ -70,6 +71,9 @@ impl Parse for XPathFnOption {
         } else if lookahead.peek(kw::context_last) {
             let _eat: kw::context_last = input.parse()?;
             XPathFnOption::Kind("context_last".to_string())
+        } else if lookahead.peek(kw::context_last_optional) {
+            let _eat: kw::context_last_optional = input.parse()?;
+            XPathFnOption::Kind("context_last_optional".to_string())
         } else if lookahead.peek(kw::position) {
             let _eat: kw::position = input.parse()?;
             XPathFnOption::Kind("position".to_string())
