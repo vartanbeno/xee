@@ -264,6 +264,10 @@ impl StaticFunction {
         }
     }
 
+    pub(crate) fn name(&self) -> &ast::Name {
+        &self.name
+    }
+
     pub(crate) fn arity(&self) -> usize {
         self.arity
     }

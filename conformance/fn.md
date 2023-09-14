@@ -3,7 +3,7 @@
 - [x] adjust-date-to-timezone
 - [x] adjust-time-to-timezone
 - [ ] analyze-string (regex, generates nodes)
-- [ ] apply (hof)
+- [ ] apply (hof, array)
 - [ ] available-environment-variables
 - [x] avg
 - [ ] base-uri
@@ -27,7 +27,7 @@
 - [x] day-from-dateTime
 - [x] days-from-duration
 - [x] deep-equal
-- [ ] default-collation
+- [x] default-collation
 - [ ] default-language
 - [x] distinct-values
 - [ ] doc
@@ -38,25 +38,25 @@
 - [ ] encode-for-uri
 - [x] ends-with
 - [ ] environment-variable
-- [ ] error
+- [x] error (all versions?)
 - [ ] escape-html-uri
 - [x] exactly-one
 - [x] exists
 - [x] false
-- [x] filter
+- [x] filter (hof)
 - [x] floor
-- [ ] fold-left (hof)
-- [ ] fold-right (hof)
-- [ ] for-each (hof)
-- [ ] for-each-pair (hof)
+- [x] fold-left (hof)
+- [x] fold-right (hof)
+- [x] for-each (hof)
+- [x] for-each-pair (hof)
 - [ ] format-date (icu4x)
 - [ ] format-dateTime (icu4x)
 - [ ] format-integer
 - [ ] format-number
 - [ ] format-time (icu4x)
-- [ ] function-arity
-- [ ] function-lookup
-- [ ] function-name
+- [x] function-arity (hof)
+- [x] function-lookup (hof)
+- [x] function-name (hof)
 - [x] generate-id
 - [x] has-children
 - [x] head
@@ -121,7 +121,7 @@
 - [x] seconds-from-duration
 - [x] seconds-from-time
 - [ ] serialize
-- [ ] sort (hof)
+- [x] sort (hof)
 - [x] starts-with
 - [ ] static-base-uri
 - [x] string

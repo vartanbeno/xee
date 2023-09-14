@@ -10,6 +10,7 @@ use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::interpreter::Interpreter;
 use crate::sequence;
+use crate::stack;
 use crate::wrap_xpath_fn;
 use crate::xml;
 use crate::Occurrence;
@@ -41,6 +42,49 @@ fn function_lookup(
             .create_static_closure_from_context(static_function_id, arg)
             .into()
     })
+}
+
+#[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
+fn function_name(
+    context: &context::DynamicContext,
+    func: sequence::Item,
+) -> error::Result<Option<ast::Name>> {
+    let closure = func.to_function()?;
+    match closure.as_ref() {
+        stack::Closure::Static {
+            static_function_id, ..
+        } => {
+            let static_function = context
+                .static_context
+                .functions
+                .get_by_index(*static_function_id);
+            Ok(Some(static_function.name().clone()))
+        }
+        stack::Closure::Inline { .. } => Ok(None),
+    }
+}
+
+#[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
+fn function_arity(
+    context: &context::DynamicContext,
+    interpreter: &Interpreter,
+    func: sequence::Item,
+) -> error::Result<IBig> {
+    let closure = func.to_function()?;
+    match closure.as_ref() {
+        stack::Closure::Static {
+            static_function_id, ..
+        } => {
+            let static_function = context
+                .static_context
+                .functions
+                .get_by_index(*static_function_id);
+            Ok(static_function.arity().into())
+        }
+        stack::Closure::Inline {
+            inline_function_id, ..
+        } => Ok(interpreter.arity(*inline_function_id).into()),
+    }
 }
 
 #[xpath_fn("fn:for-each($seq as item()*, $action as function(item()) as item()*) as item()*")]
@@ -233,6 +277,8 @@ where
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(function_lookup),
+        wrap_xpath_fn!(function_name),
+        wrap_xpath_fn!(function_arity),
         wrap_xpath_fn!(for_each),
         wrap_xpath_fn!(filter),
         wrap_xpath_fn!(fold_left),

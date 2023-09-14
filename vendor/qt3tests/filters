@@ -166,11 +166,6 @@ fo-test-fn-format-number-007
 fo-test-fn-format-number-008
 fo-test-fn-format-number-009
 fo-test-fn-format-number-010
-fo-test-fn-function-arity-001
-fo-test-fn-function-arity-002
-fo-test-fn-function-arity-003
-fo-test-fn-function-name-001
-fo-test-fn-function-name-002
 fo-test-fn-head-004
 fo-test-fn-hours-from-dateTime-005
 fo-test-fn-hours-from-time-005
@@ -947,7 +942,6 @@ fn-filter-013
 = fn-fold-left
 = fn-fold-right
 = fn-for-each
-for-each-010
 for-each-013
 for-each-014
 = fn-for-each-pair
@@ -1574,21 +1568,9 @@ millisecs-903
 millisecs-904
 millisecs-905
 = fn-function-arity
-fn-function-arity-005
-fn-function-arity-006
-fn-function-arity-007
 fn-function-arity-008
-fn-function-arity-009
-fn-function-arity-011
-fn-function-arity-013
-fn-function-arity-014
-fn-function-arity-015
 fn-function-arity-016
 fn-function-arity-017
-fn-function-arity-018
-fn-function-arity-019
-fn-function-arity-020
-fn-function-arity-021
 = fn-function-lookup
 fn-function-lookup-005
 fn-function-lookup-006
@@ -1713,17 +1695,12 @@ fn-function-lookup-402
 fn-function-lookup-404
 fn-function-lookup-415
 fn-function-lookup-416
-fn-function-lookup-419
-fn-function-lookup-420
-fn-function-lookup-421
-fn-function-lookup-422
 fn-function-lookup-523
 fn-function-lookup-524
 fn-function-lookup-525
 fn-function-lookup-526
 fn-function-lookup-527
 fn-function-lookup-528
-fn-function-lookup-609
 fn-function-lookup-720
 fn-function-lookup-721
 fn-function-lookup-724
@@ -1822,22 +1799,9 @@ fn-function-lookup-828
 fn-function-lookup-829
 fn-function-lookup-830
 = fn-function-name
-fn-function-name-005
-fn-function-name-006
-fn-function-name-007
 fn-function-name-008
-fn-function-name-009
-fn-function-name-011
-fn-function-name-012
-fn-function-name-013
-fn-function-name-014
-fn-function-name-015
-fn-function-name-016
 fn-function-name-017
 fn-function-name-018
-fn-function-name-019
-fn-function-name-020
-fn-function-name-021
 = fn-generate-id
 generate-id-001
 generate-id-002
@@ -4074,15 +4038,9 @@ function-item-1
 function-item-15
 function-item-16
 function-item-17
-function-item-8
-function-item-9
-hof-023
-hof-024
 hof-025
-hof-033
 inline-function-12a
 inline-function-15
-inline-function-2
 xqhof8
 xqhof9
 = misc-JsonTestSuite
@@ -4820,10 +4778,7 @@ K-CondExpr-3
 K-CondExpr-4
 K-CondExpr-6
 = prod-InlineFunctionExpr
-inline-fn-021
-inline-fn-022
 inline-fn-023
-inline-fn-025
 inline-fn-027
 inline-fn-028
 inline-fn-029
@@ -5151,10 +5106,6 @@ function-literal-399
 function-literal-400
 function-literal-415
 function-literal-416
-function-literal-419
-function-literal-420
-function-literal-421
-function-literal-422
 function-literal-523
 function-literal-524
 function-literal-525

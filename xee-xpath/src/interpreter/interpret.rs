@@ -523,6 +523,10 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    pub(crate) fn arity(&self, function_id: stack::InlineFunctionId) -> usize {
+        self.program.functions[function_id.0].params.len()
+    }
+
     fn call(&mut self, arity: u8) -> Result<(), Error> {
         // get callable from stack, by peeking back
         let value = &self.stack[self.stack.len() - (arity as usize + 1)];
