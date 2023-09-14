@@ -64,12 +64,12 @@ fn make_wrapper(
     let mut conversions = Vec::new();
     let mut conversion_names = Vec::new();
     let mut adjust = 0;
-    let context_ident = get_argument_ident(ast, "context")?;
+    let context_ident = get_argument_ident(ast, adjust, "context")?;
     if let Some(context_ident) = context_ident {
         conversion_names.push(context_ident);
         adjust += 1
     }
-    let interpreter_ident = get_argument_ident(ast, "interpreter")?;
+    let interpreter_ident = get_argument_ident(ast, adjust, "interpreter")?;
     if let Some(interpreter_ident) = interpreter_ident {
         conversion_names.push(interpreter_ident);
         adjust += 1;
@@ -104,9 +104,13 @@ fn make_wrapper(
     )
 }
 
-fn get_argument_ident(ast: &ItemFn, name: &str) -> syn::Result<Option<Ident>> {
+fn get_argument_ident(ast: &ItemFn, index: usize, name: &str) -> syn::Result<Option<Ident>> {
+    if index >= ast.sig.inputs.len() {
+        return Ok(None);
+    }
+
     if !ast.sig.inputs.is_empty() {
-        let maybe_context_arg = &ast.sig.inputs[0];
+        let maybe_context_arg = &ast.sig.inputs[index];
         match &maybe_context_arg {
             syn::FnArg::Typed(pat_type) => match &*pat_type.pat {
                 syn::Pat::Ident(ident) => Ok(if ident.ident == name {

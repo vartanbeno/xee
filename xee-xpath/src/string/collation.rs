@@ -150,6 +150,8 @@ impl Collation {
                 Collation::Uca(Box::new(Self::uca_collator(provider, collator_query)?))
             }
             "/2005/xpath-functions/collation/html-ascii-case-insensitive" => Collation::HtmlAscii,
+            // TODO: a bit of a hack, we support the qt3 caseblind collation too so that the test suite will work
+            "/2010/09/qt-fots-catalog/collation/caseblind" => Collation::HtmlAscii,
             _ => return Err(error::Error::FOCH0002),
         })
     }

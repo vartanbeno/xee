@@ -3,6 +3,7 @@
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::context;
 use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::interpreter::Interpreter;
@@ -110,6 +111,93 @@ fn for_each_pair(
     Ok(result.into())
 }
 
+#[xpath_fn("fn:sort($input as item()*) as item()*")]
+fn sort1(
+    context: &context::DynamicContext,
+    input: &sequence::Sequence,
+) -> error::Result<sequence::Sequence> {
+    sort_without_key(
+        context,
+        input,
+        context.static_context.default_collation_uri(),
+    )
+}
+
+#[xpath_fn("fn:sort($input as item()*, $collation as xs:string?) as item()*")]
+fn sort2(
+    context: &context::DynamicContext,
+    input: &sequence::Sequence,
+    collation: Option<&str>,
+) -> error::Result<sequence::Sequence> {
+    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    sort_without_key(context, input, collation)
+}
+
+#[xpath_fn("fn:sort($input as item()*, $collation as xs:string?, $key as function(item()) as xs:anyAtomicType) as item()*")]
+fn sort3(
+    context: &context::DynamicContext,
+    interpreter: &mut Interpreter,
+    input: &sequence::Sequence,
+    collation: Option<&str>,
+    key: sequence::Item,
+) -> error::Result<sequence::Sequence> {
+    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let closure = key.to_function()?;
+    sort_by_sequence(context, input, collation, |item| {
+        let value =
+            interpreter.call_closure_with_arguments(closure.clone(), &[item.clone().into()])?;
+        Ok(value)
+    })
+}
+
+fn sort_without_key(
+    context: &context::DynamicContext,
+    input: &sequence::Sequence,
+    collation: &str,
+) -> error::Result<sequence::Sequence> {
+    sort_by_sequence(context, input, collation, |item| {
+        // the sequivalent of fn:data()
+        let seq: sequence::Sequence = item.clone().into();
+        let atoms = seq
+            .atomized(context.xot)
+            .collect::<error::Result<Vec<_>>>()?;
+        Ok(atoms.into())
+    })
+}
+
+fn sort_by_sequence<F>(
+    context: &context::DynamicContext,
+    input: &sequence::Sequence,
+    collation: &str,
+    get: F,
+) -> error::Result<sequence::Sequence>
+where
+    F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
+{
+    let collation = context.static_context.collation(collation)?;
+    let items = input.items().collect::<error::Result<Vec<_>>>()?;
+    let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
+
+    let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
+    // sort by key. unfortunately sort_by requires the compare function
+    // to be infallible. It's not in reality, so we make any failures
+    // sort less, so they appear early on in the sequence.
+    keys_and_items.sort_by(|(a_key, _), (b_key, _)| {
+        a_key.compare(b_key, &collation, context.implicit_timezone())
+    });
+    // a pass to detect any errors; if sorting between two items is
+    // impossible we want to raise a type error
+    for ((a_key, _), (b_key, _)) in keys_and_items.iter().zip(keys_and_items.iter().skip(1)) {
+        a_key.fallible_compare(b_key, &collation, context.implicit_timezone())?;
+    }
+    // now pick up items again
+    let items = keys_and_items
+        .into_iter()
+        .map(|(_, item)| item)
+        .collect::<Vec<_>>();
+    Ok(items.into())
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(for_each),
@@ -117,5 +205,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(fold_left),
         wrap_xpath_fn!(fold_right),
         wrap_xpath_fn!(for_each_pair),
+        wrap_xpath_fn!(sort1),
+        wrap_xpath_fn!(sort2),
+        wrap_xpath_fn!(sort3),
     ]
 }

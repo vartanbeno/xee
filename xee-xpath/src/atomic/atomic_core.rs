@@ -2,6 +2,7 @@ use chrono::Offset;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use std::cmp::Ordering;
 use std::fmt;
 use std::rc::Rc;
 use xee_xpath_ast::ast::Name;
@@ -16,8 +17,8 @@ use super::datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-use super::AtomicCompare;
 use super::{op_unary, OpEq};
+use super::{AtomicCompare, OpGt};
 
 // We try to maintain this struct as size 16 as it's cloned a lot during normal
 // operation. Anything bigger we stuff in an Rc
@@ -257,6 +258,54 @@ impl Atomic {
             return true;
         }
         self.equal(other, collation, default_offset)
+    }
+
+    pub(crate) fn fallible_compare(
+        &self,
+        other: &Atomic,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+    ) -> error::Result<Ordering> {
+        if !self.is_comparable() || !other.is_comparable() {
+            return Err(error::Error::Type);
+        }
+        let is_equal = OpEq::atomic_compare(
+            self.clone(),
+            other.clone(),
+            |a, b| collation.compare(a, b),
+            default_offset,
+        )?;
+
+        if is_equal {
+            Ok(Ordering::Equal)
+        } else {
+            let is_greater = OpGt::atomic_compare(
+                self.clone(),
+                other.clone(),
+                |a, b| collation.compare(a, b),
+                default_offset,
+            )?;
+            if is_greater {
+                Ok(Ordering::Greater)
+            } else {
+                Ok(Ordering::Less)
+            }
+        }
+    }
+
+    /// This function is intended to be used by sort_by_key
+    /// Since comparison is fallible, we sort all error cases as
+    /// less than all non-error cases, and then we detect them later.
+    /// This requires an additional pass to determine that for each pair a, b
+    /// comparison doesn't fail.
+    pub(crate) fn compare(
+        &self,
+        other: &Atomic,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+    ) -> Ordering {
+        self.fallible_compare(other, collation, default_offset)
+            .unwrap_or(Ordering::Less)
     }
 }
 

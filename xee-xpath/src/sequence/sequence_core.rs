@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 // This contains a sequence abstraction that is useful
 // in interfacing with external APIs. It's a layer over the
 // stack::Value abstraction
@@ -96,6 +98,12 @@ impl Sequence {
         }
     }
 
+    pub fn items_atomic(&self) -> ItemAtomicIter {
+        ItemAtomicIter {
+            value_iter: self.stack_value.items(),
+        }
+    }
+
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
         // TODO: error conversion is a bit blunt
         self.stack_value
@@ -137,6 +145,50 @@ impl Sequence {
             }
         }
         Ok(true)
+    }
+
+    pub(crate) fn fallible_compare(
+        &self,
+        other: &Sequence,
+        collation: &Collation,
+        implicit_offset: chrono::FixedOffset,
+    ) -> error::Result<Ordering> {
+        // we get atoms not by atomizing, but by trying to turn each
+        // item into an atom. If it's not an atom, it's not comparable
+        // by eq, lt, gt, etc.
+        let a_atoms = self.items_atomic();
+        let mut b_atoms = other.items_atomic();
+        for a_atom in a_atoms {
+            let b_atom = b_atoms.next();
+            let a_atom = a_atom?;
+            if let Some(b_atom) = b_atom {
+                let b_atom = b_atom?;
+                let ordering = a_atom.fallible_compare(&b_atom, collation, implicit_offset)?;
+                if !ordering.is_eq() {
+                    return Ok(ordering);
+                }
+            } else {
+                return Ok(Ordering::Greater);
+            }
+        }
+        if b_atoms.next().is_some() {
+            Ok(Ordering::Less)
+        } else {
+            Ok(Ordering::Equal)
+        }
+    }
+
+    /// For use in sorting. If the comparison fails, it's always Ordering::Less
+    /// Another pass is required to determine whether the sequence is in order
+    /// or whether the comparison failed.
+    pub(crate) fn compare(
+        &self,
+        other: &Sequence,
+        collation: &Collation,
+        implicit_offset: chrono::FixedOffset,
+    ) -> Ordering {
+        self.fallible_compare(other, collation, implicit_offset)
+            .unwrap_or(Ordering::Less)
     }
 }
 
@@ -270,6 +322,18 @@ where
 {
     fn error(&self) -> error::Error {
         error::Error::Type
+    }
+}
+
+pub struct ItemAtomicIter {
+    value_iter: stack::ValueIter,
+}
+
+impl Iterator for ItemAtomicIter {
+    type Item = error::Result<atomic::Atomic>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.value_iter.next().map(|r| r?.to_atomic())
     }
 }
 
