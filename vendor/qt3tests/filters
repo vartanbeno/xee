@@ -150,22 +150,8 @@ fo-test-fn-escape-html-uri-001
 fo-test-fn-escape-html-uri-002
 fo-test-fn-exists-003
 fo-test-fn-exists-004
-fo-test-fn-filter-001
 fo-test-fn-filter-002
-fo-test-fn-fold-left-001
-fo-test-fn-fold-left-002
-fo-test-fn-fold-left-003
-fo-test-fn-fold-left-004
-fo-test-fn-fold-left-005
-fo-test-fn-fold-left-006
-fo-test-fn-fold-left-007
 fo-test-fn-fold-left-008
-fo-test-fn-fold-right-001
-fo-test-fn-fold-right-002
-fo-test-fn-fold-right-003
-fo-test-fn-for-each-pair-001
-fo-test-fn-for-each-pair-002
-fo-test-fn-for-each-pair-003
 fo-test-fn-format-integer-001
 fo-test-fn-format-integer-002
 fo-test-fn-format-integer-003
@@ -959,111 +945,18 @@ fn-escape-html-uri1args-5
 = fn-exists
 = fn-false
 = fn-filter
-filter-001
-filter-002
-filter-004
-filter-005
 filter-007
 filter-008
-filter-901
-filter-902
-filter-903
-filter-904
-fn-filter-005
-fn-filter-010
-fn-filter-011
-fn-filter-012
 fn-filter-013
-fn-filter-014
-fn-filter-015
-fn-filter-017
-fn-filter-018
-fn-filter-020
-fn-filter-021
 = fn-floor
 = fn-fold-left
-fold-left-001
-fold-left-002
-fold-left-003
-fold-left-004
-fold-left-005
-fold-left-006
-fold-left-007
-fold-left-008
-fold-left-010
-fold-left-011
-fold-left-012
-fold-left-013
-fold-left-014
-fold-left-015
-fold-left-017
-fold-left-019
-fold-left-020
 = fn-fold-right
-fold-right-001
-fold-right-002
-fold-right-003
-fold-right-004
-fold-right-005
-fold-right-006
-fold-right-007
-fold-right-008
-fold-right-009
-fold-right-010
-fold-right-011
-fold-right-012
-fold-right-013
-fold-right-014
-fold-right-015
-fold-right-016
-fold-right-017
-fold-right-018
-fold-right-019
-fold-right-020
 = fn-for-each
 for-each-010
 for-each-013
 for-each-014
 = fn-for-each-pair
-fn-for-each-pair-007
-fn-for-each-pair-008
-fn-for-each-pair-009
-fn-for-each-pair-011
-fn-for-each-pair-012
-fn-for-each-pair-013
-fn-for-each-pair-014
-fn-for-each-pair-015
-fn-for-each-pair-016
-fn-for-each-pair-017
-fn-for-each-pair-018
-fn-for-each-pair-019
-fn-for-each-pair-020
-fn-for-each-pair-021
 fn-for-each-pair-022
-fn-for-each-pair-023
-fn-for-each-pair-024
-fn-for-each-pair-025
-fn-for-each-pair-026
-fn-for-each-pair-027
-fn-for-each-pair-028
-fn-for-each-pair-029
-fn-for-each-pair-030
-fn-for-each-pair-031
-fn-for-each-pair-033
-fn-for-each-pair-034
-fn-for-each-pair-035
-fn-for-each-pair-036
-fn-for-each-pair-037
-for-each-pair-001
-for-each-pair-002
-for-each-pair-003
-for-each-pair-004
-for-each-pair-005
-for-each-pair-006
-for-each-pair-007
-for-each-pair-008
-for-each-pair-901
-for-each-pair-902
 for-each-pair-903
 for-each-pair-904
 = fn-format-date
@@ -4640,7 +4533,6 @@ hof-023
 hof-024
 hof-025
 hof-033
-hof-916
 inline-function-12a
 inline-function-15
 inline-function-2
@@ -5409,8 +5301,6 @@ instanceof128
 instanceof129
 instanceof130
 instanceof131
-instanceof132
-instanceof133
 instanceof134
 = prod-LetClause
 = prod-Literal
@@ -5726,14 +5616,6 @@ function-literal-419
 function-literal-420
 function-literal-421
 function-literal-422
-function-literal-425
-function-literal-426
-function-literal-427
-function-literal-428
-function-literal-429
-function-literal-430
-function-literal-431
-function-literal-432
 function-literal-523
 function-literal-524
 function-literal-525

@@ -512,7 +512,7 @@ impl<'a> Interpreter<'a> {
         self.stack.push(closure.clone().into());
         // then arguments
         let arity = arguments.len() as u8;
-        for arg in arguments.iter().rev() {
+        for arg in arguments.iter() {
             self.stack.push(arg.clone().into());
         }
         self.call_closure(closure.clone(), arity)?;
@@ -553,7 +553,9 @@ impl<'a> Interpreter<'a> {
             .static_context
             .functions
             .get_by_index(static_function_id);
-
+        if arity as usize != static_function.arity() {
+            return Err(error::Error::Type);
+        }
         let result =
             static_function.invoke(self.dynamic_context, self, closure_sequences, arity)?;
         // truncate the stack to the base
@@ -570,7 +572,9 @@ impl<'a> Interpreter<'a> {
         // look up the function in order to access the parameters information
         let function = self.program.get_function_by_id(function_id);
         let params = &function.params;
-
+        if arity as usize != params.len() {
+            return Err(error::Error::Type);
+        }
         // TODO: fast path if no sequence types exist for parameters
 
         // now pop everything off the stack to do type matching, along

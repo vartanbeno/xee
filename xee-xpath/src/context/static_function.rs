@@ -240,6 +240,10 @@ impl StaticFunction {
             (self.func)(context, interpreter, &arguments)
         }
     }
+
+    pub(crate) fn arity(&self) -> usize {
+        self.arity
+    }
 }
 
 fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
