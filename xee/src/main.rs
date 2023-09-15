@@ -67,6 +67,8 @@ fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
         }
         Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
         Item::Function(function) => println!("{:?}", function),
+        Item::Map(map) => println!("{:?}", map),
+        Item::Array(array) => println!("{:?}", array),
     }
     Ok(())
 }

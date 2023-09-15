@@ -189,7 +189,7 @@ impl Item {
                 }
             }
             Item::Atomic(_) => Err(error::Error::Type),
-            Item::Function(_) => Err(error::Error::Type),
+            Item::Function(_) | Item::Map(_) | Item::Array(_) => Err(error::Error::Type),
         }
     }
 }

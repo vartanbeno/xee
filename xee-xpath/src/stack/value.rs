@@ -370,7 +370,7 @@ impl Iterator for ValueIter {
 #[derive(Clone)]
 pub enum AtomizedIter<'a> {
     Empty,
-    One(sequence::AtomizedItemIter),
+    One(sequence::AtomizedItemIter<'a>),
     Many(AtomizedManyIter<'a>),
     Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
     Absent(std::iter::Once<error::Result<atomic::Atomic>>),
@@ -382,6 +382,8 @@ impl<'a> AtomizedIter<'a> {
             Value::Empty => AtomizedIter::Empty,
             Value::One(item) => AtomizedIter::One(sequence::AtomizedItemIter::new(item, xot)),
             Value::Many(items) => AtomizedIter::Many(AtomizedManyIter::new(
+                // TODO: this clone is expensive, can't we use the
+                // Rc and do without cloning?
                 Rc::as_ref(&items).clone().into_iter(),
                 xot,
             )),
@@ -410,7 +412,7 @@ impl<'a> Iterator for AtomizedIter<'a> {
 pub struct AtomizedManyIter<'a> {
     xot: &'a Xot,
     iter: std::vec::IntoIter<sequence::Item>,
-    item_iter: Option<sequence::AtomizedItemIter>,
+    item_iter: Option<sequence::AtomizedItemIter<'a>>,
 }
 
 impl<'a> AtomizedManyIter<'a> {

@@ -16,7 +16,7 @@ use super::{Atomic, BinaryType, ToDateTimeStamp};
 // XPath Map
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum MapKey {
+pub enum MapKey {
     String(Rc<String>),
     PositiveInfinity,
     NegativeInfinity,

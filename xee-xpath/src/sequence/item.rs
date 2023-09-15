@@ -1,8 +1,10 @@
+use ahash::HashMap;
 use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
 use crate::error;
+use crate::sequence;
 use crate::stack;
 use crate::xml;
 
@@ -11,6 +13,8 @@ pub enum Item {
     Atomic(atomic::Atomic),
     Function(Rc<stack::Closure>),
     Node(xml::Node),
+    Map(Rc<HashMap<atomic::MapKey, Rc<sequence::Sequence>>>),
+    Array(Rc<Vec<Rc<sequence::Sequence>>>),
 }
 
 impl Item {
@@ -44,7 +48,7 @@ impl Item {
             // XXX the type error that the effective boolean wants is
             // NOT the normal type error, but err:FORG0006. We don't
             // make that distinction yet
-            Item::Function(_) => Err(error::Error::Type),
+            Item::Function(_) | Item::Map(_) | Item::Array(_) => Err(error::Error::Type),
         }
     }
 
@@ -52,7 +56,7 @@ impl Item {
         match self {
             Item::Atomic(atomic) => atomic.string_value(),
             Item::Node(node) => Ok(node.string_value(xot)),
-            Item::Function(_) => Err(error::Error::Type),
+            Item::Function(_) | Item::Map(_) | Item::Array(_) => Err(error::Error::Type),
         }
     }
 }
@@ -84,31 +88,35 @@ impl From<Rc<stack::Closure>> for Item {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum AtomizedItemIter {
+#[derive(Clone)]
+pub enum AtomizedItemIter<'a> {
     Atomic(std::iter::Once<atomic::Atomic>),
     Node(AtomizedNodeIter),
+    Array(AtomizedArrayIter<'a>),
     // TODO: properly handle functions; for now they error
     Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
 }
 
-impl AtomizedItemIter {
-    pub(crate) fn new(item: Item, xot: &Xot) -> Self {
+impl<'a> AtomizedItemIter<'a> {
+    pub(crate) fn new(item: Item, xot: &'a Xot) -> Self {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
+            Item::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
             Item::Function(_) => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
+            Item::Map(_) => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
         }
     }
 }
 
-impl Iterator for AtomizedItemIter {
+impl<'a> Iterator for AtomizedItemIter<'a> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Atomic(iter) => iter.next().map(Ok),
             Self::Node(iter) => iter.next().map(Ok),
+            Self::Array(iter) => iter.next(),
             Self::Erroring(iter) => iter.next(),
         }
     }
@@ -139,6 +147,51 @@ impl Iterator for AtomizedNodeIter {
             Some(item)
         } else {
             None
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct AtomizedArrayIter<'a> {
+    xot: &'a Xot,
+    array: Rc<Vec<Rc<sequence::Sequence>>>,
+    array_index: usize,
+    iter: Option<Box<stack::AtomizedIter<'a>>>,
+}
+
+impl<'a> AtomizedArrayIter<'a> {
+    fn new(array: Rc<Vec<Rc<sequence::Sequence>>>, xot: &'a Xot) -> Self {
+        Self {
+            xot,
+            array,
+            array_index: 0,
+            iter: None,
+        }
+    }
+}
+
+impl<'a> Iterator for AtomizedArrayIter<'a> {
+    type Item = error::Result<atomic::Atomic>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            // if there there are any more atoms in this array entry,
+            // supply those
+            if let Some(iter) = &mut self.iter {
+                if let Some(item) = iter.next() {
+                    return Some(item);
+                } else {
+                    self.iter = None;
+                }
+            }
+            // if we're at the end of the array, we're done
+            if self.array_index >= self.array.len() {
+                return None;
+            }
+            let sequence = self.array[self.array_index].clone();
+            self.array_index += 1;
+
+            self.iter = Some(Box::new(sequence.atomized(self.xot)));
         }
     }
 }

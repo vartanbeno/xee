@@ -29,6 +29,7 @@ pub use datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
+pub(crate) use map_key::MapKey;
 pub(crate) use op_add::op_add;
 pub(crate) use op_div::op_div;
 pub(crate) use op_eq::OpEq;
