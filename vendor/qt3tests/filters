@@ -477,9 +477,6 @@ K2-AdjDateTimeToTimezoneFunc-1
 cbcl-adjust-dateTime-to-timezone-001
 cbcl-adjust-dateTime-to-timezone-002
 cbcl-adjust-dateTime-to-timezone-003
-cbcl-adjust-dateTime-to-timezone-004
-fn-adjust-dateTime-to-timezone-18
-fn-adjust-dateTime-to-timezone-19
 fn-adjust-dateTime-to-timezone-24
 = fn-adjust-time-to-timezone
 = fn-analyze-string
@@ -664,7 +661,6 @@ fn-dateTime-2
 = fn-day-from-dateTime
 = fn-days-from-duration
 = fn-deep-equal
-K2-SeqDeepEqualFunc-40
 fn-deep-equal-arrays-1
 fn-deep-equal-arrays-11
 fn-deep-equal-arrays-12
@@ -4154,16 +4150,8 @@ cbcl-date-gt-001
 = op-date-less-than
 cbcl-date-ge-001
 = op-dateTime-equal
-cbcl-dateTime-equal-004
-cbcl-dateTime-equal-005
-cbcl-dateTime-equal-009
-cbcl-dateTime-equal-010
 = op-dateTime-greater-than
-cbcl-dateTime-greater-than-004
-cbcl-dateTime-greater-than-010
 = op-dateTime-less-than
-cbcl-dateTime-less-than-005
-cbcl-dateTime-less-than-009
 = op-dayTimeDuration-greater-than
 = op-dayTimeDuration-less-than
 = op-divide-dayTimeDuration
@@ -4315,9 +4303,6 @@ same-key-028
 = op-subtract-dateTimes
 cbcl-subtract-dateTimes-001
 cbcl-subtract-dateTimes-002
-cbcl-subtract-dateTimes-003
-cbcl-subtract-dateTimes-004
-op-subtract-dateTimes-yielding-DTD-1
 = op-subtract-dates
 cbcl-subtract-dates-001
 cbcl-subtract-dates-002
@@ -4813,7 +4798,6 @@ Lookup-007
 Lookup-008
 Lookup-009
 Lookup-010
-Lookup-011
 Lookup-012
 Lookup-013
 Lookup-014

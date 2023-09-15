@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use chrono::Offset;
+use chrono::{Offset, TimeZone};
 
 use crate::{atomic::Atomic, error};
 
@@ -29,6 +29,10 @@ pub(crate) trait ToDateTimeStamp {
         &self,
         default_offset: chrono::FixedOffset,
     ) -> chrono::DateTime<chrono::FixedOffset>;
+
+    fn to_naive_date_time(&self, default_offset: chrono::FixedOffset) -> chrono::NaiveDateTime {
+        self.to_date_time_stamp(default_offset).naive_utc()
+    }
 }
 
 impl<T> EqWithDefaultOffset for T where T: ToDateTimeStamp {}
@@ -163,7 +167,7 @@ impl ToDateTimeStamp for NaiveDateTimeWithOffset {
         default_offset: chrono::FixedOffset,
     ) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or(default_offset);
-        chrono::DateTime::from_naive_utc_and_offset(self.date_time, offset)
+        offset.from_local_datetime(&self.date_time).unwrap()
     }
 }
 
@@ -209,10 +213,7 @@ impl ToDateTimeStamp for NaiveTimeWithOffset {
         let date_time = chrono::NaiveDate::from_ymd_opt(1972, 12, 31)
             .unwrap()
             .and_time(self.time);
-        // we need to get rid of the offset as we are going to add it
-        // back next
-        let date_time = date_time - offset;
-        chrono::DateTime::from_naive_utc_and_offset(date_time, offset)
+        offset.from_local_datetime(&date_time).unwrap()
     }
 }
 
@@ -252,9 +253,7 @@ impl ToDateTimeStamp for NaiveDateWithOffset {
     ) -> chrono::DateTime<chrono::FixedOffset> {
         let offset = self.offset.unwrap_or(default_offset);
         let date_time = self.date.and_hms_opt(0, 0, 0).unwrap();
-        // subtract offset as we're going to add it explicitly again
-        let date_time = date_time - offset;
-        chrono::DateTime::from_naive_utc_and_offset(date_time, offset)
+        offset.from_local_datetime(&date_time).unwrap()
     }
 }
 
@@ -369,5 +368,32 @@ impl From<chrono::Duration> for Atomic {
 impl From<chrono::DateTime<chrono::FixedOffset>> for Atomic {
     fn from(date_time: chrono::DateTime<chrono::FixedOffset>) -> Self {
         Atomic::DateTimeStamp(Rc::new(date_time))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::atomic::{AtomicCompare, OpGt};
+
+    use super::*;
+
+    #[test]
+    fn test_compare_dates() {
+        let a_date = NaiveDateWithOffset::new(
+            chrono::NaiveDate::from_ymd_opt(2004, 12, 25).unwrap(),
+            Some(chrono::offset::Utc.fix()),
+        );
+        let b_date = NaiveDateWithOffset::new(
+            chrono::NaiveDate::from_ymd_opt(2004, 12, 25).unwrap(),
+            Some(chrono::FixedOffset::east_opt(60 * 60 * 7).unwrap()),
+        );
+
+        let a: Atomic = Atomic::Date(Rc::new(a_date));
+        let b: Atomic = Atomic::Date(Rc::new(b_date));
+
+        assert!(
+            OpGt::atomic_compare(a.clone(), b.clone(), str::cmp, chrono::offset::Utc.fix())
+                .unwrap()
+        );
     }
 }

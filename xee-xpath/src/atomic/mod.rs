@@ -6,6 +6,7 @@ mod cast_numeric;
 mod cast_string;
 mod compare;
 mod datetime;
+mod map_key;
 mod op_add;
 mod op_div;
 mod op_eq;
