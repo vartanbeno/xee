@@ -238,12 +238,12 @@ where
 
         let curly_array_constructor = just(Token::Array)
             .ignore_then(enclosed_expr)
-            .map(ast::ArrayConstructor::Curly)
+            .map_with_span(|expr, span| {
+                ast::ArrayConstructor::Curly(expr.map(|expr| expr.value).with_span(span))
+            })
             .boxed();
-        let square_array_constructor = expr_single
+        let square_array_constructor = expr
             .clone()
-            .separated_by(just(Token::Comma))
-            .collect::<Vec<_>>()
             .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
             .map(ast::ArrayConstructor::Square)
             .boxed();

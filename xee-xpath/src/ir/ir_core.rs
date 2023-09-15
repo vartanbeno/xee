@@ -32,6 +32,8 @@ pub(crate) enum Expr {
     Cast(Cast),
     Castable(Castable),
     InstanceOf(InstanceOf),
+    MapConstructor(MapConstructor),
+    ArrayConstructor(ArrayConstructor),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -178,4 +180,15 @@ impl Castable {
 pub(crate) struct InstanceOf {
     pub(crate) atom: AtomS,
     pub(crate) sequence_type: SequenceType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct MapConstructor {
+    pub(crate) members: Vec<(AtomS, AtomS)>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ArrayConstructor {
+    Square(Vec<AtomS>),
+    Curly(AtomS),
 }

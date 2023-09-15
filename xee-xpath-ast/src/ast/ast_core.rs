@@ -299,8 +299,8 @@ pub struct MapConstructorEntry {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ArrayConstructor {
-    Square(Vec<ExprSingleS>),
-    Curly(Option<ExprS>),
+    Square(ExprS),
+    Curly(ExprOrEmptyS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

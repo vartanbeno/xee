@@ -331,7 +331,9 @@ impl<'a> IrConverter<'a> {
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast, span),
             ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast, span),
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
-            _ => Err(Error::Unsupported),
+            ast::PrimaryExpr::MapConstructor(ast) => self.map_constructor(ast, span),
+            ast::PrimaryExpr::ArrayConstructor(ast) => self.array_constructor(ast, span),
+            ast::PrimaryExpr::UnaryLookup(ast) => self.unary_lookup(ast, span),
         }
     }
 
@@ -763,6 +765,33 @@ impl<'a> IrConverter<'a> {
                 atoms.push(arg_bindings.atom());
                 Ok((bindings.concat(arg_bindings), atoms))
             })
+    }
+
+    fn unary_lookup(&mut self, ast: &ast::KeySpecifier, span: Span) -> Result<Bindings> {
+        // TODO
+        Ok(Bindings::new())
+    }
+
+    fn map_constructor(&mut self, ast: &ast::MapConstructor, span: Span) -> Result<Bindings> {
+        // TODO
+        Ok(Bindings::new())
+    }
+
+    fn array_constructor(&mut self, ast: &ast::ArrayConstructor, span: Span) -> Result<Bindings> {
+        match ast {
+            ast::ArrayConstructor::Square(expr) => {
+                let (bindings, atoms) = self.args(&expr.value.0)?;
+                let expr = ir::Expr::ArrayConstructor(ir::ArrayConstructor::Square(atoms));
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::ArrayConstructor::Curly(expr_or_empty) => {
+                let mut bindings = self.expr_or_empty(expr_or_empty)?;
+                let expr = ir::Expr::ArrayConstructor(ir::ArrayConstructor::Curly(bindings.atom()));
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+        }
     }
 }
 

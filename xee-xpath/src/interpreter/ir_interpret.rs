@@ -41,6 +41,8 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Cast(cast) => self.compile_cast(cast, span),
             ir::Expr::Castable(castable) => self.compile_castable(castable, span),
             ir::Expr::InstanceOf(instance_of) => self.compile_instance_of(instance_of, span),
+            ir::Expr::MapConstructor(_) => Ok(()),
+            ir::Expr::ArrayConstructor(_) => Ok(()),
         }
     }
 

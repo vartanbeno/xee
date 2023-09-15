@@ -381,16 +381,8 @@ pub(crate) mod visit {
         array_constructor: &mut ast::ArrayConstructor,
     ) {
         match array_constructor {
-            ast::ArrayConstructor::Square(members) => {
-                for member in members.iter_mut() {
-                    v.visit_expr_single(member);
-                }
-            }
-            ast::ArrayConstructor::Curly(expr) => {
-                if let Some(expr) = expr {
-                    v.visit_expr(expr);
-                }
-            }
+            ast::ArrayConstructor::Square(expr) => v.visit_expr(expr),
+            ast::ArrayConstructor::Curly(expr_or_empty) => v.visit_expr_or_empty(expr_or_empty),
         }
     }
 

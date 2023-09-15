@@ -5,7 +5,7 @@ expression: "parse_xpath_simple(\"[1, 2]\")"
 Ok(XPath(Expr([
   Path(PathExpr(
     steps: [
-      PrimaryExpr(ArrayConstructor(Square([
+      PrimaryExpr(ArrayConstructor(Square(Expr([
         Path(PathExpr(
           steps: [
             PrimaryExpr(Literal(Integer((Positive, [
@@ -20,7 +20,7 @@ Ok(XPath(Expr([
             ])))),
           ],
         )),
-      ]))),
+      ])))),
     ],
   )),
 ])))
