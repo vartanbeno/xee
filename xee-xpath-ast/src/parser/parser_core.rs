@@ -172,6 +172,7 @@ where
             .boxed();
 
         let function_body = enclosed_expr
+            .clone()
             .map_with_span(|expr, span| {
                 if let Some(expr) = expr {
                     Some(expr.value).with_span(span)
@@ -195,6 +196,46 @@ where
             })
             .boxed();
 
+        let map_constructor_entry = expr_single
+            .clone()
+            .then_ignore(just(Token::Colon))
+            .then(expr_single.clone())
+            .map(|(key, value)| ast::MapConstructorEntry { key, value })
+            .boxed();
+
+        let map_contents = map_constructor_entry
+            .clone()
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .boxed()
+            .delimited_by(just(Token::LeftBrace), just(Token::RightBrace))
+            .boxed();
+
+        let map_constructor = just(Token::Map)
+            .ignore_then(map_contents)
+            .map_with_span(|entries, span| {
+                ast::PrimaryExpr::MapConstructor(ast::MapConstructor { entries }).with_span(span)
+            })
+            .boxed();
+
+        let curly_array_constructor = just(Token::Array)
+            .ignore_then(enclosed_expr)
+            .map(ast::ArrayConstructor::Curly)
+            .boxed();
+        let square_array_constructor = expr_single
+            .clone()
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
+            .map(ast::ArrayConstructor::Square)
+            .boxed();
+        let array_constructor = square_array_constructor
+            .or(curly_array_constructor)
+            .boxed()
+            .map_with_span(|constructor, span| {
+                ast::PrimaryExpr::ArrayConstructor(constructor).with_span(span)
+            });
+
         let primary_expr = parenthesized_expr
             .or(literal)
             .or(var_ref)
@@ -202,6 +243,8 @@ where
             .or(named_function_ref)
             .or(inline_function_expr)
             .or(function_call)
+            .or(map_constructor)
+            .or(array_constructor)
             .boxed();
 
         let postfix_expr = primary_expr
