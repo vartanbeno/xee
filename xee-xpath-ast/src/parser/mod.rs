@@ -757,6 +757,31 @@ mod tests {
         assert_ron_snapshot!(parse_xpath_simple("[1, 2]"))
     }
 
+    #[test]
+    fn test_unary_lookup_name() {
+        assert_ron_snapshot!(parse_xpath_simple("?name"))
+    }
+
+    #[test]
+    fn test_unary_lookup_integer() {
+        assert_ron_snapshot!(parse_xpath_simple("?1"))
+    }
+
+    #[test]
+    fn test_unary_lookup_star() {
+        assert_ron_snapshot!(parse_xpath_simple("?*"))
+    }
+
+    #[test]
+    fn test_unary_lookup_expr() {
+        assert_ron_snapshot!(parse_xpath_simple("?(1 + 1)"))
+    }
+
+    #[test]
+    fn test_lookup_name() {
+        assert_ron_snapshot!(parse_xpath_simple("1?name"))
+    }
+
     // #[test]
     // fn test_function_that_takes_function_parameter() {
     //     assert_ron_snapshot!(parse_xpath_simple("filter(1, function($item) { true() })"))

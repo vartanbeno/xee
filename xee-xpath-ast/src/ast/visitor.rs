@@ -33,13 +33,13 @@ pub(crate) trait AstVisitor {
     fn visit_map_constructor(&mut self, expr: &mut ast::MapConstructor);
     fn visit_map_constructor_entry(&mut self, expr: &mut ast::MapConstructorEntry);
     fn visit_array_constructor(&mut self, expr: &mut ast::ArrayConstructor);
-    fn visit_unary_lookup(&mut self, expr: &mut ast::UnaryLookup);
+    fn visit_unary_lookup(&mut self, expr: &mut ast::KeySpecifier);
     fn visit_param(&mut self, expr: &mut ast::Param);
     fn visit_sequence_type(&mut self, expr: &mut Option<ast::SequenceType>);
     fn visit_simple_map(&mut self, expr: &mut [ast::PathExpr]);
     fn visit_predicate(&mut self, expr: &mut ast::ExprS);
     fn visit_argument_list(&mut self, expr: &mut [ast::ExprSingleS]);
-    fn visit_lookup(&mut self, expr: &mut ast::Lookup);
+    fn visit_key_specifier(&mut self, expr: &mut ast::KeySpecifier);
     fn visit_axis(&mut self, expr: &mut ast::Axis);
     fn visit_node_test(&mut self, expr: &mut ast::NodeTest);
     fn visit_name_test(&mut self, expr: &mut ast::NameTest);
@@ -202,8 +202,8 @@ pub(crate) mod visit {
             ast::Postfix::ArgumentList(argument_list) => {
                 v.visit_argument_list(argument_list);
             }
-            ast::Postfix::Lookup(lookup) => {
-                v.visit_lookup(lookup);
+            ast::Postfix::Lookup(key_specifier) => {
+                v.visit_key_specifier(key_specifier);
             }
         }
     }
@@ -221,8 +221,16 @@ pub(crate) mod visit {
         }
     }
 
-    pub(crate) fn visit_lookup<V: AstVisitor + ?Sized>(_v: &mut V, _expr: &mut ast::Lookup) {
-        // TODO
+    pub(crate) fn visit_key_specifier<V: AstVisitor + ?Sized>(
+        v: &mut V,
+        key_specifier: &mut ast::KeySpecifier,
+    ) {
+        match key_specifier {
+            ast::KeySpecifier::Expr(expr) => v.visit_expr_or_empty(expr),
+            ast::KeySpecifier::NcName(_) => {}
+            ast::KeySpecifier::Integer(_) => {}
+            ast::KeySpecifier::Star => {}
+        }
     }
 
     pub(crate) fn visit_axis_step<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut ast::AxisStep) {
@@ -387,10 +395,10 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_unary_lookup<V: AstVisitor + ?Sized>(
-        _v: &mut V,
-        _unary_lookup: &mut ast::UnaryLookup,
+        v: &mut V,
+        key_specifier: &mut ast::KeySpecifier,
     ) {
-        // TODO
+        v.visit_key_specifier(key_specifier)
     }
 
     pub(crate) fn visit_sequence_type<V: AstVisitor + ?Sized>(

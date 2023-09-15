@@ -222,15 +222,16 @@ pub enum PrimaryExpr {
     InlineFunction(InlineFunction),
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
-    UnaryLookup(UnaryLookup),
+    UnaryLookup(KeySpecifier),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub enum UnaryLookup {
-    Name(String),
-    IntegerLiteral(i64),
-    Expr(ExprS),
+pub enum KeySpecifier {
+    NcName(String),
+    Integer(IBig),
+    Expr(ExprOrEmptyS),
+    Star,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -363,16 +364,7 @@ pub enum Postfix {
     // vec contains at least 1 element
     Predicate(ExprS),
     ArgumentList(Vec<ExprSingleS>),
-    Lookup(Lookup),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub enum Lookup {
-    Name(String),
-    IntegerLiteral(i64),
-    Expr(Vec<ExprSingleS>),
-    Star,
+    Lookup(KeySpecifier),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

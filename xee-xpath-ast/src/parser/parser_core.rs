@@ -95,10 +95,12 @@ where
             .clone()
             .or_not()
             .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .map_with_span(|expr, span| {
-                let expr_or_empty = expr.map(|expr| expr.value);
-                ast::PrimaryExpr::Expr(expr_or_empty.with_span(span)).with_span(span)
-            })
+            .map_with_span(|expr, span| expr.map(|expr| expr.value).with_span(span))
+            .boxed();
+
+        let parenthesized_expr_primary = parenthesized_expr
+            .clone()
+            .map_with_span(|expr, span| ast::PrimaryExpr::Expr(expr).with_span(span))
             .boxed();
 
         let argument_placeholder = just(Token::QuestionMark)
@@ -139,7 +141,23 @@ where
             })
             .boxed();
 
-        let postfix = predicate.or(argument_list_postfix).boxed();
+        let integer = select! {
+            Token::IntegerLiteral(i) => i,
+        };
+
+        let key_specifier = ncname
+            .map(|name| ast::KeySpecifier::NcName(name.to_string()))
+            .or(integer.map(ast::KeySpecifier::Integer))
+            .or(parenthesized_expr.map(ast::KeySpecifier::Expr))
+            .or(just(Token::Asterisk).to(ast::KeySpecifier::Star));
+
+        let lookup = just(Token::QuestionMark)
+            .ignore_then(key_specifier.clone())
+            .map(ast::Postfix::Lookup)
+            .map(PostfixOrPlaceholderWrapper::Postfix)
+            .boxed();
+
+        let postfix = predicate.or(argument_list_postfix).or(lookup).boxed();
 
         let function_call = eqname
             .clone()
@@ -236,7 +254,14 @@ where
                 ast::PrimaryExpr::ArrayConstructor(constructor).with_span(span)
             });
 
-        let primary_expr = parenthesized_expr
+        let unary_lookup = just(Token::QuestionMark)
+            .ignore_then(key_specifier)
+            .boxed()
+            .map_with_span(|key_specifier, span| {
+                ast::PrimaryExpr::UnaryLookup(key_specifier).with_span(span)
+            });
+
+        let primary_expr = parenthesized_expr_primary
             .or(literal)
             .or(var_ref)
             .or(context_item_expr)
@@ -245,6 +270,7 @@ where
             .or(function_call)
             .or(map_constructor)
             .or(array_constructor)
+            .or(unary_lookup)
             .boxed();
 
         let postfix_expr = primary_expr
