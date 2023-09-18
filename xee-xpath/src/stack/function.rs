@@ -1,7 +1,11 @@
+use std::rc::Rc;
+
+use ahash::HashMap;
 use miette::SourceSpan;
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
+use crate::atomic;
 use crate::ir;
 use crate::sequence;
 use crate::stack;
@@ -62,6 +66,8 @@ pub enum Closure {
         inline_function_id: InlineFunctionId,
         sequences: Vec<sequence::Sequence>,
     },
+    Map(Rc<HashMap<atomic::MapKey, Rc<sequence::Sequence>>>),
+    Array(Rc<Vec<Rc<sequence::Sequence>>>),
 }
 
 impl Closure {
@@ -69,6 +75,7 @@ impl Closure {
         match self {
             Self::Static { sequences, .. } => sequences,
             Self::Inline { sequences, .. } => sequences,
+            _ => todo!(),
         }
     }
 }

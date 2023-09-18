@@ -1,4 +1,3 @@
-use ahash::HashMap;
 use std::rc::Rc;
 use xot::Xot;
 
@@ -13,8 +12,6 @@ pub enum Item {
     Atomic(atomic::Atomic),
     Function(Rc<stack::Closure>),
     Node(xml::Node),
-    Map(Rc<HashMap<atomic::MapKey, Rc<sequence::Sequence>>>),
-    Array(Rc<Vec<Rc<sequence::Sequence>>>),
 }
 
 impl Item {
@@ -45,10 +42,7 @@ impl Item {
             // this is the case when a single node is on the stack, just like if it
             // were in a sequence.
             Item::Node(_) => Ok(true),
-            // XXX the type error that the effective boolean wants is
-            // NOT the normal type error, but err:FORG0006. We don't
-            // make that distinction yet
-            Item::Function(_) | Item::Map(_) | Item::Array(_) => Err(error::Error::Type),
+            Item::Function(_) => Err(error::Error::FORG0006),
         }
     }
 
@@ -56,7 +50,7 @@ impl Item {
         match self {
             Item::Atomic(atomic) => atomic.string_value(),
             Item::Node(node) => Ok(node.string_value(xot)),
-            Item::Function(_) | Item::Map(_) | Item::Array(_) => Err(error::Error::Type),
+            Item::Function(_) => Err(error::Error::FOTY0014),
         }
     }
 }
@@ -102,9 +96,10 @@ impl<'a> AtomizedItemIter<'a> {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
-            Item::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
-            Item::Function(_) => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
-            Item::Map(_) => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
+            Item::Function(closure) => match closure.as_ref() {
+                stack::Closure::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
+                _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
+            },
         }
     }
 }

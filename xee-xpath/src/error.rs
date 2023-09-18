@@ -594,6 +594,7 @@ pub enum Error {
     /// Raised by fn:string, or by implicit string conversion, if the input
     /// sequence contains a function item.
     #[error("Argument to fn:string() is a function item")]
+    #[diagnostic(code(FOTY0014))]
     FOTY0014,
     /// An argument to fn:deep-equal() contains a function item.
     ///

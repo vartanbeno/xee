@@ -66,9 +66,7 @@ fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
             println!("node: \n{}", display_node(xot, *node)?);
         }
         Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
-        Item::Function(function) => println!("{:?}", function),
-        Item::Map(map) => println!("{:?}", map),
-        Item::Array(array) => println!("{:?}", array),
+        Item::Function(function) => println!("function: {:?}", function),
     }
     Ok(())
 }

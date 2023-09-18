@@ -60,7 +60,7 @@ fn function_name(
                 .get_by_index(*static_function_id);
             Ok(Some(static_function.name().clone()))
         }
-        stack::Closure::Inline { .. } => Ok(None),
+        _ => Ok(None),
     }
 }
 
@@ -84,6 +84,8 @@ fn function_arity(
         stack::Closure::Inline {
             inline_function_id, ..
         } => Ok(interpreter.arity(*inline_function_id).into()),
+        stack::Closure::Array { .. } => Ok(1.into()),
+        stack::Closure::Map { .. } => Ok(1.into()),
     }
 }
 

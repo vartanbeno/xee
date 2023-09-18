@@ -569,6 +569,7 @@ impl<'a> Interpreter<'a> {
                 inline_function_id,
                 sequences: _,
             } => self.call_inline(*inline_function_id, arity),
+            _ => todo!(),
         }
     }
 
