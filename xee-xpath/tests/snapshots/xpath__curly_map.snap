@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"map {'a' : 'b'}('a')\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "b",
+                ),
+            ),
+        ),
+    },
+)
