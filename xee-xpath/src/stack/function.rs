@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
 use ahash::HashMap;
+use ahash::HashMapExt;
 use miette::SourceSpan;
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
 use crate::atomic;
+use crate::error;
 use crate::ir;
 use crate::sequence;
 use crate::stack;
@@ -57,6 +59,54 @@ pub struct Signature {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Array(pub Rc<Vec<sequence::Sequence>>);
+
+impl Array {
+    pub(crate) fn new(vec: Vec<sequence::Sequence>) -> Self {
+        Self(Rc::new(vec))
+    }
+
+    pub(crate) fn index(&self, index: usize) -> Option<&sequence::Sequence> {
+        self.0.get(index)
+    }
+}
+
+impl From<Vec<sequence::Sequence>> for Array {
+    fn from(vec: Vec<sequence::Sequence>) -> Self {
+        Self::new(vec)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Map(pub Rc<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>>);
+
+impl Map {
+    pub(crate) fn new(entries: Vec<(atomic::Atomic, sequence::Sequence)>) -> error::Result<Self> {
+        let mut map = HashMap::new();
+        for (key, value) in entries {
+            let map_key = atomic::MapKey::new(key.clone())?;
+            if map.contains_key(&map_key) {
+                return Err(error::Error::XQDY0137);
+            }
+            map.insert(map_key, (key, value));
+        }
+        Ok(Self(Rc::new(map)))
+    }
+
+    pub(crate) fn get(&self, key: &atomic::Atomic) -> Option<sequence::Sequence> {
+        let map_key = atomic::MapKey::new(key.clone()).ok()?;
+        self.0.get(&map_key).map(|(_, v)| v.clone())
+    }
+}
+
+impl TryFrom<Vec<(atomic::Atomic, sequence::Sequence)>> for Map {
+    type Error = error::Error;
+    fn try_from(vec: Vec<(atomic::Atomic, sequence::Sequence)>) -> error::Result<Self> {
+        Self::new(vec)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Closure {
     Static {
         static_function_id: StaticFunctionId,
@@ -66,8 +116,8 @@ pub enum Closure {
         inline_function_id: InlineFunctionId,
         sequences: Vec<sequence::Sequence>,
     },
-    Map(Rc<HashMap<atomic::MapKey, Rc<sequence::Sequence>>>),
-    Array(Rc<Vec<Rc<sequence::Sequence>>>),
+    Map(Map),
+    Array(Array),
 }
 
 impl Closure {
@@ -75,7 +125,7 @@ impl Closure {
         match self {
             Self::Static { sequences, .. } => sequences,
             Self::Inline { sequences, .. } => sequences,
-            _ => todo!(),
+            _ => unreachable!(),
         }
     }
 }

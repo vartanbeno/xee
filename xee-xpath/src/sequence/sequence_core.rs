@@ -43,6 +43,15 @@ impl Sequence {
         }
     }
 
+    pub(crate) fn to_array(&self) -> error::Result<stack::Array> {
+        let mut array = Vec::new();
+        for item in self.items() {
+            let item = item?;
+            array.push(item.into());
+        }
+        Ok(array.into())
+    }
+
     pub fn is_absent(&self) -> bool {
         matches!(&self.stack_value, stack::Value::Absent)
     }
@@ -198,6 +207,12 @@ impl From<stack::Value> for Sequence {
     }
 }
 
+impl From<Sequence> for stack::Value {
+    fn from(sequence: Sequence) -> Self {
+        sequence.stack_value
+    }
+}
+
 impl From<&stack::Value> for Sequence {
     fn from(stack_value: &stack::Value) -> Self {
         stack_value.clone().into()
@@ -239,12 +254,6 @@ where
             Some(item) => Self::from(vec![item.into()]),
             None => Sequence::empty(),
         }
-    }
-}
-
-impl From<Sequence> for stack::Value {
-    fn from(sequence: Sequence) -> Self {
-        sequence.stack_value
     }
 }
 

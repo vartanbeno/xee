@@ -126,16 +126,12 @@ fo-test-fn-contains-005
 fo-test-fn-contains-006
 fo-test-fn-contains-007
 fo-test-fn-count-005
-fo-test-fn-count-006
-fo-test-fn-data-003
 fo-test-fn-dateTime-002
 fo-test-fn-deep-equal-005
 fo-test-fn-deep-equal-006
-fo-test-fn-deep-equal-007
 fo-test-fn-distinct-values-001
 fo-test-fn-distinct-values-002
 fo-test-fn-empty-003
-fo-test-fn-empty-004
 fo-test-fn-encode-for-uri-001
 fo-test-fn-encode-for-uri-002
 fo-test-fn-encode-for-uri-003
@@ -148,7 +144,6 @@ fo-test-fn-error-002
 fo-test-fn-escape-html-uri-001
 fo-test-fn-escape-html-uri-002
 fo-test-fn-exists-003
-fo-test-fn-exists-004
 fo-test-fn-filter-002
 fo-test-fn-fold-left-008
 fo-test-fn-format-integer-001
@@ -169,15 +164,12 @@ fo-test-fn-format-number-010
 fo-test-fn-head-004
 fo-test-fn-hours-from-dateTime-005
 fo-test-fn-hours-from-time-005
-fo-test-fn-index-of-005
 fo-test-fn-iri-to-uri-001
 fo-test-fn-iri-to-uri-002
 fo-test-fn-json-to-xml-001
 fo-test-fn-json-to-xml-002
 fo-test-fn-json-to-xml-003
 fo-test-fn-json-to-xml-004
-fo-test-fn-max-002
-fo-test-fn-min-002
 fo-test-fn-parse-ietf-date-001
 fo-test-fn-parse-ietf-date-002
 fo-test-fn-parse-ietf-date-003
@@ -204,8 +196,6 @@ fo-test-fn-starts-with-005
 fo-test-fn-starts-with-006
 fo-test-fn-starts-with-007
 fo-test-fn-starts-with-008
-fo-test-fn-string-005
-fo-test-fn-string-006
 fo-test-fn-substring-007
 fo-test-fn-substring-008
 fo-test-fn-substring-010
@@ -218,9 +208,6 @@ fo-test-fn-substring-before-004
 fo-test-fn-substring-before-005
 fo-test-fn-substring-before-006
 fo-test-fn-substring-before-007
-fo-test-fn-sum-008
-fo-test-fn-sum-009
-fo-test-fn-tail-005
 fo-test-fn-unordered-001
 fo-test-fn-year-from-dateTime-004
 fo-test-map-contains-003
@@ -534,18 +521,13 @@ fn-available-environment-variables-011
 cbcl-avg-001
 cbcl-avg-002
 cbcl-avg-003
-fn-avg-10
 = fn-base-uri
 K-BaseURIFunc-2
 fn-base-uri-2
 fn-base-uri-3
 = fn-boolean
 K-SeqBooleanFunc-16
-boolean-010
 boolean-010b
-boolean-011
-boolean-013
-boolean-014
 = fn-ceiling
 = fn-codepoint-equal
 = fn-codepoints-to-string
@@ -649,10 +631,7 @@ fn-contains-token-50
 = fn-data
 K2-DataFunc-6
 fn-data-2
-fn-data-3
-fn-data-5
 fn-data-6
-fn-data-7
 = fn-dateTime
 K-DateTimeFunc-12
 cbcl-dateTime-001
@@ -663,7 +642,6 @@ fn-dateTime-2
 = fn-deep-equal
 fn-deep-equal-arrays-1
 fn-deep-equal-arrays-11
-fn-deep-equal-arrays-12
 fn-deep-equal-arrays-14
 fn-deep-equal-arrays-15
 fn-deep-equal-arrays-16
@@ -672,20 +650,13 @@ fn-deep-equal-arrays-18
 fn-deep-equal-arrays-2
 fn-deep-equal-arrays-3
 fn-deep-equal-arrays-4
-fn-deep-equal-arrays-5
 fn-deep-equal-arrays-6
 fn-deep-equal-arrays-7
 fn-deep-equal-arrays-8
 fn-deep-equal-arrays-9
 fn-deep-equal-maps-1
-fn-deep-equal-maps-10
-fn-deep-equal-maps-13
 fn-deep-equal-maps-14
 fn-deep-equal-maps-15
-fn-deep-equal-maps-16
-fn-deep-equal-maps-17
-fn-deep-equal-maps-2
-fn-deep-equal-maps-3
 fn-deep-equal-maps-4
 fn-deep-equal-maps-5
 fn-deep-equal-maps-6
@@ -931,19 +902,13 @@ fn-escape-html-uri1args-5
 = fn-exists
 = fn-false
 = fn-filter
-filter-007
-filter-008
 fn-filter-013
 = fn-floor
 = fn-fold-left
 = fn-fold-right
 = fn-for-each
-for-each-013
-for-each-014
 = fn-for-each-pair
 fn-for-each-pair-022
-for-each-pair-903
-for-each-pair-904
 = fn-format-date
 format-date-001a
 format-date-001b
@@ -2709,9 +2674,7 @@ re01001
 re01002
 re01003
 = fn-max
-fn-max-19
 = fn-min
-fn-min-19
 = fn-minutes-from-dateTime
 = fn-minutes-from-duration
 = fn-minutes-from-time
@@ -3435,8 +3398,6 @@ fn-sort-20
 fn-sort-21
 fn-sort-22
 fn-sort-23
-fn-sort-24
-fn-sort-25
 fn-sort-error-2
 fn-sort-spec-6
 = fn-starts-with
@@ -3450,15 +3411,8 @@ K2-StartsWithFunc-6
 K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
-fn-string-23
 fn-string-31
-fn-string-32
-fn-string-33
-fn-string-34
-fn-string-35
 fn-string-36
-fn-string-37
-fn-string-38
 fn-string-5
 fn-string-6
 = fn-string-join
@@ -3482,7 +3436,6 @@ fn-substring-after-23
 = fn-substring-before
 fn-substring-before-23
 = fn-sum
-fn-sum-11
 = fn-tail
 = fn-timezone-from-date
 = fn-timezone-from-dateTime
@@ -3894,7 +3847,6 @@ map-get-022
 map-get-023
 map-get-024
 map-get-025
-map-get-100
 map-get-901
 map-get-902
 map-get-903
@@ -4347,9 +4299,7 @@ fn-union-node-args-010
 = prod-AllowingEmpty
 = prod-Annotation
 = prod-ArrayTest
-ArrayTest-030
 ArrayTest-031
-ArrayTest-032
 ArrayTest-033
 ArrayTest-034
 ArrayTest-035
@@ -4358,15 +4308,6 @@ ArrayTest-037
 ArrayTest-038
 ArrayTest-039
 ArrayTest-040
-ArrayTest-041
-ArrayTest-042
-ArrayTest-043
-ArrayTest-044
-ArrayTest-045
-ArrayTest-046
-ArrayTest-052
-ArrayTest-053
-ArrayTest-054
 ArrayTest-055
 ArrayTest-056
 ArrayTest-057
@@ -4742,18 +4683,14 @@ function-call-reserved-function-names-037
 = prod-GeneralComp.eq
 GenCompEq-2
 GenCompEq-24
-GenCompEq-7
-GenCompEq-8
 GenCompEq-9
 = prod-GeneralComp.ge
 = prod-GeneralComp.gt
 = prod-GeneralComp.le
 = prod-GeneralComp.lt
-GenCompLT-10
 GenCompLT-11
 GenCompLT-12
 GenCompLT-13
-GenCompLT-9
 = prod-GeneralComp.ne
 = prod-GroupByClause
 = prod-IfExpr
@@ -4765,7 +4702,6 @@ K-CondExpr-6
 = prod-InlineFunctionExpr
 inline-fn-023
 inline-fn-027
-inline-fn-028
 inline-fn-029
 inline-fn-032
 inline-fn-033
@@ -4861,7 +4797,6 @@ Lookup-168
 Lookup-211
 Lookup-212
 Lookup-213
-Lookup-214
 Lookup-215
 Lookup-216
 Lookup-217
@@ -4933,15 +4868,8 @@ MapTest-051
 MapTest-052
 MapTest-053
 MapTest-054
-MapTest-055
-MapTest-057
-MapTest-059
-MapTest-060
 MapTest-061
 MapTest-062
-MapTest-063
-MapTest-064
-MapTest-065
 MapTest-066
 = prod-ModuleImport
 = prod-NameTest
@@ -5255,12 +5183,7 @@ UnaryLookup-048
 = prod-UnorderedExpr
 = prod-ValidateExpr
 = prod-ValueComp
-value-comparison-10
-value-comparison-11
-value-comparison-5
-value-comparison-6
 value-comparison-7
-value-comparison-8
 value-comparison-9
 = prod-VarDecl
 = prod-VarDecl.external

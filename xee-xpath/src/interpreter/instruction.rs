@@ -21,6 +21,9 @@ pub(crate) enum Instruction {
     Set(u16),
     ClosureVar(u16),
     Comma,
+    CurlyArray,
+    SquareArray,
+    CurlyMap,
     Eq,
     Ne,
     Lt,
@@ -82,6 +85,9 @@ pub(crate) enum EncodedInstruction {
     Set,
     ClosureVar,
     Comma,
+    CurlyArray,
+    SquareArray,
+    CurlyMap,
     Eq,
     Ne,
     Lt,
@@ -163,6 +169,9 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             (Instruction::ClosureVar(variable), 3)
         }
         EncodedInstruction::Comma => (Instruction::Comma, 1),
+        EncodedInstruction::CurlyArray => (Instruction::CurlyArray, 1),
+        EncodedInstruction::SquareArray => (Instruction::SquareArray, 1),
+        EncodedInstruction::CurlyMap => (Instruction::CurlyMap, 1),
         EncodedInstruction::Eq => (Instruction::Eq, 1),
         EncodedInstruction::Ne => (Instruction::Ne, 1),
         EncodedInstruction::Lt => (Instruction::Lt, 1),
@@ -281,6 +290,9 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.extend_from_slice(&variable.to_le_bytes());
         }
         Instruction::Comma => bytes.push(EncodedInstruction::Comma.to_u8().unwrap()),
+        Instruction::CurlyArray => bytes.push(EncodedInstruction::CurlyArray.to_u8().unwrap()),
+        Instruction::SquareArray => bytes.push(EncodedInstruction::SquareArray.to_u8().unwrap()),
+        Instruction::CurlyMap => bytes.push(EncodedInstruction::CurlyMap.to_u8().unwrap()),
         Instruction::Eq => bytes.push(EncodedInstruction::Eq.to_u8().unwrap()),
         Instruction::Ne => bytes.push(EncodedInstruction::Ne.to_u8().unwrap()),
         Instruction::Lt => bytes.push(EncodedInstruction::Lt.to_u8().unwrap()),
@@ -375,6 +387,9 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Minus
         | Instruction::Concat
         | Instruction::Comma
+        | Instruction::CurlyArray
+        | Instruction::SquareArray
+        | Instruction::CurlyMap
         | Instruction::Eq
         | Instruction::Ne
         | Instruction::Lt

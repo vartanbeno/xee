@@ -3,7 +3,6 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
-use crate::sequence;
 use crate::stack;
 use crate::xml;
 
@@ -82,6 +81,18 @@ impl From<Rc<stack::Closure>> for Item {
     }
 }
 
+impl From<stack::Array> for Item {
+    fn from(array: stack::Array) -> Self {
+        Self::Function(Rc::new(stack::Closure::Array(array)))
+    }
+}
+
+impl From<stack::Map> for Item {
+    fn from(map: stack::Map) -> Self {
+        Self::Function(Rc::new(stack::Closure::Map(map)))
+    }
+}
+
 #[derive(Clone)]
 pub enum AtomizedItemIter<'a> {
     Atomic(std::iter::Once<atomic::Atomic>),
@@ -149,13 +160,13 @@ impl Iterator for AtomizedNodeIter {
 #[derive(Clone)]
 pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
-    array: Rc<Vec<Rc<sequence::Sequence>>>,
+    array: stack::Array,
     array_index: usize,
     iter: Option<Box<stack::AtomizedIter<'a>>>,
 }
 
 impl<'a> AtomizedArrayIter<'a> {
-    fn new(array: Rc<Vec<Rc<sequence::Sequence>>>, xot: &'a Xot) -> Self {
+    fn new(array: stack::Array, xot: &'a Xot) -> Self {
         Self {
             xot,
             array,
@@ -179,11 +190,12 @@ impl<'a> Iterator for AtomizedArrayIter<'a> {
                     self.iter = None;
                 }
             }
+            let array = &self.array.0;
             // if we're at the end of the array, we're done
-            if self.array_index >= self.array.len() {
+            if self.array_index >= array.len() {
                 return None;
             }
-            let sequence = self.array[self.array_index].clone();
+            let sequence = array[self.array_index].clone();
             self.array_index += 1;
 
             self.iter = Some(Box::new(sequence.atomized(self.xot)));

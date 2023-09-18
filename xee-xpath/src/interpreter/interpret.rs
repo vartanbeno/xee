@@ -188,6 +188,32 @@ impl<'a> Interpreter<'a> {
                     let a = self.stack.pop().unwrap();
                     self.stack.push(a.concat(b));
                 }
+                EncodedInstruction::CurlyArray => {
+                    let value = self.stack.pop().unwrap();
+                    let sequence: sequence::Sequence = value.into();
+                    self.stack.push(sequence.to_array()?.into());
+                }
+                EncodedInstruction::SquareArray => {
+                    let length = self.pop_atomic().unwrap();
+                    let length = length.cast_to_integer_value::<i64>()?;
+                    let mut popped: Vec<sequence::Sequence> = Vec::with_capacity(length as usize);
+                    for _ in 0..length {
+                        popped.push(self.stack.pop().unwrap().into());
+                    }
+                    self.stack.push(stack::Array::new(popped).into());
+                }
+                EncodedInstruction::CurlyMap => {
+                    let length = self.pop_atomic().unwrap();
+                    let length = length.cast_to_integer_value::<i64>()?;
+                    let mut popped: Vec<(atomic::Atomic, sequence::Sequence)> =
+                        Vec::with_capacity(length as usize);
+                    for _ in 0..length {
+                        let value = self.stack.pop().unwrap();
+                        let key = self.pop_atomic()?;
+                        popped.push((key, value.into()));
+                    }
+                    self.stack.push(stack::Map::new(popped)?.into());
+                }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
                     self.frame_mut().ip = (self.frame().ip as i32 + displacement as i32) as usize;
@@ -569,7 +595,8 @@ impl<'a> Interpreter<'a> {
                 inline_function_id,
                 sequences: _,
             } => self.call_inline(*inline_function_id, arity),
-            _ => todo!(),
+            stack::Closure::Array(array) => self.call_array(array, arity as usize),
+            stack::Closure::Map(map) => self.call_map(map, arity as usize),
         }
     }
 
@@ -643,6 +670,38 @@ impl<'a> Interpreter<'a> {
             base: self.stack.len() - (arity as usize),
         });
         Ok(())
+    }
+
+    fn call_array(&mut self, array: &stack::Array, arity: usize) -> error::Result<()> {
+        if arity != 1 {
+            return Err(error::Error::Type);
+        }
+        // the argument
+        let position = self.pop_atomic()?;
+        let position = position.cast_to_integer_value::<i64>()?;
+        let position = position as usize;
+        let position = position - 1;
+        let sequence = array.index(position);
+        if let Some(sequence) = sequence {
+            self.stack.push(sequence.clone().into());
+            Ok(())
+        } else {
+            Err(error::Error::FOAY0001)
+        }
+    }
+
+    fn call_map(&mut self, map: &stack::Map, arity: usize) -> error::Result<()> {
+        if arity != 1 {
+            return Err(error::Error::Type);
+        }
+        let key = self.pop_atomic()?;
+        let value = map.get(&key);
+        if let Some(value) = value {
+            self.stack.push(value.into());
+            Ok(())
+        } else {
+            Err(error::Error::FOAY0001)
+        }
     }
 
     fn value_compare<O>(&mut self, _op: O) -> error::Result<()>

@@ -1,4 +1,4 @@
-use ibig::ibig;
+use ibig::{ibig, IBig};
 use miette::SourceSpan;
 
 use crate::context::{FunctionRule, StaticContext};
@@ -41,8 +41,12 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Cast(cast) => self.compile_cast(cast, span),
             ir::Expr::Castable(castable) => self.compile_castable(castable, span),
             ir::Expr::InstanceOf(instance_of) => self.compile_instance_of(instance_of, span),
-            ir::Expr::MapConstructor(_) => Ok(()),
-            ir::Expr::ArrayConstructor(_) => Ok(()),
+            ir::Expr::MapConstructor(map_constructor) => {
+                self.compile_map_constructor(map_constructor, span)
+            }
+            ir::Expr::ArrayConstructor(array_constructor) => {
+                self.compile_array_constructor(array_constructor, span)
+            }
         }
     }
 
@@ -410,6 +414,70 @@ impl<'a> InterpreterCompiler<'a> {
             .add_sequence_type(instance_of.sequence_type.clone());
         self.builder
             .emit(Instruction::InstanceOf(sequence_type_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_map_constructor(
+        &mut self,
+        map_constructor: &ir::MapConstructor,
+        span: SourceSpan,
+    ) -> Result<()> {
+        // compile them in reverse, so we can pop them in the right
+        // order during runtime. It matters less with a map, but may
+        // still be important for consistent duplicate key detection.
+        for (key_atom, value_atom) in map_constructor.members.iter().rev() {
+            self.compile_atom(key_atom)?;
+            self.compile_atom(value_atom)?;
+        }
+        // emit constant with size of map
+        let len: IBig = map_constructor.members.len().into();
+        let len: stack::Value = len.into();
+        self.builder.emit_constant(len, span);
+        self.builder.emit(Instruction::CurlyMap, span);
+        Ok(())
+    }
+
+    fn compile_array_constructor(
+        &mut self,
+        array_constructor: &ir::ArrayConstructor,
+        span: SourceSpan,
+    ) -> Result<()> {
+        match array_constructor {
+            ir::ArrayConstructor::Curly(atom) => {
+                self.compile_curly_array_constructor(atom, span)?;
+            }
+            ir::ArrayConstructor::Square(atoms) => {
+                self.compile_square_array_constructor(atoms, span)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn compile_curly_array_constructor(
+        &mut self,
+        atom: &ir::AtomS,
+        span: SourceSpan,
+    ) -> Result<()> {
+        self.compile_atom(atom)?;
+        self.builder.emit(Instruction::CurlyArray, span);
+        Ok(())
+    }
+
+    fn compile_square_array_constructor(
+        &mut self,
+        atoms: &[ir::AtomS],
+        span: SourceSpan,
+    ) -> Result<()> {
+        // compile them in reverse, so we can pop them in the right
+        // order during runtime
+        for atom in atoms.iter().rev() {
+            self.compile_atom(atom)?;
+        }
+        // emit constant with length of array
+        let len: IBig = atoms.len().into();
+        let len: stack::Value = len.into();
+        self.builder.emit_constant(len, span);
+        self.builder.emit(Instruction::SquareArray, span);
         Ok(())
     }
 

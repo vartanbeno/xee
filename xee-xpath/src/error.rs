@@ -209,6 +209,7 @@ pub enum Error {
     ///
     /// No two keys in a map may have the same key value.
     #[error("Duplicate key values in a map")]
+    #[diagnostic(code(XQTY0137))]
     XQDY0137,
     // XPath errors and functions: https://www.w3.org/TR/xpath-functions-31/#error-summary
     /// Wrong number of arguments.
@@ -233,6 +234,7 @@ pub enum Error {
     ///
     /// This error is raised when an integer used to select a member of an array is outside the range of values for that array.
     #[error("Array index out of bounds")]
+    #[diagnostic(code(FOAY0001))]
     FOAY0001,
     /// Negative array length.
     ///

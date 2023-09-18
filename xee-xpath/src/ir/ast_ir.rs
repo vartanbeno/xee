@@ -333,7 +333,8 @@ impl<'a> IrConverter<'a> {
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
             ast::PrimaryExpr::MapConstructor(ast) => self.map_constructor(ast, span),
             ast::PrimaryExpr::ArrayConstructor(ast) => self.array_constructor(ast, span),
-            ast::PrimaryExpr::UnaryLookup(ast) => self.unary_lookup(ast, span),
+            _ => Err(Error::Unsupported),
+            // ast::PrimaryExpr::UnaryLookup(ast) => self.unary_lookup(ast, span),
         }
     }
 
@@ -767,14 +768,28 @@ impl<'a> IrConverter<'a> {
             })
     }
 
-    fn unary_lookup(&mut self, ast: &ast::KeySpecifier, span: Span) -> Result<Bindings> {
-        // TODO
+    fn unary_lookup(&mut self, _ast: &ast::KeySpecifier, _span: Span) -> Result<Bindings> {
         Ok(Bindings::new())
     }
 
     fn map_constructor(&mut self, ast: &ast::MapConstructor, span: Span) -> Result<Bindings> {
-        // TODO
-        Ok(Bindings::new())
+        let keys = ast
+            .entries
+            .iter()
+            .map(|entry| entry.key.clone())
+            .collect::<Vec<_>>();
+        let values = ast
+            .entries
+            .iter()
+            .map(|entry| entry.value.clone())
+            .collect::<Vec<_>>();
+        let (key_bindings, key_atoms) = self.args(&keys)?;
+        let (value_bindings, value_atoms) = self.args(&values)?;
+        let members = key_atoms.into_iter().zip(value_atoms).collect::<Vec<_>>();
+        let expr = ir::Expr::MapConstructor(ir::MapConstructor { members });
+        let expr_binding = self.new_binding(expr, span);
+        let bindings = key_bindings.concat(value_bindings).bind(expr_binding);
+        Ok(bindings)
     }
 
     fn array_constructor(&mut self, ast: &ast::ArrayConstructor, span: Span) -> Result<Bindings> {

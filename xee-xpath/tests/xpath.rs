@@ -1359,3 +1359,23 @@ fn test_run_function_lookup_on_focus() {
         "/root/function-lookup(fn:QName('http://www.w3.org/2005/xpath-functions', 'node-name'), 0)()"
     ));
 }
+
+#[test]
+fn test_curly_array() {
+    assert_debug_snapshot!(run("array {'a', 2, 3}(1)"));
+}
+
+#[test]
+fn test_square_array() {
+    assert_debug_snapshot!(run("['a', 2, 3](1)"));
+}
+
+#[test]
+fn test_square_array_sequence() {
+    assert_debug_snapshot!(run("[('a', 'b'), 2, 3](1)"));
+}
+
+#[test]
+fn test_curly_map() {
+    assert_debug_snapshot!(run("map {'a' : 'b'}('a')"));
+}
