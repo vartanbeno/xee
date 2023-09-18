@@ -52,12 +52,65 @@ where
         .boxed();
 
     let sequence_type = recursive(|sequence_type| {
+        // TODO: for some reason referring to sequence_type in here
+        // blows up the parser type checker and it suddenly thinks
+        // sequence_type is a tuple of name, sequence_type?
+        // let typed_map_test_entry = eqname
+        //     .then_ignore(just(Token::Comma))
+        //     .ignore_then(sequence_type.clone())
+        //     .boxed();
+
+        // let typed_map_test = just(Token::Map)
+        //     .ignore_then(
+        //         typed_map_test_entry.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+        //     )
+        //     .map(|(key_type, value_type): (ast::Name, ast::SequenceType)| {
+        //         ast::MapTest::TypedMapTest(ast::TypedMapTest {
+        //             key_type,
+        //             value_type,
+        //         })
+        //     })
+        //     .boxed();
+
+        let any_map_test = just(Token::Map)
+            .ignore_then(
+                just(Token::Asterisk).delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .to(ast::MapTest::AnyMapTest)
+            .boxed();
+
+        let item_type_map_test = any_map_test
+            .map(|map_test| ast::ItemType::MapTest(Box::new(map_test)))
+            .boxed();
+
+        let typed_array_test = just(Token::Array)
+            .ignore_then(
+                sequence_type
+                    .clone()
+                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .map(|item_type| ast::ArrayTest::TypedArrayTest(ast::TypedArrayTest { item_type }))
+            .boxed();
+
+        let any_array_test = just(Token::Array)
+            .ignore_then(
+                just(Token::Asterisk).delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .to(ast::ArrayTest::AnyArrayTest)
+            .boxed();
+
+        let item_type_array_test = any_array_test
+            .or(typed_array_test)
+            .map(|array_test| ast::ItemType::ArrayTest(Box::new(array_test)))
+            .boxed();
+
+        let typed_function_param_list = sequence_type
+            .clone()
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .boxed();
+
         let item_type = recursive(|item_type| {
-            let typed_function_param_list = sequence_type
-                .clone()
-                .separated_by(just(Token::Comma))
-                .collect::<Vec<_>>()
-                .boxed();
             let typed_function_test = just(Token::Function)
                 .ignore_then(
                     typed_function_param_list
@@ -79,6 +132,8 @@ where
             let parenthesized_item_type =
                 item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
             item_type_empty
+                .or(item_type_array_test)
+                .or(item_type_map_test)
                 .or(item_type_function_test)
                 .or(item_type_kind_test)
                 .or(item_type_atomic_or_union)
