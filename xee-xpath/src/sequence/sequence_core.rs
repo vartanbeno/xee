@@ -76,6 +76,14 @@ impl Sequence {
         }
     }
 
+    pub fn map_iter(&self) -> impl Iterator<Item = error::Result<stack::Map>> {
+        self.items().map(|item| item?.to_map())
+    }
+
+    pub fn array_iter(&self) -> impl Iterator<Item = error::Result<stack::Array>> {
+        self.items().map(|item| item?.to_array())
+    }
+
     pub fn elements<'a>(
         &self,
         xot: &'a Xot,
@@ -148,6 +156,21 @@ impl Sequence {
                         return Ok(false);
                     }
                 }
+                (Item::Function(a), Item::Function(b)) => match (a.as_ref(), b.as_ref()) {
+                    (stack::Closure::Array(a), stack::Closure::Array(b)) => {
+                        if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
+                            return Ok(false);
+                        }
+                    }
+                    (stack::Closure::Map(a), stack::Closure::Map(b)) => {
+                        if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
+                            return Ok(false);
+                        }
+                    }
+                    (stack::Closure::Map(_), stack::Closure::Array(_)) => return Ok(false),
+                    (stack::Closure::Array(_), stack::Closure::Map(_)) => return Ok(false),
+                    _ => return Err(error::Error::FOTY0015),
+                },
                 _ => {
                     return Ok(false);
                 }

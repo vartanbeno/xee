@@ -797,6 +797,11 @@ mod tests {
         assert_ron_snapshot!(parse_xpath_simple("'foo' instance of map(*)"))
     }
 
+    #[test]
+    fn test_parse_empty_array() {
+        assert_ron_snapshot!(parse_xpath_simple("[]"))
+    }
+
     // #[test]
     // fn test_function_that_takes_function_parameter() {
     //     assert_ron_snapshot!(parse_xpath_simple("filter(1, function($item) { true() })"))

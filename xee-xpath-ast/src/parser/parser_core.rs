@@ -242,8 +242,11 @@ where
                 ast::ArrayConstructor::Curly(expr.map(|expr| expr.value).with_span(span))
             })
             .boxed();
-        let square_array_constructor = expr
+        let square_array_constructor = expr_single
             .clone()
+            .separated_by(just(Token::Comma))
+            .collect::<Vec<_>>()
+            .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
             .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
             .map(ast::ArrayConstructor::Square)
             .boxed();

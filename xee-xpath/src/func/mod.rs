@@ -1,4 +1,5 @@
 mod accessor;
+mod array;
 mod boolean;
 mod context;
 mod datetime;
@@ -32,5 +33,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(qname::static_function_descriptions());
     descriptions.extend(context::static_function_descriptions());
     descriptions.extend(hof::static_function_descriptions());
+    descriptions.extend(array::static_function_descriptions());
     descriptions
 }

@@ -5,6 +5,7 @@ use ahash::HashMapExt;
 use miette::SourceSpan;
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
+use xot::Xot;
 
 use crate::atomic;
 use crate::error;
@@ -12,6 +13,7 @@ use crate::ir;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
+use crate::Collation;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct InlineFunctionId(pub(crate) usize);
@@ -69,6 +71,24 @@ impl Array {
     pub(crate) fn index(&self, index: usize) -> Option<&sequence::Sequence> {
         self.0.get(index)
     }
+
+    pub(crate) fn deep_equal(
+        &self,
+        other: Array,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+        xot: &Xot,
+    ) -> error::Result<bool> {
+        if self.0.len() != other.0.len() {
+            return Ok(false);
+        }
+        for (a, b) in self.0.iter().zip(other.0.iter()) {
+            if !a.deep_equal(b, collation, default_offset, xot)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
 }
 
 impl From<Vec<sequence::Sequence>> for Array {
@@ -96,6 +116,29 @@ impl Map {
     pub(crate) fn get(&self, key: &atomic::Atomic) -> Option<sequence::Sequence> {
         let map_key = atomic::MapKey::new(key.clone()).ok()?;
         self.0.get(&map_key).map(|(_, v)| v.clone())
+    }
+
+    pub(crate) fn deep_equal(
+        &self,
+        other: Map,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+        xot: &Xot,
+    ) -> error::Result<bool> {
+        if self.0.len() != other.0.len() {
+            return Ok(false);
+        }
+        for (map_key, (_real_key, value)) in self.0.iter() {
+            let entry = other.0.get(map_key);
+            if let Some((_real_key, found_value)) = entry {
+                if !value.deep_equal(found_value, collation, default_offset, xot)? {
+                    return Ok(false);
+                }
+            } else {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 }
 

@@ -34,6 +34,26 @@ impl Item {
         }
     }
 
+    pub fn to_map(&self) -> error::Result<stack::Map> {
+        match self {
+            Item::Function(closure) => match closure.as_ref() {
+                stack::Closure::Map(map) => Ok(map.clone()),
+                _ => Err(error::Error::Type),
+            },
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    pub fn to_array(&self) -> error::Result<stack::Array> {
+        match self {
+            Item::Function(closure) => match closure.as_ref() {
+                stack::Closure::Array(array) => Ok(array.clone()),
+                _ => Err(error::Error::Type),
+            },
+            _ => Err(error::Error::Type),
+        }
+    }
+
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Item::Atomic(a) => a.effective_boolean_value(),
@@ -50,6 +70,20 @@ impl Item {
             Item::Atomic(atomic) => atomic.string_value(),
             Item::Node(node) => Ok(node.string_value(xot)),
             Item::Function(_) => Err(error::Error::FOTY0014),
+        }
+    }
+
+    pub(crate) fn is_map(&self) -> bool {
+        match self {
+            Item::Function(closure) => matches!(closure.as_ref(), stack::Closure::Map(_)),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_array(&self) -> bool {
+        match self {
+            Item::Function(closure) => matches!(closure.as_ref(), stack::Closure::Array(_)),
+            _ => false,
         }
     }
 }

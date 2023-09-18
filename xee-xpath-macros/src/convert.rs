@@ -88,9 +88,14 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
         // we don't do anything special for higher order functions at this point;
         // the implementation is supposed to manually unpack the items
         ast::ItemType::FunctionTest(_) => Ok((quote!(#arg.items()), false)),
-        _ => {
-            todo!("Unsupported item type")
-        }
+        ast::ItemType::ArrayTest(array_test) => match array_test.as_ref() {
+            ast::ArrayTest::AnyArrayTest => Ok((quote!(#arg.array_iter()), false)),
+            _ => todo!("Unsupported item type: typed array test"),
+        },
+        ast::ItemType::MapTest(map_test) => match map_test.as_ref() {
+            ast::MapTest::AnyMapTest => Ok((quote!(#arg.map_iter()), false)),
+            _ => todo!("Unsupported item type: typed map test"),
+        },
     }
 }
 
@@ -239,5 +244,10 @@ mod tests {
             "item()*",
             &syn::parse_str("a: &crate::Sequence").unwrap()
         ));
+    }
+
+    #[test]
+    fn test_convert_array() {
+        assert_debug_snapshot!(convert("array(*)"));
     }
 }

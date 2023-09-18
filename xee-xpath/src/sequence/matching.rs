@@ -171,11 +171,37 @@ impl Item {
             ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
             // we accept any function tests, as function test matching
             // is deferred until later during runtime in coerced functions
-            // TODO: we should check for arity
+            // TODO: we should check for arity in case of function calls
+            // with function arguments.
+            // TODO: this is not correct for instance of checks, we need
+            // to do more detailed checking for those.
             ast::ItemType::FunctionTest(..) => Ok(()),
-            _ => {
-                todo!("not yet")
-            }
+            ast::ItemType::MapTest(map_test) => match map_test.as_ref() {
+                ast::MapTest::AnyMapTest => {
+                    if self.is_map() {
+                        Ok(())
+                    } else {
+                        Err(error::Error::Type)
+                    }
+                }
+                ast::MapTest::TypedMapTest(_) => {
+                    // TODO: for now we accept all typed map tests
+                    Ok(())
+                }
+            },
+            ast::ItemType::ArrayTest(array_test) => match array_test.as_ref() {
+                ast::ArrayTest::AnyArrayTest => {
+                    if self.is_array() {
+                        Ok(())
+                    } else {
+                        Err(error::Error::Type)
+                    }
+                }
+                ast::ArrayTest::TypedArrayTest(_) => {
+                    // TODO: for now we accept all typed array tests
+                    Ok(())
+                }
+            },
         }
     }
 

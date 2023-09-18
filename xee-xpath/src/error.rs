@@ -603,6 +603,7 @@ pub enum Error {
     /// Raised by fn:deep-equal if either input sequence contains a function
     /// item.
     #[error("Argument to fn:deep-equal() contains a function item")]
+    #[diagnostic(code(FOTY0015))]
     FOTY0015,
     /// Invalid $href argument to fn:unparsed-text() (etc.)
     ///
