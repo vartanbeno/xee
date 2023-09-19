@@ -146,15 +146,15 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
-                    let mut sequences = Vec::new();
+                    let mut closure_vars = Vec::new();
                     let closure_function = &self.program.functions[function_id as usize];
                     for _ in 0..closure_function.closure_names.len() {
-                        sequences.push(self.stack.pop().unwrap().into());
+                        closure_vars.push(self.stack.pop().unwrap().into());
                     }
                     self.stack.push(
                         function::Function::Inline {
                             inline_function_id: function::InlineFunctionId(function_id as usize),
-                            sequences,
+                            closure_vars,
                         }
                         .into(),
                     );
@@ -181,9 +181,9 @@ impl<'a> Interpreter<'a> {
                     // the function is always just below the base
                     let function: Rc<function::Function> =
                         (&self.stack[self.frame().base - 1]).try_into()?;
-                    let sequences = function.sequences();
+                    let closure_vars = function.closure_vars();
                     // and we push the value we need onto the stack
-                    self.stack.push(sequences[index as usize].clone().into());
+                    self.stack.push(closure_vars[index as usize].clone().into());
                 }
                 EncodedInstruction::Comma => {
                     let b = self.stack.pop().unwrap();
@@ -535,7 +535,7 @@ impl<'a> Interpreter<'a> {
             .functions
             .get_by_index(static_function_id);
         // get any context value from the stack if needed
-        let sequences = if static_function.needs_context() {
+        let closure_vars = if static_function.needs_context() {
             let value = get();
             if let Some(value) = value {
                 vec![value.into()]
@@ -547,7 +547,7 @@ impl<'a> Interpreter<'a> {
         };
         function::Function::Static {
             static_function_id,
-            sequences,
+            closure_vars,
         }
     }
 
@@ -591,11 +591,11 @@ impl<'a> Interpreter<'a> {
         match function.as_ref() {
             function::Function::Static {
                 static_function_id,
-                sequences,
-            } => self.call_static(*static_function_id, arity, sequences),
+                closure_vars,
+            } => self.call_static(*static_function_id, arity, closure_vars),
             function::Function::Inline {
                 inline_function_id,
-                sequences: _,
+                closure_vars: _,
             } => self.call_inline(*inline_function_id, arity),
             function::Function::Array(array) => self.call_array(array, arity as usize),
             function::Function::Map(map) => self.call_map(map, arity as usize),
@@ -610,7 +610,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
         arity: u8,
-        closure_sequences: &[sequence::Sequence],
+        closure_vars: &[sequence::Sequence],
     ) -> error::Result<()> {
         let static_function = self
             .dynamic_context
@@ -620,8 +620,7 @@ impl<'a> Interpreter<'a> {
         if arity as usize != static_function.arity() {
             return Err(error::Error::Type);
         }
-        let result =
-            static_function.invoke(self.dynamic_context, self, closure_sequences, arity)?;
+        let result = static_function.invoke(self.dynamic_context, self, closure_vars, arity)?;
         // truncate the stack to the base
         self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.stack.push(result.into());

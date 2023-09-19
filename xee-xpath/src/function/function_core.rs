@@ -59,21 +59,21 @@ pub struct Signature {
 pub enum Function {
     Static {
         static_function_id: StaticFunctionId,
-        sequences: Vec<sequence::Sequence>,
+        closure_vars: Vec<sequence::Sequence>,
     },
     Inline {
         inline_function_id: InlineFunctionId,
-        sequences: Vec<sequence::Sequence>,
+        closure_vars: Vec<sequence::Sequence>,
     },
     Map(Map),
     Array(Array),
 }
 
 impl Function {
-    pub(crate) fn sequences(&self) -> &[sequence::Sequence] {
+    pub(crate) fn closure_vars(&self) -> &[sequence::Sequence] {
         match self {
-            Self::Static { sequences, .. } => sequences,
-            Self::Inline { sequences, .. } => sequences,
+            Self::Static { closure_vars, .. } => closure_vars,
+            Self::Inline { closure_vars, .. } => closure_vars,
             _ => unreachable!(),
         }
     }
