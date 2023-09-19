@@ -152,7 +152,7 @@ impl<'a> Interpreter<'a> {
                         sequences.push(self.stack.pop().unwrap().into());
                     }
                     self.stack.push(
-                        function::Closure::Inline {
+                        function::Function::Inline {
                             inline_function_id: function::InlineFunctionId(function_id as usize),
                             sequences,
                         }
@@ -178,10 +178,10 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
-                    // the closure is always just below the base
-                    let closure: Rc<function::Closure> =
+                    // the function is always just below the base
+                    let function: Rc<function::Function> =
                         (&self.stack[self.frame().base - 1]).try_into()?;
-                    let sequences = closure.sequences();
+                    let sequences = function.sequences();
                     // and we push the value we need onto the stack
                     self.stack.push(sequences[index as usize].clone().into());
                 }
@@ -506,7 +506,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn create_static_closure_from_stack(
         &mut self,
         static_function_id: function::StaticFunctionId,
-    ) -> function::Closure {
+    ) -> function::Function {
         Self::create_static_closure(self.dynamic_context, static_function_id, || {
             Some(self.stack.pop().unwrap())
         })
@@ -516,7 +516,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
         arg: Option<xml::Node>,
-    ) -> function::Closure {
+    ) -> function::Function {
         Self::create_static_closure(self.dynamic_context, static_function_id, || {
             arg.map(|n| n.into())
         })
@@ -526,7 +526,7 @@ impl<'a> Interpreter<'a> {
         context: &DynamicContext,
         static_function_id: function::StaticFunctionId,
         mut get: F,
-    ) -> function::Closure
+    ) -> function::Function
     where
         F: FnMut() -> Option<stack::Value>,
     {
@@ -545,7 +545,7 @@ impl<'a> Interpreter<'a> {
         } else {
             vec![]
         };
-        function::Closure::Static {
+        function::Function::Static {
             static_function_id,
             sequences,
         }
@@ -561,24 +561,24 @@ impl<'a> Interpreter<'a> {
 
         // TODO: check that arity of function matches arity of call
 
-        let closure: Rc<function::Closure> = value.try_into()?;
-        self.call_closure(closure, arity)
+        let function: Rc<function::Function> = value.try_into()?;
+        self.call_function(function, arity)
     }
 
-    pub(crate) fn call_closure_with_arguments(
+    pub(crate) fn call_function_with_arguments(
         &mut self,
-        closure: Rc<function::Closure>,
+        function: Rc<function::Function>,
         arguments: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
-        // put closure onto the stack
-        self.stack.push(closure.clone().into());
+        // put function onto the stack
+        self.stack.push(function.clone().into());
         // then arguments
         let arity = arguments.len() as u8;
         for arg in arguments.iter() {
             self.stack.push(arg.clone().into());
         }
-        self.call_closure(closure.clone(), arity)?;
-        if matches!(closure.as_ref(), function::Closure::Inline { .. }) {
+        self.call_function(function.clone(), arity)?;
+        if matches!(function.as_ref(), function::Function::Inline { .. }) {
             // run interpreter until we return to the base
             // we started in
             self.run(self.frames.last().unwrap().base)?;
@@ -587,18 +587,18 @@ impl<'a> Interpreter<'a> {
         Ok(value)
     }
 
-    fn call_closure(&mut self, closure: Rc<function::Closure>, arity: u8) -> Result<(), Error> {
-        match closure.as_ref() {
-            function::Closure::Static {
+    fn call_function(&mut self, function: Rc<function::Function>, arity: u8) -> Result<(), Error> {
+        match function.as_ref() {
+            function::Function::Static {
                 static_function_id,
                 sequences,
             } => self.call_static(*static_function_id, arity, sequences),
-            function::Closure::Inline {
+            function::Function::Inline {
                 inline_function_id,
                 sequences: _,
             } => self.call_inline(*inline_function_id, arity),
-            function::Closure::Array(array) => self.call_array(array, arity as usize),
-            function::Closure::Map(map) => self.call_map(map, arity as usize),
+            function::Function::Array(array) => self.call_array(array, arity as usize),
+            function::Function::Map(map) => self.call_map(map, arity as usize),
         }
     }
 

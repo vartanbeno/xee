@@ -10,7 +10,7 @@ use crate::xml;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Atomic(atomic::Atomic),
-    Function(Rc<function::Closure>),
+    Function(Rc<function::Function>),
     Node(xml::Node),
 }
 
@@ -28,7 +28,7 @@ impl Item {
         }
     }
 
-    pub fn to_function(&self) -> error::Result<Rc<function::Closure>> {
+    pub fn to_function(&self) -> error::Result<Rc<function::Function>> {
         match self {
             Item::Function(f) => Ok(f.clone()),
             _ => Err(error::Error::Type),
@@ -37,8 +37,8 @@ impl Item {
 
     pub fn to_map(&self) -> error::Result<function::Map> {
         match self {
-            Item::Function(closure) => match closure.as_ref() {
-                function::Closure::Map(map) => Ok(map.clone()),
+            Item::Function(function) => match function.as_ref() {
+                function::Function::Map(map) => Ok(map.clone()),
                 _ => Err(error::Error::Type),
             },
             _ => Err(error::Error::Type),
@@ -47,8 +47,8 @@ impl Item {
 
     pub fn to_array(&self) -> error::Result<function::Array> {
         match self {
-            Item::Function(closure) => match closure.as_ref() {
-                function::Closure::Array(array) => Ok(array.clone()),
+            Item::Function(function) => match function.as_ref() {
+                function::Function::Array(array) => Ok(array.clone()),
                 _ => Err(error::Error::Type),
             },
             _ => Err(error::Error::Type),
@@ -76,14 +76,14 @@ impl Item {
 
     pub(crate) fn is_map(&self) -> bool {
         match self {
-            Item::Function(closure) => matches!(closure.as_ref(), function::Closure::Map(_)),
+            Item::Function(function) => matches!(function.as_ref(), function::Function::Map(_)),
             _ => false,
         }
     }
 
     pub(crate) fn is_array(&self) -> bool {
         match self {
-            Item::Function(closure) => matches!(closure.as_ref(), function::Closure::Array(_)),
+            Item::Function(function) => matches!(function.as_ref(), function::Function::Array(_)),
             _ => false,
         }
     }
@@ -104,27 +104,27 @@ impl From<xml::Node> for Item {
     }
 }
 
-impl From<function::Closure> for Item {
-    fn from(f: function::Closure) -> Self {
+impl From<function::Function> for Item {
+    fn from(f: function::Function) -> Self {
         Self::Function(Rc::new(f))
     }
 }
 
-impl From<Rc<function::Closure>> for Item {
-    fn from(f: Rc<function::Closure>) -> Self {
+impl From<Rc<function::Function>> for Item {
+    fn from(f: Rc<function::Function>) -> Self {
         Self::Function(f)
     }
 }
 
 impl From<function::Array> for Item {
     fn from(array: function::Array) -> Self {
-        Self::Function(Rc::new(function::Closure::Array(array)))
+        Self::Function(Rc::new(function::Function::Array(array)))
     }
 }
 
 impl From<function::Map> for Item {
     fn from(map: function::Map) -> Self {
-        Self::Function(Rc::new(function::Closure::Map(map)))
+        Self::Function(Rc::new(function::Function::Map(map)))
     }
 }
 
@@ -142,8 +142,8 @@ impl<'a> AtomizedItemIter<'a> {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
-            Item::Function(closure) => match closure.as_ref() {
-                function::Closure::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
+            Item::Function(function) => match function.as_ref() {
+                function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },
         }

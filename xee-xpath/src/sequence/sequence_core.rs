@@ -158,18 +158,18 @@ impl Sequence {
                     }
                 }
                 (Item::Function(a), Item::Function(b)) => match (a.as_ref(), b.as_ref()) {
-                    (function::Closure::Array(a), function::Closure::Array(b)) => {
+                    (function::Function::Array(a), function::Function::Array(b)) => {
                         if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
                             return Ok(false);
                         }
                     }
-                    (function::Closure::Map(a), function::Closure::Map(b)) => {
+                    (function::Function::Map(a), function::Function::Map(b)) => {
                         if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
                             return Ok(false);
                         }
                     }
-                    (function::Closure::Map(_), function::Closure::Array(_)) => return Ok(false),
-                    (function::Closure::Array(_), function::Closure::Map(_)) => return Ok(false),
+                    (function::Function::Map(_), function::Function::Array(_)) => return Ok(false),
+                    (function::Function::Array(_), function::Function::Map(_)) => return Ok(false),
                     _ => return Err(error::Error::FOTY0015),
                 },
                 _ => {

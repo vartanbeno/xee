@@ -115,11 +115,11 @@ fn for_each(
     array: function::Array,
     action: sequence::Item,
 ) -> error::Result<function::Array> {
-    let closure = action.to_function()?;
+    let function = action.to_function()?;
     let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
         let sequence =
-            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
         result.push(sequence);
     }
     Ok(result)
@@ -133,11 +133,11 @@ fn filter(
     array: function::Array,
     function: sequence::Item,
 ) -> error::Result<function::Array> {
-    let closure = function.to_function()?;
+    let function = function.to_function()?;
     let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
         let include =
-            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
         let include: atomic::Atomic = include.items().one()?.to_atomic()?;
         let include: bool = include.try_into()?;
         if include {
@@ -154,12 +154,12 @@ fn fold_left(
     zero: &sequence::Sequence,
     function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let closure = function.to_function()?;
+    let function = function.to_function()?;
 
     let mut accumulator = zero.clone();
     for sequence in array.iter() {
         accumulator = interpreter
-            .call_closure_with_arguments(closure.clone(), &[accumulator, sequence.clone()])?;
+            .call_function_with_arguments(function.clone(), &[accumulator, sequence.clone()])?;
     }
     Ok(accumulator)
 }
@@ -171,12 +171,12 @@ fn fold_right(
     zero: &sequence::Sequence,
     function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let closure = function.to_function()?;
+    let function = function.to_function()?;
 
     let mut accumulator = zero.clone();
     for sequence in array.iter().rev() {
         accumulator = interpreter
-            .call_closure_with_arguments(closure.clone(), &[sequence.clone(), accumulator])?;
+            .call_function_with_arguments(function.clone(), &[sequence.clone(), accumulator])?;
     }
     Ok(accumulator)
 }
@@ -188,12 +188,12 @@ fn for_each_pair(
     array2: function::Array,
     function: sequence::Item,
 ) -> error::Result<function::Array> {
-    let closure = function.to_function()?;
+    let function = function.to_function()?;
 
     let mut result = function::Array::new(vec![]);
     for (sequence1, sequence2) in array1.iter().zip(array2.iter()) {
-        let sequence = interpreter.call_closure_with_arguments(
-            closure.clone(),
+        let sequence = interpreter.call_function_with_arguments(
+            function.clone(),
             &[sequence1.clone(), sequence2.clone()],
         )?;
         result.push(sequence);
@@ -232,10 +232,10 @@ fn sort3(
     key: sequence::Item,
 ) -> error::Result<function::Array> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
-    let closure = key.to_function()?;
+    let function = key.to_function()?;
     sort_by_sequence(context, input, collation, |sequence| {
         let new_sequence =
-            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
         Ok(new_sequence)
     })
 }

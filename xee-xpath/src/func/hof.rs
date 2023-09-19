@@ -49,9 +49,9 @@ fn function_name(
     context: &context::DynamicContext,
     func: sequence::Item,
 ) -> error::Result<Option<ast::Name>> {
-    let closure = func.to_function()?;
-    match closure.as_ref() {
-        function::Closure::Static {
+    let function = func.to_function()?;
+    match function.as_ref() {
+        function::Function::Static {
             static_function_id, ..
         } => {
             let static_function = context
@@ -70,9 +70,9 @@ fn function_arity(
     interpreter: &Interpreter,
     func: sequence::Item,
 ) -> error::Result<IBig> {
-    let closure = func.to_function()?;
-    match closure.as_ref() {
-        function::Closure::Static {
+    let function = func.to_function()?;
+    match function.as_ref() {
+        function::Function::Static {
             static_function_id, ..
         } => {
             let static_function = context
@@ -81,11 +81,11 @@ fn function_arity(
                 .get_by_index(*static_function_id);
             Ok(static_function.arity().into())
         }
-        function::Closure::Inline {
+        function::Function::Inline {
             inline_function_id, ..
         } => Ok(interpreter.arity(*inline_function_id).into()),
-        function::Closure::Array { .. } => Ok(1.into()),
-        function::Closure::Map { .. } => Ok(1.into()),
+        function::Function::Array { .. } => Ok(1.into()),
+        function::Function::Map { .. } => Ok(1.into()),
     }
 }
 
@@ -96,11 +96,11 @@ fn for_each(
     action: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq.len());
-    let closure = action.to_function()?;
+    let function = action.to_function()?;
 
     for item in seq.items() {
         let item = item?;
-        let value = interpreter.call_closure_with_arguments(closure.clone(), &[item.into()])?;
+        let value = interpreter.call_function_with_arguments(function.clone(), &[item.into()])?;
         for item in value.items() {
             result.push(item?);
         }
@@ -115,12 +115,12 @@ fn filter(
     predicate: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::new();
-    let closure = predicate.to_function()?;
+    let function = predicate.to_function()?;
 
     for item in seq.items() {
         let item = item?;
         let value =
-            interpreter.call_closure_with_arguments(closure.clone(), &[item.clone().into()])?;
+            interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
         let atom: atomic::Atomic = value.items().one()?.to_atomic()?;
         let value: bool = atom.try_into()?;
         if value {
@@ -137,13 +137,13 @@ fn fold_left(
     zero: &sequence::Sequence,
     f: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let closure = f.to_function()?;
+    let function = f.to_function()?;
 
     let mut accumulator = zero.clone();
     for item in seq.items() {
         let item = item?;
         accumulator = interpreter
-            .call_closure_with_arguments(closure.clone(), &[accumulator, item.into()])?;
+            .call_function_with_arguments(function.clone(), &[accumulator, item.into()])?;
     }
     Ok(accumulator)
 }
@@ -155,14 +155,14 @@ fn fold_right(
     zero: &sequence::Sequence,
     f: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let closure = f.to_function()?;
+    let function = f.to_function()?;
 
     let mut accumulator = zero.clone();
     // TODO: do not have reverse iterator, so have to collect first
     let seq = seq.items().collect::<error::Result<Vec<_>>>()?;
     for item in seq.into_iter().rev() {
         accumulator = interpreter
-            .call_closure_with_arguments(closure.clone(), &[item.into(), accumulator])?;
+            .call_function_with_arguments(function.clone(), &[item.into(), accumulator])?;
     }
     Ok(accumulator)
 }
@@ -175,13 +175,13 @@ fn for_each_pair(
     action: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq1.len());
-    let closure = action.to_function()?;
+    let function = action.to_function()?;
 
     for (item1, item2) in seq1.items().zip(seq2.items()) {
         let item1 = item1?;
         let item2 = item2?;
         let value = interpreter
-            .call_closure_with_arguments(closure.clone(), &[item1.into(), item2.into()])?;
+            .call_function_with_arguments(function.clone(), &[item1.into(), item2.into()])?;
         for item in value.items() {
             result.push(item?);
         }
@@ -220,10 +220,10 @@ fn sort3(
     key: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
-    let closure = key.to_function()?;
+    let function = key.to_function()?;
     sort_by_sequence(context, input, collation, |item| {
         let value =
-            interpreter.call_closure_with_arguments(closure.clone(), &[item.clone().into()])?;
+            interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
         Ok(value)
     })
 }

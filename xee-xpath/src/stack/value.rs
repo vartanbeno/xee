@@ -294,7 +294,7 @@ impl From<Vec<sequence::Item>> for Value {
     }
 }
 
-impl TryFrom<&stack::Value> for Rc<function::Closure> {
+impl TryFrom<&stack::Value> for Rc<function::Function> {
     type Error = error::Error;
 
     fn try_from(value: &stack::Value) -> error::Result<Self> {

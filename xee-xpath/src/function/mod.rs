@@ -5,7 +5,7 @@ mod static_function;
 
 pub(crate) use array::Array;
 pub(crate) use function_core::{
-    CastType, Closure, InlineFunction, InlineFunctionId, StaticFunctionId,
+    CastType, Function, InlineFunction, InlineFunctionId, StaticFunctionId,
 };
 pub(crate) use map::Map;
 

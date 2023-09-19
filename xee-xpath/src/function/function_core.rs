@@ -56,7 +56,7 @@ pub struct Signature {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Closure {
+pub enum Function {
     Static {
         static_function_id: StaticFunctionId,
         sequences: Vec<sequence::Sequence>,
@@ -69,7 +69,7 @@ pub enum Closure {
     Array(Array),
 }
 
-impl Closure {
+impl Function {
     pub(crate) fn sequences(&self) -> &[sequence::Sequence] {
         match self {
             Self::Static { sequences, .. } => sequences,
