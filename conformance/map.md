@@ -1,10 +1,10 @@
-- [ ] contains
-- [ ] entry
+- [x] contains
+- [x] entry
 - [ ] find
 - [ ] for-each
-- [ ] get
-- [ ] keys
+- [x] get
+- [x] keys
 - [ ] merge
-- [ ] put
-- [ ] remove
-- [ ] size
+- [x] put
+- [x] remove
+- [x] size
