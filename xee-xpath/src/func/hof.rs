@@ -211,7 +211,7 @@ fn sort2(
     sort_without_key(context, input, collation)
 }
 
-#[xpath_fn("fn:sort($input as item()*, $collation as xs:string?, $key as function(item()) as xs:anyAtomicType) as item()*")]
+#[xpath_fn("fn:sort($input as item()*, $collation as xs:string?, $key as function(item()) as xs:anyAtomicType*) as item()*")]
 fn sort3(
     context: &context::DynamicContext,
     interpreter: &mut Interpreter,
@@ -252,6 +252,9 @@ fn sort_by_sequence<F>(
 where
     F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
 {
+    // see also sort_by_sequence in array.rs. The signatures are
+    // sufficiently different we don't want to try to unify them.
+
     let collation = context.static_context.collation(collation)?;
     let items = input.items().collect::<error::Result<Vec<_>>>()?;
     let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;

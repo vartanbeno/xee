@@ -5,6 +5,7 @@ use ibig::IBig;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::context;
 use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::interpreter::Interpreter;
@@ -180,6 +181,140 @@ fn fold_right(
     Ok(accumulator)
 }
 
+#[xpath_fn("array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)")]
+fn for_each_pair(
+    interpreter: &mut Interpreter,
+    array1: stack::Array,
+    array2: stack::Array,
+    function: sequence::Item,
+) -> error::Result<stack::Array> {
+    let closure = function.to_function()?;
+
+    let mut result = stack::Array::new(vec![]);
+    for (sequence1, sequence2) in array1.iter().zip(array2.iter()) {
+        let sequence = interpreter.call_closure_with_arguments(
+            closure.clone(),
+            &[sequence1.clone(), sequence2.clone()],
+        )?;
+        result.push(sequence);
+    }
+    Ok(result)
+}
+
+#[xpath_fn("array:sort($array as array(*)) as array(*)")]
+fn sort1(context: &context::DynamicContext, input: stack::Array) -> error::Result<stack::Array> {
+    sort_without_key(
+        context,
+        input,
+        context.static_context.default_collation_uri(),
+    )
+}
+
+#[xpath_fn("array:sort($array as array(*), $collation as xs:string?) as array(*)")]
+fn sort2(
+    context: &context::DynamicContext,
+    input: stack::Array,
+    collation: Option<&str>,
+) -> error::Result<stack::Array> {
+    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    sort_without_key(context, input, collation)
+}
+
+#[xpath_fn("array:sort($array as array(*), $collation as xs:string?, $key as function(item()*) as xs:anyAtomicType*) as array(*)")]
+fn sort3(
+    context: &context::DynamicContext,
+    interpreter: &mut Interpreter,
+    input: stack::Array,
+    collation: Option<&str>,
+    key: sequence::Item,
+) -> error::Result<stack::Array> {
+    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let closure = key.to_function()?;
+    sort_by_sequence(context, input, collation, |sequence| {
+        let new_sequence =
+            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+        Ok(new_sequence)
+    })
+}
+
+fn sort_without_key(
+    context: &context::DynamicContext,
+    input: stack::Array,
+    collation: &str,
+) -> error::Result<stack::Array> {
+    sort_by_sequence(context, input, collation, |sequence| {
+        // the sequivalent of fn:data()
+        let atoms = sequence
+            .atomized(context.xot)
+            .collect::<error::Result<Vec<_>>>()?;
+        Ok(atoms.into())
+    })
+}
+
+fn sort_by_sequence<F>(
+    context: &context::DynamicContext,
+    input: stack::Array,
+    collation: &str,
+    mut get: F,
+) -> error::Result<stack::Array>
+where
+    F: FnMut(&sequence::Sequence) -> error::Result<sequence::Sequence>,
+{
+    // see also sort_by_sequence in hof.rs. The signatures are sufficiently
+    // different we don't want to try to unify them.
+
+    let collation = context.static_context.collation(collation)?;
+    let sequences = input.iter().collect::<Vec<_>>();
+    let keys = sequences
+        .iter()
+        .map(|sequence| get(sequence))
+        .collect::<error::Result<Vec<_>>>()?;
+
+    let mut keys_and_sequences = keys.into_iter().zip(sequences).collect::<Vec<_>>();
+    // sort by key. unfortunately sort_by requires the compare function
+    // to be infallible. It's not in reality, so we make any failures
+    // sort less, so they appear early on in the sequence.
+    keys_and_sequences.sort_by(|(a_key, _), (b_key, _)| {
+        a_key.compare(b_key, &collation, context.implicit_timezone())
+    });
+    // a pass to detect any errors; if sorting between two items is
+    // impossible we want to raise a type error
+    for ((a_key, _), (b_key, _)) in keys_and_sequences
+        .iter()
+        .zip(keys_and_sequences.iter().skip(1))
+    {
+        a_key.fallible_compare(b_key, &collation, context.implicit_timezone())?;
+    }
+    // now pick up items again
+    let sequences = keys_and_sequences
+        .into_iter()
+        .map(|(_, sequence)| sequence.clone())
+        .collect::<Vec<_>>();
+    Ok(stack::Array::new(sequences))
+}
+
+#[xpath_fn("array:flatten($input as item()*) as item()*")]
+fn flatten(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
+    flatten_helper(input)
+}
+
+fn flatten_helper(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
+    let mut result = vec![];
+    for item in input.items() {
+        let item = item?;
+        if let Ok(array) = item.to_array() {
+            for sequence in array.iter() {
+                for item in flatten_helper(sequence)?.items() {
+                    result.push(item?.clone());
+                }
+            }
+        } else {
+            result.push(item.clone());
+        }
+    }
+    Ok(result.into())
+}
+
 fn convert_position(position: IBig) -> error::Result<usize> {
     let position: i64 = position.try_into()?;
     let position = position - 1;
@@ -216,5 +351,10 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(filter),
         wrap_xpath_fn!(fold_left),
         wrap_xpath_fn!(fold_right),
+        wrap_xpath_fn!(for_each_pair),
+        wrap_xpath_fn!(sort1),
+        wrap_xpath_fn!(sort2),
+        wrap_xpath_fn!(sort3),
+        wrap_xpath_fn!(flatten),
     ]
 }

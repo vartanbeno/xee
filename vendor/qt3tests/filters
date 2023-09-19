@@ -53,16 +53,8 @@ string-queries-results-q1
 = app-Walmsley
 = app-XMark
 = app-spec-examples
-fo-test-array-flatten-001
-fo-test-array-flatten-002
-fo-test-array-flatten-003
-fo-test-array-for-each-pair-001
-fo-test-array-for-each-pair-002
 fo-test-array-get-001
 fo-test-array-get-002
-fo-test-array-sort-001
-fo-test-array-sort-002
-fo-test-array-sort-003
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
@@ -168,26 +160,10 @@ fo-test-map-size-002
 = array-append
 = array-filter
 = array-flatten
-array-flatten-001
-array-flatten-002
-array-flatten-003
-array-flatten-004
-array-flatten-005
-array-flatten-006
-array-flatten-007
 = array-fold-left
 = array-fold-right
 = array-for-each
 = array-for-each-pair
-array-for-each-pair-301
-array-for-each-pair-302
-array-for-each-pair-303
-array-for-each-pair-304
-array-for-each-pair-305
-array-for-each-pair-306
-array-for-each-pair-307
-array-for-each-pair-308
-array-for-each-pair-309
 = array-get
 = array-head
 array-head-606
@@ -199,35 +175,9 @@ array-join-211
 = array-reverse
 = array-size
 = array-sort
-array-sort-001
-array-sort-002
-array-sort-003
-array-sort-004
-array-sort-005
-array-sort-006
-array-sort-007
-array-sort-008
-array-sort-009
-array-sort-010
-array-sort-011
-array-sort-012
-array-sort-012a
-array-sort-013
-array-sort-014
-array-sort-015
-array-sort-016
-array-sort-017
-array-sort-019
 array-sort-021
 array-sort-023
 array-sort-024
-array-sort-025
-array-sort-027
-array-sort-028
-array-sort-collation-4
-array-sort-collation-5
-array-sort-collation-6
-array-sort-collation-7
 = array-subarray
 = array-tail
 = fn-QName
@@ -1477,16 +1427,6 @@ fn-function-lookup-762
 fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
-fn-function-lookup-771
-fn-function-lookup-772
-fn-function-lookup-777
-fn-function-lookup-778
-fn-function-lookup-797
-fn-function-lookup-798
-fn-function-lookup-799
-fn-function-lookup-800
-fn-function-lookup-801
-fn-function-lookup-802
 fn-function-lookup-809
 fn-function-lookup-810
 fn-function-lookup-811
