@@ -336,9 +336,15 @@ impl atomic::Atomic {
         Parsed<V>: FromStr<Err = error::Error>,
     {
         match self {
-            atomic::Atomic::Untyped(s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
+            atomic::Atomic::Untyped(s) => Ok(s
+                .parse::<Parsed<V>>()
+                .map_err(|_| error::Error::FORG0001)?
+                .into_inner()),
             atomic::Atomic::String(StringType::AnyURI, _) => Err(error::Error::Type),
-            atomic::Atomic::String(_, s) => Ok(s.parse::<Parsed<V>>()?.into_inner()),
+            atomic::Atomic::String(_, s) => Ok(s
+                .parse::<Parsed<V>>()
+                .map_err(|_| error::Error::FORG0001)?
+                .into_inner()),
             atomic::Atomic::Float(OrderedFloat(f)) => {
                 if f.is_nan() | f.is_infinite() {
                     return Err(error::Error::FOCA0002);
