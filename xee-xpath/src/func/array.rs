@@ -4,11 +4,14 @@ use ibig::IBig;
 
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic;
 use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::stack;
 use crate::wrap_xpath_fn;
+use crate::Occurrence;
 
 #[xpath_fn("array:get($array as array(*), $position as xs:integer) as item()*")]
 fn get(array: stack::Array, position: IBig) -> error::Result<sequence::Sequence> {
@@ -93,6 +96,90 @@ fn tail(array: stack::Array) -> error::Result<stack::Array> {
         .ok_or(error::Error::FOAY0001)
 }
 
+#[xpath_fn("array:reverse($array as array(*)) as array(*)")]
+fn reverse(array: stack::Array) -> stack::Array {
+    array.reversed()
+}
+
+#[xpath_fn("array:join($arrays as array(*)*) as array(*)")]
+fn join(arrays: &[stack::Array]) -> stack::Array {
+    stack::Array::join(arrays)
+}
+
+#[xpath_fn(
+    "array:for-each($array as array(*), $action as function(item()*) as item()*) as array(*)"
+)]
+fn for_each(
+    interpreter: &mut Interpreter,
+    array: stack::Array,
+    action: sequence::Item,
+) -> error::Result<stack::Array> {
+    let closure = action.to_function()?;
+    let mut result = stack::Array::new(vec![]);
+    for sequence in array.iter() {
+        let sequence =
+            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+        result.push(sequence);
+    }
+    Ok(result)
+}
+
+#[xpath_fn(
+    "array:filter($array as array(*), $function as function(item()*) as xs:boolean) as array(*)"
+)]
+fn filter(
+    interpreter: &mut Interpreter,
+    array: stack::Array,
+    function: sequence::Item,
+) -> error::Result<stack::Array> {
+    let closure = function.to_function()?;
+    let mut result = stack::Array::new(vec![]);
+    for sequence in array.iter() {
+        let include =
+            interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
+        let include: atomic::Atomic = include.items().one()?.to_atomic()?;
+        let include: bool = include.try_into()?;
+        if include {
+            result.push(sequence.clone());
+        }
+    }
+    Ok(result)
+}
+
+#[xpath_fn("array:fold-left($array as array(*), $zero as item()*, $function as function(item()*, item()*) as item()*) as item()*")]
+fn fold_left(
+    interpreter: &mut Interpreter,
+    array: stack::Array,
+    zero: &sequence::Sequence,
+    function: sequence::Item,
+) -> error::Result<sequence::Sequence> {
+    let closure = function.to_function()?;
+
+    let mut accumulator = zero.clone();
+    for sequence in array.iter() {
+        accumulator = interpreter
+            .call_closure_with_arguments(closure.clone(), &[accumulator, sequence.clone()])?;
+    }
+    Ok(accumulator)
+}
+
+#[xpath_fn("array:fold-right($array as array(*), $zero as item()*, $function as function(item()*, item()*) as item()*) as item()*")]
+fn fold_right(
+    interpreter: &mut Interpreter,
+    array: stack::Array,
+    zero: &sequence::Sequence,
+    function: sequence::Item,
+) -> error::Result<sequence::Sequence> {
+    let closure = function.to_function()?;
+
+    let mut accumulator = zero.clone();
+    for sequence in array.iter().rev() {
+        accumulator = interpreter
+            .call_closure_with_arguments(closure.clone(), &[sequence.clone(), accumulator])?;
+    }
+    Ok(accumulator)
+}
+
 fn convert_position(position: IBig) -> error::Result<usize> {
     let position: i64 = position.try_into()?;
     let position = position - 1;
@@ -123,5 +210,11 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(insert_before),
         wrap_xpath_fn!(head),
         wrap_xpath_fn!(tail),
+        wrap_xpath_fn!(reverse),
+        wrap_xpath_fn!(join),
+        wrap_xpath_fn!(for_each),
+        wrap_xpath_fn!(filter),
+        wrap_xpath_fn!(fold_left),
+        wrap_xpath_fn!(fold_right),
     ]
 }

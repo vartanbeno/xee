@@ -68,8 +68,24 @@ impl Array {
         Self(Rc::new(vec))
     }
 
+    pub(crate) fn join(arrays: &[Self]) -> Self {
+        let mut vec = Vec::new();
+        for array in arrays {
+            vec.extend(array.0.as_ref().iter().cloned());
+        }
+        Self::new(vec)
+    }
+
     pub(crate) fn index(&self, index: usize) -> Option<&sequence::Sequence> {
         self.0.get(index)
+    }
+
+    pub(crate) fn iter(&self) -> impl DoubleEndedIterator<Item = &sequence::Sequence> {
+        self.0.iter()
+    }
+
+    pub(crate) fn push(&mut self, member: sequence::Sequence) {
+        Rc::make_mut(&mut self.0).push(member);
     }
 
     pub(crate) fn put(&self, index: usize, member: &sequence::Sequence) -> Option<Self> {
@@ -112,6 +128,12 @@ impl Array {
             }
         }
         Some(Self::new(vec))
+    }
+
+    pub(crate) fn reversed(&self) -> Self {
+        let mut vec = self.0.as_ref().clone();
+        vec.reverse();
+        Self::new(vec)
     }
 
     pub(crate) fn insert_before(

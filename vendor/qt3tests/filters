@@ -53,33 +53,13 @@ string-queries-results-q1
 = app-Walmsley
 = app-XMark
 = app-spec-examples
-fo-test-array-filter-001
-fo-test-array-filter-002
-fo-test-array-filter-003
 fo-test-array-flatten-001
 fo-test-array-flatten-002
 fo-test-array-flatten-003
-fo-test-array-fold-left-001
-fo-test-array-fold-left-002
-fo-test-array-fold-left-003
-fo-test-array-fold-right-001
-fo-test-array-fold-right-002
-fo-test-array-fold-right-003
-fo-test-array-for-each-001
-fo-test-array-for-each-002
 fo-test-array-for-each-pair-001
 fo-test-array-for-each-pair-002
 fo-test-array-get-001
 fo-test-array-get-002
-fo-test-array-join-001
-fo-test-array-join-002
-fo-test-array-join-003
-fo-test-array-join-004
-fo-test-array-join-005
-fo-test-array-reverse-001
-fo-test-array-reverse-002
-fo-test-array-reverse-003
-fo-test-array-reverse-004
 fo-test-array-sort-001
 fo-test-array-sort-002
 fo-test-array-sort-003
@@ -187,18 +167,6 @@ fo-test-map-size-001
 fo-test-map-size-002
 = array-append
 = array-filter
-array-filter-001
-array-filter-002
-array-filter-003
-array-filter-004
-array-filter-005
-array-filter-006
-array-filter-007
-array-filter-008
-array-filter-009
-array-filter-010
-array-filter-011
-array-filter-012
 = array-flatten
 array-flatten-001
 array-flatten-002
@@ -208,36 +176,8 @@ array-flatten-005
 array-flatten-006
 array-flatten-007
 = array-fold-left
-array-fold-left-101
-array-fold-left-102
-array-fold-left-103
-array-fold-left-104
-array-fold-left-105
-array-fold-left-107
-array-fold-left-108
-array-fold-left-109
-array-fold-left-110
 = array-fold-right
-array-fold-right-001
-array-fold-right-002
-array-fold-right-003
-array-fold-right-004
-array-fold-right-005
-array-fold-right-006
-array-fold-right-007
-array-fold-right-008
-array-fold-right-009
-array-fold-right-010
 = array-for-each
-array-for-each-001
-array-for-each-002
-array-for-each-003
-array-for-each-004
-array-for-each-005
-array-for-each-006
-array-for-each-007
-array-for-each-008
-array-for-each-009
 = array-for-each-pair
 array-for-each-pair-301
 array-for-each-pair-302
@@ -253,23 +193,10 @@ array-for-each-pair-309
 array-head-606
 = array-insert-before
 = array-join
-array-join-201
-array-join-202
-array-join-203
-array-join-204
-array-join-205
-array-join-206
-array-join-207
-array-join-208
-array-join-209
 array-join-211
 = array-put
 = array-remove
 = array-reverse
-array-reverse-801
-array-reverse-802
-array-reverse-803
-array-reverse-804
 = array-size
 = array-sort
 array-sort-001
@@ -1550,22 +1477,10 @@ fn-function-lookup-762
 fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
-fn-function-lookup-769
-fn-function-lookup-770
 fn-function-lookup-771
 fn-function-lookup-772
-fn-function-lookup-773
-fn-function-lookup-774
-fn-function-lookup-775
-fn-function-lookup-776
 fn-function-lookup-777
 fn-function-lookup-778
-fn-function-lookup-779
-fn-function-lookup-780
-fn-function-lookup-787
-fn-function-lookup-788
-fn-function-lookup-793
-fn-function-lookup-794
 fn-function-lookup-797
 fn-function-lookup-798
 fn-function-lookup-799
