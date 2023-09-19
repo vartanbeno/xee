@@ -71,22 +71,11 @@ fo-test-array-for-each-pair-001
 fo-test-array-for-each-pair-002
 fo-test-array-get-001
 fo-test-array-get-002
-fo-test-array-head-001
-fo-test-array-head-002
-fo-test-array-head-003
-fo-test-array-insert-before-001
-fo-test-array-insert-before-002
-fo-test-array-insert-before-003
 fo-test-array-join-001
 fo-test-array-join-002
 fo-test-array-join-003
 fo-test-array-join-004
 fo-test-array-join-005
-fo-test-array-remove-001
-fo-test-array-remove-002
-fo-test-array-remove-003
-fo-test-array-remove-004
-fo-test-array-remove-005
 fo-test-array-reverse-001
 fo-test-array-reverse-002
 fo-test-array-reverse-003
@@ -94,8 +83,6 @@ fo-test-array-reverse-004
 fo-test-array-sort-001
 fo-test-array-sort-002
 fo-test-array-sort-003
-fo-test-array-tail-001
-fo-test-array-tail-002
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
@@ -263,22 +250,8 @@ array-for-each-pair-308
 array-for-each-pair-309
 = array-get
 = array-head
-array-head-601
-array-head-602
-array-head-603
-array-head-604
-array-head-605
 array-head-606
-array-head-608
-array-head-609
 = array-insert-before
-array-insert-before-501
-array-insert-before-502
-array-insert-before-503
-array-insert-before-504
-array-insert-before-505
-array-insert-before-506
-array-insert-before-507
 = array-join
 array-join-201
 array-join-202
@@ -292,21 +265,6 @@ array-join-209
 array-join-211
 = array-put
 = array-remove
-array-remove-401
-array-remove-402
-array-remove-403
-array-remove-404
-array-remove-405
-array-remove-406
-array-remove-407
-array-remove-408
-array-remove-409
-array-remove-410
-array-remove-412
-array-remove-413
-array-remove-414
-array-remove-415
-array-remove-416
 = array-reverse
 array-reverse-801
 array-reverse-802
@@ -345,11 +303,6 @@ array-sort-collation-6
 array-sort-collation-7
 = array-subarray
 = array-tail
-array-tail-701
-array-tail-702
-array-tail-703
-array-tail-704
-array-tail-705
 = fn-QName
 = fn-abs
 fn-abs-more-args-023
@@ -1609,14 +1562,8 @@ fn-function-lookup-777
 fn-function-lookup-778
 fn-function-lookup-779
 fn-function-lookup-780
-fn-function-lookup-783
-fn-function-lookup-784
-fn-function-lookup-785
-fn-function-lookup-786
 fn-function-lookup-787
 fn-function-lookup-788
-fn-function-lookup-791
-fn-function-lookup-792
 fn-function-lookup-793
 fn-function-lookup-794
 fn-function-lookup-797
@@ -1625,8 +1572,6 @@ fn-function-lookup-799
 fn-function-lookup-800
 fn-function-lookup-801
 fn-function-lookup-802
-fn-function-lookup-807
-fn-function-lookup-808
 fn-function-lookup-809
 fn-function-lookup-810
 fn-function-lookup-811

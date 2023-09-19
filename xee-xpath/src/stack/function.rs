@@ -88,13 +88,42 @@ impl Array {
     }
 
     pub(crate) fn subarray(&self, start: usize, length: usize) -> Option<Self> {
-        if (start + length) > self.0.len() {
+        if start > self.0.len() || (start + length) > self.0.len() {
             return None;
         }
         let mut vec = Vec::with_capacity(length);
         for i in start..(start + length) {
             vec.push(self.0[i].clone());
         }
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn remove_positions(&self, positions: &[usize]) -> Option<Self> {
+        for position in positions {
+            if position >= &self.0.len() {
+                return None;
+            }
+        }
+        let mut vec = Vec::with_capacity(self.0.len() - positions.len());
+
+        for (i, member) in self.0.iter().enumerate() {
+            if !positions.contains(&i) {
+                vec.push(member.clone());
+            }
+        }
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn insert_before(
+        &self,
+        position: usize,
+        member: &sequence::Sequence,
+    ) -> Option<Self> {
+        if position > self.0.len() {
+            return None;
+        }
+        let mut vec = self.0.as_ref().clone();
+        vec.insert(position, member.clone());
         Some(Self::new(vec))
     }
 

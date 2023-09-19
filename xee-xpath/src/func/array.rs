@@ -57,6 +57,42 @@ fn subarray3(array: stack::Array, start: IBig, length: IBig) -> error::Result<st
     array.subarray(start, length).ok_or(error::Error::FOAY0001)
 }
 
+#[xpath_fn("array:remove($array as array(*), $positions as xs:integer*) as array(*)")]
+fn remove(array: stack::Array, positions: &[IBig]) -> error::Result<stack::Array> {
+    let positions = positions
+        .iter()
+        .map(|position| convert_position(position.clone()))
+        .collect::<error::Result<Vec<usize>>>()?;
+    array
+        .remove_positions(&positions)
+        .ok_or(error::Error::FOAY0001)
+}
+
+#[xpath_fn("array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)")]
+fn insert_before(
+    array: stack::Array,
+    position: IBig,
+    member: &sequence::Sequence,
+) -> error::Result<stack::Array> {
+    let position = convert_position(position)?;
+    array
+        .insert_before(position, member)
+        .ok_or(error::Error::FOAY0001)
+}
+
+#[xpath_fn("array:head($array as array(*)) as item()*")]
+fn head(array: stack::Array) -> error::Result<sequence::Sequence> {
+    let item = array.index(0).ok_or(error::Error::FOAY0001)?;
+    Ok(item.clone())
+}
+
+#[xpath_fn("array:tail($array as array(*)) as item()*")]
+fn tail(array: stack::Array) -> error::Result<stack::Array> {
+    array
+        .subarray(1, array.len() - 1)
+        .ok_or(error::Error::FOAY0001)
+}
+
 fn convert_position(position: IBig) -> error::Result<usize> {
     let position: i64 = position.try_into()?;
     let position = position - 1;
@@ -83,5 +119,9 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(append),
         wrap_xpath_fn!(subarray2),
         wrap_xpath_fn!(subarray3),
+        wrap_xpath_fn!(remove),
+        wrap_xpath_fn!(insert_before),
+        wrap_xpath_fn!(head),
+        wrap_xpath_fn!(tail),
     ]
 }
