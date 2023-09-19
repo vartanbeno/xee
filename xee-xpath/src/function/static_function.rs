@@ -5,9 +5,9 @@ use xee_xpath_ast::Namespaces;
 
 use crate::context::DynamicContext;
 use crate::error;
-use crate::func::static_function_descriptions;
 use crate::function;
 use crate::interpreter;
+use crate::library::static_function_descriptions;
 use crate::sequence;
 use crate::stack;
 
