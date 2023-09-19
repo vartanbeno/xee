@@ -1,18 +1,18 @@
-- [ ] append
+- [x] append
 - [ ] filter
 - [ ] flatten
 - [ ] fold-left
 - [ ] fold-right
 - [ ] for-each
 - [ ] for-each-pair
-- [ ] get
-- [ ] head
-- [ ] insert-before
+- [x] get
+- [x] head
+- [x] insert-before
 - [ ] join
-- [ ] put
-- [ ] remove
+- [x] put
+- [x] remove
 - [ ] reverse
-- [ ] size
+- [x] size
 - [ ] sort
 - [ ] subarray
-- [ ] tail
+- [x] tail
