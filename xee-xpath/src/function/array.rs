@@ -1,0 +1,123 @@
+use std::rc::Rc;
+
+use xot::Xot;
+
+use crate::{error, sequence, Collation};
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Array(pub Rc<Vec<sequence::Sequence>>);
+
+impl Array {
+    pub(crate) fn new(vec: Vec<sequence::Sequence>) -> Self {
+        Self(Rc::new(vec))
+    }
+
+    pub(crate) fn join(arrays: &[Self]) -> Self {
+        let mut vec = Vec::new();
+        for array in arrays {
+            vec.extend(array.0.as_ref().iter().cloned());
+        }
+        Self::new(vec)
+    }
+
+    pub(crate) fn index(&self, index: usize) -> Option<&sequence::Sequence> {
+        self.0.get(index)
+    }
+
+    pub(crate) fn iter(&self) -> impl DoubleEndedIterator<Item = &sequence::Sequence> {
+        self.0.iter()
+    }
+
+    pub(crate) fn push(&mut self, member: sequence::Sequence) {
+        Rc::make_mut(&mut self.0).push(member);
+    }
+
+    pub(crate) fn put(&self, index: usize, member: &sequence::Sequence) -> Option<Self> {
+        if index >= self.0.len() {
+            return None;
+        }
+        let mut vec = self.0.as_ref().clone();
+        vec[index] = member.clone();
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn append(&self, appendage: &sequence::Sequence) -> Self {
+        let mut vec = self.0.as_ref().clone();
+        vec.push(appendage.clone());
+        Self::new(vec)
+    }
+
+    pub(crate) fn subarray(&self, start: usize, length: usize) -> Option<Self> {
+        if start > self.0.len() || (start + length) > self.0.len() {
+            return None;
+        }
+        let mut vec = Vec::with_capacity(length);
+        for i in start..(start + length) {
+            vec.push(self.0[i].clone());
+        }
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn remove_positions(&self, positions: &[usize]) -> Option<Self> {
+        for position in positions {
+            if position >= &self.0.len() {
+                return None;
+            }
+        }
+        let mut vec = Vec::with_capacity(self.0.len() - positions.len());
+
+        for (i, member) in self.0.iter().enumerate() {
+            if !positions.contains(&i) {
+                vec.push(member.clone());
+            }
+        }
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn reversed(&self) -> Self {
+        let mut vec = self.0.as_ref().clone();
+        vec.reverse();
+        Self::new(vec)
+    }
+
+    pub(crate) fn insert_before(
+        &self,
+        position: usize,
+        member: &sequence::Sequence,
+    ) -> Option<Self> {
+        if position > self.0.len() {
+            return None;
+        }
+        let mut vec = self.0.as_ref().clone();
+        vec.insert(position, member.clone());
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub(crate) fn deep_equal(
+        &self,
+        other: Array,
+        collation: &Collation,
+        default_offset: chrono::FixedOffset,
+        xot: &Xot,
+    ) -> error::Result<bool> {
+        if self.0.len() != other.0.len() {
+            return Ok(false);
+        }
+        for (a, b) in self.0.iter().zip(other.0.iter()) {
+            if !a.deep_equal(b, collation, default_offset, xot)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+}
+
+impl From<Vec<sequence::Sequence>> for Array {
+    fn from(vec: Vec<sequence::Sequence>) -> Self {
+        Self::new(vec)
+    }
+}
