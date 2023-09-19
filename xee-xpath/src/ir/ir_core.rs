@@ -9,7 +9,7 @@ use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
-use crate::stack::{CastType, StaticFunctionId};
+use crate::function::{CastType, StaticFunctionId};
 use crate::xml;
 
 pub(crate) type AtomS = Spanned<Atom>;

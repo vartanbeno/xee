@@ -3,13 +3,14 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
+use crate::function;
 use crate::stack;
 use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Atomic(atomic::Atomic),
-    Function(Rc<stack::Closure>),
+    Function(Rc<function::Closure>),
     Node(xml::Node),
 }
 
@@ -27,27 +28,27 @@ impl Item {
         }
     }
 
-    pub fn to_function(&self) -> error::Result<Rc<stack::Closure>> {
+    pub fn to_function(&self) -> error::Result<Rc<function::Closure>> {
         match self {
             Item::Function(f) => Ok(f.clone()),
             _ => Err(error::Error::Type),
         }
     }
 
-    pub fn to_map(&self) -> error::Result<stack::Map> {
+    pub fn to_map(&self) -> error::Result<function::Map> {
         match self {
             Item::Function(closure) => match closure.as_ref() {
-                stack::Closure::Map(map) => Ok(map.clone()),
+                function::Closure::Map(map) => Ok(map.clone()),
                 _ => Err(error::Error::Type),
             },
             _ => Err(error::Error::Type),
         }
     }
 
-    pub fn to_array(&self) -> error::Result<stack::Array> {
+    pub fn to_array(&self) -> error::Result<function::Array> {
         match self {
             Item::Function(closure) => match closure.as_ref() {
-                stack::Closure::Array(array) => Ok(array.clone()),
+                function::Closure::Array(array) => Ok(array.clone()),
                 _ => Err(error::Error::Type),
             },
             _ => Err(error::Error::Type),
@@ -75,14 +76,14 @@ impl Item {
 
     pub(crate) fn is_map(&self) -> bool {
         match self {
-            Item::Function(closure) => matches!(closure.as_ref(), stack::Closure::Map(_)),
+            Item::Function(closure) => matches!(closure.as_ref(), function::Closure::Map(_)),
             _ => false,
         }
     }
 
     pub(crate) fn is_array(&self) -> bool {
         match self {
-            Item::Function(closure) => matches!(closure.as_ref(), stack::Closure::Array(_)),
+            Item::Function(closure) => matches!(closure.as_ref(), function::Closure::Array(_)),
             _ => false,
         }
     }
@@ -103,27 +104,27 @@ impl From<xml::Node> for Item {
     }
 }
 
-impl From<stack::Closure> for Item {
-    fn from(f: stack::Closure) -> Self {
+impl From<function::Closure> for Item {
+    fn from(f: function::Closure) -> Self {
         Self::Function(Rc::new(f))
     }
 }
 
-impl From<Rc<stack::Closure>> for Item {
-    fn from(f: Rc<stack::Closure>) -> Self {
+impl From<Rc<function::Closure>> for Item {
+    fn from(f: Rc<function::Closure>) -> Self {
         Self::Function(f)
     }
 }
 
-impl From<stack::Array> for Item {
-    fn from(array: stack::Array) -> Self {
-        Self::Function(Rc::new(stack::Closure::Array(array)))
+impl From<function::Array> for Item {
+    fn from(array: function::Array) -> Self {
+        Self::Function(Rc::new(function::Closure::Array(array)))
     }
 }
 
-impl From<stack::Map> for Item {
-    fn from(map: stack::Map) -> Self {
-        Self::Function(Rc::new(stack::Closure::Map(map)))
+impl From<function::Map> for Item {
+    fn from(map: function::Map) -> Self {
+        Self::Function(Rc::new(function::Closure::Map(map)))
     }
 }
 
@@ -142,7 +143,7 @@ impl<'a> AtomizedItemIter<'a> {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
             Item::Function(closure) => match closure.as_ref() {
-                stack::Closure::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
+                function::Closure::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },
         }
@@ -194,13 +195,13 @@ impl Iterator for AtomizedNodeIter {
 #[derive(Clone)]
 pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
-    array: stack::Array,
+    array: function::Array,
     array_index: usize,
     iter: Option<Box<stack::AtomizedIter<'a>>>,
 }
 
 impl<'a> AtomizedArrayIter<'a> {
-    fn new(array: stack::Array, xot: &'a Xot) -> Self {
+    fn new(array: function::Array, xot: &'a Xot) -> Self {
         Self {
             xot,
             array,

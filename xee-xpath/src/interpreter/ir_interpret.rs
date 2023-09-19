@@ -3,9 +3,10 @@ use miette::SourceSpan;
 
 use crate::context::{FunctionRule, StaticContext};
 use crate::error::{Error, Result};
+use crate::function;
 use crate::ir;
 use crate::span;
-use crate::stack::{self, StaticFunctionId};
+use crate::stack;
 
 use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
 use super::instruction::Instruction;
@@ -313,7 +314,7 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_static_function_reference(
         &mut self,
-        static_function_id: StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
         span: SourceSpan,
     ) -> Result<()> {

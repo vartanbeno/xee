@@ -7,6 +7,7 @@ use xot::Xot;
 
 use crate::atomic;
 use crate::error;
+use crate::function;
 use crate::occurrence;
 use crate::sequence;
 use crate::stack;
@@ -43,7 +44,7 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn to_array(&self) -> error::Result<stack::Array> {
+    pub(crate) fn to_array(&self) -> error::Result<function::Array> {
         let mut array = Vec::new();
         for item in self.items() {
             let item = item?;
@@ -76,11 +77,11 @@ impl Sequence {
         }
     }
 
-    pub fn map_iter(&self) -> impl Iterator<Item = error::Result<stack::Map>> {
+    pub fn map_iter(&self) -> impl Iterator<Item = error::Result<function::Map>> {
         self.items().map(|item| item?.to_map())
     }
 
-    pub fn array_iter(&self) -> impl Iterator<Item = error::Result<stack::Array>> {
+    pub fn array_iter(&self) -> impl Iterator<Item = error::Result<function::Array>> {
         self.items().map(|item| item?.to_array())
     }
 
@@ -157,18 +158,18 @@ impl Sequence {
                     }
                 }
                 (Item::Function(a), Item::Function(b)) => match (a.as_ref(), b.as_ref()) {
-                    (stack::Closure::Array(a), stack::Closure::Array(b)) => {
+                    (function::Closure::Array(a), function::Closure::Array(b)) => {
                         if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
                             return Ok(false);
                         }
                     }
-                    (stack::Closure::Map(a), stack::Closure::Map(b)) => {
+                    (function::Closure::Map(a), function::Closure::Map(b)) => {
                         if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
                             return Ok(false);
                         }
                     }
-                    (stack::Closure::Map(_), stack::Closure::Array(_)) => return Ok(false),
-                    (stack::Closure::Array(_), stack::Closure::Map(_)) => return Ok(false),
+                    (function::Closure::Map(_), function::Closure::Array(_)) => return Ok(false),
+                    (function::Closure::Array(_), function::Closure::Map(_)) => return Ok(false),
                     _ => return Err(error::Error::FOTY0015),
                 },
                 _ => {
@@ -268,16 +269,16 @@ impl From<Vec<xml::Node>> for Sequence {
     }
 }
 
-impl From<stack::Array> for Sequence {
-    fn from(array: stack::Array) -> Self {
+impl From<function::Array> for Sequence {
+    fn from(array: function::Array) -> Self {
         Self {
             stack_value: array.into(),
         }
     }
 }
 
-impl From<stack::Map> for Sequence {
-    fn from(map: stack::Map) -> Self {
+impl From<function::Map> for Sequence {
+    fn from(map: function::Map) -> Self {
         Self {
             stack_value: map.into(),
         }

@@ -5,6 +5,7 @@ use xee_xpath_ast::Namespaces;
 
 use crate::error;
 use crate::func::static_function_descriptions;
+use crate::function;
 use crate::interpreter;
 use crate::sequence;
 use crate::stack;
@@ -279,7 +280,7 @@ fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
 
 #[derive(Debug)]
 pub(crate) struct StaticFunctions {
-    by_name: HashMap<(ast::Name, u8), stack::StaticFunctionId>,
+    by_name: HashMap<(ast::Name, u8), function::StaticFunctionId>,
     by_index: Vec<StaticFunction>,
 }
 
@@ -295,7 +296,7 @@ impl StaticFunctions {
         for (i, static_function) in by_index.iter().enumerate() {
             by_name.insert(
                 (static_function.name.clone(), static_function.arity as u8),
-                stack::StaticFunctionId(i),
+                function::StaticFunctionId(i),
             );
         }
         Self { by_name, by_index }
@@ -305,14 +306,14 @@ impl StaticFunctions {
         &self,
         name: &ast::Name,
         arity: u8,
-    ) -> Option<stack::StaticFunctionId> {
+    ) -> Option<function::StaticFunctionId> {
         // TODO annoying clone
         self.by_name.get(&(name.clone(), arity)).copied()
     }
 
     pub(crate) fn get_by_index(
         &self,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
     ) -> &StaticFunction {
         &self.by_index[static_function_id.0]
     }

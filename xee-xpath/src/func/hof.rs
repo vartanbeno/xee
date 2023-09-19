@@ -8,9 +8,9 @@ use crate::atomic;
 use crate::context;
 use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function;
 use crate::interpreter::Interpreter;
 use crate::sequence;
-use crate::stack;
 use crate::wrap_xpath_fn;
 use crate::xml;
 use crate::Occurrence;
@@ -51,7 +51,7 @@ fn function_name(
 ) -> error::Result<Option<ast::Name>> {
     let closure = func.to_function()?;
     match closure.as_ref() {
-        stack::Closure::Static {
+        function::Closure::Static {
             static_function_id, ..
         } => {
             let static_function = context
@@ -72,7 +72,7 @@ fn function_arity(
 ) -> error::Result<IBig> {
     let closure = func.to_function()?;
     match closure.as_ref() {
-        stack::Closure::Static {
+        function::Closure::Static {
             static_function_id, ..
         } => {
             let static_function = context
@@ -81,11 +81,11 @@ fn function_arity(
                 .get_by_index(*static_function_id);
             Ok(static_function.arity().into())
         }
-        stack::Closure::Inline {
+        function::Closure::Inline {
             inline_function_id, ..
         } => Ok(interpreter.arity(*inline_function_id).into()),
-        stack::Closure::Array { .. } => Ok(1.into()),
-        stack::Closure::Map { .. } => Ok(1.into()),
+        function::Closure::Array { .. } => Ok(1.into()),
+        function::Closure::Map { .. } => Ok(1.into()),
     }
 }
 

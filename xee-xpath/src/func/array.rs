@@ -8,14 +8,14 @@ use crate::atomic;
 use crate::context;
 use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function;
 use crate::interpreter::Interpreter;
 use crate::sequence;
-use crate::stack;
 use crate::wrap_xpath_fn;
 use crate::Occurrence;
 
 #[xpath_fn("array:get($array as array(*), $position as xs:integer) as item()*")]
-fn get(array: stack::Array, position: IBig) -> error::Result<sequence::Sequence> {
+fn get(array: function::Array, position: IBig) -> error::Result<sequence::Sequence> {
     let position = convert_position(position)?;
     let item = array
         .index(position as usize)
@@ -24,7 +24,7 @@ fn get(array: stack::Array, position: IBig) -> error::Result<sequence::Sequence>
 }
 
 #[xpath_fn("array:size($array as array(*)) as xs:integer")]
-fn size(array: stack::Array) -> IBig {
+fn size(array: function::Array) -> IBig {
     array.len().into()
 }
 
@@ -32,21 +32,21 @@ fn size(array: stack::Array) -> IBig {
     "array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)"
 )]
 fn put(
-    array: stack::Array,
+    array: function::Array,
     position: IBig,
     member: &sequence::Sequence,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let position = convert_position(position)?;
     array.put(position, member).ok_or(error::Error::FOAY0001)
 }
 
 #[xpath_fn("array:append($array as array(*), $appendage as item()*) as array(*)")]
-fn append(array: stack::Array, appendage: &sequence::Sequence) -> stack::Array {
+fn append(array: function::Array, appendage: &sequence::Sequence) -> function::Array {
     array.append(appendage)
 }
 
 #[xpath_fn("array:subarray($array as array(*), $start as xs:integer) as array(*)")]
-fn subarray2(array: stack::Array, start: IBig) -> error::Result<stack::Array> {
+fn subarray2(array: function::Array, start: IBig) -> error::Result<function::Array> {
     let start = convert_position(start)?;
     let length = array.len() - start;
     array.subarray(start, length).ok_or(error::Error::FOAY0001)
@@ -55,14 +55,14 @@ fn subarray2(array: stack::Array, start: IBig) -> error::Result<stack::Array> {
 #[xpath_fn(
     "array:subarray($array as array(*), $start as xs:integer, $length as xs:integer) as array(*)"
 )]
-fn subarray3(array: stack::Array, start: IBig, length: IBig) -> error::Result<stack::Array> {
+fn subarray3(array: function::Array, start: IBig, length: IBig) -> error::Result<function::Array> {
     let start = convert_position(start)?;
     let length = convert_length(length)?;
     array.subarray(start, length).ok_or(error::Error::FOAY0001)
 }
 
 #[xpath_fn("array:remove($array as array(*), $positions as xs:integer*) as array(*)")]
-fn remove(array: stack::Array, positions: &[IBig]) -> error::Result<stack::Array> {
+fn remove(array: function::Array, positions: &[IBig]) -> error::Result<function::Array> {
     let positions = positions
         .iter()
         .map(|position| convert_position(position.clone()))
@@ -74,10 +74,10 @@ fn remove(array: stack::Array, positions: &[IBig]) -> error::Result<stack::Array
 
 #[xpath_fn("array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)")]
 fn insert_before(
-    array: stack::Array,
+    array: function::Array,
     position: IBig,
     member: &sequence::Sequence,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let position = convert_position(position)?;
     array
         .insert_before(position, member)
@@ -85,26 +85,26 @@ fn insert_before(
 }
 
 #[xpath_fn("array:head($array as array(*)) as item()*")]
-fn head(array: stack::Array) -> error::Result<sequence::Sequence> {
+fn head(array: function::Array) -> error::Result<sequence::Sequence> {
     let item = array.index(0).ok_or(error::Error::FOAY0001)?;
     Ok(item.clone())
 }
 
 #[xpath_fn("array:tail($array as array(*)) as item()*")]
-fn tail(array: stack::Array) -> error::Result<stack::Array> {
+fn tail(array: function::Array) -> error::Result<function::Array> {
     array
         .subarray(1, array.len() - 1)
         .ok_or(error::Error::FOAY0001)
 }
 
 #[xpath_fn("array:reverse($array as array(*)) as array(*)")]
-fn reverse(array: stack::Array) -> stack::Array {
+fn reverse(array: function::Array) -> function::Array {
     array.reversed()
 }
 
 #[xpath_fn("array:join($arrays as array(*)*) as array(*)")]
-fn join(arrays: &[stack::Array]) -> stack::Array {
-    stack::Array::join(arrays)
+fn join(arrays: &[function::Array]) -> function::Array {
+    function::Array::join(arrays)
 }
 
 #[xpath_fn(
@@ -112,11 +112,11 @@ fn join(arrays: &[stack::Array]) -> stack::Array {
 )]
 fn for_each(
     interpreter: &mut Interpreter,
-    array: stack::Array,
+    array: function::Array,
     action: sequence::Item,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let closure = action.to_function()?;
-    let mut result = stack::Array::new(vec![]);
+    let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
         let sequence =
             interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
@@ -130,11 +130,11 @@ fn for_each(
 )]
 fn filter(
     interpreter: &mut Interpreter,
-    array: stack::Array,
+    array: function::Array,
     function: sequence::Item,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let closure = function.to_function()?;
-    let mut result = stack::Array::new(vec![]);
+    let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
         let include =
             interpreter.call_closure_with_arguments(closure.clone(), &[sequence.clone()])?;
@@ -150,7 +150,7 @@ fn filter(
 #[xpath_fn("array:fold-left($array as array(*), $zero as item()*, $function as function(item()*, item()*) as item()*) as item()*")]
 fn fold_left(
     interpreter: &mut Interpreter,
-    array: stack::Array,
+    array: function::Array,
     zero: &sequence::Sequence,
     function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
@@ -167,7 +167,7 @@ fn fold_left(
 #[xpath_fn("array:fold-right($array as array(*), $zero as item()*, $function as function(item()*, item()*) as item()*) as item()*")]
 fn fold_right(
     interpreter: &mut Interpreter,
-    array: stack::Array,
+    array: function::Array,
     zero: &sequence::Sequence,
     function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
@@ -184,13 +184,13 @@ fn fold_right(
 #[xpath_fn("array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)")]
 fn for_each_pair(
     interpreter: &mut Interpreter,
-    array1: stack::Array,
-    array2: stack::Array,
+    array1: function::Array,
+    array2: function::Array,
     function: sequence::Item,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let closure = function.to_function()?;
 
-    let mut result = stack::Array::new(vec![]);
+    let mut result = function::Array::new(vec![]);
     for (sequence1, sequence2) in array1.iter().zip(array2.iter()) {
         let sequence = interpreter.call_closure_with_arguments(
             closure.clone(),
@@ -202,7 +202,10 @@ fn for_each_pair(
 }
 
 #[xpath_fn("array:sort($array as array(*)) as array(*)")]
-fn sort1(context: &context::DynamicContext, input: stack::Array) -> error::Result<stack::Array> {
+fn sort1(
+    context: &context::DynamicContext,
+    input: function::Array,
+) -> error::Result<function::Array> {
     sort_without_key(
         context,
         input,
@@ -213,9 +216,9 @@ fn sort1(context: &context::DynamicContext, input: stack::Array) -> error::Resul
 #[xpath_fn("array:sort($array as array(*), $collation as xs:string?) as array(*)")]
 fn sort2(
     context: &context::DynamicContext,
-    input: stack::Array,
+    input: function::Array,
     collation: Option<&str>,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
     sort_without_key(context, input, collation)
 }
@@ -224,10 +227,10 @@ fn sort2(
 fn sort3(
     context: &context::DynamicContext,
     interpreter: &mut Interpreter,
-    input: stack::Array,
+    input: function::Array,
     collation: Option<&str>,
     key: sequence::Item,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
     let closure = key.to_function()?;
     sort_by_sequence(context, input, collation, |sequence| {
@@ -239,9 +242,9 @@ fn sort3(
 
 fn sort_without_key(
     context: &context::DynamicContext,
-    input: stack::Array,
+    input: function::Array,
     collation: &str,
-) -> error::Result<stack::Array> {
+) -> error::Result<function::Array> {
     sort_by_sequence(context, input, collation, |sequence| {
         // the sequivalent of fn:data()
         let atoms = sequence
@@ -253,10 +256,10 @@ fn sort_without_key(
 
 fn sort_by_sequence<F>(
     context: &context::DynamicContext,
-    input: stack::Array,
+    input: function::Array,
     collation: &str,
     mut get: F,
-) -> error::Result<stack::Array>
+) -> error::Result<function::Array>
 where
     F: FnMut(&sequence::Sequence) -> error::Result<sequence::Sequence>,
 {
@@ -290,7 +293,7 @@ where
         .into_iter()
         .map(|(_, sequence)| sequence.clone())
         .collect::<Vec<_>>();
-    Ok(stack::Array::new(sequences))
+    Ok(function::Array::new(sequences))
 }
 
 #[xpath_fn("array:flatten($input as item()*) as item()*")]

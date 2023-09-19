@@ -1,9 +1,9 @@
 use miette::SourceSpan;
 use xee_xpath_ast::ast;
 
+use crate::function;
 use crate::ir;
 use crate::stack;
-use crate::stack::CastType;
 use crate::xml;
 
 use super::instruction::{encode_instruction, instruction_size, Instruction};
@@ -11,7 +11,7 @@ use super::instruction::{encode_instruction, instruction_size, Instruction};
 #[derive(Debug, Clone)]
 pub(crate) struct Program {
     pub(crate) src: String,
-    pub(crate) functions: Vec<stack::InlineFunction>,
+    pub(crate) functions: Vec<function::InlineFunction>,
 }
 
 impl Program {
@@ -24,22 +24,25 @@ impl Program {
 
     pub(crate) fn add_function(
         &mut self,
-        function: stack::InlineFunction,
-    ) -> stack::InlineFunctionId {
+        function: function::InlineFunction,
+    ) -> function::InlineFunctionId {
         let id = self.functions.len();
         if id > u16::MAX as usize {
             panic!("too many functions");
         }
         self.functions.push(function);
 
-        stack::InlineFunctionId(id)
+        function::InlineFunctionId(id)
     }
 
-    pub(crate) fn get_function(&self, index: usize) -> &stack::InlineFunction {
+    pub(crate) fn get_function(&self, index: usize) -> &function::InlineFunction {
         &self.functions[index]
     }
 
-    pub(crate) fn get_function_by_id(&self, id: stack::InlineFunctionId) -> &stack::InlineFunction {
+    pub(crate) fn get_function_by_id(
+        &self,
+        id: function::InlineFunctionId,
+    ) -> &function::InlineFunction {
         self.get_function(id.0)
     }
 }
@@ -75,7 +78,7 @@ pub(crate) struct FunctionBuilder<'a> {
     spans: Vec<SourceSpan>,
     constants: Vec<stack::Value>,
     steps: Vec<xml::Step>,
-    cast_types: Vec<CastType>,
+    cast_types: Vec<function::CastType>,
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
 }
@@ -132,7 +135,7 @@ impl<'a> FunctionBuilder<'a> {
         step_id
     }
 
-    pub(crate) fn add_cast_type(&mut self, cast_type: CastType) -> usize {
+    pub(crate) fn add_cast_type(&mut self, cast_type: function::CastType) -> usize {
         let cast_type_id = self.cast_types.len();
         self.cast_types.push(cast_type);
         if cast_type_id > (u16::MAX as usize) {
@@ -220,7 +223,7 @@ impl<'a> FunctionBuilder<'a> {
         name: String,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
-    ) -> stack::InlineFunction {
+    ) -> function::InlineFunction {
         if let Some(return_type) = &function_definition.return_type {
             let sequence_type_id = self.add_sequence_type(return_type.clone());
             if sequence_type_id > (u16::MAX as usize) {
@@ -229,7 +232,7 @@ impl<'a> FunctionBuilder<'a> {
             self.emit(Instruction::ReturnConvert(sequence_type_id as u16), span);
         }
         self.emit(Instruction::Return, span);
-        stack::InlineFunction {
+        function::InlineFunction {
             name,
             params: function_definition.params.clone(),
             chunk: self.compiled,
@@ -248,8 +251,8 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn add_function(
         &mut self,
-        function: stack::InlineFunction,
-    ) -> stack::InlineFunctionId {
+        function: function::InlineFunction,
+    ) -> function::InlineFunctionId {
         self.program.add_function(function)
     }
 }

@@ -465,7 +465,7 @@ pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
 }
 
 #[cfg(test)]
-use crate::stack::InlineFunction;
+use crate::function::InlineFunction;
 
 #[cfg(test)]
 impl InlineFunction {

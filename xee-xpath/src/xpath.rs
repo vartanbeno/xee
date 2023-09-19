@@ -2,6 +2,7 @@ use xee_xpath_ast::ast;
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
+use crate::function;
 use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
@@ -13,7 +14,7 @@ use crate::xml;
 #[derive(Debug)]
 pub struct XPath {
     pub(crate) program: Program,
-    main: stack::InlineFunctionId,
+    main: function::InlineFunctionId,
 }
 
 impl XPath {
@@ -34,7 +35,7 @@ impl XPath {
         compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
-        let inline_id = stack::InlineFunctionId(program.functions.len() - 1);
+        let inline_id = function::InlineFunctionId(program.functions.len() - 1);
         Ok(Self {
             program,
             main: inline_id,

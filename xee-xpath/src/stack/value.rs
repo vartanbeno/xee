@@ -11,6 +11,7 @@ use crate::atomic;
 use crate::atomic::AtomicCompare;
 use crate::context;
 use crate::error;
+use crate::function;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
@@ -293,7 +294,7 @@ impl From<Vec<sequence::Item>> for Value {
     }
 }
 
-impl TryFrom<&stack::Value> for Rc<stack::Closure> {
+impl TryFrom<&stack::Value> for Rc<function::Closure> {
     type Error = error::Error;
 
     fn try_from(value: &stack::Value) -> error::Result<Self> {

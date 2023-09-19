@@ -5,8 +5,8 @@ use xee_xpath_ast::{ast, ast::Span, span::Spanned, Namespaces, FN_NAMESPACE};
 
 use crate::context::StaticContext;
 use crate::error::{Error, Result};
+use crate::function;
 use crate::span;
-use crate::stack;
 use crate::xml;
 
 use super::{ir_core as ir, AtomS};
@@ -739,7 +739,7 @@ impl<'a> IrConverter<'a> {
 
     fn static_function_ref(
         &mut self,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
         span: Span,
     ) -> Bindings {
         let atom = ir::Atom::Const(ir::Const::StaticFunctionReference(

@@ -13,6 +13,7 @@ use crate::atomic::{
 use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
+use crate::function;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
@@ -26,7 +27,7 @@ const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
 struct Frame {
-    function: stack::InlineFunctionId,
+    function: function::InlineFunctionId,
     ip: usize,
     base: usize,
 }
@@ -57,7 +58,7 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn start(
         &mut self,
-        function_id: stack::InlineFunctionId,
+        function_id: function::InlineFunctionId,
         context_item: Option<&sequence::Item>,
         arguments: Vec<Vec<sequence::Item>>,
     ) {
@@ -97,7 +98,7 @@ impl<'a> Interpreter<'a> {
         self.frames.last_mut().unwrap()
     }
 
-    pub(crate) fn function(&self) -> &stack::InlineFunction {
+    pub(crate) fn function(&self) -> &function::InlineFunction {
         &self.program.functions[self.frame().function.0]
     }
 
@@ -151,8 +152,8 @@ impl<'a> Interpreter<'a> {
                         sequences.push(self.stack.pop().unwrap().into());
                     }
                     self.stack.push(
-                        stack::Closure::Inline {
-                            inline_function_id: stack::InlineFunctionId(function_id as usize),
+                        function::Closure::Inline {
+                            inline_function_id: function::InlineFunctionId(function_id as usize),
                             sequences,
                         }
                         .into(),
@@ -160,7 +161,8 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::StaticClosure => {
                     let static_function_id = self.read_u16();
-                    let static_function_id = stack::StaticFunctionId(static_function_id as usize);
+                    let static_function_id =
+                        function::StaticFunctionId(static_function_id as usize);
                     let static_closure = self.create_static_closure_from_stack(static_function_id);
                     self.stack.push(static_closure.into());
                 }
@@ -177,7 +179,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     // the closure is always just below the base
-                    let closure: Rc<stack::Closure> =
+                    let closure: Rc<function::Closure> =
                         (&self.stack[self.frame().base - 1]).try_into()?;
                     let sequences = closure.sequences();
                     // and we push the value we need onto the stack
@@ -200,7 +202,7 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..length {
                         popped.push(self.stack.pop().unwrap().into());
                     }
-                    self.stack.push(stack::Array::new(popped).into());
+                    self.stack.push(function::Array::new(popped).into());
                 }
                 EncodedInstruction::CurlyMap => {
                     let length = self.pop_atomic().unwrap();
@@ -212,7 +214,7 @@ impl<'a> Interpreter<'a> {
                         let key = self.pop_atomic()?;
                         popped.push((key, value.into()));
                     }
-                    self.stack.push(stack::Map::new(popped)?.into());
+                    self.stack.push(function::Map::new(popped)?.into());
                 }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
@@ -503,8 +505,8 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn create_static_closure_from_stack(
         &mut self,
-        static_function_id: stack::StaticFunctionId,
-    ) -> stack::Closure {
+        static_function_id: function::StaticFunctionId,
+    ) -> function::Closure {
         Self::create_static_closure(self.dynamic_context, static_function_id, || {
             Some(self.stack.pop().unwrap())
         })
@@ -512,9 +514,9 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn create_static_closure_from_context(
         &mut self,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
         arg: Option<xml::Node>,
-    ) -> stack::Closure {
+    ) -> function::Closure {
         Self::create_static_closure(self.dynamic_context, static_function_id, || {
             arg.map(|n| n.into())
         })
@@ -522,9 +524,9 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn create_static_closure<F>(
         context: &DynamicContext,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
         mut get: F,
-    ) -> stack::Closure
+    ) -> function::Closure
     where
         F: FnMut() -> Option<stack::Value>,
     {
@@ -543,13 +545,13 @@ impl<'a> Interpreter<'a> {
         } else {
             vec![]
         };
-        stack::Closure::Static {
+        function::Closure::Static {
             static_function_id,
             sequences,
         }
     }
 
-    pub(crate) fn arity(&self, function_id: stack::InlineFunctionId) -> usize {
+    pub(crate) fn arity(&self, function_id: function::InlineFunctionId) -> usize {
         self.program.functions[function_id.0].params.len()
     }
 
@@ -559,13 +561,13 @@ impl<'a> Interpreter<'a> {
 
         // TODO: check that arity of function matches arity of call
 
-        let closure: Rc<stack::Closure> = value.try_into()?;
+        let closure: Rc<function::Closure> = value.try_into()?;
         self.call_closure(closure, arity)
     }
 
     pub(crate) fn call_closure_with_arguments(
         &mut self,
-        closure: Rc<stack::Closure>,
+        closure: Rc<function::Closure>,
         arguments: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
         // put closure onto the stack
@@ -576,7 +578,7 @@ impl<'a> Interpreter<'a> {
             self.stack.push(arg.clone().into());
         }
         self.call_closure(closure.clone(), arity)?;
-        if matches!(closure.as_ref(), stack::Closure::Inline { .. }) {
+        if matches!(closure.as_ref(), function::Closure::Inline { .. }) {
             // run interpreter until we return to the base
             // we started in
             self.run(self.frames.last().unwrap().base)?;
@@ -585,18 +587,18 @@ impl<'a> Interpreter<'a> {
         Ok(value)
     }
 
-    fn call_closure(&mut self, closure: Rc<stack::Closure>, arity: u8) -> Result<(), Error> {
+    fn call_closure(&mut self, closure: Rc<function::Closure>, arity: u8) -> Result<(), Error> {
         match closure.as_ref() {
-            stack::Closure::Static {
+            function::Closure::Static {
                 static_function_id,
                 sequences,
             } => self.call_static(*static_function_id, arity, sequences),
-            stack::Closure::Inline {
+            function::Closure::Inline {
                 inline_function_id,
                 sequences: _,
             } => self.call_inline(*inline_function_id, arity),
-            stack::Closure::Array(array) => self.call_array(array, arity as usize),
-            stack::Closure::Map(map) => self.call_map(map, arity as usize),
+            function::Closure::Array(array) => self.call_array(array, arity as usize),
+            function::Closure::Map(map) => self.call_map(map, arity as usize),
         }
     }
 
@@ -606,7 +608,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_static(
         &mut self,
-        static_function_id: stack::StaticFunctionId,
+        static_function_id: function::StaticFunctionId,
         arity: u8,
         closure_sequences: &[sequence::Sequence],
     ) -> error::Result<()> {
@@ -628,7 +630,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_inline(
         &mut self,
-        function_id: stack::InlineFunctionId,
+        function_id: function::InlineFunctionId,
         arity: u8,
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
@@ -672,7 +674,7 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_array(&mut self, array: &stack::Array, arity: usize) -> error::Result<()> {
+    fn call_array(&mut self, array: &function::Array, arity: usize) -> error::Result<()> {
         if arity != 1 {
             return Err(error::Error::Type);
         }
@@ -690,7 +692,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn call_map(&mut self, map: &stack::Map, arity: usize) -> error::Result<()> {
+    fn call_map(&mut self, map: &function::Map, arity: usize) -> error::Result<()> {
         if arity != 1 {
             return Err(error::Error::Type);
         }

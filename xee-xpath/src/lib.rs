@@ -8,6 +8,7 @@ mod atomic;
 mod context;
 mod error;
 mod func;
+mod function;
 mod interpreter;
 mod ir;
 mod occurrence;
