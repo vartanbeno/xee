@@ -276,6 +276,14 @@ impl From<stack::Array> for Sequence {
     }
 }
 
+impl From<stack::Map> for Sequence {
+    fn from(map: stack::Map) -> Self {
+        Self {
+            stack_value: map.into(),
+        }
+    }
+}
+
 impl<T> From<Option<T>> for Sequence
 where
     T: Into<sequence::Item>,

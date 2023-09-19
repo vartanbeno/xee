@@ -82,7 +82,6 @@ fo-test-fn-error-002
 fo-test-fn-escape-html-uri-001
 fo-test-fn-escape-html-uri-002
 fo-test-fn-filter-002
-fo-test-fn-fold-left-008
 fo-test-fn-format-integer-001
 fo-test-fn-format-integer-002
 fo-test-fn-format-integer-003
@@ -144,19 +143,12 @@ fo-test-fn-substring-before-006
 fo-test-fn-substring-before-007
 fo-test-fn-unordered-001
 fo-test-fn-year-from-dateTime-004
-fo-test-map-contains-003
-fo-test-map-contains-004
-fo-test-map-contains-005
-fo-test-map-entry-001
 fo-test-map-for-each-001
 fo-test-map-for-each-002
 fo-test-map-for-each-003
-fo-test-map-get-003
 fo-test-map-keys-001
 fo-test-map-merge-001
 fo-test-map-merge-002
-fo-test-map-size-001
-fo-test-map-size-002
 = array-append
 = array-filter
 = array-flatten
@@ -394,7 +386,6 @@ fn-dateTime-2
 = fn-days-from-duration
 = fn-deep-equal
 fn-deep-equal-arrays-18
-fn-deep-equal-maps-15
 = fn-default-collation
 = fn-default-language
 default-language-001
@@ -1427,28 +1418,16 @@ fn-function-lookup-762
 fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
-fn-function-lookup-809
-fn-function-lookup-810
-fn-function-lookup-811
 fn-function-lookup-812
 fn-function-lookup-813
 fn-function-lookup-814
 fn-function-lookup-815
 fn-function-lookup-816
-fn-function-lookup-817
-fn-function-lookup-818
-fn-function-lookup-819
-fn-function-lookup-820
 fn-function-lookup-821
 fn-function-lookup-822
 fn-function-lookup-823
 fn-function-lookup-824
-fn-function-lookup-825
 fn-function-lookup-826
-fn-function-lookup-827
-fn-function-lookup-828
-fn-function-lookup-829
-fn-function-lookup-830
 = fn-function-name
 fn-function-name-008
 fn-function-name-017
@@ -3084,7 +3063,6 @@ serialize-xml-142b
 fn-sort-17
 fn-sort-22
 fn-sort-23
-fn-sort-error-2
 fn-sort-spec-6
 = fn-starts-with
 K2-StartsWithFunc-1
@@ -3098,7 +3076,6 @@ K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
 fn-string-31
-fn-string-36
 fn-string-5
 fn-string-6
 = fn-string-join
@@ -3441,32 +3418,7 @@ xml-to-json-D-511
 = fn-years-from-duration
 = fn-zero-or-one
 = map-contains
-map-contains-001
-map-contains-002
-map-contains-003
-map-contains-004
-map-contains-005
-map-contains-006
-map-contains-007
-map-contains-008
-map-contains-009
-map-contains-010
-map-contains-011
-map-contains-012
-map-contains-013
-map-contains-014
-map-contains-015
 map-contains-016
-map-contains-017
-map-contains-018
-map-contains-019
-map-contains-020
-map-contains-901
-map-contains-902
-map-contains-903
-map-contains-904
-map-contains-905
-map-contains-906
 = map-entry
 map-entry-001
 map-entry-001-hof
@@ -3508,51 +3460,14 @@ map-for-each-014
 map-for-each-015
 map-for-each-016
 = map-get
-map-get-001
-map-get-002
-map-get-003
-map-get-004
-map-get-005
-map-get-006
-map-get-007
-map-get-008
-map-get-009
-map-get-010
-map-get-011
-map-get-012
-map-get-013
-map-get-014
-map-get-015
 map-get-016
-map-get-017
-map-get-018
-map-get-019
-map-get-020
-map-get-021
-map-get-022
 map-get-023
 map-get-024
-map-get-025
-map-get-901
-map-get-902
-map-get-903
-map-get-904
-map-get-905
-map-get-906
 = map-keys
-map-keys-001
 map-keys-002
-map-keys-003
-map-keys-004
 map-keys-005
-map-keys-006
 map-keys-007
 map-keys-008
-map-keys-009
-map-keys-010
-map-keys-011
-map-keys-012
-map-keys-013
 map-keys-014
 = map-merge
 map-merge-002
@@ -3574,7 +3489,6 @@ map-merge-011
 map-merge-012
 map-merge-013
 map-merge-016
-map-merge-017
 map-merge-019
 map-merge-020
 map-merge-021
@@ -3598,17 +3512,12 @@ map-put-010
 map-put-011
 map-put-012
 map-put-013
-map-put-017
-map-put-018
 map-put-019
 map-put-020
 map-put-021
 map-put-023
 = map-remove
-map-remove-001
 map-remove-002
-map-remove-003
-map-remove-005
 map-remove-006
 map-remove-007
 map-remove-008
@@ -3616,27 +3525,14 @@ map-remove-009
 map-remove-010
 map-remove-011
 map-remove-012
-map-remove-013
 map-remove-014
 map-remove-015
 map-remove-016
-map-remove-017
-map-remove-018
-map-remove-019
 = map-size
-map-size-001
 map-size-002
-map-size-003
-map-size-004
 map-size-005
-map-size-006
 map-size-007
 map-size-008
-map-size-009
-map-size-010
-map-size-011
-map-size-012
-map-size-013
 map-size-014
 map-size-015
 = math-acos
@@ -3983,7 +3879,6 @@ fn-union-node-args-010
 = prod-AllowingEmpty
 = prod-Annotation
 = prod-ArrayTest
-ArrayTest-031
 ArrayTest-035
 ArrayTest-036
 ArrayTest-037
@@ -4476,16 +4371,6 @@ Lookup-232
 Lookup-233
 Lookup-234
 = prod-MapConstructor
-MapConstructor-001
-MapConstructor-002
-MapConstructor-003
-MapConstructor-004
-MapConstructor-005
-MapConstructor-006
-MapConstructor-007
-MapConstructor-022
-MapConstructor-023
-MapConstructor-024
 MapConstructor-025
 MapConstructor-036
 MapConstructor-037

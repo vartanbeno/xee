@@ -698,10 +698,10 @@ impl<'a> Interpreter<'a> {
         let value = map.get(&key);
         if let Some(value) = value {
             self.stack.push(value.into());
-            Ok(())
         } else {
-            Err(error::Error::FOAY0001)
+            self.stack.push(stack::Value::Empty);
         }
+        Ok(())
     }
 
     fn value_compare<O>(&mut self, _op: O) -> error::Result<()>

@@ -199,6 +199,30 @@ impl Map {
         self.0.get(&map_key).map(|(_, v)| v.clone())
     }
 
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub(crate) fn keys(&self) -> impl Iterator<Item = atomic::Atomic> + '_ {
+        self.0.values().map(|(k, _)| k.clone())
+    }
+
+    pub(crate) fn put(&self, key: atomic::Atomic, value: &sequence::Sequence) -> Self {
+        let mut map = self.0.as_ref().clone();
+        let map_key = atomic::MapKey::new(key.clone()).unwrap();
+        map.insert(map_key, (key, value.clone()));
+        Self(Rc::new(map))
+    }
+
+    pub(crate) fn remove_keys(&self, keys: &[atomic::Atomic]) -> Self {
+        let mut map = self.0.as_ref().clone();
+        for key in keys {
+            let map_key = atomic::MapKey::new(key.clone()).unwrap();
+            map.remove(&map_key);
+        }
+        Self(Rc::new(map))
+    }
+
     pub(crate) fn deep_equal(
         &self,
         other: Map,
