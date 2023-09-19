@@ -240,6 +240,7 @@ pub enum Error {
     ///
     /// This error is raised when the $length argument to array:subarray is negative.
     #[error("Negative array length")]
+    #[diagnostic(code(FOAY0002))]
     FOAY0002,
     /// Input value too large for decimal.
     ///

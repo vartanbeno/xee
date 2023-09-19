@@ -53,9 +53,6 @@ string-queries-results-q1
 = app-Walmsley
 = app-XMark
 = app-spec-examples
-fo-test-array-append-001
-fo-test-array-append-002
-fo-test-array-append-003
 fo-test-array-filter-001
 fo-test-array-filter-002
 fo-test-array-filter-003
@@ -85,9 +82,6 @@ fo-test-array-join-002
 fo-test-array-join-003
 fo-test-array-join-004
 fo-test-array-join-005
-fo-test-array-put-001
-fo-test-array-put-002
-fo-test-array-put-003
 fo-test-array-remove-001
 fo-test-array-remove-002
 fo-test-array-remove-003
@@ -97,20 +91,9 @@ fo-test-array-reverse-001
 fo-test-array-reverse-002
 fo-test-array-reverse-003
 fo-test-array-reverse-004
-fo-test-array-size-001
-fo-test-array-size-002
-fo-test-array-size-003
-fo-test-array-size-004
 fo-test-array-sort-001
 fo-test-array-sort-002
 fo-test-array-sort-003
-fo-test-array-subarray-001
-fo-test-array-subarray-002
-fo-test-array-subarray-003
-fo-test-array-subarray-004
-fo-test-array-subarray-005
-fo-test-array-subarray-006
-fo-test-array-subarray-007
 fo-test-array-tail-001
 fo-test-array-tail-002
 fo-test-fn-analyze-string-001
@@ -216,14 +199,6 @@ fo-test-map-merge-002
 fo-test-map-size-001
 fo-test-map-size-002
 = array-append
-array-append-101
-array-append-102
-array-append-103
-array-append-104
-array-append-105
-array-append-106
-array-append-107
-array-append-108
 = array-filter
 array-filter-001
 array-filter-002
@@ -316,15 +291,6 @@ array-join-208
 array-join-209
 array-join-211
 = array-put
-array-put-001
-array-put-002
-array-put-003
-array-put-004
-array-put-005
-array-put-006
-array-put-007
-array-put-011
-array-put-012
 = array-remove
 array-remove-401
 array-remove-402
@@ -347,13 +313,6 @@ array-reverse-802
 array-reverse-803
 array-reverse-804
 = array-size
-array-size-001
-array-size-002
-array-size-003
-array-size-004
-array-size-005
-array-size-006
-array-size-007
 = array-sort
 array-sort-001
 array-sort-002
@@ -385,22 +344,6 @@ array-sort-collation-5
 array-sort-collation-6
 array-sort-collation-7
 = array-subarray
-array-subarray-301
-array-subarray-302
-array-subarray-303
-array-subarray-304
-array-subarray-305
-array-subarray-306
-array-subarray-307
-array-subarray-308
-array-subarray-309
-array-subarray-310
-array-subarray-311
-array-subarray-312
-array-subarray-313
-array-subarray-314
-array-subarray-315
-array-subarray-316
 = array-tail
 array-tail-701
 array-tail-702
@@ -1654,8 +1597,6 @@ fn-function-lookup-762
 fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
-fn-function-lookup-767
-fn-function-lookup-768
 fn-function-lookup-769
 fn-function-lookup-770
 fn-function-lookup-771
@@ -1674,24 +1615,16 @@ fn-function-lookup-785
 fn-function-lookup-786
 fn-function-lookup-787
 fn-function-lookup-788
-fn-function-lookup-789
-fn-function-lookup-790
 fn-function-lookup-791
 fn-function-lookup-792
 fn-function-lookup-793
 fn-function-lookup-794
-fn-function-lookup-795
-fn-function-lookup-796
 fn-function-lookup-797
 fn-function-lookup-798
 fn-function-lookup-799
 fn-function-lookup-800
 fn-function-lookup-801
 fn-function-lookup-802
-fn-function-lookup-803
-fn-function-lookup-804
-fn-function-lookup-805
-fn-function-lookup-806
 fn-function-lookup-807
 fn-function-lookup-808
 fn-function-lookup-809
@@ -4261,19 +4194,11 @@ ArrayTest-064
 ArrayTest-066
 ArrayTest-067
 ArrayTest-075
-ArrayTest-076
-ArrayTest-077
-ArrayTest-078
 ArrayTest-079
-ArrayTest-080
 ArrayTest-081
-ArrayTest-082
-ArrayTest-083
 ArrayTest-084
-ArrayTest-085
 ArrayTest-086
 ArrayTest-087
-ArrayTest-088
 = prod-ArrowPostfix
 ArrowPostfix-001
 ArrowPostfix-002
@@ -4562,7 +4487,6 @@ externalcontextitem-8
 = prod-CopyNamespacesDecl
 = prod-CountClause
 = prod-CurlyArrayConstructor
-CurlyArray-004
 = prod-DecimalFormatDecl
 = prod-DefaultCollationDecl
 = prod-DefaultNamespaceDecl
@@ -5016,7 +4940,6 @@ sequence-type-14
 sequence-type-16
 sequence-type-18
 = prod-SquareArrayConstructor
-SquareArray-003
 = prod-StepExpr
 K2-Steps-8
 = prod-StringConstructor

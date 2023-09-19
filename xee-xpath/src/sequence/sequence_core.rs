@@ -268,6 +268,14 @@ impl From<Vec<xml::Node>> for Sequence {
     }
 }
 
+impl From<stack::Array> for Sequence {
+    fn from(array: stack::Array) -> Self {
+        Self {
+            stack_value: array.into(),
+        }
+    }
+}
+
 impl<T> From<Option<T>> for Sequence
 where
     T: Into<sequence::Item>,

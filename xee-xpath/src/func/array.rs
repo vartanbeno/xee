@@ -12,17 +12,76 @@ use crate::wrap_xpath_fn;
 
 #[xpath_fn("array:get($array as array(*), $position as xs:integer) as item()*")]
 fn get(array: stack::Array, position: IBig) -> error::Result<sequence::Sequence> {
-    let position: i64 = position.try_into()?;
-    let position = position - 1;
-    if position < 0 {
-        return Err(error::Error::FOAY0001);
-    }
+    let position = convert_position(position)?;
     let item = array
         .index(position as usize)
         .ok_or(error::Error::FOAY0001)?;
     Ok(item.clone())
 }
 
+#[xpath_fn("array:size($array as array(*)) as xs:integer")]
+fn size(array: stack::Array) -> IBig {
+    array.len().into()
+}
+
+#[xpath_fn(
+    "array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)"
+)]
+fn put(
+    array: stack::Array,
+    position: IBig,
+    member: &sequence::Sequence,
+) -> error::Result<stack::Array> {
+    let position = convert_position(position)?;
+    array.put(position, member).ok_or(error::Error::FOAY0001)
+}
+
+#[xpath_fn("array:append($array as array(*), $appendage as item()*) as array(*)")]
+fn append(array: stack::Array, appendage: &sequence::Sequence) -> stack::Array {
+    array.append(appendage)
+}
+
+#[xpath_fn("array:subarray($array as array(*), $start as xs:integer) as array(*)")]
+fn subarray2(array: stack::Array, start: IBig) -> error::Result<stack::Array> {
+    let start = convert_position(start)?;
+    let length = array.len() - start;
+    array.subarray(start, length).ok_or(error::Error::FOAY0001)
+}
+
+#[xpath_fn(
+    "array:subarray($array as array(*), $start as xs:integer, $length as xs:integer) as array(*)"
+)]
+fn subarray3(array: stack::Array, start: IBig, length: IBig) -> error::Result<stack::Array> {
+    let start = convert_position(start)?;
+    let length = convert_length(length)?;
+    array.subarray(start, length).ok_or(error::Error::FOAY0001)
+}
+
+fn convert_position(position: IBig) -> error::Result<usize> {
+    let position: i64 = position.try_into()?;
+    let position = position - 1;
+    if position < 0 {
+        return Err(error::Error::FOAY0001);
+    }
+    Ok(position as usize)
+}
+
+fn convert_length(length: IBig) -> error::Result<usize> {
+    let length: i64 = length.try_into()?;
+    if length < 0 {
+        return Err(error::Error::FOAY0002);
+    }
+    let length = length as usize;
+    Ok(length)
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
-    vec![wrap_xpath_fn!(get)]
+    vec![
+        wrap_xpath_fn!(get),
+        wrap_xpath_fn!(size),
+        wrap_xpath_fn!(put),
+        wrap_xpath_fn!(append),
+        wrap_xpath_fn!(subarray2),
+        wrap_xpath_fn!(subarray3),
+    ]
 }

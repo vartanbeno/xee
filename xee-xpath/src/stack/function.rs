@@ -72,6 +72,36 @@ impl Array {
         self.0.get(index)
     }
 
+    pub(crate) fn put(&self, index: usize, member: &sequence::Sequence) -> Option<Self> {
+        if index >= self.0.len() {
+            return None;
+        }
+        let mut vec = self.0.as_ref().clone();
+        vec[index] = member.clone();
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn append(&self, appendage: &sequence::Sequence) -> Self {
+        let mut vec = self.0.as_ref().clone();
+        vec.push(appendage.clone());
+        Self::new(vec)
+    }
+
+    pub(crate) fn subarray(&self, start: usize, length: usize) -> Option<Self> {
+        if (start + length) > self.0.len() {
+            return None;
+        }
+        let mut vec = Vec::with_capacity(length);
+        for i in start..(start + length) {
+            vec.push(self.0[i].clone());
+        }
+        Some(Self::new(vec))
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
     pub(crate) fn deep_equal(
         &self,
         other: Array,
