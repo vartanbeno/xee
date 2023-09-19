@@ -8,7 +8,8 @@ use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
 use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::{DynamicContext, StaticFunctionDescription};
+use crate::context::DynamicContext;
+use crate::function::StaticFunctionDescription;
 use crate::string::Collation;
 use crate::{atomic, error, interpreter, sequence, wrap_xpath_fn, Occurrence};
 

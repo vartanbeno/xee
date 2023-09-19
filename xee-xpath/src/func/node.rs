@@ -6,7 +6,7 @@ use std::rc::Rc;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
-use crate::context::StaticFunctionDescription;
+use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 use crate::xml;
 use crate::DynamicContext;

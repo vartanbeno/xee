@@ -2,12 +2,13 @@ use ibig::IBig;
 use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::{DynamicContext, StaticFunctionDescription};
+use crate::context::DynamicContext;
 use crate::error;
+use crate::function::StaticFunctionDescription;
+use crate::interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::interpreter;
 
 #[xpath_fn("fn:my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
 fn my_function(a: IBig, b: IBig) -> IBig {

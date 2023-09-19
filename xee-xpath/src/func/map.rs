@@ -5,8 +5,8 @@ use ibig::IBig;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
-use crate::context::StaticFunctionDescription;
 use crate::function;
+use crate::function::StaticFunctionDescription;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 

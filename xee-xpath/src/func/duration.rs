@@ -5,8 +5,7 @@ use rust_decimal::Decimal;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::Duration;
-use crate::context::StaticFunctionDescription;
-
+use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("fn:years-from-duration($arg as xs:duration?) as xs:integer?")]

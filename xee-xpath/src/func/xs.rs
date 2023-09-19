@@ -1,8 +1,9 @@
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
-use crate::context::{DynamicContext, StaticFunctionDescription};
+use crate::context::DynamicContext;
 use crate::error;
+use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("xs:untypedAtomic($arg as xs:anyAtomicType?) as xs:untypedAtomic?")]

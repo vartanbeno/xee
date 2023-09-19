@@ -6,7 +6,7 @@ use rust_decimal::Decimal;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::ToDateTimeStamp;
-use crate::context::StaticFunctionDescription;
+use crate::function::StaticFunctionDescription;
 use crate::{
     error, wrap_xpath_fn, DynamicContext, NaiveDateTimeWithOffset, NaiveDateWithOffset,
     NaiveTimeWithOffset,

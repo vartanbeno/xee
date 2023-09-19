@@ -6,9 +6,9 @@ use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
 use crate::context;
-use crate::context::StaticFunctionDescription;
 use crate::error;
 use crate::function;
+use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;

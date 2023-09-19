@@ -8,9 +8,9 @@ use xee_xpath_ast::ast;
 use xee_xpath_ast::FN_NAMESPACE;
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::FunctionKind;
-use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function::FunctionKind;
+use crate::function::StaticFunctionDescription;
 use crate::sequence;
 use crate::DynamicContext;
 

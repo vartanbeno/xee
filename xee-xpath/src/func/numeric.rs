@@ -9,8 +9,8 @@ use rust_decimal::Decimal;
 use rust_decimal::RoundingStrategy;
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 use crate::Atomic;
 

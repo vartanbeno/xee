@@ -1,8 +1,8 @@
 // https://www.w3.org/TR/xpath-functions-31/#boolean-functions
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function::StaticFunctionDescription;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 

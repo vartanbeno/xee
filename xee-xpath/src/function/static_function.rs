@@ -3,14 +3,13 @@ use std::fmt::{Debug, Formatter};
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 
+use crate::context::DynamicContext;
 use crate::error;
 use crate::func::static_function_descriptions;
 use crate::function;
 use crate::interpreter;
 use crate::sequence;
 use crate::stack;
-
-use super::dynamic_context::DynamicContext;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) enum FunctionKind {
@@ -67,10 +66,10 @@ macro_rules! wrap_xpath_fn {
     ($function:path) => {{
         use $function as wrapped_function;
         let namespaces = xee_xpath_ast::Namespaces::default();
-        $crate::context::StaticFunctionDescription::new(
+        $crate::function::StaticFunctionDescription::new(
             wrapped_function::WRAPPER,
             wrapped_function::SIGNATURE,
-            $crate::context::FunctionKind::parse(wrapped_function::KIND),
+            $crate::function::FunctionKind::parse(wrapped_function::KIND),
             &namespaces,
         )
     }};

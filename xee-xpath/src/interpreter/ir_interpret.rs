@@ -1,9 +1,10 @@
 use ibig::{ibig, IBig};
 use miette::SourceSpan;
 
-use crate::context::{FunctionRule, StaticContext};
+use crate::context::StaticContext;
 use crate::error::{Error, Result};
 use crate::function;
+use crate::function::FunctionRule;
 use crate::ir;
 use crate::span;
 use crate::stack;

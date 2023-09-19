@@ -2,8 +2,8 @@
 use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::StaticFunctionDescription;
 use crate::error;
+use crate::function::StaticFunctionDescription;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;

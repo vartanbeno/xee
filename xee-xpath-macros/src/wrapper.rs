@@ -31,7 +31,7 @@ pub(crate) fn xpath_fn_wrapper(
         #[doc(hidden)]
         #vis mod #name {
             pub(crate) struct MakeWrapper;
-            pub(crate) const WRAPPER: crate::context::StaticFunctionType = MakeWrapper::WRAPPER;
+            pub(crate) const WRAPPER: crate::function::StaticFunctionType = MakeWrapper::WRAPPER;
             // We store the signature as a string; this means we need to
             // reparse it again later during registration, but it's a lot
             // easier than trying to serialize a data structure, so it will
@@ -48,7 +48,7 @@ pub(crate) fn xpath_fn_wrapper(
             // This is a trick to ensure we can get it into the module defined
             // above
             impl #name::MakeWrapper {
-                const WRAPPER: crate::context::StaticFunctionType = #wrapper_name;
+                const WRAPPER: crate::function::StaticFunctionType = #wrapper_name;
             }
             #vis #wrapper
         };

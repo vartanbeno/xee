@@ -6,8 +6,8 @@ use icu_provider_blob::BlobDataProvider;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 
-use super::static_function::StaticFunctions;
 use crate::error;
+use crate::function::StaticFunctions;
 use crate::string::provider;
 use crate::string::{Collation, Collations};
 
