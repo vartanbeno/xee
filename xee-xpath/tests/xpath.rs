@@ -1379,3 +1379,8 @@ fn test_square_array_sequence() {
 fn test_curly_map() {
     assert_debug_snapshot!(run("map {'a' : 'b'}('a')"));
 }
+
+#[test]
+fn test_cast_negative_zero() {
+    assert_debug_snapshot!(run("xs:unsignedLong('-0')"));
+}

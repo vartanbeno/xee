@@ -65,6 +65,10 @@ fn cast_binary(
         // Cast integer to decimal
         (Decimal(_), Integer(_, _)) => Ok((a, b.cast_to_decimal()?)),
         (Integer(_, _), Decimal(_)) => Ok((a.cast_to_decimal()?, b)),
+
+        // cast any DateTimeStamp to a DateTime
+        (DateTimeStamp(_), DateTime(_)) => Ok((a.cast_to_date_time()?, b)),
+        (DateTime(_), DateTimeStamp(_)) => Ok((a, b.cast_to_date_time()?)),
         // otherwise, we don't cast
         _ => Ok((a, b)),
     }

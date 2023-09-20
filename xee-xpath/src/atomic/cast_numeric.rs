@@ -64,6 +64,10 @@ impl atomic::Atomic {
     where
         V: lexical::FromLexical,
     {
+        // -0 should count as a 0, so it doesn't fail even for unsigned
+        // numbers. There doesn't appear to be a configuration option for
+        // lexical for this.
+        let s = if s == "-0" { "0" } else { s };
         lexical::parse::<V, _>(s).map_err(|_| error::Error::FORG0001)
     }
 
@@ -280,7 +284,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_non_positive_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i > ibig!(0) {
-            return Err(error::Error::FOCA0003);
+            return Err(error::Error::FORG0001);
         }
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::NonPositiveInteger,
@@ -291,7 +295,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_negative_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i >= ibig!(0) {
-            return Err(error::Error::FOCA0003);
+            return Err(error::Error::FORG0001);
         }
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::NegativeInteger,
@@ -302,7 +306,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_non_negative_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i < ibig!(0) {
-            return Err(error::Error::FOCA0003);
+            return Err(error::Error::FORG0001);
         }
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::NonNegativeInteger,
@@ -313,7 +317,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_positive_integer(self) -> error::Result<atomic::Atomic> {
         let i = self.cast_to_integer_value::<IBig>()?;
         if i <= ibig!(0) {
-            return Err(error::Error::FOCA0003);
+            return Err(error::Error::FORG0001);
         }
         Ok(atomic::Atomic::Integer(
             atomic::IntegerType::PositiveInteger,

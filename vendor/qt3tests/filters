@@ -174,16 +174,6 @@ array-sort-024
 = array-tail
 = fn-QName
 = fn-abs
-fn-abs-more-args-023
-fn-abs-more-args-024
-fn-abs-more-args-041
-fn-abs-more-args-042
-fn-abs-more-args-043
-fn-abs-more-args-048
-fn-abs-more-args-053
-fn-abs-more-args-058
-fn-abs-more-args-059
-fn-abs-more-args-060
 = fn-adjust-date-to-timezone
 cbcl-adjust-date-to-timezone-002
 cbcl-adjust-date-to-timezone-003
@@ -3655,12 +3645,8 @@ op-concatusht2args-4
 op-concatusht2args-5
 = op-concatenate
 = op-date-equal
-cbcl-date-eq-001
-cbcl-date-ne-001
 = op-date-greater-than
-cbcl-date-gt-001
 = op-date-less-than
-cbcl-date-ge-001
 = op-dateTime-equal
 = op-dateTime-greater-than
 = op-dateTime-less-than
@@ -3813,11 +3799,7 @@ same-key-028
 = op-string-greater-than
 = op-string-less-than
 = op-subtract-dateTimes
-cbcl-subtract-dateTimes-001
-cbcl-subtract-dateTimes-002
 = op-subtract-dates
-cbcl-subtract-dates-001
-cbcl-subtract-dates-002
 = op-subtract-dayTimeDuration-from-date
 = op-subtract-dayTimeDuration-from-dateTime
 = op-subtract-dayTimeDuration-from-time
@@ -3977,28 +3959,11 @@ K2-SeqExprCast-221
 K2-SeqExprCast-223
 K2-SeqExprCast-231
 K2-SeqExprCast-232
-K2-SeqExprCast-28
-K2-SeqExprCast-29
-K2-SeqExprCast-30
 K2-SeqExprCast-422
 K2-SeqExprCast-423
 K2-SeqExprCast-424
 K2-SeqExprCast-480
-K2-SeqExprCast-49
 K2-SeqExprCast-505
-K2-SeqExprCast-51
-K2-SeqExprCast-52
-K2-SeqExprCast-53
-K2-SeqExprCast-54
-K2-SeqExprCast-55
-K2-SeqExprCast-56
-K2-SeqExprCast-57
-K2-SeqExprCast-62
-K2-SeqExprCast-63
-K2-SeqExprCast-82
-K2-SeqExprCast-87
-K2-SeqExprCast-88
-K2-SeqExprCast-89
 = prod-CastExpr.derived
 cbcl-cast-byte-001
 cbcl-cast-byte-002
@@ -4021,14 +3986,6 @@ cbcl-cast-int-001
 cbcl-cast-int-002
 cbcl-cast-long-001
 cbcl-cast-long-002
-cbcl-cast-negativeInteger-001
-cbcl-cast-negativeInteger-002
-cbcl-cast-nonNegativeInteger-001
-cbcl-cast-nonNegativeInteger-002
-cbcl-cast-nonPositiveInteger-001
-cbcl-cast-nonPositiveInteger-002
-cbcl-cast-positiveInteger-001
-cbcl-cast-positiveInteger-002
 cbcl-cast-short-001
 cbcl-cast-short-002
 cbcl-cast-unsignedByte-001
