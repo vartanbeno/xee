@@ -67,7 +67,6 @@ fo-test-fn-contains-004
 fo-test-fn-contains-005
 fo-test-fn-contains-006
 fo-test-fn-contains-007
-fo-test-fn-dateTime-002
 fo-test-fn-distinct-values-001
 fo-test-fn-distinct-values-002
 fo-test-fn-encode-for-uri-001
@@ -97,8 +96,6 @@ fo-test-fn-format-number-007
 fo-test-fn-format-number-008
 fo-test-fn-format-number-009
 fo-test-fn-format-number-010
-fo-test-fn-hours-from-dateTime-005
-fo-test-fn-hours-from-time-005
 fo-test-fn-iri-to-uri-001
 fo-test-fn-iri-to-uri-002
 fo-test-fn-json-to-xml-001
@@ -251,7 +248,6 @@ K-CodepointToStringFunc-8
 cbcl-codepoints-to-string-008
 cbcl-codepoints-to-string-009
 cbcl-codepoints-to-string-011
-cbcl-codepoints-to-string-021
 cbcl-codepoints-to-string-023
 cbcl-codepoints-to-string-024
 fn-codepoints-to-string-1
@@ -342,9 +338,7 @@ fn-contains-token-50
 = fn-data
 K2-DataFunc-6
 = fn-dateTime
-K-DateTimeFunc-12
 cbcl-dateTime-001
-fn-dateTime-2
 = fn-day-from-date
 = fn-day-from-dateTime
 = fn-days-from-duration
@@ -595,7 +589,6 @@ fn-filter-013
 = fn-fold-right
 = fn-for-each
 = fn-for-each-pair
-fn-for-each-pair-022
 = fn-format-date
 format-date-001a
 format-date-001b
@@ -3040,8 +3033,6 @@ K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
 fn-string-31
-fn-string-5
-fn-string-6
 = fn-string-join
 = fn-string-length
 fn-string-length-24
@@ -3940,13 +3931,11 @@ K-SeqExprCast-1414
 K-SeqExprCast-143
 K-SeqExprCast-1491
 K-SeqExprCast-350
-K-SeqExprCast-374
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
 K-SeqExprCast-63
 K-SeqExprCast-64
-K-SeqExprCast-69
 K-SeqExprCast-8
 K2-SeqExprCast-210
 K2-SeqExprCast-221
@@ -3961,12 +3950,6 @@ K2-SeqExprCast-505
 = prod-CastExpr.derived
 cbcl-cast-byte-001
 cbcl-cast-byte-002
-cbcl-cast-date-001
-cbcl-cast-date-002
-cbcl-cast-date-003
-cbcl-cast-dateTime-001
-cbcl-cast-dateTime-002
-cbcl-cast-dateTime-003
 cbcl-cast-dayTimeDuration-001
 cbcl-cast-dayTimeDuration-002
 cbcl-cast-duration-001

@@ -925,6 +925,11 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime, MyE
         .then_ignore(just(':'))
         .then(second)
         .try_map(|((hour, minute), (second, millisecond)), _| {
+            let hour = if hour == 24 && minute == 0 && second == 0 && millisecond == 0 {
+                0
+            } else {
+                hour
+            };
             chrono::NaiveTime::from_hms_milli_opt(hour, minute, second, millisecond)
                 .ok_or(error::Error::FORG0001.into())
         })
