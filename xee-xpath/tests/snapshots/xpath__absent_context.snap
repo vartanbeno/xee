@@ -9,9 +9,7 @@ Err(
             offset: SourceOffset(
                 0,
             ),
-            length: SourceOffset(
-                1,
-            ),
+            length: 1,
         },
     },
 )

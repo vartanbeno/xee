@@ -56,7 +56,7 @@ impl Assertable for AssertAnyOf {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(assert_context, result);
             match result {
-                TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => return result,
+                TestOutcome::Passed => return result,
                 _ => failed_test_results.push(result),
             }
         }

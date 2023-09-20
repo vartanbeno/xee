@@ -10,9 +10,7 @@ Err(
             offset: SourceOffset(
                 0,
             ),
-            length: SourceOffset(
-                18,
-            ),
+            length: 18,
         },
     },
 )

@@ -1,5 +1,6 @@
 use chrono::{Datelike, Offset, TimeZone, Timelike};
 use chumsky::prelude::*;
+use chumsky::util::MaybeRef;
 use rust_decimal::prelude::*;
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -487,199 +488,192 @@ impl atomic::Atomic {
         }
     }
 
+    fn parse<'a, T: Into<atomic::Atomic>>(
+        parser: impl Parser<'a, &'a str, T, MyExtra>,
+        s: &'a str,
+    ) -> error::Result<atomic::Atomic> {
+        match parser.parse(s).into_result() {
+            Ok(value) => Ok(value.into()),
+            Err(e) => Err(match &e[0] {
+                ParserError::ExpectedFound { .. } => error::Error::FORG0001,
+                ParserError::Error(e) => e.clone(),
+            }),
+        }
+    }
+
+    // TODO: these parse functions have overhead I'd like to avoid
+    // https://github.com/zesterer/chumsky/issues/501
+
     fn parse_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::Duration(Rc::new(duration))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_year_month_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = year_month_duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(year_month_duration) => Ok(atomic::Atomic::YearMonthDuration(year_month_duration)),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_day_time_duration(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = day_time_duration_parser();
-        match parser.parse(&s).into_result() {
-            Ok(duration) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_date_time(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = date_time_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(date_time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_date_time_stamp(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = date_time_stamp_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date_time) => Ok(atomic::Atomic::DateTimeStamp(Rc::new(date_time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_time(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = time_parser();
-        match parser.parse(&s).into_result() {
-            Ok(time) => Ok(atomic::Atomic::Time(Rc::new(time))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_date(s: &str) -> error::Result<atomic::Atomic> {
-        // TODO: this has overhead I'd like to avoid
-        // https://github.com/zesterer/chumsky/issues/501
         let s = whitespace_collapse(s);
         let parser = date_parser();
-        match parser.parse(&s).into_result() {
-            Ok(date) => Ok(atomic::Atomic::Date(Rc::new(date))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_g_year_month(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_year_month_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_year_month) => {
-                let date =
-                    chrono::NaiveDate::from_ymd_opt(g_year_month.year, g_year_month.month, 1);
-                if date.is_some() {
-                    Ok(atomic::Atomic::GYearMonth(Rc::new(g_year_month)))
-                } else {
-                    Err(error::Error::FORG0001)
-                }
-            }
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_g_year(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_year_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_year) => Ok(atomic::Atomic::GYear(Rc::new(g_year))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_g_month_day(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_month_day_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_month_day) => {
-                // pick leap year 2000
-                let date =
-                    chrono::NaiveDate::from_ymd_opt(2000, g_month_day.month, g_month_day.day);
-                if date.is_some() {
-                    Ok(atomic::Atomic::GMonthDay(Rc::new(g_month_day)))
-                } else {
-                    Err(error::Error::FORG0001)
-                }
-            }
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_g_day(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_day_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_day) => Ok(atomic::Atomic::GDay(Rc::new(g_day))),
-            Err(_) => Err(error::Error::FORG0001),
-        }
+        Self::parse(parser, &s)
     }
 
     fn parse_g_month(s: &str) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(s);
         let parser = g_month_parser();
-        match parser.parse(&s).into_result() {
-            Ok(g_month) => Ok(atomic::Atomic::GMonth(Rc::new(g_month))),
-            Err(_) => Err(error::Error::FORG0001),
+        Self::parse(parser, &s)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum ParserError {
+    ExpectedFound {
+        span: SimpleSpan<usize>,
+        expected: Vec<Option<char>>,
+        found: Option<char>,
+    },
+    Error(error::Error),
+}
+
+impl From<error::Error> for ParserError {
+    fn from(e: error::Error) -> Self {
+        Self::Error(e)
+    }
+}
+
+impl<'a> chumsky::error::Error<'a, &'a str> for ParserError {
+    fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, char>>>>(
+        expected: E,
+        found: Option<MaybeRef<'a, char>>,
+        span: SimpleSpan<usize>,
+    ) -> Self {
+        Self::ExpectedFound {
+            span,
+            expected: expected
+                .into_iter()
+                .map(|e| e.as_deref().copied())
+                .collect(),
+            found: found.as_deref().copied(),
+        }
+    }
+
+    fn merge(self, other: Self) -> Self {
+        match (self, other) {
+            (ParserError::ExpectedFound { .. }, a) => a,
+            (a, ParserError::ExpectedFound { .. }) => a,
+            (a, _) => a,
         }
     }
 }
 
-fn digit_parser<'a>() -> impl Parser<'a, &'a str, char> {
-    any::<&str, extra::Default>().filter(|c: &char| c.is_ascii_digit())
+type MyExtra = extra::Err<ParserError>;
+
+fn digit_parser<'a>() -> impl Parser<'a, &'a str, char, MyExtra> {
+    any::<&str, MyExtra>().filter(|c: &char| c.is_ascii_digit())
 }
 
-fn digits_parser<'a>() -> impl Parser<'a, &'a str, String> {
+fn digits_parser<'a>() -> impl Parser<'a, &'a str, String, MyExtra> {
     let digit = digit_parser();
     digit.repeated().at_least(1).collect::<String>()
 }
 
-fn number_parser<'a>() -> impl Parser<'a, &'a str, u32> {
-    digits_parser().try_map(|s, _| s.parse().map_err(|_| EmptyErr::default()))
+fn number_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
+    // failed parse may result in an overflow
+    digits_parser().try_map(|s, _| s.parse().map_err(|_| error::Error::FODT0001.into()))
 }
 
-fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool> {
+fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool, MyExtra> {
     just('-').or_not().map(|sign| sign.is_some())
 }
 
-fn duration_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
+fn duration_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32), MyExtra> {
     let seconds_digits = digits_parser().boxed();
     let ms_digits = digits_parser().boxed();
     seconds_digits
         .clone()
         .then(just('.').ignore_then(ms_digits).or_not())
-        .map(|(a, b)| {
+        .try_map(|(a, b), _| {
             let b = b.unwrap_or("0".to_string());
             // ignore anything below milliseconds
             let b = if b.len() > 3 { &b[..3] } else { &b };
             let l = b.len();
 
-            let a = a.parse::<u32>().unwrap();
-            let b = b.parse::<u32>().unwrap();
-            (a, b * 10u32.pow(3 - l as u32))
+            let a = a.parse::<u32>().map_err(|_| error::Error::FODT0002)?;
+            let b = b.parse::<u32>().map_err(|_| error::Error::FODT0002)?;
+            Ok((a, b * 10u32.pow(3 - l as u32)))
         })
 }
 
-fn time_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32)> {
+fn time_second_parser<'a>() -> impl Parser<'a, &'a str, (u32, u32), MyExtra> {
     let seconds_digits = two_digit_parser().boxed();
     let ms_digits = digits_parser().boxed();
     seconds_digits
         .clone()
         .then(just('.').ignore_then(ms_digits).or_not())
-        .map(|(a, b)| {
+        .try_map(|(a, b), _| {
             let b = b.unwrap_or("0".to_string());
             // ignore anything below milliseconds
             let b = if b.len() > 3 { &b[..3] } else { &b };
             let l = b.len();
 
-            let b = b.parse::<u32>().unwrap();
-            (a, b * 10u32.pow(3 - l as u32))
+            let b = b.parse::<u32>().map_err(|_| error::Error::FODT0001)?;
+            Ok((a, b * 10u32.pow(3 - l as u32)))
         })
 }
 
-fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64> {
+fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64, MyExtra> {
     let number = number_parser().boxed();
     let year_y = number.clone().then_ignore(just('Y')).boxed();
     let month_m = number.then_ignore(just('M')).boxed();
@@ -692,7 +686,7 @@ fn year_month_fragment_parser<'a>() -> impl Parser<'a, &'a str, i64> {
     .map(|(years, months)| years as i64 * 12 + months as i64)
 }
 
-fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, YearMonthDuration> {
+fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, YearMonthDuration, MyExtra> {
     let year_month = year_month_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
@@ -701,7 +695,7 @@ fn year_month_duration_parser<'a>() -> impl Parser<'a, &'a str, YearMonthDuratio
         .map(|(sign, months)| YearMonthDuration::new(if sign { -months } else { months }))
 }
 
-fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
+fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration, MyExtra> {
     let number = number_parser().boxed();
     let day_d = number.clone().then_ignore(just('D')).boxed();
     let hour_h = number.clone().then_ignore(just('H')).boxed();
@@ -714,7 +708,7 @@ fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
         .then(second_s.or_not())
         .try_map(|((hours, minutes), s_ms), _| {
             if hours.is_none() && minutes.is_none() && s_ms.is_none() {
-                return Err(EmptyErr::default());
+                return Err(error::Error::FORG0001.into());
             }
             let hours = hours.unwrap_or(0);
             let minutes = minutes.unwrap_or(0);
@@ -738,7 +732,7 @@ fn day_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
     days_then_time.or(time)
 }
 
-fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> {
+fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration, MyExtra> {
     let day_time = day_time_fragment_parser().boxed();
     let sign = sign_parser();
     sign.then_ignore(just('P'))
@@ -747,7 +741,7 @@ fn day_time_duration_parser<'a>() -> impl Parser<'a, &'a str, chrono::Duration> 
         .map(|(sign, duration)| if sign { -duration } else { duration })
 }
 
-fn duration_parser<'a>() -> impl Parser<'a, &'a str, Duration> {
+fn duration_parser<'a>() -> impl Parser<'a, &'a str, Duration, MyExtra> {
     let year_month = year_month_fragment_parser().boxed();
     let day_time = day_time_fragment_parser().boxed();
     let sign = sign_parser();
@@ -757,7 +751,7 @@ fn duration_parser<'a>() -> impl Parser<'a, &'a str, Duration> {
         .then_ignore(end())
         .try_map(|((sign, months), duration), _| {
             if months.is_none() && duration.is_none() {
-                return Err(EmptyErr::default());
+                return Err(error::Error::FORG0001.into());
             }
             let months = months.unwrap_or(0);
             let duration = duration.unwrap_or(chrono::Duration::seconds(0));
@@ -769,30 +763,90 @@ fn duration_parser<'a>() -> impl Parser<'a, &'a str, Duration> {
         })
 }
 
-fn year_parser<'a>() -> impl Parser<'a, &'a str, i32> {
+fn year_parser<'a>() -> impl Parser<'a, &'a str, i32, MyExtra> {
     let digits = digits_parser();
     let sign = sign_parser();
+
     // the year may have 0 prefixes, unless it's larger than 4, in
     // which case we don't allow any prefixes
-    sign.then(digits.boxed()).try_map(|(sign, digits), _| {
-        let year = match digits.len().cmp(&4) {
+
+    // we use validate here otherwise different parser paths eradicate
+    // FODT0001
+    // https://github.com/zesterer/chumsky/issues/530
+    let year_digits = digits.validate(|digits, _, emitter| {
+        match digits.len().cmp(&4) {
             Ordering::Greater => {
                 // cannot have any 0 prefix
                 if digits.starts_with('0') {
-                    Err(EmptyErr::default())
+                    emitter.emit(error::Error::FORG0001.into());
+                    0
+                } else if let Ok(year) = digits.parse::<i32>() {
+                    year
                 } else {
-                    let d: i32 = digits.parse().map_err(|_| EmptyErr::default())?;
-                    Ok(d)
+                    emitter.emit(error::Error::FODT0001.into());
+                    0
                 }
             }
-            Ordering::Equal => Ok(digits.parse().unwrap()),
-            Ordering::Less => Err(EmptyErr::default()),
-        };
-        year.map(|year: i32| if sign { -year } else { year })
-    })
+            Ordering::Equal => {
+                if let Ok(year) = digits.parse::<i32>() {
+                    year
+                } else {
+                    emitter.emit(error::Error::FODT0001.into());
+                    0
+                }
+            }
+            Ordering::Less => {
+                emitter.emit(error::Error::FORG0001.into());
+                0
+            }
+        }
+    });
+
+    sign.then(year_digits)
+        .map(|(sign, year)| if sign { -year } else { year })
 }
 
-fn two_digit_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+// HACK: a hacked version of year_parser which only returns FORG0001 using
+// map_err on the output of year_parser does not work, so we have to resort to
+// this duplication for now.
+fn year_for_g_parser<'a>() -> impl Parser<'a, &'a str, i32, MyExtra> {
+    let digits = digits_parser();
+    let sign = sign_parser();
+
+    let year_digits = digits.validate(|digits, _, emitter| {
+        match digits.len().cmp(&4) {
+            Ordering::Greater => {
+                // cannot have any 0 prefix
+                if digits.starts_with('0') {
+                    emitter.emit(error::Error::FORG0001.into());
+                    0
+                } else if let Ok(year) = digits.parse::<i32>() {
+                    year
+                } else {
+                    emitter.emit(error::Error::FORG0001.into());
+                    0
+                }
+            }
+            Ordering::Equal => {
+                if let Ok(year) = digits.parse::<i32>() {
+                    year
+                } else {
+                    emitter.emit(error::Error::FORG0001.into());
+                    0
+                }
+            }
+            Ordering::Less => {
+                emitter.emit(error::Error::FORG0001.into());
+                0
+            }
+        }
+    });
+
+    sign.then(year_digits)
+        .map(|(sign, year)| if sign { -year } else { year })
+}
+
+fn two_digit_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     let digit = digit_parser().boxed();
     digit
         .clone()
@@ -800,27 +854,28 @@ fn two_digit_parser<'a>() -> impl Parser<'a, &'a str, u32> {
         .map(|(a, b)| a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap())
 }
 
-fn month_parser<'a>() -> impl Parser<'a, &'a str, u32> {
-    two_digit_parser().try_map(|month, _| {
+fn month_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
+    two_digit_parser().validate(|month, _, emitter| {
         if month == 0 || month > 12 {
-            Err(EmptyErr::default())
+            emitter.emit(error::Error::FORG0001.into());
+            0
         } else {
-            Ok(month)
+            month
         }
     })
 }
 
-fn day_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+fn day_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     two_digit_parser().try_map(|day, _| {
         if day == 0 || day > 31 {
-            Err(EmptyErr::default())
+            Err(error::Error::FORG0001.into())
         } else {
             Ok(day)
         }
     })
 }
 
-fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
+fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate, MyExtra> {
     let year = year_parser().boxed();
     let month = month_parser().boxed();
     let day = day_parser().boxed();
@@ -829,11 +884,11 @@ fn date_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate> {
         .then_ignore(just('-'))
         .then(day)
         .try_map(|((year, month), day), _| {
-            chrono::NaiveDate::from_ymd_opt(year, month, day).ok_or(EmptyErr::default())
+            chrono::NaiveDate::from_ymd_opt(year, month, day).ok_or(error::Error::FORG0001.into())
         })
 }
 
-fn date_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateWithOffset> {
+fn date_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateWithOffset, MyExtra> {
     let date = date_fragment_parser().boxed();
     let tz = tz_parser().boxed();
     date.then(tz.or_not())
@@ -841,27 +896,27 @@ fn date_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateWithOffset> {
         .map(|(date, offset)| NaiveDateWithOffset::new(date, offset))
 }
 
-fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+fn hour_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     two_digit_parser().try_map(|hour, _| {
         if hour > 24 {
-            Err(EmptyErr::default())
+            Err(error::Error::FORG0001.into())
         } else {
             Ok(hour)
         }
     })
 }
 
-fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32> {
+fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     two_digit_parser().try_map(|minute, _| {
         if minute > 59 {
-            Err(EmptyErr::default())
+            Err(error::Error::FORG0001.into())
         } else {
             Ok(minute)
         }
     })
 }
 
-fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
+fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime, MyExtra> {
     let hour = hour_parser().boxed();
     let minute = minute_parser().boxed();
     let second = time_second_parser().boxed();
@@ -871,11 +926,11 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime> {
         .then(second)
         .try_map(|((hour, minute), (second, millisecond)), _| {
             chrono::NaiveTime::from_hms_milli_opt(hour, minute, second, millisecond)
-                .ok_or(EmptyErr::default())
+                .ok_or(error::Error::FORG0001.into())
         })
 }
 
-fn time_parser<'a>() -> impl Parser<'a, &'a str, NaiveTimeWithOffset> {
+fn time_parser<'a>() -> impl Parser<'a, &'a str, NaiveTimeWithOffset, MyExtra> {
     let time = time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
     time.then(tz.or_not())
@@ -883,7 +938,7 @@ fn time_parser<'a>() -> impl Parser<'a, &'a str, NaiveTimeWithOffset> {
         .map(|(time, offset)| NaiveTimeWithOffset::new(time, offset))
 }
 
-fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime> {
+fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime, MyExtra> {
     let date = date_fragment_parser().boxed();
     let time = time_fragment_parser().boxed();
     date.then_ignore(just('T'))
@@ -891,7 +946,7 @@ fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate
         .map(|(date, time)| date.and_time(time))
 }
 
-fn date_time_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateTimeWithOffset> {
+fn date_time_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateTimeWithOffset, MyExtra> {
     let date_time = date_time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
     date_time
@@ -899,7 +954,8 @@ fn date_time_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateTimeWithOffset> {
         .map(|(date_time, offset)| NaiveDateTimeWithOffset::new(date_time, offset))
 }
 
-fn date_time_stamp_parser<'a>() -> impl Parser<'a, &'a str, chrono::DateTime<chrono::FixedOffset>> {
+fn date_time_stamp_parser<'a>(
+) -> impl Parser<'a, &'a str, chrono::DateTime<chrono::FixedOffset>, MyExtra> {
     let date_time = date_time_fragment_parser().boxed();
     let tz = tz_parser().boxed();
     date_time
@@ -907,21 +963,21 @@ fn date_time_stamp_parser<'a>() -> impl Parser<'a, &'a str, chrono::DateTime<chr
         .map(|(date_time, tz)| tz.from_utc_datetime(&date_time))
 }
 
-fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32> {
+fn offset_time_parser<'a>() -> impl Parser<'a, &'a str, i32, MyExtra> {
     let hour = hour_parser().boxed();
     let minute = minute_parser().boxed();
     hour.then_ignore(just(":"))
         .then(minute)
         .try_map(|(hour, minute), _| {
             if hour > 14 || hour == 14 && minute > 0 {
-                Err(EmptyErr::default())
+                Err(error::Error::FORG0001.into())
             } else {
                 Ok(hour as i32 * 60 + minute as i32)
             }
         })
 }
 
-fn offset_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
+fn offset_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset, MyExtra> {
     one_of("+-")
         .then(offset_time_parser())
         .map(|(sign, offset)| {
@@ -935,20 +991,20 @@ fn offset_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
         })
 }
 
-fn tz_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset> {
+fn tz_parser<'a>() -> impl Parser<'a, &'a str, chrono::FixedOffset, MyExtra> {
     let offset = offset_parser();
     just('Z').to(chrono::offset::Utc.fix()).or(offset)
 }
 
-fn g_year_parser<'a>() -> impl Parser<'a, &'a str, GYear> {
-    let year = year_parser().boxed();
+fn g_year_parser<'a>() -> impl Parser<'a, &'a str, GYear, MyExtra> {
+    let year = year_for_g_parser().boxed();
     let tz = tz_parser().boxed();
     year.then(tz.or_not())
         .then_ignore(end())
         .map(|(year, tz)| GYear::new(year, tz))
 }
 
-fn g_month_parser<'a>() -> impl Parser<'a, &'a str, GMonth> {
+fn g_month_parser<'a>() -> impl Parser<'a, &'a str, GMonth, MyExtra> {
     let month = month_parser().boxed();
     let tz = tz_parser().boxed();
     just('-')
@@ -959,7 +1015,7 @@ fn g_month_parser<'a>() -> impl Parser<'a, &'a str, GMonth> {
         .map(|(month, tz)| GMonth::new(month, tz))
 }
 
-fn g_day_parser<'a>() -> impl Parser<'a, &'a str, GDay> {
+fn g_day_parser<'a>() -> impl Parser<'a, &'a str, GDay, MyExtra> {
     let day = day_parser().boxed();
     let tz = tz_parser().boxed();
     just('-')
@@ -971,7 +1027,7 @@ fn g_day_parser<'a>() -> impl Parser<'a, &'a str, GDay> {
         .map(|(day, tz)| GDay::new(day, tz))
 }
 
-fn g_month_day_parser<'a>() -> impl Parser<'a, &'a str, GMonthDay> {
+fn g_month_day_parser<'a>() -> impl Parser<'a, &'a str, GMonthDay, MyExtra> {
     let month = month_parser().boxed();
     let day = day_parser().boxed();
     let tz = tz_parser().boxed();
@@ -982,18 +1038,34 @@ fn g_month_day_parser<'a>() -> impl Parser<'a, &'a str, GMonthDay> {
         .then(day)
         .then(tz.or_not())
         .then_ignore(end())
-        .map(|((month, day), tz)| GMonthDay::new(month, day, tz))
+        .try_map(|((month, day), tz), _| {
+            // pick leap year 2000
+            let date = chrono::NaiveDate::from_ymd_opt(2000, month, day);
+            if date.is_some() {
+                Ok(GMonthDay::new(month, day, tz))
+            } else {
+                Err(error::Error::FORG0001.into())
+            }
+        })
 }
 
-fn g_year_month_parser<'a>() -> impl Parser<'a, &'a str, GYearMonth> {
-    let year = year_parser().boxed();
+fn g_year_month_parser<'a>() -> impl Parser<'a, &'a str, GYearMonth, MyExtra> {
+    let year = year_for_g_parser().boxed();
     let month = month_parser().boxed();
     let tz = tz_parser().boxed();
-    year.then_ignore(just('-'))
+    year.map_err(|_| error::Error::FORG0001.into())
+        .then_ignore(just('-'))
         .then(month)
         .then(tz.or_not())
         .then_ignore(end())
-        .map(|((year, month), tz)| GYearMonth::new(year, month, tz))
+        .try_map(|((year, month), tz), _| {
+            let date = chrono::NaiveDate::from_ymd_opt(year, month, 1);
+            if date.is_some() {
+                Ok(GYearMonth::new(year, month, tz))
+            } else {
+                Err(error::Error::FODT0001.into())
+            }
+        })
 }
 
 #[cfg(test)]
@@ -1422,6 +1494,39 @@ mod tests {
         assert_eq!(
             g_year_month_parser().parse("2020-04Z").unwrap(),
             GYearMonth::new(2020, 4, Some(chrono::offset::Utc.fix()))
+        );
+    }
+
+    #[test]
+    fn test_year_parser_error() {
+        assert_eq!(
+            year_parser()
+                .parse("1000000000000000000")
+                .errors()
+                .collect::<Vec<_>>(),
+            vec![&ParserError::Error(error::Error::FODT0001)]
+        );
+    }
+
+    #[test]
+    fn test_year_parser_error_negative() {
+        assert_eq!(
+            year_parser()
+                .parse("-1000000000000000000")
+                .errors()
+                .collect::<Vec<_>>(),
+            vec![&ParserError::Error(error::Error::FODT0001)]
+        );
+    }
+
+    #[test]
+    fn test_date_parser_error() {
+        assert_eq!(
+            date_parser()
+                .parse("1000000000000000000-01-01")
+                .errors()
+                .collect::<Vec<_>>(),
+            vec![&ParserError::Error(error::Error::FODT0001)]
         );
     }
 }

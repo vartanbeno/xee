@@ -175,14 +175,8 @@ array-sort-024
 = fn-QName
 = fn-abs
 = fn-adjust-date-to-timezone
-cbcl-adjust-date-to-timezone-002
-cbcl-adjust-date-to-timezone-003
 = fn-adjust-dateTime-to-timezone
 K2-AdjDateTimeToTimezoneFunc-1
-cbcl-adjust-dateTime-to-timezone-001
-cbcl-adjust-dateTime-to-timezone-002
-cbcl-adjust-dateTime-to-timezone-003
-fn-adjust-dateTime-to-timezone-24
 = fn-adjust-time-to-timezone
 = fn-analyze-string
 analyzeString-001
