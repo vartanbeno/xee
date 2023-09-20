@@ -133,10 +133,14 @@ impl<'a> Interpreter<'a> {
                     self.unary_arithmetic(|a| a.minus())?;
                 }
                 EncodedInstruction::Concat => {
-                    let (a, b) = self.pop_atomic2()?;
-                    let a = a.to_str()?;
-                    let b = b.to_str()?;
-                    let result = a.to_owned() + b;
+                    let (a, b) = self.pop_atomic2_option()?;
+                    let a = a.unwrap_or("".into());
+                    let b = b.unwrap_or("".into());
+                    let a = a.cast_to_string();
+                    let b = b.cast_to_string();
+                    let a = a.to_str().unwrap();
+                    let b = b.to_str().unwrap();
+                    let result = a.to_string() + b;
                     self.stack.push(result.into());
                 }
                 EncodedInstruction::Const => {
@@ -813,6 +817,14 @@ impl<'a> Interpreter<'a> {
     fn pop_atomic2(&mut self) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
         let b = self.pop_atomic()?;
         let a = self.pop_atomic()?;
+        Ok((a, b))
+    }
+
+    fn pop_atomic2_option(
+        &mut self,
+    ) -> error::Result<(Option<atomic::Atomic>, Option<atomic::Atomic>)> {
+        let b = self.pop_atomic_option()?;
+        let a = self.pop_atomic_option()?;
         Ok((a, b))
     }
 

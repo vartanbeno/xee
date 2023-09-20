@@ -62,7 +62,6 @@ fo-test-fn-apply-001
 fo-test-fn-codepoints-to-string-004
 fo-test-fn-compare-002
 fo-test-fn-compare-004
-fo-test-fn-concat-006
 fo-test-fn-contains-004
 fo-test-fn-contains-005
 fo-test-fn-contains-006
@@ -3552,80 +3551,6 @@ op-boolean-equal-18
 = op-boolean-greater-than
 = op-boolean-less-than
 = op-concat
-K-ConcatOp-5
-K-ConcatOp-6
-K-ConcatOp-7
-K-ConcatOp-8
-K-ConcatOp-9
-op-concat-19
-op-concat-2
-op-concat-20
-op-concat-3
-op-concatdbl2args-1
-op-concatdbl2args-2
-op-concatdbl2args-3
-op-concatdbl2args-4
-op-concatdbl2args-5
-op-concatdec2args-1
-op-concatdec2args-2
-op-concatdec2args-3
-op-concatdec2args-4
-op-concatdec2args-5
-op-concatflt2args-1
-op-concatflt2args-2
-op-concatflt2args-3
-op-concatflt2args-4
-op-concatflt2args-5
-op-concatint2args-1
-op-concatint2args-2
-op-concatint2args-3
-op-concatint2args-4
-op-concatint2args-5
-op-concatintg2args-1
-op-concatintg2args-2
-op-concatintg2args-3
-op-concatintg2args-4
-op-concatintg2args-5
-op-concatlng2args-1
-op-concatlng2args-2
-op-concatlng2args-3
-op-concatlng2args-4
-op-concatlng2args-5
-op-concatnint2args-1
-op-concatnint2args-2
-op-concatnint2args-3
-op-concatnint2args-4
-op-concatnint2args-5
-op-concatnni2args-1
-op-concatnni2args-2
-op-concatnni2args-3
-op-concatnni2args-4
-op-concatnni2args-5
-op-concatnpi2args-1
-op-concatnpi2args-2
-op-concatnpi2args-3
-op-concatnpi2args-4
-op-concatnpi2args-5
-op-concatpint2args-1
-op-concatpint2args-2
-op-concatpint2args-3
-op-concatpint2args-4
-op-concatpint2args-5
-op-concatsht2args-1
-op-concatsht2args-2
-op-concatsht2args-3
-op-concatsht2args-4
-op-concatsht2args-5
-op-concatulng2args-1
-op-concatulng2args-2
-op-concatulng2args-3
-op-concatulng2args-4
-op-concatulng2args-5
-op-concatusht2args-1
-op-concatusht2args-2
-op-concatusht2args-3
-op-concatusht2args-4
-op-concatusht2args-5
 = op-concatenate
 = op-date-equal
 = op-date-greater-than
@@ -3812,7 +3737,6 @@ rangeExpr-30
 rangeExpr-31
 rangeExpr-32
 rangeExpr-33
-rangeExpr-34
 = op-union
 fn-union-node-args-006
 fn-union-node-args-010
@@ -4442,9 +4366,6 @@ K-FilterExpr-92
 K-FilterExpr-93
 K-FilterExpr-94
 K2-Predicates-1
-predicates-34
-predicates-35
-predicates-36
 = prod-QuantifiedExpr
 K-QuantExprWithout-7
 K-QuantExprWithout-8
