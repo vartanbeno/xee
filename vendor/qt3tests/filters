@@ -3421,7 +3421,6 @@ map-get-024
 = map-keys
 map-keys-002
 map-keys-005
-map-keys-007
 map-keys-008
 map-keys-014
 = map-merge
@@ -3486,7 +3485,6 @@ map-remove-016
 = map-size
 map-size-002
 map-size-005
-map-size-007
 map-size-008
 map-size-014
 map-size-015
@@ -3771,15 +3769,12 @@ K-NumericSubtract-35
 = op-numeric-unary-plus
 = op-same-key
 same-key-001
-same-key-003
 same-key-004
 same-key-005
 same-key-007
 same-key-009
 same-key-021
 same-key-022
-same-key-027
-same-key-028
 = op-string-equal
 = op-string-greater-than
 = op-string-less-than
@@ -4222,13 +4217,6 @@ Lookup-233
 Lookup-234
 = prod-MapConstructor
 MapConstructor-025
-MapConstructor-036
-MapConstructor-037
-MapConstructor-038
-MapConstructor-039
-MapConstructor-040
-MapConstructor-041
-MapConstructor-042
 = prod-MapTest
 MapTest-004
 MapTest-005

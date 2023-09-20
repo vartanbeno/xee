@@ -209,7 +209,7 @@ pub enum Error {
     ///
     /// No two keys in a map may have the same key value.
     #[error("Duplicate key values in a map")]
-    #[diagnostic(code(XQTY0137))]
+    #[diagnostic(code(XQDY0137))]
     XQDY0137,
     // XPath errors and functions: https://www.w3.org/TR/xpath-functions-31/#error-summary
     /// Wrong number of arguments.
