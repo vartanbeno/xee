@@ -58,7 +58,6 @@ fo-test-array-get-002
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
-fo-test-fn-apply-001
 fo-test-fn-codepoints-to-string-004
 fo-test-fn-compare-002
 fo-test-fn-compare-004
@@ -202,19 +201,7 @@ analyzeString-901
 analyzeString-902
 analyzeString-903
 = fn-apply
-fn-apply-01
-fn-apply-02
-fn-apply-03
-fn-apply-04
-fn-apply-06
-fn-apply-07
-fn-apply-08
-fn-apply-09
-fn-apply-10
 fn-apply-11
-fn-apply-12
-fn-apply-13
-fn-apply-16
 fn-apply-17
 = fn-available-environment-variables
 fn-available-environment-variables-001
@@ -1343,8 +1330,6 @@ fn-function-lookup-527
 fn-function-lookup-528
 fn-function-lookup-720
 fn-function-lookup-721
-fn-function-lookup-724
-fn-function-lookup-725
 fn-function-lookup-734
 fn-function-lookup-735
 fn-function-lookup-736
@@ -4024,7 +4009,6 @@ K-CondExpr-3
 K-CondExpr-4
 K-CondExpr-6
 = prod-InlineFunctionExpr
-inline-fn-023
 inline-fn-027
 inline-fn-032
 inline-fn-033

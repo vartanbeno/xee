@@ -555,8 +555,24 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn arity(&self, function_id: function::InlineFunctionId) -> usize {
-        self.program.functions[function_id.0].params.len()
+    pub(crate) fn arity(&self, function: &function::Function) -> usize {
+        match function {
+            function::Function::Inline {
+                inline_function_id, ..
+            } => self.program.functions[inline_function_id.0].params.len(),
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let static_function = self
+                    .dynamic_context
+                    .static_context
+                    .functions
+                    .get_by_index(*static_function_id);
+                static_function.arity()
+            }
+            function::Function::Array(_) => 1,
+            function::Function::Map(_) => 1,
+        }
     }
 
     fn call(&mut self, arity: u8) -> Result<(), Error> {

@@ -65,28 +65,9 @@ fn function_name(
 }
 
 #[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
-fn function_arity(
-    context: &context::DynamicContext,
-    interpreter: &Interpreter,
-    func: sequence::Item,
-) -> error::Result<IBig> {
+fn function_arity(interpreter: &Interpreter, func: sequence::Item) -> error::Result<IBig> {
     let function = func.to_function()?;
-    match function.as_ref() {
-        function::Function::Static {
-            static_function_id, ..
-        } => {
-            let static_function = context
-                .static_context
-                .functions
-                .get_by_index(*static_function_id);
-            Ok(static_function.arity().into())
-        }
-        function::Function::Inline {
-            inline_function_id, ..
-        } => Ok(interpreter.arity(*inline_function_id).into()),
-        function::Function::Array { .. } => Ok(1.into()),
-        function::Function::Map { .. } => Ok(1.into()),
-    }
+    Ok(interpreter.arity(function.as_ref()).into())
 }
 
 #[xpath_fn("fn:for-each($seq as item()*, $action as function(item()) as item()*) as item()*")]
@@ -279,6 +260,22 @@ where
     Ok(items.into())
 }
 
+#[xpath_fn("fn:apply($function as function(*), $array as array(*)) as item()*")]
+fn apply(
+    interpreter: &mut Interpreter,
+    function: sequence::Item,
+    array: function::Array,
+) -> error::Result<sequence::Sequence> {
+    let function = function.to_function()?;
+    let arity = array.len();
+    if interpreter.arity(function.as_ref()) != arity {
+        return Err(error::Error::FOAP0001);
+    }
+    let arguments = array.iter().cloned().collect::<Vec<_>>();
+
+    interpreter.call_function_with_arguments(function.clone(), &arguments)
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(function_lookup),
@@ -292,5 +289,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(sort1),
         wrap_xpath_fn!(sort2),
         wrap_xpath_fn!(sort3),
+        wrap_xpath_fn!(apply),
     ]
 }

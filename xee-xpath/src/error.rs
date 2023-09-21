@@ -217,6 +217,7 @@ pub enum Error {
     /// Raised when fn:apply is called and the arity of the supplied function
     /// is not the same as the number of members in the supplied array.
     #[error("Wrong number of arguments")]
+    #[diagnostic(code(FOAP0001))]
     FOAP0001,
     /// Division by zero.
     ///
