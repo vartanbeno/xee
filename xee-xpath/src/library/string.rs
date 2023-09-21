@@ -369,8 +369,8 @@ fn contains(
     match collation.as_ref() {
         Collation::CodePoint => Ok(arg1.contains(arg2)),
         Collation::HtmlAscii => {
-            let arg1 = arg1.to_lowercase();
-            let arg2 = arg2.to_lowercase();
+            let arg1 = arg1.to_ascii_lowercase();
+            let arg2 = arg2.to_ascii_lowercase();
             Ok(arg1.contains(&arg2))
         }
         // for now, icu4x does not yet support collation units (actually named collation elements)
