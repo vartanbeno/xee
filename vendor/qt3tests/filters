@@ -3507,7 +3507,6 @@ UCA-params-034
 = op-base64Binary-greater-than
 = op-base64Binary-less-than
 = op-boolean-equal
-op-boolean-equal-18
 = op-boolean-greater-than
 = op-boolean-less-than
 = op-concat
@@ -3584,7 +3583,6 @@ cbcl-gMonthDay-equal-018
 fn-intersect-node-args-005
 fn-intersect-node-args-006
 = op-is-same-node
-cbcl-is-same-node-002
 = op-multiply-dayTimeDuration
 K-DayTimeDurationMultiply-9
 = op-multiply-yearMonthDuration
@@ -3967,13 +3965,10 @@ function-call-reserved-function-names-037
 = prod-FunctionDecl
 = prod-GeneralComp.eq
 GenCompEq-2
-GenCompEq-24
 = prod-GeneralComp.ge
 = prod-GeneralComp.gt
 = prod-GeneralComp.le
 = prod-GeneralComp.lt
-GenCompLT-12
-GenCompLT-13
 = prod-GeneralComp.ne
 = prod-GroupByClause
 = prod-IfExpr

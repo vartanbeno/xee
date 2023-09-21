@@ -596,7 +596,25 @@ where
         ])
         .boxed();
 
-        let comparison_expr = binary_expr_op(string_concat_expr, comparison_operator).boxed();
+        // unlike other binary operators, a comparison expression may only
+        // contain a single comparison operator (unless braces are used)
+        let comparison_expr = (string_concat_expr
+            .clone()
+            .then(comparison_operator)
+            .then(string_concat_expr.clone())
+            .map_with_span(|((left, operator), right), span| {
+                ast::ExprSingle::Binary(ast::BinaryExpr {
+                    operator,
+                    left: expr_single_to_path_expr(left),
+                    right: expr_single_to_path_expr(right),
+                })
+                .with_span(span)
+            }))
+        .or(string_concat_expr.map_with_span(|expr, span| {
+            ast::ExprSingle::Path(expr_single_to_path_expr(expr)).with_span(span)
+        }))
+        .boxed();
+
         let and_expr = binary_expr(comparison_expr, Token::And, ast::BinaryOperator::And).boxed();
         let or_expr = binary_expr(and_expr, Token::Or, ast::BinaryOperator::Or).boxed();
 

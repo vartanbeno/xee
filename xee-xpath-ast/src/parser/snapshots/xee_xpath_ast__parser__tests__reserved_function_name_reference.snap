@@ -2,4 +2,4 @@
 source: xee-xpath-ast/src/parser/mod.rs
 expression: "parse_xpath_simple(\"switch#2\")"
 ---
-Err("[Cannot use \'switch\' as a function name as it is a reserved name at 0..8]")
+Err("[multiple errors found at 0..8]")
