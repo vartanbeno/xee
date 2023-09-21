@@ -58,7 +58,6 @@ fo-test-array-get-002
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
-fo-test-fn-codepoints-to-string-004
 fo-test-fn-compare-002
 fo-test-fn-compare-004
 fo-test-fn-contains-004
@@ -223,18 +222,6 @@ K-SeqBooleanFunc-16
 = fn-ceiling
 = fn-codepoint-equal
 = fn-codepoints-to-string
-K-CodepointToStringFunc-11
-K-CodepointToStringFunc-12
-K-CodepointToStringFunc-24
-K-CodepointToStringFunc-25
-K-CodepointToStringFunc-7
-K-CodepointToStringFunc-8
-cbcl-codepoints-to-string-008
-cbcl-codepoints-to-string-009
-cbcl-codepoints-to-string-011
-cbcl-codepoints-to-string-023
-cbcl-codepoints-to-string-024
-fn-codepoints-to-string-1
 = fn-collation-key
 collation-key-001
 collation-key-002
@@ -313,8 +300,6 @@ fn-contains-35
 fn-contains-37
 liam-contains-004
 = fn-contains-token
-fn-contains-token-20
-fn-contains-token-50
 = fn-count
 = fn-current-date
 = fn-current-dateTime
@@ -1426,10 +1411,6 @@ fn-in-scope-prefixes-23
 fn-in-scope-prefixes-24
 fn-in-scope-prefixes-25
 fn-in-scope-prefixes-26
-fn-in-scope-prefixes-27
-fn-in-scope-prefixes-28
-fn-in-scope-prefixes-29
-fn-in-scope-prefixes-30
 = fn-index-of
 = fn-innermost
 fn-innermost-024
@@ -1618,7 +1599,6 @@ json-to-xml-error-023
 json-to-xml-error-024
 json-to-xml-error-025
 json-to-xml-error-026
-json-to-xml-error-027
 json-to-xml-error-029
 json-to-xml-error-030
 json-to-xml-error-031
@@ -3052,7 +3032,6 @@ fn-tokenize-34
 fn-tokenize-36
 fn-tokenize-37
 fn-tokenize-38
-fn-tokenize-50
 fn-tokenize-7
 fn-tokenize-8
 = fn-trace

@@ -50,6 +50,10 @@ impl Default for KnownDependencies {
                 type_: "feature".to_string(),
                 value: "higherOrderFunctions".to_string(),
             },
+            qt::DependencySpec {
+                type_: "xml-version".to_string(),
+                value: "1.0".to_string(),
+            },
         ];
         Self::new(&specs)
     }
@@ -153,6 +157,18 @@ impl qt::Dependencies {
         true
     }
 
+    // the XML version is supported if the the xml-version is the same
+    pub(crate) fn is_xml_version_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        for dependency in &self.dependencies {
+            if dependency.spec.type_ == "xml-version"
+                && !known_dependencies.is_supported(dependency)
+            {
+                return false;
+            }
+        }
+        true
+    }
+
     pub(crate) fn is_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         // if we have no dependencies, we're always supported
         if self.dependencies.is_empty() {
@@ -160,6 +176,9 @@ impl qt::Dependencies {
         }
         // if we don't support the spec, we don't support it
         if !self.is_spec_supported(known_dependencies) {
+            return false;
+        }
+        if !self.is_xml_version_supported(known_dependencies) {
             return false;
         }
         self.is_feature_supported(known_dependencies)

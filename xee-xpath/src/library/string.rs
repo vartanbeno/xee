@@ -22,9 +22,24 @@ fn codepoints_to_string(arg: &[IBig]) -> error::Result<String> {
     arg.iter()
         .map(|c| {
             let c: u32 = c.try_into().map_err(|_| error::Error::FOCH0001)?;
-            char::from_u32(c).ok_or(error::Error::FOCH0001)
+            let c = char::from_u32(c).ok_or(error::Error::FOCH0001)?;
+            if is_valid_xml_char(c) {
+                Ok(c)
+            } else {
+                Err(error::Error::FOCH0001)
+            }
         })
         .collect::<error::Result<String>>()
+}
+
+fn is_valid_xml_char(c: char) -> bool {
+    // Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+    c == '\t'
+        || c == '\n'
+        || c == '\r'
+        || ('\u{20}'..='\u{D7FF}').contains(&c)
+        || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{10FFFF}').contains(&c)
 }
 
 #[xpath_fn("fn:string-to-codepoints($arg as xs:string?) as xs:integer*")]
