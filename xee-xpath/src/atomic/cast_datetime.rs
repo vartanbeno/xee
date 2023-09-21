@@ -916,7 +916,7 @@ fn minute_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     })
 }
 
-fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime, MyExtra> {
+fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, (chrono::NaiveTime, bool), MyExtra> {
     let hour = hour_parser().boxed();
     let minute = minute_parser().boxed();
     let second = time_second_parser().boxed();
@@ -925,13 +925,15 @@ fn time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveTime, MyE
         .then_ignore(just(':'))
         .then(second)
         .try_map(|((hour, minute), (second, millisecond)), _| {
-            let hour = if hour == 24 && minute == 0 && second == 0 && millisecond == 0 {
-                0
+            let (hour, twentyfour) = if hour == 24 && minute == 0 && second == 0 && millisecond == 0
+            {
+                (0, true)
             } else {
-                hour
+                (hour, false)
             };
-            chrono::NaiveTime::from_hms_milli_opt(hour, minute, second, millisecond)
-                .ok_or(error::Error::FORG0001.into())
+            let time = chrono::NaiveTime::from_hms_milli_opt(hour, minute, second, millisecond)
+                .ok_or(ParserError::Error(error::Error::FORG0001))?;
+            Ok((time, twentyfour))
         })
 }
 
@@ -940,7 +942,7 @@ fn time_parser<'a>() -> impl Parser<'a, &'a str, NaiveTimeWithOffset, MyExtra> {
     let tz = tz_parser().boxed();
     time.then(tz.or_not())
         .then_ignore(end())
-        .map(|(time, offset)| NaiveTimeWithOffset::new(time, offset))
+        .map(|((time, _twentyfour), offset)| NaiveTimeWithOffset::new(time, offset))
 }
 
 fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDateTime, MyExtra> {
@@ -948,7 +950,16 @@ fn date_time_fragment_parser<'a>() -> impl Parser<'a, &'a str, chrono::NaiveDate
     let time = time_fragment_parser().boxed();
     date.then_ignore(just('T'))
         .then(time)
-        .map(|(date, time)| date.and_time(time))
+        .map(|(date, (time, twentyfour))| {
+            let dt = date.and_time(time);
+            if twentyfour {
+                // we're one day behind now, as we went to 0:00.
+                // move into the next day
+                dt + chrono::Duration::days(1)
+            } else {
+                dt
+            }
+        })
 }
 
 fn date_time_parser<'a>() -> impl Parser<'a, &'a str, NaiveDateTimeWithOffset, MyExtra> {

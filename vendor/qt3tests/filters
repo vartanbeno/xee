@@ -137,7 +137,6 @@ fo-test-fn-substring-before-005
 fo-test-fn-substring-before-006
 fo-test-fn-substring-before-007
 fo-test-fn-unordered-001
-fo-test-fn-year-from-dateTime-004
 fo-test-map-for-each-001
 fo-test-map-for-each-002
 fo-test-map-for-each-003
@@ -171,7 +170,6 @@ array-sort-024
 = fn-abs
 = fn-adjust-date-to-timezone
 = fn-adjust-dateTime-to-timezone
-K2-AdjDateTimeToTimezoneFunc-1
 = fn-adjust-time-to-timezone
 = fn-analyze-string
 analyzeString-001
@@ -3834,7 +3832,6 @@ K-SeqExprCast-1212
 K-SeqExprCast-1414
 K-SeqExprCast-143
 K-SeqExprCast-1491
-K-SeqExprCast-350
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
