@@ -634,7 +634,14 @@ fn digits_parser<'a>() -> impl Parser<'a, &'a str, String, MyExtra> {
 
 fn number_parser<'a>() -> impl Parser<'a, &'a str, u32, MyExtra> {
     // failed parse may result in an overflow
-    digits_parser().try_map(|s, _| s.parse().map_err(|_| error::Error::FODT0001.into()))
+    digits_parser().validate(|s, _, emitter| {
+        if let Ok(parsed) = s.parse() {
+            parsed
+        } else {
+            emitter.emit(error::Error::FODT0002.into());
+            0
+        }
+    })
 }
 
 fn sign_parser<'a>() -> impl Parser<'a, &'a str, bool, MyExtra> {

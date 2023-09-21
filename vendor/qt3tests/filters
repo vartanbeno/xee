@@ -208,8 +208,6 @@ fn-available-environment-variables-010
 fn-available-environment-variables-011
 = fn-avg
 cbcl-avg-001
-cbcl-avg-002
-cbcl-avg-003
 = fn-base-uri
 K-BaseURIFunc-2
 fn-base-uri-2
@@ -3513,11 +3511,7 @@ UCA-params-034
 K-DayTimeDurationDivide-4
 K-DayTimeDurationDivide-5
 K-DayTimeDurationDivide-6
-cbcl-divide-dayTimeDuration-003
 = op-divide-dayTimeDuration-by-dayTimeDuration
-cbcl-divide-dayTimeDuration-by-dayTimeDuration-001
-cbcl-divide-dayTimeDuration-by-dayTimeDuration-002
-cbcl-divide-dayTimeDuration-by-dayTimeDuration-003
 op-divide-dayTimeDuration-by-dTD-1
 op-divide-dayTimeDuration-by-dTD-11
 = op-divide-yearMonthDuration
@@ -3525,7 +3519,6 @@ K-YearMonthDurationDivide-5
 op-divide-yearMonthDuration-17
 op-divide-yearMonthDuration-8
 = op-divide-yearMonthDuration-by-yearMonthDuration
-cbcl-divide-yearMonthDuration-by-yearMonthDuration-001
 op-divide-yearMonthDuration-by-yMD-11
 = op-duration-equal
 K-DurationEQ-15
@@ -3803,10 +3796,6 @@ K2-SeqExprCast-505
 = prod-CastExpr.derived
 cbcl-cast-byte-001
 cbcl-cast-byte-002
-cbcl-cast-dayTimeDuration-001
-cbcl-cast-dayTimeDuration-002
-cbcl-cast-duration-001
-cbcl-cast-duration-002
 cbcl-cast-gYear-001
 cbcl-cast-gYear-002
 cbcl-cast-gYear-003
@@ -3830,8 +3819,6 @@ cbcl-cast-unsignedLong-005
 cbcl-cast-unsignedShort-001
 cbcl-cast-unsignedShort-002
 cbcl-cast-unsignedShort-005
-cbcl-cast-yearMonthDuration-001
-cbcl-cast-yearMonthDuration-002
 = prod-CastExpr.schema
 = prod-CastableExpr
 CastableAs663

@@ -138,7 +138,7 @@ fn op_divide_year_month_duration_by_year_month_duration(
     b: YearMonthDuration,
 ) -> error::Result<atomic::Atomic> {
     if b.months == 0 {
-        return Err(error::Error::FODT0002);
+        return Err(error::Error::DivisionByZero);
     }
     let a: Decimal = a.months.into();
     let b: Decimal = b.months.into();
