@@ -139,7 +139,7 @@ impl From<NaiveDateTimeWithOffset> for chrono::DateTime<chrono::FixedOffset> {
 
 impl From<chrono::DateTime<chrono::FixedOffset>> for NaiveDateTimeWithOffset {
     fn from(date_time: chrono::DateTime<chrono::FixedOffset>) -> Self {
-        NaiveDateTimeWithOffset::new(date_time.naive_utc(), Some(*date_time.offset()))
+        NaiveDateTimeWithOffset::new(date_time.naive_local(), Some(*date_time.offset()))
     }
 }
 

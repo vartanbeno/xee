@@ -186,8 +186,15 @@ fn adjust_date_time_to_timezone(
 ) -> error::Result<Option<NaiveDateTimeWithOffset>> {
     match (arg, offset) {
         (Some(arg), Some(offset)) => {
-            let date_time = if let Some(arg_offset) = arg.offset {
-                arg.date_time - arg_offset + offset
+            let date_time = if arg.offset.is_some() {
+                // we need to first turn this into a date time stamp;
+                // the default offset will be ignored as we know we have
+                // an arg.offset
+                let stamp = arg.to_date_time_stamp(chrono::offset::Utc.fix());
+                // now we need to take the same time in this offset
+                let stamp = stamp.with_timezone(&offset);
+                // now we get the naive datetime local again
+                stamp.naive_local()
             } else {
                 arg.date_time
             };

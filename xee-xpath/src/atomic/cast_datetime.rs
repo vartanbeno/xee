@@ -302,7 +302,10 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
             atomic::Atomic::DateTime(_) => Ok(self.clone()),
             atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(
-                NaiveDateTimeWithOffset::new(date_time.naive_utc(), Some(date_time.offset().fix())),
+                NaiveDateTimeWithOffset::new(
+                    date_time.naive_local(),
+                    Some(date_time.offset().fix()),
+                ),
             ))),
             atomic::Atomic::Date(date) => Ok(atomic::Atomic::DateTime(Rc::new(
                 NaiveDateTimeWithOffset::new(

@@ -48,7 +48,7 @@ fn current_date_time(context: &DynamicContext) -> chrono::DateTime<chrono::offse
 #[xpath_fn("fn:current-date() as xs:date")]
 fn current_date(context: &DynamicContext) -> NaiveDateWithOffset {
     NaiveDateWithOffset {
-        date: context.current_datetime().date_naive(),
+        date: context.current_datetime().naive_local().date(),
         offset: Some(context.implicit_timezone()),
     }
 }
