@@ -46,7 +46,11 @@ where
     if b.is_zero() {
         return Err(error::Error::DivisionByZero);
     }
-    let v = op_div_float(a, b)?;
+    if a.is_nan() || b.is_nan() || a.is_infinite() {
+        return Err(error::Error::Overflow);
+    }
+
+    let v = op_div_float(a, b);
     let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
     let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
     Ok(i.into())

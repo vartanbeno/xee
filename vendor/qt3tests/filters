@@ -124,9 +124,6 @@ fo-test-fn-starts-with-006
 fo-test-fn-starts-with-007
 fo-test-fn-starts-with-008
 fo-test-fn-substring-007
-fo-test-fn-substring-008
-fo-test-fn-substring-010
-fo-test-fn-substring-011
 fo-test-fn-substring-after-004
 fo-test-fn-substring-after-005
 fo-test-fn-substring-after-006
@@ -3001,14 +2998,7 @@ fn-string-length-24
 K2-SeqSubsequenceFunc-1
 = fn-substring
 K-SubstringFunc-10
-K-SubstringFunc-11
-K-SubstringFunc-13
-K-SubstringFunc-14
-fn-substring-10
-fn-substring-11
 fn-substring-22
-fn-substring-7
-fn-substring-8
 = fn-substring-after
 fn-substring-after-23
 = fn-substring-before
@@ -3595,18 +3585,6 @@ op-multiply-yearMonthDuration-20
 = op-node-before
 = op-numeric-add
 = op-numeric-divide
-K2-NumericDivide-10
-K2-NumericDivide-11
-K2-NumericDivide-12
-K2-NumericDivide-13
-K2-NumericDivide-14
-K2-NumericDivide-15
-K2-NumericDivide-16
-K2-NumericDivide-5
-K2-NumericDivide-6
-K2-NumericDivide-7
-K2-NumericDivide-8
-K2-NumericDivide-9
 op-numeric-dividedec2args-2
 op-numeric-dividedec2args-4
 op-numeric-divideint2args-2
@@ -3633,7 +3611,6 @@ K-NumericGT-15
 K-NumericGT-16
 K2-NumericGT-4
 = op-numeric-integer-divide
-op-numeric-integer-divide-1
 = op-numeric-less-than
 K-NumericLT-17
 K-NumericLT-18
@@ -4447,7 +4424,6 @@ xs-dateTimeStamp-4
 xs-dateTimeStamp-5
 xs-dateTimeStamp-6
 = xs-double
-xs-double-002
 xs-double-004
 = xs-error
 xs-error-005
@@ -4480,7 +4456,6 @@ xs-error-051
 xs-error-052
 xs-error-053
 = xs-float
-xs-float-002
 xs-float-004
 = xs-hexBinary
 = xs-normalizedString

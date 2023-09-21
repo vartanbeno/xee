@@ -20,8 +20,8 @@ pub(crate) fn op_div(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
     match (a, b) {
         (Atomic::Decimal(a), Atomic::Decimal(b)) => Ok(op_div_decimal(a, b)?.into()),
         (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(op_div_integer(a, b)?),
-        (Atomic::Float(a), Atomic::Float(b)) => Ok(op_div_float(a, b)?.into()),
-        (Atomic::Double(a), Atomic::Double(b)) => Ok(op_div_float(a, b)?.into()),
+        (Atomic::Float(a), Atomic::Float(b)) => Ok(op_div_float(a, b).into()),
+        (Atomic::Double(a), Atomic::Double(b)) => Ok(op_div_float(a, b).into()),
         // op:divide-yearMonthDuration(A, B) -> xs:yearMonthDuration
         (Atomic::YearMonthDuration(a), b @ Atomic::Decimal(_)) => {
             Ok(op_divide_year_month_duration_by_atomic(a, b)?)
@@ -76,14 +76,11 @@ fn op_div_integer(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
     Ok(v.into())
 }
 
-pub(crate) fn op_div_float<F>(a: F, b: F) -> error::Result<F>
+pub(crate) fn op_div_float<F>(a: F, b: F) -> F
 where
     F: Float,
 {
-    if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
-    }
-    Ok(a / b)
+    a / b
 }
 
 fn op_divide_year_month_duration_by_atomic(
