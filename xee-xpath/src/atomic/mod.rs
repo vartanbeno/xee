@@ -20,6 +20,7 @@ mod op_multiply;
 mod op_ne;
 mod op_subtract;
 mod op_unary;
+mod round;
 mod types;
 
 pub use atomic_core::Atomic;
@@ -42,4 +43,5 @@ pub(crate) use op_mod::op_mod;
 pub(crate) use op_multiply::op_multiply;
 pub(crate) use op_ne::OpNe;
 pub(crate) use op_subtract::op_subtract;
+pub(crate) use round::{round_double, round_float};
 pub use types::{BinaryType, IntegerType, StringType};

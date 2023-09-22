@@ -3,12 +3,14 @@ use std::cmp::Ordering;
 
 use ibig::ops::Abs;
 use ibig::IBig;
-use num_traits::{Float, Zero};
+use num_traits::Float;
+
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use rust_decimal::RoundingStrategy;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic::{round_double, round_float};
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
@@ -94,8 +96,8 @@ fn round_atomic(arg: Atomic, precision: i32) -> error::Result<Atomic> {
         // even though the spec claims we should cast to an infinite
         // precision decimal, we don't have such a thing, so we
         // make do with doing the operation directly on f32 and f64
-        Atomic::Float(OrderedFloat(f)) => Ok(round_float(f, precision)),
-        Atomic::Double(OrderedFloat(d)) => Ok(round_double(d, precision)),
+        Atomic::Float(OrderedFloat(f)) => Ok(round_float(f, precision).into()),
+        Atomic::Double(OrderedFloat(d)) => Ok(round_double(d, precision).into()),
         _ => Err(error::Error::Type),
     }
 }
@@ -136,61 +138,6 @@ fn round_decimal(arg: Decimal, precision: i32) -> error::Result<Atomic> {
             let arg = arg * d;
             Ok(arg.into())
         }
-    }
-}
-
-fn round_float(arg: f32, precision: i32) -> Atomic {
-    if arg.is_nan() || arg.is_infinite() || arg.is_zero() {
-        return arg.into();
-    }
-
-    match precision.cmp(&0) {
-        Ordering::Equal => round_f32_ties_to_positive_infinity(arg).into(),
-        Ordering::Greater => {
-            let d = 10u32.pow(precision.unsigned_abs()) as f32;
-            (round_f32_ties_to_positive_infinity(arg * d) / d).into()
-        }
-        Ordering::Less => {
-            let d = 10u32.pow(precision.unsigned_abs()) as f32;
-            (round_f32_ties_to_positive_infinity(arg / d) * d).into()
-        }
-    }
-}
-
-fn round_f32_ties_to_positive_infinity(x: f32) -> f32 {
-    let y = x.floor();
-    if x == y {
-        x
-    } else {
-        let z = (2.0 * x - y).floor();
-        z.copysign(x)
-    }
-}
-
-fn round_double(arg: f64, precision: i32) -> Atomic {
-    if arg.is_nan() || arg.is_infinite() || arg.is_zero() {
-        return arg.into();
-    }
-    match precision.cmp(&0) {
-        Ordering::Equal => round_f64_ties_to_positive_infinity(arg).into(),
-        Ordering::Greater => {
-            let d = 10u32.pow(precision.unsigned_abs()) as f64;
-            (round_f64_ties_to_positive_infinity(arg * d) / d).into()
-        }
-        Ordering::Less => {
-            let d = 10u32.pow(precision.unsigned_abs()) as f64;
-            (round_f64_ties_to_positive_infinity(arg / d) * d).into()
-        }
-    }
-}
-
-fn round_f64_ties_to_positive_infinity(x: f64) -> f64 {
-    let y = x.floor();
-    if x == y {
-        x
-    } else {
-        let z = (2.0 * x - y).floor();
-        z.copysign(x)
     }
 }
 
