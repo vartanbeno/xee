@@ -597,7 +597,7 @@ where
         .boxed();
 
         // unlike other binary operators, a comparison expression may only
-        // contain a single comparison operator (unless braces are used)
+        // contain a single comparison operator (unless parens are used)
         let comparison_expr = (string_concat_expr
             .clone()
             .then(comparison_operator)
