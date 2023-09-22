@@ -43,7 +43,7 @@ impl Sequence {
                 let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
                 Ok(sequence)
             },
-            |sequence, _| Ok(sequence),
+            true,
             xot,
         )
     }
@@ -57,10 +57,7 @@ impl Sequence {
         self.sequence_type_matching_convert(
             sequence_type,
             |sequence, xs| Self::convert_atomic(sequence, xs, context),
-            // I can't think of a way that failing to do coercion will
-            // not work, and the qt3 test suite seems to agree with me,
-            // so don't do function coercion at all
-            |sequence, _| Ok(sequence),
+            false,
             context.xot,
         )
     }
@@ -90,7 +87,7 @@ impl Sequence {
         self,
         t: &ast::SequenceType,
         convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
-        convert_function: impl Fn(Sequence, &ast::FunctionTest) -> error::Result<Sequence>,
+        check_function: bool,
         xot: &Xot,
     ) -> error::Result<Self> {
         match t {
@@ -101,12 +98,9 @@ impl Sequence {
                     Err(error::Error::Type)
                 }
             }
-            ast::SequenceType::Item(occurrence_item) => self.occurrence_item_matching(
-                occurrence_item,
-                convert_atomic,
-                convert_function,
-                xot,
-            ),
+            ast::SequenceType::Item(occurrence_item) => {
+                self.occurrence_item_matching(occurrence_item, convert_atomic, check_function, xot)
+            }
         }
     }
 
@@ -114,7 +108,7 @@ impl Sequence {
         self,
         occurrence_item: &ast::Item,
         convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
-        convert_function: impl Fn(Sequence, &ast::FunctionTest) -> error::Result<Sequence>,
+        check_function: bool,
         xot: &Xot,
     ) -> error::Result<Self> {
         let sequence = match &occurrence_item.item_type {
@@ -124,19 +118,18 @@ impl Sequence {
                     .ok_or(error::Error::UndefinedTypeReference)?;
                 convert_atomic(&self, xs)?
             }
-            ast::ItemType::FunctionTest(function_test) => convert_function(self, function_test)?,
             _ => self,
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = sequence.items().one()?;
-                one.item_type_matching(&occurrence_item.item_type, xot)?;
+                one.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
                 Ok(sequence)
             }
             ast::Occurrence::Option => {
                 let option = sequence.items().option()?;
                 if let Some(item) = option {
-                    item.item_type_matching(&occurrence_item.item_type, xot)?;
+                    item.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
                     Ok(sequence)
                 } else {
                     Ok(sequence)
@@ -144,7 +137,7 @@ impl Sequence {
             }
             ast::Occurrence::Many => {
                 for item in sequence.items() {
-                    item?.item_type_matching(&occurrence_item.item_type, xot)?;
+                    item?.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
                 }
                 Ok(sequence)
             }
@@ -153,7 +146,7 @@ impl Sequence {
                     return Err(error::Error::Type);
                 }
                 for item in sequence.items() {
-                    item?.item_type_matching(&occurrence_item.item_type, xot)?;
+                    item?.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
                 }
                 Ok(sequence)
             }
@@ -162,7 +155,12 @@ impl Sequence {
 }
 
 impl Item {
-    fn item_type_matching(&self, item_type: &ast::ItemType, xot: &Xot) -> error::Result<()> {
+    fn item_type_matching(
+        &self,
+        item_type: &ast::ItemType,
+        check_function: bool,
+        xot: &Xot,
+    ) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => Ok(()),
             ast::ItemType::AtomicOrUnionType(name) => {
@@ -171,11 +169,20 @@ impl Item {
             ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
             // we accept any function tests, as function test matching
             // is deferred until later during runtime in coerced functions
-            // TODO: we should check for arity in case of function calls
-            // with function arguments.
+
             // TODO: this is not correct for instance of checks, we need
             // to do more detailed checking for those.
-            ast::ItemType::FunctionTest(..) => Ok(()),
+            ast::ItemType::FunctionTest(..) => {
+                Ok(())
+                // let function = self.to_function()?;
+                // if !check_function {
+                //     // should check for arity
+                //     //  TODO: we should check for arity in case of function calls
+                //     // with function arguments.
+                //     Ok(())
+                // } else {
+                // }
+            }
             ast::ItemType::MapTest(map_test) => match map_test.as_ref() {
                 ast::MapTest::AnyMapTest => {
                     if self.is_map() {
