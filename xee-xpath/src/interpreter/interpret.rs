@@ -19,7 +19,6 @@ use crate::sequence;
 use crate::stack;
 use crate::xml;
 
-use super::builder::Program;
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
 const FRAMES_MAX: usize = 64;
@@ -34,7 +33,7 @@ struct Frame {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
-    program: &'a Program,
+    program: &'a function::Program,
     dynamic_context: &'a DynamicContext<'a>,
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,
@@ -42,7 +41,7 @@ pub(crate) struct Interpreter<'a> {
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext) -> Self {
+    pub(crate) fn new(program: &'a function::Program, dynamic_context: &'a DynamicContext) -> Self {
         Interpreter {
             program,
             dynamic_context,

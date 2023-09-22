@@ -3,7 +3,7 @@ use xee_xpath_ast::ast;
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::function;
-use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Program, Scopes};
+use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Scopes};
 use crate::ir;
 use crate::ir::IrConverter;
 use crate::occurrence::Occurrence;
@@ -13,7 +13,7 @@ use crate::xml;
 
 #[derive(Debug)]
 pub struct XPath {
-    pub(crate) program: Program,
+    pub(crate) program: function::Program,
     main: function::InlineFunctionId,
 }
 
@@ -24,7 +24,7 @@ impl XPath {
         let expr = ir_converter.convert_xpath(&ast)?;
         // this expression contains a function definition, we're getting it
         // in the end
-        let mut program = Program::new(xpath.to_string());
+        let mut program = function::Program::new(xpath.to_string());
         let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
         let builder = FunctionBuilder::new(&mut program);
         let mut compiler = InterpreterCompiler {
