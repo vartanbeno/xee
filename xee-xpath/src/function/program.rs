@@ -37,4 +37,8 @@ impl Program {
     ) -> &function::InlineFunction {
         self.get_function(id.0)
     }
+
+    pub(crate) fn last_inline_function_id(&self) -> function::InlineFunctionId {
+        function::InlineFunctionId(self.functions.len() - 1)
+    }
 }

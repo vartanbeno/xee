@@ -35,7 +35,7 @@ impl XPath {
         compiler.compile_expr(&expr)?;
 
         // the inline function should be the last finished function
-        let inline_id = function::InlineFunctionId(program.functions.len() - 1);
+        let inline_id = program.last_inline_function_id();
         Ok(Self {
             program,
             main: inline_id,
