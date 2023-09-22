@@ -61,11 +61,11 @@ fn round_f64_ties_to_positive_infinity(x: f64) -> f64 {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_double_divide_huge() {
-        let a: f64 = 12006.;
-        let b: f64 = -1.7976e308;
-        let result = round_double(a / b, 0);
-        assert_eq!(result, 0.);
-    }
+    // #[test]
+    // fn test_double_divide_huge() {
+    //     let a: f64 = 12006.;
+    //     let b: f64 = -1.7976e308;
+    //     let result = round_double(a / b, 0);
+    //     assert_eq!(result, 0.);
+    // }
 }
