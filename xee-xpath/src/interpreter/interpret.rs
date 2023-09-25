@@ -573,12 +573,7 @@ impl<'a> Interpreter<'a> {
         arity: u8,
         closure_vars: &[sequence::Sequence],
     ) -> error::Result<()> {
-        let static_function = self
-            .runnable
-            .dynamic_context
-            .static_context
-            .functions
-            .get_by_index(static_function_id);
+        let static_function = self.runnable.static_function(static_function_id);
         if arity as usize != static_function.arity() {
             return Err(error::Error::Type);
         }

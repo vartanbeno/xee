@@ -24,11 +24,11 @@ impl<'a> Runnable<'a> {
         }
     }
 
-    pub(crate) fn program(&self) -> &function::Program {
+    pub(crate) fn program(&self) -> &'a function::Program {
         self.program
     }
 
-    pub(crate) fn dynamic_context(&self) -> &DynamicContext {
+    pub(crate) fn dynamic_context(&self) -> &'a DynamicContext {
         self.dynamic_context
     }
 
@@ -51,14 +51,14 @@ impl<'a> Runnable<'a> {
     pub(crate) fn inline_function(
         &self,
         function_id: function::InlineFunctionId,
-    ) -> &function::InlineFunction {
+    ) -> &'a function::InlineFunction {
         &self.program.functions[function_id.0]
     }
 
     pub(crate) fn static_function(
         &self,
         function_id: function::StaticFunctionId,
-    ) -> &function::StaticFunction {
+    ) -> &'a function::StaticFunction {
         self.dynamic_context
             .static_context
             .functions
