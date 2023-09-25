@@ -1,14 +1,62 @@
-use xee_xpath_ast::ast;
+use xee_xpath_ast::{ast, WithSpan, XS_NAMESPACE};
+
+use crate::ir;
 
 use super::static_function::FunctionKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Signature {
-    pub(crate) parameter_types: Vec<ast::SequenceType>,
-    pub(crate) return_type: ast::SequenceType,
+    pub(crate) parameter_types: Vec<Option<ast::SequenceType>>,
+    pub(crate) return_type: Option<ast::SequenceType>,
 }
 
 impl Signature {
+    pub(crate) fn map_signature() -> Self {
+        let any_atomic_type = ast::Name::new(
+            "anyAtomicType".to_string(),
+            Some(XS_NAMESPACE.to_string()),
+            Some("xs".to_string()),
+        )
+        .with_span((0..0).into());
+
+        let key = ast::SequenceType::Item(ast::Item {
+            item_type: ast::ItemType::AtomicOrUnionType(any_atomic_type),
+            occurrence: ast::Occurrence::One,
+        });
+
+        let return_type = ast::SequenceType::Item(ast::Item {
+            item_type: ast::ItemType::Item,
+            occurrence: ast::Occurrence::Many,
+        });
+        Self {
+            parameter_types: vec![Some(key)],
+            return_type: Some(return_type),
+        }
+    }
+
+    pub(crate) fn array_signature() -> Self {
+        let any_atomic_type = ast::Name::new(
+            "integer".to_string(),
+            Some(XS_NAMESPACE.to_string()),
+            Some("xs".to_string()),
+        )
+        .with_span((0..0).into());
+
+        let position = ast::SequenceType::Item(ast::Item {
+            item_type: ast::ItemType::AtomicOrUnionType(any_atomic_type),
+            occurrence: ast::Occurrence::One,
+        });
+
+        let return_type = ast::SequenceType::Item(ast::Item {
+            item_type: ast::ItemType::Item,
+            occurrence: ast::Occurrence::Many,
+        });
+        Self {
+            parameter_types: vec![Some(position)],
+            return_type: Some(return_type),
+        }
+    }
+
     pub(crate) fn alternative_signatures(
         &self,
         function_kind: FunctionKind,
@@ -67,8 +115,25 @@ impl Signature {
 impl From<ast::Signature> for Signature {
     fn from(signature: ast::Signature) -> Self {
         Self {
-            parameter_types: signature.params.into_iter().map(|p| p.type_).collect(),
-            return_type: signature.return_type,
+            parameter_types: signature
+                .params
+                .into_iter()
+                .map(|p| Some(p.type_))
+                .collect(),
+            return_type: Some(signature.return_type),
+        }
+    }
+}
+
+impl From<&ir::FunctionDefinition> for Signature {
+    fn from(function_definition: &ir::FunctionDefinition) -> Self {
+        Self {
+            parameter_types: function_definition
+                .params
+                .iter()
+                .map(|param| param.type_.clone())
+                .collect(),
+            return_type: function_definition.return_type.clone(),
         }
     }
 }

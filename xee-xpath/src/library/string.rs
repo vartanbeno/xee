@@ -645,8 +645,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
 
     for arity in 2..MAX_CONCAT_ARITY {
         let signature = function::Signature {
-            parameter_types: vec![string_type.clone(); arity],
-            return_type: string_type.clone(),
+            parameter_types: vec![Some(string_type.clone()); arity],
+            return_type: Some(string_type.clone()),
         };
         r.push(StaticFunctionDescription {
             name: name.clone(),

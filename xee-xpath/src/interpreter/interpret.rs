@@ -580,8 +580,8 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
         let function = self.runnable.inline_function(function_id);
-        let params = &function.params;
-        if arity as usize != params.len() {
+        let parameter_types = &function.signature.parameter_types;
+        if arity as usize != parameter_types.len() {
             return Err(error::Error::Type);
         }
         // TODO: fast path if no sequence types exist for parameters
@@ -589,9 +589,9 @@ impl<'a> Interpreter<'a> {
         // now pop everything off the stack to do type matching, along
         // with sequence type conversion, function coercion
         let mut arguments = Vec::with_capacity(arity as usize);
-        for param in params.iter().rev() {
+        for parameter_type in parameter_types.iter().rev() {
             let value = self.state.pop();
-            if let Some(type_) = &param.type_ {
+            if let Some(type_) = parameter_type {
                 let sequence: sequence::Sequence = value.into();
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(

@@ -10,6 +10,8 @@ use crate::{error, Collation};
 #[derive(Debug, Clone)]
 pub(crate) struct Runnable<'a> {
     program: &'a function::Program,
+    map_signature: function::Signature,
+    array_signature: function::Signature,
     // TODO: this should be private, but is needed right now
     // to implement call_static without lifetime issues.
     // We could possibly obtain context from the interpreter directly,
@@ -24,6 +26,8 @@ impl<'a> Runnable<'a> {
     ) -> Self {
         Self {
             program,
+            map_signature: function::Signature::map_signature(),
+            array_signature: function::Signature::array_signature(),
             dynamic_context,
         }
     }
@@ -91,11 +95,7 @@ impl<'a> FunctionInfo<'a> {
         match self.function {
             function::Function::Inline {
                 inline_function_id, ..
-            } => self
-                .runnable
-                .inline_function(*inline_function_id)
-                .params
-                .len(),
+            } => self.runnable.inline_function(*inline_function_id).arity(),
             function::Function::Static {
                 static_function_id, ..
             } => self.runnable.static_function(*static_function_id).arity(),
@@ -127,36 +127,11 @@ impl<'a> FunctionInfo<'a> {
             function::Function::Inline {
                 inline_function_id, ..
             } => {
-                let _inline_function = self.runnable.inline_function(*inline_function_id);
-                // there is a Signature defined next to inline function,
-                // but it's not in use yet
-                todo!()
+                let inline_function = self.runnable.inline_function(*inline_function_id);
+                inline_function.signature()
             }
-            function::Function::Map(_map) => {
-                todo!()
-            }
-            function::Function::Array(_array) => {
-                todo!()
-            }
+            function::Function::Map(_map) => &self.runnable.map_signature,
+            function::Function::Array(_array) => &self.runnable.array_signature,
         }
     }
-
-    // pub(crate) fn params(&self) -> &[function::Param] {
-    //     match self.function {
-    //         function::Function::Inline {
-    //             inline_function_id, ..
-    //         } => &self.program.functions[inline_function_id.0].params,
-    //         function::Function::Static {
-    //             static_function_id, ..
-    //         } => {
-    //             let static_function = self
-    //                 .static_context
-    //                 .functions
-    //                 .get_by_index(static_function_id);
-    //             static_function.params()
-    //         }
-    //         function::Function::Array(_) => &[],
-    //         function::Function::Map(_) => &[],
-    //     }
-    // }
 }
