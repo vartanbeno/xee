@@ -1,15 +1,17 @@
 mod array;
 mod function_core;
+mod inline_function;
 mod map;
 mod program;
+mod signature;
 mod static_function;
 
 pub(crate) use array::Array;
-pub(crate) use function_core::{
-    CastType, Function, InlineFunction, InlineFunctionId, Signature, StaticFunctionId,
-};
+pub(crate) use function_core::{Function, InlineFunctionId, StaticFunctionId};
+pub(crate) use inline_function::{CastType, InlineFunction};
 pub(crate) use map::Map;
 pub(crate) use program::Program;
+pub(crate) use signature::Signature;
 
 // we allow StaticFunctionType as it's used in the xpath_fn macro
 #[allow(unused_imports)]
