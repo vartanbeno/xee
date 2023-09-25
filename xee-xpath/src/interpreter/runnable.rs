@@ -9,7 +9,9 @@ use crate::{error, Collation};
 pub(crate) struct Runnable<'a> {
     program: &'a function::Program,
     // TODO: this should be private, but is needed right now
-    // to implement call_static without lifetime issues
+    // to implement call_static without lifetime issues.
+    // We could possibly obtain context from the interpreter directly,
+    // but this leads to lifetime issues right now.
     pub(crate) dynamic_context: &'a DynamicContext<'a>,
 }
 
