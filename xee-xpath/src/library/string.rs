@@ -5,11 +5,11 @@ use std::cmp::Ordering;
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
-use xee_xpath_ast::{ast, FN_NAMESPACE};
+use xee_xpath_ast::{ast, WithSpan, FN_NAMESPACE, XS_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
 use crate::context::DynamicContext;
-use crate::function::StaticFunctionDescription;
+use crate::function::{self, StaticFunctionDescription};
 use crate::string::Collation;
 use crate::{atomic, error, interpreter, sequence, wrap_xpath_fn, Occurrence};
 
@@ -628,12 +628,29 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(tokenize2),
     ];
     // register concat for a variety of arities
-    // it's stupid that we have to do this, but it's in the
-    // spec https://www.w3.org/TR/xpath-functions-31/#func-concat
+    // the spec leaves the amount of arguments indefinite
+    // https://www.w3.org/TR/xpath-functions-31/#func-concat
+    let string_type = ast::SequenceType::Item(ast::Item {
+        occurrence: ast::Occurrence::One,
+        item_type: ast::ItemType::AtomicOrUnionType(
+            ast::Name::new(
+                "string".to_string(),
+                Some(XS_NAMESPACE.to_string()),
+                Some("xs".to_string()),
+            )
+            .with_span((0..0).into()),
+        ),
+    });
+    let name = ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None);
+
     for arity in 2..MAX_CONCAT_ARITY {
+        let signature = function::Signature {
+            parameter_types: vec![string_type.clone(); arity],
+            return_type: string_type.clone(),
+        };
         r.push(StaticFunctionDescription {
-            name: ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None),
-            arity,
+            name: name.clone(),
+            signature,
             function_kind: None,
             func: concat,
         });

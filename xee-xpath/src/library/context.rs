@@ -5,6 +5,7 @@ use crate::wrap_xpath_fn;
 use crate::NaiveDateWithOffset;
 use crate::NaiveTimeWithOffset;
 use xee_xpath_ast::ast;
+use xee_xpath_ast::Namespaces;
 use xee_xpath_ast::FN_NAMESPACE;
 use xee_xpath_macros::xpath_fn;
 
@@ -75,13 +76,17 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
             name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string()), None),
-            arity: 0,
+            signature: ast::Signature::parse("fn:position() as xs:integer", &Namespaces::default())
+                .unwrap()
+                .into(),
             function_kind: Some(FunctionKind::Position),
             func: bound_position,
         },
         StaticFunctionDescription {
             name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
-            arity: 0,
+            signature: ast::Signature::parse("fn:last() as xs:integer", &Namespaces::default())
+                .unwrap()
+                .into(),
             function_kind: Some(FunctionKind::Size),
             func: bound_last,
         },

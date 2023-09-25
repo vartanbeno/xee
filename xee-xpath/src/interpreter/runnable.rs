@@ -116,15 +116,13 @@ impl<'a> FunctionInfo<'a> {
         }
     }
 
-    pub(crate) fn signature(&self) -> Option<ast::Signature> {
+    pub(crate) fn signature(&self) -> &function::Signature {
         match &self.function {
             function::Function::Static {
                 static_function_id, ..
             } => {
-                let _static_function = self.runnable.static_function(*static_function_id);
-                // todo: modify so that we do have signature
-                // Some(static_function.signature().clone())
-                todo!()
+                let static_function = self.runnable.static_function(*static_function_id);
+                static_function.signature()
             }
             function::Function::Inline {
                 inline_function_id, ..

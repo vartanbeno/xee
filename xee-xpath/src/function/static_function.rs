@@ -11,7 +11,7 @@ use crate::library::static_function_descriptions;
 use crate::sequence;
 use crate::stack;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Copy)]
 pub(crate) enum FunctionKind {
     // generate a function with one less arity that takes the
     // item as the first argument
@@ -54,7 +54,7 @@ pub(crate) type StaticFunctionType = fn(
 
 pub(crate) struct StaticFunctionDescription {
     pub(crate) name: ast::Name,
-    pub(crate) arity: usize,
+    pub(crate) signature: function::Signature,
     pub(crate) function_kind: Option<FunctionKind>,
     pub(crate) func: StaticFunctionType,
 }
@@ -82,15 +82,16 @@ impl StaticFunctionDescription {
         function_kind: Option<FunctionKind>,
         namespaces: &Namespaces,
     ) -> Self {
-        // XXX reparse signature; the macro could have stored the parsed
+        // TODO reparse signature; the macro could have stored the parsed
         // version as code, but that's more work than I'm prepared to do
         // right now.
         let signature = ast::Signature::parse(signature, namespaces)
             .expect("Signature parse failed unexpectedly");
-
+        let name = signature.name.value.clone();
+        let signature: function::Signature = signature.into();
         Self {
-            name: signature.name.value,
-            arity: signature.params.len(),
+            name,
+            signature,
             function_kind,
             func,
         }
@@ -98,87 +99,20 @@ impl StaticFunctionDescription {
 
     fn functions(&self) -> Vec<StaticFunction> {
         if let Some(function_kind) = &self.function_kind {
-            match function_kind {
-                FunctionKind::ItemFirst => {
-                    vec![
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity - 1,
-                            function_rule: Some(FunctionRule::ItemFirst),
-                            func: self.func,
-                        },
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity,
-                            function_rule: None,
-                            func: self.func,
-                        },
-                    ]
-                }
-                FunctionKind::ItemLast => {
-                    vec![
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity - 1,
-                            function_rule: Some(FunctionRule::ItemLast),
-                            func: self.func,
-                        },
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity,
-                            function_rule: None,
-                            func: self.func,
-                        },
-                    ]
-                }
-                FunctionKind::ItemLastOptional => {
-                    vec![StaticFunction {
-                        name: self.name.clone(),
-                        arity: self.arity - 1,
-                        function_rule: Some(FunctionRule::ItemLastOptional),
-                        func: self.func,
-                    }]
-                }
-                FunctionKind::Position => {
-                    vec![StaticFunction {
-                        name: self.name.clone(),
-                        arity: self.arity,
-                        function_rule: Some(FunctionRule::PositionFirst),
-                        func: self.func,
-                    }]
-                }
-                FunctionKind::Size => {
-                    vec![StaticFunction {
-                        name: self.name.clone(),
-                        arity: self.arity,
-                        function_rule: Some(FunctionRule::SizeFirst),
-                        func: self.func,
-                    }]
-                }
-                FunctionKind::Collation => {
-                    vec![
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity - 1,
-                            function_rule: Some(FunctionRule::Collation),
-                            func: self.func,
-                        },
-                        StaticFunction {
-                            name: self.name.clone(),
-                            arity: self.arity,
-                            function_rule: None,
-                            func: self.func,
-                        },
-                    ]
-                }
-            }
+            self.signature
+                .alternative_signatures(*function_kind)
+                .into_iter()
+                .map(|(signature, function_kind)| {
+                    StaticFunction::new(self.func, self.name.clone(), signature, function_kind)
+                })
+                .collect()
         } else {
-            vec![StaticFunction {
-                name: self.name.clone(),
-                arity: self.arity,
-                function_rule: None,
-                func: self.func,
-            }]
+            vec![StaticFunction::new(
+                self.func,
+                self.name.clone(),
+                self.signature.clone(),
+                None,
+            )]
         }
     }
 }
@@ -193,8 +127,22 @@ pub(crate) enum FunctionRule {
     Collation,
 }
 
+impl From<FunctionKind> for FunctionRule {
+    fn from(function_kind: FunctionKind) -> Self {
+        match function_kind {
+            FunctionKind::ItemFirst => FunctionRule::ItemFirst,
+            FunctionKind::ItemLast => FunctionRule::ItemLast,
+            FunctionKind::ItemLastOptional => FunctionRule::ItemLastOptional,
+            FunctionKind::Position => FunctionRule::PositionFirst,
+            FunctionKind::Size => FunctionRule::SizeFirst,
+            FunctionKind::Collation => FunctionRule::Collation,
+        }
+    }
+}
+
 pub(crate) struct StaticFunction {
     name: ast::Name,
+    signature: function::Signature,
     arity: usize,
     pub(crate) function_rule: Option<FunctionRule>,
     func: StaticFunctionType,
@@ -211,6 +159,23 @@ impl Debug for StaticFunction {
 }
 
 impl StaticFunction {
+    pub(crate) fn new(
+        func: StaticFunctionType,
+        name: ast::Name,
+        signature: function::Signature,
+        function_kind: Option<FunctionKind>,
+    ) -> Self {
+        let function_rule = function_kind.map(|k| k.into());
+        let arity = signature.arity();
+        Self {
+            name,
+            signature,
+            arity,
+            function_rule,
+            func,
+        }
+    }
+
     pub(crate) fn needs_context(&self) -> bool {
         match self.function_rule {
             None | Some(FunctionRule::Collation) => false,
@@ -270,6 +235,10 @@ impl StaticFunction {
 
     pub(crate) fn arity(&self) -> usize {
         self.arity
+    }
+
+    pub(crate) fn signature(&self) -> &function::Signature {
+        &self.signature
     }
 }
 
