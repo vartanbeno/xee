@@ -497,20 +497,6 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    // pub(crate) fn inline_function(
-    //     &self,
-    //     inline_function_id: function::InlineFunctionId,
-    // ) -> &function::InlineFunction {
-    //     self.runnable.inline_function(inline_function_id)
-    // }
-
-    // pub(crate) fn static_function(
-    //     &self,
-    //     static_function_id: function::StaticFunctionId,
-    // ) -> &function::StaticFunction {
-    //     self.runnable.static_function(static_function_id)
-    // }
-
     pub(crate) fn function(&self) -> &function::InlineFunction {
         self.runnable.inline_function(self.state.frame().function())
     }
