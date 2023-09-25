@@ -11,13 +11,13 @@ use crate::atomic::{
     op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
 use crate::context::{self, DynamicContext};
+use crate::error;
 use crate::error::Error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
-use crate::{error, Collation};
 
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 use super::runnable::Runnable;

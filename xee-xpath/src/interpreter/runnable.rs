@@ -1,26 +1,10 @@
-use std::cmp::Ordering;
 use std::rc::Rc;
 
-use ibig::IBig;
-use miette::SourceSpan;
-use xee_schema_type::Xs;
-use xee_xpath_ast::ast;
+use crate::context::DynamicContext;
 
-use crate::atomic::{self, AtomicCompare};
-use crate::atomic::{
-    op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
-};
-use crate::context::{self, DynamicContext};
-use crate::error::Error;
 use crate::function;
-use crate::occurrence::Occurrence;
-use crate::sequence;
-use crate::stack;
 use crate::xml;
 use crate::{error, Collation};
-
-use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
-use super::state::State;
 
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
