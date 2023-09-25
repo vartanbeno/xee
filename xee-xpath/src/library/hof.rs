@@ -46,28 +46,17 @@ fn function_lookup(
 
 #[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
 fn function_name(
-    context: &context::DynamicContext,
+    interpreter: &Interpreter,
     func: sequence::Item,
 ) -> error::Result<Option<ast::Name>> {
     let function = func.to_function()?;
-    match function.as_ref() {
-        function::Function::Static {
-            static_function_id, ..
-        } => {
-            let static_function = context
-                .static_context
-                .functions
-                .get_by_index(*static_function_id);
-            Ok(Some(static_function.name().clone()))
-        }
-        _ => Ok(None),
-    }
+    Ok(interpreter.function_name(function.as_ref()))
 }
 
 #[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
 fn function_arity(interpreter: &Interpreter, func: sequence::Item) -> error::Result<IBig> {
     let function = func.to_function()?;
-    Ok(interpreter.arity(function.as_ref()).into())
+    Ok(interpreter.function_arity(function.as_ref()).into())
 }
 
 #[xpath_fn("fn:for-each($seq as item()*, $action as function(item()) as item()*) as item()*")]
@@ -268,7 +257,7 @@ fn apply(
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;
     let arity = array.len();
-    if interpreter.arity(function.as_ref()) != arity {
+    if interpreter.function_arity(function.as_ref()) != arity {
         return Err(error::Error::FOAP0001);
     }
     let arguments = array.iter().cloned().collect::<Vec<_>>();

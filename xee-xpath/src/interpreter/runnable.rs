@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use xee_xpath_ast::ast;
+
 use crate::context::DynamicContext;
 use crate::function;
 use crate::xml;
@@ -66,4 +68,97 @@ impl<'a> Runnable<'a> {
             .functions
             .get_by_index(function_id)
     }
+
+    pub(crate) fn function_info(&'a self, function: &'a function::Function) -> FunctionInfo<'a> {
+        FunctionInfo::new(function, self)
+    }
+}
+
+pub(crate) struct FunctionInfo<'a> {
+    function: &'a function::Function,
+    runnable: &'a Runnable<'a>,
+}
+
+impl<'a> FunctionInfo<'a> {
+    pub(crate) fn new(
+        function: &'a function::Function,
+        runnable: &'a Runnable<'a>,
+    ) -> FunctionInfo<'a> {
+        FunctionInfo { function, runnable }
+    }
+
+    pub(crate) fn arity(&self) -> usize {
+        match self.function {
+            function::Function::Inline {
+                inline_function_id, ..
+            } => self
+                .runnable
+                .inline_function(*inline_function_id)
+                .params
+                .len(),
+            function::Function::Static {
+                static_function_id, ..
+            } => self.runnable.static_function(*static_function_id).arity(),
+            function::Function::Array(_) => 1,
+            function::Function::Map(_) => 1,
+        }
+    }
+
+    pub(crate) fn name(&self) -> Option<ast::Name> {
+        match self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let static_function = self.runnable.static_function(*static_function_id);
+                Some(static_function.name().clone())
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn signature(&self) -> Option<ast::Signature> {
+        match &self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let _static_function = self.runnable.static_function(*static_function_id);
+                // todo: modify so that we do have signature
+                // Some(static_function.signature().clone())
+                todo!()
+            }
+            function::Function::Inline {
+                inline_function_id, ..
+            } => {
+                let _inline_function = self.runnable.inline_function(*inline_function_id);
+                // there is a Signature defined next to inline function,
+                // but it's not in use yet
+                todo!()
+            }
+            function::Function::Map(_map) => {
+                todo!()
+            }
+            function::Function::Array(_array) => {
+                todo!()
+            }
+        }
+    }
+
+    // pub(crate) fn params(&self) -> &[function::Param] {
+    //     match self.function {
+    //         function::Function::Inline {
+    //             inline_function_id, ..
+    //         } => &self.program.functions[inline_function_id.0].params,
+    //         function::Function::Static {
+    //             static_function_id, ..
+    //         } => {
+    //             let static_function = self
+    //                 .static_context
+    //                 .functions
+    //                 .get_by_index(static_function_id);
+    //             static_function.params()
+    //         }
+    //         function::Function::Array(_) => &[],
+    //         function::Function::Map(_) => &[],
+    //     }
+    // }
 }

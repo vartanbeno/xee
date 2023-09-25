@@ -10,7 +10,7 @@ use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
     op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
-use crate::context::{self, DynamicContext};
+use crate::context::DynamicContext;
 use crate::error;
 use crate::error::Error;
 use crate::function;
@@ -501,24 +501,12 @@ impl<'a> Interpreter<'a> {
         self.runnable.inline_function(self.state.frame().function())
     }
 
-    pub(crate) fn arity(&self, function: &function::Function) -> usize {
-        match function {
-            function::Function::Inline {
-                inline_function_id, ..
-            } => self
-                .runnable
-                .inline_function(*inline_function_id)
-                .params
-                .len(),
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.runnable.static_function(*static_function_id);
-                static_function.arity()
-            }
-            function::Function::Array(_) => 1,
-            function::Function::Map(_) => 1,
-        }
+    pub(crate) fn function_name(&self, function: &function::Function) -> Option<ast::Name> {
+        self.runnable.function_info(function).name()
+    }
+
+    pub(crate) fn function_arity(&self, function: &function::Function) -> usize {
+        self.runnable.function_info(function).arity()
     }
 
     fn call(&mut self, arity: u8) -> error::Result<()> {
@@ -822,113 +810,6 @@ impl<'a> Interpreter<'a> {
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }
-}
-
-struct FunctionInfo<'a> {
-    function: function::Function,
-    program: &'a function::Program,
-    static_context: &'a context::StaticContext<'a>,
-}
-
-impl<'a> FunctionInfo<'a> {
-    pub(crate) fn new(
-        function: function::Function,
-        program: &'a function::Program,
-        static_context: &'a context::StaticContext<'a>,
-    ) -> FunctionInfo<'a> {
-        FunctionInfo {
-            function,
-            program,
-            static_context,
-        }
-    }
-
-    fn inline_function(
-        &self,
-        inline_function_id: function::InlineFunctionId,
-    ) -> &function::InlineFunction {
-        self.program.get_function_by_id(inline_function_id)
-    }
-
-    fn static_function(
-        &self,
-        static_function_id: function::StaticFunctionId,
-    ) -> &function::StaticFunction {
-        self.static_context
-            .functions
-            .get_by_index(static_function_id)
-    }
-
-    pub(crate) fn arity(&self) -> usize {
-        match self.function {
-            function::Function::Inline {
-                inline_function_id, ..
-            } => self.inline_function(inline_function_id).params.len(),
-            function::Function::Static {
-                static_function_id, ..
-            } => self.static_function(static_function_id).arity(),
-            function::Function::Array(_) => 1,
-            function::Function::Map(_) => 1,
-        }
-    }
-
-    pub(crate) fn name(&self) -> Option<ast::Name> {
-        match self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.static_function(static_function_id);
-                Some(static_function.name().clone())
-            }
-            _ => None,
-        }
-    }
-
-    pub(crate) fn signature(&self) -> Option<ast::Signature> {
-        match &self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let _static_function = self.static_function(*static_function_id);
-                // todo: modify so that we do have signature
-                // Some(static_function.signature().clone())
-                todo!()
-            }
-            function::Function::Inline {
-                inline_function_id, ..
-            } => {
-                let _inline_function = self.inline_function(*inline_function_id);
-                // there is a Signature defined next to inline function,
-                // but it's not in use yet
-                todo!()
-            }
-            function::Function::Map(_map) => {
-                todo!()
-            }
-            function::Function::Array(_array) => {
-                todo!()
-            }
-        }
-    }
-
-    // pub(crate) fn params(&self) -> &[function::Param] {
-    //     match self.function {
-    //         function::Function::Inline {
-    //             inline_function_id, ..
-    //         } => &self.program.functions[inline_function_id.0].params,
-    //         function::Function::Static {
-    //             static_function_id, ..
-    //         } => {
-    //             let static_function = self
-    //                 .static_context
-    //                 .functions
-    //                 .get_by_index(static_function_id);
-    //             static_function.params()
-    //         }
-    //         function::Function::Array(_) => &[],
-    //         function::Function::Map(_) => &[],
-    //     }
-    // }
 }
 // #[cfg(test)]
 // mod tests {
