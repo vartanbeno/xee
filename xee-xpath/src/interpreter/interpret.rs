@@ -5,19 +5,20 @@ use arrayvec::ArrayVec;
 use ibig::IBig;
 use miette::SourceSpan;
 use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 
 use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
     op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
-use crate::context::DynamicContext;
-use crate::error;
+use crate::context::{self, DynamicContext};
 use crate::error::Error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
+use crate::{error, Collation};
 
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 
@@ -25,34 +26,213 @@ const FRAMES_MAX: usize = 64;
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
-struct Frame {
+pub(crate) struct Frame {
     function: function::InlineFunctionId,
     ip: usize,
     base: usize,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Interpreter<'a> {
+pub(crate) struct Runnable<'a> {
     program: &'a function::Program,
     dynamic_context: &'a DynamicContext<'a>,
+}
+
+impl<'a> Runnable<'a> {
+    fn annotations(&self) -> &xml::Annotations {
+        &self.dynamic_context.documents.annotations
+    }
+
+    fn xot(&self) -> &xot::Xot {
+        &self.dynamic_context.xot
+    }
+
+    fn default_collation(&self) -> error::Result<Rc<Collation>> {
+        self.dynamic_context.static_context.default_collation()
+    }
+
+    fn implicit_timezone(&self) -> chrono::FixedOffset {
+        self.dynamic_context.implicit_timezone()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct State {
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
 }
 
-impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a function::Program, dynamic_context: &'a DynamicContext) -> Self {
-        Interpreter {
-            program,
-            dynamic_context,
-            stack: vec![],
-            build_stack: vec![],
-            frames: ArrayVec::new(),
+impl State {
+    pub(crate) fn push(&mut self, value: stack::Value) {
+        self.stack.push(value);
+    }
+
+    pub(crate) fn build_new(&mut self) {
+        self.build_stack.push(Vec::new());
+    }
+
+    pub(crate) fn build_push(&mut self) -> error::Result<()> {
+        let build = &mut self.build_stack.last_mut().unwrap();
+        let value = self.stack.pop().unwrap();
+        Self::build_push_helper(build, value)
+    }
+
+    pub(crate) fn build_complete(&mut self) {
+        let build = self.build_stack.pop().unwrap();
+        self.stack.push(build.into());
+    }
+
+    fn build_push_helper(
+        build: &mut Vec<sequence::Item>,
+        value: stack::Value,
+    ) -> error::Result<()> {
+        match value {
+            stack::Value::Empty => {}
+            stack::Value::One(item) => build.push(item),
+            stack::Value::Many(items) => build.extend(items.iter().cloned()),
+            stack::Value::Absent => return Err(error::Error::ComponentAbsentInDynamicContext)?,
         }
+        Ok(())
+    }
+
+    pub(crate) fn push_var(&mut self, index: usize) {
+        self.stack
+            .push(self.stack[self.frame().base + index as usize].clone());
+    }
+
+    pub(crate) fn push_closure_var(&mut self, index: usize) -> error::Result<()> {
+        let function = self.function()?;
+        let closure_vars = function.closure_vars();
+        self.stack.push(closure_vars[index as usize].clone().into());
+        Ok(())
+    }
+
+    pub(crate) fn set_var(&mut self, index: usize) {
+        let base = self.frame().base;
+        self.stack[base + index as usize] = self.stack.pop().unwrap();
+    }
+
+    pub(crate) fn pop(&mut self) -> stack::Value {
+        self.stack.pop().unwrap()
+    }
+
+    pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
+        // the function is always just below the base
+        (&self.stack[self.frame().base - 1]).try_into()
+    }
+
+    pub(crate) fn push_start_frame(&mut self, function_id: function::InlineFunctionId) {
+        self.frames.push(Frame {
+            function: function_id,
+            ip: 0,
+            base: 0,
+        });
+    }
+
+    pub(crate) fn push_frame(
+        &mut self,
+        function_id: function::InlineFunctionId,
+        arity: usize,
+    ) -> error::Result<()> {
+        if self.frames.len() >= self.frames.capacity() {
+            return Err(error::Error::StackOverflow);
+        }
+        self.frames.push(Frame {
+            function: function_id,
+            ip: 0,
+            base: self.stack.len() - arity,
+        });
+        Ok(())
+    }
+
+    pub(crate) fn frame(&self) -> &Frame {
+        self.frames.last().unwrap()
+    }
+
+    pub(crate) fn frame_mut(&mut self) -> &mut Frame {
+        self.frames.last_mut().unwrap()
+    }
+
+    pub(crate) fn jump(&mut self, displacement: i32) {
+        self.frame_mut().ip = (self.frame().ip as i32 + displacement) as usize;
+    }
+
+    pub(crate) fn callable(&self, arity: usize) -> error::Result<Rc<function::Function>> {
+        let value = &self.stack[self.stack.len() - (arity + 1)];
+        // TODO: check that arity of function matches arity of call
+        value.try_into()
+    }
+
+    pub(crate) fn arguments(&self, arity: usize) -> &[stack::Value] {
+        &self.stack[self.stack.len() - arity..]
+    }
+
+    pub(crate) fn inline_return(&mut self, start_base: usize) -> bool {
+        let return_value = self.stack.pop().unwrap();
+
+        // truncate the stack to the base
+        let base = self.frame().base;
+        self.stack.truncate(base);
+
+        // pop off the function id we just called
+        // for the outer main function this is the context item
+        if !self.stack.is_empty() {
+            self.stack.pop();
+        }
+
+        // push back return value
+        self.stack.push(return_value);
+
+        // now pop off the frame
+        self.frames.pop();
+
+        // if the start base is the same as the base we just popped off,
+        // we are done
+        base == start_base
+    }
+
+    pub(crate) fn static_return(&mut self, arity: usize) {
+        // truncate the stack to the base
+        self.stack.truncate(self.stack.len() - (arity + 1));
+    }
+
+    pub(crate) fn top(&self) -> &stack::Value {
+        self.stack.last().unwrap()
     }
 
     pub(crate) fn stack(&self) -> &[stack::Value] {
         &self.stack
+    }
+
+    // pub(crate) fn function(&self) -> &function::InlineFunction {
+    //     self.stack[self.frame().base - 1]).
+    // }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Interpreter<'a> {
+    runnable: Runnable<'a>,
+    state: State,
+}
+
+impl<'a> Interpreter<'a> {
+    pub(crate) fn new(program: &'a function::Program, dynamic_context: &'a DynamicContext) -> Self {
+        Interpreter {
+            runnable: Runnable {
+                program,
+                dynamic_context,
+            },
+            state: State {
+                stack: vec![],
+                build_stack: vec![],
+                frames: ArrayVec::new(),
+            },
+        }
+    }
+
+    pub(crate) fn state(&self) -> &State {
+        &self.state
     }
 
     pub(crate) fn start(
@@ -61,26 +241,23 @@ impl<'a> Interpreter<'a> {
         context_item: Option<&sequence::Item>,
         arguments: Vec<Vec<sequence::Item>>,
     ) {
-        self.frames.push(Frame {
-            function: function_id,
-            ip: 0,
-            base: 0,
-        });
+        self.state.push_start_frame(function_id);
+
         if let Some(context_item) = context_item {
             // the context item
-            self.stack.push(stack::Value::from(context_item.clone()));
+            self.state.push(stack::Value::from(context_item.clone()));
             // position & size
-            self.stack.push(1i64.into());
-            self.stack.push(1i64.into());
+            self.state.push(1i64.into());
+            self.state.push(1i64.into());
         } else {
             // absent context, position and size
-            self.stack.push(stack::Value::Absent);
-            self.stack.push(stack::Value::Absent);
-            self.stack.push(stack::Value::Absent);
+            self.state.push(stack::Value::Absent);
+            self.state.push(stack::Value::Absent);
+            self.state.push(stack::Value::Absent);
         }
         // and any arguments
         for arg in arguments {
-            self.stack.push(stack::Value::from(arg));
+            self.state.push(stack::Value::from(arg));
         }
     }
 
@@ -89,16 +266,16 @@ impl<'a> Interpreter<'a> {
         self.run_actual(start_base).map_err(|e| self.err(e))
     }
 
-    fn frame(&self) -> &Frame {
-        self.frames.last().unwrap()
-    }
+    // fn frame(&self) -> &Frame {
+    //     self.frames.last().unwrap()
+    // }
 
-    fn frame_mut(&mut self) -> &mut Frame {
-        self.frames.last_mut().unwrap()
-    }
+    // fn frame_mut(&mut self) -> &mut Frame {
+    //     self.frames.last_mut().unwrap()
+    // }
 
     pub(crate) fn function(&self) -> &function::InlineFunction {
-        &self.program.functions[self.frame().function.0]
+        &self.runnable.program.functions[self.state.frame().function.0]
     }
 
     pub(crate) fn run_actual(&mut self, start_base: usize) -> error::Result<()> {
@@ -140,21 +317,21 @@ impl<'a> Interpreter<'a> {
                     let a = a.to_str().unwrap();
                     let b = b.to_str().unwrap();
                     let result = a.to_string() + b;
-                    self.stack.push(result.into());
+                    self.state.push(result.into());
                 }
                 EncodedInstruction::Const => {
                     let index = self.read_u16();
-                    self.stack
+                    self.state
                         .push(self.function().constants[index as usize].clone());
                 }
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
                     let mut closure_vars = Vec::new();
-                    let closure_function = &self.program.functions[function_id as usize];
+                    let closure_function = &self.runnable.program.functions[function_id as usize];
                     for _ in 0..closure_function.closure_names.len() {
-                        closure_vars.push(self.stack.pop().unwrap().into());
+                        closure_vars.push(self.state.pop().into());
                     }
-                    self.stack.push(
+                    self.state.push(
                         function::Function::Inline {
                             inline_function_id: function::InlineFunctionId(function_id as usize),
                             closure_vars,
@@ -167,45 +344,46 @@ impl<'a> Interpreter<'a> {
                     let static_function_id =
                         function::StaticFunctionId(static_function_id as usize);
                     let static_closure = self.create_static_closure_from_stack(static_function_id);
-                    self.stack.push(static_closure.into());
+                    self.state.push(static_closure.into());
                 }
                 EncodedInstruction::Var => {
                     let index = self.read_u16();
-                    self.stack
-                        .push(self.stack[self.frame().base + index as usize].clone());
+                    self.state.push_var(index as usize);
                 }
                 EncodedInstruction::Set => {
                     let index = self.read_u16();
-                    let base = self.frame().base;
-                    self.stack[base + index as usize] = self.stack.pop().unwrap();
+                    self.state.set_var(index as usize);
+                    // let base = self.frame().base;
+                    // self.stack[base + index as usize] = self.stack.pop().unwrap();
                 }
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
-                    // the function is always just below the base
-                    let function: Rc<function::Function> =
-                        (&self.stack[self.frame().base - 1]).try_into()?;
-                    let closure_vars = function.closure_vars();
-                    // and we push the value we need onto the stack
-                    self.stack.push(closure_vars[index as usize].clone().into());
+                    self.state.push_closure_var(index as usize)?;
+                    // let function = self.state.function()?;
+                    // // let function: Rc<function::Function> =
+                    // //     (&self.stack[self.frame().base - 1]).try_into()?;
+                    // let closure_vars = function.closure_vars();
+                    // // and we push the value we need onto the stack
+                    // self.stack.push(closure_vars[index as usize].clone().into());
                 }
                 EncodedInstruction::Comma => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    self.stack.push(a.concat(b));
+                    let b = self.state.pop();
+                    let a = self.state.pop();
+                    self.state.push(a.concat(b));
                 }
                 EncodedInstruction::CurlyArray => {
-                    let value = self.stack.pop().unwrap();
+                    let value = self.state.pop();
                     let sequence: sequence::Sequence = value.into();
-                    self.stack.push(sequence.to_array()?.into());
+                    self.state.push(sequence.to_array()?.into());
                 }
                 EncodedInstruction::SquareArray => {
                     let length = self.pop_atomic().unwrap();
                     let length = length.cast_to_integer_value::<i64>()?;
                     let mut popped: Vec<sequence::Sequence> = Vec::with_capacity(length as usize);
                     for _ in 0..length {
-                        popped.push(self.stack.pop().unwrap().into());
+                        popped.push(self.state.pop().into());
                     }
-                    self.stack.push(function::Array::new(popped).into());
+                    self.state.push(function::Array::new(popped).into());
                 }
                 EncodedInstruction::CurlyMap => {
                     let length = self.pop_atomic().unwrap();
@@ -213,30 +391,33 @@ impl<'a> Interpreter<'a> {
                     let mut popped: Vec<(atomic::Atomic, sequence::Sequence)> =
                         Vec::with_capacity(length as usize);
                     for _ in 0..length {
-                        let value = self.stack.pop().unwrap();
+                        let value = self.state.pop();
                         let key = self.pop_atomic()?;
                         popped.push((key, value.into()));
                     }
-                    self.stack.push(function::Map::new(popped)?.into());
+                    self.state.push(function::Map::new(popped)?.into());
                 }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
-                    self.frame_mut().ip = (self.frame().ip as i32 + displacement as i32) as usize;
+                    self.state.jump(displacement as i32);
+                    // self.frame_mut().ip = (self.frame().ip as i32 + displacement as i32) as usize;
                 }
                 EncodedInstruction::JumpIfTrue => {
                     let displacement = self.read_i16();
                     let a = self.pop_effective_boolean()?;
                     if a {
-                        self.frame_mut().ip =
-                            (self.frame().ip as i32 + displacement as i32) as usize;
+                        self.state.jump(displacement as i32);
+                        // self.frame_mut().ip =
+                        //     (self.frame().ip as i32 + displacement as i32) as usize;
                     }
                 }
                 EncodedInstruction::JumpIfFalse => {
                     let displacement = self.read_i16();
                     let a = self.pop_effective_boolean()?;
                     if !a {
-                        self.frame_mut().ip =
-                            (self.frame().ip as i32 + displacement as i32) as usize;
+                        self.state.jump(displacement as i32);
+                        // self.frame_mut().ip =
+                        //     (self.frame().ip as i32 + displacement as i32) as usize;
                     }
                 }
                 EncodedInstruction::Eq => {
@@ -274,60 +455,60 @@ impl<'a> Interpreter<'a> {
                     self.general_compare(OpGe)?;
                 }
                 EncodedInstruction::Is => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.state.pop();
+                    let a = self.state.pop();
                     if a.is_empty_sequence() || b.is_empty_sequence() {
-                        self.stack.push(stack::Value::Empty);
+                        self.state.push(stack::Value::Empty);
                         continue;
                     }
-                    let result = a.is(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(result.into());
+                    let result = a.is(b, self.runnable.annotations())?;
+                    self.state.push(result.into());
                 }
                 EncodedInstruction::Precedes => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.state.pop();
+                    let a = self.state.pop();
                     if a.is_empty_sequence() || b.is_empty_sequence() {
-                        self.stack.push(stack::Value::Empty);
+                        self.state.push(stack::Value::Empty);
                         continue;
                     }
-                    let result = a.precedes(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(result.into());
+                    let result = a.precedes(b, self.runnable.annotations())?;
+                    self.state.push(result.into());
                 }
                 EncodedInstruction::Follows => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
+                    let b = self.state.pop();
+                    let a = self.state.pop();
                     if a.is_empty_sequence() || b.is_empty_sequence() {
-                        self.stack.push(stack::Value::Empty);
+                        self.state.push(stack::Value::Empty);
                         continue;
                     }
-                    let result = a.follows(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(result.into());
+                    let result = a.follows(b, self.runnable.annotations())?;
+                    self.state.push(result.into());
                 }
                 EncodedInstruction::Union => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let combined = a.union(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(combined);
+                    let b = self.state.pop();
+                    let a = self.state.pop();
+                    let combined = a.union(b, self.runnable.annotations())?;
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Intersect => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let combined = a.intersect(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(combined);
+                    let b = self.state.pop();
+                    let a = self.state.pop();
+                    let combined = a.intersect(b, self.runnable.annotations())?;
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Except => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let combined = a.except(b, &self.dynamic_context.documents.annotations)?;
-                    self.stack.push(combined);
+                    let b = self.state.pop();
+                    let a = self.state.pop();
+                    let combined = a.except(b, self.runnable.annotations())?;
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Dup => {
-                    let value = self.stack.pop().unwrap();
-                    self.stack.push(value.clone());
-                    self.stack.push(value);
+                    let value = self.state.pop();
+                    self.state.push(value.clone());
+                    self.state.push(value);
                 }
                 EncodedInstruction::Pop => {
-                    self.stack.pop();
+                    self.state.pop();
                 }
                 EncodedInstruction::Call => {
                     let arity = self.read_u8();
@@ -335,69 +516,73 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
-                    let node = self.stack.pop().unwrap().try_into()?;
+                    let node = self.state.pop().try_into()?;
                     let step = &(self.function().steps[step_id as usize]);
-                    let value = xml::resolve_step(step, node, self.dynamic_context.xot);
-                    self.stack.push(value);
+                    let value = xml::resolve_step(step, node, self.runnable.xot());
+                    self.state.push(value);
                 }
                 EncodedInstruction::Deduplicate => {
-                    let value = self.stack.pop().unwrap();
-                    let value = value.deduplicate(&self.dynamic_context.documents.annotations)?;
-                    self.stack.push(value);
+                    let value = self.state.pop();
+                    let value = value.deduplicate(self.runnable.annotations())?;
+                    self.state.push(value);
                 }
                 EncodedInstruction::Return => {
-                    let return_value = self.stack.pop().unwrap();
-
-                    // truncate the stack to the base
-                    self.stack.truncate(self.frame().base);
-
-                    // pop off the function id we just called
-                    // for the outer main function this is the context item
-                    if !self.stack.is_empty() {
-                        self.stack.pop();
-                    }
-
-                    // push back return value
-                    self.stack.push(return_value);
-
-                    // if this frame is the same as the frame we started
-                    // at, we are done
-                    let base = self.frames.last().unwrap().base;
-                    // now pop off the frame
-                    self.frames.pop();
-                    if base == start_base {
+                    if self.state.inline_return(start_base) {
                         break;
                     }
+                    // let return_value = self.state.pop();
+
+                    // // truncate the stack to the base
+                    // self.stack.truncate(self.frame().base);
+
+                    // // pop off the function id we just called
+                    // // for the outer main function this is the context item
+                    // if !self.stack.is_empty() {
+                    //     self.stack.pop();
+                    // }
+
+                    // // push back return value
+                    // self.stack.push(return_value);
+
+                    // // if this frame is the same as the frame we started
+                    // // at, we are done
+                    // let base = self.frames.last().unwrap().base;
+                    // // now pop off the frame
+                    // self.frames.pop();
+
+                    // if base == start_base {
+                    //     break;
+                    // }
                 }
                 EncodedInstruction::ReturnConvert => {
                     let sequence_type_id = self.read_u16();
-                    let value = self.stack.pop().unwrap();
+                    let value = self.state.pop();
                     let sequence: sequence::Sequence = value.into();
                     let sequence_type =
                         &(self.function().sequence_types[sequence_type_id as usize]);
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
-                        self.dynamic_context,
+                        self.runnable.dynamic_context,
                     )?;
-                    self.stack.push(sequence.into());
+                    self.state.push(sequence.into());
                 }
                 EncodedInstruction::LetDone => {
-                    let return_value = self.stack.pop().unwrap();
+                    let return_value = self.state.pop();
                     // pop the variable assignment
-                    let _ = self.stack.pop();
-                    self.stack.push(return_value);
+                    let _ = self.state.pop();
+                    self.state.push(return_value);
                 }
                 EncodedInstruction::Cast => {
                     let type_id = self.read_u16();
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value =
-                            value.cast_to_schema_type(cast_type.xs, self.dynamic_context)?;
-                        self.stack.push(cast_value.into());
+                        let cast_value = value
+                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context)?;
+                        self.state.push(cast_value.into());
                     } else if cast_type.empty_sequence_allowed {
-                        self.stack.push(stack::Value::Empty);
+                        self.state.push(stack::Value::Empty);
                     } else {
                         Err(error::Error::Type)?;
                     }
@@ -408,38 +593,38 @@ impl<'a> Interpreter<'a> {
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value =
-                            value.cast_to_schema_type(cast_type.xs, self.dynamic_context);
-                        self.stack.push(cast_value.is_ok().into());
+                            value.cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context);
+                        self.state.push(cast_value.is_ok().into());
                     } else if cast_type.empty_sequence_allowed {
-                        self.stack.push(true.into())
+                        self.state.push(true.into())
                     } else {
-                        self.stack.push(false.into());
+                        self.state.push(false.into());
                     }
                 }
                 EncodedInstruction::InstanceOf => {
                     let sequence_type_id = self.read_u16();
-                    let value = self.stack.pop().unwrap();
+                    let value = self.state.pop();
                     let sequence_type =
                         &(self.function().sequence_types[sequence_type_id as usize]);
                     let sequence: sequence::Sequence = value.into();
-                    let matches =
-                        sequence.sequence_type_matching(sequence_type, self.dynamic_context.xot);
+                    let matches = sequence
+                        .sequence_type_matching(sequence_type, self.runnable.dynamic_context.xot);
                     if matches.is_ok() {
-                        self.stack.push(true.into());
+                        self.state.push(true.into());
                     } else {
-                        self.stack.push(false.into());
+                        self.state.push(false.into());
                     }
                 }
                 EncodedInstruction::Range => {
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    let mut a = a.atomized(self.dynamic_context.xot);
-                    let mut b = b.atomized(self.dynamic_context.xot);
+                    let b = self.state.pop();
+                    let a = self.state.pop();
+                    let mut a = a.atomized(self.runnable.xot());
+                    let mut b = b.atomized(self.runnable.xot());
                     let a = a.option()?;
                     let b = b.option()?;
                     let (a, b) = match (a, b) {
                         (None, None) | (None, _) | (_, None) => {
-                            self.stack.push(stack::Value::Empty);
+                            self.state.push(stack::Value::Empty);
                             continue;
                         }
                         (Some(a), Some(b)) => (a, b),
@@ -453,53 +638,55 @@ impl<'a> Interpreter<'a> {
                     let b = b.cast_to_integer_value::<i64>()?;
 
                     match a.cmp(&b) {
-                        Ordering::Greater => self.stack.push(stack::Value::Empty),
-                        Ordering::Equal => self.stack.push(a.into()),
+                        Ordering::Greater => self.state.push(stack::Value::Empty),
+                        Ordering::Equal => self.state.push(a.into()),
                         Ordering::Less => {
                             if (b - a) > MAXIMUM_RANGE_SIZE {
                                 return Err(error::Error::XPDY0130);
                             }
                             let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
-                            self.stack.push(items.into())
+                            self.state.push(items.into())
                         }
                     }
                 }
 
                 EncodedInstruction::SequenceLen => {
-                    let value = self.stack.pop().unwrap();
+                    let value = self.state.pop();
                     let l: IBig = value.len()?.into();
-                    self.stack.push(l.into());
+                    self.state.push(l.into());
                 }
                 EncodedInstruction::SequenceGet => {
-                    let value = self.stack.pop().unwrap();
+                    let value = self.state.pop();
                     let index = self.pop_atomic()?;
                     let index = index.cast_to_integer_value::<i64>()? as usize;
                     // substract 1 as Xpath is 1-indexed
                     let item = value.index(index - 1)?;
-                    self.stack.push(item.into())
+                    self.state.push(item.into())
                 }
                 EncodedInstruction::BuildNew => {
-                    self.build_stack.push(Vec::new());
+                    self.state.build_new();
                 }
                 EncodedInstruction::BuildPush => {
-                    let build = &mut self.build_stack.last_mut().unwrap();
-                    let value = self.stack.pop().unwrap();
-                    build_push(build, value)?;
+                    self.state.build_push()?;
+                    // let build = &mut self.build_stack.last_mut().unwrap();
+                    // let value = self.stack.pop().unwrap();
+                    // build_push(build, value)?;
                 }
                 EncodedInstruction::BuildComplete => {
-                    let build = self.build_stack.pop().unwrap();
-                    self.stack.push(build.into());
+                    self.state.build_complete();
+                    // let build = self.build_stack.pop().unwrap();
+                    // self.stack.push(build.into());
                 }
                 EncodedInstruction::IsNumeric => {
                     let is_numeric = self.pop_is_numeric()?;
-                    self.stack.push(is_numeric.into());
+                    self.state.push(is_numeric.into());
                 }
                 EncodedInstruction::PrintTop => {
-                    let top = self.stack.last().unwrap();
+                    let top = self.state.top();
                     println!("{:#?}", top);
                 }
                 EncodedInstruction::PrintStack => {
-                    println!("{:#?}", self.stack);
+                    println!("{:#?}", self.state.stack());
                 }
             }
         }
@@ -510,8 +697,8 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
     ) -> function::Function {
-        Self::create_static_closure(self.dynamic_context, static_function_id, || {
-            Some(self.stack.pop().unwrap())
+        Self::create_static_closure(self.runnable.dynamic_context, static_function_id, || {
+            Some(self.state.pop())
         })
     }
 
@@ -520,7 +707,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: function::StaticFunctionId,
         arg: Option<xml::Node>,
     ) -> function::Function {
-        Self::create_static_closure(self.dynamic_context, static_function_id, || {
+        Self::create_static_closure(self.runnable.dynamic_context, static_function_id, || {
             arg.map(|n| n.into())
         })
     }
@@ -558,14 +745,15 @@ impl<'a> Interpreter<'a> {
         &self,
         inline_function_id: function::InlineFunctionId,
     ) -> &function::InlineFunction {
-        &self.program.functions[inline_function_id.0]
+        &self.runnable.program.functions[inline_function_id.0]
     }
 
     pub(crate) fn static_function(
         &self,
         static_function_id: function::StaticFunctionId,
     ) -> &function::StaticFunction {
-        self.dynamic_context
+        self.runnable
+            .dynamic_context
             .static_context
             .functions
             .get_by_index(static_function_id)
@@ -575,11 +763,14 @@ impl<'a> Interpreter<'a> {
         match function {
             function::Function::Inline {
                 inline_function_id, ..
-            } => self.program.functions[inline_function_id.0].params.len(),
+            } => self.runnable.program.functions[inline_function_id.0]
+                .params
+                .len(),
             function::Function::Static {
                 static_function_id, ..
             } => {
                 let static_function = self
+                    .runnable
                     .dynamic_context
                     .static_context
                     .functions
@@ -591,13 +782,14 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn call(&mut self, arity: u8) -> Result<(), Error> {
-        // get callable from stack, by peeking back
-        let value = &self.stack[self.stack.len() - (arity as usize + 1)];
+    fn call(&mut self, arity: u8) -> error::Result<()> {
+        let function = self.state.callable(arity as usize)?;
+        // // get callable from stack, by peeking back
+        // let value = &self.stack[self.stack.len() - (arity as usize + 1)];
 
-        // TODO: check that arity of function matches arity of call
+        // // TODO: check that arity of function matches arity of call
 
-        let function: Rc<function::Function> = value.try_into()?;
+        // let function: Rc<function::Function> = value.try_into()?;
         self.call_function(function, arity)
     }
 
@@ -607,19 +799,19 @@ impl<'a> Interpreter<'a> {
         arguments: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
         // put function onto the stack
-        self.stack.push(function.clone().into());
+        self.state.push(function.clone().into());
         // then arguments
         let arity = arguments.len() as u8;
         for arg in arguments.iter() {
-            self.stack.push(arg.clone().into());
+            self.state.push(arg.clone().into());
         }
         self.call_function(function.clone(), arity)?;
         if matches!(function.as_ref(), function::Function::Inline { .. }) {
             // run interpreter until we return to the base
             // we started in
-            self.run(self.frames.last().unwrap().base)?;
+            self.run(self.state.frame().base)?;
         }
-        let value = self.stack.pop().unwrap().into();
+        let value = self.state.pop().into();
         Ok(value)
     }
 
@@ -639,7 +831,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn arguments(&self, arity: u8) -> &[stack::Value] {
-        &self.stack[self.stack.len() - (arity as usize)..]
+        self.state.arguments(arity as usize)
     }
 
     fn call_static(
@@ -649,6 +841,7 @@ impl<'a> Interpreter<'a> {
         closure_vars: &[sequence::Sequence],
     ) -> error::Result<()> {
         let static_function = self
+            .runnable
             .dynamic_context
             .static_context
             .functions
@@ -656,10 +849,12 @@ impl<'a> Interpreter<'a> {
         if arity as usize != static_function.arity() {
             return Err(error::Error::Type);
         }
-        let result = static_function.invoke(self.dynamic_context, self, closure_vars, arity)?;
+        let result =
+            static_function.invoke(self.runnable.dynamic_context, self, closure_vars, arity)?;
         // truncate the stack to the base
-        self.stack.truncate(self.stack.len() - (arity as usize + 1));
-        self.stack.push(result.into());
+        self.state.static_return(arity as usize);
+        // self.stack.truncate(self.stack.len() - (arity as usize + 1));
+        self.state.push(result.into());
         Ok(())
     }
 
@@ -669,7 +864,7 @@ impl<'a> Interpreter<'a> {
         arity: u8,
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
-        let function = self.program.get_function_by_id(function_id);
+        let function = self.runnable.program.get_function_by_id(function_id);
         let params = &function.params;
         if arity as usize != params.len() {
             return Err(error::Error::Type);
@@ -680,12 +875,14 @@ impl<'a> Interpreter<'a> {
         // with sequence type conversion, function coercion
         let mut arguments = Vec::with_capacity(arity as usize);
         for param in params.iter().rev() {
-            let value = self.stack.pop().unwrap();
+            let value = self.state.pop();
             if let Some(type_) = &param.type_ {
                 let sequence: sequence::Sequence = value.into();
                 // matching also takes care of function conversion rules
-                let sequence = sequence
-                    .sequence_type_matching_function_conversion(type_, self.dynamic_context)?;
+                let sequence = sequence.sequence_type_matching_function_conversion(
+                    type_,
+                    self.runnable.dynamic_context,
+                )?;
                 arguments.push(sequence.into())
             } else {
                 // no need to do any checking or conversion
@@ -695,18 +892,19 @@ impl<'a> Interpreter<'a> {
         // now we have a list of arguments that we want to push back onto the stack,
         // in reverse
         for arg in arguments.into_iter().rev() {
-            self.stack.push(arg);
+            self.state.push(arg);
         }
 
-        if self.frames.len() >= self.frames.capacity() {
-            return Err(error::Error::StackOverflow);
-        }
-        self.frames.push(Frame {
-            function: function_id,
-            ip: 0,
-            base: self.stack.len() - (arity as usize),
-        });
-        Ok(())
+        self.state.push_frame(function_id, arity as usize)
+        // if self.frames.len() >= self.frames.capacity() {
+        //     return Err(error::Error::StackOverflow);
+        // }
+        // self.frames.push(Frame {
+        //     function: function_id,
+        //     ip: 0,
+        //     base: self.stack.len() - (arity as usize),
+        // });
+        // Ok(())
     }
 
     fn call_array(&mut self, array: &function::Array, arity: usize) -> error::Result<()> {
@@ -720,7 +918,7 @@ impl<'a> Interpreter<'a> {
         let position = position - 1;
         let sequence = array.index(position);
         if let Some(sequence) = sequence {
-            self.stack.push(sequence.clone().into());
+            self.state.push(sequence.clone().into());
             Ok(())
         } else {
             Err(error::Error::FOAY0001)
@@ -734,9 +932,9 @@ impl<'a> Interpreter<'a> {
         let key = self.pop_atomic()?;
         let value = map.get(&key);
         if let Some(value) = value {
-            self.stack.push(value.into());
+            self.state.push(value.into());
         } else {
-            self.stack.push(stack::Value::Empty);
+            self.state.push(stack::Value::Empty);
         }
         Ok(())
     }
@@ -745,26 +943,27 @@ impl<'a> Interpreter<'a> {
     where
         O: AtomicCompare,
     {
-        let b = self.stack.pop().unwrap();
-        let a = self.stack.pop().unwrap();
+        let b = self.state.pop();
+        let a = self.state.pop();
         // https://www.w3.org/TR/xpath-31/#id-value-comparisons
         // If an operand is the empty sequence, the result is the empty sequence
         if a.is_empty_sequence() || b.is_empty_sequence() {
-            self.stack.push(stack::Value::Empty);
+            self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.dynamic_context.xot);
-        let mut atomized_b = b.atomized(self.dynamic_context.xot);
+        let mut atomized_a = a.atomized(self.runnable.xot());
+        let mut atomized_b = b.atomized(self.runnable.xot());
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let collation = self.dynamic_context.static_context.default_collation()?;
+        let collation = self.runnable.default_collation()?;
+        // dynamic_context.static_context.default_collation()?;
         let result = O::atomic_compare(
             a,
             b,
             |a: &str, b: &str| collation.compare(a, b),
-            self.dynamic_context.implicit_timezone(),
+            self.runnable.implicit_timezone(),
         )?;
-        self.stack.push(result.into());
+        self.state.push(result.into());
         Ok(())
     }
 
@@ -772,10 +971,12 @@ impl<'a> Interpreter<'a> {
     where
         O: AtomicCompare,
     {
-        let b = self.stack.pop().unwrap();
-        let a = self.stack.pop().unwrap();
-        let value = a.general_comparison(b, self.dynamic_context, op)?.into();
-        self.stack.push(value);
+        let b = self.state.pop();
+        let a = self.state.pop();
+        let value = a
+            .general_comparison(b, self.runnable.dynamic_context, op)?
+            .into();
+        self.state.push(value);
         Ok(())
     }
 
@@ -790,20 +991,20 @@ impl<'a> Interpreter<'a> {
     where
         F: Fn(atomic::Atomic, atomic::Atomic, chrono::FixedOffset) -> error::Result<atomic::Atomic>,
     {
-        let b = self.stack.pop().unwrap();
-        let a = self.stack.pop().unwrap();
+        let b = self.state.pop();
+        let a = self.state.pop();
         // https://www.w3.org/TR/xpath-31/#id-arithmetic
         // 2. If an operand is the empty sequence, the result is the empty sequence
         if a.is_empty_sequence() || b.is_empty_sequence() {
-            self.stack.push(stack::Value::Empty);
+            self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.dynamic_context.xot);
-        let mut atomized_b = b.atomized(self.dynamic_context.xot);
+        let mut atomized_a = a.atomized(self.runnable.xot());
+        let mut atomized_b = b.atomized(self.runnable.xot());
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
-        let result = op(a, b, self.dynamic_context.implicit_timezone())?;
-        self.stack.push(result.into());
+        let result = op(a, b, self.runnable.implicit_timezone())?;
+        self.state.push(result.into());
         Ok(())
     }
 
@@ -811,21 +1012,21 @@ impl<'a> Interpreter<'a> {
     where
         F: Fn(atomic::Atomic) -> error::Result<atomic::Atomic>,
     {
-        let a = self.stack.pop().unwrap();
+        let a = self.state.pop();
         if a.is_empty_sequence() {
-            self.stack.push(stack::Value::Empty);
+            self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.dynamic_context.xot);
+        let mut atomized_a = a.atomized(self.runnable.xot());
         let a = atomized_a.one()?;
         let value = op(a)?;
-        self.stack.push(value.into());
+        self.state.push(value.into());
         Ok(())
     }
 
     fn pop_is_numeric(&mut self) -> error::Result<bool> {
-        let value = self.stack.pop().unwrap();
-        let mut atomized = value.atomized(self.dynamic_context.xot);
+        let value = self.state.pop();
+        let mut atomized = value.atomized(self.runnable.xot());
         let a = atomized.option()?;
         if let Some(a) = a {
             Ok(a.is_numeric())
@@ -835,14 +1036,14 @@ impl<'a> Interpreter<'a> {
     }
 
     fn pop_atomic(&mut self) -> error::Result<atomic::Atomic> {
-        let value = self.stack.pop().unwrap();
-        let mut atomized = value.atomized(self.dynamic_context.xot);
+        let value = self.state.pop();
+        let mut atomized = value.atomized(self.runnable.xot());
         atomized.one()
     }
 
     fn pop_atomic_option(&mut self) -> error::Result<Option<atomic::Atomic>> {
-        let value = self.stack.pop().unwrap();
-        let mut atomized = value.atomized(self.dynamic_context.xot);
+        let value = self.state.pop();
+        let mut atomized = value.atomized(self.runnable.xot());
         atomized.option()
     }
 
@@ -861,46 +1062,46 @@ impl<'a> Interpreter<'a> {
     }
 
     fn pop_effective_boolean(&mut self) -> error::Result<bool> {
-        let a = self.stack.pop().unwrap();
+        let a = self.state.pop();
         a.effective_boolean_value()
     }
 
     fn err(&self, value_error: error::Error) -> Error {
-        value_error.with_span(self.program, self.current_span())
+        value_error.with_span(self.runnable.program, self.current_span())
     }
 
     fn current_span(&self) -> SourceSpan {
-        let frame = self.frame();
-        let function = &self.program.functions[frame.function.0];
+        let frame = self.state.frame();
+        let function = &self.runnable.program.functions[frame.function.0];
         // we substract 1 to end up in the current instruction - this
         // because the ip is already on the next instruction
         function.spans[frame.ip - 1]
     }
 
     fn read_instruction(&mut self) -> EncodedInstruction {
-        let frame = &mut self.frames.last_mut().unwrap();
-        let function = &self.program.functions[frame.function.0];
+        let frame = self.state.frame_mut(); // &mut self.frames.last_mut().unwrap();
+        let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_instruction(chunk, &mut frame.ip)
     }
 
     fn read_u16(&mut self) -> u16 {
-        let frame = &mut self.frames.last_mut().unwrap();
-        let function = &self.program.functions[frame.function.0];
+        let frame = &mut self.state.frame_mut(); // .last_mut().unwrap();
+        let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_u16(chunk, &mut frame.ip)
     }
 
     fn read_i16(&mut self) -> i16 {
-        let frame = &mut self.frames.last_mut().unwrap();
-        let function = &self.program.functions[frame.function.0];
+        let frame = &mut self.state.frame_mut();
+        let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_i16(chunk, &mut frame.ip)
     }
 
     fn read_u8(&mut self) -> u8 {
-        let frame = &mut self.frames.last_mut().unwrap();
-        let function = &self.program.functions[frame.function.0];
+        let frame = &mut self.state.frame_mut();
+        let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }
@@ -916,6 +1117,112 @@ fn build_push(build: &mut Vec<sequence::Item>, value: stack::Value) -> error::Re
     Ok(())
 }
 
+struct FunctionInfo<'a> {
+    function: function::Function,
+    program: &'a function::Program,
+    static_context: &'a context::StaticContext<'a>,
+}
+
+impl<'a> FunctionInfo<'a> {
+    pub(crate) fn new(
+        function: function::Function,
+        program: &'a function::Program,
+        static_context: &'a context::StaticContext<'a>,
+    ) -> FunctionInfo<'a> {
+        FunctionInfo {
+            function,
+            program,
+            static_context,
+        }
+    }
+
+    fn inline_function(
+        &self,
+        inline_function_id: function::InlineFunctionId,
+    ) -> &function::InlineFunction {
+        self.program.get_function_by_id(inline_function_id)
+    }
+
+    fn static_function(
+        &self,
+        static_function_id: function::StaticFunctionId,
+    ) -> &function::StaticFunction {
+        self.static_context
+            .functions
+            .get_by_index(static_function_id)
+    }
+
+    pub(crate) fn arity(&self) -> usize {
+        match self.function {
+            function::Function::Inline {
+                inline_function_id, ..
+            } => self.inline_function(inline_function_id).params.len(),
+            function::Function::Static {
+                static_function_id, ..
+            } => self.static_function(static_function_id).arity(),
+            function::Function::Array(_) => 1,
+            function::Function::Map(_) => 1,
+        }
+    }
+
+    pub(crate) fn name(&self) -> Option<ast::Name> {
+        match self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let static_function = self.static_function(static_function_id);
+                Some(static_function.name().clone())
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn signature(&self) -> Option<ast::Signature> {
+        match &self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let _static_function = self.static_function(*static_function_id);
+                // todo: modify so that we do have signature
+                // Some(static_function.signature().clone())
+                todo!()
+            }
+            function::Function::Inline {
+                inline_function_id, ..
+            } => {
+                let _inline_function = self.inline_function(*inline_function_id);
+                // there is a Signature defined next to inline function,
+                // but it's not in use yet
+                todo!()
+            }
+            function::Function::Map(_map) => {
+                todo!()
+            }
+            function::Function::Array(_array) => {
+                todo!()
+            }
+        }
+    }
+
+    // pub(crate) fn params(&self) -> &[function::Param] {
+    //     match self.function {
+    //         function::Function::Inline {
+    //             inline_function_id, ..
+    //         } => &self.program.functions[inline_function_id.0].params,
+    //         function::Function::Static {
+    //             static_function_id, ..
+    //         } => {
+    //             let static_function = self
+    //                 .static_context
+    //                 .functions
+    //                 .get_by_index(static_function_id);
+    //             static_function.params()
+    //         }
+    //         function::Function::Array(_) => &[],
+    //         function::Function::Map(_) => &[],
+    //     }
+    // }
+}
 // #[cfg(test)]
 // mod tests {
 //     use super::*;

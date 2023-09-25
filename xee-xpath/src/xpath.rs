@@ -56,12 +56,12 @@ impl XPath {
         // the outer main function will pop the context item; this code is there to
         // remove the function id from the stack but the main function has no function id
         assert_eq!(
-            interpreter.stack().len(),
+            interpreter.state().stack().len(),
             1,
             "stack must only have 1 value but found {:?}",
-            interpreter.stack()
+            interpreter.state().stack()
         );
-        let value = interpreter.stack().last().unwrap().clone();
+        let value = interpreter.state().stack().last().unwrap().clone();
         match value {
             stack::Value::Absent => Err(Error::SpannedComponentAbsentInDynamicContext {
                 src: self.program.src.clone(),

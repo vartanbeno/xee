@@ -158,7 +158,7 @@ impl Item {
     fn item_type_matching(
         &self,
         item_type: &ast::ItemType,
-        check_function: bool,
+        _check_function: bool,
         xot: &Xot,
     ) -> error::Result<()> {
         match item_type {
