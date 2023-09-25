@@ -1,12 +1,9 @@
 use std::rc::Rc;
 
 use crate::context::DynamicContext;
-
 use crate::function;
 use crate::xml;
 use crate::{error, Collation};
-
-const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
 pub(crate) struct Runnable<'a> {
