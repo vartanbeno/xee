@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use arrayvec::ArrayVec;
 use ibig::IBig;
 use miette::SourceSpan;
 use xee_schema_type::Xs;
@@ -21,16 +20,9 @@ use crate::xml;
 use crate::{error, Collation};
 
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
+use super::state::State;
 
-const FRAMES_MAX: usize = 64;
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
-
-#[derive(Debug, Clone)]
-pub(crate) struct Frame {
-    function: function::InlineFunctionId,
-    ip: usize,
-    base: usize,
-}
 
 #[derive(Debug, Clone)]
 pub(crate) struct Runnable<'a> {
@@ -57,156 +49,6 @@ impl<'a> Runnable<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct State {
-    stack: Vec<stack::Value>,
-    build_stack: Vec<Vec<sequence::Item>>,
-    frames: ArrayVec<Frame, FRAMES_MAX>,
-}
-
-impl State {
-    pub(crate) fn push(&mut self, value: stack::Value) {
-        self.stack.push(value);
-    }
-
-    pub(crate) fn build_new(&mut self) {
-        self.build_stack.push(Vec::new());
-    }
-
-    pub(crate) fn build_push(&mut self) -> error::Result<()> {
-        let build = &mut self.build_stack.last_mut().unwrap();
-        let value = self.stack.pop().unwrap();
-        Self::build_push_helper(build, value)
-    }
-
-    pub(crate) fn build_complete(&mut self) {
-        let build = self.build_stack.pop().unwrap();
-        self.stack.push(build.into());
-    }
-
-    fn build_push_helper(
-        build: &mut Vec<sequence::Item>,
-        value: stack::Value,
-    ) -> error::Result<()> {
-        match value {
-            stack::Value::Empty => {}
-            stack::Value::One(item) => build.push(item),
-            stack::Value::Many(items) => build.extend(items.iter().cloned()),
-            stack::Value::Absent => return Err(error::Error::ComponentAbsentInDynamicContext)?,
-        }
-        Ok(())
-    }
-
-    pub(crate) fn push_var(&mut self, index: usize) {
-        self.stack
-            .push(self.stack[self.frame().base + index].clone());
-    }
-
-    pub(crate) fn push_closure_var(&mut self, index: usize) -> error::Result<()> {
-        let function = self.function()?;
-        let closure_vars = function.closure_vars();
-        self.stack.push(closure_vars[index].clone().into());
-        Ok(())
-    }
-
-    pub(crate) fn set_var(&mut self, index: usize) {
-        let base = self.frame().base;
-        self.stack[base + index] = self.stack.pop().unwrap();
-    }
-
-    pub(crate) fn pop(&mut self) -> stack::Value {
-        self.stack.pop().unwrap()
-    }
-
-    pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
-        // the function is always just below the base
-        (&self.stack[self.frame().base - 1]).try_into()
-    }
-
-    pub(crate) fn push_start_frame(&mut self, function_id: function::InlineFunctionId) {
-        self.frames.push(Frame {
-            function: function_id,
-            ip: 0,
-            base: 0,
-        });
-    }
-
-    pub(crate) fn push_frame(
-        &mut self,
-        function_id: function::InlineFunctionId,
-        arity: usize,
-    ) -> error::Result<()> {
-        if self.frames.len() >= self.frames.capacity() {
-            return Err(error::Error::StackOverflow);
-        }
-        self.frames.push(Frame {
-            function: function_id,
-            ip: 0,
-            base: self.stack.len() - arity,
-        });
-        Ok(())
-    }
-
-    pub(crate) fn frame(&self) -> &Frame {
-        self.frames.last().unwrap()
-    }
-
-    pub(crate) fn frame_mut(&mut self) -> &mut Frame {
-        self.frames.last_mut().unwrap()
-    }
-
-    pub(crate) fn jump(&mut self, displacement: i32) {
-        self.frame_mut().ip = (self.frame().ip as i32 + displacement) as usize;
-    }
-
-    pub(crate) fn callable(&self, arity: usize) -> error::Result<Rc<function::Function>> {
-        let value = &self.stack[self.stack.len() - (arity + 1)];
-        // TODO: check that arity of function matches arity of call
-        value.try_into()
-    }
-
-    pub(crate) fn arguments(&self, arity: usize) -> &[stack::Value] {
-        &self.stack[self.stack.len() - arity..]
-    }
-
-    pub(crate) fn inline_return(&mut self, start_base: usize) -> bool {
-        let return_value = self.stack.pop().unwrap();
-
-        // truncate the stack to the base
-        let base = self.frame().base;
-        self.stack.truncate(base);
-
-        // pop off the function id we just called
-        // for the outer main function this is the context item
-        if !self.stack.is_empty() {
-            self.stack.pop();
-        }
-
-        // push back return value
-        self.stack.push(return_value);
-
-        // now pop off the frame
-        self.frames.pop();
-
-        // if the start base is the same as the base we just popped off,
-        // we are done
-        base == start_base
-    }
-
-    pub(crate) fn static_return(&mut self, arity: usize) {
-        // truncate the stack to the base
-        self.stack.truncate(self.stack.len() - (arity + 1));
-    }
-
-    pub(crate) fn top(&self) -> &stack::Value {
-        self.stack.last().unwrap()
-    }
-
-    pub(crate) fn stack(&self) -> &[stack::Value] {
-        &self.stack
-    }
-}
-
-#[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
     runnable: Runnable<'a>,
     state: State,
@@ -219,11 +61,7 @@ impl<'a> Interpreter<'a> {
                 program,
                 dynamic_context,
             },
-            state: State {
-                stack: vec![],
-                build_stack: vec![],
-                frames: ArrayVec::new(),
-            },
+            state: State::new(),
         }
     }
 
@@ -263,7 +101,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn function(&self) -> &function::InlineFunction {
-        &self.runnable.program.functions[self.state.frame().function.0]
+        &self.runnable.program.functions[self.state.frame().function().0]
     }
 
     pub(crate) fn run_actual(&mut self, start_base: usize) -> error::Result<()> {
@@ -750,7 +588,7 @@ impl<'a> Interpreter<'a> {
         if matches!(function.as_ref(), function::Function::Inline { .. }) {
             // run interpreter until we return to the base
             // we started in
-            self.run(self.state.frame().base)?;
+            self.run(self.state.frame().base())?;
         }
         let value = self.state.pop().into();
         Ok(value)
@@ -1002,7 +840,7 @@ impl<'a> Interpreter<'a> {
 
     fn current_span(&self) -> SourceSpan {
         let frame = self.state.frame();
-        let function = &self.runnable.program.functions[frame.function.0];
+        let function = &self.runnable.program.functions[frame.function().0];
         // we substract 1 to end up in the current instruction - this
         // because the ip is already on the next instruction
         function.spans[frame.ip - 1]
@@ -1010,28 +848,28 @@ impl<'a> Interpreter<'a> {
 
     fn read_instruction(&mut self) -> EncodedInstruction {
         let frame = self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function.0];
+        let function = &self.runnable.program.functions[frame.function().0];
         let chunk = &function.chunk;
         read_instruction(chunk, &mut frame.ip)
     }
 
     fn read_u16(&mut self) -> u16 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function.0];
+        let function = &self.runnable.program.functions[frame.function().0];
         let chunk = &function.chunk;
         read_u16(chunk, &mut frame.ip)
     }
 
     fn read_i16(&mut self) -> i16 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function.0];
+        let function = &self.runnable.program.functions[frame.function().0];
         let chunk = &function.chunk;
         read_i16(chunk, &mut frame.ip)
     }
 
     fn read_u8(&mut self) -> u8 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function.0];
+        let function = &self.runnable.program.functions[frame.function().0];
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }

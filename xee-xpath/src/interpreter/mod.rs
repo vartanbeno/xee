@@ -3,6 +3,7 @@ mod instruction;
 mod interpret;
 mod ir_interpret;
 mod scope;
+mod state;
 
 pub(crate) use builder::FunctionBuilder;
 pub(crate) use interpret::Interpreter;
