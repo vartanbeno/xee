@@ -118,7 +118,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Const => {
                     let index = self.read_u16();
                     self.state
-                        .push(self.function().constants[index as usize].clone());
+                        .push(self.current_inline_function().constants[index as usize].clone());
                 }
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
@@ -301,7 +301,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
                     let node = self.state.pop().try_into()?;
-                    let step = &(self.function().steps[step_id as usize]);
+                    let step = &(self.current_inline_function().steps[step_id as usize]);
                     let value = xml::resolve_step(step, node, self.runnable.xot());
                     self.state.push(value);
                 }
@@ -320,7 +320,7 @@ impl<'a> Interpreter<'a> {
                     let value = self.state.pop();
                     let sequence: sequence::Sequence = value.into();
                     let sequence_type =
-                        &(self.function().sequence_types[sequence_type_id as usize]);
+                        &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
@@ -337,7 +337,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Cast => {
                     let type_id = self.read_u16();
                     let value = self.pop_atomic_option()?;
-                    let cast_type = &(self.function().cast_types[type_id as usize]);
+                    let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value
                             .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context())?;
@@ -351,7 +351,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Castable => {
                     let type_id = self.read_u16();
                     let value = self.pop_atomic_option()?;
-                    let cast_type = &(self.function().cast_types[type_id as usize]);
+                    let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value
                             .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context());
@@ -366,7 +366,7 @@ impl<'a> Interpreter<'a> {
                     let sequence_type_id = self.read_u16();
                     let value = self.state.pop();
                     let sequence_type =
-                        &(self.function().sequence_types[sequence_type_id as usize]);
+                        &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
                     let sequence: sequence::Sequence = value.into();
                     let matches =
                         sequence.sequence_type_matching(sequence_type, self.runnable.xot());
@@ -497,7 +497,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn function(&self) -> &function::InlineFunction {
+    pub(crate) fn current_inline_function(&self) -> &function::InlineFunction {
         self.runnable.inline_function(self.state.frame().function())
     }
 
