@@ -44,7 +44,7 @@ impl<'a> Runnable<'a> {
     }
 
     fn xot(&self) -> &xot::Xot {
-        &self.dynamic_context.xot
+        self.dynamic_context.xot
     }
 
     fn default_collation(&self) -> error::Result<Rc<Collation>> {
@@ -98,19 +98,19 @@ impl State {
 
     pub(crate) fn push_var(&mut self, index: usize) {
         self.stack
-            .push(self.stack[self.frame().base + index as usize].clone());
+            .push(self.stack[self.frame().base + index].clone());
     }
 
     pub(crate) fn push_closure_var(&mut self, index: usize) -> error::Result<()> {
         let function = self.function()?;
         let closure_vars = function.closure_vars();
-        self.stack.push(closure_vars[index as usize].clone().into());
+        self.stack.push(closure_vars[index].clone().into());
         Ok(())
     }
 
     pub(crate) fn set_var(&mut self, index: usize) {
         let base = self.frame().base;
-        self.stack[base + index as usize] = self.stack.pop().unwrap();
+        self.stack[base + index] = self.stack.pop().unwrap();
     }
 
     pub(crate) fn pop(&mut self) -> stack::Value {
@@ -204,10 +204,6 @@ impl State {
     pub(crate) fn stack(&self) -> &[stack::Value] {
         &self.stack
     }
-
-    // pub(crate) fn function(&self) -> &function::InlineFunction {
-    //     self.stack[self.frame().base - 1]).
-    // }
 }
 
 #[derive(Debug, Clone)]
@@ -265,14 +261,6 @@ impl<'a> Interpreter<'a> {
         // annotate run with detailed error information
         self.run_actual(start_base).map_err(|e| self.err(e))
     }
-
-    // fn frame(&self) -> &Frame {
-    //     self.frames.last().unwrap()
-    // }
-
-    // fn frame_mut(&mut self) -> &mut Frame {
-    //     self.frames.last_mut().unwrap()
-    // }
 
     pub(crate) fn function(&self) -> &function::InlineFunction {
         &self.runnable.program.functions[self.state.frame().function.0]
@@ -353,18 +341,10 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Set => {
                     let index = self.read_u16();
                     self.state.set_var(index as usize);
-                    // let base = self.frame().base;
-                    // self.stack[base + index as usize] = self.stack.pop().unwrap();
                 }
                 EncodedInstruction::ClosureVar => {
                     let index = self.read_u16();
                     self.state.push_closure_var(index as usize)?;
-                    // let function = self.state.function()?;
-                    // // let function: Rc<function::Function> =
-                    // //     (&self.stack[self.frame().base - 1]).try_into()?;
-                    // let closure_vars = function.closure_vars();
-                    // // and we push the value we need onto the stack
-                    // self.stack.push(closure_vars[index as usize].clone().into());
                 }
                 EncodedInstruction::Comma => {
                     let b = self.state.pop();
@@ -400,15 +380,12 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
                     self.state.jump(displacement as i32);
-                    // self.frame_mut().ip = (self.frame().ip as i32 + displacement as i32) as usize;
                 }
                 EncodedInstruction::JumpIfTrue => {
                     let displacement = self.read_i16();
                     let a = self.pop_effective_boolean()?;
                     if a {
                         self.state.jump(displacement as i32);
-                        // self.frame_mut().ip =
-                        //     (self.frame().ip as i32 + displacement as i32) as usize;
                     }
                 }
                 EncodedInstruction::JumpIfFalse => {
@@ -416,8 +393,6 @@ impl<'a> Interpreter<'a> {
                     let a = self.pop_effective_boolean()?;
                     if !a {
                         self.state.jump(displacement as i32);
-                        // self.frame_mut().ip =
-                        //     (self.frame().ip as i32 + displacement as i32) as usize;
                     }
                 }
                 EncodedInstruction::Eq => {
@@ -530,29 +505,6 @@ impl<'a> Interpreter<'a> {
                     if self.state.inline_return(start_base) {
                         break;
                     }
-                    // let return_value = self.state.pop();
-
-                    // // truncate the stack to the base
-                    // self.stack.truncate(self.frame().base);
-
-                    // // pop off the function id we just called
-                    // // for the outer main function this is the context item
-                    // if !self.stack.is_empty() {
-                    //     self.stack.pop();
-                    // }
-
-                    // // push back return value
-                    // self.stack.push(return_value);
-
-                    // // if this frame is the same as the frame we started
-                    // // at, we are done
-                    // let base = self.frames.last().unwrap().base;
-                    // // now pop off the frame
-                    // self.frames.pop();
-
-                    // if base == start_base {
-                    //     break;
-                    // }
                 }
                 EncodedInstruction::ReturnConvert => {
                     let sequence_type_id = self.read_u16();
@@ -668,14 +620,9 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::BuildPush => {
                     self.state.build_push()?;
-                    // let build = &mut self.build_stack.last_mut().unwrap();
-                    // let value = self.stack.pop().unwrap();
-                    // build_push(build, value)?;
                 }
                 EncodedInstruction::BuildComplete => {
                     self.state.build_complete();
-                    // let build = self.build_stack.pop().unwrap();
-                    // self.stack.push(build.into());
                 }
                 EncodedInstruction::IsNumeric => {
                     let is_numeric = self.pop_is_numeric()?;
@@ -784,12 +731,6 @@ impl<'a> Interpreter<'a> {
 
     fn call(&mut self, arity: u8) -> error::Result<()> {
         let function = self.state.callable(arity as usize)?;
-        // // get callable from stack, by peeking back
-        // let value = &self.stack[self.stack.len() - (arity as usize + 1)];
-
-        // // TODO: check that arity of function matches arity of call
-
-        // let function: Rc<function::Function> = value.try_into()?;
         self.call_function(function, arity)
     }
 
@@ -853,7 +794,6 @@ impl<'a> Interpreter<'a> {
             static_function.invoke(self.runnable.dynamic_context, self, closure_vars, arity)?;
         // truncate the stack to the base
         self.state.static_return(arity as usize);
-        // self.stack.truncate(self.stack.len() - (arity as usize + 1));
         self.state.push(result.into());
         Ok(())
     }
@@ -896,15 +836,6 @@ impl<'a> Interpreter<'a> {
         }
 
         self.state.push_frame(function_id, arity as usize)
-        // if self.frames.len() >= self.frames.capacity() {
-        //     return Err(error::Error::StackOverflow);
-        // }
-        // self.frames.push(Frame {
-        //     function: function_id,
-        //     ip: 0,
-        //     base: self.stack.len() - (arity as usize),
-        // });
-        // Ok(())
     }
 
     fn call_array(&mut self, array: &function::Array, arity: usize) -> error::Result<()> {
@@ -956,7 +887,6 @@ impl<'a> Interpreter<'a> {
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
         let collation = self.runnable.default_collation()?;
-        // dynamic_context.static_context.default_collation()?;
         let result = O::atomic_compare(
             a,
             b,
@@ -1079,14 +1009,14 @@ impl<'a> Interpreter<'a> {
     }
 
     fn read_instruction(&mut self) -> EncodedInstruction {
-        let frame = self.state.frame_mut(); // &mut self.frames.last_mut().unwrap();
+        let frame = self.state.frame_mut();
         let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_instruction(chunk, &mut frame.ip)
     }
 
     fn read_u16(&mut self) -> u16 {
-        let frame = &mut self.state.frame_mut(); // .last_mut().unwrap();
+        let frame = &mut self.state.frame_mut();
         let function = &self.runnable.program.functions[frame.function.0];
         let chunk = &function.chunk;
         read_u16(chunk, &mut frame.ip)
@@ -1105,16 +1035,6 @@ impl<'a> Interpreter<'a> {
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }
-}
-
-fn build_push(build: &mut Vec<sequence::Item>, value: stack::Value) -> error::Result<()> {
-    match value {
-        stack::Value::Empty => {}
-        stack::Value::One(item) => build.push(item),
-        stack::Value::Many(items) => build.extend(items.iter().cloned()),
-        stack::Value::Absent => return Err(error::Error::ComponentAbsentInDynamicContext)?,
-    }
-    Ok(())
 }
 
 struct FunctionInfo<'a> {
