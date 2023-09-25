@@ -585,6 +585,10 @@ impl<'a> Interpreter<'a> {
             return Err(error::Error::Type);
         }
         // TODO: fast path if no sequence types exist for parameters
+        // could cache this inside of signature so that it's really fast
+        // to detect. we could also have a secondary fast path where
+        // if the types are all exactly the same, we don't do a clone, but that
+        // won't happen as quickly.
 
         // now pop everything off the stack to do type matching, along
         // with sequence type conversion, function coercion
