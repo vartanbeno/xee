@@ -20,33 +20,10 @@ use crate::xml;
 use crate::{error, Collation};
 
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
+use super::runnable::Runnable;
 use super::state::State;
 
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
-
-#[derive(Debug, Clone)]
-pub(crate) struct Runnable<'a> {
-    program: &'a function::Program,
-    dynamic_context: &'a DynamicContext<'a>,
-}
-
-impl<'a> Runnable<'a> {
-    fn annotations(&self) -> &xml::Annotations {
-        &self.dynamic_context.documents.annotations
-    }
-
-    fn xot(&self) -> &xot::Xot {
-        self.dynamic_context.xot
-    }
-
-    fn default_collation(&self) -> error::Result<Rc<Collation>> {
-        self.dynamic_context.static_context.default_collation()
-    }
-
-    fn implicit_timezone(&self) -> chrono::FixedOffset {
-        self.dynamic_context.implicit_timezone()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
@@ -57,10 +34,7 @@ pub(crate) struct Interpreter<'a> {
 impl<'a> Interpreter<'a> {
     pub(crate) fn new(program: &'a function::Program, dynamic_context: &'a DynamicContext) -> Self {
         Interpreter {
-            runnable: Runnable {
-                program,
-                dynamic_context,
-            },
+            runnable: Runnable::new(program, dynamic_context),
             state: State::new(),
         }
     }
@@ -98,10 +72,6 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn run(&mut self, start_base: usize) -> Result<(), Error> {
         // annotate run with detailed error information
         self.run_actual(start_base).map_err(|e| self.err(e))
-    }
-
-    pub(crate) fn function(&self) -> &function::InlineFunction {
-        &self.runnable.program.functions[self.state.frame().function().0]
     }
 
     pub(crate) fn run_actual(&mut self, start_base: usize) -> error::Result<()> {
@@ -153,13 +123,14 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
                     let mut closure_vars = Vec::new();
-                    let closure_function = &self.runnable.program.functions[function_id as usize];
+                    let inline_function_id = function::InlineFunctionId(function_id as usize);
+                    let closure_function = self.runnable.inline_function(inline_function_id);
                     for _ in 0..closure_function.closure_names.len() {
                         closure_vars.push(self.state.pop().into());
                     }
                     self.state.push(
                         function::Function::Inline {
-                            inline_function_id: function::InlineFunctionId(function_id as usize),
+                            inline_function_id,
                             closure_vars,
                         }
                         .into(),
@@ -353,7 +324,7 @@ impl<'a> Interpreter<'a> {
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
-                        self.runnable.dynamic_context,
+                        self.runnable.dynamic_context(),
                     )?;
                     self.state.push(sequence.into());
                 }
@@ -369,7 +340,7 @@ impl<'a> Interpreter<'a> {
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value
-                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context)?;
+                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context())?;
                         self.state.push(cast_value.into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(stack::Value::Empty);
@@ -382,8 +353,8 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value =
-                            value.cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context);
+                        let cast_value = value
+                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context());
                         self.state.push(cast_value.is_ok().into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(true.into())
@@ -397,8 +368,8 @@ impl<'a> Interpreter<'a> {
                     let sequence_type =
                         &(self.function().sequence_types[sequence_type_id as usize]);
                     let sequence: sequence::Sequence = value.into();
-                    let matches = sequence
-                        .sequence_type_matching(sequence_type, self.runnable.dynamic_context.xot);
+                    let matches =
+                        sequence.sequence_type_matching(sequence_type, self.runnable.xot());
                     if matches.is_ok() {
                         self.state.push(true.into());
                     } else {
@@ -482,7 +453,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
     ) -> function::Function {
-        Self::create_static_closure(self.runnable.dynamic_context, static_function_id, || {
+        Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
             Some(self.state.pop())
         })
     }
@@ -492,7 +463,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: function::StaticFunctionId,
         arg: Option<xml::Node>,
     ) -> function::Function {
-        Self::create_static_closure(self.runnable.dynamic_context, static_function_id, || {
+        Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
             arg.map(|n| n.into())
         })
     }
@@ -526,40 +497,37 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn inline_function(
-        &self,
-        inline_function_id: function::InlineFunctionId,
-    ) -> &function::InlineFunction {
-        &self.runnable.program.functions[inline_function_id.0]
-    }
+    // pub(crate) fn inline_function(
+    //     &self,
+    //     inline_function_id: function::InlineFunctionId,
+    // ) -> &function::InlineFunction {
+    //     self.runnable.inline_function(inline_function_id)
+    // }
 
-    pub(crate) fn static_function(
-        &self,
-        static_function_id: function::StaticFunctionId,
-    ) -> &function::StaticFunction {
-        self.runnable
-            .dynamic_context
-            .static_context
-            .functions
-            .get_by_index(static_function_id)
+    // pub(crate) fn static_function(
+    //     &self,
+    //     static_function_id: function::StaticFunctionId,
+    // ) -> &function::StaticFunction {
+    //     self.runnable.static_function(static_function_id)
+    // }
+
+    pub(crate) fn function(&self) -> &function::InlineFunction {
+        self.runnable.inline_function(self.state.frame().function())
     }
 
     pub(crate) fn arity(&self, function: &function::Function) -> usize {
         match function {
             function::Function::Inline {
                 inline_function_id, ..
-            } => self.runnable.program.functions[inline_function_id.0]
+            } => self
+                .runnable
+                .inline_function(*inline_function_id)
                 .params
                 .len(),
             function::Function::Static {
                 static_function_id, ..
             } => {
-                let static_function = self
-                    .runnable
-                    .dynamic_context
-                    .static_context
-                    .functions
-                    .get_by_index(*static_function_id);
+                let static_function = self.runnable.static_function(*static_function_id);
                 static_function.arity()
             }
             function::Function::Array(_) => 1,
@@ -642,7 +610,7 @@ impl<'a> Interpreter<'a> {
         arity: u8,
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
-        let function = self.runnable.program.get_function_by_id(function_id);
+        let function = self.runnable.inline_function(function_id);
         let params = &function.params;
         if arity as usize != params.len() {
             return Err(error::Error::Type);
@@ -659,7 +627,7 @@ impl<'a> Interpreter<'a> {
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
-                    self.runnable.dynamic_context,
+                    self.runnable.dynamic_context(),
                 )?;
                 arguments.push(sequence.into())
             } else {
@@ -742,7 +710,7 @@ impl<'a> Interpreter<'a> {
         let b = self.state.pop();
         let a = self.state.pop();
         let value = a
-            .general_comparison(b, self.runnable.dynamic_context, op)?
+            .general_comparison(b, self.runnable.dynamic_context(), op)?
             .into();
         self.state.push(value);
         Ok(())
@@ -835,12 +803,12 @@ impl<'a> Interpreter<'a> {
     }
 
     fn err(&self, value_error: error::Error) -> Error {
-        value_error.with_span(self.runnable.program, self.current_span())
+        value_error.with_span(self.runnable.program(), self.current_span())
     }
 
     fn current_span(&self) -> SourceSpan {
         let frame = self.state.frame();
-        let function = &self.runnable.program.functions[frame.function().0];
+        let function = self.runnable.inline_function(frame.function());
         // we substract 1 to end up in the current instruction - this
         // because the ip is already on the next instruction
         function.spans[frame.ip - 1]
@@ -848,28 +816,28 @@ impl<'a> Interpreter<'a> {
 
     fn read_instruction(&mut self) -> EncodedInstruction {
         let frame = self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function().0];
+        let function = self.runnable.inline_function(frame.function());
         let chunk = &function.chunk;
         read_instruction(chunk, &mut frame.ip)
     }
 
     fn read_u16(&mut self) -> u16 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function().0];
+        let function = self.runnable.inline_function(frame.function());
         let chunk = &function.chunk;
         read_u16(chunk, &mut frame.ip)
     }
 
     fn read_i16(&mut self) -> i16 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function().0];
+        let function = self.runnable.inline_function(frame.function());
         let chunk = &function.chunk;
         read_i16(chunk, &mut frame.ip)
     }
 
     fn read_u8(&mut self) -> u8 {
         let frame = &mut self.state.frame_mut();
-        let function = &self.runnable.program.functions[frame.function().0];
+        let function = self.runnable.inline_function(frame.function());
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }

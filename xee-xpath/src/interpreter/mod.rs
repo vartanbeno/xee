@@ -2,6 +2,7 @@ mod builder;
 mod instruction;
 mod interpret;
 mod ir_interpret;
+mod runnable;
 mod scope;
 mod state;
 
