@@ -47,7 +47,7 @@
 - [x] numeric-unary-minus
 - [x] numeric-unary-plus
 - [x] QName-equal
-- [ ] same-key
+- [x] same-key
 - [x] subtract-dates
 - [x] subtract-dateTimes
 - [x] subtract-dayTimeDuration-from-date

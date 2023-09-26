@@ -3,7 +3,7 @@
 - [x] adjust-date-to-timezone
 - [x] adjust-time-to-timezone
 - [ ] analyze-string (regex, generates nodes)
-- [ ] apply (hof, array)
+- [x] apply (hof, array)
 - [ ] available-environment-variables
 - [x] avg
 - [ ] base-uri
