@@ -130,6 +130,10 @@ impl<'a> Runnable<'a> {
     pub(crate) fn function_info(&'a self, function: &'a function::Function) -> FunctionInfo<'a> {
         FunctionInfo::new(function, self)
     }
+
+    pub fn signature(&'a self, function: &'a function::Function) -> &function::Signature {
+        self.function_info(function).signature()
+    }
 }
 
 pub(crate) struct FunctionInfo<'a> {
