@@ -56,7 +56,7 @@ where
     let nodes = get_nodes(&xot, document);
 
     let xpath = XPath::new(context.static_context, xpath)?;
-    let result = xpath.many_xot_node(&context, document.root)?;
+    let result = xpath.runnable(&context).many_xot_node(document.root)?;
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())
 }

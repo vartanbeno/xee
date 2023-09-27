@@ -35,7 +35,7 @@ pub fn evaluate_root(
     let document = documents.get(&uri).unwrap();
 
     let xpath = XPath::new(context.static_context, xpath)?;
-    xpath.many_xot_node(&context, document.root)
+    xpath.runnable(&context).many_xot_node(document.root)
 }
 
 pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
@@ -44,7 +44,7 @@ pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
     let xpath = XPath::new(context.static_context, s)?;
-    xpath.many(&context, None)
+    xpath.runnable(&context).many(None)
 }
 
 pub fn evaluate_without_focus_with_variables(
@@ -60,5 +60,5 @@ pub fn evaluate_without_focus_with_variables(
     let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
     let context = DynamicContext::with_variables(&xot, &static_context, variables);
     let xpath = XPath::new(context.static_context, s)?;
-    xpath.many(&context, None)
+    xpath.runnable(&context).many(None)
 }

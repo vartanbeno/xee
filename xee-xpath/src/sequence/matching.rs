@@ -223,8 +223,8 @@ impl Item {
 
     fn function_arity_matching<'a>(
         &self,
-        function_test: &ast::FunctionTest,
-        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        _function_test: &ast::FunctionTest,
+        _get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
         Ok(())
         // match self {
@@ -242,8 +242,8 @@ impl Item {
 
     fn function_type_matching<'a>(
         &self,
-        function_test: &ast::FunctionTest,
-        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        _function_test: &ast::FunctionTest,
+        _get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
         Ok(())
     }

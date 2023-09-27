@@ -228,7 +228,7 @@ impl qt::TestCase {
             &run_context.documents,
             &variables,
         );
-        let result = xpath.many(&dynamic_context, context_item.as_ref());
+        let result = xpath.runnable(&dynamic_context).many(context_item.as_ref());
         self.result
             .assert_result(&run_context.assert_context(), &result)
     }

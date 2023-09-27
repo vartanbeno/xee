@@ -725,7 +725,7 @@ fn run_xpath(expr: &qt::XPathExpr, assert_context: &AssertContext) -> Result<Seq
         &static_context,
         assert_context.documents,
     );
-    xpath.many(&dynamic_context, None)
+    xpath.runnable(&dynamic_context).many(None)
 }
 
 fn run_xpath_with_result(
@@ -745,5 +745,5 @@ fn run_xpath_with_result(
         assert_context.documents,
         &variables,
     );
-    xpath.many(&dynamic_context, None)
+    xpath.runnable(&dynamic_context).many(None)
 }

@@ -1,15 +1,11 @@
 use xee_xpath_ast::ast;
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::error::{Error, Result};
+use crate::error;
 use crate::function;
 use crate::interpreter;
 use crate::ir;
 use crate::ir::IrConverter;
-use crate::occurrence::Occurrence;
-use crate::sequence;
-use crate::stack;
-use crate::xml;
 
 #[derive(Debug)]
 pub struct XPath {
@@ -17,7 +13,7 @@ pub struct XPath {
 }
 
 impl XPath {
-    pub fn new(static_context: &StaticContext, xpath: &str) -> Result<Self> {
+    pub fn new(static_context: &StaticContext, xpath: &str) -> error::Result<Self> {
         let ast = ast::XPath::parse(xpath, static_context.namespaces, &static_context.variables)?;
         let mut ir_converter = IrConverter::new(xpath, static_context);
         let expr = ir_converter.convert_xpath(&ast)?;
@@ -36,51 +32,11 @@ impl XPath {
         Ok(Self { program })
     }
 
-    pub fn many_xot_node(
-        &self,
-        dynamic_context: &DynamicContext,
-        node: xot::Node,
-    ) -> Result<sequence::Sequence> {
-        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
-        runnable.many_xot_node(node)
-        // let node = xml::Node::Xot(node);
-        // let item = sequence::Item::Node(node);
-        // self.many(dynamic_context, Some(&item))
-    }
-
-    pub fn many(
-        &self,
-        dynamic_context: &DynamicContext,
-        item: Option<&sequence::Item>,
-    ) -> Result<sequence::Sequence> {
-        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
-        runnable.many(item)
-        // let value = self.run_value(dynamic_context, item)?;
-        // Ok(value.into())
-    }
-
-    pub fn one(
-        &self,
-        dynamic_context: &DynamicContext,
-        item: Option<&sequence::Item>,
-    ) -> Result<sequence::Item> {
-        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
-        runnable.one(item)
-        // let value = self.run_value(dynamic_context, item)?;
-        // let sequence: sequence::Sequence = value.into();
-        // sequence.items().one()
-    }
-
-    pub fn option(
-        &self,
-        dynamic_context: &DynamicContext,
-        item: Option<&sequence::Item>,
-    ) -> Result<Option<sequence::Item>> {
-        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
-        runnable.option(item)
-        // let value = self.run_value(dynamic_context, item)?;
-        // let sequence: sequence::Sequence = value.into();
-        // sequence.items().option()
+    pub fn runnable<'a>(
+        &'a self,
+        dynamic_context: &'a DynamicContext,
+    ) -> interpreter::Runnable<'a> {
+        interpreter::Runnable::new(&self.program, dynamic_context)
     }
 }
 
@@ -92,6 +48,7 @@ mod tests {
     use xot::Xot;
 
     use crate::context::StaticContext;
+    use crate::xml;
 
     #[test]
     fn test_parse_error() {

@@ -53,7 +53,7 @@ impl EnvironmentSpec {
             }
             let xpath = xpath.unwrap();
             let dynamic_context = DynamicContext::new(xot, &static_context);
-            let result = xpath.many(&dynamic_context, None)?;
+            let result = xpath.runnable(&dynamic_context).many(None)?;
             let result = result.items().collect::<XPathResult<Vec<Item>>>().unwrap();
             variables.push((param.name.clone(), result));
         }

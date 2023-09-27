@@ -146,7 +146,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.one(session.dynamic_context, Some(item))?;
+        let item = xpath.runnable(session.dynamic_context).one(Some(item))?;
         (self.convert)(session, &item)
     }
 }
@@ -173,7 +173,7 @@ impl OneRecurseQuery {
         recurse: &Recurse<V>,
     ) -> error::Result<V> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.one(session.dynamic_context, Some(item))?;
+        let item = xpath.runnable(session.dynamic_context).one(Some(item))?;
         recurse.execute(session, &item)
     }
 }
@@ -194,7 +194,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.option(session.dynamic_context, Some(item))?;
+        let item = xpath.runnable(session.dynamic_context).option(Some(item))?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -228,7 +228,7 @@ impl OptionRecurseQuery {
         recurse: &Recurse<V>,
     ) -> error::Result<Option<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let item = xpath.option(session.dynamic_context, Some(item))?;
+        let item = xpath.runnable(session.dynamic_context).option(Some(item))?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
         } else {
@@ -253,7 +253,7 @@ where
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let sequence = xpath.many(session.dynamic_context, Some(item))?;
+        let sequence = xpath.runnable(session.dynamic_context).many(Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             match (self.convert)(session, &item?) {
@@ -287,7 +287,7 @@ impl ManyRecurseQuery {
         recurse: &Recurse<V>,
     ) -> error::Result<Vec<V>> {
         let xpath = session.one_query_xpath(self.id);
-        let sequence = xpath.many(session.dynamic_context, Some(item))?;
+        let sequence = xpath.runnable(session.dynamic_context).many(Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             values.push(recurse.execute(session, &item?)?);

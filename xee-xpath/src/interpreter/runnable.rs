@@ -13,7 +13,7 @@ use crate::{error, Collation};
 use super::Interpreter;
 
 #[derive(Debug, Clone)]
-pub(crate) struct Runnable<'a> {
+pub struct Runnable<'a> {
     program: &'a function::Program,
     map_signature: function::Signature,
     array_signature: function::Signature,
