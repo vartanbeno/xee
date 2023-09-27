@@ -114,4 +114,8 @@ impl<'a> DynamicContext<'a> {
     pub(crate) fn implicit_timezone(&self) -> chrono::FixedOffset {
         self.current_datetime.timezone()
     }
+
+    pub fn documents(&self) -> &xml::Documents {
+        &self.documents
+    }
 }

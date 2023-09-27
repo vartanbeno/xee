@@ -177,7 +177,7 @@ impl Assertable for Assert {
         runnable: &Runnable<'_>,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let result_sequence = run_xpath_with_result(&self.0, sequence, assert_context);
+        let result_sequence = run_xpath_with_result(&self.0, sequence, assert_context, runnable);
 
         match result_sequence {
             Ok(result_sequence) => match result_sequence.effective_boolean_value() {
@@ -211,17 +211,17 @@ impl Assertable for AssertEq {
         runnable: &Runnable<'_>,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, assert_context);
+        let expected_sequence = run_xpath(&self.0, assert_context, runnable);
 
         match expected_sequence {
             Ok(expected_sequence) => {
-                let atom = sequence.atomized(assert_context.xot).one();
+                let atom = sequence.atomized(runnable.xot()).one();
                 let atom = match atom {
                     Ok(atom) => atom,
                     Err(error) => return TestOutcome::RuntimeError(error),
                 };
                 let expected_atom = expected_sequence
-                    .atomized(assert_context.xot)
+                    .atomized(runnable.xot())
                     .one()
                     .expect("Should get single atom in sequence");
                 if expected_atom.simple_equal(&atom) {
@@ -251,7 +251,7 @@ impl Assertable for AssertDeepEq {
         runnable: &Runnable<'_>,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, assert_context);
+        let expected_sequence = run_xpath(&self.0, assert_context, runnable);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -260,7 +260,7 @@ impl Assertable for AssertDeepEq {
                         sequence,
                         &Collation::CodePoint,
                         chrono::offset::Utc.fix(),
-                        assert_context.xot,
+                        runnable.xot(),
                     )
                     .unwrap_or(false)
                 {
@@ -321,7 +321,7 @@ impl Assertable for AssertXml {
         runnable: &Runnable<'_>,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let xml = serialize(assert_context.xot, sequence);
+        let xml = serialize(runnable.xot(), sequence);
 
         let xml = if let Ok(xml) = xml {
             xml
@@ -396,7 +396,7 @@ impl Assertable for AssertType {
         runnable: &Runnable<'_>,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let matches = sequence.matches_type(&self.0, assert_context.xot, |_| todo!());
+        let matches = sequence.matches_type(&self.0, runnable.xot(), |_| todo!());
         if let Ok(matches) = matches {
             if matches {
                 TestOutcome::Passed
@@ -488,7 +488,7 @@ impl Assertable for AssertStringValue {
     ) -> TestOutcome {
         let strings = sequence
             .items()
-            .map(|item| item?.string_value(assert_context.xot))
+            .map(|item| item?.string_value(runnable.xot()))
             .collect::<Result<Vec<_>>>();
         match strings {
             Ok(strings) => {
@@ -799,14 +799,18 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &qt::XPathExpr, assert_context: &AssertContext) -> Result<Sequence> {
+fn run_xpath(
+    expr: &qt::XPathExpr,
+    assert_context: &AssertContext,
+    runnable: &Runnable<'_>,
+) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let program = Program::new(&static_context, &expr.0)?;
     let dynamic_context = DynamicContext::with_documents(
-        assert_context.xot,
+        runnable.xot(),
         &static_context,
-        assert_context.documents,
+        runnable.dynamic_context().documents(),
     );
     let runnable = program.runnable(&dynamic_context);
     runnable.many(None)
@@ -816,6 +820,7 @@ fn run_xpath_with_result(
     expr: &qt::XPathExpr,
     sequence: &Sequence,
     assert_context: &AssertContext,
+    runnable: &Runnable<'_>,
 ) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let name = Name::unprefixed("result");
@@ -824,9 +829,9 @@ fn run_xpath_with_result(
     let program = Program::new(&static_context, &expr.0)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_documents_and_variables(
-        assert_context.xot,
+        runnable.xot(),
         &static_context,
-        assert_context.documents,
+        runnable.dynamic_context().documents(),
         &variables,
     );
     let runnable = program.runnable(&dynamic_context);

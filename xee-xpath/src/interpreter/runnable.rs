@@ -90,7 +90,7 @@ impl<'a> Runnable<'a> {
         self.program
     }
 
-    pub(crate) fn dynamic_context(&self) -> &'a DynamicContext {
+    pub fn dynamic_context(&self) -> &'a DynamicContext {
         self.dynamic_context
     }
 
@@ -98,7 +98,7 @@ impl<'a> Runnable<'a> {
         &self.dynamic_context.documents.annotations
     }
 
-    pub(crate) fn xot(&self) -> &xot::Xot {
+    pub fn xot(&self) -> &xot::Xot {
         self.dynamic_context.xot
     }
 
