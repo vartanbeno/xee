@@ -2,7 +2,7 @@ use ibig::error::OutOfBoundsError;
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::{function::Program, span};
+use crate::{interpreter::Program, span};
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
 pub enum Error {

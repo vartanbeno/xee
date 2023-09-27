@@ -11,10 +11,11 @@ use crate::Occurrence;
 use crate::{error, Collation};
 
 use super::Interpreter;
+use super::Program;
 
 #[derive(Debug, Clone)]
 pub struct Runnable<'a> {
-    program: &'a function::Program,
+    program: &'a Program,
     map_signature: function::Signature,
     array_signature: function::Signature,
     // TODO: this should be private, but is needed right now
@@ -25,10 +26,7 @@ pub struct Runnable<'a> {
 }
 
 impl<'a> Runnable<'a> {
-    pub(crate) fn new(
-        program: &'a function::Program,
-        dynamic_context: &'a DynamicContext<'a>,
-    ) -> Self {
+    pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext<'a>) -> Self {
         Self {
             program,
             map_signature: function::Signature::map_signature(),
@@ -88,7 +86,7 @@ impl<'a> Runnable<'a> {
         sequence.items().option()
     }
 
-    pub(crate) fn program(&self) -> &'a function::Program {
+    pub(crate) fn program(&self) -> &'a Program {
         self.program
     }
 

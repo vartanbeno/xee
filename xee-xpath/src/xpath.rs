@@ -2,14 +2,13 @@ use xee_xpath_ast::ast;
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error;
-use crate::function;
 use crate::interpreter;
 use crate::ir;
 use crate::ir::IrConverter;
 
 #[derive(Debug)]
 pub struct XPath {
-    pub(crate) program: function::Program,
+    pub(crate) program: interpreter::Program,
 }
 
 impl XPath {
@@ -19,7 +18,7 @@ impl XPath {
         let expr = ir_converter.convert_xpath(&ast)?;
         // this expression contains a function definition, we're getting it
         // in the end
-        let mut program = function::Program::new(xpath.to_string());
+        let mut program = interpreter::Program::new(xpath.to_string());
         let mut scopes = interpreter::Scopes::new(ir::Name("dummy".to_string()));
         let builder = interpreter::FunctionBuilder::new(&mut program);
         let mut compiler = interpreter::InterpreterCompiler {

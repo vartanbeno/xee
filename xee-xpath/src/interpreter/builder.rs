@@ -7,6 +7,7 @@ use crate::stack;
 use crate::xml;
 
 use super::instruction::{encode_instruction, instruction_size, Instruction};
+use super::Program;
 
 #[must_use]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,7 +35,7 @@ pub(crate) enum JumpCondition {
 }
 
 pub(crate) struct FunctionBuilder<'a> {
-    program: &'a mut function::Program,
+    program: &'a mut Program,
     compiled: Vec<u8>,
     spans: Vec<SourceSpan>,
     constants: Vec<stack::Value>,
@@ -45,7 +46,7 @@ pub(crate) struct FunctionBuilder<'a> {
 }
 
 impl<'a> FunctionBuilder<'a> {
-    pub(crate) fn new(program: &'a mut function::Program) -> Self {
+    pub(crate) fn new(program: &'a mut Program) -> Self {
         FunctionBuilder {
             program,
             compiled: Vec::new(),
