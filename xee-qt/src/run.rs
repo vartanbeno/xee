@@ -215,7 +215,7 @@ impl qt::TestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
-                    expected_error.assert_result(&run_context.assert_context(), None, &Err(error))
+                    expected_error.assert_error(&error)
                 } else {
                     TestOutcome::CompilationError(error)
                 }
@@ -231,7 +231,7 @@ impl qt::TestCase {
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref());
         self.result
-            .assert_result(&run_context.assert_context(), Some(&runnable), &result)
+            .assert_result(&run_context.assert_context(), &runnable, &result)
     }
 
     fn environment_specs<'a>(
