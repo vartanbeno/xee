@@ -4,7 +4,7 @@ use xot::Xot;
 
 use xee_xpath::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, Atomic, Document,
-    Documents, DynamicContext, Item, Node, Result, Sequence, StaticContext, Uri, XPath,
+    Documents, DynamicContext, Item, Node, Program, Result, Sequence, StaticContext, Uri,
 };
 
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
@@ -55,7 +55,7 @@ where
     let document = documents.get(&uri).unwrap();
     let nodes = get_nodes(&xot, document);
 
-    let xpath = XPath::new(context.static_context, xpath)?;
+    let xpath = Program::new(context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(document.root)?;
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())

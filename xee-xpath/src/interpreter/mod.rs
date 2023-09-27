@@ -8,5 +8,5 @@ mod scope;
 mod state;
 
 pub(crate) use interpret::Interpreter;
-pub(crate) use program::Program;
-pub(crate) use runnable::Runnable;
+pub use program::Program;
+pub use runnable::Runnable;

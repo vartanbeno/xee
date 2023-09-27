@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
-    Documents, DynamicContext, Item, Name, Namespaces, Node, Result as XPathResult, StaticContext,
-    Uri, XPath,
+    Documents, DynamicContext, Item, Name, Namespaces, Node, Program, Result as XPathResult,
+    StaticContext, Uri,
 };
 use xot::Xot;
 
@@ -46,14 +46,15 @@ impl EnvironmentSpec {
             let namespaces = Namespaces::default();
             let static_context = StaticContext::new(&namespaces);
             let select = (param.select.as_ref()).expect("param: missing select not supported");
-            let xpath = XPath::new(&static_context, select);
-            if xpath.is_err() {
+            let program = Program::new(&static_context, select);
+            if program.is_err() {
                 println!("param: select xpath parse failed: {}", select);
                 continue;
             }
-            let xpath = xpath.unwrap();
+            let program = program.unwrap();
             let dynamic_context = DynamicContext::new(xot, &static_context);
-            let result = xpath.runnable(&dynamic_context).many(None)?;
+            let runnable = program.runnable(&dynamic_context);
+            let result = runnable.many(None)?;
             let result = result.items().collect::<XPathResult<Vec<Item>>>().unwrap();
             variables.push((param.name.clone(), result));
         }

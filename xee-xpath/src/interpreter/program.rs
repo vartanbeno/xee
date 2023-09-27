@@ -7,9 +7,10 @@ use crate::ir;
 
 use super::builder::FunctionBuilder;
 use super::ir_interpret::{InterpreterCompiler, Scopes};
+use super::Runnable;
 
 #[derive(Debug, Clone)]
-pub(crate) struct Program {
+pub struct Program {
     pub(crate) src: String,
     pub(crate) functions: Vec<function::InlineFunction>,
 }
@@ -39,6 +40,10 @@ impl Program {
             src,
             functions: Vec::new(),
         }
+    }
+
+    pub fn runnable<'a>(&'a self, dynamic_context: &'a context::DynamicContext) -> Runnable<'a> {
+        Runnable::new(self, dynamic_context)
     }
 
     pub(crate) fn add_function(

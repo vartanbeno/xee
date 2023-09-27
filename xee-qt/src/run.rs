@@ -1,6 +1,6 @@
 use derive_builder::Builder;
 use std::path::Path;
-use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, StaticContext, XPath};
+use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, Program, StaticContext};
 use xot::Xot;
 
 use crate::assert::{AssertContext, Assertable};
@@ -210,12 +210,12 @@ impl qt::TestCase {
             .map(|(name, _)| name.clone())
             .collect::<Vec<_>>();
         let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
-        let xpath = XPath::new(&static_context, &self.test);
-        let xpath = match xpath {
+        let program = Program::new(&static_context, &self.test);
+        let program = match program {
             Ok(xpath) => xpath,
             Err(error) => {
                 return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
-                    expected_error.assert_result(&run_context.assert_context(), &Err(error))
+                    expected_error.assert_result(&run_context.assert_context(), None, &Err(error))
                 } else {
                     TestOutcome::CompilationError(error)
                 }
@@ -228,9 +228,10 @@ impl qt::TestCase {
             &run_context.documents,
             &variables,
         );
-        let result = xpath.runnable(&dynamic_context).many(context_item.as_ref());
+        let runnable = program.runnable(&dynamic_context);
+        let result = runnable.many(context_item.as_ref());
         self.result
-            .assert_result(&run_context.assert_context(), &result)
+            .assert_result(&run_context.assert_context(), Some(&runnable), &result)
     }
 
     fn environment_specs<'a>(

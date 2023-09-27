@@ -4,9 +4,8 @@ use xee_xpath_ast::{ast, Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::Result;
-use crate::sequence;
 use crate::xml;
-use crate::xpath::XPath;
+use crate::{interpreter, sequence};
 
 /// A high level function that evaluates an xpath expression on an xml document.
 pub fn evaluate(
@@ -34,8 +33,9 @@ pub fn evaluate_root(
     let context = DynamicContext::with_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
-    let xpath = XPath::new(context.static_context, xpath)?;
-    xpath.runnable(&context).many_xot_node(document.root)
+    let program = interpreter::Program::new(context.static_context, xpath)?;
+    let runnable = program.runnable(&context);
+    runnable.many_xot_node(document.root)
 }
 
 pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
@@ -43,8 +43,10 @@ pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::new(&xot, &static_context);
-    let xpath = XPath::new(context.static_context, s)?;
-    xpath.runnable(&context).many(None)
+
+    let program = interpreter::Program::new(context.static_context, s)?;
+    let runnable = program.runnable(&context);
+    runnable.many(None)
 }
 
 pub fn evaluate_without_focus_with_variables(
@@ -59,6 +61,7 @@ pub fn evaluate_without_focus_with_variables(
         .collect::<Vec<_>>();
     let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
     let context = DynamicContext::with_variables(&xot, &static_context, variables);
-    let xpath = XPath::new(context.static_context, s)?;
-    xpath.runnable(&context).many(None)
+    let program = interpreter::Program::new(context.static_context, s)?;
+    let runnable = program.runnable(&context);
+    runnable.many(None)
 }

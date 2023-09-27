@@ -17,17 +17,17 @@ use crate::{Item, Sequence};
 
 impl Sequence {
     /// Check a type for qee-qt assert-type
-    pub fn matches_type(
+    pub fn matches_type<'a>(
         &self,
         s: &str,
         xot: &Xot,
-        // get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
     ) -> error::Result<bool> {
         let namespaces = Namespaces::default();
         let sequence_type = ast::SequenceType::parse(s, &namespaces)?;
         if self
             .clone()
-            .sequence_type_matching(&sequence_type, xot, |_| todo!())
+            .sequence_type_matching(&sequence_type, xot, get_signature)
             .is_ok()
         {
             Ok(true)

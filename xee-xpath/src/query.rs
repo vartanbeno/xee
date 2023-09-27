@@ -1,7 +1,7 @@
 use crate::context::{DynamicContext, StaticContext};
 use crate::error;
+use crate::interpreter;
 use crate::sequence;
-use crate::xpath::XPath;
 
 pub trait Convert<V>: Fn(&Session, &sequence::Item) -> error::Result<V> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &sequence::Item) -> error::Result<V> {}
@@ -32,7 +32,7 @@ pub trait ConvertRecurse<V>: Fn(&Session, &sequence::Item) -> error::Result<V> {
 
 #[derive(Debug)]
 pub struct Queries<'s> {
-    queries: Vec<XPath>,
+    queries: Vec<interpreter::Program>,
     static_context: &'s StaticContext<'s>,
 }
 
@@ -49,9 +49,9 @@ impl<'s> Queries<'s> {
     }
 
     fn register(&mut self, s: &str) -> error::Result<usize> {
-        let xpath = XPath::new(self.static_context, s)?;
+        let program = interpreter::Program::new(self.static_context, s)?;
         let id = self.queries.len();
-        self.queries.push(xpath);
+        self.queries.push(program);
         Ok(id)
     }
 
@@ -121,7 +121,7 @@ impl<'s> Session<'s> {
         }
     }
 
-    fn one_query_xpath(&self, id: usize) -> &XPath {
+    fn one_query_program(&self, id: usize) -> &interpreter::Program {
         &self.queries.queries[id]
     }
 }
@@ -145,8 +145,9 @@ where
     F: Convert<V>,
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.runnable(session.dynamic_context).one(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let item = runnable.one(Some(item))?;
         (self.convert)(session, &item)
     }
 }
@@ -172,8 +173,9 @@ impl OneRecurseQuery {
         item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<V> {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.runnable(session.dynamic_context).one(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let item = runnable.one(Some(item))?;
         recurse.execute(session, &item)
     }
 }
@@ -193,8 +195,9 @@ where
     F: Convert<V>,
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Option<V>> {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.runnable(session.dynamic_context).option(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let item = runnable.option(Some(item))?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -227,8 +230,9 @@ impl OptionRecurseQuery {
         item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<Option<V>> {
-        let xpath = session.one_query_xpath(self.id);
-        let item = xpath.runnable(session.dynamic_context).option(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let item = runnable.option(Some(item))?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
         } else {
@@ -252,8 +256,9 @@ where
     F: Convert<V>,
 {
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Vec<V>> {
-        let xpath = session.one_query_xpath(self.id);
-        let sequence = xpath.runnable(session.dynamic_context).many(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let sequence = runnable.many(Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             match (self.convert)(session, &item?) {
@@ -286,8 +291,9 @@ impl ManyRecurseQuery {
         item: &sequence::Item,
         recurse: &Recurse<V>,
     ) -> error::Result<Vec<V>> {
-        let xpath = session.one_query_xpath(self.id);
-        let sequence = xpath.runnable(session.dynamic_context).many(Some(item))?;
+        let program = session.one_query_program(self.id);
+        let runnable = program.runnable(session.dynamic_context);
+        let sequence = runnable.many(Some(item))?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             values.push(recurse.execute(session, &item?)?);

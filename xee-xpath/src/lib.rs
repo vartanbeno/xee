@@ -31,6 +31,7 @@ pub use crate::atomic::{
 };
 pub use crate::context::{DynamicContext, StaticContext};
 pub use crate::error::{Error, Result};
+pub use crate::interpreter::{Program, Runnable};
 pub use crate::occurrence::Occurrence;
 pub use crate::query::{
     Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
@@ -41,4 +42,4 @@ pub use crate::run::{
 pub use crate::sequence::{Item, Sequence};
 pub use crate::string::Collation;
 pub use crate::xml::{Document, Documents, Node, Uri};
-pub use crate::xpath::XPath;
+// pub use crate::xpath::XPath;
