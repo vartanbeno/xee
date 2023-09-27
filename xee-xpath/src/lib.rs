@@ -19,7 +19,6 @@ mod span;
 mod stack;
 mod string;
 mod xml;
-mod xpath;
 
 pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::Namespaces;
@@ -42,4 +41,3 @@ pub use crate::run::{
 pub use crate::sequence::{Item, Sequence};
 pub use crate::string::Collation;
 pub use crate::xml::{Document, Documents, Node, Uri};
-// pub use crate::xpath::XPath;
