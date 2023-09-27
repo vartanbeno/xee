@@ -116,7 +116,7 @@ impl<'a> FunctionInfo<'a> {
         }
     }
 
-    pub(crate) fn signature(&self) -> &function::Signature {
+    pub(crate) fn signature(&self) -> &'a function::Signature {
         match &self.function {
             function::Function::Static {
                 static_function_id, ..

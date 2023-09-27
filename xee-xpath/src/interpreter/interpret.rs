@@ -325,6 +325,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
                         self.runnable.dynamic_context(),
+                        |function| self.runnable.function_info(function).signature(),
                     )?;
                     self.state.push(sequence.into());
                 }
@@ -368,8 +369,11 @@ impl<'a> Interpreter<'a> {
                     let sequence_type =
                         &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
                     let sequence: sequence::Sequence = value.into();
-                    let matches =
-                        sequence.sequence_type_matching(sequence_type, self.runnable.xot());
+                    let matches = sequence.sequence_type_matching(
+                        sequence_type,
+                        self.runnable.xot(),
+                        |function| self.runnable.function_info(function).signature(),
+                    );
                     if matches.is_ok() {
                         self.state.push(true.into());
                     } else {
@@ -601,6 +605,7 @@ impl<'a> Interpreter<'a> {
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
                     self.runnable.dynamic_context(),
+                    |function| self.runnable.function_info(function).signature(),
                 )?;
                 arguments.push(sequence.into())
             } else {
