@@ -3,7 +3,7 @@ use xee_xpath_ast::ast;
 use crate::context::{DynamicContext, StaticContext};
 use crate::error::{Error, Result};
 use crate::function;
-use crate::interpreter::{FunctionBuilder, Interpreter, InterpreterCompiler, Scopes};
+use crate::interpreter;
 use crate::ir;
 use crate::ir::IrConverter;
 use crate::occurrence::Occurrence;
@@ -24,9 +24,9 @@ impl XPath {
         // this expression contains a function definition, we're getting it
         // in the end
         let mut program = function::Program::new(xpath.to_string());
-        let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
-        let builder = FunctionBuilder::new(&mut program);
-        let mut compiler = InterpreterCompiler {
+        let mut scopes = interpreter::Scopes::new(ir::Name("dummy".to_string()));
+        let builder = interpreter::FunctionBuilder::new(&mut program);
+        let mut compiler = interpreter::InterpreterCompiler {
             builder,
             scopes: &mut scopes,
             static_context,
@@ -41,28 +41,8 @@ impl XPath {
         dynamic_context: &DynamicContext,
         context_item: Option<&sequence::Item>,
     ) -> Result<stack::Value> {
-        let mut interpreter = Interpreter::new(&self.program, dynamic_context);
-        let arguments = dynamic_context.arguments()?;
-        interpreter.start(context_item, arguments);
-        interpreter.run(0)?;
-        // the stack has to be 1 values and return the result of the expression
-        // why 1 value if the context item is on the top of the stack? This is because
-        // the outer main function will pop the context item; this code is there to
-        // remove the function id from the stack but the main function has no function id
-        assert_eq!(
-            interpreter.state().stack().len(),
-            1,
-            "stack must only have 1 value but found {:?}",
-            interpreter.state().stack()
-        );
-        let value = interpreter.state().stack().last().unwrap().clone();
-        match value {
-            stack::Value::Absent => Err(Error::SpannedComponentAbsentInDynamicContext {
-                src: self.program.src.clone(),
-                span: (0, self.program.src.len()).into(),
-            }),
-            _ => Ok(value),
-        }
+        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
+        runnable.run_value(context_item)
     }
 
     pub fn many_xot_node(

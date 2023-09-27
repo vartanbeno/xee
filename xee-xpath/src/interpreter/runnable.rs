@@ -4,8 +4,12 @@ use xee_xpath_ast::ast;
 
 use crate::context::DynamicContext;
 use crate::function;
+use crate::sequence;
+use crate::stack;
 use crate::xml;
 use crate::{error, Collation};
+
+use super::Interpreter;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Runnable<'a> {
@@ -29,6 +33,34 @@ impl<'a> Runnable<'a> {
             map_signature: function::Signature::map_signature(),
             array_signature: function::Signature::array_signature(),
             dynamic_context,
+        }
+    }
+
+    pub(crate) fn run_value(
+        &self,
+        context_item: Option<&sequence::Item>,
+    ) -> error::Result<stack::Value> {
+        let mut interpreter = Interpreter::new(self);
+        let arguments = self.dynamic_context.arguments()?;
+        interpreter.start(context_item, arguments);
+        interpreter.run(0)?;
+        // the stack has to be 1 values and return the result of the expression
+        // why 1 value if the context item is on the top of the stack? This is because
+        // the outer main function will pop the context item; this code is there to
+        // remove the function id from the stack but the main function has no function id
+        assert_eq!(
+            interpreter.state().stack().len(),
+            1,
+            "stack must only have 1 value but found {:?}",
+            interpreter.state().stack()
+        );
+        let value = interpreter.state().stack().last().unwrap().clone();
+        match value {
+            stack::Value::Absent => Err(error::Error::SpannedComponentAbsentInDynamicContext {
+                src: self.program.src.clone(),
+                span: (0, self.program.src.len()).into(),
+            }),
+            _ => Ok(value),
         }
     }
 

@@ -28,7 +28,8 @@ mod test {
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
         let program = function::Program::new("".to_string());
-        let mut interpreter = interpreter::Interpreter::new(&program, &context);
+        let runnable = interpreter::Runnable::new(&program, &context);
+        let mut interpreter = interpreter::Interpreter::new(&runnable);
         assert_eq!(foo::WRAPPER(&context, &mut interpreter, &[]), Ok(expected));
     }
 
@@ -41,7 +42,8 @@ mod test {
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
         let program = function::Program::new("".to_string());
-        let mut interpreter = interpreter::Interpreter::new(&program, &context);
+        let runnable = interpreter::Runnable::new(&program, &context);
+        let mut interpreter = interpreter::Interpreter::new(&runnable);
         assert_eq!(
             int_to_string::WRAPPER(
                 &context,

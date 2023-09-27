@@ -27,14 +27,14 @@ const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
 pub(crate) struct Interpreter<'a> {
-    runnable: Runnable<'a>,
+    runnable: &'a Runnable<'a>,
     state: State,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(program: &'a function::Program, dynamic_context: &'a DynamicContext) -> Self {
+    pub(crate) fn new(runnable: &'a Runnable<'a>) -> Self {
         Interpreter {
-            runnable: Runnable::new(program, dynamic_context),
+            runnable,
             state: State::new(),
         }
     }
