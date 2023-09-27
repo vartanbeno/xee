@@ -7,6 +7,7 @@ use crate::function;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
+use crate::Occurrence;
 use crate::{error, Collation};
 
 use super::Interpreter;
@@ -62,6 +63,29 @@ impl<'a> Runnable<'a> {
             }),
             _ => Ok(value),
         }
+    }
+
+    pub fn many_xot_node(&self, node: xot::Node) -> error::Result<sequence::Sequence> {
+        let node = xml::Node::Xot(node);
+        let item = sequence::Item::Node(node);
+        self.many(Some(&item))
+    }
+
+    pub fn many(&self, item: Option<&sequence::Item>) -> error::Result<sequence::Sequence> {
+        let value = self.run_value(item)?;
+        Ok(value.into())
+    }
+
+    pub fn one(&self, item: Option<&sequence::Item>) -> error::Result<sequence::Item> {
+        let value = self.run_value(item)?;
+        let sequence: sequence::Sequence = value.into();
+        sequence.items().one()
+    }
+
+    pub fn option(&self, item: Option<&sequence::Item>) -> error::Result<Option<sequence::Item>> {
+        let value = self.run_value(item)?;
+        let sequence: sequence::Sequence = value.into();
+        sequence.items().option()
     }
 
     pub(crate) fn program(&self) -> &'a function::Program {

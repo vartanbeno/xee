@@ -36,23 +36,16 @@ impl XPath {
         Ok(Self { program })
     }
 
-    pub(crate) fn run_value(
-        &self,
-        dynamic_context: &DynamicContext,
-        context_item: Option<&sequence::Item>,
-    ) -> Result<stack::Value> {
-        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
-        runnable.run_value(context_item)
-    }
-
     pub fn many_xot_node(
         &self,
         dynamic_context: &DynamicContext,
         node: xot::Node,
     ) -> Result<sequence::Sequence> {
-        let node = xml::Node::Xot(node);
-        let item = sequence::Item::Node(node);
-        self.many(dynamic_context, Some(&item))
+        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
+        runnable.many_xot_node(node)
+        // let node = xml::Node::Xot(node);
+        // let item = sequence::Item::Node(node);
+        // self.many(dynamic_context, Some(&item))
     }
 
     pub fn many(
@@ -60,8 +53,10 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&sequence::Item>,
     ) -> Result<sequence::Sequence> {
-        let value = self.run_value(dynamic_context, item)?;
-        Ok(value.into())
+        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
+        runnable.many(item)
+        // let value = self.run_value(dynamic_context, item)?;
+        // Ok(value.into())
     }
 
     pub fn one(
@@ -69,9 +64,11 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&sequence::Item>,
     ) -> Result<sequence::Item> {
-        let value = self.run_value(dynamic_context, item)?;
-        let sequence: sequence::Sequence = value.into();
-        sequence.items().one()
+        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
+        runnable.one(item)
+        // let value = self.run_value(dynamic_context, item)?;
+        // let sequence: sequence::Sequence = value.into();
+        // sequence.items().one()
     }
 
     pub fn option(
@@ -79,9 +76,11 @@ impl XPath {
         dynamic_context: &DynamicContext,
         item: Option<&sequence::Item>,
     ) -> Result<Option<sequence::Item>> {
-        let value = self.run_value(dynamic_context, item)?;
-        let sequence: sequence::Sequence = value.into();
-        sequence.items().option()
+        let runnable = interpreter::Runnable::new(&self.program, dynamic_context);
+        runnable.option(item)
+        // let value = self.run_value(dynamic_context, item)?;
+        // let sequence: sequence::Sequence = value.into();
+        // sequence.items().option()
     }
 }
 
