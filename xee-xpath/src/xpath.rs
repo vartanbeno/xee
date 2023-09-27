@@ -1,10 +1,6 @@
-use xee_xpath_ast::ast;
-
 use crate::context::{DynamicContext, StaticContext};
 use crate::error;
 use crate::interpreter;
-use crate::ir;
-use crate::ir::IrConverter;
 
 #[derive(Debug)]
 pub struct XPath {
@@ -13,21 +9,7 @@ pub struct XPath {
 
 impl XPath {
     pub fn new(static_context: &StaticContext, xpath: &str) -> error::Result<Self> {
-        let ast = ast::XPath::parse(xpath, static_context.namespaces, &static_context.variables)?;
-        let mut ir_converter = IrConverter::new(xpath, static_context);
-        let expr = ir_converter.convert_xpath(&ast)?;
-        // this expression contains a function definition, we're getting it
-        // in the end
-        let mut program = interpreter::Program::new(xpath.to_string());
-        let mut scopes = interpreter::Scopes::new(ir::Name("dummy".to_string()));
-        let builder = interpreter::FunctionBuilder::new(&mut program);
-        let mut compiler = interpreter::InterpreterCompiler {
-            builder,
-            scopes: &mut scopes,
-            static_context,
-        };
-        compiler.compile_expr(&expr)?;
-
+        let program = interpreter::Program::new(static_context, xpath)?;
         Ok(Self { program })
     }
 
