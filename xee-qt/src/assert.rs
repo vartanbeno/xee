@@ -2,8 +2,8 @@ use chrono::Offset;
 use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
-    Collation, Documents, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result,
-    Runnable, Sequence, StaticContext,
+    Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result, Runnable,
+    Sequence, StaticContext,
 };
 use xot::Xot;
 
@@ -11,36 +11,15 @@ use crate::outcome::{TestOutcome, UnexpectedError};
 use crate::qt;
 use crate::serialize::serialize;
 
-pub(crate) struct AssertContext<'a> {
-    xot: &'a Xot,
-    documents: &'a Documents,
-}
-
-impl<'a> AssertContext<'a> {
-    pub(crate) fn new(xot: &'a Xot, documents: &'a Documents) -> Self {
-        Self { xot, documents }
-    }
-}
-
 pub(crate) trait Assertable {
-    fn assert_result(
-        &self,
-        assert_context: &AssertContext<'_>,
-        runnable: &Runnable<'_>,
-        result: &Result<Sequence>,
-    ) -> TestOutcome {
+    fn assert_result(&self, runnable: &Runnable<'_>, result: &Result<Sequence>) -> TestOutcome {
         match result {
-            Ok(sequence) => self.assert_value(assert_context, runnable, sequence),
+            Ok(sequence) => self.assert_value(runnable, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext<'_>,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome;
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -53,15 +32,10 @@ impl AssertAnyOf {
 }
 
 impl Assertable for AssertAnyOf {
-    fn assert_result(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        result: &Result<Sequence>,
-    ) -> TestOutcome {
+    fn assert_result(&self, runnable: &Runnable<'_>, result: &Result<Sequence>) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(assert_context, runnable, result);
+            let result = test_case_result.assert_result(runnable, result);
             match result {
                 TestOutcome::Passed => return result,
                 _ => failed_test_results.push(result),
@@ -73,12 +47,7 @@ impl Assertable for AssertAnyOf {
         }
     }
 
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        _runnable: &Runnable<'_>,
-        _sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -93,14 +62,9 @@ impl AssertAllOf {
 }
 
 impl Assertable for AssertAllOf {
-    fn assert_result(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        result: &Result<Sequence>,
-    ) -> TestOutcome {
+    fn assert_result(&self, runnable: &Runnable<'_>, result: &Result<Sequence>) -> TestOutcome {
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(assert_context, runnable, result);
+            let result = test_case_result.assert_result(runnable, result);
             match result {
                 TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => {}
                 _ => return result,
@@ -109,12 +73,7 @@ impl Assertable for AssertAllOf {
         TestOutcome::Passed
     }
 
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        _runnable: &Runnable<'_>,
-        _sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -129,13 +88,8 @@ impl AssertNot {
 }
 
 impl Assertable for AssertNot {
-    fn assert_result(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        result: &Result<Sequence>,
-    ) -> TestOutcome {
-        let result = self.0.assert_result(assert_context, runnable, result);
+    fn assert_result(&self, runnable: &Runnable<'_>, result: &Result<Sequence>) -> TestOutcome {
+        let result = self.0.assert_result(runnable, result);
         match result {
             TestOutcome::Passed => {
                 TestOutcome::Failed(Failure::Not(self.clone(), Box::new(result)))
@@ -145,12 +99,7 @@ impl Assertable for AssertNot {
         }
     }
 
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        _sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, _sequence: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -171,13 +120,8 @@ impl Assert {
 }
 
 impl Assertable for Assert {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
-        let result_sequence = run_xpath_with_result(&self.0, sequence, assert_context, runnable);
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
+        let result_sequence = run_xpath_with_result(&self.0, sequence, runnable);
 
         match result_sequence {
             Ok(result_sequence) => match result_sequence.effective_boolean_value() {
@@ -205,13 +149,8 @@ impl AssertEq {
 }
 
 impl Assertable for AssertEq {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, assert_context, runnable);
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0, runnable);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -245,13 +184,8 @@ impl AssertDeepEq {
 }
 
 impl Assertable for AssertDeepEq {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, assert_context, runnable);
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
+        let expected_sequence = run_xpath(&self.0, runnable);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -284,12 +218,7 @@ impl AssertCount {
 }
 
 impl Assertable for AssertCount {
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         let found_len = sequence.len();
         if found_len == self.0 {
             TestOutcome::Passed
@@ -315,12 +244,7 @@ impl AssertXml {
 }
 
 impl Assertable for AssertXml {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         let xml = serialize(runnable.xot(), sequence);
 
         let xml = if let Ok(xml) = xml {
@@ -360,12 +284,7 @@ impl AssertEmpty {
 }
 
 impl Assertable for AssertEmpty {
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         if sequence.is_empty() {
             TestOutcome::Passed
         } else {
@@ -390,12 +309,7 @@ impl AssertType {
 }
 
 impl Assertable for AssertType {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         let matches = sequence.matches_type(&self.0, runnable.xot(), |_| todo!());
         if let Ok(matches) = matches {
             if matches {
@@ -420,12 +334,7 @@ impl AssertTrue {
 }
 
 impl Assertable for AssertTrue {
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -450,12 +359,7 @@ impl AssertFalse {
 }
 
 impl Assertable for AssertFalse {
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
@@ -480,12 +384,7 @@ impl AssertStringValue {
 }
 
 impl Assertable for AssertStringValue {
-    fn assert_value(
-        &self,
-        assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        sequence: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
         let strings = sequence
             .items()
             .map(|item| item?.string_value(runnable.xot()))
@@ -546,24 +445,14 @@ impl AssertError {
 }
 
 impl Assertable for AssertError {
-    fn assert_result(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        result: &Result<Sequence>,
-    ) -> TestOutcome {
+    fn assert_result(&self, _runnable: &Runnable<'_>, result: &Result<Sequence>) -> TestOutcome {
         match result {
             Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
             Err(error) => self.assert_error(error),
         }
     }
 
-    fn assert_value(
-        &self,
-        _assert_context: &AssertContext,
-        runnable: &Runnable<'_>,
-        _: &Sequence,
-    ) -> TestOutcome {
+    fn assert_value(&self, _runnable: &Runnable<'_>, _: &Sequence) -> TestOutcome {
         unreachable!();
     }
 }
@@ -645,27 +534,24 @@ pub(crate) enum TestCaseResult {
 impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
-        assert_context: &AssertContext,
         runnable: &Runnable<'_>,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match self {
-            TestCaseResult::AnyOf(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AllOf(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::Not(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertEq(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertDeepEq(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertTrue(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertFalse(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertCount(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertStringValue(a) => {
-                a.assert_result(assert_context, runnable, result)
-            }
-            TestCaseResult::AssertXml(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::Assert(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertError(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertEmpty(a) => a.assert_result(assert_context, runnable, result),
-            TestCaseResult::AssertType(a) => a.assert_result(assert_context, runnable, result),
+            TestCaseResult::AnyOf(a) => a.assert_result(runnable, result),
+            TestCaseResult::AllOf(a) => a.assert_result(runnable, result),
+            TestCaseResult::Not(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertEq(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertDeepEq(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertTrue(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertFalse(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertCount(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertStringValue(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertXml(a) => a.assert_result(runnable, result),
+            TestCaseResult::Assert(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertError(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertType(a) => a.assert_result(runnable, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
@@ -799,11 +685,7 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(
-    expr: &qt::XPathExpr,
-    assert_context: &AssertContext,
-    runnable: &Runnable<'_>,
-) -> Result<Sequence> {
+fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
     let program = Program::new(&static_context, &expr.0)?;
@@ -819,7 +701,6 @@ fn run_xpath(
 fn run_xpath_with_result(
     expr: &qt::XPathExpr,
     sequence: &Sequence,
-    assert_context: &AssertContext,
     runnable: &Runnable<'_>,
 ) -> Result<Sequence> {
     let namespaces = Namespaces::default();
