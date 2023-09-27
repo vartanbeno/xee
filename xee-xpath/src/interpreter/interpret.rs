@@ -45,11 +45,11 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn start(
         &mut self,
-        function_id: function::InlineFunctionId,
         context_item: Option<&sequence::Item>,
         arguments: Vec<Vec<sequence::Item>>,
     ) {
-        self.state.push_start_frame(function_id);
+        self.state
+            .push_start_frame(self.runnable.program().main_id());
 
         if let Some(context_item) = context_item {
             // the context item

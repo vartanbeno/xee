@@ -14,7 +14,6 @@ use crate::xml;
 #[derive(Debug)]
 pub struct XPath {
     pub(crate) program: function::Program,
-    main: function::InlineFunctionId,
 }
 
 impl XPath {
@@ -34,12 +33,7 @@ impl XPath {
         };
         compiler.compile_expr(&expr)?;
 
-        // the inline function should be the last finished function
-        let inline_id = program.last_inline_function_id();
-        Ok(Self {
-            program,
-            main: inline_id,
-        })
+        Ok(Self { program })
     }
 
     pub(crate) fn run_value(
@@ -49,7 +43,7 @@ impl XPath {
     ) -> Result<stack::Value> {
         let mut interpreter = Interpreter::new(&self.program, dynamic_context);
         let arguments = dynamic_context.arguments()?;
-        interpreter.start(self.main, context_item, arguments);
+        interpreter.start(context_item, arguments);
         interpreter.run(0)?;
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because
