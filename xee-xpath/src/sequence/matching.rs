@@ -168,10 +168,8 @@ impl Item {
             ast::ItemType::Item => Ok(()),
             ast::ItemType::AtomicOrUnionType(xs) => self.to_atomic()?.atomic_type_matching(*xs),
             ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
-            ast::ItemType::FunctionTest(function_test) => {
-                check_function(function_test.as_ref(), self)
-            }
-            ast::ItemType::MapTest(map_test) => match map_test.as_ref() {
+            ast::ItemType::FunctionTest(function_test) => check_function(function_test, self),
+            ast::ItemType::MapTest(map_test) => match map_test {
                 ast::MapTest::AnyMapTest => {
                     if self.is_map() {
                         Ok(())
@@ -184,7 +182,7 @@ impl Item {
                     Ok(())
                 }
             },
-            ast::ItemType::ArrayTest(array_test) => match array_test.as_ref() {
+            ast::ItemType::ArrayTest(array_test) => match array_test {
                 ast::ArrayTest::AnyArrayTest => {
                     if self.is_array() {
                         Ok(())

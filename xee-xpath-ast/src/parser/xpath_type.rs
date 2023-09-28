@@ -86,9 +86,7 @@ where
             .to(ast::MapTest::AnyMapTest)
             .boxed();
 
-        let item_type_map_test = any_map_test
-            .map(|map_test| ast::ItemType::MapTest(Box::new(map_test)))
-            .boxed();
+        let item_type_map_test = any_map_test.map(ast::ItemType::MapTest).boxed();
 
         let typed_array_test = just(Token::Array)
             .ignore_then(
@@ -96,7 +94,9 @@ where
                     .clone()
                     .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
             )
-            .map(|item_type| ast::ArrayTest::TypedArrayTest(ast::TypedArrayTest { item_type }))
+            .map(|item_type| {
+                ast::ArrayTest::TypedArrayTest(Box::new(ast::TypedArrayTest { item_type }))
+            })
             .boxed();
 
         let any_array_test = just(Token::Array)
@@ -108,7 +108,7 @@ where
 
         let item_type_array_test = any_array_test
             .or(typed_array_test)
-            .map(|array_test| ast::ItemType::ArrayTest(Box::new(array_test)))
+            .map(ast::ItemType::ArrayTest)
             .boxed();
 
         let typed_function_param_list = sequence_type
@@ -125,16 +125,16 @@ where
                         .then_ignore(just(Token::As))
                         .then(sequence_type)
                         .map_with_span(|(parameter_types, return_type), _span| {
-                            ast::FunctionTest::TypedFunctionTest(ast::TypedFunctionTest {
+                            ast::FunctionTest::TypedFunctionTest(Box::new(ast::TypedFunctionTest {
                                 parameter_types,
                                 return_type,
-                            })
+                            }))
                         }),
                 )
                 .boxed();
             let item_type_function_test = typed_function_test
                 .or(any_function_test)
-                .map(|function_test| ast::ItemType::FunctionTest(Box::new(function_test)));
+                .map(ast::ItemType::FunctionTest);
 
             let parenthesized_item_type =
                 item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));

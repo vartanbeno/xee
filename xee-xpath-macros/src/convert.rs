@@ -88,11 +88,11 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
         // we don't do anything special for higher order functions at this point;
         // the implementation is supposed to manually unpack the items
         ast::ItemType::FunctionTest(_) => Ok((quote!(#arg.items()), false)),
-        ast::ItemType::ArrayTest(array_test) => match array_test.as_ref() {
+        ast::ItemType::ArrayTest(array_test) => match array_test {
             ast::ArrayTest::AnyArrayTest => Ok((quote!(#arg.array_iter()), false)),
             _ => todo!("Unsupported item type: typed array test"),
         },
-        ast::ItemType::MapTest(map_test) => match map_test.as_ref() {
+        ast::ItemType::MapTest(map_test) => match map_test {
             ast::MapTest::AnyMapTest => Ok((quote!(#arg.map_iter()), false)),
             _ => todo!("Unsupported item type: typed map test"),
         },

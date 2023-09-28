@@ -119,7 +119,7 @@ fn element_or_attribute_test(
         let name_matches = match &test.name_or_wildcard {
             ast::NameOrWildcard::Name(name) => {
                 if let Some(node_name) = node.node_name_id(xot) {
-                    let name_id = name_id_for_name(xot, &name.value);
+                    let name_id = name_id_for_name(xot, name);
                     Some(node_name) == name_id
                 } else {
                     false

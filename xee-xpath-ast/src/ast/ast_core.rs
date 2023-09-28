@@ -481,9 +481,9 @@ pub enum ItemType {
     Item,
     AtomicOrUnionType(Xs),
     KindTest(KindTest),
-    FunctionTest(Box<FunctionTest>),
-    MapTest(Box<MapTest>),
-    ArrayTest(Box<ArrayTest>),
+    FunctionTest(FunctionTest),
+    MapTest(MapTest),
+    ArrayTest(ArrayTest),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -535,27 +535,27 @@ pub struct TypeName {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum NameOrWildcard {
-    Name(NameS),
+    Name(Name),
     Wildcard,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaElementTest {
-    pub name: NameS,
+    pub name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct SchemaAttributeTest {
-    pub name: NameS,
+    pub name: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum FunctionTest {
     AnyFunctionTest,
-    TypedFunctionTest(TypedFunctionTest),
+    TypedFunctionTest(Box<TypedFunctionTest>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -569,7 +569,7 @@ pub struct TypedFunctionTest {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum MapTest {
     AnyMapTest,
-    TypedMapTest(TypedMapTest),
+    TypedMapTest(Box<TypedMapTest>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -583,7 +583,7 @@ pub struct TypedMapTest {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ArrayTest {
     AnyArrayTest,
-    TypedArrayTest(TypedArrayTest),
+    TypedArrayTest(Box<TypedArrayTest>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

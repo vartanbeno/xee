@@ -29,7 +29,7 @@ where
         .ignore_then(
             element_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
         )
-        .map(|name| ast::SchemaElementTest { name })
+        .map(|name| ast::SchemaElementTest { name: name.value })
         .boxed();
 
     let name_or_wildcard = just(Token::Asterisk)
@@ -39,9 +39,10 @@ where
             .map_with_state(|name, _span, state: &mut State| {
                 // use default element namespace; we can do this without worrying
                 // about context, as it's an element name test
-                ast::NameOrWildcard::Name(name.map(|name| {
-                    name.with_default_namespace(state.namespaces.default_element_namespace)
-                }))
+                ast::NameOrWildcard::Name(
+                    name.value
+                        .with_default_namespace(state.namespaces.default_element_namespace),
+                )
             }))
         .boxed();
 
@@ -136,7 +137,7 @@ where
         .ignore_then(
             attribute_declaration.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
         )
-        .map(|name| ast::SchemaAttributeTest { name })
+        .map(|name| ast::SchemaAttributeTest { name: name.value })
         .boxed();
 
     let pi_test_content = ncname
