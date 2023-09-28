@@ -15,6 +15,8 @@ use crate::occurrence::Occurrence;
 use crate::xml;
 use crate::{Item, Sequence};
 
+use super::sequence_type::TypeInfo;
+
 impl Sequence {
     /// Check a type for qee-qt assert-type
     pub fn matches_type<'a>(
@@ -250,7 +252,7 @@ impl Item {
                 if signature.arity() != typed_function_test.parameter_types.len() {
                     return Err(error::Error::Type);
                 }
-                if Self::covariant_function_type_matching(typed_function_test, signature) {
+                if Self::function_type_matching_helper(typed_function_test, signature) {
                     Ok(())
                 } else {
                     Err(error::Error::Type)
@@ -259,7 +261,7 @@ impl Item {
         }
     }
 
-    fn covariant_function_type_matching(
+    fn function_type_matching_helper(
         function_test: &ast::TypedFunctionTest,
         signature: &function::Signature,
     ) -> bool {
@@ -268,8 +270,8 @@ impl Item {
             .return_type
             .as_ref()
             .unwrap_or(&default_sequence_type);
-        if !Self::covariant_sequence_type_matching(&function_test.return_type, function_return_type)
-        {
+        // return type is covariant
+        if !function_return_type.subtype(&function_test.return_type) {
             return false;
         }
 
@@ -281,25 +283,12 @@ impl Item {
             let function_parameter = function_parameter
                 .as_ref()
                 .unwrap_or(&default_sequence_type);
-            if !Self::contravariant_sequence_type_matching(function_parameter, test_parameter) {
+            // parameter is contravariant
+            if !test_parameter.subtype(function_parameter) {
                 return false;
             }
         }
 
-        true
-    }
-
-    fn covariant_sequence_type_matching(
-        _function_parameter: &ast::SequenceType,
-        _test_parameter: &ast::SequenceType,
-    ) -> bool {
-        true
-    }
-
-    fn contravariant_sequence_type_matching(
-        _function_parameter: &ast::SequenceType,
-        _test_parameter: &ast::SequenceType,
-    ) -> bool {
         true
     }
 

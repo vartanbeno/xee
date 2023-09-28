@@ -29,6 +29,23 @@ impl AssertAnyOf {
     pub(crate) fn new(test_case_results: Vec<TestCaseResult>) -> Self {
         Self(test_case_results)
     }
+
+    pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
+        let mut failed_test_results = Vec::new();
+        for test_case_result in &self.0 {
+            if let TestCaseResult::AssertError(assert_error) = test_case_result {
+                let result = assert_error.assert_error(error);
+                match result {
+                    TestOutcome::Passed => return result,
+                    _ => failed_test_results.push(result),
+                }
+            } else {
+                // any non-error is a failure, as we arrived with an error
+                return TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results));
+            }
+        }
+        TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results))
+    }
 }
 
 impl Assertable for AssertAnyOf {

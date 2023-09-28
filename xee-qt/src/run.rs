@@ -209,10 +209,12 @@ impl qt::TestCase {
         let program = match program {
             Ok(xpath) => xpath,
             Err(error) => {
-                return if let qt::TestCaseResult::AssertError(expected_error) = &self.result {
-                    expected_error.assert_error(&error)
-                } else {
-                    TestOutcome::CompilationError(error)
+                return match &self.result {
+                    qt::TestCaseResult::AssertError(assert_error) => {
+                        assert_error.assert_error(&error)
+                    }
+                    qt::TestCaseResult::AnyOf(any_of) => any_of.assert_error(&error),
+                    _ => TestOutcome::CompilationError(error),
                 }
             }
         };

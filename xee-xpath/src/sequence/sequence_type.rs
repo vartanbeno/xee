@@ -2,7 +2,7 @@
 
 use xee_xpath_ast::ast;
 
-trait TypeInfo {
+pub(crate) trait TypeInfo {
     fn subtype(&self, other: &Self) -> bool;
 }
 
@@ -173,7 +173,7 @@ impl TypeInfo for ast::ItemType {
                 ast::ItemType::MapTest(ast::MapTest::TypedMapTest(a_typed_map_test)),
                 ast::ItemType::MapTest(ast::MapTest::TypedMapTest(b_typed_map_test)),
             ) => a_typed_map_test.as_ref().subtype(b_typed_map_test.as_ref()),
-            // 29  Ai is map(*) (or, because of the transitivity rules, any
+            // 29 Ai is map(*) (or, because of the transitivity rules, any
             // other map type), and Bi is function(*).
             (
                 ast::ItemType::MapTest(_),
@@ -255,42 +255,166 @@ fn array_function_test() -> ast::TypedFunctionTest {
 
 impl TypeInfo for ast::DocumentTest {
     fn subtype(&self, other: &ast::DocumentTest) -> bool {
-        // TODO
-        false
+        match (self, other) {
+            // duplicate of 13 Bi is either element() or element(*), and Ai is an ElementTest.
+            (ast::DocumentTest::Element(..), ast::DocumentTest::Element(None)) => true,
+            (
+                ast::DocumentTest::Element(Some(a_element_or_attribute_test)),
+                ast::DocumentTest::Element(Some(b_element_or_attribute_test)),
+            ) => a_element_or_attribute_test.subtype(b_element_or_attribute_test),
+            // TODO: schema element test
+            _ => false,
+        }
     }
 }
 
 impl TypeInfo for ast::ElementOrAttributeTest {
     fn subtype(&self, other: &ast::ElementOrAttributeTest) -> bool {
-        // 14 Bi is either element(Bn) or element(Bn, xs:anyType?), the
-        // expanded QName of An equals the expanded QName of Bn, and Ai
-        // is either element(An) or element(An, T) or element(An, T?)
-        // for any type T.
-        // match (self, other) {
-        //     ast::ElementOrAttributeTest(a_name)
-        // }
-
-        false
+        match (self, other) {
+            // 14 Bi is either element(Bn) or element(Bn, xs:anyType?), the
+            // expanded QName of An equals the expanded QName of Bn, and Ai
+            // is either element(An) or element(An, T) or element(An, T?)
+            // for any type T.
+            (
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(a_name),
+                    ..
+                },
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(b_name),
+                    type_name:
+                        None
+                        | Some(ast::TypeName {
+                            name: xee_schema_type::Xs::AnyType,
+                            can_be_nilled: true,
+                        }),
+                },
+            ) => a_name == b_name,
+            // 15 Bi is element(Bn, Bt), the expanded QName of An equals the
+            // expanded QName of Bn, Ai is element(An, At), and
+            // derives-from(At, Bt) returns true.
+            (
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(a_name),
+                    type_name:
+                        Some(ast::TypeName {
+                            name: a_type_name,
+                            can_be_nilled: false,
+                        }),
+                },
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(b_name),
+                    type_name:
+                        Some(ast::TypeName {
+                            name: b_type_name,
+                            can_be_nilled: false,
+                        }),
+                },
+            ) => a_name == b_name && a_type_name.derives_from(*b_type_name),
+            // 16 Bi is element(Bn, Bt?), the expanded QName of An equals the
+            // expanded QName of Bn, Ai is either element(An, At) or
+            // element(An, At?), and derives-from(At, Bt) returns true.
+            (
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(a_name),
+                    type_name:
+                        Some(ast::TypeName {
+                            name: a_type_name, ..
+                        }),
+                },
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Name(b_name),
+                    type_name:
+                        Some(ast::TypeName {
+                            name: b_type_name,
+                            can_be_nilled: true,
+                        }),
+                },
+            ) => a_name == b_name && a_type_name.derives_from(*b_type_name),
+            // 17 Bi is element(*, Bt), Ai is either element(*, At) or
+            // element(N, At) for any name N, and derives-from(At, Bt) returns
+            // true.
+            (
+                ast::ElementOrAttributeTest {
+                    type_name:
+                        Some(ast::TypeName {
+                            name: a_type_name,
+                            can_be_nilled: false,
+                        }),
+                    ..
+                },
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Wildcard,
+                    type_name:
+                        Some(ast::TypeName {
+                            name: b_type_name,
+                            can_be_nilled: false,
+                        }),
+                },
+            ) => a_type_name.derives_from(*b_type_name),
+            // 18 Bi is element(*, Bt?), Ai is either element(*, At),
+            // element(*, At?), element(N, At), or element(N, At?) for any name
+            // N, and derives-from(At, Bt) returns true.
+            (
+                ast::ElementOrAttributeTest {
+                    type_name:
+                        Some(ast::TypeName {
+                            name: a_type_name, ..
+                        }),
+                    ..
+                },
+                ast::ElementOrAttributeTest {
+                    name_or_wildcard: ast::NameOrWildcard::Wildcard,
+                    type_name:
+                        Some(ast::TypeName {
+                            name: b_type_name,
+                            can_be_nilled: true,
+                        }),
+                },
+            ) => a_type_name.derives_from(*b_type_name),
+            _ => false,
+        }
     }
 }
 
 impl TypeInfo for ast::TypedFunctionTest {
     fn subtype(&self, other: &ast::TypedFunctionTest) -> bool {
-        // TODO
-        false
+        // 26 Bi is function(Ba_1, Ba_2, ... Ba_N) as Br, Ai is function(Aa_1,
+        // Aa_2, ... Aa_M) as Ar, where N (arity of Bi) equals M (arity of Ai);
+        // subtype(Ar, Br); and for values of I between 1 and N, subtype(Ba_I,
+        // Aa_I).
+        // That is, the arguments are contravariant and the return type is covariant
+        if self.parameter_types.len() != other.parameter_types.len() {
+            return false;
+        }
+
+        // covariant
+        if !self.return_type.subtype(&other.return_type) {
+            return false;
+        }
+
+        for (a, b) in self
+            .parameter_types
+            .iter()
+            .zip(other.parameter_types.iter())
+        {
+            // contravariant
+            if !b.subtype(a) {
+                return false;
+            }
+        }
+        true
     }
 }
 
 impl TypeInfo for ast::TypedMapTest {
     fn subtype(&self, other: &ast::TypedMapTest) -> bool {
-        // TODO
-        false
+        self.key_type.derives_from(other.key_type) && self.value_type.subtype(&other.value_type)
     }
 }
 
 impl TypeInfo for ast::TypedArrayTest {
     fn subtype(&self, other: &ast::TypedArrayTest) -> bool {
-        // TODO
-        false
+        self.item_type.subtype(&other.item_type)
     }
 }

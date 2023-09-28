@@ -3462,7 +3462,6 @@ errors-and-optimization-1
 errors-and-optimization-7
 = misc-HigherOrderFunctions
 function-item-1
-function-item-17
 hof-025
 inline-function-12a
 inline-function-15
@@ -3729,8 +3728,6 @@ ArrowPostfix-110
 = prod-AxisStep
 Axes041-1
 K2-Axes-16
-K2-Axes-34
-K2-Axes-35
 K2-Axes-38
 K2-Axes-39
 K2-Axes-43
@@ -3741,7 +3738,6 @@ K2-Axes-5
 K2-Axes-50
 K2-Axes-53
 K2-Axes-94
-K2-Axes-97
 K2-Axes-98
 statictypingaxis-1
 statictypingaxis-2
@@ -3773,12 +3769,9 @@ CastAs212
 K-SeqExprCast-1212
 K-SeqExprCast-1414
 K-SeqExprCast-143
-K-SeqExprCast-1491
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
-K-SeqExprCast-63
-K-SeqExprCast-64
 K-SeqExprCast-8
 K2-SeqExprCast-210
 K2-SeqExprCast-221
@@ -3820,9 +3813,6 @@ cbcl-cast-unsignedShort-005
 = prod-CastableExpr
 CastableAs663
 CastableAs664
-K-SeqExprCastable-14
-K-SeqExprCastable-15
-K-SeqExprCastable-16
 K-SeqExprCastable-23
 K-SeqExprCastable-34
 K-SeqExprCastable-38
@@ -3913,7 +3903,6 @@ FunctionCall-027
 FunctionCall-046
 FunctionCall-047
 FunctionCall-048
-K-FunctionCallExpr-10
 K-FunctionCallExpr-15a
 K-FunctionCallExpr-16a
 K-FunctionCallExpr-17a
@@ -3922,8 +3911,6 @@ K-FunctionCallExpr-19
 K-FunctionCallExpr-20
 K-FunctionCallExpr-21
 K-FunctionCallExpr-5
-K-FunctionCallExpr-6
-function-call-reserved-function-names-037
 = prod-FunctionDecl
 = prod-GeneralComp.eq
 GenCompEq-2
@@ -3941,21 +3928,13 @@ K-CondExpr-4
 K-CondExpr-6
 = prod-InlineFunctionExpr
 inline-fn-027
-inline-fn-032
-inline-fn-033
 = prod-InstanceofExpr
 K-SeqExprInstanceOf-49
 K-SeqExprInstanceOf-50
 K-SeqExprInstanceOf-51
 K-SeqExprInstanceOf-52
 K-SeqExprInstanceOf-53
-K-SeqExprInstanceOf-54
-K-SeqExprInstanceOf-55
 instanceof111
-instanceof128
-instanceof129
-instanceof130
-instanceof134
 = prod-LetClause
 = prod-Literal
 K2-Literals-37
@@ -4073,7 +4052,6 @@ MapTest-019
 MapTest-020
 MapTest-040
 MapTest-041
-MapTest-042
 MapTest-043
 MapTest-044
 MapTest-045
@@ -4084,9 +4062,10 @@ MapTest-050
 MapTest-051
 MapTest-053
 MapTest-054
-MapTest-061
-MapTest-062
-MapTest-066
+MapTest-059
+MapTest-063
+MapTest-064
+MapTest-065
 = prod-ModuleImport
 = prod-NameTest
 K2-NameTest-1
@@ -4268,7 +4247,6 @@ K-LogicExpr-44
 = prod-OrderingModeDecl
 = prod-ParenthesizedExpr
 = prod-PathExpr
-PathExpr-10
 PathExpr-15
 = prod-PositionalVar
 = prod-Predicate
@@ -4289,7 +4267,6 @@ K-QuantExprWithout-96
 K-QuantExprWithout-97
 K2-QuantExprWithout-4
 = prod-ReturnClause
-K2-ReturnExpr-1
 = prod-SchemaImport
 = prod-SequenceType
 sequence-type-10
