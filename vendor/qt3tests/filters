@@ -545,7 +545,6 @@ fn-escape-html-uri1args-5
 = fn-exists
 = fn-false
 = fn-filter
-fn-filter-013
 = fn-floor
 = fn-fold-left
 = fn-fold-right
@@ -3463,8 +3462,6 @@ errors-and-optimization-1
 errors-and-optimization-7
 = misc-HigherOrderFunctions
 function-item-1
-function-item-15
-function-item-16
 function-item-17
 hof-025
 inline-function-12a
@@ -3957,7 +3954,6 @@ instanceof111
 instanceof128
 instanceof129
 instanceof130
-instanceof131
 instanceof134
 = prod-LetClause
 = prod-Literal

@@ -21,7 +21,7 @@ impl Sequence {
         &self,
         s: &str,
         xot: &Xot,
-        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<bool> {
         let namespaces = Namespaces::default();
         let sequence_type = ast::SequenceType::parse(s, &namespaces)?;
@@ -41,7 +41,7 @@ impl Sequence {
         self,
         sequence_type: &ast::SequenceType,
         xot: &Xot,
-        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
@@ -60,7 +60,7 @@ impl Sequence {
         self,
         sequence_type: &ast::SequenceType,
         context: &'a context::DynamicContext,
-        get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
@@ -223,29 +223,100 @@ impl Item {
 
     fn function_arity_matching<'a>(
         &self,
-        _function_test: &ast::FunctionTest,
-        _get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        function_test: &ast::FunctionTest,
+        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
-        Ok(())
-        // match self {
-        //     Item::Function(function) => {
-        //         let signature = get_signature(function);
-        //         if signature.arity() == function_test.parameter_types.len() {
-        //             Ok(())
-        //         } else {
-        //             Err(error::Error::Type)
-        //         }
-        //     }
-        //     _ => Err(error::Error::Type),
-        // }
+        match function_test {
+            ast::FunctionTest::AnyFunctionTest => {
+                self.to_function()?;
+                Ok(())
+            }
+            ast::FunctionTest::TypedFunctionTest(typed_function_test) => {
+                let function = self.to_function()?;
+                let signature = get_signature(&function);
+                if signature.arity() == typed_function_test.parameter_types.len() {
+                    Ok(())
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
+        }
     }
 
     fn function_type_matching<'a>(
         &self,
-        _function_test: &ast::FunctionTest,
-        _get_signature: impl Fn(&'a function::Function) -> &'a function::Signature,
+        function_test: &ast::FunctionTest,
+        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
-        Ok(())
+        match function_test {
+            ast::FunctionTest::AnyFunctionTest => {
+                self.to_function()?;
+                Ok(())
+            }
+            ast::FunctionTest::TypedFunctionTest(typed_function_test) => {
+                let function = self.to_function()?;
+                let signature = get_signature(&function);
+                if signature.arity() != typed_function_test.parameter_types.len() {
+                    return Err(error::Error::Type);
+                }
+                if Self::covariant_function_type_matching(typed_function_test, signature) {
+                    Ok(())
+                } else {
+                    Err(error::Error::Type)
+                }
+            }
+        }
+    }
+
+    fn covariant_function_type_matching(
+        function_test: &ast::TypedFunctionTest,
+        signature: &function::Signature,
+    ) -> bool {
+        let default_sequence_type = Self::default_sequence_type();
+        let function_return_type = signature
+            .return_type
+            .as_ref()
+            .unwrap_or(&default_sequence_type);
+        if !Self::covariant_sequence_type_matching(&function_test.return_type, function_return_type)
+        {
+            return false;
+        }
+
+        for (function_parameter, test_parameter) in signature
+            .parameter_types
+            .iter()
+            .zip(&function_test.parameter_types)
+        {
+            let function_parameter = function_parameter
+                .as_ref()
+                .unwrap_or(&default_sequence_type);
+            if !Self::contravariant_sequence_type_matching(function_parameter, test_parameter) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn covariant_sequence_type_matching(
+        _function_parameter: &ast::SequenceType,
+        _test_parameter: &ast::SequenceType,
+    ) -> bool {
+        true
+    }
+
+    fn contravariant_sequence_type_matching(
+        _function_parameter: &ast::SequenceType,
+        _test_parameter: &ast::SequenceType,
+    ) -> bool {
+        true
+    }
+
+    fn default_sequence_type() -> ast::SequenceType {
+        ast::SequenceType::Item(ast::Item {
+            item_type: ast::ItemType::Item,
+            occurrence: ast::Occurrence::Many,
+        })
     }
 }
 
@@ -266,6 +337,8 @@ impl atomic::Atomic {
 #[cfg(test)]
 mod tests {
     // use std::rc::Rc;
+
+    use std::rc::Rc;
 
     use super::*;
     use ibig::ibig;
@@ -582,24 +655,111 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn test_one_function() {
-    //     let namespaces = Namespaces::default();
-    //     let sequence_type =
-    //         ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+    #[test]
+    fn test_any_function_test() {
+        let namespaces = Namespaces::default();
+        let sequence_type = ast::SequenceType::parse("function(*)", &namespaces).unwrap();
+        let function = function::Function::Static {
+            static_function_id: function::StaticFunctionId(1),
+            closure_vars: vec![],
+        };
+        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
 
-    //     let closure = stack::Closure {
-    //         function_id: ClosureFunctionId::Static(StaticFunctionId(1)),
-    //         values: vec![],
-    //     };
+        let signature = function::Signature {
+            parameter_types: vec![Some(
+                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+            )],
+            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+        };
 
-    //     let right_sequence = Sequence::from(vec![Item::Function(Rc::new(closure))]);
+        let xot = Xot::new();
 
-    //     let xot = Xot::new();
+        let right_result =
+            right_sequence
+                .clone()
+                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+        assert_eq!(&right_result.unwrap(), &right_sequence);
+    }
 
-    //     let right_result = right_sequence
-    //         .clone()
-    //         .sequence_type_matching(&sequence_type, &xot);
-    //     assert_eq!(&right_result.unwrap(), &right_sequence);
-    // }
+    #[test]
+    fn test_function_test_same_parameters() {
+        let namespaces = Namespaces::default();
+        let sequence_type =
+            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+        let function = function::Function::Static {
+            static_function_id: function::StaticFunctionId(1),
+            closure_vars: vec![],
+        };
+        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+
+        let signature = function::Signature {
+            parameter_types: vec![Some(
+                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+            )],
+            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+        };
+
+        let xot = Xot::new();
+
+        let right_result =
+            right_sequence
+                .clone()
+                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+        assert_eq!(&right_result.unwrap(), &right_sequence);
+    }
+
+    #[test]
+    fn test_function_test_derived_parameters() {
+        let namespaces = Namespaces::default();
+        let sequence_type =
+            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+        let function = function::Function::Static {
+            static_function_id: function::StaticFunctionId(1),
+            closure_vars: vec![],
+        };
+        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+
+        let signature = function::Signature {
+            parameter_types: vec![Some(
+                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+            )],
+            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+        };
+
+        let xot = Xot::new();
+
+        let right_result =
+            right_sequence
+                .clone()
+                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+        assert_eq!(&right_result.unwrap(), &right_sequence);
+    }
+
+    #[test]
+    fn test_function_test_wrong_arity() {
+        let namespaces = Namespaces::default();
+        let sequence_type =
+            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+        let function = function::Function::Static {
+            static_function_id: function::StaticFunctionId(1),
+            closure_vars: vec![],
+        };
+        let wrong_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+
+        let signature = function::Signature {
+            parameter_types: vec![
+                Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+                Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+            ],
+            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+        };
+
+        let xot = Xot::new();
+
+        let wrong_result =
+            wrong_sequence
+                .clone()
+                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+        assert_eq!(wrong_result, Err(error::Error::Type));
+    }
 }

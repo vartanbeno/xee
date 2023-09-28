@@ -127,25 +127,28 @@ impl<'a> Runnable<'a> {
             .get_by_index(function_id)
     }
 
-    pub(crate) fn function_info(&'a self, function: &'a function::Function) -> FunctionInfo<'a> {
+    pub(crate) fn function_info<'function>(
+        &'a self,
+        function: &'function function::Function,
+    ) -> FunctionInfo<'a, 'function> {
         FunctionInfo::new(function, self)
     }
 
-    pub fn signature(&'a self, function: &'a function::Function) -> &function::Signature {
+    pub fn signature(&'a self, function: &function::Function) -> &'a function::Signature {
         self.function_info(function).signature()
     }
 }
 
-pub(crate) struct FunctionInfo<'a> {
-    function: &'a function::Function,
-    runnable: &'a Runnable<'a>,
+pub(crate) struct FunctionInfo<'runnable, 'function> {
+    function: &'function function::Function,
+    runnable: &'runnable Runnable<'runnable>,
 }
 
-impl<'a> FunctionInfo<'a> {
+impl<'runnable, 'function> FunctionInfo<'runnable, 'function> {
     pub(crate) fn new(
-        function: &'a function::Function,
-        runnable: &'a Runnable<'a>,
-    ) -> FunctionInfo<'a> {
+        function: &'function function::Function,
+        runnable: &'runnable Runnable<'runnable>,
+    ) -> FunctionInfo<'runnable, 'function> {
         FunctionInfo { function, runnable }
     }
 
@@ -174,7 +177,7 @@ impl<'a> FunctionInfo<'a> {
         }
     }
 
-    pub(crate) fn signature(&self) -> &'a function::Signature {
+    pub(crate) fn signature(&self) -> &'runnable function::Signature {
         match &self.function {
             function::Function::Static {
                 static_function_id, ..
