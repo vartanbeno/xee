@@ -59,25 +59,25 @@ where
         .boxed();
 
     let sequence_type = recursive(|sequence_type| {
-        // TODO: for some reason referring to sequence_type in here
-        // blows up the parser type checker and it suddenly thinks
-        // sequence_type is a tuple of name, sequence_type?
-        // let typed_map_test_entry = eqname
-        //     .then_ignore(just(Token::Comma))
-        //     .ignore_then(sequence_type.clone())
-        //     .boxed();
+        let typed_map_test_entry = (eqname
+            .then_ignore(just(Token::Comma))
+            .then(sequence_type.clone()))
+        .try_map(|(key_type, value_type), span| {
+            Ok(ast::MapTest::TypedMapTest(Box::new(ast::TypedMapTest {
+                key_type: key_type
+                    .value
+                    .try_into()
+                    .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                value_type,
+            })))
+        })
+        .boxed();
 
-        // let typed_map_test = just(Token::Map)
-        //     .ignore_then(
-        //         typed_map_test_entry.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
-        //     )
-        //     .map(|(key_type, value_type): (ast::Name, ast::SequenceType)| {
-        //         ast::MapTest::TypedMapTest(ast::TypedMapTest {
-        //             key_type,
-        //             value_type,
-        //         })
-        //     })
-        //     .boxed();
+        let typed_map_test = just(Token::Map)
+            .ignore_then(
+                typed_map_test_entry.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+            )
+            .boxed();
 
         let any_map_test = just(Token::Map)
             .ignore_then(
@@ -86,17 +86,20 @@ where
             .to(ast::MapTest::AnyMapTest)
             .boxed();
 
-        let item_type_map_test = any_map_test.map(ast::ItemType::MapTest).boxed();
+        let item_type_map_test = any_map_test
+            .or(typed_map_test)
+            .map(ast::ItemType::MapTest)
+            .boxed();
 
         let typed_array_test = just(Token::Array)
             .ignore_then(
                 sequence_type
                     .clone()
-                    .delimited_by(just(Token::LeftParen), just(Token::RightParen)),
+                    .delimited_by(just(Token::LeftParen), just(Token::RightParen))
+                    .map(|item_type| {
+                        ast::ArrayTest::TypedArrayTest(Box::new(ast::TypedArrayTest { item_type }))
+                    }),
             )
-            .map(|item_type| {
-                ast::ArrayTest::TypedArrayTest(Box::new(ast::TypedArrayTest { item_type }))
-            })
             .boxed();
 
         let any_array_test = just(Token::Array)

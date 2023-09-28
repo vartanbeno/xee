@@ -1343,7 +1343,6 @@ fn-function-lookup-821
 fn-function-lookup-822
 fn-function-lookup-823
 fn-function-lookup-824
-fn-function-lookup-826
 = fn-function-name
 fn-function-name-008
 fn-function-name-017
@@ -3400,13 +3399,7 @@ map-merge-025
 map-merge-026
 map-merge-027
 = map-put
-map-put-002
-map-put-002-hof
-map-put-003
 map-put-003-hof
-map-put-004
-map-put-006
-map-put-007
 map-put-008
 map-put-010
 map-put-011
@@ -3422,8 +3415,6 @@ map-remove-006
 map-remove-007
 map-remove-008
 map-remove-009
-map-remove-010
-map-remove-011
 map-remove-012
 map-remove-014
 map-remove-015
@@ -3676,13 +3667,11 @@ ArrayTest-055
 ArrayTest-059
 ArrayTest-061
 ArrayTest-064
-ArrayTest-066
 ArrayTest-067
 ArrayTest-075
 ArrayTest-079
 ArrayTest-081
 ArrayTest-084
-ArrayTest-086
 ArrayTest-087
 = prod-ArrowPostfix
 ArrowPostfix-001
@@ -4035,33 +4024,12 @@ Lookup-234
 = prod-MapConstructor
 MapConstructor-025
 = prod-MapTest
-MapTest-004
-MapTest-005
 MapTest-006
 MapTest-008
-MapTest-009
 MapTest-010
-MapTest-011
-MapTest-012
 MapTest-013
-MapTest-014
 MapTest-015
-MapTest-017
-MapTest-018
-MapTest-019
 MapTest-020
-MapTest-040
-MapTest-041
-MapTest-043
-MapTest-044
-MapTest-045
-MapTest-046
-MapTest-047
-MapTest-048
-MapTest-050
-MapTest-051
-MapTest-053
-MapTest-054
 MapTest-059
 MapTest-063
 MapTest-064

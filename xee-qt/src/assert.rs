@@ -330,15 +330,19 @@ impl Assertable for AssertType {
         let matches = sequence.matches_type(&self.0, runnable.xot(), |function| {
             runnable.signature(function)
         });
-        if let Ok(matches) = matches {
-            if matches {
-                TestOutcome::Passed
-            } else {
-                TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
+        match matches {
+            Ok(matches) => {
+                if matches {
+                    TestOutcome::Passed
+                } else {
+                    TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
+                }
             }
-        } else {
-            // TODO: we don't support this sequence type expression yet
-            TestOutcome::Unsupported
+            Err(_) => {
+                // we don't support this sequence type expression yet
+                // this should resolve itself once we do and we can parse it
+                TestOutcome::Unsupported
+            }
         }
     }
 }
