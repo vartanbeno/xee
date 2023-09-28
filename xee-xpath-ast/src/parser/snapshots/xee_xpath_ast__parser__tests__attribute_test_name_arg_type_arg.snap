@@ -1,6 +1,6 @@
 ---
 source: xee-xpath-ast/src/parser/mod.rs
-expression: "ast::ExprSingle::parse(\"self::attribute(foo, bar)\")"
+expression: "ast::ExprSingle::parse(\"self::attribute(foo, xs:integer)\")"
 ---
 Ok(Path(PathExpr(
   steps: [
@@ -13,11 +13,7 @@ Ok(Path(PathExpr(
           namespace: None,
         )),
         type_name: Some(TypeName(
-          name: Name(
-            name: "bar",
-            prefix: None,
-            namespace: None,
-          ),
+          name: Integer,
           can_be_nilled: true,
         )),
       )))),

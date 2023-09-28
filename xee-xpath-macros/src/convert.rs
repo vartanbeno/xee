@@ -80,8 +80,8 @@ fn convert_item(
 fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(TokenStream, bool)> {
     match item {
         ast::ItemType::Item => Ok((quote!(#arg.items()), false)),
-        ast::ItemType::AtomicOrUnionType(name) => {
-            let (token_stream, borrow) = convert_atomic_or_union_type(&name.value, arg)?;
+        ast::ItemType::AtomicOrUnionType(xs) => {
+            let (token_stream, borrow) = convert_atomic_or_union_type(*xs, arg)?;
             Ok((token_stream, borrow))
         }
         ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),
@@ -99,15 +99,7 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
     }
 }
 
-fn convert_atomic_or_union_type(
-    name: &ast::Name,
-    arg: TokenStream,
-) -> syn::Result<(TokenStream, bool)> {
-    // TODO: instead of unwrap we should return an error. But this requires
-    // having access to the ParseStream at this point to call error, which
-    // seems to require a major refactoring.
-    let xs = Xs::by_name(name.namespace(), name.local_name()).expect("Xs type not found");
-
+fn convert_atomic_or_union_type(xs: Xs, arg: TokenStream) -> syn::Result<(TokenStream, bool)> {
     if xs == Xs::AnyAtomicType || xs == Xs::Numeric {
         return Ok((quote!(#arg.atomized(context.xot)), false));
     }

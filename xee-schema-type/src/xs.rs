@@ -1,9 +1,11 @@
 const XS_NAMESPACE: &str = "http://www.w3.org/2001/XMLSchema";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Xs {
     AnyType,
     AnySimpleType,
+    Error,
     Untyped,
     AnyAtomicType,
     Numeric,
@@ -98,6 +100,7 @@ impl Xs {
         let xs = match local_name {
             "anyType" => AnyType,
             "anySimpleType" => AnySimpleType,
+            "error" => Error,
             "untyped" => Untyped,
             "anyAtomicType" => AnyAtomicType,
             "numeric" => Numeric,
@@ -160,6 +163,7 @@ impl Xs {
         match self {
             AnyType => "anyType",
             AnySimpleType => "anySimpleType",
+            Error => "error",
             Untyped => "untyped",
             AnyAtomicType => "anyAtomicType",
             Numeric => "numeric",
@@ -216,6 +220,7 @@ impl Xs {
         match self {
             AnyType => None,
             AnySimpleType => Some(AnyType),
+            Error => None,
             Untyped => Some(AnyType),
             AnyAtomicType => Some(AnySimpleType),
             UntypedAtomic => Some(AnyAtomicType),
@@ -291,6 +296,7 @@ impl Xs {
         match self {
             AnyType => None,
             AnySimpleType => None,
+            Error => None,
             Untyped => None,
             AnyAtomicType => None,
             UntypedAtomic => Some(RustInfo::as_ref("String")),

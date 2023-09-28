@@ -1,4 +1,5 @@
-use xee_xpath_ast::{ast, WithSpan, XS_NAMESPACE};
+use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 
 use crate::ir;
 
@@ -12,15 +13,8 @@ pub struct Signature {
 
 impl Signature {
     pub(crate) fn map_signature() -> Self {
-        let any_atomic_type = ast::Name::new(
-            "anyAtomicType".to_string(),
-            Some(XS_NAMESPACE.to_string()),
-            Some("xs".to_string()),
-        )
-        .with_span((0..0).into());
-
         let key = ast::SequenceType::Item(ast::Item {
-            item_type: ast::ItemType::AtomicOrUnionType(any_atomic_type),
+            item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,
         });
 
@@ -35,15 +29,8 @@ impl Signature {
     }
 
     pub(crate) fn array_signature() -> Self {
-        let any_atomic_type = ast::Name::new(
-            "integer".to_string(),
-            Some(XS_NAMESPACE.to_string()),
-            Some("xs".to_string()),
-        )
-        .with_span((0..0).into());
-
         let position = ast::SequenceType::Item(ast::Item {
-            item_type: ast::ItemType::AtomicOrUnionType(any_atomic_type),
+            item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,
         });
 

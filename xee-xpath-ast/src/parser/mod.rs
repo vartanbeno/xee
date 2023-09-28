@@ -429,7 +429,7 @@ mod tests {
 
     #[test]
     fn test_attribute_test_name_arg_type_arg() {
-        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute(foo, bar)"));
+        assert_ron_snapshot!(ast::ExprSingle::parse("self::attribute(foo, xs:integer)"));
     }
 
     #[test]

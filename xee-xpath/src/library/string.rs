@@ -5,7 +5,8 @@ use std::cmp::Ordering;
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
-use xee_xpath_ast::{ast, WithSpan, FN_NAMESPACE, XS_NAMESPACE};
+use xee_schema_type::Xs;
+use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
 
 use crate::context::DynamicContext;
@@ -632,14 +633,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     // https://www.w3.org/TR/xpath-functions-31/#func-concat
     let string_type = ast::SequenceType::Item(ast::Item {
         occurrence: ast::Occurrence::One,
-        item_type: ast::ItemType::AtomicOrUnionType(
-            ast::Name::new(
-                "string".to_string(),
-                Some(XS_NAMESPACE.to_string()),
-                Some("xs".to_string()),
-            )
-            .with_span((0..0).into()),
-        ),
+        item_type: ast::ItemType::AtomicOrUnionType(Xs::String),
     });
     let name = ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None);
 

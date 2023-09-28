@@ -50,9 +50,14 @@ where
     let element_type_name = type_name
         .clone()
         .then(just(Token::QuestionMark).or_not())
-        .map(|(name, question_mark)| ast::TypeName {
-            name,
-            can_be_nilled: question_mark.is_some(),
+        .try_map(|(name, question_mark), span| {
+            Ok(ast::TypeName {
+                name: name
+                    .value
+                    .try_into()
+                    .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                can_be_nilled: question_mark.is_some(),
+            })
         })
         .boxed();
 
@@ -93,16 +98,23 @@ where
 
     let attribute_test_content = name_or_wildcard
         .then((just(Token::Comma).ignore_then(type_name)).or_not())
-        .map(
-            |(name_or_wildcard, type_name)| ast::ElementOrAttributeTest {
+        .try_map(|(name_or_wildcard, type_name), span| {
+            Ok(ast::ElementOrAttributeTest {
                 name_or_wildcard,
-                type_name: type_name.map(|name| ast::TypeName {
-                    name,
-                    // this is not relevant for attributes
-                    can_be_nilled: true,
-                }),
-            },
-        )
+                type_name: type_name
+                    .map(|name| {
+                        Ok(ast::TypeName {
+                            name: name
+                                .value
+                                .try_into()
+                                .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                            // this is not relevant for attributes
+                            can_be_nilled: true,
+                        })
+                    })
+                    .transpose()?,
+            })
+        })
         .boxed();
 
     let attribute_test = just(Token::Attribute)

@@ -16,21 +16,13 @@ Ok(Signature(
         namespace: None,
       ),
       type_: Item(Item(
-        item_type: AtomicOrUnionType(Name(
-          name: "decimal",
-          prefix: Some("xs"),
-          namespace: Some("http://www.w3.org/2001/XMLSchema"),
-        )),
+        item_type: AtomicOrUnionType(Decimal),
         occurrence: Many,
       )),
     ),
   ],
   return_type: Item(Item(
-    item_type: AtomicOrUnionType(Name(
-      name: "integer",
-      prefix: Some("xs"),
-      namespace: Some("http://www.w3.org/2001/XMLSchema"),
-    )),
+    item_type: AtomicOrUnionType(Integer),
     occurrence: One,
   )),
 ))

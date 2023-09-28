@@ -1,4 +1,5 @@
 use chumsky::{input::ValueInput, prelude::*};
+use xee_schema_type::Xs;
 
 use crate::ast;
 use crate::ast::Span;
@@ -42,7 +43,13 @@ where
         .ignore_then(empty_call.clone())
         .to(ast::ItemType::Item)
         .boxed();
-    let item_type_atomic_or_union = eqname.clone().map(ast::ItemType::AtomicOrUnionType);
+    let item_type_atomic_or_union = eqname.clone().try_map(|name, span| {
+        Ok(ast::ItemType::AtomicOrUnionType(
+            name.value
+                .try_into()
+                .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+        ))
+    });
 
     let any_function_test = just(Token::Function)
         .ignore_then(
@@ -168,5 +175,13 @@ where
     ParserTypeOutput {
         sequence_type,
         single_type,
+    }
+}
+
+impl TryFrom<ast::Name> for Xs {
+    type Error = ();
+
+    fn try_from(name: ast::Name) -> Result<Xs, ()> {
+        Xs::by_name(name.namespace(), name.local_name()).ok_or(())
     }
 }

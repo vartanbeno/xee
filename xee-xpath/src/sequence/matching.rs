@@ -120,12 +120,7 @@ impl Sequence {
         xot: &Xot,
     ) -> error::Result<Self> {
         let sequence = match &occurrence_item.item_type {
-            ast::ItemType::AtomicOrUnionType(name) => {
-                let name = &name.value;
-                let xs = Xs::by_name(name.namespace(), name.local_name())
-                    .ok_or(error::Error::UndefinedTypeReference)?;
-                convert_atomic(&self, xs)?
-            }
+            ast::ItemType::AtomicOrUnionType(xs) => convert_atomic(&self, *xs)?,
             _ => self,
         };
         match occurrence_item.occurrence {
@@ -171,9 +166,7 @@ impl Item {
     ) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => Ok(()),
-            ast::ItemType::AtomicOrUnionType(name) => {
-                self.to_atomic()?.atomic_type_matching(&name.value)
-            }
+            ast::ItemType::AtomicOrUnionType(xs) => self.to_atomic()?.atomic_type_matching(*xs),
             ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
             ast::ItemType::FunctionTest(function_test) => {
                 check_function(function_test.as_ref(), self)
@@ -321,10 +314,7 @@ impl Item {
 }
 
 impl atomic::Atomic {
-    fn atomic_type_matching(&self, name: &ast::Name) -> error::Result<()> {
-        // XXX error should be detectable statically, earlier
-        let xs = Xs::by_name(name.namespace(), name.local_name())
-            .ok_or(error::Error::UndefinedTypeReference)?;
+    fn atomic_type_matching(&self, xs: Xs) -> error::Result<()> {
         let schema_type = self.schema_type();
         if schema_type.derives_from(xs) || schema_type.matches(xs) {
             Ok(())

@@ -3604,6 +3604,7 @@ version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
  "insta",
+ "serde",
 ]
 
 [[package]]
@@ -3661,6 +3662,7 @@ dependencies = [
  "rust_decimal_macros",
  "serde",
  "thiserror",
+ "xee-schema-type",
  "xot",
 ]
 

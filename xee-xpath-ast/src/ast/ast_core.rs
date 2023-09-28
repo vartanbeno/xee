@@ -2,6 +2,7 @@ use chumsky::prelude::SimpleSpan;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
+use xee_schema_type::Xs;
 use xot::Xot;
 
 use crate::namespaces::NamespaceLookup;
@@ -478,7 +479,7 @@ pub struct Item {
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ItemType {
     Item,
-    AtomicOrUnionType(NameS),
+    AtomicOrUnionType(Xs),
     KindTest(KindTest),
     FunctionTest(Box<FunctionTest>),
     MapTest(Box<MapTest>),
@@ -526,7 +527,7 @@ pub struct ElementOrAttributeTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypeName {
-    pub name: NameS,
+    pub name: Xs,
     // only relevant for elements; for attributes it's always true
     pub can_be_nilled: bool,
 }
@@ -574,7 +575,7 @@ pub enum MapTest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct TypedMapTest {
-    pub key_type: Name,
+    pub key_type: Xs,
     pub value_type: SequenceType,
 }
 

@@ -1,4 +1,3 @@
-use xee_schema_type::Xs;
 use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
@@ -133,15 +132,7 @@ fn element_or_attribute_test(
         }
         // the type also has to match
         if let Some(type_name) = &test.type_name {
-            // derives-from(type-annotation, TypeName) must be true
-            let name = &type_name.name.value;
-            let type_ = Xs::by_name(name.namespace(), name.local_name());
-            if let Some(type_) = type_ {
-                node.type_annotation().derives_from(type_)
-            } else {
-                // unknown type
-                false
-            }
+            node.type_annotation().derives_from(type_name.name)
             // ignoring can_be_nilled for now
         } else {
             true
