@@ -380,7 +380,7 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_lookup(&mut self, lookup: &ir::Lookup, span: SourceSpan) -> Result<()> {
         self.compile_atom(&lookup.atom)?;
-        self.compile_atom(&lookup.key)?;
+        self.compile_atom(&lookup.arg_atom)?;
         self.builder.emit(Instruction::Lookup, span);
         Ok(())
     }

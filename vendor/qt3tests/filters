@@ -148,10 +148,8 @@ fo-test-map-merge-002
 = array-for-each-pair
 = array-get
 = array-head
-array-head-606
 = array-insert-before
 = array-join
-array-join-211
 = array-put
 = array-remove
 = array-reverse
@@ -3320,15 +3318,7 @@ xml-to-json-D-511
 = map-contains
 map-contains-016
 = map-entry
-map-entry-001
 map-entry-001-hof
-map-entry-002
-map-entry-003
-map-entry-004
-map-entry-005
-map-entry-006
-map-entry-007
-map-entry-007-hof
 = map-find
 map-find-001
 map-find-002
@@ -3401,8 +3391,6 @@ map-merge-027
 = map-put
 map-put-003-hof
 map-put-008
-map-put-010
-map-put-011
 map-put-012
 map-put-013
 map-put-019
@@ -3612,8 +3600,6 @@ same-key-001
 same-key-004
 same-key-005
 same-key-007
-same-key-009
-same-key-021
 same-key-022
 = op-string-equal
 = op-string-greater-than
@@ -3929,32 +3915,8 @@ K2-Literals-37
 K2-Literals-38
 K2-Literals-6
 = prod-Lookup
-Lookup-001
-Lookup-002
-Lookup-003
-Lookup-005
-Lookup-006
-Lookup-007
-Lookup-008
-Lookup-009
-Lookup-010
-Lookup-012
-Lookup-013
-Lookup-014
-Lookup-015
 Lookup-016
 Lookup-017
-Lookup-019
-Lookup-022
-Lookup-023
-Lookup-025
-Lookup-040
-Lookup-041
-Lookup-042
-Lookup-043
-Lookup-044
-Lookup-045
-Lookup-046
 Lookup-101
 Lookup-102
 Lookup-103
@@ -3962,14 +3924,8 @@ Lookup-105
 Lookup-106
 Lookup-107
 Lookup-108
-Lookup-109
-Lookup-110
-Lookup-111
-Lookup-112
-Lookup-113
 Lookup-114
 Lookup-115
-Lookup-119
 Lookup-122
 Lookup-123
 Lookup-140
@@ -3982,33 +3938,11 @@ Lookup-146
 Lookup-147
 Lookup-148
 Lookup-149
-Lookup-150
-Lookup-151
-Lookup-152
-Lookup-153
 Lookup-154
-Lookup-155
-Lookup-158
-Lookup-159
-Lookup-160
-Lookup-161
-Lookup-162
 Lookup-164
-Lookup-165
-Lookup-167
 Lookup-211
-Lookup-212
-Lookup-213
-Lookup-215
-Lookup-216
-Lookup-217
-Lookup-218
-Lookup-219
-Lookup-220
 Lookup-221
-Lookup-222
 Lookup-223
-Lookup-224
 Lookup-225
 Lookup-226
 Lookup-227
@@ -4019,7 +3953,6 @@ Lookup-232
 Lookup-233
 Lookup-234
 = prod-MapConstructor
-MapConstructor-025
 = prod-MapTest
 MapTest-006
 MapTest-008
@@ -4307,8 +4240,6 @@ treat-as-9
 = prod-UnaryLookup
 UnaryLookup-016
 UnaryLookup-017
-UnaryLookup-022
-UnaryLookup-048
 = prod-UnorderedExpr
 = prod-ValidateExpr
 = prod-ValueComp

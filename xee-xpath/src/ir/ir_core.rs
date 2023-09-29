@@ -115,7 +115,7 @@ pub(crate) struct FunctionCall {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Lookup {
     pub(crate) atom: AtomS,
-    pub(crate) key: AtomS,
+    pub(crate) arg_atom: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

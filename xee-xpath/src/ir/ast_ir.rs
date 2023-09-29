@@ -369,7 +369,49 @@ impl<'a> IrConverter<'a> {
                     let binding = self.new_binding(expr, empty_span);
                     Ok(bindings.concat(arg_bindings).bind(binding))
                 }
-                _ => Err(Error::Unsupported),
+                ast::Postfix::Lookup(key_specifier) => {
+                    let atom = bindings.atom();
+                    let span = (0..0).into();
+                    match key_specifier {
+                        ast::KeySpecifier::NcName(ncname) => {
+                            let arg_atom = Spanned::new(
+                                ir::Atom::Const(ir::Const::String(ncname.clone())),
+                                span,
+                            );
+                            let arg_bindings = self.atom(arg_atom, span);
+                            let mut bindings = bindings.concat(arg_bindings);
+                            let arg_atom = bindings.atom();
+                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                            let binding = self.new_binding(expr, span);
+                            Ok(bindings.bind(binding))
+                        }
+                        ast::KeySpecifier::Integer(integer) => {
+                            let arg_atom = Spanned::new(
+                                ir::Atom::Const(ir::Const::Integer(integer.clone())),
+                                span,
+                            );
+                            let arg_bindings = self.atom(arg_atom, span);
+                            let mut bindings = bindings.concat(arg_bindings);
+                            let arg_atom = bindings.atom();
+                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                            let binding = self.new_binding(expr, span);
+                            Ok(bindings.bind(binding))
+                        }
+                        ast::KeySpecifier::Expr(expr) => {
+                            let arg_bindings = self.expr_or_empty(expr)?;
+                            let mut bindings = bindings.concat(arg_bindings);
+                            let arg_atom = bindings.atom();
+                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                            let binding = self.new_binding(expr, span);
+                            Ok(bindings.bind(binding))
+                        }
+                        ast::KeySpecifier::Star => {
+                            let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom });
+                            let binding = self.new_binding(expr, span);
+                            Ok(bindings.bind(binding))
+                        }
+                    }
+                }
             }
         })
     }
@@ -768,24 +810,42 @@ impl<'a> IrConverter<'a> {
     }
 
     fn unary_lookup(&mut self, ast: &ast::KeySpecifier, span: Span) -> Result<Bindings> {
+        let mut bindings = self.context_item(span)?;
+        let context_atom = bindings.atom();
+
         match ast {
             ast::KeySpecifier::NcName(ncname) => {
                 let arg_atom =
                     Spanned::new(ir::Atom::Const(ir::Const::String(ncname.clone())), span);
-                self.simple_key_specifier(arg_atom, span)
-            }
-            ast::KeySpecifier::Integer(i) => {
-                let arg_atom = Spanned::new(ir::Atom::Const(ir::Const::Integer(i.clone())), span);
-                self.simple_key_specifier(arg_atom, span)
-            }
-            ast::KeySpecifier::Expr(expr) => {
-                let mut bindings = self.context_item(span)?;
-                let context_atom = bindings.atom();
-                let mut bindings = self.expr_or_empty(expr)?;
+                let arg_bindings = self.atom(arg_atom, span);
+                let mut bindings = bindings.concat(arg_bindings);
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup {
                     atom: context_atom,
-                    key: arg_atom,
+                    arg_atom,
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::KeySpecifier::Integer(i) => {
+                let arg_atom = Spanned::new(ir::Atom::Const(ir::Const::Integer(i.clone())), span);
+                let arg_bindings = self.atom(arg_atom, span);
+                let mut bindings = bindings.concat(arg_bindings);
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup {
+                    atom: context_atom,
+                    arg_atom,
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::KeySpecifier::Expr(expr) => {
+                let arg_bindings = self.expr_or_empty(expr)?;
+                let mut bindings = bindings.concat(arg_bindings);
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup {
+                    atom: context_atom,
+                    arg_atom,
                 });
                 let binding = self.new_binding(expr, span);
                 Ok(bindings.bind(binding))
@@ -800,20 +860,10 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn simple_key_specifier(&mut self, arg_atom: AtomS, span: Span) -> Result<Bindings> {
-        let mut bindings = self.context_item(span)?;
-        let context_atom = bindings.atom();
-        let arg_expr = ir::Expr::Atom(arg_atom);
-        let arg_binding = self.new_binding(arg_expr, span);
-        let mut bindings = bindings.bind(arg_binding);
-        let arg_atom = bindings.atom();
-        // call the context atom with one argument
-        let expr = ir::Expr::Lookup(ir::Lookup {
-            atom: context_atom,
-            key: arg_atom,
-        });
+    fn atom(&mut self, atom: AtomS, span: Span) -> Bindings {
+        let expr = ir::Expr::Atom(atom);
         let binding = self.new_binding(expr, span);
-        Ok(bindings.bind(binding))
+        Bindings::from_vec(vec![binding])
     }
 
     fn map_constructor(&mut self, ast: &ast::MapConstructor, span: Span) -> Result<Bindings> {
