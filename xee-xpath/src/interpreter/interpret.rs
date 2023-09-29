@@ -301,6 +301,9 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Lookup => {
                     self.lookup()?;
                 }
+                EncodedInstruction::WildcardLookup => {
+                    self.wildcard_lookup()?;
+                }
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
                     let node = self.state.pop().try_into()?;
@@ -672,22 +675,42 @@ impl<'a> Interpreter<'a> {
         let key_specifier = self.state.pop();
         let value = self.state.pop();
         let function: Rc<function::Function> = (&value).try_into()?;
-        let value = match function.as_ref() {
-            function::Function::Map(map) => {
-                self.lookup_helper(key_specifier, map, |map, atomic| {
-                    Ok(map.get(&atomic).unwrap_or(sequence::Sequence::empty()))
-                })
-            }
-            function::Function::Array(array) => {
-                self.lookup_helper(key_specifier, array, |array, atomic| match atomic {
-                    atomic::Atomic::Integer(..) => Self::array_get(array, atomic),
-                    _ => Err(error::Error::Type),
-                })
-            }
-            _ => return Err(error::Error::Type),
-        }?;
-        self.state.push(value);
+        let value = self.lookup_value(&function, key_specifier)?;
+        self.state.push(value.into());
         Ok(())
+    }
+
+    fn lookup_value(
+        &self,
+        function: &function::Function,
+        key_specifier: stack::Value,
+    ) -> error::Result<Vec<sequence::Item>> {
+        match function {
+            function::Function::Map(map) => self.lookup_map(map, key_specifier),
+            function::Function::Array(array) => self.lookup_array(array, key_specifier),
+            _ => Err(error::Error::Type),
+        }
+    }
+
+    fn lookup_map(
+        &self,
+        map: &function::Map,
+        key_specifier: stack::Value,
+    ) -> error::Result<Vec<sequence::Item>> {
+        self.lookup_helper(key_specifier, map, |map, atomic| {
+            Ok(map.get(&atomic).unwrap_or(sequence::Sequence::empty()))
+        })
+    }
+
+    fn lookup_array(
+        &self,
+        array: &function::Array,
+        key_specifier: stack::Value,
+    ) -> error::Result<Vec<sequence::Item>> {
+        self.lookup_helper(key_specifier, array, |array, atomic| match atomic {
+            atomic::Atomic::Integer(..) => Self::array_get(array, atomic),
+            _ => Err(error::Error::Type),
+        })
     }
 
     fn lookup_helper<T>(
@@ -695,7 +718,7 @@ impl<'a> Interpreter<'a> {
         key_specifier: stack::Value,
         data: T,
         get_key: impl Fn(&T, atomic::Atomic) -> error::Result<sequence::Sequence>,
-    ) -> error::Result<stack::Value> {
+    ) -> error::Result<Vec<sequence::Item>> {
         let keys = key_specifier
             .atomized(self.runnable.xot())
             .collect::<error::Result<Vec<_>>>()?;
@@ -705,7 +728,36 @@ impl<'a> Interpreter<'a> {
                 result.push(item?);
             }
         }
-        Ok(result.into())
+        Ok(result)
+    }
+
+    fn wildcard_lookup(&mut self) -> error::Result<()> {
+        let value = self.state.pop();
+        let function: Rc<function::Function> = (&value).try_into()?;
+        let value = match function.as_ref() {
+            function::Function::Map(map) => {
+                let mut result = Vec::new();
+                for key in map.keys() {
+                    for value in self.lookup_map(map, key.into())? {
+                        result.push(value)
+                    }
+                }
+                result
+            }
+            function::Function::Array(array) => {
+                let mut result = Vec::new();
+                for i in 1..(array.len() + 1) {
+                    let i: IBig = i.into();
+                    for value in self.lookup_array(array, i.into())? {
+                        result.push(value)
+                    }
+                }
+                result
+            }
+            _ => return Err(error::Error::Type),
+        };
+        self.state.push(value.into());
+        Ok(())
     }
 
     fn value_compare<O>(&mut self, _op: O) -> error::Result<()>

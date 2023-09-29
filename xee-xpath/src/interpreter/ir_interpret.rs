@@ -35,6 +35,9 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_function_call(function_call, span)
             }
             ir::Expr::Lookup(lookup) => self.compile_lookup(lookup, span),
+            ir::Expr::WildcardLookup(wildcard_lookup) => {
+                self.compile_wildcard_lookup(wildcard_lookup, span)
+            }
             ir::Expr::Step(step) => self.compile_step(step, span),
             ir::Expr::Deduplicate(expr) => self.compile_deduplicate(expr, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
@@ -379,6 +382,16 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&lookup.atom)?;
         self.compile_atom(&lookup.key)?;
         self.builder.emit(Instruction::Lookup, span);
+        Ok(())
+    }
+
+    fn compile_wildcard_lookup(
+        &mut self,
+        lookup: &ir::WildcardLookup,
+        span: SourceSpan,
+    ) -> Result<()> {
+        self.compile_atom(&lookup.atom)?;
+        self.builder.emit(Instruction::WildcardLookup, span);
         Ok(())
     }
 

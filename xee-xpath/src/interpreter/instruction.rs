@@ -47,6 +47,7 @@ pub(crate) enum Instruction {
     JumpIfFalse(i16),
     Call(u8),
     Lookup,
+    WildcardLookup,
     Step(u16),
     Deduplicate,
     Return,
@@ -112,6 +113,7 @@ pub(crate) enum EncodedInstruction {
     JumpIfFalse,
     Call,
     Lookup,
+    WildcardLookup,
     Step,
     Deduplicate,
     Return,
@@ -209,6 +211,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
             (Instruction::Call(arity), 2)
         }
         EncodedInstruction::Lookup => (Instruction::Lookup, 1),
+        EncodedInstruction::WildcardLookup => (Instruction::WildcardLookup, 1),
         EncodedInstruction::Step => {
             let step = u16::from_le_bytes([bytes[1], bytes[2]]);
             (Instruction::Step(step), 3)
@@ -331,6 +334,9 @@ pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) 
             bytes.push(arity);
         }
         Instruction::Lookup => bytes.push(EncodedInstruction::Lookup.to_u8().unwrap()),
+        Instruction::WildcardLookup => {
+            bytes.push(EncodedInstruction::WildcardLookup.to_u8().unwrap())
+        }
         Instruction::Step(step_id) => {
             bytes.push(EncodedInstruction::Step.to_u8().unwrap());
             bytes.extend_from_slice(&step_id.to_le_bytes());
@@ -425,6 +431,7 @@ pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::IsNumeric
         | Instruction::Deduplicate
         | Instruction::Lookup
+        | Instruction::WildcardLookup
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,

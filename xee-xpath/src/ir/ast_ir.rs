@@ -790,7 +790,13 @@ impl<'a> IrConverter<'a> {
                 let binding = self.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
-            _ => Err(Error::Unsupported),
+            ast::KeySpecifier::Star => {
+                let mut bindings = self.context_item(span)?;
+                let context_atom = bindings.atom();
+                let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom: context_atom });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
         }
     }
 

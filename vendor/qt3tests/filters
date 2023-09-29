@@ -4305,12 +4305,9 @@ treat-as-9
 = prod-TryCatchExpr
 = prod-TypeswitchExpr
 = prod-UnaryLookup
-UnaryLookup-014
 UnaryLookup-016
 UnaryLookup-017
 UnaryLookup-022
-UnaryLookup-023
-UnaryLookup-045
 UnaryLookup-048
 = prod-UnorderedExpr
 = prod-ValidateExpr
