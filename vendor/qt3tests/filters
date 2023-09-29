@@ -3916,7 +3916,6 @@ K-CondExpr-3
 K-CondExpr-4
 K-CondExpr-6
 = prod-InlineFunctionExpr
-inline-fn-027
 = prod-InstanceofExpr
 K-SeqExprInstanceOf-49
 K-SeqExprInstanceOf-50
@@ -3996,9 +3995,7 @@ Lookup-161
 Lookup-162
 Lookup-164
 Lookup-165
-Lookup-166
 Lookup-167
-Lookup-168
 Lookup-211
 Lookup-212
 Lookup-213
@@ -4308,31 +4305,20 @@ treat-as-9
 = prod-TryCatchExpr
 = prod-TypeswitchExpr
 = prod-UnaryLookup
-UnaryLookup-001
 UnaryLookup-002
-UnaryLookup-003
-UnaryLookup-005
-UnaryLookup-006
 UnaryLookup-007
 UnaryLookup-008
 UnaryLookup-009
 UnaryLookup-010
-UnaryLookup-011
-UnaryLookup-012
 UnaryLookup-013
 UnaryLookup-014
-UnaryLookup-015
 UnaryLookup-016
 UnaryLookup-017
 UnaryLookup-019
 UnaryLookup-022
 UnaryLookup-023
 UnaryLookup-025
-UnaryLookup-040
-UnaryLookup-041
 UnaryLookup-042
-UnaryLookup-043
-UnaryLookup-044
 UnaryLookup-045
 UnaryLookup-046
 UnaryLookup-048

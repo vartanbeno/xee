@@ -632,6 +632,8 @@ impl<'a> Interpreter<'a> {
         let position = position as usize;
         let position = position - 1;
         let sequence = array.index(position);
+        // pop the array off the stack
+        self.state.pop();
         if let Some(sequence) = sequence {
             self.state.push(sequence.clone().into());
             Ok(())
@@ -646,6 +648,8 @@ impl<'a> Interpreter<'a> {
         }
         let key = self.pop_atomic()?;
         let value = map.get(&key);
+        // pop the map off the stack
+        self.state.pop();
         if let Some(value) = value {
             self.state.push(value.into());
         } else {

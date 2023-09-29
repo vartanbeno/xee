@@ -333,8 +333,7 @@ impl<'a> IrConverter<'a> {
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
             ast::PrimaryExpr::MapConstructor(ast) => self.map_constructor(ast, span),
             ast::PrimaryExpr::ArrayConstructor(ast) => self.array_constructor(ast, span),
-            _ => Err(Error::Unsupported),
-            // ast::PrimaryExpr::UnaryLookup(ast) => self.unary_lookup(ast, span),
+            ast::PrimaryExpr::UnaryLookup(ast) => self.unary_lookup(ast, span),
         }
     }
 
@@ -768,8 +767,35 @@ impl<'a> IrConverter<'a> {
             })
     }
 
-    fn unary_lookup(&mut self, _ast: &ast::KeySpecifier, _span: Span) -> Result<Bindings> {
-        Ok(Bindings::new())
+    fn unary_lookup(&mut self, ast: &ast::KeySpecifier, span: Span) -> Result<Bindings> {
+        match ast {
+            ast::KeySpecifier::NcName(ncname) => {
+                let arg_atom =
+                    Spanned::new(ir::Atom::Const(ir::Const::String(ncname.clone())), span);
+                self.simple_key_specifier(arg_atom, span)
+            }
+            ast::KeySpecifier::Integer(i) => {
+                let arg_atom = Spanned::new(ir::Atom::Const(ir::Const::Integer(i.clone())), span);
+                self.simple_key_specifier(arg_atom, span)
+            }
+            _ => Err(Error::Unsupported),
+        }
+    }
+
+    fn simple_key_specifier(&mut self, arg_atom: AtomS, span: Span) -> Result<Bindings> {
+        let mut bindings = self.context_item(span)?;
+        let context_atom = bindings.atom();
+        let arg_expr = ir::Expr::Atom(arg_atom);
+        let arg_binding = self.new_binding(arg_expr, span);
+        let mut bindings = bindings.bind(arg_binding);
+        let arg_atom = bindings.atom();
+        // call the context atom with one argument
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+            atom: context_atom,
+            args: vec![arg_atom],
+        });
+        let binding = self.new_binding(expr, span);
+        Ok(bindings.bind(binding))
     }
 
     fn map_constructor(&mut self, ast: &ast::MapConstructor, span: Span) -> Result<Bindings> {
@@ -1081,5 +1107,15 @@ mod tests {
         assert_debug_snapshot!(
             convert_expr_single(
                 "compare('a', 'b', ((), 'http://www.w3.org/2005/xpath-functions/collation/codepoint', ()))"));
+    }
+
+    #[test]
+    fn test_ncname_key_specifier() {
+        assert_debug_snapshot!(convert_xpath("? foo"));
+    }
+
+    #[test]
+    fn test_integer_key_specifier() {
+        assert_debug_snapshot!(convert_xpath("? 1"));
     }
 }
