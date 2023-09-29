@@ -28,8 +28,8 @@ Ok(
                 ],
                 return_type: None,
                 body: Spanned {
-                    value: FunctionCall(
-                        FunctionCall {
+                    value: Lookup(
+                        Lookup {
                             atom: Spanned {
                                 value: Variable(
                                     Name(
@@ -38,16 +38,14 @@ Ok(
                                 ),
                                 span: 0..0,
                             },
-                            args: [
-                                Spanned {
-                                    value: Const(
-                                        Integer(
-                                            1,
-                                        ),
+                            key: Spanned {
+                                value: Const(
+                                    Integer(
+                                        1,
                                     ),
-                                    span: 0..3,
-                                },
-                            ],
+                                ),
+                                span: 0..3,
+                            },
                         },
                     ),
                     span: 0..3,

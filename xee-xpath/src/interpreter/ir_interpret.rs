@@ -34,6 +34,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::FunctionCall(function_call) => {
                 self.compile_function_call(function_call, span)
             }
+            ir::Expr::Lookup(lookup) => self.compile_lookup(lookup, span),
             ir::Expr::Step(step) => self.compile_step(step, span),
             ir::Expr::Deduplicate(expr) => self.compile_deduplicate(expr, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
@@ -371,6 +372,13 @@ impl<'a> InterpreterCompiler<'a> {
         }
         self.builder
             .emit(Instruction::Call(function_call.args.len() as u8), span);
+        Ok(())
+    }
+
+    fn compile_lookup(&mut self, lookup: &ir::Lookup, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&lookup.atom)?;
+        self.compile_atom(&lookup.key)?;
+        self.builder.emit(Instruction::Lookup, span);
         Ok(())
     }
 

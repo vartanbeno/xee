@@ -24,6 +24,8 @@ pub(crate) enum Expr {
     Unary(Unary),
     FunctionDefinition(FunctionDefinition),
     FunctionCall(FunctionCall),
+    Lookup(Lookup),
+    // WildcardLookup(WildcardLookup),
     Step(Step),
     Deduplicate(Box<ExprS>),
     Map(Map),
@@ -109,6 +111,17 @@ pub(crate) struct FunctionCall {
     pub(crate) atom: AtomS,
     pub(crate) args: Vec<AtomS>,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Lookup {
+    pub(crate) atom: AtomS,
+    pub(crate) key: AtomS,
+}
+
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub(crate) struct WildcardLookup {
+//     pub(crate) atom: AtomS,
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Step {

@@ -778,6 +778,18 @@ impl<'a> IrConverter<'a> {
                 let arg_atom = Spanned::new(ir::Atom::Const(ir::Const::Integer(i.clone())), span);
                 self.simple_key_specifier(arg_atom, span)
             }
+            ast::KeySpecifier::Expr(expr) => {
+                let mut bindings = self.context_item(span)?;
+                let context_atom = bindings.atom();
+                let mut bindings = self.expr_or_empty(expr)?;
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup {
+                    atom: context_atom,
+                    key: arg_atom,
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
             _ => Err(Error::Unsupported),
         }
     }
@@ -790,9 +802,9 @@ impl<'a> IrConverter<'a> {
         let mut bindings = bindings.bind(arg_binding);
         let arg_atom = bindings.atom();
         // call the context atom with one argument
-        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+        let expr = ir::Expr::Lookup(ir::Lookup {
             atom: context_atom,
-            args: vec![arg_atom],
+            key: arg_atom,
         });
         let binding = self.new_binding(expr, span);
         Ok(bindings.bind(binding))

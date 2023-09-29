@@ -298,6 +298,9 @@ impl<'a> Interpreter<'a> {
                     let arity = self.read_u8();
                     self.call(arity)?;
                 }
+                EncodedInstruction::Lookup => {
+                    self.lookup()?;
+                }
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
                     let node = self.state.pop().try_into()?;
@@ -628,18 +631,25 @@ impl<'a> Interpreter<'a> {
         }
         // the argument
         let position = self.pop_atomic()?;
-        let position = position.cast_to_integer_value::<i64>()?;
+        let sequence = Self::array_get(array, position)?;
+        // pop the array off the stack
+        self.state.pop();
+        // now push the result
+        self.state.push(sequence.into());
+        Ok(())
+    }
+
+    fn array_get(
+        array: &function::Array,
+        position: atomic::Atomic,
+    ) -> error::Result<sequence::Sequence> {
+        let position = position
+            .cast_to_integer_value::<i64>()
+            .map_err(|_| error::Error::Type)?;
         let position = position as usize;
         let position = position - 1;
         let sequence = array.index(position);
-        // pop the array off the stack
-        self.state.pop();
-        if let Some(sequence) = sequence {
-            self.state.push(sequence.clone().into());
-            Ok(())
-        } else {
-            Err(error::Error::FOAY0001)
-        }
+        sequence.cloned().ok_or(error::Error::FOAY0001)
     }
 
     fn call_map(&mut self, map: &function::Map, arity: usize) -> error::Result<()> {
@@ -656,6 +666,46 @@ impl<'a> Interpreter<'a> {
             self.state.push(stack::Value::Empty);
         }
         Ok(())
+    }
+
+    fn lookup(&mut self) -> error::Result<()> {
+        let key_specifier = self.state.pop();
+        let value = self.state.pop();
+        let function: Rc<function::Function> = (&value).try_into()?;
+        let value = match function.as_ref() {
+            function::Function::Map(map) => {
+                self.lookup_helper(key_specifier, map, |map, atomic| {
+                    Ok(map.get(&atomic).unwrap_or(sequence::Sequence::empty()))
+                })
+            }
+            function::Function::Array(array) => {
+                self.lookup_helper(key_specifier, array, |array, atomic| match atomic {
+                    atomic::Atomic::Integer(..) => Self::array_get(array, atomic),
+                    _ => Err(error::Error::Type),
+                })
+            }
+            _ => return Err(error::Error::Type),
+        }?;
+        self.state.push(value);
+        Ok(())
+    }
+
+    fn lookup_helper<T>(
+        &self,
+        key_specifier: stack::Value,
+        data: T,
+        get_key: impl Fn(&T, atomic::Atomic) -> error::Result<sequence::Sequence>,
+    ) -> error::Result<stack::Value> {
+        let keys = key_specifier
+            .atomized(self.runnable.xot())
+            .collect::<error::Result<Vec<_>>>()?;
+        let mut result = Vec::new();
+        for key in keys {
+            for item in get_key(&data, key)?.items() {
+                result.push(item?);
+            }
+        }
+        Ok(result.into())
     }
 
     fn value_compare<O>(&mut self, _op: O) -> error::Result<()>
