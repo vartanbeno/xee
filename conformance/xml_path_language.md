@@ -12,7 +12,7 @@ https://www.w3.org/TR/xpath-31/
 
 ### 2.1.1 Static Context
 
-- [ ] XPath 1.0 compatibility mode. May not implement.
+- [ ] XPath 1.0 compatibility mode. _No implementation plans_
 
 - [x] Statically known namespaces
 
@@ -28,9 +28,9 @@ https://www.w3.org/TR/xpath-31/
 
 - [x] Statically known function signatures. _Only built-in functions_
 
-- [ ] Statically known collations
+- [x] Statically known collations
 
-- [ ] Default collation
+- [x] Default collation
 
 - [ ] Statically known documents.
 
@@ -52,11 +52,11 @@ https://www.w3.org/TR/xpath-31/
 
 - [x] Named functions. _Not sure how this is dynamic?_
 
-- [ ] Current dateTime
+- [x] Current dateTime
 
-- [ ] Implicit timezone
+- [x] Implicit timezone
 
-- [ ] Default language
+- [x] Default language
 
 - [ ] Default calendar
 
@@ -90,11 +90,11 @@ https://www.w3.org/TR/xpath-31/
 
 - [ ] Normalization of operation tree to make atomization and effective boolean value extraction explicit. _We don't do it this way, but we do extract this information. We may consider making this explicit in the IR if it helps with static analysis_.
 
-- [ ] Static typing feature. _No static typing yet. Would be nice, but not required for conformance_
+- [ ] Static typing feature. _No static typing yet. Would be nice, but not required for conformance. Saxon doesn't have it and it would introduce compatibility problems if implemented._
 
 #### 2.2.3.2 Dynamic Evaluation Phase
 
-- [x] Raise type error if operand has dynamic type that is incorrect. _Though a lot of types and checking is yet to be implemented_
+- [x] Raise type error if operand has dynamic type that is incorrect.
 
 ### 2.2.4 Consistency Constraints
 
@@ -114,7 +114,7 @@ https://www.w3.org/TR/xpath-31/
 
 - [x] Dynamic errors are raised
 
-- [x] error function. _Not complete yet_
+- [ ] error function. _Not complete yet_
 
 ### 2.3.4 Errors and Optimization
 
@@ -134,7 +134,7 @@ _No optimization yet_
 
 - [x] Function raises error _May be wrong error code_
 
-- [ ] If item is array, atomize each item
+- [x] If item is array, atomize each item
 
 Atomization is applied to:
 
@@ -142,13 +142,13 @@ Atomization is applied to:
 
 - [x] Comparison expressions
 
-- [ ] Inline function call arguments
+- [x] Inline function call arguments
 
-- [ ] Inline function call returns
+- [x] Inline function call returns
 
 - [x] Built-in function calls
 
-- [ ] Cast expressions
+- [x] Cast expressions
 
 ### 2.4.3 Effective Boolean Value
 
@@ -158,15 +158,15 @@ Atomization is applied to:
 
 - [x] Singleton of type `xs:boolean` returns boolean
 
-- [ ] Singleton derived from `xs:boolean` returns boolean
+- [x] Singleton derived from `xs:boolean` returns boolean
 
 - [x] Singleton of type `xs:string`, `xs:untypedAtomic` returns true if length > 0
 
-- [ ] Singleton of `xs:anyURI` is true if length > 0
+- [x] Singleton of `xs:anyURI` is true if length > 0
 
 - [x] Singleton of numeric type, returns true if not zero
 
-- [ ] Singleton of numeric type returns true if not NaN
+- [x] Singleton of numeric type returns true if not NaN
 
 - [x] Type error in other cases
 
@@ -194,7 +194,7 @@ Used in:
 
 - [ ] Verification of valid URI in BracedURILiteral
 
-- [ ] Whitespace normalization of URI literal
+- [x] Whitespace normalization of URI literal
 
 ### 2.4.6 Resolving a Relative URI Reference
 
@@ -204,27 +204,27 @@ Used in:
 
 - [ ] Schema types
 
-- [ ] Generalized atomic type
+- [x] Generalized atomic type
 
 - [ ] pure union type
 
 ### 2.5.1 Predefined Schema Types
 
-- [ ] `xs:untyped`
+- [x] `xs:untyped`
 
 - [x] `xs:untypedAtomic` _But not yet in inline function definitions_
 
-- [ ] xs:dayTimeDuration
+- [x] xs:dayTimeDuration
 
-- [ ] xs:yearMonthDuration
+- [x] xs:yearMonthDuration
 
 - [x] `xs:anyAtomicType` _But not yet in inline function definitions_
 
-- [ ] xs:error
+- [x] xs:error
 
 ### 2.5.2 Namespace-sensitive types
 
-- [ ] `xs:QName`
+- [x] `xs:QName`
 
 - [ ] `xs:NOTATION`
 
@@ -246,15 +246,15 @@ Used in:
 
 derives-from pseudo function
 
-- [ ] error if ET not present in in scope-schema definitions
+- [x] error if ET not present in in scope-schema definitions
 
 - [x] AT is ET
 
-- [ ] ET is base type of AT
+- [x] ET is base type of AT
 
-- [ ] ET is a pure union type of which AT is a member type
+- [x] ET is a pure union type of which AT is a member type
 
-- [ ] Recursion via intermediate type MT
+- [x] Recursion via intermediate type MT
 
 #### 2.5.5.1 Matching a SequenceType and a Value
 
@@ -264,7 +264,7 @@ derives-from pseudo function
 
 - [x] 0 or more items postfix, xs:int\*
 
-- [ ] 1 or more items postfix, xs:int+
+- [x] 1 or more items postfix, xs:int+
 
 #### 2.5.5.2 Matching an ItemType and an Item
 
@@ -286,21 +286,21 @@ derives-from pseudo function
 
 - [x] `document-node()`
 
-- [ ] item type that is a test
+- [x] item type that is a test
 
-- [ ] `map(K, V)`
+- [x] `map(K, V)`
 
-- [ ] `map(*)`
+- [x] `map(*)`
 
-- [ ] `array(T)`
+- [x] `array(T)`
 
-- [ ] `array(*)`
+- [x] `array(*)`
 
 #### 2.5.5.3 Element Test
 
-- [ ] Use in type system
+- [x] Use in type system
 
-- [ ] Use in NodeTest
+- [x] Use in NodeTest
 
 - [x] `element()` and `element(*)`
 
@@ -310,9 +310,9 @@ derives-from pseudo function
 
 - [x] `element(ElementName, TypeName?)`
 
-- [ ] `element(*, TypeName)`
+- [x] `element(*, TypeName)`
 
-- [ ] `element(*, TypeName?)`
+- [x] `element(*, TypeName?)`
 
 #### 2.5.5.4 Schema Element test
 
@@ -320,13 +320,13 @@ derives-from pseudo function
 
 #### 2.5.5.5 Attribute test
 
-- [ ] `attribute()` and `attribute(*)`
+- [x] `attribute()` and `attribute(*)`
 
-- [ ] `attribute(AttributeName)`
+- [x] `attribute(AttributeName)`
 
-- [ ] `attribute(AttributeName, TypeName)`
+- [x] `attribute(AttributeName, TypeName)`
 
-- [ ] `attribute(*, TypeName)`
+- [x] `attribute(*, TypeName)`
 
 #### 2.5.5.6 Schema attribute test
 
@@ -334,33 +334,33 @@ derives-from pseudo function
 
 #### 2.5.5.7 Function test
 
-- [ ] `function(*)`
+- [x] `function(*)`
 
-- [ ] `function()` with argument types and return value
+- [x] `function()` with argument types and return value
 
 #### 2.5.5.8 Map Test
 
-- [ ] Map test
+- [x] Map test _But details for instance of still to be done_
 
 #### 2.5.5.9 Array Test
 
-- [ ] Array test
+- [x] Array test
 
 ### 2.5.6 SequenceType Subtype Relationships
 
 #### 2.5.6.1 The judgement `subtype(A, B)`
 
-- [ ] The judgement `subtype(A, B)`
+- [x] The judgement `subtype(A, B)`
 
 #### 2.5.6.2 The judgement `subtype-itemtype(Ai, Bi)`
 
 Note: detailed rules of 36 items, may spell it out when implementing.
 
-- [ ] The judgement `subtype-itemtype(Ai, Bi)`
+- [x] The judgement `subtype-itemtype(Ai, Bi)`
 
 ### 2.5.6 xs:error
 
-- [ ] `xs:error` type
+- [x] `xs:error` type
 
 ## 2.6 Comments
 
@@ -408,17 +408,17 @@ Note: detailed rules of 36 items, may spell it out when implementing.
 
 - [x] Dynamic function lookup
 
-- [ ] Application of function conversion rules for inline function arguments
+- [x] Application of function conversion rules for inline function arguments
 
 - [x] Application of function conversion rules for built-in functions. _In as much as implemented_
 
 - [x] Partial function application
 
-- [ ] map function
+- [x] map function
 
 - [x] inline function evaluation
 
-- [ ] inline function evaluation conversion rules for return value
+- [x] inline function evaluation conversion rules for return value
 
 - [x] non-local variable bindings for inline functions
 
@@ -430,17 +430,15 @@ Note: detailed rules of 36 items, may spell it out when implementing.
 
 #### 3.1.5.2 Function Conversion Rules
 
-_Note: not yet implemented for inline functions, only static functions_
-
 - [ ] XPath 1.0 compatibility mode
 
 - [x] Atomization for built-in functions
 
 - [x] `untypedAtomic` cast to expected function. _Casting still limited_
 
-- [ ] numeric item type promotion
+- [x] numeric item type promotion
 
-- [ ] `anyURI` type promotion
+- [x] `anyURI` type promotion
 
 - [ ] `TypedFunctionTest` causes function coercion
 
@@ -448,7 +446,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 #### 3.1.5.3 Function Coercion
 
-- [ ] Function coercion
+- [x] Function coercion
 
 ### 3.1.6 Named Function References
 
@@ -460,9 +458,9 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] Non-local variable bindings
 
-- [ ] Type signature support
+- [x] Type signature support
 
-- [ ] Function coercion
+- [x] Function coercion
 
 ### 3.1.8 Enclosed Expressions
 
@@ -514,9 +512,9 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] `preceding-sibling`
 
-- [ ] `following`
+- [x] `following`
 
-- [ ] `preceding`
+- [x] `preceding`
 
 - [x] `attribute`
 
@@ -534,7 +532,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] Wildcard name test
 
-- [ ] Kind test (see 2.5.4 and 2.5.5)
+- [x] Kind test (see 2.5.4 and 2.5.5)
 
 ### 3.3.3 Predicates within Steps
 
@@ -558,7 +556,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] Union
 
-- [ ] Intersection
+- [x] Intersection
 
 ### 3.5 Arithmetic Expressions
 
@@ -598,11 +596,11 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] `untypedAtomic` cast to string
 
-- [ ] Values are of different types: `xs:string`/`xs:anyURI`
+- [x] Values are of different types: `xs:string`/`xs:anyURI`
 
-- [ ] Values are of different types: `xs:decimal`/`xs:float`
+- [x] Values are of different types: `xs:decimal`/`xs:float`
 
-- [ ] Values are of different types `xs:decimal`, `xs:float`, `xs:double`
+- [x] Values are of different types `xs:decimal`, `xs:float`, `xs:double`
 
 ### 3.7.2 General Comparisons
 
@@ -612,21 +610,21 @@ _Note: not yet implemented for inline functions, only static functions_
 
 - [x] Both `untypedAtomic` are cast to `xs:string`
 
-- [ ] `untypedAtomic` cast to `xs:double`
+- [x] `untypedAtomic` cast to `xs:double`
 
-- [ ] `untypedAtomic` cast to `xs:daytimeDuration`
+- [x] `untypedAtomic` cast to `xs:daytimeDuration`
 
-- [ ] `untypedAtomic` cast to `xs:yearMonthDuration`
+- [x] `untypedAtomic` cast to `xs:yearMonthDuration`
 
-- [ ] `untypedAtomic` cast from primitive base type
+- [x] `untypedAtomic` cast from primitive base type
 
 ### 3.7.3 Node Comparisons
 
-- [ ] `is` operator
+- [x] `is` operator
 
-- [ ] `<<` operator
+- [x] `<<` operator
 
-- [ ] `>>` operator
+- [x] `>>` operator
 
 ## 3.8 Logical epxressions
 
@@ -650,31 +648,31 @@ _Note: not yet implemented for inline functions, only static functions_
 
 #### 3.11.1.1 Map Constructors
 
-- [ ] Map constructors
+- [x] Map constructors
 
 #### 3.11.1.2 Map lookup using Function Call Syntax
 
-- [ ] Map lookup using function call syntax
+- [x] Map lookup using function call syntax
 
 ### 3.11.2 Arrays
 
 #### 3.11.2.1 Array Constructors
 
-- [ ] Array constructors
+- [x] Array constructors
 
 #### 3.11.2.2 Array Lookup using Function Call Syntax
 
-- [ ] Array lookup using function call syntax
+- [x] Array lookup using function call syntax
 
 ### 3.11.3 The Lookup Operator `?` for Maps and Arrays
 
 #### 3.11.3.1 Unary Lookup
 
-- [ ] Unary Lookup
+- [x] Unary Lookup
 
 #### 3.11.3.2 Postfix Lookup
 
-- [ ] Postfix Lookup
+- [x] Postfix Lookup
 
 ## 3.12 Conditional Expressions
 
@@ -690,7 +688,7 @@ _Note: not yet implemented for inline functions, only static functions_
 
 ### 3.14.1 Instance of
 
-- [ ] `instance of`
+- [x] `instance of`
 
 ### 3.14.2 Cast
 
@@ -702,15 +700,11 @@ _Note: not yet implemented for inline functions, only static functions_
 
 ### 3.14.4 Constructor functions
 
-- [x] `xs:string` _but does not handle everything yet, and doesn't handle empty sequence_
-
-- [x] `xs:integer` _but needs better error handling_
-
-- [ ] Lots more constructor functions not yet
+- [x] Constructor functions
 
 ### 3.14.5 Treat
 
-- [ ] `treat as`
+- [ ] `treat as` _no effect without stating typing, maybe should do instance of_
 
 ## 3.15 Simple map operator (`!`)
 
@@ -792,7 +786,7 @@ TDB
 
 - [x] Numeric type promotion for operators
 
-- [ ] Numeric type promotion for function calls
+- [x] Numeric type promotion for function calls
 
 - [ ] URI type promotion for operators
 
@@ -804,9 +798,9 @@ TDB
 
 - [x] Operator mapping for numeric arithmetic
 
-- [ ] Operator mapping for date time arithmetic
+- [x] Operator mapping for date time arithmetic
 
-- [ ] Complete handling of all operator mapping in big table
+- [x] Complete handling of all operator mapping in big table
 
 # C Context Components
 

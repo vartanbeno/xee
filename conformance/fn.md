@@ -38,7 +38,7 @@
 - [ ] encode-for-uri
 - [x] ends-with
 - [ ] environment-variable
-- [x] error (all versions?)
+- [ ] error (not yet all versions)
 - [ ] escape-html-uri
 - [x] exactly-one
 - [x] exists
