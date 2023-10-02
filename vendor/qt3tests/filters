@@ -135,7 +135,6 @@ fo-test-fn-substring-before-007
 fo-test-fn-unordered-001
 fo-test-map-for-each-001
 fo-test-map-for-each-002
-fo-test-map-for-each-003
 fo-test-map-keys-001
 = array-append
 = array-filter
@@ -1331,8 +1330,6 @@ fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
 fn-function-lookup-812
-fn-function-lookup-815
-fn-function-lookup-816
 = fn-function-name
 fn-function-name-008
 fn-function-name-017
@@ -3313,22 +3310,6 @@ map-entry-001-hof
 map-find-101
 map-find-102
 = map-for-each
-map-for-each-001
-map-for-each-002
-map-for-each-003
-map-for-each-004
-map-for-each-005
-map-for-each-006
-map-for-each-007
-map-for-each-008
-map-for-each-009
-map-for-each-010
-map-for-each-011
-map-for-each-012
-map-for-each-013
-map-for-each-014
-map-for-each-015
-map-for-each-016
 = map-get
 map-get-023
 map-get-024

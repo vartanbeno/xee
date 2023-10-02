@@ -13,6 +13,7 @@ use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter;
+use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::Occurrence;
@@ -205,6 +206,24 @@ fn remove(map: function::Map, keys: &[atomic::Atomic]) -> function::Map {
     map.remove_keys(keys)
 }
 
+#[xpath_fn("map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*) as item()*")]
+fn for_each(
+    interpreter: &mut Interpreter,
+    map: function::Map,
+    action: sequence::Item,
+) -> error::Result<sequence::Sequence> {
+    let function = action.to_function()?;
+    let mut result: Vec<sequence::Item> = Vec::with_capacity(map.len());
+    for (_, (key, value)) in map.0.iter() {
+        let r = interpreter
+            .call_function_with_arguments(function.clone(), &[key.clone().into(), value.clone()])?;
+        for item in r.items() {
+            result.push(item?);
+        }
+    }
+    Ok(result.into())
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(merge1),
@@ -217,5 +236,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(put),
         wrap_xpath_fn!(entry),
         wrap_xpath_fn!(remove),
+        wrap_xpath_fn!(for_each),
     ]
 }
