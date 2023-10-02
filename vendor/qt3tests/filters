@@ -2969,7 +2969,6 @@ serialize-xml-141b
 serialize-xml-142b
 = fn-sort
 fn-sort-17
-fn-sort-22
 fn-sort-23
 fn-sort-spec-6
 = fn-starts-with
@@ -3917,37 +3916,9 @@ K2-Literals-6
 = prod-Lookup
 Lookup-016
 Lookup-017
-Lookup-101
-Lookup-102
-Lookup-103
-Lookup-105
-Lookup-106
-Lookup-107
-Lookup-108
-Lookup-114
-Lookup-115
-Lookup-122
-Lookup-123
-Lookup-140
-Lookup-141
-Lookup-142
-Lookup-143
-Lookup-144
 Lookup-145
-Lookup-146
-Lookup-147
-Lookup-148
-Lookup-149
 Lookup-154
-Lookup-164
 Lookup-211
-Lookup-221
-Lookup-223
-Lookup-225
-Lookup-226
-Lookup-227
-Lookup-228
-Lookup-229
 Lookup-231
 Lookup-232
 Lookup-233

@@ -381,9 +381,23 @@ impl<'a> IrConverter<'a> {
         key_specifier: &ast::KeySpecifier,
         bindings: &mut Bindings,
     ) -> Result<Bindings> {
-        let atom = bindings.atom();
         let span = (0..0).into();
-        match key_specifier {
+
+        // the thing we loop over is bound
+        let var_atom = bindings.atom();
+
+        // make up an internal name for the loop variable
+        let name = self.new_name();
+        // access the loop variable
+        let mut bindings = bindings.bind(Binding {
+            name: name.clone(),
+            expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(name.clone()), span)),
+            span,
+        });
+
+        let atom = bindings.atom();
+
+        let return_bindings = match key_specifier {
             ast::KeySpecifier::NcName(ncname) => {
                 let arg_atom =
                     Spanned::new(ir::Atom::Const(ir::Const::String(ncname.clone())), span);
@@ -392,15 +406,7 @@ impl<'a> IrConverter<'a> {
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
                 let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
-
-                // let return_bindings = Bindings::from_vec(vec![binding]);
-                // let context_names = self.explicit_context_names(name);
-                // let expr = ir::Expr::Map(ir::Map {
-                //     context_names,
-                //     var_atom: atom,
-                //     return_expr: Box::new(return_bindings.expr()),
-                // });
+                bindings.bind(binding)
             }
             ast::KeySpecifier::Integer(integer) => {
                 let arg_atom =
@@ -410,7 +416,7 @@ impl<'a> IrConverter<'a> {
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
                 let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
+                bindings.bind(binding)
             }
             ast::KeySpecifier::Expr(expr) => {
                 let arg_bindings = self.expr_or_empty(expr)?;
@@ -418,14 +424,23 @@ impl<'a> IrConverter<'a> {
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
                 let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
+                bindings.bind(binding)
             }
             ast::KeySpecifier::Star => {
                 let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom });
                 let binding = self.new_binding(expr, span);
-                Ok(bindings.bind(binding))
+                bindings.bind(binding)
             }
-        }
+        };
+        // we wrap the whole thing in a map
+        let context_names = self.explicit_context_names(name);
+        let expr = ir::Expr::Map(ir::Map {
+            context_names,
+            var_atom,
+            return_expr: Box::new(return_bindings.expr()),
+        });
+        let binding = self.new_binding(expr, span);
+        Ok(bindings.bind(binding))
     }
 
     fn axis_step(&mut self, ast: &ast::AxisStep, span: Span) -> Result<Bindings> {
@@ -1197,5 +1212,10 @@ mod tests {
     #[test]
     fn test_integer_key_specifier() {
         assert_debug_snapshot!(convert_xpath("? 1"));
+    }
+
+    #[test]
+    fn test_postfix_lookup() {
+        assert_debug_snapshot!(convert_xpath("1 ? foo"));
     }
 }
