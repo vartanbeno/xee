@@ -3826,8 +3826,6 @@ K2-Literals-37
 K2-Literals-38
 K2-Literals-6
 = prod-Lookup
-Lookup-016
-Lookup-017
 Lookup-145
 Lookup-154
 Lookup-211
@@ -4121,8 +4119,6 @@ treat-as-9
 = prod-TryCatchExpr
 = prod-TypeswitchExpr
 = prod-UnaryLookup
-UnaryLookup-016
-UnaryLookup-017
 = prod-UnorderedExpr
 = prod-ValidateExpr
 = prod-ValueComp

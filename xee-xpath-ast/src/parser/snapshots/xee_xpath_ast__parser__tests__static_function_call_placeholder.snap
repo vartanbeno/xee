@@ -47,6 +47,7 @@ Ok(Path(PathExpr(
           ],
         )),
       ])),
+      wrapper: true,
     ))),
   ],
 )))

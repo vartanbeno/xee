@@ -12,6 +12,7 @@ Ok(XPath(Expr([
           occurrence: Many,
         ))),
         body: None,
+        wrapper: false,
       ))),
     ],
   )),

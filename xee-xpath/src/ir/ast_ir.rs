@@ -720,9 +720,16 @@ impl<'a> IrConverter<'a> {
             .iter()
             .map(|param| self.param(param))
             .collect();
-        self.push_absent_context();
+        // wrapper functions (used to simulate placeholder arguments) do not
+        // have an absent context, but instead share the context of their
+        // environment. Normal inline functions wipe out the context, however.
+        if !inline_function.wrapper {
+            self.push_absent_context();
+        }
         let body_bindings = self.expr_or_empty(&inline_function.body)?;
-        self.pop_context();
+        if !inline_function.wrapper {
+            self.pop_context();
+        }
         let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
             return_type: inline_function.return_type.clone(),

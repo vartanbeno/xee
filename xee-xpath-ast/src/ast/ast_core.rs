@@ -333,6 +333,7 @@ pub struct InlineFunction {
     pub params: Vec<Param>,
     pub return_type: Option<SequenceType>,
     pub body: ExprOrEmptyS,
+    pub wrapper: bool,
 }
 
 // a function signature as described by:

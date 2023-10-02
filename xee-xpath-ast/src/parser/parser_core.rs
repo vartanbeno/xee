@@ -209,6 +209,7 @@ where
                     params,
                     return_type,
                     body,
+                    wrapper: false,
                 })
                 .with_span(span)
             })
@@ -896,6 +897,7 @@ fn placeholder_wrapper_function(
         params,
         return_type: None,
         body,
+        wrapper: true,
     })
     .with_span(span)
 }
