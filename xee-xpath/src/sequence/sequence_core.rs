@@ -129,6 +129,12 @@ impl Sequence {
             .map_err(|_| error::Error::FORG0006)
     }
 
+    pub fn concat(&self, other: &sequence::Sequence) -> Self {
+        let a: stack::Value = self.clone().into();
+        let b: stack::Value = other.clone().into();
+        a.concat(b).into()
+    }
+
     pub fn deep_equal(
         &self,
         other: &Sequence,

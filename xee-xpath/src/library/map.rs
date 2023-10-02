@@ -1,14 +1,142 @@
 // https://www.w3.org/TR/xpath-functions-31/#array-functions
 
+use ahash::HashMap;
+use ahash::HashMapExt;
 use ibig::IBig;
 
+use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
+use crate::interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
+use crate::Occurrence;
+
+#[xpath_fn("map:merge($maps as map(*)*) as map(*)")]
+fn merge1(maps: &[function::Map]) -> error::Result<function::Map> {
+    merge(
+        maps,
+        MergeOptions {
+            duplicates: MergeDuplicates::UseFirst,
+        },
+    )
+}
+
+#[xpath_fn("map:merge($maps as map(*)*, $options as map(*)) as map(*)")]
+fn merge2(
+    interpreter: &interpreter::Interpreter,
+    maps: &[function::Map],
+    options: function::Map,
+) -> error::Result<function::Map> {
+    let options = MergeOptions::from_map(&options, interpreter.runnable())?;
+    merge(maps, options)
+}
+
+enum MergeDuplicates {
+    // raise FOJS0003, if duplicate keys are encountered
+    Reject,
+    // if duplicate keys are present, the one from the earlier map takes precedence
+    UseFirst,
+    // if duplicate keys are present, the one from the later map takes precedence
+    UseLast,
+    // Implementation dependent on which duplicates take precedence
+    UseAny,
+    // duplicate values are concatenated into a sequence
+    Combine,
+}
+
+impl MergeDuplicates {
+    fn from_str(s: &str) -> error::Result<Self> {
+        match s {
+            "reject" => Ok(MergeDuplicates::Reject),
+            "use-first" => Ok(MergeDuplicates::UseFirst),
+            "use-last" => Ok(MergeDuplicates::UseLast),
+            "use-any" => Ok(MergeDuplicates::UseAny),
+            "combine" => Ok(MergeDuplicates::Combine),
+            _ => Err(error::Error::FOJS0005),
+        }
+    }
+}
+
+struct MergeOptions {
+    duplicates: MergeDuplicates,
+}
+
+impl MergeOptions {
+    fn from_map(map: &function::Map, runnable: &interpreter::Runnable) -> error::Result<Self> {
+        let key: atomic::Atomic = "duplicates".to_string().into();
+        let duplicates = map.get(&key);
+        if let Some(duplicates) = duplicates {
+            let value = Self::duplicates_value(runnable, &duplicates)?;
+            let duplicates = MergeDuplicates::from_str(&value)?;
+            Ok(Self { duplicates })
+        } else {
+            // default
+            Ok(Self {
+                duplicates: MergeDuplicates::UseFirst,
+            })
+        }
+    }
+
+    fn duplicates_value(
+        runnable: &interpreter::Runnable,
+        duplicates: &sequence::Sequence,
+    ) -> error::Result<String> {
+        // we want a string type
+        let sequence_type = ast::SequenceType::Item(ast::Item {
+            occurrence: ast::Occurrence::One,
+            item_type: ast::ItemType::AtomicOrUnionType(Xs::String),
+        });
+        // apply function conversion rules as specified by the option parameter
+        // conventions
+        let duplicates = duplicates
+            .clone()
+            .sequence_type_matching_function_conversion(
+                &sequence_type,
+                runnable.dynamic_context(),
+                |function| runnable.function_info(function).signature(),
+            )?;
+        // take the first value, which should be a string
+        let duplicates = duplicates.items().one()?;
+        let atomic: atomic::Atomic = duplicates.to_atomic()?;
+        atomic.to_string()
+    }
+}
+
+fn merge(maps: &[function::Map], options: MergeOptions) -> error::Result<function::Map> {
+    match options.duplicates {
+        MergeDuplicates::Reject => combine_maps(maps, |_, _| Err(error::Error::FOJS0003)),
+        MergeDuplicates::UseFirst => combine_maps(maps, |a, _| Ok(a.clone())),
+        MergeDuplicates::UseLast => combine_maps(maps, |_, b| Ok(b.clone())),
+        MergeDuplicates::UseAny => combine_maps(maps, |a, _| Ok(a.clone())),
+        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.concat(b))),
+    }
+}
+
+fn combine_maps(
+    maps: &[function::Map],
+    combine: impl Fn(&sequence::Sequence, &sequence::Sequence) -> error::Result<sequence::Sequence>,
+) -> error::Result<function::Map> {
+    let mut result = HashMap::new();
+    for map in maps {
+        for (_, (key, value)) in map.0.iter() {
+            let map_key = atomic::MapKey::new(key.clone()).unwrap();
+            let entry = result.get(&map_key);
+            let value = if let Some((_, a)) = entry {
+                combine(a, value)?
+            } else {
+                value.clone()
+            };
+            result.insert(map_key, (key.clone(), value));
+        }
+    }
+    Ok(function::Map::from_map(result))
+}
 
 #[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
 fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
@@ -47,6 +175,8 @@ fn remove(map: function::Map, keys: &[atomic::Atomic]) -> function::Map {
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
+        wrap_xpath_fn!(merge1),
+        wrap_xpath_fn!(merge2),
         wrap_xpath_fn!(get),
         wrap_xpath_fn!(size),
         wrap_xpath_fn!(keys),

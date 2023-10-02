@@ -21,6 +21,12 @@ impl Map {
         Ok(Self(Rc::new(map)))
     }
 
+    pub(crate) fn from_map(
+        map: HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>,
+    ) -> Self {
+        Self(Rc::new(map))
+    }
+
     pub(crate) fn get(&self, key: &atomic::Atomic) -> Option<sequence::Sequence> {
         let map_key = atomic::MapKey::new(key.clone()).ok()?;
         self.0.get(&map_key).map(|(_, v)| v.clone())
@@ -28,6 +34,10 @@ impl Map {
 
     pub(crate) fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 
     pub(crate) fn keys(&self) -> impl Iterator<Item = atomic::Atomic> + '_ {

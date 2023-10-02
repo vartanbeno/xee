@@ -419,6 +419,7 @@ pub enum Error {
     /// fn:json-to-xml if the input contains duplicate keys, when the chosen
     /// policy is to reject duplicates.
     #[error("JSON duplicate keys")]
+    #[diagnostic(code(FOJS0003))]
     FOJS0003,
     /// JSON: not schema-aware.
     ///
@@ -431,6 +432,7 @@ pub enum Error {
     /// Raised by functions such as map:merge, fn:parse-json, and
     /// fn:xml-to-json if the $options map contains an invalid entry.
     #[error("Invalid options")]
+    #[diagnostic(code(FOJS0005))]
     FOJS0005,
     /// Invalid XML representation of JSON.
     ///

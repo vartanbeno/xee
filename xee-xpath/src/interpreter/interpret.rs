@@ -43,6 +43,10 @@ impl<'a> Interpreter<'a> {
         &self.state
     }
 
+    pub(crate) fn runnable(&self) -> &Runnable {
+        self.runnable
+    }
+
     pub(crate) fn start(
         &mut self,
         context_item: Option<&sequence::Item>,
