@@ -38,7 +38,7 @@ Ok(
                                 ),
                                 span: 0..0,
                             },
-                            key: Spanned {
+                            arg_atom: Spanned {
                                 value: Const(
                                     String(
                                         "foo",
