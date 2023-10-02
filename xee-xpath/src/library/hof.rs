@@ -204,7 +204,7 @@ fn sort_without_key(
     collation: &str,
 ) -> error::Result<sequence::Sequence> {
     sort_by_sequence(context, input, collation, |item| {
-        // the sequivalent of fn:data()
+        // the equivalent of fn:data()
         let seq: sequence::Sequence = item.clone().into();
         let atoms = seq
             .atomized(context.xot)
