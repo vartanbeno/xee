@@ -370,50 +370,62 @@ impl<'a> IrConverter<'a> {
                     Ok(bindings.concat(arg_bindings).bind(binding))
                 }
                 ast::Postfix::Lookup(key_specifier) => {
-                    let atom = bindings.atom();
-                    let span = (0..0).into();
-                    match key_specifier {
-                        ast::KeySpecifier::NcName(ncname) => {
-                            let arg_atom = Spanned::new(
-                                ir::Atom::Const(ir::Const::String(ncname.clone())),
-                                span,
-                            );
-                            let arg_bindings = self.atom(arg_atom, span);
-                            let mut bindings = bindings.concat(arg_bindings);
-                            let arg_atom = bindings.atom();
-                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                            let binding = self.new_binding(expr, span);
-                            Ok(bindings.bind(binding))
-                        }
-                        ast::KeySpecifier::Integer(integer) => {
-                            let arg_atom = Spanned::new(
-                                ir::Atom::Const(ir::Const::Integer(integer.clone())),
-                                span,
-                            );
-                            let arg_bindings = self.atom(arg_atom, span);
-                            let mut bindings = bindings.concat(arg_bindings);
-                            let arg_atom = bindings.atom();
-                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                            let binding = self.new_binding(expr, span);
-                            Ok(bindings.bind(binding))
-                        }
-                        ast::KeySpecifier::Expr(expr) => {
-                            let arg_bindings = self.expr_or_empty(expr)?;
-                            let mut bindings = bindings.concat(arg_bindings);
-                            let arg_atom = bindings.atom();
-                            let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                            let binding = self.new_binding(expr, span);
-                            Ok(bindings.bind(binding))
-                        }
-                        ast::KeySpecifier::Star => {
-                            let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom });
-                            let binding = self.new_binding(expr, span);
-                            Ok(bindings.bind(binding))
-                        }
-                    }
+                    self.postfix_lookup(key_specifier, &mut bindings)
                 }
             }
         })
+    }
+
+    fn postfix_lookup(
+        &mut self,
+        key_specifier: &ast::KeySpecifier,
+        bindings: &mut Bindings,
+    ) -> Result<Bindings> {
+        let atom = bindings.atom();
+        let span = (0..0).into();
+        match key_specifier {
+            ast::KeySpecifier::NcName(ncname) => {
+                let arg_atom =
+                    Spanned::new(ir::Atom::Const(ir::Const::String(ncname.clone())), span);
+                let arg_bindings = self.atom(arg_atom, span);
+                let mut bindings = bindings.concat(arg_bindings);
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+
+                // let return_bindings = Bindings::from_vec(vec![binding]);
+                // let context_names = self.explicit_context_names(name);
+                // let expr = ir::Expr::Map(ir::Map {
+                //     context_names,
+                //     var_atom: atom,
+                //     return_expr: Box::new(return_bindings.expr()),
+                // });
+            }
+            ast::KeySpecifier::Integer(integer) => {
+                let arg_atom =
+                    Spanned::new(ir::Atom::Const(ir::Const::Integer(integer.clone())), span);
+                let arg_bindings = self.atom(arg_atom, span);
+                let mut bindings = bindings.concat(arg_bindings);
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::KeySpecifier::Expr(expr) => {
+                let arg_bindings = self.expr_or_empty(expr)?;
+                let mut bindings = bindings.concat(arg_bindings);
+                let arg_atom = bindings.atom();
+                let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+            ast::KeySpecifier::Star => {
+                let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
+        }
     }
 
     fn axis_step(&mut self, ast: &ast::AxisStep, span: Span) -> Result<Bindings> {
