@@ -1331,8 +1331,6 @@ fn-function-lookup-764
 fn-function-lookup-765
 fn-function-lookup-766b
 fn-function-lookup-812
-fn-function-lookup-813
-fn-function-lookup-814
 fn-function-lookup-815
 fn-function-lookup-816
 = fn-function-name
@@ -3312,16 +3310,6 @@ xml-to-json-D-511
 = map-entry
 map-entry-001-hof
 = map-find
-map-find-001
-map-find-002
-map-find-003
-map-find-004
-map-find-005
-map-find-006
-map-find-007
-map-find-008
-map-find-009
-map-find-010
 map-find-101
 map-find-102
 = map-for-each

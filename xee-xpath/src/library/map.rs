@@ -138,11 +138,6 @@ fn combine_maps(
     Ok(function::Map::from_map(result))
 }
 
-#[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
-fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
-    map.get(&key).unwrap_or(sequence::Sequence::empty())
-}
-
 #[xpath_fn("map:size($map as map(*)) as xs:integer")]
 fn size(map: function::Map) -> IBig {
     map.len().into()
@@ -156,6 +151,43 @@ fn keys(map: function::Map) -> sequence::Sequence {
 #[xpath_fn("map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean")]
 fn contains(map: function::Map, key: atomic::Atomic) -> bool {
     map.get(&key).is_some()
+}
+
+#[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
+fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
+    map.get(&key).unwrap_or(sequence::Sequence::empty())
+}
+
+#[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]
+fn find(input: &sequence::Sequence, key: atomic::Atomic) -> function::Array {
+    find_helper(input, atomic::MapKey::new(key.clone()).unwrap()).into()
+}
+
+fn find_helper(input: &sequence::Sequence, key: atomic::MapKey) -> Vec<sequence::Sequence> {
+    let mut result: Vec<sequence::Sequence> = Vec::new();
+    for item in input.items().flatten() {
+        if let sequence::Item::Function(function) = item {
+            match function.as_ref() {
+                function::Function::Array(array) => {
+                    for entry in array.iter() {
+                        let found = find_helper(entry, key.clone());
+                        result.extend(found.into_iter())
+                    }
+                }
+                function::Function::Map(map) => {
+                    for (k, (_, v)) in map.0.iter() {
+                        if k == &key {
+                            result.push(v.clone());
+                        }
+                        let found = find_helper(v, key.clone());
+                        result.extend(found.into_iter())
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    result
 }
 
 #[xpath_fn("map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*)")]
@@ -177,10 +209,11 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(merge1),
         wrap_xpath_fn!(merge2),
-        wrap_xpath_fn!(get),
+        wrap_xpath_fn!(find),
         wrap_xpath_fn!(size),
         wrap_xpath_fn!(keys),
         wrap_xpath_fn!(contains),
+        wrap_xpath_fn!(get),
         wrap_xpath_fn!(put),
         wrap_xpath_fn!(entry),
         wrap_xpath_fn!(remove),
