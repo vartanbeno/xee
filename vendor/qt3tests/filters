@@ -137,8 +137,6 @@ fo-test-map-for-each-001
 fo-test-map-for-each-002
 fo-test-map-for-each-003
 fo-test-map-keys-001
-fo-test-map-merge-001
-fo-test-map-merge-002
 = array-append
 = array-filter
 = array-flatten
@@ -1337,10 +1335,6 @@ fn-function-lookup-813
 fn-function-lookup-814
 fn-function-lookup-815
 fn-function-lookup-816
-fn-function-lookup-821
-fn-function-lookup-822
-fn-function-lookup-823
-fn-function-lookup-824
 = fn-function-name
 fn-function-name-008
 fn-function-name-017
@@ -3315,7 +3309,6 @@ xml-to-json-D-511
 = fn-years-from-duration
 = fn-zero-or-one
 = map-contains
-map-contains-016
 = map-entry
 map-entry-001-hof
 = map-find
@@ -3349,67 +3342,21 @@ map-for-each-014
 map-for-each-015
 map-for-each-016
 = map-get
-map-get-016
 map-get-023
 map-get-024
 = map-keys
-map-keys-002
-map-keys-005
-map-keys-008
-map-keys-014
 = map-merge
-map-merge-002
-map-merge-003
 map-merge-003-hof
-map-merge-004
-map-merge-005
-map-merge-006
-map-merge-006b
-map-merge-006c
-map-merge-006d
-map-merge-006e
-map-merge-006f
-map-merge-007
-map-merge-008
-map-merge-009
-map-merge-010
-map-merge-011
-map-merge-012
-map-merge-013
-map-merge-016
-map-merge-019
-map-merge-020
-map-merge-021
-map-merge-022
-map-merge-023
-map-merge-024
-map-merge-024-hof
-map-merge-025
-map-merge-026
 map-merge-027
 = map-put
 map-put-003-hof
-map-put-008
-map-put-012
-map-put-013
-map-put-019
-map-put-020
 map-put-021
 map-put-023
 = map-remove
-map-remove-002
-map-remove-006
-map-remove-007
-map-remove-008
-map-remove-009
-map-remove-012
 map-remove-014
 map-remove-015
 map-remove-016
 = map-size
-map-size-002
-map-size-005
-map-size-008
 map-size-014
 map-size-015
 = math-acos
@@ -3595,11 +3542,7 @@ K-NumericSubtract-35
 = op-numeric-unary-minus
 = op-numeric-unary-plus
 = op-same-key
-same-key-001
-same-key-004
-same-key-005
 same-key-007
-same-key-022
 = op-string-equal
 = op-string-greater-than
 = op-string-less-than
