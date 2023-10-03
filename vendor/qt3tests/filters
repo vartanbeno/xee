@@ -53,8 +53,6 @@ string-queries-results-q1
 = app-Walmsley
 = app-XMark
 = app-spec-examples
-fo-test-array-get-001
-fo-test-array-get-002
 fo-test-fn-analyze-string-001
 fo-test-fn-analyze-string-002
 fo-test-fn-analyze-string-003
@@ -185,8 +183,6 @@ analyzeString-901
 analyzeString-902
 analyzeString-903
 = fn-apply
-fn-apply-11
-fn-apply-17
 = fn-available-environment-variables
 fn-available-environment-variables-001
 fn-available-environment-variables-002
@@ -295,7 +291,6 @@ K2-DataFunc-6
 = fn-day-from-dateTime
 = fn-days-from-duration
 = fn-deep-equal
-fn-deep-equal-arrays-18
 = fn-default-collation
 = fn-default-language
 default-language-001
@@ -3025,8 +3020,6 @@ fn-trace-9
 fn-transform-901
 fn-transform-902
 = fn-translate
-fn-translate-21
-fn-translate-22
 = fn-true
 = fn-unordered
 fn-unordered-mix-args-001
@@ -3296,23 +3289,14 @@ map-find-101
 map-find-102
 = map-for-each
 = map-get
-map-get-023
-map-get-024
 = map-keys
 = map-merge
 map-merge-003-hof
 map-merge-027
 = map-put
 map-put-003-hof
-map-put-021
-map-put-023
 = map-remove
-map-remove-014
-map-remove-015
-map-remove-016
 = map-size
-map-size-014
-map-size-015
 = math-acos
 = math-asin
 = math-atan
@@ -3556,44 +3540,21 @@ ArrayTest-081
 ArrayTest-084
 ArrayTest-087
 = prod-ArrowPostfix
-ArrowPostfix-001
-ArrowPostfix-002
-ArrowPostfix-003
 ArrowPostfix-004
 ArrowPostfix-005
 ArrowPostfix-006
-ArrowPostfix-007
-ArrowPostfix-008
-ArrowPostfix-009
-ArrowPostfix-010
 ArrowPostfix-011
 ArrowPostfix-012
 ArrowPostfix-013
-ArrowPostfix-015
-ArrowPostfix-016
-ArrowPostfix-017
-ArrowPostfix-018
-ArrowPostfix-019
 ArrowPostfix-020
 ArrowPostfix-021
 ArrowPostfix-022
 ArrowPostfix-023
-ArrowPostfix-024
 ArrowPostfix-025
-ArrowPostfix-026
-ArrowPostfix-027
-ArrowPostfix-028
-ArrowPostfix-029
-ArrowPostfix-030
-ArrowPostfix-032
-ArrowPostfix-101
-ArrowPostfix-102
-ArrowPostfix-103
 ArrowPostfix-104
 ArrowPostfix-105
 ArrowPostfix-106
 ArrowPostfix-107
-ArrowPostfix-108
 ArrowPostfix-109
 ArrowPostfix-110
 = prod-AxisStep

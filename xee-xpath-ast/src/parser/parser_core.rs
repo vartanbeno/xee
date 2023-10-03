@@ -5,7 +5,7 @@ use crate::ast;
 use crate::ast::Span;
 use crate::lexer::Token;
 
-use crate::span::WithSpan;
+use crate::span::{Spanned, WithSpan};
 use crate::FN_NAMESPACE;
 
 use super::axis_node_test::{parser_axis_node_test, ParserAxisNodeTestOutput};
@@ -148,7 +148,7 @@ where
         let key_specifier = ncname
             .map(|name| ast::KeySpecifier::NcName(name.to_string()))
             .or(integer.map(ast::KeySpecifier::Integer))
-            .or(parenthesized_expr.map(ast::KeySpecifier::Expr))
+            .or(parenthesized_expr.clone().map(ast::KeySpecifier::Expr))
             .or(just(Token::Asterisk).to(ast::KeySpecifier::Star));
 
         let lookup = just(Token::QuestionMark)
@@ -159,29 +159,40 @@ where
 
         let postfix = predicate.or(argument_list_postfix).or(lookup).boxed();
 
+        fn static_function_call(
+            name: ast::NameS,
+            arguments: Vec<ArgumentOrPlaceholder>,
+            default_function_namespace: Option<&str>,
+            span: Span,
+        ) -> ast::PrimaryExprS {
+            let name = name.map(|name| name.with_default_namespace(default_function_namespace));
+            let (arguments, params) = placeholder_arguments(&arguments);
+            if params.is_empty() {
+                ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
+                    .with_span(span)
+            } else {
+                let inner_function_call =
+                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
+                        .with_empty_span();
+                let step_expr = ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
+                placeholder_wrapper_function(step_expr, params, span)
+            }
+        }
+
         let function_call = eqname
             .clone()
-            .then(argument_list)
+            .then(argument_list.clone())
             .try_map(|(name, arguments), span| {
                 check_reserved(&name, span)?;
                 Ok((name, arguments))
             })
             .map_with_state(move |(name, arguments), span, state: &mut State| {
-                let name = name.map(|name| {
-                    name.with_default_namespace(state.namespaces.default_function_namespace)
-                });
-                let (arguments, params) = placeholder_arguments(&arguments);
-                if params.is_empty() {
-                    ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
-                        .with_span(span)
-                } else {
-                    let inner_function_call =
-                        ast::PrimaryExpr::FunctionCall(ast::FunctionCall { name, arguments })
-                            .with_empty_span();
-                    let step_expr =
-                        ast::StepExpr::PrimaryExpr(inner_function_call).with_empty_span();
-                    placeholder_wrapper_function(step_expr, params, span)
-                }
+                static_function_call(
+                    name,
+                    arguments,
+                    state.namespaces.default_function_namespace,
+                    span,
+                )
             })
             .boxed();
 
@@ -267,7 +278,7 @@ where
 
         let primary_expr = parenthesized_expr_primary
             .or(literal)
-            .or(var_ref)
+            .or(var_ref.clone())
             .or(context_item_expr)
             .or(named_function_ref)
             .or(inline_function_expr)
@@ -457,8 +468,52 @@ where
             })
             .boxed();
 
-        // // TODO
-        let arrow_expr = unary_expr;
+        enum ArrowFunctionSpecifier {
+            EQName(ast::NameS),
+            VarRef(ast::PrimaryExprS),
+            ParenthesizedExpr(Spanned<Option<ast::Expr>>),
+        }
+        let arrow_function_specifier = (eqname.clone().map(ArrowFunctionSpecifier::EQName))
+            .or(var_ref.clone().map(ArrowFunctionSpecifier::VarRef))
+            .or(parenthesized_expr
+                .clone()
+                .map(ArrowFunctionSpecifier::ParenthesizedExpr));
+
+        let arrow_expr = unary_expr
+            .then(
+                (just(Token::Arrow)
+                    .ignore_then(arrow_function_specifier)
+                    .then(argument_list.clone()))
+                .repeated()
+                .collect::<Vec<(ArrowFunctionSpecifier, Vec<ArgumentOrPlaceholder>)>>(),
+            )
+            .map_with_state(
+                |(unary_expr, arrow_function_specifiers), span, state: &mut State| {
+                    if arrow_function_specifiers.is_empty() {
+                        return unary_expr;
+                    }
+                    arrow_function_specifiers.iter().fold(
+                        unary_expr,
+                        |expr, (specifier, argument_list)| match specifier {
+                            ArrowFunctionSpecifier::EQName(name) => {
+                                let mut argument_list = argument_list.clone();
+                                argument_list.insert(0, ArgumentOrPlaceholder::Argument(expr));
+                                primary_expr_to_expr_single(static_function_call(
+                                    name.clone(),
+                                    argument_list,
+                                    state.namespaces.default_function_namespace,
+                                    span,
+                                ))
+                            }
+                            // TODO
+                            ArrowFunctionSpecifier::VarRef(_primary_expr) => expr,
+                            // TODO
+                            ArrowFunctionSpecifier::ParenthesizedExpr(_parenthesized_expr) => expr,
+                        },
+                    )
+                },
+            );
+
         let cast_expr = arrow_expr
             .then(
                 just(Token::Cast)
@@ -814,6 +869,14 @@ fn expr_single_to_path_expr(expr: ast::ExprSingleS) -> ast::PathExpr {
     }
 }
 
+fn primary_expr_to_expr_single(primary_expr: ast::PrimaryExprS) -> ast::ExprSingleS {
+    let span = primary_expr.span;
+    ast::ExprSingle::Path(ast::PathExpr {
+        steps: vec![ast::StepExpr::PrimaryExpr(primary_expr).with_span(span)],
+    })
+    .with_span(span)
+}
+
 fn root_step(span: Span) -> ast::StepExprS {
     let path_arg = ast::ExprSingle::Path(ast::PathExpr {
         steps: vec![ast::StepExpr::AxisStep(ast::AxisStep {
@@ -836,6 +899,7 @@ fn root_step(span: Span) -> ast::StepExprS {
     .with_span(span)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum ArgumentOrPlaceholder {
     Argument(ast::ExprSingleS),
     Placeholder,
