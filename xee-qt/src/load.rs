@@ -282,6 +282,13 @@ fn test_cases_query<'a>(
         )))
     })?;
 
+    let assert_permutation_query = queries.one("string()", |_, item| {
+        let xpath: String = item.to_atomic()?.try_into()?;
+        Ok(qt::TestCaseResult::AssertPermutation(
+            assert::AssertPermutation::new(qt::XPathExpr(xpath)),
+        ))
+    })?;
+
     let any_all_recurse = queries.many_recurse("*")?;
     let not_recurse = queries.one_recurse("*")?;
 
@@ -321,6 +328,8 @@ fn test_cases_query<'a>(
                 assert_string_value_query.execute(session, item)?
             } else if local_name == "assert" {
                 assert_query.execute(session, item)?
+            } else if local_name == "assert-permutation" {
+                assert_permutation_query.execute(session, item)?
             } else if local_name == "assert-empty" {
                 qt::TestCaseResult::AssertEmpty(assert::AssertEmpty::new())
             } else if local_name == "assert-type" {

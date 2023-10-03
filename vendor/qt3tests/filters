@@ -64,7 +64,6 @@ fo-test-fn-contains-004
 fo-test-fn-contains-005
 fo-test-fn-contains-006
 fo-test-fn-contains-007
-fo-test-fn-distinct-values-001
 fo-test-fn-distinct-values-002
 fo-test-fn-encode-for-uri-001
 fo-test-fn-encode-for-uri-002
@@ -132,10 +131,6 @@ fo-test-fn-substring-before-004
 fo-test-fn-substring-before-005
 fo-test-fn-substring-before-006
 fo-test-fn-substring-before-007
-fo-test-fn-unordered-001
-fo-test-map-for-each-001
-fo-test-map-for-each-002
-fo-test-map-keys-001
 = array-append
 = array-filter
 = array-flatten
@@ -311,13 +306,8 @@ default-language-005
 default-language-006
 = fn-distinct-values
 fn-distinct-values-2
-fn-distinct-values-mixed-args-005
-fn-distinct-values-mixed-args-006
 fn-distinct-values-mixed-args-009
-fn-distinct-values-mixed-args-010
 fn-distinct-values-mixed-args-011
-fn-distinct-values-mixed-args-018
-fn-distinct-values-mixed-args-032
 = fn-doc
 K2-SeqDocFunc-1
 K2-SeqDocFunc-10
@@ -3040,11 +3030,6 @@ fn-translate-22
 = fn-true
 = fn-unordered
 fn-unordered-mix-args-001
-fn-unordered-mix-args-002
-fn-unordered-mix-args-003
-fn-unordered-mix-args-004
-fn-unordered-mix-args-005
-fn-unordered-mix-args-006
 fn-unordered-mix-args-007
 fn-unordered-mix-args-008
 fn-unordered-mix-args-009
@@ -3826,8 +3811,6 @@ K2-Literals-37
 K2-Literals-38
 K2-Literals-6
 = prod-Lookup
-Lookup-145
-Lookup-154
 Lookup-211
 Lookup-231
 Lookup-232

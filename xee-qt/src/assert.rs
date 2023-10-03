@@ -251,6 +251,57 @@ impl Assertable for AssertCount {
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertPermutation(qt::XPathExpr);
 
+impl AssertPermutation {
+    pub(crate) fn new(expr: qt::XPathExpr) -> Self {
+        Self(expr)
+    }
+}
+
+impl Assertable for AssertPermutation {
+    fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
+        // sequence should consist of atoms. sort these so we only have to
+        // compare to one permutation.
+        let context = runnable.dynamic_context();
+        let collation_str = runnable.default_collation_uri();
+        let collation = runnable.default_collation().unwrap();
+        let default_offset = runnable.implicit_timezone();
+        let xot = runnable.xot();
+
+        let sequence = sequence.sorted(context, collation_str);
+
+        if let Err(err) = sequence {
+            return TestOutcome::RuntimeError(err);
+        }
+        let sequence = sequence.unwrap();
+
+        let result_sequence = run_xpath(&self.0, runnable);
+
+        match result_sequence {
+            Ok(result_sequence) => {
+                // sort result sequence too.
+                let result_sequence = result_sequence.sorted(context, collation_str);
+
+                match result_sequence {
+                    Ok(value) => {
+                        if let Ok(true) =
+                            sequence.deep_equal(&value, collation.as_ref(), default_offset, xot)
+                        {
+                            TestOutcome::Passed
+                        } else {
+                            TestOutcome::Failed(Failure::Permutation(
+                                self.clone(),
+                                sequence.clone(),
+                            ))
+                        }
+                    }
+                    Err(error) => TestOutcome::RuntimeError(error),
+                }
+            }
+            Err(error) => TestOutcome::UnsupportedExpression(error),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssertXml(String);
 
@@ -572,6 +623,7 @@ impl TestCaseResult {
             TestCaseResult::AssertStringValue(a) => a.assert_result(runnable, result),
             TestCaseResult::AssertXml(a) => a.assert_result(runnable, result),
             TestCaseResult::Assert(a) => a.assert_result(runnable, result),
+            TestCaseResult::AssertPermutation(a) => a.assert_result(runnable, result),
             TestCaseResult::AssertError(a) => a.assert_result(runnable, result),
             TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, result),
             TestCaseResult::AssertType(a) => a.assert_result(runnable, result),
@@ -613,6 +665,7 @@ pub enum Failure {
     StringValue(AssertStringValue, AssertStringValueFailure),
     Xml(AssertXml, AssertXmlFailure),
     Assert(Assert, Sequence),
+    Permutation(AssertPermutation, Sequence),
     Empty(AssertEmpty, Sequence),
     Error(AssertError, Sequence),
     Type(AssertType, Sequence),
@@ -684,6 +737,12 @@ impl fmt::Display for Failure {
             }
             Failure::Assert(_a, failure) => {
                 writeln!(f, "assert:")?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Permutation(a, failure) => {
+                writeln!(f, "permutation:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
                 writeln!(f, "  actual: {:?}", failure)?;
                 Ok(())
             }

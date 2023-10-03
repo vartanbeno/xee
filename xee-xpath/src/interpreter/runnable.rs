@@ -102,11 +102,15 @@ impl<'a> Runnable<'a> {
         self.dynamic_context.xot
     }
 
-    pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
+    pub fn default_collation_uri(&self) -> &str {
+        self.dynamic_context.static_context.default_collation_uri()
+    }
+
+    pub fn default_collation(&self) -> error::Result<Rc<Collation>> {
         self.dynamic_context.static_context.default_collation()
     }
 
-    pub(crate) fn implicit_timezone(&self) -> chrono::FixedOffset {
+    pub fn implicit_timezone(&self) -> chrono::FixedOffset {
         self.dynamic_context.implicit_timezone()
     }
 
