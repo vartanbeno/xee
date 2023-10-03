@@ -179,6 +179,7 @@ impl TypeInfo for ast::ItemType {
                 ast::ItemType::MapTest(_),
                 ast::ItemType::FunctionTest(ast::FunctionTest::AnyFunctionTest),
             ) => true,
+
             // 30 Ai is map(*) (or, because of the transitivity rules, any
             // other map type), and Bi is function(xs:anyAtomicType) as
             // item()*.
@@ -187,7 +188,7 @@ impl TypeInfo for ast::ItemType {
                 ast::ItemType::FunctionTest(ast::FunctionTest::TypedFunctionTest(
                     typed_function_test,
                 )),
-            ) => typed_function_test.as_ref() == &map_function_test(),
+            ) if typed_function_test.as_ref() == &map_function_test() => true,
             // 31 Ai is array(X) and Bi is array(*).
             (
                 ast::ItemType::ArrayTest(_),
@@ -197,15 +198,19 @@ impl TypeInfo for ast::ItemType {
             (
                 ast::ItemType::ArrayTest(ast::ArrayTest::TypedArrayTest(a_typed_array_test)),
                 ast::ItemType::ArrayTest(ast::ArrayTest::TypedArrayTest(b_typed_array_test)),
-            ) => a_typed_array_test
+            ) if a_typed_array_test
                 .as_ref()
-                .subtype(b_typed_array_test.as_ref()),
+                .subtype(b_typed_array_test.as_ref()) =>
+            {
+                true
+            }
             // 33 Ai is array(*) (or, because of the transitivity rules, any
             // other array type) and Bi is function(*).
             (
                 ast::ItemType::ArrayTest(_),
                 ast::ItemType::FunctionTest(ast::FunctionTest::AnyFunctionTest),
             ) => true,
+
             // 34 Ai is array(*) (or, because of the transitivity rules, any
             // other array type) and Bi is function(xs:integer) as item()*.
             (
@@ -213,13 +218,67 @@ impl TypeInfo for ast::ItemType {
                 ast::ItemType::FunctionTest(ast::FunctionTest::TypedFunctionTest(
                     typed_function_test,
                 )),
-            ) => typed_function_test.as_ref() == &array_function_test(),
+            ) if typed_function_test.as_ref() == &array_function_test() => true,
             // 35 Ai is map(K, V), and Bi is function(xs:anyAtomicType) as V?.
-            // TODO
+            // has to be above 30 to match at all
+            (
+                ast::ItemType::MapTest(ast::MapTest::TypedMapTest(typed_map_test)),
+                ast::ItemType::FunctionTest(ast::FunctionTest::TypedFunctionTest(
+                    typed_function_test,
+                )),
+            ) => {
+                typed_function_test.parameter_types.len() == 1
+                    && typed_function_test.parameter_types[0]
+                        == ast::SequenceType::Item(ast::Item {
+                            item_type: ast::ItemType::AtomicOrUnionType(
+                                xee_schema_type::Xs::AnyAtomicType,
+                            ),
+                            occurrence: ast::Occurrence::One,
+                        })
+                    && is_type_question_mark(
+                        &typed_map_test.value_type,
+                        &typed_function_test.return_type,
+                    )
+            }
             // 36 Ai is array(X) and Bi is function(xs:integer) as X.
-            // TODO
+            (
+                ast::ItemType::ArrayTest(ast::ArrayTest::TypedArrayTest(a_sequence_type)),
+                ast::ItemType::FunctionTest(ast::FunctionTest::TypedFunctionTest(
+                    typed_function_test,
+                )),
+            ) => {
+                typed_function_test.parameter_types.len() == 1
+                    && typed_function_test.parameter_types[0]
+                        == ast::SequenceType::Item(ast::Item {
+                            item_type: ast::ItemType::AtomicOrUnionType(
+                                xee_schema_type::Xs::Integer,
+                            ),
+                            occurrence: ast::Occurrence::One,
+                        })
+                    && a_sequence_type.item_type == typed_function_test.return_type
+            }
             _ => false,
         }
+    }
+}
+
+// V? occurs in places in the spec. This isn't very well defined, but
+// I've analyzed it here: https://github.com/w3c/qt3tests/issues/28
+fn is_type_question_mark(a: &ast::SequenceType, b: &ast::SequenceType) -> bool {
+    match (a, b) {
+        (ast::SequenceType::Empty, ast::SequenceType::Empty) => true,
+        (ast::SequenceType::Item(a_item), ast::SequenceType::Item(b_item)) => {
+            if a_item != b_item {
+                return false;
+            }
+            match &b_item.occurrence {
+                ast::Occurrence::One => false,
+                ast::Occurrence::NonEmpty => false,
+                ast::Occurrence::Option => true,
+                ast::Occurrence::Many => true,
+            }
+        }
+        _ => false,
     }
 }
 
