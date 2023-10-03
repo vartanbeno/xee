@@ -424,17 +424,26 @@ impl<'a> Interpreter<'a> {
                     a.ensure_base_schema_type(Xs::Integer)?;
                     b.ensure_base_schema_type(Xs::Integer)?;
 
-                    let a = a.cast_to_integer_value::<i64>()?;
-                    let b = b.cast_to_integer_value::<i64>()?;
+                    let a: IBig = a.try_into().unwrap();
+                    let b: IBig = b.try_into().unwrap();
+                    // let a = a.cast_to_integer_value::<i64>()?;
+                    // let b = b.cast_to_integer_value::<i64>()?;
 
                     match a.cmp(&b) {
                         Ordering::Greater => self.state.push(stack::Value::Empty),
                         Ordering::Equal => self.state.push(a.into()),
                         Ordering::Less => {
-                            if (b - a) > MAXIMUM_RANGE_SIZE {
-                                return Err(error::Error::XPDY0130);
+                            let length: IBig = b - &a + 1;
+                            if (length) > MAXIMUM_RANGE_SIZE.into() {
+                                return Err(error::Error::Overflow);
                             }
-                            let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
+                            let mut items = Vec::with_capacity(length.clone().try_into().unwrap());
+                            let mut i: IBig = 0.into();
+                            while i < length {
+                                items.push((&a + &i).into());
+                                i += 1;
+                            }
+                            // let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
                             self.state.push(items.into())
                         }
                     }
