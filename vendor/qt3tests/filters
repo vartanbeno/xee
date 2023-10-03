@@ -3540,23 +3540,6 @@ ArrayTest-081
 ArrayTest-084
 ArrayTest-087
 = prod-ArrowPostfix
-ArrowPostfix-004
-ArrowPostfix-005
-ArrowPostfix-006
-ArrowPostfix-011
-ArrowPostfix-012
-ArrowPostfix-013
-ArrowPostfix-020
-ArrowPostfix-021
-ArrowPostfix-022
-ArrowPostfix-023
-ArrowPostfix-025
-ArrowPostfix-104
-ArrowPostfix-105
-ArrowPostfix-106
-ArrowPostfix-107
-ArrowPostfix-109
-ArrowPostfix-110
 = prod-AxisStep
 Axes041-1
 K2-Axes-16

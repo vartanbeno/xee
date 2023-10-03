@@ -479,6 +479,29 @@ where
                 .clone()
                 .map(ArrowFunctionSpecifier::ParenthesizedExpr));
 
+        fn dynamic_function_call(
+            primary: ast::PrimaryExprS,
+            argument_list: Vec<ArgumentOrPlaceholder>,
+            span: Span,
+        ) -> ast::ExprSingleS {
+            let (arguments, params) = placeholder_arguments(&argument_list);
+            let primary = if params.is_empty() {
+                primary
+            } else {
+                let step_expr = ast::StepExpr::PrimaryExpr(primary).with_span(span);
+                placeholder_wrapper_function(step_expr, params, span)
+            };
+
+            ast::ExprSingle::Path(ast::PathExpr {
+                steps: vec![ast::StepExpr::PostfixExpr {
+                    primary,
+                    postfixes: vec![ast::Postfix::ArgumentList(arguments)],
+                }
+                .with_span(span)],
+            })
+            .with_span(span)
+        }
+
         let arrow_expr = unary_expr
             .then(
                 (just(Token::Arrow)
@@ -492,23 +515,30 @@ where
                     if arrow_function_specifiers.is_empty() {
                         return unary_expr;
                     }
-                    arrow_function_specifiers.iter().fold(
+                    arrow_function_specifiers.into_iter().fold(
                         unary_expr,
-                        |expr, (specifier, argument_list)| match specifier {
-                            ArrowFunctionSpecifier::EQName(name) => {
-                                let mut argument_list = argument_list.clone();
-                                argument_list.insert(0, ArgumentOrPlaceholder::Argument(expr));
-                                primary_expr_to_expr_single(static_function_call(
-                                    name.clone(),
-                                    argument_list,
-                                    state.namespaces.default_function_namespace,
-                                    span,
-                                ))
+                        |expr, (specifier, argument_list)| {
+                            let mut argument_list = argument_list.clone();
+                            argument_list.insert(0, ArgumentOrPlaceholder::Argument(expr));
+
+                            match specifier {
+                                ArrowFunctionSpecifier::EQName(name) => {
+                                    primary_expr_to_expr_single(static_function_call(
+                                        name.clone(),
+                                        argument_list,
+                                        state.namespaces.default_function_namespace,
+                                        span,
+                                    ))
+                                }
+                                ArrowFunctionSpecifier::VarRef(primary) => {
+                                    dynamic_function_call(primary, argument_list, span)
+                                }
+                                ArrowFunctionSpecifier::ParenthesizedExpr(parenthesized_expr) => {
+                                    let primary =
+                                        ast::PrimaryExpr::Expr(parenthesized_expr).with_span(span);
+                                    dynamic_function_call(primary, argument_list, span)
+                                }
                             }
-                            // TODO
-                            ArrowFunctionSpecifier::VarRef(_primary_expr) => expr,
-                            // TODO
-                            ArrowFunctionSpecifier::ParenthesizedExpr(_parenthesized_expr) => expr,
                         },
                     )
                 },
