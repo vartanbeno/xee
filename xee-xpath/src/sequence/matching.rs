@@ -200,8 +200,17 @@ impl Item {
                         Err(error::Error::Type)
                     }
                 }
-                ast::MapTest::TypedMapTest(_) => {
-                    // TODO: for now we accept all typed map tests
+                ast::MapTest::TypedMapTest(typed_map_test) => {
+                    let map = self.to_map()?;
+                    for (_, (key, value)) in map.0.iter() {
+                        key.atomic_type_matching(typed_map_test.key_type)?;
+                        value.clone().sequence_type_matching_convert(
+                            &typed_map_test.value_type,
+                            convert_atomic,
+                            check_function,
+                            xot,
+                        )?;
+                    }
                     Ok(())
                 }
             },

@@ -3526,10 +3526,8 @@ fn-union-node-args-010
 = prod-AllowingEmpty
 = prod-Annotation
 = prod-ArrayTest
-ArrayTest-067
 ArrayTest-079
 ArrayTest-084
-ArrayTest-087
 = prod-ArrowPostfix
 = prod-AxisStep
 Axes041-1
@@ -3753,11 +3751,7 @@ Lookup-233
 Lookup-234
 = prod-MapConstructor
 = prod-MapTest
-MapTest-006
 MapTest-008
-MapTest-010
-MapTest-013
-MapTest-015
 MapTest-020
 MapTest-059
 MapTest-063
