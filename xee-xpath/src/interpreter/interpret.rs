@@ -443,7 +443,6 @@ impl<'a> Interpreter<'a> {
                                 items.push((&a + &i).into());
                                 i += 1;
                             }
-                            // let items = (a..=b).map(|i| i.into()).collect::<Vec<sequence::Item>>();
                             self.state.push(items.into())
                         }
                     }
