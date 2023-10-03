@@ -107,24 +107,11 @@ pub(crate) mod visit {
             ast::ApplyOperator::SimpleMap(exprs) => {
                 v.visit_simple_map(exprs);
             }
-            ast::ApplyOperator::Unary(_unary_operators) => {
-                // TODO
-            }
-            ast::ApplyOperator::Arrow(_arrows) => {
-                // TODO
-            }
-            ast::ApplyOperator::Cast(_single_type) => {
-                // TODO
-            }
-            ast::ApplyOperator::Castable(_single_type) => {
-                // TODO
-            }
-            ast::ApplyOperator::Treat(_single_type) => {
-                // TODO
-            }
-            ast::ApplyOperator::InstanceOf(_sequence_type) => {
-                // TODO
-            }
+            ast::ApplyOperator::Unary(_unary_operators) => {}
+            ast::ApplyOperator::Cast(_single_type) => {}
+            ast::ApplyOperator::Castable(_single_type) => {}
+            ast::ApplyOperator::Treat(_single_type) => {}
+            ast::ApplyOperator::InstanceOf(_sequence_type) => {}
         }
     }
     pub(crate) fn visit_simple_map<V: AstVisitor + ?Sized>(v: &mut V, expr: &mut [ast::PathExpr]) {

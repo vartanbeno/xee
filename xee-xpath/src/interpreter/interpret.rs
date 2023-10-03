@@ -390,6 +390,21 @@ impl<'a> Interpreter<'a> {
                         self.state.push(false.into());
                     }
                 }
+                EncodedInstruction::Treat => {
+                    let sequence_type_id = self.read_u16();
+                    let value = self.state.top();
+                    let sequence_type =
+                        &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
+                    let sequence: sequence::Sequence = value.into();
+                    let matches = sequence.sequence_type_matching(
+                        sequence_type,
+                        self.runnable.xot(),
+                        &|function| self.runnable.function_info(function).signature(),
+                    );
+                    if matches.is_err() {
+                        Err(error::Error::XPDY0050)?;
+                    }
+                }
                 EncodedInstruction::Range => {
                     let b = self.state.pop();
                     let a = self.state.pop();

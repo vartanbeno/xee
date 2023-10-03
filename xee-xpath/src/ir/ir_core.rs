@@ -34,6 +34,7 @@ pub(crate) enum Expr {
     Cast(Cast),
     Castable(Castable),
     InstanceOf(InstanceOf),
+    Treat(Treat),
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
 }
@@ -191,6 +192,12 @@ impl Castable {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct InstanceOf {
+    pub(crate) atom: AtomS,
+    pub(crate) sequence_type: SequenceType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Treat {
     pub(crate) atom: AtomS,
     pub(crate) sequence_type: SequenceType,
 }

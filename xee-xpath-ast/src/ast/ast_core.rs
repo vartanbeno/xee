@@ -255,7 +255,6 @@ pub struct ApplyExpr {
 pub enum ApplyOperator {
     SimpleMap(Vec<PathExpr>),
     Unary(Vec<UnaryOperator>),
-    Arrow(Vec<(ArrowFunctionSpecifier, Vec<ExprSingleS>)>),
     Cast(SingleType),
     Castable(SingleType),
     Treat(SequenceType),
@@ -274,14 +273,6 @@ pub enum UnaryOperator {
 pub struct SingleType {
     pub name: NameS,
     pub optional: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub enum ArrowFunctionSpecifier {
-    Name(EQName),
-    VarRef(EQName),
-    Expr(ExprS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -47,6 +47,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Cast(cast) => self.compile_cast(cast, span),
             ir::Expr::Castable(castable) => self.compile_castable(castable, span),
             ir::Expr::InstanceOf(instance_of) => self.compile_instance_of(instance_of, span),
+            ir::Expr::Treat(treat) => self.compile_treat(treat, span),
             ir::Expr::MapConstructor(map_constructor) => {
                 self.compile_map_constructor(map_constructor, span)
             }
@@ -437,6 +438,14 @@ impl<'a> InterpreterCompiler<'a> {
             .add_sequence_type(instance_of.sequence_type.clone());
         self.builder
             .emit(Instruction::InstanceOf(sequence_type_id as u16), span);
+        Ok(())
+    }
+
+    fn compile_treat(&mut self, treat: &ir::Treat, span: SourceSpan) -> Result<()> {
+        self.compile_atom(&treat.atom)?;
+        let sequence_type_id = self.builder.add_sequence_type(treat.sequence_type.clone());
+        self.builder
+            .emit(Instruction::Treat(sequence_type_id as u16), span);
         Ok(())
     }
 

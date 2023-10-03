@@ -199,7 +199,6 @@ K-BaseURIFunc-2
 fn-base-uri-2
 fn-base-uri-3
 = fn-boolean
-K-SeqBooleanFunc-16
 = fn-ceiling
 = fn-codepoint-equal
 = fn-codepoints-to-string
@@ -249,21 +248,9 @@ fn-collection-2
 fn-collection-3
 fn-collection-7
 = fn-compare
-K2-CompareFunc-4
-K2-CompareFunc-5
-K2-CompareFunc-6
-K2-CompareFunc-7
-K2-CompareFunc-8
-K2-CompareFunc-9
 compare-013
 = fn-concat
 = fn-contains
-K2-ContainsFunc-1
-K2-ContainsFunc-2
-K2-ContainsFunc-3
-K2-ContainsFunc-4
-K2-ContainsFunc-5
-K2-ContainsFunc-6
 fn-contains-17
 fn-contains-18
 fn-contains-19
@@ -416,12 +403,6 @@ fn-encode-for-uri1args-4
 fn-encode-for-uri1args-5
 fn-encode-for-uri1args-6
 = fn-ends-with
-K2-EndsWithFunc-1
-K2-EndsWithFunc-2
-K2-EndsWithFunc-3
-K2-EndsWithFunc-4
-K2-EndsWithFunc-5
-K2-EndsWithFunc-6
 = fn-environment-variable
 environment-variable-001
 environment-variable-002
@@ -440,7 +421,6 @@ K-ErrorFunc-6
 K-ErrorFunc-7
 K-ErrorFunc-9
 K2-ErrorFunc-3
-cbcl-error-035
 fn-error-10
 fn-error-11
 fn-error-12
@@ -1379,10 +1359,6 @@ fn-in-scope-prefixes-26
 fn-innermost-024
 fn-innermost-059
 = fn-insert-before
-K-SeqInsertBeforeFunc-17
-K-SeqInsertBeforeFunc-18
-K-SeqInsertBeforeFunc-19
-K-SeqInsertBeforeFunc-20
 = fn-iri-to-uri
 K-IRIToURIfunc-3
 K-IRIToURIfunc-4
@@ -1613,11 +1589,6 @@ fn-lang1args-1
 fn-lang1args-2
 fn-lang1args-3
 = fn-last
-K-ContextLastFunc-24
-K-ContextLastFunc-25
-K-ContextLastFunc-26
-K-ContextLastFunc-27
-K-ContextLastFunc-5
 = fn-load-xquery-module
 = fn-local-name
 fn-local-name-78
@@ -2258,7 +2229,6 @@ fn-normalize-space0args-1
 cbcl-fn-normalize-unicode-001
 cbcl-fn-normalize-unicode-006
 = fn-not
-K-NotFunc-10
 = fn-number
 = fn-one-or-more
 = fn-outermost
@@ -2571,10 +2541,6 @@ path010
 path015
 path020
 = fn-position
-K-ContextPositionFunc-20
-K-ContextPositionFunc-21
-K-ContextPositionFunc-22
-K-ContextPositionFunc-23
 = fn-prefix-from-QName
 fn-prefix-from-qname-8
 = fn-random-number-generator
@@ -2946,12 +2912,6 @@ fn-sort-17
 fn-sort-23
 fn-sort-spec-6
 = fn-starts-with
-K2-StartsWithFunc-1
-K2-StartsWithFunc-2
-K2-StartsWithFunc-3
-K2-StartsWithFunc-4
-K2-StartsWithFunc-5
-K2-StartsWithFunc-6
 = fn-static-base-uri
 K-StaticBaseURIFunc-3
 fn-static-base-15
@@ -2962,7 +2922,6 @@ fn-string-31
 fn-string-length-24
 = fn-string-to-codepoints
 = fn-subsequence
-K2-SeqSubsequenceFunc-1
 = fn-substring
 K-SubstringFunc-10
 fn-substring-22
@@ -2976,10 +2935,6 @@ fn-substring-before-23
 = fn-timezone-from-dateTime
 = fn-timezone-from-time
 = fn-tokenize
-K2-TokenizeFunc-1
-K2-TokenizeFunc-2
-K2-TokenizeFunc-3
-K2-TokenizeFunc-4
 fn-tokenize-1
 fn-tokenize-31
 fn-tokenize-32
@@ -3498,8 +3453,6 @@ same-key-007
 = op-time-greater-than
 = op-time-less-than
 = op-to
-K-RangeExpr-31
-K-RangeExpr-32
 RangeExpr-409
 RangeExpr-409a
 RangeExpr-409b
@@ -3572,7 +3525,6 @@ CastAs177
 CastAs212
 K-SeqExprCast-1212
 K-SeqExprCast-1414
-K-SeqExprCast-143
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
@@ -3726,10 +3678,6 @@ GenCompEq-2
 = prod-GroupByClause
 = prod-IfExpr
 CondExpr022
-K-CondExpr-12
-K-CondExpr-3
-K-CondExpr-4
-K-CondExpr-6
 = prod-InlineFunctionExpr
 = prod-InstanceofExpr
 K-SeqExprInstanceOf-49
@@ -3924,16 +3872,6 @@ K2-NodeTest-30
 = prod-OptionDecl
 = prod-OptionDecl.serialization
 = prod-OrExpr
-K-LogicExpr-14
-K-LogicExpr-15
-K-LogicExpr-25
-K-LogicExpr-26
-K-LogicExpr-27
-K-LogicExpr-32
-K-LogicExpr-33
-K-LogicExpr-42
-K-LogicExpr-43
-K-LogicExpr-44
 = prod-OrderByClause
 = prod-OrderingModeDecl
 = prod-ParenthesizedExpr
@@ -3943,15 +3881,10 @@ PathExpr-15
 = prod-Predicate
 K-FilterExpr-38
 K-FilterExpr-40
-K-FilterExpr-51
-K-FilterExpr-52
 K-FilterExpr-92
 K-FilterExpr-93
 K-FilterExpr-94
-K2-Predicates-1
 = prod-QuantifiedExpr
-K-QuantExprWithout-7
-K-QuantExprWithout-8
 K-QuantExprWithout-94
 K-QuantExprWithout-95
 K-QuantExprWithout-96
@@ -3971,63 +3904,8 @@ K2-Steps-8
 = prod-StringConstructor
 = prod-SwitchExpr
 = prod-TreatExpr
-K-SeqExprTreat-1
-K-SeqExprTreat-10
-K-SeqExprTreat-11
-K-SeqExprTreat-12
-K-SeqExprTreat-13
-K-SeqExprTreat-14
-K-SeqExprTreat-15
-K-SeqExprTreat-17
-K-SeqExprTreat-2
-K-SeqExprTreat-3
-K-SeqExprTreat-4
-K-SeqExprTreat-5
-K-SeqExprTreat-6
-K-SeqExprTreat-7
 K-SeqExprTreat-8
 K-SeqExprTreat-9
-K2-SeqExprTreat-1
-K2-SeqExprTreat-2
-cbcl-treat-as-001
-cbcl-treat-as-002
-cbcl-treat-as-003
-cbcl-treat-as-004
-cbcl-treat-as-005
-cbcl-treat-as-006
-cbcl-treat-as-007
-cbcl-treat-as-008
-cbcl-treat-as-009
-cbcl-treat-as-010
-cbcl-treat-as-011
-cbcl-treat-as-012
-cbcl-treat-as-013
-cbcl-treat-as-014
-treat-as-1
-treat-as-10
-treat-as-11
-treat-as-12
-treat-as-13
-treat-as-14
-treat-as-15
-treat-as-16
-treat-as-17
-treat-as-18
-treat-as-19
-treat-as-2
-treat-as-20
-treat-as-21
-treat-as-22
-treat-as-23
-treat-as-24
-treat-as-25
-treat-as-3
-treat-as-4
-treat-as-5
-treat-as-6
-treat-as-7
-treat-as-8
-treat-as-9
 = prod-TryCatchExpr
 = prod-TypeswitchExpr
 = prod-UnaryLookup
@@ -4072,9 +3950,6 @@ xs-error-040
 xs-error-041
 xs-error-042
 xs-error-043
-xs-error-047
-xs-error-048
-xs-error-049
 xs-error-050
 xs-error-051
 xs-error-052
@@ -4084,5 +3959,4 @@ xs-float-004
 = xs-hexBinary
 = xs-normalizedString
 = xs-numeric
-xs-numeric-006
 = xs-token

@@ -144,6 +144,7 @@ pub enum Error {
     /// path expression is an abbreviation for an initial step that includes
     /// the clause `treat as document-node()`.
     #[error("Treat type does not match sequence type")]
+    #[diagnostic(code(XPDY0050))]
     XPDY0050,
     /// Undefined type reference
     ///

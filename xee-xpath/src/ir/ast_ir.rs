@@ -640,7 +640,15 @@ impl<'a> IrConverter<'a> {
                 let binding = self.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
-            _ => Err(Error::Unsupported),
+            ast::ApplyOperator::Treat(sequence_type) => {
+                let mut bindings = self.path_expr(&ast.path_expr)?;
+                let expr = ir::Expr::Treat(ir::Treat {
+                    atom: bindings.atom(),
+                    sequence_type: sequence_type.clone(),
+                });
+                let binding = self.new_binding(expr, span);
+                Ok(bindings.bind(binding))
+            }
         }
     }
 
