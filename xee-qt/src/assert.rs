@@ -378,7 +378,7 @@ impl AssertType {
 
 impl Assertable for AssertType {
     fn assert_value(&self, runnable: &Runnable<'_>, sequence: &Sequence) -> TestOutcome {
-        let matches = sequence.matches_type(&self.0, runnable.xot(), |function| {
+        let matches = sequence.matches_type(&self.0, runnable.xot(), &|function| {
             runnable.signature(function)
         });
         match matches {

@@ -100,7 +100,7 @@ impl MergeOptions {
             .sequence_type_matching_function_conversion(
                 &sequence_type,
                 runnable.dynamic_context(),
-                |function| runnable.function_info(function).signature(),
+                &|function| runnable.function_info(function).signature(),
             )?;
         // take the first value, which should be a string
         let duplicates = duplicates.items().one()?;

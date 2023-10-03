@@ -3526,17 +3526,8 @@ fn-union-node-args-010
 = prod-AllowingEmpty
 = prod-Annotation
 = prod-ArrayTest
-ArrayTest-035
-ArrayTest-036
-ArrayTest-037
-ArrayTest-055
-ArrayTest-059
-ArrayTest-061
-ArrayTest-064
 ArrayTest-067
-ArrayTest-075
 ArrayTest-079
-ArrayTest-081
 ArrayTest-084
 ArrayTest-087
 = prod-ArrowPostfix

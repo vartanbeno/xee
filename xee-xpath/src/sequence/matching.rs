@@ -23,7 +23,7 @@ impl Sequence {
         &self,
         s: &str,
         xot: &Xot,
-        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
+        get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<bool> {
         let namespaces = Namespaces::default();
         let sequence_type = ast::SequenceType::parse(s, &namespaces)?;
@@ -43,16 +43,16 @@ impl Sequence {
         self,
         sequence_type: &ast::SequenceType,
         xot: &Xot,
-        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
+        get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            |sequence, _| {
+            &|sequence, _| {
                 let atomized = sequence.atomized(xot);
                 let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
                 Ok(sequence)
             },
-            |function_test, item| item.function_type_matching(function_test, &get_signature),
+            &|function_test, item| item.function_type_matching(function_test, &get_signature),
             xot,
         )
     }
@@ -62,12 +62,12 @@ impl Sequence {
         self,
         sequence_type: &ast::SequenceType,
         context: &'a context::DynamicContext,
-        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
+        get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            |sequence, xs| Self::convert_atomic(sequence, xs, context),
-            |function_test, item| item.function_arity_matching(function_test, &get_signature),
+            &|sequence, xs| Self::convert_atomic(sequence, xs, context),
+            &|function_test, item| item.function_arity_matching(function_test, &get_signature),
             context.xot,
         )
     }
@@ -96,8 +96,8 @@ impl Sequence {
     fn sequence_type_matching_convert(
         self,
         t: &ast::SequenceType,
-        convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
-        check_function: impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
+        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<Self> {
         match t {
@@ -117,8 +117,8 @@ impl Sequence {
     fn occurrence_item_matching(
         self,
         occurrence_item: &ast::Item,
-        convert_atomic: impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
-        check_function: impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
+        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<Self> {
         let sequence = match &occurrence_item.item_type {
@@ -128,13 +128,23 @@ impl Sequence {
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = sequence.items().one()?;
-                one.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
+                one.item_type_matching(
+                    &occurrence_item.item_type,
+                    convert_atomic,
+                    check_function,
+                    xot,
+                )?;
                 Ok(sequence)
             }
             ast::Occurrence::Option => {
                 let option = sequence.items().option()?;
                 if let Some(item) = option {
-                    item.item_type_matching(&occurrence_item.item_type, check_function, xot)?;
+                    item.item_type_matching(
+                        &occurrence_item.item_type,
+                        convert_atomic,
+                        check_function,
+                        xot,
+                    )?;
                     Ok(sequence)
                 } else {
                     Ok(sequence)
@@ -142,7 +152,12 @@ impl Sequence {
             }
             ast::Occurrence::Many => {
                 for item in sequence.items() {
-                    item?.item_type_matching(&occurrence_item.item_type, &check_function, xot)?;
+                    item?.item_type_matching(
+                        &occurrence_item.item_type,
+                        convert_atomic,
+                        check_function,
+                        xot,
+                    )?;
                 }
                 Ok(sequence)
             }
@@ -151,7 +166,12 @@ impl Sequence {
                     return Err(error::Error::Type);
                 }
                 for item in sequence.items() {
-                    item?.item_type_matching(&occurrence_item.item_type, &check_function, xot)?;
+                    item?.item_type_matching(
+                        &occurrence_item.item_type,
+                        convert_atomic,
+                        check_function,
+                        xot,
+                    )?;
                 }
                 Ok(sequence)
             }
@@ -163,7 +183,8 @@ impl Item {
     fn item_type_matching(
         &self,
         item_type: &ast::ItemType,
-        check_function: impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
+        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<()> {
         match item_type {
@@ -192,8 +213,17 @@ impl Item {
                         Err(error::Error::Type)
                     }
                 }
-                ast::ArrayTest::TypedArrayTest(_) => {
-                    // TODO: for now we accept all typed array tests
+                ast::ArrayTest::TypedArrayTest(typed_array_test) => {
+                    let array = self.to_array()?;
+                    for sequence in array.iter() {
+                        sequence.clone().sequence_type_matching_convert(
+                            &typed_array_test.item_type,
+                            convert_atomic,
+                            check_function,
+                            xot,
+                        )?;
+                    }
+
                     Ok(())
                 }
             },
@@ -217,7 +247,7 @@ impl Item {
     fn function_arity_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
-        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
+        get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
         match function_test {
             ast::FunctionTest::AnyFunctionTest => {
@@ -239,7 +269,7 @@ impl Item {
     fn function_type_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
-        get_signature: impl Fn(&function::Function) -> &'a function::Signature,
+        get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<()> {
         match function_test {
             ast::FunctionTest::AnyFunctionTest => {
@@ -339,17 +369,18 @@ mod tests {
         let wrong_type_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(&right_result.unwrap(), &right_sequence);
 
         let wrong_amount_result =
-            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let wrong_type_result =
-            wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_type_result, Err(error::Error::Type));
     }
 
@@ -363,16 +394,17 @@ mod tests {
         let wrong_type_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
-            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let wrong_type_result =
-            wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_type_result, Err(error::Error::Type));
     }
 
@@ -387,18 +419,19 @@ mod tests {
         let right_type_sequence2 = Sequence::from(vec![Item::from(atomic::Atomic::from(false))]);
         let xot = Xot::new();
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
-            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_type_result2 = right_type_sequence2.clone().sequence_type_matching(
             &sequence_type,
             &xot,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         assert_eq!(right_type_result2, Ok(right_type_sequence2));
     }
@@ -418,19 +451,20 @@ mod tests {
         ]);
         let right_type_sequence2 = Sequence::from(vec![Item::from(node)]);
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_amount_result =
-            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_type_result2 = right_type_sequence2.clone().sequence_type_matching(
             &sequence_type,
             &xot,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         assert_eq!(right_type_result2, Ok(right_type_sequence2));
     }
@@ -446,18 +480,19 @@ mod tests {
         let right_empty_sequence = Sequence::empty();
         let xot = Xot::new();
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
-            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_amount_result, Err(error::Error::Type));
         let right_empty_result = right_empty_sequence.clone().sequence_type_matching(
             &sequence_type,
             &xot,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         assert_eq!(right_empty_result, Ok(right_empty_sequence));
     }
@@ -472,23 +507,24 @@ mod tests {
         let right_empty_sequence = Sequence::empty();
         let xot = Xot::new();
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
 
         let right_multi_result = right_multi_sequence.clone().sequence_type_matching(
             &sequence_type,
             &xot,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         assert_eq!(right_multi_result, Ok(right_multi_sequence));
 
         let right_empty_result = right_empty_sequence.clone().sequence_type_matching(
             &sequence_type,
             &xot,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         assert_eq!(right_empty_result, Ok(right_empty_sequence));
     }
@@ -521,14 +557,15 @@ mod tests {
 
         let wrong_sequence = Sequence::from(vec![Item::from(ibig!(1))]);
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_result =
-            wrong_sequence.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_result, Err(error::Error::Type));
     }
 
@@ -555,17 +592,18 @@ mod tests {
         let wrong_sequence_text = Sequence::from(vec![Item::from(text)]);
         let wrong_sequence_attr = Sequence::from(vec![Item::from(attr)]);
 
-        let right_result =
-            right_sequence
-                .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+        let right_result = right_sequence.clone().sequence_type_matching(
+            &sequence_type,
+            &xot,
+            &|_| unreachable!(),
+        );
         assert_eq!(right_result, Ok(right_sequence));
 
         let wrong_result =
-            wrong_sequence_text.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_sequence_text.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_result, Err(error::Error::Type));
         let wrong_result =
-            wrong_sequence_attr.sequence_type_matching(&sequence_type, &xot, |_| unreachable!());
+            wrong_sequence_attr.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
         assert_eq!(wrong_result, Err(error::Error::Type));
     }
 
@@ -585,7 +623,7 @@ mod tests {
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,
             &dynamic_context,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         // atomization has changed the result sequence
         assert_eq!(
@@ -620,7 +658,7 @@ mod tests {
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,
             &dynamic_context,
-            |_| unreachable!(),
+            &|_| unreachable!(),
         );
         // atomization has changed the result sequence
         assert_eq!(
@@ -654,7 +692,7 @@ mod tests {
         let right_result =
             right_sequence
                 .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+                .sequence_type_matching(&sequence_type, &xot, &|_| &signature);
         assert_eq!(&right_result.unwrap(), &right_sequence);
     }
 
@@ -681,7 +719,7 @@ mod tests {
         let right_result =
             right_sequence
                 .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+                .sequence_type_matching(&sequence_type, &xot, &|_| &signature);
         assert_eq!(&right_result.unwrap(), &right_sequence);
     }
 
@@ -708,7 +746,7 @@ mod tests {
         let right_result =
             right_sequence
                 .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+                .sequence_type_matching(&sequence_type, &xot, &|_| &signature);
         assert_eq!(&right_result.unwrap(), &right_sequence);
     }
 
@@ -736,7 +774,7 @@ mod tests {
         let wrong_result =
             wrong_sequence
                 .clone()
-                .sequence_type_matching(&sequence_type, &xot, |_| &signature);
+                .sequence_type_matching(&sequence_type, &xot, &|_| &signature);
         assert_eq!(wrong_result, Err(error::Error::Type));
     }
 }

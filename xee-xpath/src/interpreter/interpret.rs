@@ -335,7 +335,7 @@ impl<'a> Interpreter<'a> {
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
                         self.runnable.dynamic_context(),
-                        |function| self.runnable.function_info(function).signature(),
+                        &|function| self.runnable.function_info(function).signature(),
                     )?;
                     self.state.push(sequence.into());
                 }
@@ -382,7 +382,7 @@ impl<'a> Interpreter<'a> {
                     let matches = sequence.sequence_type_matching(
                         sequence_type,
                         self.runnable.xot(),
-                        |function| self.runnable.function_info(function).signature(),
+                        &|function| self.runnable.function_info(function).signature(),
                     );
                     if matches.is_ok() {
                         self.state.push(true.into());
@@ -615,7 +615,7 @@ impl<'a> Interpreter<'a> {
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
                     self.runnable.dynamic_context(),
-                    |function| self.runnable.function_info(function).signature(),
+                    &|function| self.runnable.function_info(function).signature(),
                 )?;
                 arguments.push(sequence.into())
             } else {
