@@ -6,6 +6,7 @@ use std::cmp::Ordering;
 use xot::Xot;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 use crate::function;
 use crate::occurrence;
@@ -228,6 +229,60 @@ impl Sequence {
     ) -> Ordering {
         self.fallible_compare(other, collation, implicit_offset)
             .unwrap_or(Ordering::Less)
+    }
+
+    pub fn sorted(
+        &self,
+        context: &context::DynamicContext,
+        collation: &str,
+    ) -> error::Result<Self> {
+        self.sorted_by_key(context, collation, |item| {
+            // the equivalent of fn:data()
+            let seq: sequence::Sequence = item.clone().into();
+            let atoms = seq
+                .atomized(context.xot)
+                .collect::<error::Result<Vec<_>>>()?;
+            Ok(atoms.into())
+        })
+    }
+
+    pub fn sorted_by_key<F>(
+        &self,
+        context: &context::DynamicContext,
+        collation: &str,
+        mut get: F,
+    ) -> error::Result<Self>
+    where
+        F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
+    {
+        // see also sort_by_sequence in array.rs. The signatures are
+        // sufficiently different we don't want to try to unify them.
+
+        let collation = context.static_context.collation(collation)?;
+        let items = self.items().collect::<error::Result<Vec<_>>>()?;
+        let keys = self
+            .items()
+            .map(|key| get(&key?))
+            .collect::<error::Result<Vec<_>>>()?;
+
+        let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
+        // sort by key. unfortunately sort_by requires the compare function
+        // to be infallible. It's not in reality, so we make any failures
+        // sort less, so they appear early on in the sequence.
+        keys_and_items.sort_by(|(a_key, _), (b_key, _)| {
+            a_key.compare(b_key, &collation, context.implicit_timezone())
+        });
+        // a pass to detect any errors; if sorting between two items is
+        // impossible we want to raise a type error
+        for ((a_key, _), (b_key, _)) in keys_and_items.iter().zip(keys_and_items.iter().skip(1)) {
+            a_key.fallible_compare(b_key, &collation, context.implicit_timezone())?;
+        }
+        // now pick up items again
+        let items = keys_and_items
+            .into_iter()
+            .map(|(_, item)| item)
+            .collect::<Vec<_>>();
+        Ok(items.into())
     }
 }
 

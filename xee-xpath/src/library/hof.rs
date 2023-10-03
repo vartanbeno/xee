@@ -164,11 +164,7 @@ fn sort1(
     context: &context::DynamicContext,
     input: &sequence::Sequence,
 ) -> error::Result<sequence::Sequence> {
-    sort_without_key(
-        context,
-        input,
-        context.static_context.default_collation_uri(),
-    )
+    input.sorted(context, context.static_context.default_collation_uri())
 }
 
 #[xpath_fn("fn:sort($input as item()*, $collation as xs:string?) as item()*")]
@@ -178,7 +174,7 @@ fn sort2(
     collation: Option<&str>,
 ) -> error::Result<sequence::Sequence> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
-    sort_without_key(context, input, collation)
+    input.sorted(context, collation)
 }
 
 #[xpath_fn("fn:sort($input as item()*, $collation as xs:string?, $key as function(item()) as xs:anyAtomicType*) as item()*")]
@@ -191,7 +187,7 @@ fn sort3(
 ) -> error::Result<sequence::Sequence> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
     let function = key.to_function()?;
-    sort_by_sequence(context, input, collation, |item| {
+    input.sorted_by_key(context, collation, |item| {
         let value =
             interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
         Ok(value)
