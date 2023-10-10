@@ -426,15 +426,13 @@ impl<'a> Interpreter<'a> {
 
                     let a: IBig = a.try_into().unwrap();
                     let b: IBig = b.try_into().unwrap();
-                    // let a = a.cast_to_integer_value::<i64>()?;
-                    // let b = b.cast_to_integer_value::<i64>()?;
 
                     match a.cmp(&b) {
                         Ordering::Greater => self.state.push(stack::Value::Empty),
                         Ordering::Equal => self.state.push(a.into()),
                         Ordering::Less => {
                             let length: IBig = b - &a + 1;
-                            if (length) > MAXIMUM_RANGE_SIZE.into() {
+                            if length > MAXIMUM_RANGE_SIZE.into() {
                                 return Err(error::Error::Overflow);
                             }
                             let mut items = Vec::with_capacity(length.clone().try_into().unwrap());
