@@ -1,0 +1,27 @@
+[package]
+name = "xee-xslt-ast"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Martijn Faassen <faassen@startifact.com>",
+    "Nalle Rooth <nalle.rooth@paligo.net>",
+]
+keywords = ["xml", "xslt"]
+license = "Apache-2.0"
+description = "XSLT parser and AST implementation"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xslt"
+homepage = "https://github.com/Paligo/xee-xslt"
+
+[dependencies]
+ahash = "0.8.3"
+chumsky = { workspace = true }
+thiserror = "1.0.40"
+xot = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["ron", "glob"] }
+xot = { workspace = true, features = ["proptest"] }
+ron = "0.8.0"
+serde = { workspace = true, features = ["derive"] }

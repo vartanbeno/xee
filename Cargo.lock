@@ -3679,6 +3679,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xslt-ast"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.3",
+ "chumsky",
+ "insta",
+ "ron 0.8.1",
+ "serde",
+ "thiserror",
+ "xot",
+]
+
+[[package]]
 name = "xhtmlchardet"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
