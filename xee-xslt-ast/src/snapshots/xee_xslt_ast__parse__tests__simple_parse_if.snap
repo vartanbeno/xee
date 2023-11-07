@@ -1,0 +1,10 @@
+---
+source: xee-xslt-ast/src/parse.rs
+expression: parser().parse(stream).into_result().unwrap()
+---
+If(
+  test: "true()",
+  content: [
+    Text("Hello"),
+  ],
+)

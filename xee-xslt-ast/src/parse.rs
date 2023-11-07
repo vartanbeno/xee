@@ -10,6 +10,7 @@ pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a, Token<'a>>
 pub type Span = SimpleSpan;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub(crate) enum Token<'a> {
     ElementStart(Name<'a>, HashMap<Name<'a>, &'a str>),
     ElementEnd(Name<'a>),
@@ -19,13 +20,14 @@ pub(crate) enum Token<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub(crate) struct Name<'a> {
     namespace: &'a str,
     localname: &'a str,
 }
 
 impl<'a> From<(&'a str, &'a str)> for Name<'a> {
-    fn from((namespace, localname): (&'a str, &'a str)) -> Self {
+    fn from((localname, namespace): (&'a str, &'a str)) -> Self {
         Self {
             namespace,
             localname,
@@ -106,7 +108,7 @@ where
         .map(|(attributes, content)| {
             let name = Name {
                 namespace: "",
-                localname: "if",
+                localname: "test",
             };
             ast::If {
                 test: attributes.get(&name).unwrap().to_string(),
@@ -126,6 +128,14 @@ mod tests {
     use super::*;
     use chumsky::input::Stream;
     use insta::assert_ron_snapshot;
+
+    #[test]
+    fn test_tokenize() {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<if test="true()">Hello</if>"#).unwrap();
+        let tokens = tokenize(&xot, doc).collect::<Vec<_>>();
+        assert_ron_snapshot!(tokens);
+    }
 
     #[test]
     fn test_simple_parse_if() {
