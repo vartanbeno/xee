@@ -3663,6 +3663,7 @@ dependencies = [
  "serde",
  "thiserror",
  "xee-schema-type",
+ "xee-xpath-ast",
  "xot",
 ]
 
@@ -3688,6 +3689,8 @@ dependencies = [
  "ron 0.8.1",
  "serde",
  "thiserror",
+ "xee-xpath-ast",
+ "xee-xslt-ast",
  "xot",
 ]
 

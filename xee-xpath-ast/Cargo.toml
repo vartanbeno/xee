@@ -11,6 +11,14 @@ readme = "README.md"
 documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee-xpath"
 
+[features]
+serde = [
+    "dep:serde",
+    "ibig/serde",
+    "ordered-float/serde",
+    "xee-schema-type/serde",
+]
+
 [dependencies]
 ahash = "0.8.3"
 chumsky = { workspace = true }
@@ -22,13 +30,12 @@ ibig = { workspace = true }
 rust_decimal = { workspace = true }
 xot = { workspace = true }
 xee-schema-type = { path = "../xee-schema-type" }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
-ibig = { workspace = true, features = ["serde"] }
-ordered-float = { workspace = true, features = ["serde"] }
+# we want to depend on serde feature during tests
+xee-xpath-ast = { path = ".", features = ["serde"] }
 insta = { version = "1.29.0", features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = "1.29.1"
 ron = "0.8.0"
-serde = { workspace = true, features = ["derive"] }
-xee-schema-type = { path = "../xee-schema-type", features = ["serde"] }

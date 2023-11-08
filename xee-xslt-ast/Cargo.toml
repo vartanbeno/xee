@@ -14,14 +14,19 @@ readme = "README.md"
 documentation = "https://docs.rs/xee-xslt"
 homepage = "https://github.com/Paligo/xee-xslt"
 
+[features]
+serde = ["dep:serde", "xee-xpath-ast/serde"]
+
 [dependencies]
 ahash = "0.8.3"
 chumsky = { workspace = true }
+xee-xpath-ast = { path = "../xee-xpath-ast" }
 thiserror = "1.0.40"
 xot = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
+xee-xslt-ast = { path = ".", features = ["serde"] }
 insta = { version = "1.29.0", features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
 ron = "0.8.0"
-serde = { workspace = true, features = ["derive"] }

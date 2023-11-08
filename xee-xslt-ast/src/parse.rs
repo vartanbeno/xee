@@ -1,12 +1,20 @@
-use ahash::{HashMap, HashMapExt};
+use ahash::HashMap;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
+use std::borrow::Cow;
+use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_ast::Namespaces;
 use xot::{Node, Xot};
 
 use crate::ast_core as ast;
 
-type Extra<'a, T> = Full<Rich<'a, T>, (), ()>;
+pub(crate) struct State<'a> {
+    pub(crate) namespaces: Cow<'a, Namespaces<'a>>,
+}
+
+type Extra<'a, T> = Full<Rich<'a, T>, State<'a>, ()>;
 
 pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a, Token<'a>>>;
+
 pub type Span = SimpleSpan;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -105,15 +113,17 @@ where
 
     let if_instruction = if_
         .then(sequence_constructor)
-        .map(|(attributes, content)| {
+        .try_map_with_state(|(attributes, content), span, state: &mut State| {
             let name = Name {
                 namespace: "",
                 localname: "test",
             };
-            ast::If {
-                test: attributes.get(&name).unwrap().to_string(),
+            let test = attributes.get(&name).unwrap();
+            // let test = xpath_ast::XPath::parse(test, state.namespaces.as_ref(), &[])?;
+            Ok(ast::If {
+                test: test.to_string(),
                 content: vec![content],
-            }
+            })
         })
         .then_ignore(just(Token::ElementEnd(Name {
             namespace: "",
@@ -143,7 +153,13 @@ mod tests {
         let doc = xot.parse(r#"<if test="true()">Hello</if>"#).unwrap();
         let tokens = tokenize(&xot, doc);
         let stream = Stream::from_iter(tokens);
-
-        assert_ron_snapshot!(parser().parse(stream).into_result().unwrap());
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+        assert_ron_snapshot!(parser()
+            .parse_with_state(stream, &mut state)
+            .into_result()
+            .unwrap());
     }
 }

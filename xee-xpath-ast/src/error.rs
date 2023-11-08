@@ -16,7 +16,7 @@ impl<'a> Error<'a> {
 
 pub type Result<'a, T> = std::result::Result<T, Error<'a>>;
 
-#[cfg(test)]
+#[cfg(feature = "serde")]
 impl serde::Serialize for Error<'_> {
     fn serialize<S: serde::Serializer>(
         &self,

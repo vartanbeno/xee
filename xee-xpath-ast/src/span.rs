@@ -20,7 +20,7 @@ where
 
 // custom serializer that skips span, so we don't see it in the ron
 // snapshot tests
-#[cfg(test)]
+#[cfg(feature = "serde")]
 impl<T: serde::Serialize> serde::Serialize for Spanned<T> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.value.serialize(serializer)

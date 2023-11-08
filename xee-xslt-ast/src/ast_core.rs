@@ -1,14 +1,16 @@
+use xee_xpath_ast::ast as xpath_ast;
+
 type XPathExpr = String;
 type EqName = String;
 type SequenceType = String;
 
-#[cfg_attr(test, derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub(crate) struct If {
     pub(crate) test: XPathExpr,
     pub(crate) content: Vec<SequenceConstructor>,
 }
 
-#[cfg_attr(test, derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub(crate) enum SequenceConstructor {
     Text(String),
 }
