@@ -57,7 +57,7 @@ fn insert_before(
     } else {
         position
     };
-    let position: usize = position.try_into().map_err(|_| error::Error::Overflow)?;
+    let position: usize = position.try_into().map_err(|_| error::Error::FOAR0002)?;
     let position = position.saturating_sub(1);
     let position = if position > target.len() {
         target.len()
@@ -81,7 +81,7 @@ fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::
     } else {
         position
     };
-    let position: usize = position.try_into().map_err(|_| error::Error::Overflow)?;
+    let position: usize = position.try_into().map_err(|_| error::Error::FOAR0002)?;
     if position == 0 || position > target.len() {
         // TODO: unfortunate we can't just copy sequence
         return Ok(target.to_vec().into());

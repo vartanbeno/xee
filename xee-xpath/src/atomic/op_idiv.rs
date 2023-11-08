@@ -21,20 +21,20 @@ pub(crate) fn op_idiv(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<ato
         (Atomic::Integer(_, a), Atomic::Integer(_, b)) => Ok(op_idiv_integer(a, b)?),
         (Atomic::Float(a), Atomic::Float(b)) => Ok(op_idiv_float(a, b)?),
         (Atomic::Double(a), Atomic::Double(b)) => Ok(op_idiv_float(a, b)?),
-        _ => Err(error::Error::XPTY0004),
+        _ => Err(error::Error::XPST0003),
     }
 }
 
 fn op_idiv_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
     let v = op_div_decimal(a, b)?;
-    let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
-    let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
+    let v: i128 = v.trunc().to_i128().ok_or(error::Error::FOAR0002)?;
+    let i: IBig = v.try_into().map_err(|_| error::Error::FOAR0002)?;
     Ok(i.into())
 }
 
 fn op_idiv_integer(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
     if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
     Ok((a.as_ref() / b.as_ref()).into())
 }
@@ -44,15 +44,15 @@ where
     F: Float + Into<atomic::Atomic>,
 {
     if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
     if a.is_nan() || b.is_nan() || a.is_infinite() {
-        return Err(error::Error::Overflow);
+        return Err(error::Error::FOAR0002);
     }
 
     let v = op_div_float(a, b);
-    let v: i128 = v.trunc().to_i128().ok_or(error::Error::Overflow)?;
-    let i: IBig = v.try_into().map_err(|_| error::Error::Overflow)?;
+    let v: i128 = v.trunc().to_i128().ok_or(error::Error::FOAR0002)?;
+    let i: IBig = v.try_into().map_err(|_| error::Error::FOAR0002)?;
     Ok(i.into())
 }
 
@@ -131,7 +131,7 @@ mod tests {
         let a = 3i64.into();
         let b = 0i64.into();
         let result = op_idiv(a, b);
-        assert_eq!(result, Err(error::Error::DivisionByZero));
+        assert_eq!(result, Err(error::Error::FOAR0001));
     }
 
     #[test]
@@ -139,7 +139,7 @@ mod tests {
         let a = 3.0f64.into();
         let b = 0i64.into();
         let result = op_idiv(a, b);
-        assert_eq!(result, Err(error::Error::DivisionByZero));
+        assert_eq!(result, Err(error::Error::FOAR0001));
     }
 
     #[test]

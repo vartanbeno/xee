@@ -62,9 +62,9 @@ pub(crate) fn op_div(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
 
 pub(crate) fn op_div_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<Decimal> {
     if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
-    a.checked_div(*b.as_ref()).ok_or(error::Error::Overflow)
+    a.checked_div(*b.as_ref()).ok_or(error::Error::FOAR0002)
 }
 
 fn op_div_integer(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
@@ -138,7 +138,7 @@ fn op_divide_year_month_duration_by_year_month_duration(
     b: YearMonthDuration,
 ) -> error::Result<atomic::Atomic> {
     if b.months == 0 {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
     let a: Decimal = a.months.into();
     let b: Decimal = b.months.into();

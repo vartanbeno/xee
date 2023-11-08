@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use miette::{IntoDiagnostic, Result, WrapErr};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -27,7 +26,7 @@ enum Commands {
     },
 }
 
-fn main() -> Result<()> {
+fn main() -> xee_xpath::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Xpath {
@@ -36,24 +35,14 @@ fn main() -> Result<()> {
             namespace_default,
         } => {
             let mut xot = Xot::new();
-            let xml_file = File::open(xml)
-                .into_diagnostic()
-                .wrap_err("Cannot open XML file")?;
+            let xml_file = File::open(xml).unwrap();
             let mut buf_reader = BufReader::new(xml_file);
             let mut xml = String::new();
-            buf_reader
-                .read_to_string(&mut xml)
-                .into_diagnostic()
-                .wrap_err("Cannot read XML file")?;
-            let root = xot
-                .parse(&xml)
-                .into_diagnostic()
-                .wrap_err("Cannot parse XML")?;
+            buf_reader.read_to_string(&mut xml).unwrap();
+            let root = xot.parse(&xml).unwrap();
             let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
             for item in result.items() {
-                display_item(&xot, &item?)
-                    .into_diagnostic()
-                    .wrap_err("Could not display item")?;
+                display_item(&xot, &item?).unwrap();
             }
         }
     }

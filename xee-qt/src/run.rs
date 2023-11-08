@@ -472,7 +472,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             run(xot, &test_set),
-            TestOutcome::RuntimeError(Error::DivisionByZero)
+            TestOutcome::RuntimeError(Error::FOAR0001)
         );
     }
 

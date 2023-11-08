@@ -25,14 +25,14 @@ pub(crate) fn op_mod(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
 
 fn op_mod_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
     if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
     Ok((a.as_ref() % b.as_ref()).into())
 }
 
 fn op_mod_integer(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
     if b.is_zero() {
-        return Err(error::Error::DivisionByZero);
+        return Err(error::Error::FOAR0001);
     }
     Ok((a.as_ref() % b.as_ref()).into())
 }

@@ -17,6 +17,8 @@ arrayvec = "0.7.2"
 miette = { workspace = true }
 chumsky = { workspace = true }
 next-gen = "0.1.1"
+strum = { workspace = true }
+strum_macros = { workspace = true }
 nonempty = "0.8.1"
 num = "0.4.0"
 num-derive = "0.3.3"

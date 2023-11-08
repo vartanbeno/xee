@@ -282,22 +282,12 @@ impl std::fmt::Display for TestOutcome {
             TestOutcome::Failed(failure) => {
                 write!(f, "{} {}", "FAIL".red(), failure)
             }
-            TestOutcome::RuntimeError(error) => match error.code() {
-                Some(code) => {
-                    write!(f, "{} {} {}", "RUNTIME ERROR".red(), code, error)
-                }
-                None => {
-                    write!(f, "{} {}", "RUNTIME ERROR".red(), error)
-                }
-            },
-            TestOutcome::CompilationError(error) => match error.code() {
-                Some(code) => {
-                    write!(f, "{} {} {}", "COMPILATION ERROR".red(), code, error)
-                }
-                None => {
-                    write!(f, "{} {}", "COMPILATION ERROR".red(), error)
-                }
-            },
+            TestOutcome::RuntimeError(error) => {
+                write!(f, "{} {} {:?}", "RUNTIME ERROR".red(), error, error)
+            }
+            TestOutcome::CompilationError(error) => {
+                write!(f, "{} {} {:?}", "COMPILATION ERROR".red(), error, error)
+            }
             TestOutcome::UnsupportedExpression(error) => {
                 write!(f, "{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error)
             }

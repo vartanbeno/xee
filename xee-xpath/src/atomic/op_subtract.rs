@@ -87,7 +87,7 @@ pub(crate) fn op_subtract(
 fn op_substract_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
     Ok(a.as_ref()
         .checked_sub(*b.as_ref())
-        .ok_or(error::Error::Overflow)?
+        .ok_or(error::Error::FOAR0002)?
         .into())
 }
 
@@ -113,10 +113,10 @@ fn op_subtract_year_month_duration_from_date(
     let date = a.date;
     let new_date = if b.months >= 0 {
         date.checked_sub_months(chrono::Months::new(b.months as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     } else {
         date.checked_add_months(chrono::Months::new(b.months.unsigned_abs() as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     }?;
 
     Ok(NaiveDateWithOffset::new(new_date, a.offset).into())
@@ -128,7 +128,7 @@ fn op_subtract_day_time_duration_from_date(
 ) -> error::Result<atomic::Atomic> {
     let offset = a.as_ref().offset;
     let a = a.to_date_time_stamp(chrono::offset::Utc.fix());
-    let a = a.checked_sub_signed(b).ok_or(error::Error::Overflow)?;
+    let a = a.checked_sub_signed(b).ok_or(error::Error::FOAR0002)?;
     let new_date = a.date_naive();
     Ok(NaiveDateWithOffset::new(new_date, offset).into())
 }
@@ -196,11 +196,11 @@ fn op_subtract_year_month_duration_from_date_time(
     let new_date_time = if b.months >= 0 {
         date_time
             .checked_sub_months(chrono::Months::new(b.months as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     } else {
         date_time
             .checked_add_months(chrono::Months::new(b.months.unsigned_abs() as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     }?;
 
     Ok(NaiveDateTimeWithOffset::new(new_date_time, a.offset).into())
@@ -215,11 +215,11 @@ fn op_subtract_year_month_duration_from_date_time_stamp(
     let new_date_time = if b.months >= 0 {
         date_time
             .checked_sub_months(chrono::Months::new(b.months as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     } else {
         date_time
             .checked_add_months(chrono::Months::new(b.months.unsigned_abs() as u32))
-            .ok_or(error::Error::Overflow)
+            .ok_or(error::Error::FOAR0002)
     }?;
 
     Ok(new_date_time.into())
@@ -233,7 +233,7 @@ fn op_subtract_day_time_duration_from_date_time(
         .as_ref()
         .date_time
         .checked_sub_signed(b)
-        .ok_or(error::Error::Overflow)?;
+        .ok_or(error::Error::FOAR0002)?;
     Ok(NaiveDateTimeWithOffset::new(new_date_time, a.as_ref().offset).into())
 }
 
@@ -243,7 +243,7 @@ fn op_subtract_day_time_duration_from_date_time_stamp(
 ) -> error::Result<atomic::Atomic> {
     let new_date_time = (*a.as_ref())
         .checked_sub_signed(b)
-        .ok_or(error::Error::Overflow)?;
+        .ok_or(error::Error::FOAR0002)?;
     Ok(new_date_time.into())
 }
 
@@ -254,7 +254,7 @@ fn op_subtract_year_month_durations(
     let new_months = a
         .months
         .checked_sub(b.months)
-        .ok_or(error::Error::Overflow)?;
+        .ok_or(error::Error::FOAR0002)?;
     Ok(YearMonthDuration { months: new_months }.into())
 }
 
@@ -264,7 +264,7 @@ fn op_subtract_day_time_durations(
 ) -> error::Result<atomic::Atomic> {
     let new_duration = (*a.as_ref())
         .checked_sub(b.as_ref())
-        .ok_or(error::Error::Overflow)?;
+        .ok_or(error::Error::FOAR0002)?;
 
     Ok(new_duration.into())
 }

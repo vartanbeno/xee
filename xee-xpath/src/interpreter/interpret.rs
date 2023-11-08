@@ -433,7 +433,7 @@ impl<'a> Interpreter<'a> {
                         Ordering::Less => {
                             let length: IBig = b - &a + 1;
                             if length > MAXIMUM_RANGE_SIZE.into() {
-                                return Err(error::Error::Overflow);
+                                return Err(error::Error::FOAR0002);
                             }
                             let mut items = Vec::with_capacity(length.clone().try_into().unwrap());
                             let mut i: IBig = 0.into();

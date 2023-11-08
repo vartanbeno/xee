@@ -505,15 +505,11 @@ impl AssertError {
     pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
         // all errors are officially a pass, but we check whether the error
         // code matches too
-        let code = error.code();
-        if let Some(code) = code {
-            if code.to_string() == self.0 {
-                TestOutcome::Passed
-            } else {
-                TestOutcome::PassedWithUnexpectedError(UnexpectedError::Code(code.to_string()))
-            }
+        let code = error.to_string();
+        if code == self.0 {
+            TestOutcome::Passed
         } else {
-            TestOutcome::PassedWithUnexpectedError(UnexpectedError::Error(error.clone()))
+            TestOutcome::PassedWithUnexpectedError(UnexpectedError::Code(code.to_string()))
         }
     }
 }

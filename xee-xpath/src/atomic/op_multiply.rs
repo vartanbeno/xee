@@ -62,7 +62,7 @@ pub(crate) fn op_multiply(a: atomic::Atomic, b: atomic::Atomic) -> error::Result
 fn op_multiply_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
     Ok(a.as_ref()
         .checked_mul(*b.as_ref())
-        .ok_or(error::Error::Overflow)?
+        .ok_or(error::Error::FOAR0002)?
         .into())
 }
 

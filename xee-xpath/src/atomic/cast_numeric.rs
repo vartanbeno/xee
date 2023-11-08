@@ -201,10 +201,10 @@ impl atomic::Atomic {
                     Decimal::try_from_i128_with_scale(
                         // if this is bigger than an i128, it certainly can't be
                         // an integer
-                        i.as_ref().try_into().map_err(|_| error::Error::Overflow)?,
+                        i.as_ref().try_into().map_err(|_| error::Error::FOAR0002)?,
                         0,
                     )
-                    .map_err(|_| error::Error::Overflow)?,
+                    .map_err(|_| error::Error::FOAR0002)?,
                 ),
             )),
             atomic::Atomic::Boolean(b) => {
