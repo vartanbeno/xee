@@ -1,7 +1,7 @@
 use ahash::HashMap;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
 use std::borrow::Cow;
-use xee_xpath_ast::ast as xpath_ast;
+// use xee_xpath_ast::ast as xpath_ast;
 use xee_xpath_ast::Namespaces;
 use xot::{Node, Xot};
 
@@ -113,7 +113,7 @@ where
 
     let if_instruction = if_
         .then(sequence_constructor)
-        .try_map_with_state(|(attributes, content), span, state: &mut State| {
+        .try_map_with_state(|(attributes, content), _span, _state: &mut State| {
             let name = Name {
                 namespace: "",
                 localname: "test",

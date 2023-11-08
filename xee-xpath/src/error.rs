@@ -1,7 +1,5 @@
 use ibig::error::OutOfBoundsError;
-use miette::Diagnostic;
 use strum_macros::{Display, EnumMessage};
-use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Display, EnumMessage)]
 pub enum Error {
@@ -605,7 +603,7 @@ pub enum Error {
 impl std::error::Error for Error {}
 
 impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
-    fn from(e: xee_xpath_ast::Error) -> Self {
+    fn from(_e: xee_xpath_ast::Error) -> Self {
         // TODO: we are losing span information
         Error::XPST0003
     }

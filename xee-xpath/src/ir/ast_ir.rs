@@ -6,7 +6,6 @@ use xee_xpath_ast::{ast, ast::Span, span::Spanned, Namespaces, FN_NAMESPACE};
 use crate::context::StaticContext;
 use crate::error::{Error, Result};
 use crate::function;
-use crate::span;
 use crate::xml;
 
 use super::{ir_core as ir, AtomS};
@@ -151,7 +150,7 @@ impl<'a> IrConverter<'a> {
     }
 
     fn var_ref(&mut self, name: &ast::Name, span: Span) -> Result<Bindings> {
-        let ir_name = self.variables.get(name).ok_or_else(|| Error::XPST0008)?;
+        let ir_name = self.variables.get(name).ok_or(Error::XPST0008)?;
         Ok(Bindings::from_vec(vec![Binding {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
@@ -167,7 +166,8 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn context_name<F>(&mut self, get_name: F, span: Span) -> Result<Bindings>
+    // TODO: we're not using the span for error messages
+    fn context_name<F>(&mut self, get_name: F, _span: Span) -> Result<Bindings>
     where
         F: Fn(&ir::ContextNames) -> ir::Name,
     {

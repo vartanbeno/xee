@@ -1,5 +1,4 @@
 use chrono::Offset;
-use miette::Diagnostic;
 use std::fmt;
 use xee_xpath::{
     Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result, Runnable,

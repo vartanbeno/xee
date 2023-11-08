@@ -2,7 +2,6 @@ use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use miette::Diagnostic;
 use std::io::{stdout, Stdout};
 use std::path::Path;
 
