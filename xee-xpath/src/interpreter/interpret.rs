@@ -911,8 +911,10 @@ impl<'a> Interpreter<'a> {
         a.effective_boolean_value()
     }
 
-    fn err(&self, value_error: error::Error) -> Error {
-        value_error.with_span(self.runnable.program(), self.current_span())
+    fn err(&self, value_error: error::Error) -> error::Error {
+        value_error
+        // TODO: wrap error code in error that has span
+        // value_error.with_span(self.runnable.program(), self.current_span())
     }
 
     fn current_span(&self) -> SourceSpan {

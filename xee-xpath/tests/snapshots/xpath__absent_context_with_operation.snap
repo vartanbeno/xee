@@ -3,13 +3,5 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\". + 1\")"
 ---
 Err(
-    XPDY0002S {
-        src: ". + 1",
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: 5,
-        },
-    },
+    XPDY0002,
 )

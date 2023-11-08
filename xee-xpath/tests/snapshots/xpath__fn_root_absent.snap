@@ -3,13 +3,5 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"fn:root()\")"
 ---
 Err(
-    XPDY0002S {
-        src: "fn:root()",
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: 9,
-        },
-    },
+    XPDY0002,
 )

@@ -3,13 +3,5 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"() cast as xs:string\")"
 ---
 Err(
-    XPTY0004S {
-        src: "() cast as xs:string",
-        span: SourceSpan {
-            offset: SourceOffset(
-                0,
-            ),
-            length: 20,
-        },
-    },
+    XPTY0004,
 )

@@ -3,13 +3,5 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"let $x := $x return $x\")"
 ---
 Err(
-    XPST0008 {
-        src: "let $x := $x return $x",
-        span: SourceSpan {
-            offset: SourceOffset(
-                10,
-            ),
-            length: 2,
-        },
-    },
+    XPST0008,
 )
