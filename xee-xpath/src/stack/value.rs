@@ -32,25 +32,25 @@ impl Value {
             Value::Empty => Ok(0),
             Value::One(_) => Ok(1),
             Value::Many(items) => Ok(items.len()),
-            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Absent => Err(error::Error::XPDY0002),
         }
     }
 
     pub(crate) fn index(self, index: usize) -> error::Result<sequence::Item> {
         match self {
-            Value::Empty => Err(error::Error::Type),
+            Value::Empty => Err(error::Error::XPTY0004),
             Value::One(item) => {
                 if index == 0 {
                     Ok(item)
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
             Value::Many(items) => items
                 .get(index)
-                .ok_or(error::Error::Type)
+                .ok_or(error::Error::XPTY0004)
                 .map(|item| item.clone()),
-            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Absent => Err(error::Error::XPDY0002),
         }
     }
     pub(crate) fn items(&self) -> ValueIter {
@@ -71,10 +71,10 @@ impl Value {
                 if matches!(items[0], sequence::Item::Node(_)) {
                     Ok(true)
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
-            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Absent => Err(error::Error::XPDY0002),
         }
     }
 
@@ -86,8 +86,8 @@ impl Value {
         match self {
             Value::Empty => Ok("".to_string()),
             Value::One(item) => item.string_value(xot),
-            Value::Many(_) => Err(error::Error::Type),
-            Value::Absent => Err(error::Error::ComponentAbsentInDynamicContext),
+            Value::Many(_) => Err(error::Error::XPTY0004),
+            Value::Absent => Err(error::Error::XPDY0002),
         }
     }
 
@@ -138,7 +138,7 @@ impl Value {
     fn one_node(self) -> error::Result<xml::Node> {
         match self {
             Value::One(item) => item.to_node(),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
@@ -241,13 +241,13 @@ impl Value {
             match item? {
                 sequence::Item::Node(n) => {
                     if non_node_seen {
-                        return Err(error::Error::Type);
+                        return Err(error::Error::XPTY0004);
                     }
                     s.insert(n);
                 }
                 _ => {
                     if !s.is_empty() {
-                        return Err(error::Error::Type);
+                        return Err(error::Error::XPTY0004);
                     }
                     non_node_seen = true;
                 }
@@ -300,7 +300,7 @@ impl TryFrom<&stack::Value> for Rc<function::Function> {
     fn try_from(value: &stack::Value) -> error::Result<Self> {
         match value {
             stack::Value::One(sequence::Item::Function(c)) => Ok(c.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 }
@@ -319,7 +319,7 @@ impl TryFrom<&stack::Value> for xml::Node {
     fn try_from(value: &stack::Value) -> error::Result<xml::Node> {
         match value {
             stack::Value::One(sequence::Item::Node(n)) => Ok(*n),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 }
@@ -348,9 +348,7 @@ impl ValueIter {
             Value::Empty => ValueIter::Empty,
             Value::One(item) => ValueIter::OneIter(std::iter::once(item)),
             Value::Many(items) => ValueIter::ManyIter(Rc::as_ref(&items).clone().into_iter()),
-            Value::Absent => ValueIter::AbsentIter(std::iter::once(Err(
-                error::Error::ComponentAbsentInDynamicContext,
-            ))),
+            Value::Absent => ValueIter::AbsentIter(std::iter::once(Err(error::Error::XPDY0002))),
         }
     }
 }
@@ -388,9 +386,7 @@ impl<'a> AtomizedIter<'a> {
                 Rc::as_ref(&items).clone().into_iter(),
                 xot,
             )),
-            Value::Absent => AtomizedIter::Absent(std::iter::once(Err(
-                error::Error::ComponentAbsentInDynamicContext,
-            ))),
+            Value::Absent => AtomizedIter::Absent(std::iter::once(Err(error::Error::XPDY0002))),
         }
     }
 }

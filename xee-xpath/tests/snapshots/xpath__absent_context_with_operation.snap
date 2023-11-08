@@ -3,7 +3,7 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\". + 1\")"
 ---
 Err(
-    SpannedComponentAbsentInDynamicContext {
+    XPDY0002S {
         src: ". + 1",
         span: SourceSpan {
             offset: SourceOffset(

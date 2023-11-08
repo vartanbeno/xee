@@ -192,7 +192,7 @@ impl StaticFunction {
     ) -> error::Result<sequence::Sequence> {
         let arguments = &interpreter.arguments(arity);
         if arguments.len() != self.arity {
-            return Err(error::Error::Type);
+            return Err(error::Error::XPTY0004);
         }
         let arguments = into_sequences(arguments);
         if let Some(function_rule) = &self.function_rule {

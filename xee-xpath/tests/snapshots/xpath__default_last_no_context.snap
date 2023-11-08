@@ -3,7 +3,7 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"fn:last()\")"
 ---
 Err(
-    SpannedComponentAbsentInDynamicContext {
+    XPDY0002S {
         src: "fn:last()",
         span: SourceSpan {
             offset: SourceOffset(

@@ -80,7 +80,7 @@ pub(crate) fn op_subtract(
         (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => {
             Ok(op_subtract_day_time_durations(a, b)?)
         }
-        _ => Err(error::Error::Type),
+        _ => Err(error::Error::XPTY0004),
     }
 }
 

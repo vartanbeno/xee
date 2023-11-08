@@ -3,7 +3,7 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"fn:position()\")"
 ---
 Err(
-    SpannedComponentAbsentInDynamicContext {
+    XPDY0002S {
         src: "fn:position()",
         span: SourceSpan {
             offset: SourceOffset(

@@ -55,7 +55,7 @@ impl<'a> Runnable<'a> {
         );
         let value = interpreter.state().stack().last().unwrap().clone();
         match value {
-            stack::Value::Absent => Err(error::Error::SpannedComponentAbsentInDynamicContext {
+            stack::Value::Absent => Err(error::Error::XPDY0002S {
                 src: self.program.src.clone(),
                 span: (0, self.program.src.len()).into(),
             }),

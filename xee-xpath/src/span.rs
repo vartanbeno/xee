@@ -20,7 +20,7 @@ mod tests {
 
     fn span(result: Result<sequence::Sequence, Error>) -> Option<SourceSpan> {
         match result.err().unwrap() {
-            Error::SpannedType { span, .. } => Some(span),
+            Error::XPTY0004S { span, .. } => Some(span),
             _ => None,
         }
     }

@@ -18,20 +18,20 @@ impl Item {
     pub fn to_atomic(&self) -> error::Result<atomic::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
     pub fn to_node(&self) -> error::Result<xml::Node> {
         match self {
             Item::Node(n) => Ok(*n),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub fn to_function(&self) -> error::Result<Rc<function::Function>> {
         match self {
             Item::Function(f) => Ok(f.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
@@ -39,9 +39,9 @@ impl Item {
         match self {
             Item::Function(function) => match function.as_ref() {
                 function::Function::Map(map) => Ok(map.clone()),
-                _ => Err(error::Error::Type),
+                _ => Err(error::Error::XPTY0004),
             },
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
@@ -49,9 +49,9 @@ impl Item {
         match self {
             Item::Function(function) => match function.as_ref() {
                 function::Function::Array(array) => Ok(array.clone()),
-                _ => Err(error::Error::Type),
+                _ => Err(error::Error::XPTY0004),
             },
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 

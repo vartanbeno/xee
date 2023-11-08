@@ -56,7 +56,7 @@ pub(crate) fn op_div(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<atom
         (Atomic::DayTimeDuration(a), Atomic::DayTimeDuration(b)) => {
             Ok(op_divide_day_time_duration_by_day_time_duration(a, b)?)
         }
-        _ => Err(error::Error::Type),
+        _ => Err(error::Error::XPTY0004),
     }
 }
 

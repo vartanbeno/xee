@@ -330,11 +330,11 @@ impl<'a> InterpreterCompiler<'a> {
             .get_by_index(static_function_id);
         match static_function.function_rule {
             Some(FunctionRule::ItemFirst) => {
-                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
+                let context_names = context_names.ok_or(Error::XPDY0002)?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::ItemLast) => {
-                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
+                let context_names = context_names.ok_or(Error::XPDY0002)?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::ItemLastOptional) => {
@@ -346,14 +346,13 @@ impl<'a> InterpreterCompiler<'a> {
             }
             Some(FunctionRule::PositionFirst) => self.compile_variable(
                 {
-                    let context_names =
-                        context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
+                    let context_names = context_names.ok_or(Error::XPDY0002)?;
                     &context_names.position
                 },
                 span,
             )?,
             Some(FunctionRule::SizeFirst) => {
-                let context_names = context_names.ok_or(Error::ComponentAbsentInDynamicContext)?;
+                let context_names = context_names.ok_or(Error::XPDY0002)?;
                 self.compile_variable(&context_names.last, span)?
             }
             Some(FunctionRule::Collation) | None => {}

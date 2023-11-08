@@ -22,7 +22,7 @@ pub enum Error {
     /// part of the dynamic context that is absent.
     #[error("Component absent in dynamic context")]
     #[diagnostic(code(XPDY0002))]
-    SpannedComponentAbsentInDynamicContext {
+    XPDY0002S {
         #[source_code]
         src: String,
         #[label("Context absent")]
@@ -30,14 +30,14 @@ pub enum Error {
     },
     #[error("Component absent in dynamic context")]
     #[diagnostic(code(XPDY0002))]
-    ComponentAbsentInDynamicContext,
+    XPDY0002,
     /// Parse error.
     ///
     /// It is a static error if an expression is not a valid instance of the
     /// grammar defined in A.1 EBNF.
     #[error("Parse error")]
     #[diagnostic(code(XPST0003), help("Invalid XPath expression"))]
-    Parse {
+    XPST0003 {
         #[source_code]
         src: String,
         #[label("Could not parse beyond this")]
@@ -52,7 +52,7 @@ pub enum Error {
     /// by the matching rules in 2.5.5 SequenceType Matching.
     #[error("Type error")]
     #[diagnostic(code(XPTY0004))]
-    SpannedType {
+    XPTY0004S {
         #[source_code]
         src: String,
         #[label("Type error")]
@@ -60,7 +60,7 @@ pub enum Error {
     },
     #[error("Type error")]
     #[diagnostic(code(XPTY0004))]
-    Type,
+    XPTY0004,
     /// Empty Sequence type error.
     ///
     /// During the analysis phase, it is a static error if the static type
@@ -76,7 +76,7 @@ pub enum Error {
     /// an ElementTest or an AttributeName in an AttributeTest.
     #[error("Name not defined")]
     #[diagnostic(code(XPST0008))]
-    UndefinedName {
+    XPST0008 {
         #[source_code]
         src: String,
         #[label("Name not defined")]
@@ -96,7 +96,7 @@ pub enum Error {
     /// signature in the static context.
     #[error("Type error: incorrect function name or number of arguments")]
     #[diagnostic(code(XPST0017))]
-    IncorrectFunctionNameOrWrongNumberOfArguments {
+    XPST0017 {
         #[help]
         advice: String,
         #[source_code]
@@ -679,7 +679,7 @@ pub enum Error {
 
 impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
     fn from(e: xee_xpath_ast::Error) -> Self {
-        Error::Parse {
+        Error::XPST0003 {
             // TODO: we don't want to copy the source code, but
             // otherwise we introduce a lifetime into Error which is painful right
             // now
@@ -699,16 +699,14 @@ impl Error {
     pub(crate) fn with_span(self, program: &Program, span: SourceSpan) -> Self {
         match self {
             // TODO: can we introduce a SpannedError that's a wrapper around Error?
-            Error::Type => Error::SpannedType {
+            Error::XPTY0004 => Error::XPTY0004S {
                 src: program.src.to_string(),
                 span,
             },
-            Error::ComponentAbsentInDynamicContext => {
-                Error::SpannedComponentAbsentInDynamicContext {
-                    src: program.src.to_string(),
-                    span,
-                }
-            }
+            Error::XPDY0002 => Error::XPDY0002S {
+                src: program.src.to_string(),
+                span,
+            },
             _ => self,
         }
     }

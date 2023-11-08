@@ -68,7 +68,7 @@ impl State {
             stack::Value::Empty => {}
             stack::Value::One(item) => build.push(item),
             stack::Value::Many(items) => build.extend(items.iter().cloned()),
-            stack::Value::Absent => return Err(error::Error::ComponentAbsentInDynamicContext)?,
+            stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }
         Ok(())
     }

@@ -24,7 +24,7 @@ fn abs(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
             Atomic::Decimal(d) => Ok(Some(d.abs().into())),
             Atomic::Float(f) => Ok(Some(f.abs().into())),
             Atomic::Double(d) => Ok(Some(d.abs().into())),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     } else {
         Ok(None)
@@ -39,7 +39,7 @@ fn ceiling(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
             Atomic::Decimal(d) => Ok(Some(d.ceil().into())),
             Atomic::Float(f) => Ok(Some(f.ceil().into())),
             Atomic::Double(d) => Ok(Some(d.ceil().into())),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     } else {
         Ok(None)
@@ -54,7 +54,7 @@ fn floor(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
             Atomic::Decimal(d) => Ok(Some(d.floor().into())),
             Atomic::Float(f) => Ok(Some(f.floor().into())),
             Atomic::Double(d) => Ok(Some(d.floor().into())),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     } else {
         Ok(None)
@@ -98,7 +98,7 @@ fn round_atomic(arg: Atomic, precision: i32) -> error::Result<Atomic> {
         // make do with doing the operation directly on f32 and f64
         Atomic::Float(OrderedFloat(f)) => Ok(round_float(f, precision).into()),
         Atomic::Double(OrderedFloat(d)) => Ok(round_double(d, precision).into()),
-        _ => Err(error::Error::Type),
+        _ => Err(error::Error::XPTY0004),
     }
 }
 

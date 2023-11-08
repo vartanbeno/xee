@@ -3,7 +3,7 @@ source: xee-xpath/src/ir/ast_ir.rs
 expression: "convert_xpath(\"function() { . }\")"
 ---
 Err(
-    SpannedComponentAbsentInDynamicContext {
+    XPDY0002S {
         src: "function() { . }",
         span: SourceSpan {
             offset: SourceOffset(

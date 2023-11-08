@@ -62,7 +62,7 @@ impl Sequence {
         if self.is_empty() {
             Ok(self)
         } else {
-            Err(error::Error::Type)
+            Err(error::Error::XPTY0004)
         }
     }
 
@@ -95,7 +95,7 @@ impl Sequence {
                 if n.is_element(xot) {
                     Ok(n)
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
             Err(n) => Err(n),
@@ -431,7 +431,7 @@ where
     U: Iterator<Item = error::Result<V>>,
 {
     fn error(&self) -> error::Error {
-        error::Error::Type
+        error::Error::XPTY0004
     }
 }
 

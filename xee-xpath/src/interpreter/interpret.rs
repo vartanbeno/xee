@@ -356,7 +356,7 @@ impl<'a> Interpreter<'a> {
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(stack::Value::Empty);
                     } else {
-                        Err(error::Error::Type)?;
+                        Err(error::Error::XPTY0004)?;
                     }
                 }
                 EncodedInstruction::Castable => {
@@ -598,7 +598,7 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<()> {
         let static_function = self.runnable.static_function(static_function_id);
         if arity as usize != static_function.arity() {
-            return Err(error::Error::Type);
+            return Err(error::Error::XPTY0004);
         }
         let result =
             static_function.invoke(self.runnable.dynamic_context, self, closure_vars, arity)?;
@@ -617,7 +617,7 @@ impl<'a> Interpreter<'a> {
         let function = self.runnable.inline_function(function_id);
         let parameter_types = &function.signature.parameter_types;
         if arity as usize != parameter_types.len() {
-            return Err(error::Error::Type);
+            return Err(error::Error::XPTY0004);
         }
         // TODO: fast path if no sequence types exist for parameters
         // could cache this inside of signature so that it's really fast
@@ -655,7 +655,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_array(&mut self, array: &function::Array, arity: usize) -> error::Result<()> {
         if arity != 1 {
-            return Err(error::Error::Type);
+            return Err(error::Error::XPTY0004);
         }
         // the argument
         let position = self.pop_atomic()?;
@@ -673,7 +673,7 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<sequence::Sequence> {
         let position = position
             .cast_to_integer_value::<i64>()
-            .map_err(|_| error::Error::Type)?;
+            .map_err(|_| error::Error::XPTY0004)?;
         let position = position as usize;
         let position = position - 1;
         let sequence = array.index(position);
@@ -682,7 +682,7 @@ impl<'a> Interpreter<'a> {
 
     fn call_map(&mut self, map: &function::Map, arity: usize) -> error::Result<()> {
         if arity != 1 {
-            return Err(error::Error::Type);
+            return Err(error::Error::XPTY0004);
         }
         let key = self.pop_atomic()?;
         let value = map.get(&key);
@@ -713,7 +713,7 @@ impl<'a> Interpreter<'a> {
         match function {
             function::Function::Map(map) => self.lookup_map(map, key_specifier),
             function::Function::Array(array) => self.lookup_array(array, key_specifier),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
@@ -734,7 +734,7 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<Vec<sequence::Item>> {
         self.lookup_helper(key_specifier, array, |array, atomic| match atomic {
             atomic::Atomic::Integer(..) => Self::array_get(array, atomic),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         })
     }
 
@@ -779,7 +779,7 @@ impl<'a> Interpreter<'a> {
                 }
                 result
             }
-            _ => return Err(error::Error::Type),
+            _ => return Err(error::Error::XPTY0004),
         };
         self.state.push(value.into());
         Ok(())

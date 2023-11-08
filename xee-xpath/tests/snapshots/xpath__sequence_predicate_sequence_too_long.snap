@@ -3,7 +3,7 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"(1, 2, 3)[(2, 3)]\")"
 ---
 Err(
-    SpannedType {
+    XPTY0004S {
         src: "(1, 2, 3)[(2, 3)]",
         span: SourceSpan {
             offset: SourceOffset(

@@ -249,7 +249,7 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_duration(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
             atomic::Atomic::Duration(_) => Ok(self.clone()),
             atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
@@ -258,13 +258,13 @@ impl atomic::Atomic {
             atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
                 Duration::from_day_time(*duration.as_ref()),
             ))),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_year_month_duration(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_year_month_duration(&s)
             }
@@ -275,13 +275,13 @@ impl atomic::Atomic {
             atomic::Atomic::DayTimeDuration(_) => {
                 Ok(atomic::Atomic::YearMonthDuration(YearMonthDuration::new(0)))
             }
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_day_time_duration(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_day_time_duration(&s)
             }
@@ -292,13 +292,13 @@ impl atomic::Atomic {
                 chrono::Duration::zero(),
             ))),
             atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_date_time(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
             atomic::Atomic::DateTime(_) => Ok(self.clone()),
             atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(
@@ -314,13 +314,13 @@ impl atomic::Atomic {
                     date.offset,
                 ),
             ))),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_date_time_stamp(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_date_time_stamp(&s)
             }
@@ -330,18 +330,18 @@ impl atomic::Atomic {
                         chrono::DateTime::from_naive_utc_and_offset(date_time.date_time, offset),
                     )))
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
             atomic::Atomic::DateTimeStamp(_) => Ok(self.clone()),
 
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_time(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
             atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Time(Rc::new(
                 NaiveTimeWithOffset::new(date_time.date_time.time(), date_time.offset),
@@ -350,13 +350,13 @@ impl atomic::Atomic {
                 NaiveTimeWithOffset::new(date_time.time(), Some(date_time.offset().fix())),
             ))),
             atomic::Atomic::Time(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_date(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
             atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Date(Rc::new(
                 NaiveDateWithOffset::new(date_time.date_time.date(), date_time.offset),
@@ -368,13 +368,13 @@ impl atomic::Atomic {
                 ))))
             }
             atomic::Atomic::Date(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_g_year_month(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_year_month(&s)
             }
@@ -398,13 +398,13 @@ impl atomic::Atomic {
                 date.offset,
             )))),
             atomic::Atomic::GYearMonth(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_g_year(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_year(&s),
             atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(
                 date_time.date_time.year(),
@@ -418,13 +418,13 @@ impl atomic::Atomic {
                 date.offset,
             )))),
             atomic::Atomic::GYear(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_g_month_day(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_month_day(&s)
             }
@@ -448,13 +448,13 @@ impl atomic::Atomic {
                 date.offset,
             )))),
             atomic::Atomic::GMonthDay(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_g_day(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_day(&s),
             atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GDay(Rc::new(GDay::new(
                 date_time.date_time.day(),
@@ -468,13 +468,13 @@ impl atomic::Atomic {
                 date.offset,
             )))),
             atomic::Atomic::GDay(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
     pub(crate) fn cast_to_g_month(self) -> error::Result<atomic::Atomic> {
         match self {
-            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::Type),
+            atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_month(&s),
             atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GMonth(Rc::new(
                 GMonth::new(date_time.date_time.month(), date_time.offset),
@@ -487,7 +487,7 @@ impl atomic::Atomic {
                 date.offset,
             )))),
             atomic::Atomic::GMonth(_) => Ok(self.clone()),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 

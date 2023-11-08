@@ -39,7 +39,7 @@ impl atomic::Atomic {
                 Rc::new(whitespace_collapse(&s)),
             )),
             atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(StringType::AnyURI, s.clone())),
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 
@@ -166,7 +166,7 @@ impl atomic::Atomic {
                     Err(_) => Err(error::Error::FORG0001),
                 }
             }
-            _ => Err(error::Error::Type),
+            _ => Err(error::Error::XPTY0004),
         }
     }
 }

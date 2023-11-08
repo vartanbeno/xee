@@ -105,7 +105,7 @@ impl Sequence {
                 if self.is_empty() {
                     Ok(self)
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
             ast::SequenceType::Item(occurrence_item) => {
@@ -163,7 +163,7 @@ impl Sequence {
             }
             ast::Occurrence::NonEmpty => {
                 if sequence.is_empty() {
-                    return Err(error::Error::Type);
+                    return Err(error::Error::XPTY0004);
                 }
                 for item in sequence.items() {
                     item?.item_type_matching(
@@ -197,7 +197,7 @@ impl Item {
                     if self.is_map() {
                         Ok(())
                     } else {
-                        Err(error::Error::Type)
+                        Err(error::Error::XPTY0004)
                     }
                 }
                 ast::MapTest::TypedMapTest(typed_map_test) => {
@@ -219,7 +219,7 @@ impl Item {
                     if self.is_array() {
                         Ok(())
                     } else {
-                        Err(error::Error::Type)
+                        Err(error::Error::XPTY0004)
                     }
                 }
                 ast::ArrayTest::TypedArrayTest(typed_array_test) => {
@@ -245,11 +245,11 @@ impl Item {
                 if xml::kind_test(kind_test, xot, *node) {
                     Ok(())
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
-            Item::Atomic(_) => Err(error::Error::Type),
-            Item::Function(_) => Err(error::Error::Type),
+            Item::Atomic(_) => Err(error::Error::XPTY0004),
+            Item::Function(_) => Err(error::Error::XPTY0004),
         }
     }
 
@@ -269,7 +269,7 @@ impl Item {
                 if signature.arity() == typed_function_test.parameter_types.len() {
                     Ok(())
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
         }
@@ -289,12 +289,12 @@ impl Item {
                 let function = self.to_function()?;
                 let signature = get_signature(&function);
                 if signature.arity() != typed_function_test.parameter_types.len() {
-                    return Err(error::Error::Type);
+                    return Err(error::Error::XPTY0004);
                 }
                 if Self::function_type_matching_helper(typed_function_test, signature) {
                     Ok(())
                 } else {
-                    Err(error::Error::Type)
+                    Err(error::Error::XPTY0004)
                 }
             }
         }
@@ -345,7 +345,7 @@ impl atomic::Atomic {
         if schema_type.derives_from(xs) || schema_type.matches(xs) {
             Ok(())
         } else {
-            Err(error::Error::Type)
+            Err(error::Error::XPTY0004)
         }
     }
 }
@@ -387,10 +387,10 @@ mod tests {
 
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004));
         let wrong_type_result =
             wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_type_result, Err(error::Error::Type));
+        assert_eq!(wrong_type_result, Err(error::Error::XPTY0004));
     }
 
     #[test]
@@ -411,10 +411,10 @@ mod tests {
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004));
         let wrong_type_result =
             wrong_type_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_type_result, Err(error::Error::Type));
+        assert_eq!(wrong_type_result, Err(error::Error::XPTY0004));
     }
 
     #[test]
@@ -436,7 +436,7 @@ mod tests {
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004));
         let right_type_result2 = right_type_sequence2.clone().sequence_type_matching(
             &sequence_type,
             &xot,
@@ -469,7 +469,7 @@ mod tests {
 
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004));
         let right_type_result2 = right_type_sequence2.clone().sequence_type_matching(
             &sequence_type,
             &xot,
@@ -497,7 +497,7 @@ mod tests {
         assert_eq!(right_result, Ok(right_sequence));
         let wrong_amount_result =
             wrong_amount_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_amount_result, Err(error::Error::Type));
+        assert_eq!(wrong_amount_result, Err(error::Error::XPTY0004));
         let right_empty_result = right_empty_sequence.clone().sequence_type_matching(
             &sequence_type,
             &xot,
@@ -575,7 +575,7 @@ mod tests {
 
         let wrong_result =
             wrong_sequence.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_result, Err(error::Error::Type));
+        assert_eq!(wrong_result, Err(error::Error::XPTY0004));
     }
 
     #[test]
@@ -610,10 +610,10 @@ mod tests {
 
         let wrong_result =
             wrong_sequence_text.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_result, Err(error::Error::Type));
+        assert_eq!(wrong_result, Err(error::Error::XPTY0004));
         let wrong_result =
             wrong_sequence_attr.sequence_type_matching(&sequence_type, &xot, &|_| unreachable!());
-        assert_eq!(wrong_result, Err(error::Error::Type));
+        assert_eq!(wrong_result, Err(error::Error::XPTY0004));
     }
 
     #[test]
@@ -784,6 +784,6 @@ mod tests {
             wrong_sequence
                 .clone()
                 .sequence_type_matching(&sequence_type, &xot, &|_| &signature);
-        assert_eq!(wrong_result, Err(error::Error::Type));
+        assert_eq!(wrong_result, Err(error::Error::XPTY0004));
     }
 }
