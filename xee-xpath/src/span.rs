@@ -1,13 +1,22 @@
-use xee_xpath_ast::ast::Span;
+use xee_xpath_ast::ast;
 
-pub(crate) fn to_miette(span: Span) -> miette::SourceSpan {
-    (span.start, span.end - span.start).into()
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub(crate) struct SourceSpan(usize, usize);
+
+impl From<ast::Span> for SourceSpan {
+    fn from(span: ast::Span) -> Self {
+        Self(span.start, span.end)
+    }
 }
 
-pub(crate) fn to_ast(span: miette::SourceSpan) -> Span {
-    let span_range = span.offset()..(span.offset() + span.len());
-    span_range.into()
-}
+// pub(crate) fn to_miette(span: Span) -> miette::SourceSpan {
+//     (span.start, span.end - span.start).into()
+// }
+
+// pub(crate) fn to_ast(span: miette::SourceSpan) -> Span {
+//     let span_range = span.offset()..(span.offset() + span.len());
+//     span_range.into()
+// }
 
 // TODO: disabled tests that check whether the correct error spans are generated
 // during runtime

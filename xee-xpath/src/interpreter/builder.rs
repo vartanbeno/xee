@@ -1,8 +1,8 @@
-use miette::SourceSpan;
 use xee_xpath_ast::ast;
 
 use crate::function;
 use crate::ir;
+use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
 

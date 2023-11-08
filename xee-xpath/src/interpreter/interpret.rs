@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use ibig::IBig;
-use miette::SourceSpan;
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
@@ -16,6 +15,7 @@ use crate::error::Error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
 

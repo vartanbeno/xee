@@ -14,7 +14,6 @@ homepage = "https://github.com/Paligo/xee-xpath"
 [dependencies]
 ahash = "0.8.3"
 arrayvec = "0.7.2"
-miette = { workspace = true }
 chumsky = { workspace = true }
 next-gen = "0.1.1"
 strum = { workspace = true }

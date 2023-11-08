@@ -1,12 +1,12 @@
 use ibig::{ibig, IBig};
-use miette::SourceSpan;
 
 use crate::context::StaticContext;
 use crate::error::{Error, Result};
 use crate::function;
 use crate::function::FunctionRule;
 use crate::ir;
-use crate::span;
+
+use crate::span::SourceSpan;
 use crate::stack;
 
 use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
@@ -22,7 +22,7 @@ pub(crate) struct InterpreterCompiler<'a> {
 
 impl<'a> InterpreterCompiler<'a> {
     pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> Result<()> {
-        let span = span::to_miette(expr.span);
+        let span = expr.span.into();
         match &expr.value {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
             ir::Expr::Let(let_) => self.compile_let(let_, span),
@@ -58,7 +58,7 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
-        let span = span::to_miette(atom.span);
+        let span = atom.span.into();
         match &atom.value {
             ir::Atom::Const(c) => {
                 match c {
