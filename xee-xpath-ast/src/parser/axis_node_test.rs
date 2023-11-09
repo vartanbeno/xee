@@ -1,8 +1,8 @@
 use chumsky::{input::ValueInput, prelude::*};
 
-use crate::ast;
 use crate::ast::Span;
 use crate::lexer::Token;
+use crate::{ast, error::ParserError};
 
 use super::types::{BoxedParser, State};
 
@@ -23,17 +23,20 @@ pub(crate) fn parser_axis_node_test<'a, I>(
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let wildcard_prefix = ncname
-        .clone()
-        .then_ignore(just(Token::ColonAsterisk))
-        .try_map_with_state(|prefix, span, state: &mut State| {
-            let namespace = state
-                .namespaces
-                .by_prefix(prefix)
-                .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))?;
-            Ok(ast::NameTest::Namespace(namespace.to_string()))
-        })
-        .boxed();
+    let wildcard_prefix =
+        ncname
+            .clone()
+            .then_ignore(just(Token::ColonAsterisk))
+            .try_map_with_state(|prefix, span, state: &mut State| {
+                let namespace = state.namespaces.by_prefix(prefix).ok_or_else(|| {
+                    ParserError::UnknownPrefix {
+                        prefix: prefix.to_string(),
+                        span,
+                    }
+                })?;
+                Ok(ast::NameTest::Namespace(namespace.to_string()))
+            })
+            .boxed();
     let wildcard_braced_uri_literal = braced_uri_literal
         .then_ignore(just(Token::Asterisk))
         .map(|uri| ast::NameTest::Namespace(uri.to_string()))

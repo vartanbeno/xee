@@ -2,10 +2,10 @@ use chumsky::{input::ValueInput, prelude::*};
 use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 
-use crate::ast;
 use crate::ast::Span;
 use crate::lexer::Token;
 use crate::span::WithSpan;
+use crate::{ast, error::ParserError};
 
 use super::types::{BoxedParser, State};
 
@@ -82,7 +82,7 @@ where
         .try_map_with_state(|(name, arity), span, state: &mut State| {
             let arity: u8 = arity
                 .try_into()
-                .map_err(|_| Rich::custom(span, "Arity out of range".to_string()))?;
+                .map_err(|_| ParserError::ArityOverflow { span })?;
             Ok(ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
                 name: name.map(|name| {
                     name.with_default_namespace(state.namespaces.default_function_namespace)
@@ -126,16 +126,13 @@ const RESERVED_FUNCTION_NAMES: [&str; 18] = [
 pub(crate) fn check_reserved<'a>(
     name: &ast::NameS,
     span: Span,
-) -> std::result::Result<(), Rich<'a, Token<'a>>> {
+) -> std::result::Result<(), ParserError<'a>> {
     let local_name = name.value.local_name();
     if RESERVED_FUNCTION_NAMES.contains(&local_name) {
-        return Err(Rich::custom(
+        return Err(ParserError::Reserved {
+            name: local_name.to_string(),
             span,
-            format!(
-                "Cannot use '{}' as a function name as it is a reserved name",
-                local_name
-            ),
-        ));
+        });
     }
     Ok(())
 }

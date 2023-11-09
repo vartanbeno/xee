@@ -14,7 +14,7 @@ use std::borrow::Cow;
 use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
-use crate::error::{Error, Result};
+use crate::error::{Error, ParserError, Result};
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
 
@@ -36,7 +36,7 @@ fn parse<'a, I, T>(
     parser: BoxedParser<'a, I, T>,
     input: I,
     namespaces: Cow<'a, Namespaces<'a>>,
-) -> std::result::Result<T, Vec<Rich<'a, Token<'a>>>>
+) -> std::result::Result<T, Vec<ParserError<'a>>>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
     T: std::fmt::Debug,

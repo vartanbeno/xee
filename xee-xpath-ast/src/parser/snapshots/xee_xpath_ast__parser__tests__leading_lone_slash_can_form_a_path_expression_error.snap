@@ -2,4 +2,4 @@
 source: xee-xpath-ast/src/parser/mod.rs
 expression: "parse_xpath_simple(\"/ * 5\")"
 ---
-Err("[found \'IntegerLiteral(5)\' at 4..5 expected \'Plus\', or \'Minus\']")
+Err("[ExpectedFound { span: 4..5, expected: [Some(Plus), Some(Minus)], found: Some(IntegerLiteral(5)) }]")

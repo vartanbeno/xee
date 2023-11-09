@@ -1,9 +1,9 @@
 use chumsky::{input::ValueInput, prelude::*};
 
-use crate::ast;
 use crate::ast::Span;
 use crate::lexer::Token;
 use crate::span::WithSpan;
+use crate::{ast, error::ParserError};
 
 use super::types::{BoxedParser, State};
 
@@ -41,7 +41,10 @@ where
         .try_map_with_state(|(prefix, local_name), span, state: &mut State| {
             ast::Name::prefixed(prefix, local_name, state.namespaces.as_ref())
                 .map(|name| name.with_span(span))
-                .ok_or_else(|| Rich::custom(span, format!("Unknown prefix: {}", prefix)))
+                .ok_or_else(|| ParserError::UnknownPrefix {
+                    prefix: prefix.to_string(),
+                    span,
+                })
         })
         .boxed();
 

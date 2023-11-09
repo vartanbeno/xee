@@ -1,9 +1,9 @@
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 
-use crate::ast;
 use crate::ast::Span;
 use crate::lexer::Token;
+use crate::{ast, error::ParserError};
 
 use super::types::{BoxedParser, State};
 
@@ -51,12 +51,16 @@ where
     let element_type_name = type_name
         .clone()
         .then(just(Token::QuestionMark).or_not())
-        .try_map(|(name, question_mark), span| {
+        .try_map(|(name, question_mark), _span| {
             Ok(ast::TypeName {
                 name: name
                     .value
+                    .clone()
                     .try_into()
-                    .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                    .map_err(|_| ParserError::UnknownType {
+                        name: name.value.clone(),
+                        span: name.span,
+                    })?,
                 can_be_nilled: question_mark.is_some(),
             })
         })
@@ -99,16 +103,18 @@ where
 
     let attribute_test_content = name_or_wildcard
         .then((just(Token::Comma).ignore_then(type_name)).or_not())
-        .try_map(|(name_or_wildcard, type_name), span| {
+        .try_map(|(name_or_wildcard, type_name), _span| {
             Ok(ast::ElementOrAttributeTest {
                 name_or_wildcard,
                 type_name: type_name
                     .map(|name| {
                         Ok(ast::TypeName {
-                            name: name
-                                .value
-                                .try_into()
-                                .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                            name: name.value.clone().try_into().map_err(|_| {
+                                ParserError::UnknownType {
+                                    name: name.value.clone(),
+                                    span: name.span,
+                                }
+                            })?,
                             // this is not relevant for attributes
                             can_be_nilled: true,
                         })

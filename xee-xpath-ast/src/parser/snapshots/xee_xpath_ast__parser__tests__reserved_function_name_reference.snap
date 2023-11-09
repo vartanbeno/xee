@@ -2,4 +2,4 @@
 source: xee-xpath-ast/src/parser/mod.rs
 expression: "parse_xpath_simple(\"switch#2\")"
 ---
-Err("[multiple errors found at 0..8]")
+Err("[Reserved { span: 0..8, name: \"switch\" }]")

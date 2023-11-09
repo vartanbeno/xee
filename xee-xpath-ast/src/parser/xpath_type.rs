@@ -3,6 +3,7 @@ use xee_schema_type::Xs;
 
 use crate::ast;
 use crate::ast::Span;
+use crate::error::ParserError;
 use crate::lexer::Token;
 
 use super::types::BoxedParser;
@@ -43,11 +44,15 @@ where
         .ignore_then(empty_call.clone())
         .to(ast::ItemType::Item)
         .boxed();
-    let item_type_atomic_or_union = eqname.clone().try_map(|name, span| {
+    let item_type_atomic_or_union = eqname.clone().try_map(|name, _span| {
         Ok(ast::ItemType::AtomicOrUnionType(
             name.value
+                .clone()
                 .try_into()
-                .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                .map_err(|_| ParserError::UnknownType {
+                    name: name.value.clone(),
+                    span: name.span,
+                })?,
         ))
     });
 
@@ -62,12 +67,14 @@ where
         let typed_map_test_entry = (eqname
             .then_ignore(just(Token::Comma))
             .then(sequence_type.clone()))
-        .try_map(|(key_type, value_type), span| {
+        .try_map(|(key_type, value_type), _span| {
             Ok(ast::MapTest::TypedMapTest(Box::new(ast::TypedMapTest {
-                key_type: key_type
-                    .value
-                    .try_into()
-                    .map_err(|_| Rich::custom(span, "Unknown type".to_string()))?,
+                key_type: key_type.value.clone().try_into().map_err(|_| {
+                    ParserError::UnknownType {
+                        name: key_type.value.clone(),
+                        span: key_type.span,
+                    }
+                })?,
                 value_type,
             })))
         })
