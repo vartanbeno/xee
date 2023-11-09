@@ -40,7 +40,8 @@ fn main() -> xee_xpath::Result<()> {
             let mut xml = String::new();
             buf_reader.read_to_string(&mut xml).unwrap();
             let root = xot.parse(&xml).unwrap();
-            let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())?;
+            let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())
+                .map_err(|e| e.error)?;
             for item in result.items() {
                 display_item(&xot, &item?).unwrap();
             }

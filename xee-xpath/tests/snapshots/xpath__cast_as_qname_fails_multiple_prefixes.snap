@@ -3,5 +3,11 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"'xs:bar:baz' cast as xs:QName\")"
 ---
 Err(
-    FORG0001,
+    SpannedError {
+        error: FORG0001,
+        span: SourceSpan(
+            0,
+            29,
+        ),
+    },
 )

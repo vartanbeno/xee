@@ -1,6 +1,14 @@
 use ibig::error::OutOfBoundsError;
 use strum_macros::{Display, EnumMessage};
 
+use crate::span::SourceSpan;
+
+#[derive(Debug)]
+pub struct SpannedError {
+    pub error: Error,
+    pub span: SourceSpan,
+}
+
 #[derive(Debug, Clone, PartialEq, Display, EnumMessage)]
 pub enum Error {
     #[strum(message = "Stack overflow")]
@@ -600,12 +608,28 @@ pub enum Error {
     Unsupported,
 }
 
+impl Error {
+    pub(crate) fn with_span(self, span: SourceSpan) -> SpannedError {
+        SpannedError { error: self, span }
+    }
+    pub(crate) fn with_simple_span(self, span: xee_xpath_ast::ast::Span) -> SpannedError {
+        Self::with_span(self, span.into())
+    }
+}
 impl std::error::Error for Error {}
 
 impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
     fn from(_e: xee_xpath_ast::Error) -> Self {
-        // TODO: we are losing span information
         Error::XPST0003
+    }
+}
+
+impl<'a> From<xee_xpath_ast::Error<'a>> for SpannedError {
+    fn from(e: xee_xpath_ast::Error) -> Self {
+        SpannedError {
+            error: Error::XPST0003,
+            span: e.span().into(),
+        }
     }
 }
 
@@ -633,3 +657,4 @@ impl From<OutOfBoundsError> for Error {
 // }
 
 pub type Result<T> = std::result::Result<T, Error>;
+pub type SpannedResult<T> = std::result::Result<T, SpannedError>;

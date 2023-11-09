@@ -211,10 +211,10 @@ impl qt::TestCase {
             Err(error) => {
                 return match &self.result {
                     qt::TestCaseResult::AssertError(assert_error) => {
-                        assert_error.assert_error(&error)
+                        assert_error.assert_error(&error.error)
                     }
-                    qt::TestCaseResult::AnyOf(any_of) => any_of.assert_error(&error),
-                    _ => TestOutcome::CompilationError(error),
+                    qt::TestCaseResult::AnyOf(any_of) => any_of.assert_error(&error.error),
+                    _ => TestOutcome::CompilationError(error.error),
                 }
             }
         };
@@ -227,7 +227,8 @@ impl qt::TestCase {
         );
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref());
-        self.result.assert_result(&runnable, &result)
+        self.result
+            .assert_result(&runnable, &result.map_err(|error| error.error))
     }
 
     fn environment_specs<'a>(

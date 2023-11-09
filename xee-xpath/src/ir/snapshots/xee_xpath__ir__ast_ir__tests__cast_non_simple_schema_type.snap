@@ -3,5 +3,11 @@ source: xee-xpath/src/ir/ast_ir.rs
 expression: "convert_expr_single(\"1 cast as xs:untyped\")"
 ---
 Err(
-    XQST0052,
+    SpannedError {
+        error: XQST0052,
+        span: SourceSpan(
+            0,
+            20,
+        ),
+    },
 )

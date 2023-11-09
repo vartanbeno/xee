@@ -4,7 +4,7 @@ use xot::Xot;
 
 use xee_xpath::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, Atomic, Document,
-    Documents, DynamicContext, Item, Node, Program, Result, Sequence, StaticContext, Uri,
+    Documents, DynamicContext, Item, Node, Program, Sequence, SpannedResult, StaticContext, Uri,
 };
 
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
@@ -15,15 +15,15 @@ fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
     )
 }
 
-fn run(s: &str) -> Result<Sequence> {
+fn run(s: &str) -> SpannedResult<Sequence> {
     evaluate_without_focus(s)
 }
 
-fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<Item>)]) -> Result<Sequence> {
+fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<Item>)]) -> SpannedResult<Sequence> {
     evaluate_without_focus_with_variables(s, variables)
 }
 
-// fn run_debug(s: &str) -> Result<stack::Value> {
+// fn run_debug(s: &str) -> SpannedResult<stack::Value> {
 //     let xot = Xot::new();
 //     let namespaces = Namespaces::default();
 //     let static_context = StaticContext::new(&namespaces);
@@ -33,15 +33,15 @@ fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<Item>)]) -> Result<S
 //     xpath.run_value(&context, None)
 // }
 
-fn run_xml(xml: &str, xpath: &str) -> Result<Sequence> {
+fn run_xml(xml: &str, xpath: &str) -> SpannedResult<Sequence> {
     evaluate(xml, xpath, None)
 }
 
-fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> Result<Sequence> {
+fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> SpannedResult<Sequence> {
     evaluate(xml, xpath, Some(ns))
 }
 
-fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> Result<()>
+fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> SpannedResult<()>
 where
     S: Fn(&Xot, &Document) -> Vec<xot::Node>,
 {
@@ -442,7 +442,7 @@ fn test_sequence_predicate_sequence_empty() {
 }
 
 #[test]
-fn test_child_axis_step1() -> Result<()> {
+fn test_child_axis_step1() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
         let doc_el = xot.document_element(document.root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
@@ -452,7 +452,7 @@ fn test_child_axis_step1() -> Result<()> {
 }
 
 #[test]
-fn test_child_axis_step2() -> Result<()> {
+fn test_child_axis_step2() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/a", |xot, document| {
         let doc_el = xot.document_element(document.root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
@@ -461,7 +461,7 @@ fn test_child_axis_step2() -> Result<()> {
 }
 
 #[test]
-fn test_step_with_predicate() -> Result<()> {
+fn test_step_with_predicate() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a/><b/></doc>"#,
         "doc/*[fn:position() eq 2]",
@@ -475,7 +475,7 @@ fn test_step_with_predicate() -> Result<()> {
 }
 
 #[test]
-fn test_descendant_axis_step() -> Result<()> {
+fn test_descendant_axis_step() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a/><b><c/></b></doc>"#,
         "descendant::*",
@@ -498,7 +498,7 @@ fn test_descendant_axis_position() {
 }
 
 #[test]
-fn test_descendant_axis_step2() -> Result<()> {
+fn test_descendant_axis_step2() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a><c/></a><b/></doc>"#,
         "descendant::*",
@@ -513,7 +513,7 @@ fn test_descendant_axis_step2() -> Result<()> {
 }
 
 #[test]
-fn test_comma_nodes() -> Result<()> {
+fn test_comma_nodes() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/b, doc/a", |xot, document| {
         let doc_el = xot.document_element(document.root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
@@ -523,7 +523,7 @@ fn test_comma_nodes() -> Result<()> {
 }
 
 #[test]
-fn test_union() -> Result<()> {
+fn test_union() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a/><b/><c/></doc>"#,
         "doc/c | doc/a | doc/b | doc/a",
@@ -742,7 +742,7 @@ fn test_atomize_xml_attribute_missing() {
 }
 
 #[test]
-fn test_attribute_predicate() -> Result<()> {
+fn test_attribute_predicate() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
         "//*[@foo eq 'FOO']",
@@ -1253,7 +1253,7 @@ fn test_instance_of_node_fails() {
 }
 
 #[test]
-fn test_kind_test_in_path() -> Result<()> {
+fn test_kind_test_in_path() -> SpannedResult<()> {
     assert_nodes(
         r#"<doc><a/>foo<b/></doc>"#,
         "doc/element()",

@@ -3,8 +3,10 @@ use std::rc::Rc;
 use xee_xpath_ast::ast;
 
 use crate::context::DynamicContext;
+use crate::error::SpannedError;
 use crate::function;
 use crate::sequence;
+use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
 use crate::Occurrence;
@@ -38,9 +40,13 @@ impl<'a> Runnable<'a> {
     pub(crate) fn run_value(
         &self,
         context_item: Option<&sequence::Item>,
-    ) -> error::Result<stack::Value> {
+    ) -> error::SpannedResult<stack::Value> {
         let mut interpreter = Interpreter::new(self);
-        let arguments = self.dynamic_context.arguments()?;
+        // TODO: the arguments aren't supplied to the function that are expected.
+        // This should result in an error, preferrably the variable that is missing
+        // underlined in the xpath expression. But that requires some more work to
+        // accomplish, so for now we panic.
+        let arguments = self.dynamic_context.arguments().unwrap();
         interpreter.start(context_item, arguments);
         interpreter.run(0)?;
         // the stack has to be 1 values and return the result of the expression
@@ -55,32 +61,44 @@ impl<'a> Runnable<'a> {
         );
         let value = interpreter.state().stack().last().unwrap().clone();
         match value {
-            stack::Value::Absent => Err(error::Error::XPDY0002),
+            stack::Value::Absent => Err(SpannedError {
+                error: error::Error::XPDY0002,
+                span: SourceSpan::entire(&self.program.src),
+            }),
             _ => Ok(value),
         }
     }
 
-    pub fn many_xot_node(&self, node: xot::Node) -> error::Result<sequence::Sequence> {
+    pub fn many_xot_node(&self, node: xot::Node) -> error::SpannedResult<sequence::Sequence> {
         let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
         self.many(Some(&item))
     }
 
-    pub fn many(&self, item: Option<&sequence::Item>) -> error::Result<sequence::Sequence> {
+    pub fn many(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Sequence> {
         let value = self.run_value(item)?;
         Ok(value.into())
     }
 
-    pub fn one(&self, item: Option<&sequence::Item>) -> error::Result<sequence::Item> {
+    pub fn one(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Item> {
         let value = self.run_value(item)?;
         let sequence: sequence::Sequence = value.into();
-        sequence.items().one()
+        sequence.items().one().map_err(|error| SpannedError {
+            error,
+            span: SourceSpan::entire(&self.program.src),
+        })
     }
 
-    pub fn option(&self, item: Option<&sequence::Item>) -> error::Result<Option<sequence::Item>> {
+    pub fn option(
+        &self,
+        item: Option<&sequence::Item>,
+    ) -> error::SpannedResult<Option<sequence::Item>> {
         let value = self.run_value(item)?;
         let sequence: sequence::Sequence = value.into();
-        sequence.items().option()
+        sequence.items().option().map_err(|error| SpannedError {
+            error,
+            span: SourceSpan::entire(&self.program.src),
+        })
     }
 
     pub(crate) fn program(&self) -> &'a Program {

@@ -3,5 +3,11 @@ source: xee-xpath/src/ir/ast_ir.rs
 expression: "convert_expr_single(\"$unknown\")"
 ---
 Err(
-    XPST0008,
+    SpannedError {
+        error: XPST0008,
+        span: SourceSpan(
+            0,
+            8,
+        ),
+    },
 )

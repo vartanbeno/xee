@@ -3,5 +3,11 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"let $x := $x return $x\")"
 ---
 Err(
-    XPST0008,
+    SpannedError {
+        error: XPST0008,
+        span: SourceSpan(
+            10,
+            12,
+        ),
+    },
 )

@@ -3,7 +3,7 @@ use xot::Xot;
 use xee_xpath_ast::{ast, Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::error::Result;
+use crate::error;
 use crate::xml;
 use crate::{interpreter, sequence};
 
@@ -12,7 +12,7 @@ pub fn evaluate(
     xml: &str,
     xpath: &str,
     default_element_namespace: Option<&str>,
-) -> Result<sequence::Sequence> {
+) -> error::SpannedResult<sequence::Sequence> {
     let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
     evaluate_root(&xot, root, xpath, default_element_namespace)
@@ -24,7 +24,7 @@ pub fn evaluate_root(
     root: xot::Node,
     xpath: &str,
     default_element_namespace: Option<&str>,
-) -> Result<sequence::Sequence> {
+) -> error::SpannedResult<sequence::Sequence> {
     let uri = xml::Uri("http://example.com".to_string());
     let mut documents = xml::Documents::new();
     documents.add_root(xot, &uri, root);
@@ -38,7 +38,7 @@ pub fn evaluate_root(
     runnable.many_xot_node(document.root)
 }
 
-pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
+pub fn evaluate_without_focus(s: &str) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
@@ -52,7 +52,7 @@ pub fn evaluate_without_focus(s: &str) -> Result<sequence::Sequence> {
 pub fn evaluate_without_focus_with_variables(
     s: &str,
     variables: &[(ast::Name, Vec<sequence::Item>)],
-) -> Result<sequence::Sequence> {
+) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let namespaces = Namespaces::default();
     let variable_names = variables

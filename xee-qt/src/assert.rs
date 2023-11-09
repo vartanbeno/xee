@@ -765,14 +765,14 @@ impl fmt::Display for Failure {
 fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let static_context = StaticContext::new(&namespaces);
-    let program = Program::new(&static_context, &expr.0)?;
+    let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
     let dynamic_context = DynamicContext::with_documents(
         runnable.xot(),
         &static_context,
         runnable.dynamic_context().documents(),
     );
     let runnable = program.runnable(&dynamic_context);
-    runnable.many(None)
+    runnable.many(None).map_err(|e| e.error)
 }
 
 fn run_xpath_with_result(
@@ -784,7 +784,7 @@ fn run_xpath_with_result(
     let name = Name::unprefixed("result");
     let names = vec![name.clone()];
     let static_context = StaticContext::with_variable_names(&namespaces, &names);
-    let program = Program::new(&static_context, &expr.0)?;
+    let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_documents_and_variables(
         runnable.xot(),
@@ -793,5 +793,5 @@ fn run_xpath_with_result(
         &variables,
     );
     let runnable = program.runnable(&dynamic_context);
-    runnable.many(None)
+    runnable.many(None).map_err(|e| e.error)
 }

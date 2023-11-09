@@ -54,7 +54,7 @@ impl EnvironmentSpec {
             let program = program.unwrap();
             let dynamic_context = DynamicContext::new(xot, &static_context);
             let runnable = program.runnable(&dynamic_context);
-            let result = runnable.many(None)?;
+            let result = runnable.many(None).map_err(|e| e.error)?;
             let result = result.items().collect::<XPathResult<Vec<Item>>>().unwrap();
             variables.push((param.name.clone(), result));
         }

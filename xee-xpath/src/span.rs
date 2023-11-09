@@ -1,7 +1,17 @@
 use xee_xpath_ast::ast;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub(crate) struct SourceSpan(usize, usize);
+pub struct SourceSpan(usize, usize);
+
+impl SourceSpan {
+    pub(crate) fn entire(src: &str) -> Self {
+        Self(0, src.len())
+    }
+
+    pub(crate) fn empty() -> Self {
+        Self(0, 0)
+    }
+}
 
 impl From<ast::Span> for SourceSpan {
     fn from(span: ast::Span) -> Self {

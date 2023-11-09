@@ -3,5 +3,11 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"'foo:bar' cast as xs:NCName\")"
 ---
 Err(
-    FORG0001,
+    SpannedError {
+        error: FORG0001,
+        span: SourceSpan(
+            0,
+            27,
+        ),
+    },
 )

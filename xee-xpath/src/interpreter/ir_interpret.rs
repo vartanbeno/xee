@@ -1,7 +1,8 @@
 use ibig::{ibig, IBig};
 
 use crate::context::StaticContext;
-use crate::error::{Error, Result};
+use crate::error;
+use crate::error::Error;
 use crate::function;
 use crate::function::FunctionRule;
 use crate::ir;
@@ -21,7 +22,7 @@ pub(crate) struct InterpreterCompiler<'a> {
 }
 
 impl<'a> InterpreterCompiler<'a> {
-    pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> Result<()> {
+    pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> error::SpannedResult<()> {
         let span = expr.span.into();
         match &expr.value {
             ir::Expr::Atom(atom) => self.compile_atom(atom),
@@ -57,7 +58,7 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_atom(&mut self, atom: &ir::AtomS) -> Result<()> {
+    fn compile_atom(&mut self, atom: &ir::AtomS) -> error::SpannedResult<()> {
         let span = atom.span.into();
         match &atom.value {
             ir::Atom::Const(c) => {
@@ -91,10 +92,10 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_variable(&mut self, name: &ir::Name, span: SourceSpan) -> Result<()> {
+    fn compile_variable(&mut self, name: &ir::Name, span: SourceSpan) -> error::SpannedResult<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
-                return Err(Error::XPDY0130);
+                return Err(Error::XPDY0130.with_span(span));
             }
             self.builder.emit(Instruction::Var(index as u16), span);
             Ok(())
@@ -103,7 +104,7 @@ impl<'a> InterpreterCompiler<'a> {
             if self.scopes.is_closed_over_name(name) {
                 let index = self.builder.add_closure_name(name);
                 if index > u16::MAX as usize {
-                    return Err(Error::XPDY0130);
+                    return Err(Error::XPDY0130.with_span(span));
                 }
                 self.builder
                     .emit(Instruction::ClosureVar(index as u16), span);
@@ -114,10 +115,14 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
-    fn compile_variable_set(&mut self, name: &ir::Name, span: SourceSpan) -> Result<()> {
+    fn compile_variable_set(
+        &mut self,
+        name: &ir::Name,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
-                return Err(Error::XPDY0130);
+                return Err(Error::XPDY0130.with_span(span));
             }
             self.builder.emit(Instruction::Set(index as u16), span);
         } else {
@@ -126,7 +131,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_let(&mut self, let_: &ir::Let, span: SourceSpan) -> Result<()> {
+    fn compile_let(&mut self, let_: &ir::Let, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_expr(&let_.var_expr)?;
         self.scopes.push_name(&let_.name);
         self.compile_expr(&let_.return_expr)?;
@@ -135,7 +140,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_if(&mut self, if_: &ir::If, span: SourceSpan) -> Result<()> {
+    fn compile_if(&mut self, if_: &ir::If, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&if_.condition)?;
         let jump_else = self.builder.emit_jump_forward(JumpCondition::False, span);
         self.compile_expr(&if_.then)?;
@@ -146,7 +151,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_binary(&mut self, binary: &ir::Binary, span: SourceSpan) -> Result<()> {
+    fn compile_binary(
+        &mut self,
+        binary: &ir::Binary,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&binary.left)?;
         self.compile_atom(&binary.right)?;
         match &binary.op {
@@ -266,7 +275,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_unary(&mut self, unary: &ir::Unary, span: SourceSpan) -> Result<()> {
+    fn compile_unary(&mut self, unary: &ir::Unary, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&unary.atom)?;
         match unary.op {
             ir::UnaryOperator::Plus => {
@@ -283,7 +292,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         let nested_builder = self.builder.builder();
         self.scopes.push_scope();
 
@@ -323,18 +332,18 @@ impl<'a> InterpreterCompiler<'a> {
         static_function_id: function::StaticFunctionId,
         context_names: Option<&ir::ContextNames>,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         let static_function = self
             .static_context
             .functions
             .get_by_index(static_function_id);
         match static_function.function_rule {
             Some(FunctionRule::ItemFirst) => {
-                let context_names = context_names.ok_or(Error::XPDY0002)?;
+                let context_names = context_names.ok_or(Error::XPDY0002.with_span(span))?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::ItemLast) => {
-                let context_names = context_names.ok_or(Error::XPDY0002)?;
+                let context_names = context_names.ok_or(Error::XPDY0002.with_span(span))?;
                 self.compile_variable(&context_names.item, span)?
             }
             Some(FunctionRule::ItemLastOptional) => {
@@ -346,13 +355,13 @@ impl<'a> InterpreterCompiler<'a> {
             }
             Some(FunctionRule::PositionFirst) => self.compile_variable(
                 {
-                    let context_names = context_names.ok_or(Error::XPDY0002)?;
+                    let context_names = context_names.ok_or(Error::XPDY0002.with_span(span))?;
                     &context_names.position
                 },
                 span,
             )?,
             Some(FunctionRule::SizeFirst) => {
-                let context_names = context_names.ok_or(Error::XPDY0002)?;
+                let context_names = context_names.ok_or(Error::XPDY0002.with_span(span))?;
                 self.compile_variable(&context_names.last, span)?
             }
             Some(FunctionRule::Collation) | None => {}
@@ -368,7 +377,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         function_call: &ir::FunctionCall,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&function_call.atom)?;
         for arg in &function_call.args {
             self.compile_atom(arg)?;
@@ -378,7 +387,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_lookup(&mut self, lookup: &ir::Lookup, span: SourceSpan) -> Result<()> {
+    fn compile_lookup(
+        &mut self,
+        lookup: &ir::Lookup,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&lookup.atom)?;
         self.compile_atom(&lookup.arg_atom)?;
         self.builder.emit(Instruction::Lookup, span);
@@ -389,26 +402,30 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         lookup: &ir::WildcardLookup,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&lookup.atom)?;
         self.builder.emit(Instruction::WildcardLookup, span);
         Ok(())
     }
 
-    fn compile_step(&mut self, step: &ir::Step, span: SourceSpan) -> Result<()> {
+    fn compile_step(&mut self, step: &ir::Step, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&step.context)?;
         let step_id = self.builder.add_step(step.step.clone());
         self.builder.emit(Instruction::Step(step_id as u16), span);
         Ok(())
     }
 
-    fn compile_deduplicate(&mut self, expr: &ir::ExprS, span: SourceSpan) -> Result<()> {
+    fn compile_deduplicate(
+        &mut self,
+        expr: &ir::ExprS,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.compile_expr(expr)?;
         self.builder.emit(Instruction::Deduplicate, span);
         Ok(())
     }
 
-    fn compile_cast(&mut self, cast: &ir::Cast, span: SourceSpan) -> Result<()> {
+    fn compile_cast(&mut self, cast: &ir::Cast, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&cast.atom)?;
         let cast_type = cast.cast_type();
         let cast_type_id = self.builder.add_cast_type(cast_type);
@@ -417,7 +434,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_castable(&mut self, castable: &ir::Castable, span: SourceSpan) -> Result<()> {
+    fn compile_castable(
+        &mut self,
+        castable: &ir::Castable,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&castable.atom)?;
         let cast_type = castable.cast_type();
         let cast_type_id = self.builder.add_cast_type(cast_type);
@@ -430,7 +451,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         instance_of: &ir::InstanceOf,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&instance_of.atom)?;
         let sequence_type_id = self
             .builder
@@ -440,7 +461,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_treat(&mut self, treat: &ir::Treat, span: SourceSpan) -> Result<()> {
+    fn compile_treat(&mut self, treat: &ir::Treat, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&treat.atom)?;
         let sequence_type_id = self.builder.add_sequence_type(treat.sequence_type.clone());
         self.builder
@@ -452,7 +473,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         map_constructor: &ir::MapConstructor,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         // compile them in reverse, so we can pop them in the right
         // order during runtime. It matters less with a map, but may
         // still be important for consistent duplicate key detection.
@@ -472,7 +493,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         array_constructor: &ir::ArrayConstructor,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         match array_constructor {
             ir::ArrayConstructor::Curly(atom) => {
                 self.compile_curly_array_constructor(atom, span)?;
@@ -488,7 +509,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         atom: &ir::AtomS,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         self.compile_atom(atom)?;
         self.builder.emit(Instruction::CurlyArray, span);
         Ok(())
@@ -498,7 +519,7 @@ impl<'a> InterpreterCompiler<'a> {
         &mut self,
         atoms: &[ir::AtomS],
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         // compile them in reverse, so we can pop them in the right
         // order during runtime
         for atom in atoms.iter().rev() {
@@ -512,7 +533,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_map(&mut self, map: &ir::Map, span: SourceSpan) -> Result<()> {
+    fn compile_map(&mut self, map: &ir::Map, span: SourceSpan) -> error::SpannedResult<()> {
         // create new build sequence on build stack
         self.builder.emit(Instruction::BuildNew, span);
 
@@ -544,7 +565,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_filter(&mut self, filter: &ir::Filter, span: SourceSpan) -> Result<()> {
+    fn compile_filter(
+        &mut self,
+        filter: &ir::Filter,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         // create new build sequence on build stack
         self.builder.emit(Instruction::BuildNew, span);
 
@@ -597,7 +622,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_quantified(&mut self, quantified: &ir::Quantified, span: SourceSpan) -> Result<()> {
+    fn compile_quantified(
+        &mut self,
+        quantified: &ir::Quantified,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         let (loop_start, loop_end) =
             self.compile_sequence_loop_init(&quantified.var_atom, &quantified.context_names, span)?;
 
@@ -654,7 +683,7 @@ impl<'a> InterpreterCompiler<'a> {
         atom: &ir::AtomS,
         context_names: &ir::ContextNames,
         span: SourceSpan,
-    ) -> Result<(BackwardJumpRef, ForwardJumpRef)> {
+    ) -> error::SpannedResult<(BackwardJumpRef, ForwardJumpRef)> {
         //  sequence length
         self.compile_atom(atom)?;
         self.scopes.push_name(&context_names.last);
@@ -681,7 +710,7 @@ impl<'a> InterpreterCompiler<'a> {
         atom: &ir::AtomS,
         context_names: &ir::ContextNames,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         // get item at the index
         self.compile_variable(&context_names.position, span)?;
         self.compile_atom(atom)?;
@@ -694,7 +723,7 @@ impl<'a> InterpreterCompiler<'a> {
         loop_start: BackwardJumpRef,
         context_names: &ir::ContextNames,
         span: SourceSpan,
-    ) -> Result<()> {
+    ) -> error::SpannedResult<()> {
         // update index with 1
         self.compile_variable(&context_names.position, span)?;
         self.builder.emit_constant(ibig!(1).into(), span);

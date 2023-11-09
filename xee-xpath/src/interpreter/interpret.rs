@@ -11,7 +11,6 @@ use crate::atomic::{
 };
 use crate::context::DynamicContext;
 use crate::error;
-use crate::error::Error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::sequence;
@@ -73,7 +72,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn run(&mut self, start_base: usize) -> Result<(), Error> {
+    pub(crate) fn run(&mut self, start_base: usize) -> error::SpannedResult<()> {
         // annotate run with detailed error information
         self.run_actual(start_base).map_err(|e| self.err(e))
     }
@@ -565,13 +564,13 @@ impl<'a> Interpreter<'a> {
         if matches!(function.as_ref(), function::Function::Inline { .. }) {
             // run interpreter until we return to the base
             // we started in
-            self.run(self.state.frame().base())?;
+            self.run_actual(self.state.frame().base())?;
         }
         let value = self.state.pop().into();
         Ok(value)
     }
 
-    fn call_function(&mut self, function: Rc<function::Function>, arity: u8) -> Result<(), Error> {
+    fn call_function(&mut self, function: Rc<function::Function>, arity: u8) -> error::Result<()> {
         match function.as_ref() {
             function::Function::Static {
                 static_function_id,
@@ -911,12 +910,20 @@ impl<'a> Interpreter<'a> {
         a.effective_boolean_value()
     }
 
-    fn err(&self, value_error: error::Error) -> error::Error {
-        value_error
-        // TODO: wrap error code in error that has span
-        // value_error.with_span(self.runnable.program(), self.current_span())
+    // The interpreter can return an error for any byte code, in any level of
+    // nesting in the function. When this happens the interpreter stops with
+    // the error code. We here wrap it in a SpannedError using the current
+    // span.
+    fn err(&self, value_error: error::Error) -> error::SpannedError {
+        error::SpannedError {
+            error: value_error,
+            span: self.current_span(),
+        }
     }
 
+    // During the compilation process, spans became associated with each
+    // compiled bytecode instruction. Here we take the current function and the
+    // instruction in it to determine the span of the code that failed.
     fn current_span(&self) -> SourceSpan {
         let frame = self.state.frame();
         let function = self.runnable.inline_function(frame.function());

@@ -3,5 +3,11 @@ source: xee-xpath/tests/xpath.rs
 expression: "run(\"'f' cast as xs:hexBinary\")"
 ---
 Err(
-    FORG0001,
+    SpannedError {
+        error: FORG0001,
+        span: SourceSpan(
+            0,
+            24,
+        ),
+    },
 )

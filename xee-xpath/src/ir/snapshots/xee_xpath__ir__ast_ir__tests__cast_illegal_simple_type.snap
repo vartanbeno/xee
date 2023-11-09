@@ -3,5 +3,11 @@ source: xee-xpath/src/ir/ast_ir.rs
 expression: "convert_expr_single(\"1 cast as xs:NOTATION\")"
 ---
 Err(
-    XPST0080,
+    SpannedError {
+        error: XPST0080,
+        span: SourceSpan(
+            0,
+            21,
+        ),
+    },
 )

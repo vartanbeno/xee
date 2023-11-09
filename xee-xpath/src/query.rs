@@ -49,7 +49,7 @@ impl<'s> Queries<'s> {
     }
 
     fn register(&mut self, s: &str) -> error::Result<usize> {
-        let program = interpreter::Program::new(self.static_context, s)?;
+        let program = interpreter::Program::new(self.static_context, s).map_err(|e| e.error)?;
         let id = self.queries.len();
         self.queries.push(program);
         Ok(id)
@@ -147,7 +147,7 @@ where
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item))?;
+        let item = runnable.one(Some(item)).map_err(|e| e.error)?;
         (self.convert)(session, &item)
     }
 }
@@ -175,7 +175,7 @@ impl OneRecurseQuery {
     ) -> error::Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item))?;
+        let item = runnable.one(Some(item)).map_err(|e| e.error)?;
         recurse.execute(session, &item)
     }
 }
@@ -197,7 +197,7 @@ where
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Option<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.option(Some(item))?;
+        let item = runnable.option(Some(item)).map_err(|e| e.error)?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -232,7 +232,7 @@ impl OptionRecurseQuery {
     ) -> error::Result<Option<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.option(Some(item))?;
+        let item = runnable.option(Some(item)).map_err(|e| e.error)?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
         } else {
@@ -258,7 +258,7 @@ where
     pub fn execute(&self, session: &Session, item: &sequence::Item) -> error::Result<Vec<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let sequence = runnable.many(Some(item))?;
+        let sequence = runnable.many(Some(item)).map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             match (self.convert)(session, &item?) {
@@ -293,7 +293,7 @@ impl ManyRecurseQuery {
     ) -> error::Result<Vec<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let sequence = runnable.many(Some(item))?;
+        let sequence = runnable.many(Some(item)).map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             values.push(recurse.execute(session, &item?)?);

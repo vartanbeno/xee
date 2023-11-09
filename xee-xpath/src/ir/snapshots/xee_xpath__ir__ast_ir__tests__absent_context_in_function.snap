@@ -3,5 +3,11 @@ source: xee-xpath/src/ir/ast_ir.rs
 expression: "convert_xpath(\"function() { . }\")"
 ---
 Err(
-    XPDY0002,
+    SpannedError {
+        error: XPDY0002,
+        span: SourceSpan(
+            13,
+            14,
+        ),
+    },
 )
