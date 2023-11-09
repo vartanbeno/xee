@@ -1,6 +1,7 @@
 use ibig::error::OutOfBoundsError;
 use strum::EnumMessage;
 use strum_macros::{Display, EnumMessage};
+use xee_xpath_ast::ParserError;
 
 use crate::span::SourceSpan;
 
@@ -119,7 +120,7 @@ pub enum Error {
     /// a SequenceType is not defined in the in-scope schema types as a
     /// generalized atomic type.
     #[strum(message = "Undefined type reference")]
-    UndefinedTypeReference,
+    XPST0051,
     /// Invalid type named in cast or castable expression.
     ///
     /// The type named in a cast or castable expression must be the name of a
@@ -631,17 +632,29 @@ impl Error {
 }
 impl std::error::Error for Error {}
 
+// note: this is only used for internal conversions of names
+// for now, not the full grammar.
 impl<'a> From<xee_xpath_ast::Error<'a>> for Error {
-    fn from(_e: xee_xpath_ast::Error) -> Self {
-        Error::XPST0003
+    fn from(e: xee_xpath_ast::Error) -> Self {
+        let spanned_error: SpannedError = e.into();
+        spanned_error.error
     }
 }
 
 impl<'a> From<xee_xpath_ast::Error<'a>> for SpannedError {
     fn from(e: xee_xpath_ast::Error) -> Self {
+        let error = &e.errors[0];
+        let span = error.span();
+        let error = match &e.errors[0] {
+            ParserError::ExpectedFound { .. } => Error::XPST0003,
+            ParserError::ArityOverflow { .. } => Error::XPDY0130,
+            ParserError::Reserved { .. } => Error::XPST0003,
+            ParserError::UnknownPrefix { .. } => Error::XPST0081,
+            ParserError::UnknownType { .. } => Error::XPST0051,
+        };
         SpannedError {
-            error: Error::XPST0003,
-            span: e.span().into(),
+            error,
+            span: span.into(),
         }
     }
 }

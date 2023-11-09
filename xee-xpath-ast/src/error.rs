@@ -30,7 +30,7 @@ pub enum ParserError<'a> {
 }
 
 impl<'a> ParserError<'a> {
-    fn span(&self) -> Span {
+    pub fn span(&self) -> Span {
         match self {
             Self::ExpectedFound { span, .. } => *span,
             Self::UnknownPrefix { span, .. } => *span,
