@@ -11,6 +11,10 @@ impl SourceSpan {
     pub(crate) fn empty() -> Self {
         Self(0, 0)
     }
+
+    pub fn range(&self) -> std::ops::Range<usize> {
+        self.0..self.1
+    }
 }
 
 impl From<ast::Span> for SourceSpan {

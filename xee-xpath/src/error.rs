@@ -1,4 +1,5 @@
 use ibig::error::OutOfBoundsError;
+use strum::EnumMessage;
 use strum_macros::{Display, EnumMessage};
 
 use crate::span::SourceSpan;
@@ -614,6 +615,18 @@ impl Error {
     }
     pub(crate) fn with_simple_span(self, span: xee_xpath_ast::ast::Span) -> SpannedError {
         Self::with_span(self, span.into())
+    }
+
+    pub fn code(&self) -> String {
+        self.to_string()
+    }
+
+    pub fn message(&self) -> Option<&str> {
+        self.get_message()
+    }
+
+    pub fn note(&self) -> Option<&str> {
+        self.get_documentation()
     }
 }
 impl std::error::Error for Error {}

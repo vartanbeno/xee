@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
+use xee_xpath::SpannedError;
 use xee_xpath::{evaluate_root, Node};
 use xee_xpath::{Atomic, Item};
 use xot::Xot;
@@ -40,10 +41,14 @@ fn main() -> xee_xpath::Result<()> {
             let mut xml = String::new();
             buf_reader.read_to_string(&mut xml).unwrap();
             let root = xot.parse(&xml).unwrap();
-            let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref())
-                .map_err(|e| e.error)?;
-            for item in result.items() {
-                display_item(&xot, &item?).unwrap();
+            let result = evaluate_root(&xot, root, &xpath, namespace_default.as_deref());
+            match result {
+                Ok(sequence) => {
+                    for item in sequence.items() {
+                        display_item(&xot, &item?).unwrap();
+                    }
+                }
+                Err(e) => render_error(&xpath, e),
             }
         }
     }
@@ -84,4 +89,20 @@ fn display_node(xot: &Xot, node: Node) -> Result<String, xot::Error> {
             todo!()
         }
     }
+}
+
+fn render_error(src: &str, e: SpannedError) {
+    let red = ariadne::Color::Red;
+
+    ariadne::Report::build(ariadne::ReportKind::Error, "source", 0)
+        .with_code(e.error.code())
+        .with_label(
+            ariadne::Label::new(("source", e.span.range()))
+                .with_message(e.error.message().unwrap_or(""))
+                .with_color(red),
+        )
+        .with_note(e.error.note().unwrap_or(""))
+        .finish()
+        .print(("source", ariadne::Source::from(src)))
+        .unwrap();
 }

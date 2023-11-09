@@ -29,7 +29,7 @@ pub use crate::atomic::{
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
 pub use crate::context::{DynamicContext, StaticContext};
-pub use crate::error::{Error, Result, SpannedResult};
+pub use crate::error::{Error, Result, SpannedError, SpannedResult};
 pub use crate::interpreter::{Program, Runnable};
 pub use crate::occurrence::Occurrence;
 pub use crate::query::{
