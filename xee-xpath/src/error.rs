@@ -652,22 +652,5 @@ impl From<OutOfBoundsError> for Error {
     }
 }
 
-// impl Error {
-//     pub(crate) fn with_span(self, program: &Program, span: SourceSpan) -> Self {
-//         match self {
-//             // TODO: can we introduce a SpannedError that's a wrapper around Error?
-//             Error::XPTY0004 => Error::XPTY0004S {
-//                 src: program.src.to_string(),
-//                 span,
-//             },
-//             Error::XPDY0002 => Error::XPDY0002S {
-//                 src: program.src.to_string(),
-//                 span,
-//             },
-//             _ => self,
-//         }
-//     }
-// }
-
 pub type Result<T> = std::result::Result<T, Error>;
 pub type SpannedResult<T> = std::result::Result<T, SpannedError>;
