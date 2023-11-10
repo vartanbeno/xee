@@ -1,7 +1,7 @@
 use chumsky::input::Stream;
 use chumsky::util::MaybeRef;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
-use xmlparser::{StrSpan, Token};
+use xmlparser::Token;
 
 use crate::parse::{Span, State};
 
@@ -208,22 +208,21 @@ where
         .then_ignore(element_end())
         .then(sequence_constructor)
         .try_map(|(attributes, content), span| {
-            dbg!(&attributes);
-            let select = attributes.iter().find_map(|attribute| match attribute {
-                VariableAttribute::Select(select) => Some(select),
-                _ => None,
-            });
-            let name = attributes
-                .iter()
-                .find_map(|attribute| match attribute {
-                    VariableAttribute::Name(name) => Some(name),
-                    _ => None,
-                })
-                .ok_or(ParserError::ExpectedFound { span })?;
-            // TODO: avoid clone by somehow consuming attributes
+            let mut select = None;
+            let mut name = None;
+            for attribute in attributes.into_iter() {
+                match attribute {
+                    VariableAttribute::Select(v) => {
+                        select = Some(v);
+                    }
+                    VariableAttribute::Name(v) => {
+                        name = Some(v);
+                    }
+                }
+            }
             Ok(ast::Variable {
-                name: name.to_string(),
-                select: select.cloned(),
+                name: name.ok_or(ParserError::ExpectedFound { span })?,
+                select,
                 content: vec![content],
             })
         })
@@ -238,7 +237,6 @@ mod tests {
     use std::borrow::Cow;
 
     use super::*;
-    use chumsky::input::Stream;
     use insta::assert_ron_snapshot;
     use xee_xpath_ast::Namespaces;
 
