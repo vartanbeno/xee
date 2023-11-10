@@ -103,6 +103,24 @@ where
         .boxed()
 }
 
+fn attribute<'a, I>(local: &'a str) -> BoxedParser<'a, I, &'a str>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let attribute = select! {
+        Token::Attribute { local, value, ..} => Attribute(local.as_str(), value.as_str()),
+    }
+    .boxed();
+    attribute
+        .validate(move |attribute, span, emitter| {
+            if attribute.0 != local {
+                emitter.emit(ParserError::ExpectedFound { span })
+            }
+            attribute.1
+        })
+        .boxed()
+}
+
 fn element_end<'a, I>() -> BoxedParser<'a, I, ()>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
@@ -137,19 +155,7 @@ where
         .map(|text| ast::SequenceConstructor::Text(text.to_string()))
         .boxed();
 
-    let attribute = select! {
-        Token::Attribute { local, value, ..} => Attribute(local.as_str(), value.as_str()),
-    }
-    .boxed();
-
-    let test_attribute_str = attribute
-        .validate(|attribute, span, emitter| {
-            if attribute.0 != "test" {
-                emitter.emit(ParserError::ExpectedFound { span })
-            }
-            attribute.1
-        })
-        .boxed();
+    let test_attribute_str = attribute("test");
 
     let test_attribute =
         test_attribute_str.try_map_with_state(|value, _span, state: &mut State| {
@@ -201,4 +207,14 @@ mod tests {
         };
         assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
     }
+
+    // #[test]
+    // fn test_simple_parse2() {
+    //     let stream = tokens(r#"<if test="true()">Hello</if>"#);
+    //     let namespaces = Namespaces::default();
+    //     let mut state = State {
+    //         namespaces: Cow::Owned(namespaces),
+    //     };
+    //     assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
+    // }
 }

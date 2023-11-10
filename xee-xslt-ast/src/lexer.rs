@@ -65,6 +65,7 @@ enum Token<'a> {
         text: StrSpan<'a>,
         span: StrSpan<'a>,
     },
+    Error,
 }
 
 struct NamespacedTokenizer<'a> {
