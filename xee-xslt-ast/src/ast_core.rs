@@ -1,6 +1,6 @@
-// use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_ast::ast as xpath_ast;
 
-type XPathExpr = String;
+type XPathExpr = xpath_ast::XPath;
 type EqName = String;
 type SequenceType = String;
 

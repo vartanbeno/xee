@@ -3,7 +3,20 @@ source: xee-xslt-ast/src/parse.rs
 expression: "parser().parse_with_state(stream, &mut state).into_result()"
 ---
 Ok(If(
-  test: "true()",
+  test: XPath(Expr([
+    Path(PathExpr(
+      steps: [
+        PrimaryExpr(FunctionCall(FunctionCall(
+          name: Name(
+            name: "true",
+            prefix: None,
+            namespace: Some("http://www.w3.org/2005/xpath-functions"),
+          ),
+          arguments: [],
+        ))),
+      ],
+    )),
+  ])),
   content: [
     Text("Hello"),
   ],

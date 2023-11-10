@@ -51,6 +51,7 @@ pub enum ParserError<'a> {
         expected: Vec<Option<Token<'a>>>,
         found: Option<Token<'a>>,
     },
+    MyError,
     XPath(xee_xpath_ast::ParserError<'a>),
 }
 
@@ -183,17 +184,22 @@ where
         .map(|text| ast::SequenceConstructor::Text(text.to_string()))
         .boxed();
 
-    let if_instruction = if_
-        .then(sequence_constructor)
-        .try_map_with_state(|(attributes, content), _span, _state: &mut State| {
+    if_.then(sequence_constructor)
+        .try_map_with_state(|(attributes, content), _span, state: &mut State| {
             let name = Name {
                 namespace: "",
                 localname: "test",
             };
             let test = attributes.get(&name).unwrap();
-            // let test = xee_xpath_ast::ast::XPath::parse(test, state.namespaces.as_ref(), &[])?;
+            let namespaces = state.namespaces.as_ref();
+
+            let test = xee_xpath_ast::ast::XPath::parse(test, namespaces, &[]);
+            // HACK: to get out of a lifetime bind; we can't prove to Rust that
+            // a ParserError<'a> from the xpath parser has the right lifetime to
+            // be used with the state in this closure somehow.
+            let test = test.map_err(|_e| ParserError::MyError)?;
             Ok(ast::If {
-                test: test.to_string(),
+                test,
                 content: vec![content],
             })
         })
@@ -201,8 +207,7 @@ where
             namespace: "",
             localname: "if",
         })))
-        .boxed();
-    if_instruction
+        .boxed()
 }
 
 #[cfg(test)]
