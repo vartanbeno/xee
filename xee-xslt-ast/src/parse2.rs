@@ -1,3 +1,4 @@
+use chumsky::input::Stream;
 use chumsky::util::MaybeRef;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
 use xmlparser::{StrSpan, Token};
@@ -9,6 +10,33 @@ use crate::ast_core as ast;
 type Extra<'a> = Full<ParserError, State<'a>, ()>;
 
 pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a>>;
+
+fn token_span(token: &Token) -> Span {
+    let span = match token {
+        Token::Attribute { span, .. } => span,
+        Token::Cdata { span, .. } => span,
+        Token::Comment { span, .. } => span,
+        Token::ElementEnd { span, .. } => span,
+        Token::ElementStart { span, .. } => span,
+        Token::ProcessingInstruction { span, .. } => span,
+        Token::Text { text, .. } => text,
+        Token::Declaration { span, .. } => span,
+        Token::EmptyDtd { span, .. } => span,
+        Token::DtdEnd { span, .. } => span,
+        Token::DtdStart { span, .. } => span,
+        Token::EntityDeclaration { span, .. } => span,
+    };
+    span.range().into()
+}
+
+fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {
+    Stream::from_iter(xmlparser::Tokenizer::from(src).map(|token| {
+        // TODO: we need an Error token
+        let token = token.unwrap();
+        (token, token_span(&token))
+    }))
+    .spanned((src.len()..src.len()).into())
+}
 
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ParserError {
@@ -99,25 +127,6 @@ where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
     let if_ = element_start("if");
-    // let element = select! {
-    //     Token::ElementStart { local, .. } => Element(local.as_str()),
-    // }
-    // .boxed();
-    // let if_ = element
-    //     .validate(|element, span, emitter| {
-    //         if element.0 != "if" {
-    //             emitter.emit(ParserError::ExpectedFound { span })
-    //         }
-    //     })
-    //     .boxed();
-    // let element_end = select! {
-    //     Token::ElementEnd { end: xmlparser::ElementEnd::Open, .. } => (),
-    // }
-    // .boxed();
-
-    // let element_close = select! {
-    //     Token::ElementEnd { end: xmlparser::ElementEnd::Close(..) | xmlparser::ElementEnd::Empty, .. } => (),
-    // };
 
     let text = select! {
         Token::Text { text } => text,
@@ -185,9 +194,7 @@ mod tests {
 
     #[test]
     fn test_simple_parse_if() {
-        let tokens = xmlparser::Tokenizer::from(r#"<if test="true()">Hello</if>"#);
-
-        let stream = Stream::from_iter(tokens.map(|t| t.unwrap()));
+        let stream = tokens(r#"<if test="true()">Hello</if>"#);
         let namespaces = Namespaces::default();
         let mut state = State {
             namespaces: Cow::Owned(namespaces),
