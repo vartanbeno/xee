@@ -123,7 +123,7 @@ const RESERVED_FUNCTION_NAMES: [&str; 18] = [
     "typeswitch",
 ];
 
-pub(crate) fn check_reserved<'a>(
+pub(crate) fn check_reserved(
     name: &ast::NameS,
     span: Span,
 ) -> std::result::Result<(), ParserError> {

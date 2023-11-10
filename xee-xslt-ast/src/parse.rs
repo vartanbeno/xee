@@ -50,7 +50,7 @@ pub enum ParserError {
     XPath(xee_xpath_ast::ParserError),
 }
 
-impl<'a> From<xee_xpath_ast::ParserError> for ParserError {
+impl From<xee_xpath_ast::ParserError> for ParserError {
     fn from(e: xee_xpath_ast::ParserError) -> Self {
         Self::XPath(e)
     }
@@ -165,10 +165,6 @@ where
             let namespaces = state.namespaces.as_ref();
 
             let test = xee_xpath_ast::ast::XPath::parse(test, namespaces, &[])?;
-            // HACK: to get out of a lifetime bind; we can't prove to Rust that
-            // a ParserError<'a> from the xpath parser has the right lifetime to
-            // be used with the state in this closure somehow.
-            // let test = test.map_err(|_e| ParserError::MyError)?;
             Ok(ast::If {
                 test,
                 content: vec![content],

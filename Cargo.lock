@@ -3544,6 +3544,7 @@ dependencies = [
  "thiserror",
  "xee-xpath-ast",
  "xee-xslt-ast",
+ "xmlparser",
  "xot",
 ]
 
