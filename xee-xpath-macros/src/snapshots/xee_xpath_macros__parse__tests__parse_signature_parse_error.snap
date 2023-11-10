@@ -4,6 +4,6 @@ expression: "syn::parse_str::<XPathFnOptions>(r#\"\"wrong wrong\"\"#)"
 ---
 Err(
     Error(
-        "unexpected end of input, ExpectedFound { span: 6..11, expected: [Some(Colon), Some(LeftParen)], found: Some(NCName(\"wrong\")) }",
+        "unexpected end of input, ExpectedFound { span: 6..11 }",
     ),
 )

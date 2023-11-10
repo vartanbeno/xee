@@ -7,30 +7,15 @@ use crate::lexer::Token;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum ParserError<'a> {
-    ExpectedFound {
-        span: Span,
-        expected: Vec<Option<Token<'a>>>,
-        found: Option<Token<'a>>,
-    },
-    UnknownPrefix {
-        span: Span,
-        prefix: String,
-    },
-    Reserved {
-        span: Span,
-        name: String,
-    },
-    ArityOverflow {
-        span: Span,
-    },
-    UnknownType {
-        span: Span,
-        name: ast::Name,
-    },
+pub enum ParserError {
+    ExpectedFound { span: Span },
+    UnknownPrefix { span: Span, prefix: String },
+    Reserved { span: Span, name: String },
+    ArityOverflow { span: Span },
+    UnknownType { span: Span, name: ast::Name },
 }
 
-impl<'a> ParserError<'a> {
+impl ParserError {
     pub fn span(&self) -> Span {
         match self {
             Self::ExpectedFound { span, .. } => *span,
@@ -42,58 +27,33 @@ impl<'a> ParserError<'a> {
     }
 }
 
-impl<'a, I> chumsky::error::Error<'a, I> for ParserError<'a>
+impl<'a, I> chumsky::error::Error<'a, I> for ParserError
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
+    // we don't do anything with expected and found, instead just retaining
+    // the span. This is because these contain tokens with a lifetime, and
+    // having a lifetime for the ParserError turns out open up a world of trouble
+    // as soon as we want to build on it in the XSLT parser. We also don't
+    // have a good way to turn a logos token into a human-readable string, so
+    // we couldn't really construct good error messages anyway.
     fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, Token<'a>>>>>(
-        expected: E,
-        found: Option<MaybeRef<'a, Token<'a>>>,
+        _expected: E,
+        _found: Option<MaybeRef<'a, Token<'a>>>,
         span: Span,
     ) -> Self {
-        Self::ExpectedFound {
-            span,
-            expected: expected
-                .into_iter()
-                .map(|e| e.as_deref().cloned())
-                .collect(),
-            found: found.as_deref().cloned(),
-        }
+        Self::ExpectedFound { span }
     }
 
     fn merge(self, other: Self) -> Self {
         match (self, other) {
             (
-                ParserError::ExpectedFound {
-                    expected: a,
-                    span: span_a,
-                    found: found_a,
-                },
-                ParserError::ExpectedFound {
-                    expected: b,
-                    span: _,
-                    found: _,
-                },
-            ) => {
-                let mut combined = Vec::new();
-                for a_entry in a.into_iter() {
-                    combined.push(a_entry);
-                }
-                for b_entry in b.into_iter() {
-                    if !combined.contains(&b_entry) {
-                        combined.push(b_entry);
-                    }
-                }
-                ParserError::ExpectedFound {
-                    span: span_a,
-                    expected: combined,
-                    found: found_a,
-                }
-            }
+                ParserError::ExpectedFound { span: span_a },
+                ParserError::ExpectedFound { span: _ },
+            ) => ParserError::ExpectedFound { span: span_a },
             (ParserError::ExpectedFound { .. }, a) => a,
             (a, ParserError::ExpectedFound { .. }) => a,
             (a, _) => a,
         }
     }
 }
-

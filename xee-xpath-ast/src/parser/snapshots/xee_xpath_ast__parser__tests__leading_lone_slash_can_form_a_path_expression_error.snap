@@ -8,11 +8,4 @@ Err(ExpectedFound(
     end: 5,
     context: (),
   ),
-  expected: [
-    Some(Plus),
-    Some(Minus),
-  ],
-  found: Some(IntegerLiteral((Positive, [
-    5,
-  ]))),
 ))

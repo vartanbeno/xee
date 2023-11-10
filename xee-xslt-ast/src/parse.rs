@@ -1,8 +1,7 @@
 use ahash::HashMap;
+use chumsky::util::MaybeRef;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
 use std::borrow::Cow;
-// use xee_xpath_ast::ast as xpath_ast;
-use chumsky::util::MaybeRef;
 use xee_xpath_ast::Namespaces;
 use xot::{Node, Xot};
 
@@ -12,7 +11,7 @@ pub(crate) struct State<'a> {
     pub(crate) namespaces: Cow<'a, Namespaces<'a>>,
 }
 
-type Extra<'a> = Full<ParserError<'a>, State<'a>, ()>;
+type Extra<'a> = Full<ParserError, State<'a>, ()>;
 
 pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a>>;
 
@@ -45,70 +44,42 @@ impl<'a> From<(&'a str, &'a str)> for Name<'a> {
 }
 
 #[cfg_attr(test, derive(serde::Serialize))]
-pub enum ParserError<'a> {
-    ExpectedFound {
-        span: Span,
-        expected: Vec<Option<Token<'a>>>,
-        found: Option<Token<'a>>,
-    },
+pub enum ParserError {
+    ExpectedFound { span: Span },
     MyError,
-    XPath(xee_xpath_ast::ParserError<'a>),
+    XPath(xee_xpath_ast::ParserError),
 }
 
-impl<'a> From<xee_xpath_ast::ParserError<'a>> for ParserError<'a> {
-    fn from(e: xee_xpath_ast::ParserError<'a>) -> Self {
+impl<'a> From<xee_xpath_ast::ParserError> for ParserError {
+    fn from(e: xee_xpath_ast::ParserError) -> Self {
         Self::XPath(e)
     }
 }
 
-impl<'a, I> chumsky::error::Error<'a, I> for ParserError<'a>
+impl<'a, I> chumsky::error::Error<'a, I> for ParserError
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
+    // we don't do anything with expected and found, instead just retaining
+    // the span. This is because these contain tokens with a lifetime, and
+    // having a lifetime for the ParserError turns out open up a world of trouble
+    // as soon as we want to build on it in the XSLT parser. We also don't
+    // have a good way to turn a logos token into a human-readable string, so
+    // we couldn't really construct good error messages anyway.
     fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, Token<'a>>>>>(
-        expected: E,
-        found: Option<MaybeRef<'a, Token<'a>>>,
+        _expected: E,
+        _found: Option<MaybeRef<'a, Token<'a>>>,
         span: Span,
     ) -> Self {
-        Self::ExpectedFound {
-            span,
-            expected: expected
-                .into_iter()
-                .map(|e| e.as_deref().cloned())
-                .collect(),
-            found: found.as_deref().cloned(),
-        }
+        Self::ExpectedFound { span }
     }
 
     fn merge(self, other: Self) -> Self {
         match (self, other) {
             (
-                ParserError::ExpectedFound {
-                    expected: a,
-                    span: span_a,
-                    found: found_a,
-                },
-                ParserError::ExpectedFound {
-                    expected: b,
-                    span: _,
-                    found: _,
-                },
-            ) => {
-                let mut combined = Vec::new();
-                for a_entry in a.into_iter() {
-                    combined.push(a_entry);
-                }
-                for b_entry in b.into_iter() {
-                    if !combined.contains(&b_entry) {
-                        combined.push(b_entry);
-                    }
-                }
-                ParserError::ExpectedFound {
-                    span: span_a,
-                    expected: combined,
-                    found: found_a,
-                }
-            }
+                ParserError::ExpectedFound { span: span_a },
+                ParserError::ExpectedFound { span: _ },
+            ) => ParserError::ExpectedFound { span: span_a },
             (ParserError::ExpectedFound { .. }, a) => a,
             (a, ParserError::ExpectedFound { .. }) => a,
             (a, _) => a,
@@ -193,11 +164,11 @@ where
             let test = attributes.get(&name).unwrap();
             let namespaces = state.namespaces.as_ref();
 
-            let test = xee_xpath_ast::ast::XPath::parse(test, namespaces, &[]);
+            let test = xee_xpath_ast::ast::XPath::parse(test, namespaces, &[])?;
             // HACK: to get out of a lifetime bind; we can't prove to Rust that
             // a ParserError<'a> from the xpath parser has the right lifetime to
             // be used with the state in this closure somehow.
-            let test = test.map_err(|_e| ParserError::MyError)?;
+            // let test = test.map_err(|_e| ParserError::MyError)?;
             Ok(ast::If {
                 test,
                 content: vec![content],

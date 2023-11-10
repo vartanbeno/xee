@@ -556,15 +556,15 @@ impl std::error::Error for Error {}
 
 // note: this is only used for internal conversions of names
 // for now, not the full grammar.
-impl<'a> From<xee_xpath_ast::ParserError<'a>> for Error {
-    fn from(e: xee_xpath_ast::ParserError<'a>) -> Self {
+impl From<xee_xpath_ast::ParserError> for Error {
+    fn from(e: xee_xpath_ast::ParserError) -> Self {
         let spanned_error: SpannedError = e.into();
         spanned_error.error
     }
 }
 
-impl<'a> From<xee_xpath_ast::ParserError<'a>> for SpannedError {
-    fn from(e: xee_xpath_ast::ParserError<'a>) -> Self {
+impl From<xee_xpath_ast::ParserError> for SpannedError {
+    fn from(e: xee_xpath_ast::ParserError) -> Self {
         let span = e.span();
         let error = match e {
             ParserError::ExpectedFound { .. } => Error::XPST0003,

@@ -36,7 +36,7 @@ fn parse<'a, I, T>(
     parser: BoxedParser<'a, I, T>,
     input: I,
     namespaces: Cow<'a, Namespaces<'a>>,
-) -> std::result::Result<T, ParserError<'a>>
+) -> std::result::Result<T, ParserError>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
     T: std::fmt::Debug,
@@ -53,7 +53,7 @@ impl ast::XPath {
         input: &'a str,
         namespaces: &'a Namespaces,
         variables: &'a [ast::Name],
-    ) -> Result<Self, ParserError<'a>> {
+    ) -> Result<Self, ParserError> {
         let mut xpath = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces))?;
         // rename all variables to unique names
         unique_names(&mut xpath, variables);
@@ -62,27 +62,27 @@ impl ast::XPath {
 }
 
 impl ast::ExprSingle {
-    pub fn parse<'a>(src: &'a str) -> Result<ast::ExprSingleS, ParserError<'a>> {
+    pub fn parse(src: &str) -> Result<ast::ExprSingleS, ParserError> {
         let namespaces = Namespaces::default();
         parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
     }
 }
 
 impl ast::KindTest {
-    pub fn parse<'a>(src: &'a str) -> Result<Self, ParserError<'a>> {
+    pub fn parse(src: &str) -> Result<Self, ParserError> {
         let namespaces = Namespaces::default();
         parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
     }
 }
 
 impl ast::Signature {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError<'a>> {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
         parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
     }
 }
 
 impl ast::SequenceType {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError<'a>> {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
         parse(
             parser().sequence_type,
             tokens(input),
@@ -92,10 +92,7 @@ impl ast::SequenceType {
 }
 
 impl ast::Name {
-    pub fn parse<'a>(
-        src: &'a str,
-        namespaces: &'a Namespaces,
-    ) -> Result<ast::NameS, ParserError<'a>> {
+    pub fn parse<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<ast::NameS, ParserError> {
         parse(parser().name, tokens(src), Cow::Borrowed(namespaces))
     }
 }
@@ -108,12 +105,12 @@ mod tests {
 
     use insta::assert_ron_snapshot;
 
-    fn parse_xpath_simple<'a>(src: &'a str) -> Result<ast::XPath, ParserError<'a>> {
+    fn parse_xpath_simple<'a>(src: &'a str) -> Result<ast::XPath, ParserError> {
         let namespaces = Namespaces::default();
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 
-    fn parse_xpath_simple_element_ns<'a>(src: &'a str) -> Result<ast::XPath, ParserError<'a>> {
+    fn parse_xpath_simple_element_ns<'a>(src: &'a str) -> Result<ast::XPath, ParserError> {
         let namespaces = Namespaces::new(Some("http://example.com"), None);
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }

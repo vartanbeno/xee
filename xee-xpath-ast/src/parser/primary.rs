@@ -126,7 +126,7 @@ const RESERVED_FUNCTION_NAMES: [&str; 18] = [
 pub(crate) fn check_reserved<'a>(
     name: &ast::NameS,
     span: Span,
-) -> std::result::Result<(), ParserError<'a>> {
+) -> std::result::Result<(), ParserError> {
     let local_name = name.value.local_name();
     if RESERVED_FUNCTION_NAMES.contains(&local_name) {
         return Err(ParserError::Reserved {
