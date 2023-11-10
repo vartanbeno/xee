@@ -5,29 +5,30 @@ type EqName = String;
 type SequenceType = String;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) struct If {
+pub struct If {
     pub(crate) test: XPathExpr,
     pub(crate) content: Vec<SequenceConstructor>,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) enum SequenceConstructor {
+pub enum SequenceConstructor {
     Text(String),
 }
 
-struct Variable {
-    name: EqName,
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Variable {
+    pub name: EqName,
     // TODO: should this be subsumed into the
     // content, as a variable may either have
     // a select or a content, but not both
-    select: Option<XPathExpr>,
-    as_: Option<SequenceType>,
-    static_: bool,
-    visbility: Visibility,
-    // it's also possible to have an empty variable
-    // in case visibility is static; this could
-    // perhaps be modelled separately?
-    content: Vec<SequenceConstructor>,
+    pub select: Option<XPathExpr>,
+    // as_: Option<SequenceType>,
+    // static_: bool,
+    // visbility: Visibility,
+    // // it's also possible to have an empty variable
+    // // in case visibility is static; this could
+    // // perhaps be modelled separately?
+    pub content: Vec<SequenceConstructor>,
 }
 
 enum Visibility {
@@ -53,4 +54,10 @@ struct Param {}
 enum NewEachTime {
     Bool(bool),
     Maybe,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Instruction {
+    Variable(Variable),
+    If(If),
 }

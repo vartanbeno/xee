@@ -2,8 +2,9 @@
 source: xee-xslt-ast/src/parse2.rs
 expression: "parser().parse_with_state(stream, &mut state).into_result()"
 ---
-Ok(If(If(
-  test: XPath(Expr([
+Ok(Variable(Variable(
+  name: "foo",
+  select: Some(XPath(Expr([
     Path(PathExpr(
       steps: [
         PrimaryExpr(FunctionCall(FunctionCall(
@@ -16,7 +17,7 @@ Ok(If(If(
         ))),
       ],
     )),
-  ])),
+  ]))),
   content: [
     Text("Hello"),
   ],

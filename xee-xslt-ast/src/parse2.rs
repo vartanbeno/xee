@@ -95,9 +95,11 @@ where
     }
     .boxed();
     element
-        .validate(move |element, span, emitter| {
-            if element.0 != local {
-                emitter.emit(ParserError::ExpectedFound { span })
+        .try_map(move |element, span| {
+            if element.0 == local {
+                Ok(())
+            } else {
+                Err(ParserError::ExpectedFound { span })
             }
         })
         .boxed()
@@ -112,11 +114,12 @@ where
     }
     .boxed();
     attribute
-        .validate(move |attribute, span, emitter| {
-            if attribute.0 != local {
-                emitter.emit(ParserError::ExpectedFound { span })
+        .try_map(move |attribute, span| {
+            if attribute.0 == local {
+                Ok(attribute.1)
+            } else {
+                Err(ParserError::ExpectedFound { span })
             }
-            attribute.1
         })
         .boxed()
 }
@@ -140,11 +143,12 @@ where
     }.boxed()
 }
 
-fn parser<'a, I>() -> BoxedParser<'a, I, ast::If>
+fn parser<'a, I>() -> BoxedParser<'a, I, ast::Instruction>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let if_ = element_start("if");
+    let if_start = element_start("if");
+    let variable_start = element_start("variable");
 
     let text = select! {
         Token::Text { text } => text,
@@ -157,20 +161,38 @@ where
 
     let test_attribute_str = attribute("test");
 
-    let test_attribute =
-        test_attribute_str.try_map_with_state(|value, _span, state: &mut State| {
-            Ok(xee_xpath_ast::ast::XPath::parse(
-                value,
-                state.namespaces.as_ref(),
-                &[],
-            )?)
-        });
+    let parse_xpath = |value, _span, state: &mut State| {
+        Ok(xee_xpath_ast::ast::XPath::parse(
+            value,
+            state.namespaces.as_ref(),
+            &[],
+        )?)
+    };
+
+    let test_attribute = test_attribute_str.try_map_with_state(parse_xpath);
 
     let if_attributes = test_attribute.repeated().collect::<Vec<_>>();
 
-    if_.ignore_then(if_attributes)
+    #[derive(Debug)]
+    enum VariableAttribute {
+        Name(String),
+        Select(xee_xpath_ast::ast::XPath),
+    }
+
+    let select_attribute_str = attribute("select");
+    let select_attribute = select_attribute_str
+        .try_map_with_state(parse_xpath)
+        .map(VariableAttribute::Select);
+    let name_attribute_str = attribute("name").map(|s| VariableAttribute::Name(s.to_string()));
+
+    let variable_attribute = select_attribute.or(name_attribute_str);
+
+    let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
+
+    let if_ = if_start
+        .ignore_then(if_attributes)
         .then_ignore(element_end())
-        .then(sequence_constructor)
+        .then(sequence_constructor.clone())
         .try_map_with_state(|(attributes, content), _span, _state: &mut State| {
             let test = attributes.into_iter().next().unwrap();
             Ok(ast::If {
@@ -179,7 +201,36 @@ where
             })
         })
         .then_ignore(element_close())
-        .boxed()
+        .map(ast::Instruction::If)
+        .boxed();
+    let variable = variable_start
+        .ignore_then(variable_attributes)
+        .then_ignore(element_end())
+        .then(sequence_constructor)
+        .try_map(|(attributes, content), span| {
+            dbg!(&attributes);
+            let select = attributes.iter().find_map(|attribute| match attribute {
+                VariableAttribute::Select(select) => Some(select),
+                _ => None,
+            });
+            let name = attributes
+                .iter()
+                .find_map(|attribute| match attribute {
+                    VariableAttribute::Name(name) => Some(name),
+                    _ => None,
+                })
+                .ok_or(ParserError::ExpectedFound { span })?;
+            // TODO: avoid clone by somehow consuming attributes
+            Ok(ast::Variable {
+                name: name.to_string(),
+                select: select.cloned(),
+                content: vec![content],
+            })
+        })
+        .then_ignore(element_close())
+        .map(ast::Instruction::Variable)
+        .boxed();
+    if_.or(variable).boxed()
 }
 
 #[cfg(test)]
@@ -208,13 +259,13 @@ mod tests {
         assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
     }
 
-    // #[test]
-    // fn test_simple_parse2() {
-    //     let stream = tokens(r#"<if test="true()">Hello</if>"#);
-    //     let namespaces = Namespaces::default();
-    //     let mut state = State {
-    //         namespaces: Cow::Owned(namespaces),
-    //     };
-    //     assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
-    // }
+    #[test]
+    fn test_simple_parse_variable() {
+        let stream = tokens(r#"<variable name="foo" select="true()">Hello</variable>"#);
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+        assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
+    }
 }
