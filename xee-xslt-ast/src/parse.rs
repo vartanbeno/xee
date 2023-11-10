@@ -2,6 +2,7 @@ use ahash::HashMap;
 use chumsky::{extra::Full, input::ValueInput, prelude::*};
 use std::borrow::Cow;
 // use xee_xpath_ast::ast as xpath_ast;
+use chumsky::util::MaybeRef;
 use xee_xpath_ast::Namespaces;
 use xot::{Node, Xot};
 
@@ -11,15 +12,15 @@ pub(crate) struct State<'a> {
     pub(crate) namespaces: Cow<'a, Namespaces<'a>>,
 }
 
-type Extra<'a, T> = Full<Rich<'a, T>, State<'a>, ()>;
+type Extra<'a> = Full<ParserError<'a>, State<'a>, ()>;
 
-pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a, Token<'a>>>;
+pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a>>;
 
 pub type Span = SimpleSpan;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub(crate) enum Token<'a> {
+pub enum Token<'a> {
     ElementStart(Name<'a>, HashMap<Name<'a>, &'a str>),
     ElementEnd(Name<'a>),
     Text(&'a str),
@@ -29,7 +30,7 @@ pub(crate) enum Token<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub(crate) struct Name<'a> {
+pub struct Name<'a> {
     namespace: &'a str,
     localname: &'a str,
 }
@@ -39,6 +40,77 @@ impl<'a> From<(&'a str, &'a str)> for Name<'a> {
         Self {
             namespace,
             localname,
+        }
+    }
+}
+
+#[cfg_attr(test, derive(serde::Serialize))]
+pub enum ParserError<'a> {
+    ExpectedFound {
+        span: Span,
+        expected: Vec<Option<Token<'a>>>,
+        found: Option<Token<'a>>,
+    },
+    XPath(xee_xpath_ast::ParserError<'a>),
+}
+
+impl<'a> From<xee_xpath_ast::ParserError<'a>> for ParserError<'a> {
+    fn from(e: xee_xpath_ast::ParserError<'a>) -> Self {
+        Self::XPath(e)
+    }
+}
+
+impl<'a, I> chumsky::error::Error<'a, I> for ParserError<'a>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, Token<'a>>>>>(
+        expected: E,
+        found: Option<MaybeRef<'a, Token<'a>>>,
+        span: Span,
+    ) -> Self {
+        Self::ExpectedFound {
+            span,
+            expected: expected
+                .into_iter()
+                .map(|e| e.as_deref().cloned())
+                .collect(),
+            found: found.as_deref().cloned(),
+        }
+    }
+
+    fn merge(self, other: Self) -> Self {
+        match (self, other) {
+            (
+                ParserError::ExpectedFound {
+                    expected: a,
+                    span: span_a,
+                    found: found_a,
+                },
+                ParserError::ExpectedFound {
+                    expected: b,
+                    span: _,
+                    found: _,
+                },
+            ) => {
+                let mut combined = Vec::new();
+                for a_entry in a.into_iter() {
+                    combined.push(a_entry);
+                }
+                for b_entry in b.into_iter() {
+                    if !combined.contains(&b_entry) {
+                        combined.push(b_entry);
+                    }
+                }
+                ParserError::ExpectedFound {
+                    span: span_a,
+                    expected: combined,
+                    found: found_a,
+                }
+            }
+            (ParserError::ExpectedFound { .. }, a) => a,
+            (a, ParserError::ExpectedFound { .. }) => a,
+            (a, _) => a,
         }
     }
 }
@@ -119,7 +191,7 @@ where
                 localname: "test",
             };
             let test = attributes.get(&name).unwrap();
-            // let test = xpath_ast::XPath::parse(test, state.namespaces.as_ref(), &[])?;
+            // let test = xee_xpath_ast::ast::XPath::parse(test, state.namespaces.as_ref(), &[])?;
             Ok(ast::If {
                 test: test.to_string(),
                 content: vec![content],
@@ -157,9 +229,6 @@ mod tests {
         let mut state = State {
             namespaces: Cow::Owned(namespaces),
         };
-        assert_ron_snapshot!(parser()
-            .parse_with_state(stream, &mut state)
-            .into_result()
-            .unwrap());
+        assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
     }
 }

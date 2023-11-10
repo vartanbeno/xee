@@ -1,10 +1,10 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser().parse(stream).into_result().unwrap()
+expression: "parser().parse_with_state(stream, &mut state).into_result()"
 ---
-If(
+Ok(If(
   test: "true()",
   content: [
     Text("Hello"),
   ],
-)
+))

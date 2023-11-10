@@ -2,4 +2,11 @@
 source: xee-xpath-ast/src/parser/mod.rs
 expression: "parse_xpath_simple(\"switch#2\")"
 ---
-Err("[Reserved { span: 0..8, name: \"switch\" }]")
+Err(Reserved(
+  span: SimpleSpan(
+    start: 0,
+    end: 8,
+    context: (),
+  ),
+  name: "switch",
+))

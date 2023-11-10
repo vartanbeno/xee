@@ -14,7 +14,7 @@ use std::borrow::Cow;
 use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
-use crate::error::{Error, ParserError, Result};
+use crate::error::ParserError;
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
 
@@ -36,13 +36,16 @@ fn parse<'a, I, T>(
     parser: BoxedParser<'a, I, T>,
     input: I,
     namespaces: Cow<'a, Namespaces<'a>>,
-) -> std::result::Result<T, Vec<ParserError<'a>>>
+) -> std::result::Result<T, ParserError<'a>>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
     T: std::fmt::Debug,
 {
     let mut state = State { namespaces };
-    parser.parse_with_state(input, &mut state).into_result()
+    parser
+        .parse_with_state(input, &mut state)
+        .into_result()
+        .map_err(|e| e.into_iter().next().unwrap())
 }
 
 impl ast::XPath {
@@ -50,58 +53,50 @@ impl ast::XPath {
         input: &'a str,
         namespaces: &'a Namespaces,
         variables: &'a [ast::Name],
-    ) -> Result<'a, Self> {
-        let result = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces));
-
-        match result {
-            Ok(mut xpath) => {
-                // rename all variables to unique names
-                unique_names(&mut xpath, variables);
-                Ok(xpath)
-            }
-            Err(errors) => Err(Error { src: input, errors }),
-        }
+    ) -> Result<Self, ParserError<'a>> {
+        let mut xpath = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces))?;
+        // rename all variables to unique names
+        unique_names(&mut xpath, variables);
+        Ok(xpath)
     }
 }
 
 impl ast::ExprSingle {
-    pub fn parse(src: &str) -> Result<ast::ExprSingleS> {
+    pub fn parse<'a>(src: &'a str) -> Result<ast::ExprSingleS, ParserError<'a>> {
         let namespaces = Namespaces::default();
         parse(parser().expr_single, tokens(src), Cow::Owned(namespaces))
-            .map_err(|errors| Error { src, errors })
     }
 }
 
 impl ast::KindTest {
-    pub fn parse(src: &str) -> Result<Self> {
+    pub fn parse<'a>(src: &'a str) -> Result<Self, ParserError<'a>> {
         let namespaces = Namespaces::default();
         parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
-            .map_err(|errors| Error { src, errors })
     }
 }
 
 impl ast::Signature {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<'a, Self> {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError<'a>> {
         parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
-            .map_err(|errors| Error { src: input, errors })
     }
 }
 
 impl ast::SequenceType {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<'a, ast::SequenceType> {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError<'a>> {
         parse(
             parser().sequence_type,
             tokens(input),
             Cow::Borrowed(namespaces),
         )
-        .map_err(|errors| Error { src: input, errors })
     }
 }
 
 impl ast::Name {
-    pub fn parse<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<'a, ast::NameS> {
+    pub fn parse<'a>(
+        src: &'a str,
+        namespaces: &'a Namespaces,
+    ) -> Result<ast::NameS, ParserError<'a>> {
         parse(parser().name, tokens(src), Cow::Borrowed(namespaces))
-            .map_err(|errors| Error { src, errors })
     }
 }
 
@@ -113,16 +108,14 @@ mod tests {
 
     use insta::assert_ron_snapshot;
 
-    fn parse_xpath_simple(src: &str) -> Result<ast::XPath> {
+    fn parse_xpath_simple<'a>(src: &'a str) -> Result<ast::XPath, ParserError<'a>> {
         let namespaces = Namespaces::default();
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
-            .map_err(|errors| Error { src, errors })
     }
 
-    fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath> {
+    fn parse_xpath_simple_element_ns<'a>(src: &'a str) -> Result<ast::XPath, ParserError<'a>> {
         let namespaces = Namespaces::new(Some("http://example.com"), None);
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
-            .map_err(|errors| Error { src, errors })
     }
 
     #[test]

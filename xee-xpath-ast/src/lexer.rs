@@ -8,6 +8,7 @@ use rust_decimal::Decimal;
 #[logos(subpattern name_start_char_without_colon = r"[A-Za-z_\u{c0}-\u{d6}\u{d8}-\u{f6}\u{f8}-\u{2ff}\u{370}-\u{37d}\u{37f}-\u{1fff}\u{200c}-\u{200d}\u{2070}-\u{218f}\u{2c00}-\u{2fef}\u{3001}-\u{d7ff}\u{f900}-\u{fdfc}\u{fdf0}-\u{fffd}\u{10000}-\u{effff}]")]
 #[logos(subpattern name_char_without_colon = r"(?&name_start_char_without_colon)|[\-\.0-9\u{b7}\u{300}-\u{36F}\u{203f}-\u{2040}]")]
 #[logos(subpattern ncname = r"(?&name_start_char_without_colon)(?&name_char_without_colon)*")]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Token<'a> {
     Error,
     #[regex(r"[0-9]+", integer_literal, priority = 3)]

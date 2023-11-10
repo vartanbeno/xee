@@ -6,6 +6,7 @@ use crate::ast;
 use crate::lexer::Token;
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ParserError<'a> {
     ExpectedFound {
         span: Span,
@@ -96,27 +97,3 @@ where
     }
 }
 
-#[derive(Debug)]
-pub struct Error<'a> {
-    pub src: &'a str,
-    pub errors: Vec<ParserError<'a>>,
-}
-
-impl<'a> Error<'a> {
-    pub fn span(&self) -> Span {
-        self.errors[0].span()
-    }
-}
-
-pub type Result<'a, T> = std::result::Result<T, Error<'a>>;
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Error<'_> {
-    fn serialize<S: serde::Serializer>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error> {
-        let formatted = format!("{:?}", self.errors);
-        serializer.serialize_str(&formatted)
-    }
-}

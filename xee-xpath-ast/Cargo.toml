@@ -17,6 +17,7 @@ serde = [
     "ibig/serde",
     "ordered-float/serde",
     "xee-schema-type/serde",
+    "chumsky/serde",
 ]
 
 [dependencies]
