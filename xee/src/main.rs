@@ -98,11 +98,11 @@ fn render_error(src: &str, e: SpannedError) {
         .with_code(e.error.code())
         .with_label(
             ariadne::Label::new(("source", e.span.range()))
-                .with_message(e.error.message().unwrap_or(""))
+                .with_message(e.error.message())
                 .with_color(red),
         )
-        .with_note(e.error.note().unwrap_or(""))
         .finish()
         .print(("source", ariadne::Source::from(src)))
         .unwrap();
+    println!("{}", e.error.note());
 }
