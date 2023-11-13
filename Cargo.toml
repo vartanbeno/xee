@@ -16,7 +16,7 @@ resolver = "2"
 [workspace.dependencies]
 strum = "0.25"
 strum_macros = "0.25"
-xot = "0.16.0"
+xot = "0.17.0"
 clap = "4.2.7"
 ibig = "0.3.6"
 ordered-float = "3.7.0"
