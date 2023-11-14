@@ -1,0 +1,12 @@
+---
+source: xee-xslt-ast/src/parse4.rs
+expression: parser.parse(node)
+---
+Err(AttributeExpected(
+  namespace: "",
+  local: "name",
+  span: Span(
+    start: 1,
+    end: 9,
+  ),
+))

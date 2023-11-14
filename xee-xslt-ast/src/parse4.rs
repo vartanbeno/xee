@@ -208,22 +208,20 @@ mod tests {
         assert_ron_snapshot!(parser.parse(node));
     }
 
-    // #[test]
-    // fn test_simple_parse_variable_missing_required_name_attribute() {
-    //     let mut xot = Xot::new();
+    #[test]
+    fn test_simple_parse_variable_missing_required_name_attribute() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
 
-    //     let names = Names::new(&mut xot);
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<variable select="true()">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
 
-    //     let stream =
-    //         token_stream(&mut xot, r#"<variable select="true()">Hello</variable>"#).unwrap();
-    //     let namespaces = Namespaces::default();
-    //     let mut state = State {
-    //         namespaces: Cow::Owned(namespaces),
-    //     };
-    //     assert_ron_snapshot!(parser(&names)
-    //         .parse_with_state(stream, &mut state)
-    //         .into_result());
-    // }
+        assert_ron_snapshot!(parser.parse(node));
+    }
 
     // #[test]
     // fn test_simple_parse_variable_broken_xpath() {
