@@ -376,8 +376,6 @@ where
         .map(|text| ast::SequenceConstructor::Text(text.to_string()))
         .boxed();
 
-    // let variable_start = element_start("variable");
-
     let parse_xpath = |value, _span, state: &mut State| {
         Ok(xee_xpath_ast::ast::XPath::parse(
             value,
@@ -393,11 +391,11 @@ where
         .repeated()
         .collect::<Vec<_>>();
 
-    // #[derive(Debug)]
-    // enum VariableAttribute {
-    //     Name(String),
-    //     Select(xee_xpath_ast::ast::XPath),
-    // }
+    #[derive(Debug)]
+    enum VariableAttribute {
+        Name(String),
+        Select(xee_xpath_ast::ast::XPath),
+    }
 
     // let select_attribute_str = attribute("select");
     // let select_attribute = select_attribute_str
@@ -423,34 +421,45 @@ where
         .then_ignore(element_end())
         .map(ast::Instruction::If)
         .boxed();
-    // let variable = variable_start
-    //     .ignore_then(variable_attributes)
-    //     .then_ignore(element_end())
-    //     .then(sequence_constructor)
-    //     .try_map(|(attributes, content), span| {
-    //         let mut select = None;
-    //         let mut name = None;
-    //         for attribute in attributes.into_iter() {
-    //             match attribute {
-    //                 VariableAttribute::Select(v) => {
-    //                     select = Some(v);
-    //                 }
-    //                 VariableAttribute::Name(v) => {
-    //                     name = Some(v);
-    //                 }
-    //             }
-    //         }
-    //         Ok(ast::Variable {
-    //             name: name.ok_or(ParserError::ExpectedFound { span })?,
-    //             select,
-    //             content: vec![content],
-    //         })
-    //     })
-    //     .then_ignore(element_close())
-    //     .map(ast::Instruction::Variable)
-    //     .boxed();
-    if_
-    // if_.or(variable).boxed()
+
+    let select_attribute = attribute_name(names.select)
+        .ignore_then(attribute_value().try_map_with_state(parse_xpath))
+        .map(VariableAttribute::Select);
+    let name_attribute = attribute_name(names.name)
+        .ignore_then(attribute_value())
+        .map(|name| VariableAttribute::Name(name.to_string()));
+    let variable_attribute = select_attribute.or(name_attribute);
+
+    let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
+
+    let variable = element_start(names.variable)
+        .ignore_then(variable_attributes)
+        .then_ignore(element_close())
+        .then(sequence_constructor)
+        .try_map(|(attributes, content), span| {
+            let mut select = None;
+            let mut name = None;
+            for attribute in attributes.into_iter() {
+                match attribute {
+                    VariableAttribute::Select(v) => {
+                        select = Some(v);
+                    }
+                    VariableAttribute::Name(v) => {
+                        name = Some(v);
+                    }
+                }
+            }
+            Ok(ast::Variable {
+                name: name.ok_or(ParserError::ExpectedFound { span })?,
+                select,
+                content: vec![content],
+            })
+        })
+        .then_ignore(element_end())
+        .map(ast::Instruction::Variable)
+        .boxed();
+
+    if_.or(variable).boxed()
 }
 
 #[cfg(test)]
@@ -517,17 +526,23 @@ mod tests {
             .into_result());
     }
 
-    // #[test]
-    // fn test_simple_parse_variable() {
-    //     let mut xot = Xot::new();
-    //     let stream = tokens(
-    //         &mut xot,
-    //         r#"<variable name="foo" select="true()">Hello</variable>"#,
-    //     );
-    //     let namespaces = Namespaces::default();
-    //     let mut state = State {
-    //         namespaces: Cow::Owned(namespaces),
-    //     };
-    //     assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
-    // }
+    #[test]
+    fn test_simple_parse_variable() {
+        let mut xot = Xot::new();
+
+        let names = Names::new(&mut xot);
+
+        let stream = token_stream(
+            &mut xot,
+            r#"<variable name="foo" select="true()">Hello</variable>"#,
+        )
+        .unwrap();
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+        assert_ron_snapshot!(parser(&names)
+            .parse_with_state(stream, &mut state)
+            .into_result());
+    }
 }
