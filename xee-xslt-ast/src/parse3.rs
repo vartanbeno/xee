@@ -388,7 +388,6 @@ where
     };
 
     let xpath_value = attribute_value().try_map_with_state(parse_xpath);
-    // let test_attribute = test_attribute_str.try_map_with_state(parse_xpath);
 
     let if_attributes = (attribute_name(names.test).ignore_then(xpath_value))
         .repeated()
