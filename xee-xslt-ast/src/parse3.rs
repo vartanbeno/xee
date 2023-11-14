@@ -380,12 +380,11 @@ where
         .map(|text| ast::SequenceConstructor::Text(text.to_string()))
         .boxed();
 
-    let parse_xpath = |value, _span, state: &mut State| {
-        Ok(xee_xpath_ast::ast::XPath::parse(
-            value,
-            state.namespaces.as_ref(),
-            &[],
-        )?)
+    let parse_xpath = |value, span: Span, state: &mut State| {
+        Ok(
+            xee_xpath_ast::ast::XPath::parse(value, state.namespaces.as_ref(), &[])
+                .map_err(|e| e.adjust(span.start))?,
+        )
     };
 
     let xpath_value = attribute_value().try_map_with_state(parse_xpath);
@@ -552,6 +551,26 @@ mod tests {
 
         let stream =
             token_stream(&mut xot, r#"<variable select="true()">Hello</variable>"#).unwrap();
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+        assert_ron_snapshot!(parser(&names)
+            .parse_with_state(stream, &mut state)
+            .into_result());
+    }
+
+    #[test]
+    fn test_simple_parse_variable_broken_xpath() {
+        let mut xot = Xot::new();
+
+        let names = Names::new(&mut xot);
+
+        let stream = token_stream(
+            &mut xot,
+            r#"<variable name="foo" select="let $x := 1">Hello</variable>"#,
+        )
+        .unwrap();
         let namespaces = Namespaces::default();
         let mut state = State {
             namespaces: Cow::Owned(namespaces),

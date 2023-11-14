@@ -25,6 +25,28 @@ impl ParserError {
             Self::UnknownType { span, .. } => *span,
         }
     }
+
+    pub fn adjust(mut self, start: usize) -> Self {
+        use ParserError::*;
+        match &mut self {
+            ExpectedFound { span } => {
+                *span = Span::new(span.start + start, span.end + start);
+            }
+            UnknownPrefix { span, .. } => {
+                *span = Span::new(span.start + start, span.end + start);
+            }
+            Reserved { span, .. } => {
+                *span = Span::new(span.start + start, span.end + start);
+            }
+            ArityOverflow { span } => {
+                *span = Span::new(span.start + start, span.end + start);
+            }
+            UnknownType { span, .. } => {
+                *span = Span::new(span.start + start, span.end + start);
+            }
+        }
+        self
+    }
 }
 
 impl<'a, I> chumsky::error::Error<'a, I> for ParserError
