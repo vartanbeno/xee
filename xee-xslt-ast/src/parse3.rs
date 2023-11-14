@@ -11,7 +11,7 @@ type Extra<'a> = Full<ParserError, State<'a>, ()>;
 
 pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a>>;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Token<'a> {
     ElementStartOpen { name: xot::NameId, span: Span },
     AttributeName { name: xot::NameId, span: Span },
@@ -49,6 +49,7 @@ struct TokenIterator<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> {
     output_iterator: I,
     want_extra: bool,
     extra: Option<Token<'a>>,
+    done: bool,
 }
 
 impl<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> TokenIterator<'a, I> {
@@ -58,6 +59,7 @@ impl<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> TokenIterator<'a, I> 
             output_iterator,
             want_extra: false,
             extra: None,
+            done: false,
         }
     }
 }
@@ -180,9 +182,15 @@ impl<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> Iterator for TokenIte
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // to ensure we don't get called after exhaustion; output_iterator doesn't
+        // seem to like it
+        if self.done {
+            return None;
+        }
         if let Some(extra) = self.extra.take() {
             return Some(extra);
         }
+
         while let Some((node, output)) = self.output_iterator.next() {
             if let Ok(token_option) = self.next_result(node, &output) {
                 if token_option.is_some() {
@@ -194,15 +202,18 @@ impl<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> Iterator for TokenIte
                             return Some(Token::Error);
                         }
                     }
+
                     return token_option;
                 } else {
                     // skip any outputs that don't have representation
+
                     continue;
                 }
             } else {
                 return Some(Token::Error);
             }
         }
+        self.done = true;
         None
     }
 }
@@ -210,16 +221,23 @@ impl<'a, I: Iterator<Item = (xot::Node, xot::Output<'a>)>> Iterator for TokenIte
 fn tokens<'a>(
     xot: &'a mut Xot,
     src: &'a str,
-) -> Result<impl ValueInput<'a, Token = Token<'a>, Span = Span>, ParserError> {
+) -> Result<TokenIterator<'a, impl Iterator<Item = (xot::Node, xot::Output<'a>)>>, ParserError> {
     let (node, span_info) = xot.parse_with_span_info(src)?;
-    let iterator = TokenIterator::new(span_info, xot.outputs(node));
+    Ok(TokenIterator::new(span_info, xot.outputs(node)))
+}
 
+fn token_stream<'a>(
+    xot: &'a mut Xot,
+    src: &'a str,
+) -> Result<impl ValueInput<'a, Token = Token<'a>, Span = Span>, ParserError> {
+    let iterator = tokens(xot, src)?;
     Ok(
         Stream::from_iter(iterator.map(|token| (token, token.span())))
             .spanned(Span::new(src.len(), src.len())),
     )
 }
 
+#[derive(Debug)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum ParserError {
     ExpectedFound {
@@ -275,155 +293,165 @@ where
     }
 }
 
-struct Element<'a>(&'a str);
+fn element_start<'a, I>(match_name: xot::NameId) -> BoxedParser<'a, I, ()>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    select! {
+        Token::ElementStartOpen { name, .. } if name == match_name => (),
+    }
+    .boxed()
+}
 
-struct Attribute<'a>(&'a str, &'a str);
+fn attribute_name<'a, I>(match_name: xot::NameId) -> BoxedParser<'a, I, ()>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    select! {
+        Token::AttributeName { name, ..} if name == match_name => (),
+    }
+    .boxed()
+}
 
-// fn element_start<'a, I>(local: &'a str) -> BoxedParser<'a, I, ()>
-// where
-//     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-// {
-//     let element = select! {
-//         Token::ElementStart { local, .. } => Element(local.as_str()),
-//     }
-//     .boxed();
-//     element
-//         .try_map(move |element, span| {
-//             if element.0 == local {
-//                 Ok(())
-//             } else {
-//                 Err(ParserError::ExpectedFound { span })
-//             }
-//         })
-//         .boxed()
-// }
+fn attribute_value<'a, I>() -> BoxedParser<'a, I, &'a str>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    select! {
+        Token::AttributeValue { value, ..} => value,
+    }
+    .boxed()
+}
 
-// fn attribute<'a, I>(local: &'a str) -> BoxedParser<'a, I, &'a str>
-// where
-//     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-// {
-//     let attribute = select! {
-//         Token::Attribute { local, value, ..} => Attribute(local.as_str(), value.as_str()),
-//     }
-//     .boxed();
-//     attribute
-//         .try_map(move |attribute, span| {
-//             if attribute.0 == local {
-//                 Ok(attribute.1)
-//             } else {
-//                 Err(ParserError::ExpectedFound { span })
-//             }
-//         })
-//         .boxed()
-// }
+fn element_close<'a, I>() -> BoxedParser<'a, I, ()>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    select! {
+        Token::ElementStartClose { .. } => (),
+    }
+    .boxed()
+}
 
-// fn element_end<'a, I>() -> BoxedParser<'a, I, ()>
-// where
-//     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-// {
-//     select! {
-//         Token::ElementEnd { end: xmlparser::ElementEnd::Open, .. } => (),
-//     }
-//     .boxed()
-// }
+fn element_end<'a, I>() -> BoxedParser<'a, I, ()>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    select! {
+        Token::ElementEnd { .. } => (),
+    }
+    .boxed()
+}
 
-// fn element_close<'a, I>() -> BoxedParser<'a, I, ()>
-// where
-//     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-// {
-//     select! {
-//         Token::ElementEnd { end: xmlparser::ElementEnd::Close(..) | xmlparser::ElementEnd::Empty, .. } => (),
-//     }.boxed()
-// }
+struct Names {
+    if_: xot::NameId,
+    test: xot::NameId,
+    variable: xot::NameId,
+    select: xot::NameId,
+    name: xot::NameId,
+}
 
-// fn parser<'a, I>() -> BoxedParser<'a, I, ast::Instruction>
-// where
-//     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-// {
-//     let if_start = element_start("if");
-//     let variable_start = element_start("variable");
+impl Names {
+    fn new(xot: &mut Xot) -> Self {
+        Self {
+            if_: xot.add_name("if"),
+            test: xot.add_name("test"),
+            variable: xot.add_name("variable"),
+            select: xot.add_name("select"),
+            name: xot.add_name("name"),
+        }
+    }
+}
 
-//     let text = select! {
-//         Token::Text { text } => text,
-//     }
-//     .boxed();
+fn parser<'a, I>(names: &Names) -> BoxedParser<'a, I, ast::Instruction>
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
+    let text = select! {
+        Token::Text { value, .. } => value,
+    }
+    .boxed();
 
-//     let sequence_constructor = text
-//         .map(|text| ast::SequenceConstructor::Text(text.to_string()))
-//         .boxed();
+    let sequence_constructor = text
+        .map(|text| ast::SequenceConstructor::Text(text.to_string()))
+        .boxed();
 
-//     let test_attribute_str = attribute("test");
+    // let variable_start = element_start("variable");
 
-//     let parse_xpath = |value, _span, state: &mut State| {
-//         Ok(xee_xpath_ast::ast::XPath::parse(
-//             value,
-//             state.namespaces.as_ref(),
-//             &[],
-//         )?)
-//     };
+    let parse_xpath = |value, _span, state: &mut State| {
+        Ok(xee_xpath_ast::ast::XPath::parse(
+            value,
+            state.namespaces.as_ref(),
+            &[],
+        )?)
+    };
 
-//     let test_attribute = test_attribute_str.try_map_with_state(parse_xpath);
+    let xpath_value = attribute_value().try_map_with_state(parse_xpath);
+    // let test_attribute = test_attribute_str.try_map_with_state(parse_xpath);
 
-//     let if_attributes = test_attribute.repeated().collect::<Vec<_>>();
+    let if_attributes = (attribute_name(names.test).ignore_then(xpath_value))
+        .repeated()
+        .collect::<Vec<_>>();
 
-//     #[derive(Debug)]
-//     enum VariableAttribute {
-//         Name(String),
-//         Select(xee_xpath_ast::ast::XPath),
-//     }
+    // #[derive(Debug)]
+    // enum VariableAttribute {
+    //     Name(String),
+    //     Select(xee_xpath_ast::ast::XPath),
+    // }
 
-//     let select_attribute_str = attribute("select");
-//     let select_attribute = select_attribute_str
-//         .try_map_with_state(parse_xpath)
-//         .map(VariableAttribute::Select);
-//     let name_attribute_str = attribute("name").map(|s| VariableAttribute::Name(s.to_string()));
+    // let select_attribute_str = attribute("select");
+    // let select_attribute = select_attribute_str
+    //     .try_map_with_state(parse_xpath)
+    //     .map(VariableAttribute::Select);
+    // let name_attribute_str = attribute("name").map(|s| VariableAttribute::Name(s.to_string()));
 
-//     let variable_attribute = select_attribute.or(name_attribute_str);
+    // let variable_attribute = select_attribute.or(name_attribute_str);
 
-//     let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
+    // let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
 
-//     let if_ = if_start
-//         .ignore_then(if_attributes)
-//         .then_ignore(element_end())
-//         .then(sequence_constructor.clone())
-//         .try_map_with_state(|(attributes, content), _span, _state: &mut State| {
-//             let test = attributes.into_iter().next().unwrap();
-//             Ok(ast::If {
-//                 test,
-//                 content: vec![content],
-//             })
-//         })
-//         .then_ignore(element_close())
-//         .map(ast::Instruction::If)
-//         .boxed();
-//     let variable = variable_start
-//         .ignore_then(variable_attributes)
-//         .then_ignore(element_end())
-//         .then(sequence_constructor)
-//         .try_map(|(attributes, content), span| {
-//             let mut select = None;
-//             let mut name = None;
-//             for attribute in attributes.into_iter() {
-//                 match attribute {
-//                     VariableAttribute::Select(v) => {
-//                         select = Some(v);
-//                     }
-//                     VariableAttribute::Name(v) => {
-//                         name = Some(v);
-//                     }
-//                 }
-//             }
-//             Ok(ast::Variable {
-//                 name: name.ok_or(ParserError::ExpectedFound { span })?,
-//                 select,
-//                 content: vec![content],
-//             })
-//         })
-//         .then_ignore(element_close())
-//         .map(ast::Instruction::Variable)
-//         .boxed();
-//     if_.or(variable).boxed()
-// }
+    let if_ = element_start(names.if_)
+        .ignore_then(if_attributes)
+        .then_ignore(element_close())
+        .then(sequence_constructor.clone())
+        .try_map_with_state(|(attributes, content), _span, _state: &mut State| {
+            let test = attributes.into_iter().next().unwrap();
+            Ok(ast::If {
+                test,
+                content: vec![content],
+            })
+        })
+        .then_ignore(element_end())
+        .map(ast::Instruction::If)
+        .boxed();
+    // let variable = variable_start
+    //     .ignore_then(variable_attributes)
+    //     .then_ignore(element_end())
+    //     .then(sequence_constructor)
+    //     .try_map(|(attributes, content), span| {
+    //         let mut select = None;
+    //         let mut name = None;
+    //         for attribute in attributes.into_iter() {
+    //             match attribute {
+    //                 VariableAttribute::Select(v) => {
+    //                     select = Some(v);
+    //                 }
+    //                 VariableAttribute::Name(v) => {
+    //                     name = Some(v);
+    //                 }
+    //             }
+    //         }
+    //         Ok(ast::Variable {
+    //             name: name.ok_or(ParserError::ExpectedFound { span })?,
+    //             select,
+    //             content: vec![content],
+    //         })
+    //     })
+    //     .then_ignore(element_close())
+    //     .map(ast::Instruction::Variable)
+    //     .boxed();
+    if_
+    // if_.or(variable).boxed()
+}
 
 #[cfg(test)]
 mod tests {
@@ -433,23 +461,61 @@ mod tests {
     use insta::assert_ron_snapshot;
     use xee_xpath_ast::Namespaces;
 
-    // #[test]
-    // fn test_tokens() {
-    //     let tokens = xmlparser::Tokenizer::from(r#"<if test="true()">Hello</if>"#);
+    #[test]
+    fn test_tokens() {
+        let mut xot = Xot::new();
+        let if_name = xot.add_name("if");
+        let test_name = xot.add_name("test");
 
-    //     dbg!(tokens.collect::<Vec<_>>());
-    // }
+        let tokens = tokens(&mut xot, r#"<if test="true()">Hello</if>"#).unwrap();
+        //                                  0123456789012345678901234567
+        assert_eq!(
+            tokens.collect::<Vec<_>>(),
+            vec![
+                Token::ElementStartOpen {
+                    name: if_name,
+                    span: Span::new(1, 3)
+                },
+                Token::AttributeName {
+                    name: test_name,
+                    span: Span::new(4, 8)
+                },
+                Token::AttributeValue {
+                    value: "true()",
+                    span: Span::new(10, 16)
+                },
+                Token::ElementStartClose {
+                    name: if_name,
+                    span: Span::new(1, 3)
+                },
+                Token::Text {
+                    value: "Hello",
+                    span: Span::new(18, 23)
+                },
+                Token::ElementEnd {
+                    name: if_name,
+                    span: Span::new(23, 28)
+                },
+            ]
+        );
+    }
 
-    // #[test]
-    // fn test_simple_parse_if() {
-    //     let mut xot = Xot::new();
-    //     let stream = tokens(&mut xot, r#"<if test="true()">Hello</if>"#);
-    //     let namespaces = Namespaces::default();
-    //     let mut state = State {
-    //         namespaces: Cow::Owned(namespaces),
-    //     };
-    //     assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
-    // }
+    #[test]
+    fn test_simple_parse_if() {
+        let mut xot = Xot::new();
+
+        let names = Names::new(&mut xot);
+
+        let stream = token_stream(&mut xot, r#"<if test="true()">Hello</if>"#).unwrap();
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+
+        assert_ron_snapshot!(parser(&names)
+            .parse_with_state(stream, &mut state)
+            .into_result());
+    }
 
     // #[test]
     // fn test_simple_parse_variable() {

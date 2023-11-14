@@ -10,6 +10,7 @@ pub struct If {
     pub(crate) content: Vec<SequenceConstructor>,
 }
 
+#[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructor {
     Text(String),
