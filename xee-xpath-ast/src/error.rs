@@ -28,23 +28,14 @@ impl ParserError {
 
     pub fn adjust(mut self, start: usize) -> Self {
         use ParserError::*;
-        match &mut self {
-            ExpectedFound { span } => {
-                *span = Span::new(span.start + start, span.end + start);
-            }
-            UnknownPrefix { span, .. } => {
-                *span = Span::new(span.start + start, span.end + start);
-            }
-            Reserved { span, .. } => {
-                *span = Span::new(span.start + start, span.end + start);
-            }
-            ArityOverflow { span } => {
-                *span = Span::new(span.start + start, span.end + start);
-            }
-            UnknownType { span, .. } => {
-                *span = Span::new(span.start + start, span.end + start);
-            }
-        }
+        let span = match &mut self {
+            ExpectedFound { span } => span,
+            UnknownPrefix { span, .. } => span,
+            Reserved { span, .. } => span,
+            ArityOverflow { span } => span,
+            UnknownType { span, .. } => span,
+        };
+        *span = Span::new(span.start + start, span.end + start);
         self
     }
 }
