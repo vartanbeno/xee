@@ -397,16 +397,6 @@ where
         Select(xee_xpath_ast::ast::XPath),
     }
 
-    // let select_attribute_str = attribute("select");
-    // let select_attribute = select_attribute_str
-    //     .try_map_with_state(parse_xpath)
-    //     .map(VariableAttribute::Select);
-    // let name_attribute_str = attribute("name").map(|s| VariableAttribute::Name(s.to_string()));
-
-    // let variable_attribute = select_attribute.or(name_attribute_str);
-
-    // let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
-
     let if_ = element_start(names.if_)
         .ignore_then(if_attributes)
         .then_ignore(element_close())
