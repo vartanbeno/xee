@@ -152,7 +152,7 @@ where
     .boxed();
 
     let sequence_constructor = text
-        .map(|text| ast::SequenceConstructor::Text(text.to_string()))
+        .map(|text| ast::SequenceConstructorItem::Text(text.to_string()))
         .boxed();
 
     if_.then(sequence_constructor)

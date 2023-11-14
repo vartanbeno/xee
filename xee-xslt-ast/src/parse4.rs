@@ -186,15 +186,12 @@ impl<'a> XsltParser<'a> {
         })
     }
 
-    fn parse_sequence_constructor(
-        &self,
-        node: Node,
-    ) -> Result<Vec<ast::SequenceConstructor>, Error> {
+    fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
         for node in self.xot.children(node) {
             match self.xot.value(node) {
                 Value::Text(text) => {
-                    result.push(ast::SequenceConstructor::Text(text.get().to_string()))
+                    result.push(ast::SequenceConstructorItem::Text(text.get().to_string()))
                 }
                 _ => return Err(Error::UnexpectedSequenceConstructor),
             }

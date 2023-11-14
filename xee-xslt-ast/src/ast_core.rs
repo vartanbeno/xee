@@ -4,6 +4,7 @@ type Expression = xpath_ast::XPath;
 type EqName = String;
 type QName = String;
 type SequenceType = xpath_ast::SequenceType;
+type ItemType = xpath_ast::ItemType;
 type Pattern = String;
 type Token = String;
 type Uri = String;
@@ -28,21 +29,57 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Accept {
-    pub component: AcceptComponent,
-    pub names: Tokens,
-    pub visibility: VisibilityWithHidden,
+pub enum Visibility {
+    Public,
+    Private,
+    Final,
+    Abstract,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum AcceptComponent {
+pub enum VisibilityWithHidden {
+    Public,
+    Private,
+    Final,
+    Abstract,
+    Hidden,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Validation {
+    Strict,
+    Lax,
+    Preserve,
+    Strip,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Component {
     Template,
     Function,
     AttributeSet,
     Variable,
     Mode,
     Star,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Use {
+    Required,
+    Optional,
+    Absent,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Accept {
+    pub component: Component,
+    pub names: Tokens,
+    pub visibility: VisibilityWithHidden,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -121,17 +158,8 @@ pub struct Attribute {
     pub select: Option<Expression>,
     pub separator: Option<Template<String>>,
     pub type_: Option<EqName>,
-    pub validation: Option<AttributeValidation>,
+    pub validation: Option<Validation>,
     pub content: SequenceConstructor,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum AttributeValidation {
-    Strict,
-    Lax,
-    Preserve,
-    Strip,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -164,6 +192,240 @@ pub struct Catch {
     pub errors: Option<Tokens>,
     pub select: Option<Expression>,
     pub content: Vec<SequenceConstructor>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct CharacterMap {
+    pub name: EqName,
+    pub use_character_maps: Option<EqNames>,
+    pub content: Vec<OutputCharacter>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Choose {
+    when: Vec<When>,
+    otherwise: Option<Otherwise>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Comment {
+    pub select: Option<Expression>,
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ContextItem {
+    pub as_: Option<ItemType>,
+    pub use_: Option<Use>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Copy {
+    pub select: Option<Expression>,
+    pub copy_namespaces: Option<bool>,
+    pub inherit_namespaces: Option<bool>,
+    pub use_attribute_sets: Option<EqNames>,
+    pub type_: Option<EqName>,
+    pub validation: Option<Validation>,
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct CopyOf {
+    pub select: Expression,
+    pub copy_accumulators: Option<bool>,
+    pub copy_namespaces: Option<bool>,
+    pub type_: Option<EqName>,
+    pub validation: Option<Validation>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct DecimalFormat {
+    pub name: Option<EqName>,
+    pub decimal_separator: Option<char>,
+    pub grouping_separator: Option<char>,
+    pub infinity: Option<String>,
+    pub minus_sign: Option<char>,
+    pub exponent_separator: Option<char>,
+    pub nan: Option<String>,
+    pub percent: Option<char>,
+    pub per_mille: Option<char>,
+    pub zero_digit: Option<char>,
+    pub digit: Option<char>,
+    pub pattern_separator: Option<char>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Document {
+    pub validation: Option<Validation>,
+    pub type_: Option<EqName>,
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Element {
+    name: Template<EqName>,
+    namespace: Option<Template<Uri>>,
+    inherit_namespaces: Option<bool>,
+    use_attribute_sets: Option<EqNames>,
+    type_: Option<EqName>,
+    validation: Option<Validation>,
+    content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Evaluate {
+    xpath: Expression,
+    as_: Option<SequenceType>,
+    base_uri: Option<Template<Uri>>,
+    with_params: Option<Expression>,
+    context_item: Option<Expression>,
+    namespace_context: Option<Expression>,
+    schema_aware: Option<Template<bool>>,
+    content: Vec<EvaluateContent>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum EvaluateContent {
+    WithParam(WithParam),
+    Fallback(Fallback),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Expose {
+    pub component: Component,
+    pub names: Tokens,
+    pub visibility: Visibility,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Fallback {
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ForEach {
+    pub select: Expression,
+
+    pub sort: Vec<Sort>,
+    pub constructor: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ForEachGroup {
+    pub select: Expression,
+    pub group_by: Option<Expression>,
+    pub group_adjacent: Option<Expression>,
+    pub group_starting_with: Option<Pattern>,
+    pub group_ending_with: Option<Pattern>,
+    pub composite: Option<bool>,
+    pub collation: Option<Template<Uri>>,
+
+    pub sort: Vec<Sort>,
+    pub constructor: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Fork {
+    pub content: ForkContent,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum ForkContent {
+    Fallback(Vec<Fallback>),
+    SequenceFallbacks(Vec<(Sequence, Vec<Fallback>)>),
+    ForEachGroup((ForEachGroup, Vec<Fallback>)),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Function {
+    pub name: EqName,
+    pub as_: Option<SequenceType>,
+    pub visibility: Option<Visibility>,
+    pub streamability: Option<Streamability>,
+    pub override_extension_function: Option<bool>,
+    pub new_each_time: Option<NewEachTime>,
+    pub cache: Option<bool>,
+
+    pub params: Vec<Param>,
+    pub constructor: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Streamability {
+    Unclassified,
+    Absorbing,
+    Inspection,
+    Filter,
+    ShallowDescent,
+    DeepDescent,
+    Ascent,
+    EqName(EqName),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum NewEachTime {
+    Yes,
+    No,
+    Maybe,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct GlobalContextItem {
+    as_: Option<ItemType>,
+    use_: Option<Use>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct If {
+    pub test: Expression,
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Otherwise {
+    // TODO
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct OutputCharacter {
+    // TODO
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Param {
+    // TODO
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Sequence {
+    // TODO
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -203,6 +465,12 @@ pub enum DataType {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct When {
+    // TODO
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct WithParam {
     pub name: EqName,
     pub select: Option<Expression>,
@@ -211,15 +479,11 @@ pub struct WithParam {
     pub content: SequenceConstructor,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct If {
-    pub(crate) test: Expression,
-    pub(crate) content: Vec<SequenceConstructor>,
-}
+pub type SequenceConstructor = Vec<SequenceConstructorItem>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum SequenceConstructor {
+pub enum SequenceConstructorItem {
     Text(String),
 }
 
@@ -236,44 +500,7 @@ pub struct Variable {
     // // it's also possible to have an empty variable
     // // in case visibility is static; this could
     // // perhaps be modelled separately?
-    pub content: Vec<SequenceConstructor>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum Visibility {
-    Public,
-    Private,
-    Final,
-    Abstract,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum VisibilityWithHidden {
-    Public,
-    Private,
-    Final,
-    Abstract,
-    Hidden,
-}
-
-struct Function {
-    name: EqName,
-    as_: Option<SequenceType>,
-    visbility: Visibility,
-    override_extension_function: bool,
-    new_each_time: NewEachTime,
-    cache: bool,
-    params: Vec<Param>,
-    content: Vec<SequenceConstructor>,
-}
-
-struct Param {}
-
-enum NewEachTime {
-    Bool(bool),
-    Maybe,
+    pub content: SequenceConstructor,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
