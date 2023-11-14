@@ -243,6 +243,10 @@ pub enum ParserError {
     ExpectedFound {
         span: Span,
     },
+    MissingRequiredAttribute {
+        name: String,
+        span: Span,
+    },
     MyError,
     SpanInfoMissing,
     XPath(xee_xpath_ast::ParserError),
@@ -391,12 +395,6 @@ where
         .repeated()
         .collect::<Vec<_>>();
 
-    #[derive(Debug)]
-    enum VariableAttribute {
-        Name(String),
-        Select(xee_xpath_ast::ast::XPath),
-    }
-
     let if_ = element_start(names.if_)
         .ignore_then(if_attributes)
         .then_ignore(element_close())
@@ -412,6 +410,12 @@ where
         .map(ast::Instruction::If)
         .boxed();
 
+    #[derive(Debug)]
+    enum VariableAttribute {
+        Name(String),
+        Select(xee_xpath_ast::ast::XPath),
+    }
+
     let select_attribute = attribute_name(names.select)
         .ignore_then(attribute_value().try_map_with_state(parse_xpath))
         .map(VariableAttribute::Select);
@@ -423,10 +427,11 @@ where
     let variable_attributes = variable_attribute.repeated().collect::<Vec<_>>();
 
     let variable = element_start(names.variable)
-        .ignore_then(variable_attributes)
+        .map_with_span(|_, span| span)
+        .then(variable_attributes)
         .then_ignore(element_close())
         .then(sequence_constructor)
-        .try_map(|(attributes, content), span| {
+        .try_map(|((element_span, attributes), content), _| {
             let mut select = None;
             let mut name = None;
             for attribute in attributes.into_iter() {
@@ -440,7 +445,10 @@ where
                 }
             }
             Ok(ast::Variable {
-                name: name.ok_or(ParserError::ExpectedFound { span })?,
+                name: name.ok_or(ParserError::MissingRequiredAttribute {
+                    name: "name".to_string(),
+                    span: element_span,
+                })?,
                 select,
                 content: vec![content],
             })
@@ -527,6 +535,23 @@ mod tests {
             r#"<variable name="foo" select="true()">Hello</variable>"#,
         )
         .unwrap();
+        let namespaces = Namespaces::default();
+        let mut state = State {
+            namespaces: Cow::Owned(namespaces),
+        };
+        assert_ron_snapshot!(parser(&names)
+            .parse_with_state(stream, &mut state)
+            .into_result());
+    }
+
+    #[test]
+    fn test_simple_parse_variable_missing_required_name_attribute() {
+        let mut xot = Xot::new();
+
+        let names = Names::new(&mut xot);
+
+        let stream =
+            token_stream(&mut xot, r#"<variable select="true()">Hello</variable>"#).unwrap();
         let namespaces = Namespaces::default();
         let mut state = State {
             namespaces: Cow::Owned(namespaces),
