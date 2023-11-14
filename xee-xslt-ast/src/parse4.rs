@@ -23,8 +23,6 @@ impl From<&xot::Span> for Span {
 #[cfg_attr(test, derive(serde::Serialize))]
 enum Error {
     Unexpected,
-    // ElementExpected,
-    // NameExpected(NameId),
     AttributeExpected {
         namespace: String,
         local: String,
