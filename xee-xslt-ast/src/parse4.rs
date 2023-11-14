@@ -147,7 +147,15 @@ impl<'a> XsltParser<'a> {
         let select = element
             .get_attribute(self.names.select)
             .map(|select| xee_xpath_ast::ast::XPath::parse(select, &self.namespaces, &[]))
-            .transpose()?;
+            .transpose()
+            .map_err(|e| {
+                e.adjust(
+                    self.span_info
+                        .get(SpanInfoKey::AttributeValue(node, self.names.select))
+                        .unwrap()
+                        .start,
+                )
+            })?;
         Ok(ast::Variable {
             name: name.to_string(),
             select,
@@ -223,23 +231,18 @@ mod tests {
         assert_ron_snapshot!(parser.parse(node));
     }
 
-    // #[test]
-    // fn test_simple_parse_variable_broken_xpath() {
-    //     let mut xot = Xot::new();
+    #[test]
+    fn test_simple_parse_variable_broken_xpath() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
 
-    //     let names = Names::new(&mut xot);
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<variable name="foo" select="let $x := 1">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
 
-    //     let stream = token_stream(
-    //         &mut xot,
-    //         r#"<variable name="foo" select="let $x := 1">Hello</variable>"#,
-    //     )
-    //     .unwrap();
-    //     let namespaces = Namespaces::default();
-    //     let mut state = State {
-    //         namespaces: Cow::Owned(namespaces),
-    //     };
-    //     assert_ron_snapshot!(parser(&names)
-    //         .parse_with_state(stream, &mut state)
-    //         .into_result());
-    // }
+        assert_ron_snapshot!(parser.parse(node));
+    }
 }

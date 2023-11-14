@@ -1,0 +1,11 @@
+---
+source: xee-xslt-ast/src/parse4.rs
+expression: parser.parse(node)
+---
+Err(XPath(ExpectedFound(
+  span: SimpleSpan(
+    start: 39,
+    end: 40,
+    context: (),
+  ),
+)))
