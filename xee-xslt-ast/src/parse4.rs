@@ -89,13 +89,28 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn get_required_attribute(
+    fn get_attribute<T>(
+        &self,
+        element: &'a Element,
+        name: NameId,
+        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+    ) -> Result<Option<T>, Error> {
+        if let Some(value) = element.get_attribute(name) {
+            let value = parse_value(value)?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn get_required_attribute<T>(
         &self,
         node: Node,
         element: &'a Element,
         name: NameId,
-    ) -> Result<&'a str, Error> {
-        let attribute = element.get_attribute(name).ok_or_else(|| {
+        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        let value = element.get_attribute(name).ok_or_else(|| {
             let span = self.span_info.get(SpanInfoKey::ElementStart(node));
             if let Some(span) = span {
                 let (local, namespace) = self.xot.name_ns_str(name);
@@ -108,7 +123,7 @@ impl<'a> XsltParser<'a> {
                 Error::MissingSpan
             }
         })?;
-        Ok(attribute)
+        parse_value(value)
     }
 
     fn parse_element(&self, node: Node, name: NameId) -> Result<&'a Element, Error> {
@@ -135,7 +150,7 @@ impl<'a> XsltParser<'a> {
 
     fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
         let element = self.parse_element(node, self.names.if_)?;
-        let test = self.get_required_attribute(node, element, self.names.test)?;
+        let test = self.get_required_attribute(node, element, self.names.test, Ok)?;
         let test = xee_xpath_ast::ast::XPath::parse(test, &self.namespaces, &[])?;
         let content = self.parse_sequence_constructor(node)?;
         Ok(ast::If { test, content })
@@ -143,19 +158,20 @@ impl<'a> XsltParser<'a> {
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let element = self.parse_element(node, self.names.variable)?;
-        let name = self.get_required_attribute(node, element, self.names.name)?;
-        let select = element
-            .get_attribute(self.names.select)
-            .map(|select| xee_xpath_ast::ast::XPath::parse(select, &self.namespaces, &[]))
-            .transpose()
-            .map_err(|e| {
-                e.adjust(
-                    self.span_info
-                        .get(SpanInfoKey::AttributeValue(node, self.names.select))
-                        .unwrap()
-                        .start,
-                )
-            })?;
+        let name = self.get_required_attribute(node, element, self.names.name, Ok)?;
+        let select = self.get_attribute(element, self.names.select, |s| {
+            Ok(
+                xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[]).map_err(|e| {
+                    e.adjust(
+                        self.span_info
+                            .get(SpanInfoKey::AttributeValue(node, self.names.select))
+                            .unwrap()
+                            .start,
+                    )
+                })?,
+            )
+        })?;
+
         Ok(ast::Variable {
             name: name.to_string(),
             select,
