@@ -244,6 +244,8 @@ pub enum ParserError {
         span: Span,
     },
     MissingRequiredAttribute {
+        // TODO: use NameId here to indicate missing attribute?
+        // but attributes could be both in xsl namespace or not
         name: String,
         span: Span,
     },
