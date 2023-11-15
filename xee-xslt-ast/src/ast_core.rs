@@ -149,6 +149,8 @@ pub struct Accept {
     pub component: Component,
     pub names: Vec<Token>,
     pub visibility: VisibilityWithHidden,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -158,7 +160,10 @@ pub struct Accumulator {
     pub initial_value: Expression,
     pub as_: Option<SequenceType>,
     pub streamable: Option<bool>,
-    pub content: Vec<AccumulatorRule>,
+
+    pub rules: Vec<AccumulatorRule>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -168,6 +173,8 @@ pub struct AccumulatorRule {
     pub phase: Option<AccumulatorPhase>,
     pub select: Option<Expression>,
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -187,12 +194,16 @@ pub struct AnalyzeString {
     pub matching_substring: Option<MatchingSubstring>,
     pub non_matching_substring: Option<NonMatchingSubstring>,
     pub fallbacks: Vec<Fallback>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ApplyImports {
-    pub content: Vec<WithParam>,
+    pub with_params: Vec<WithParam>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -202,6 +213,8 @@ pub struct ApplyTemplates {
     pub mode: Option<Token>,
 
     pub content: Vec<ApplyTemplatesContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -219,6 +232,8 @@ pub struct Assert {
     pub error_code: Option<Templ<EqName>>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -232,6 +247,8 @@ pub struct Attribute {
     pub validation: Option<Validation>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -243,6 +260,8 @@ pub struct AttributeSet {
     pub streamable: Option<bool>,
 
     pub content: Vec<Attribute>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -251,6 +270,8 @@ pub struct Break {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -259,6 +280,8 @@ pub struct CallTemplate {
     pub name: EqName,
 
     pub content: Vec<WithParam>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -268,6 +291,8 @@ pub struct Catch {
     pub select: Option<Expression>,
 
     pub content: Vec<SequenceConstructor>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -277,6 +302,8 @@ pub struct CharacterMap {
     pub use_character_maps: Option<Vec<EqName>>,
 
     pub content: Vec<OutputCharacter>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -284,6 +311,8 @@ pub struct CharacterMap {
 pub struct Choose {
     when: Vec<When>,
     otherwise: Option<Otherwise>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -292,6 +321,8 @@ pub struct Comment {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -299,6 +330,8 @@ pub struct Comment {
 pub struct ContextItem {
     pub as_: Option<ItemType>,
     pub use_: Option<Use>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -312,6 +345,8 @@ pub struct Copy {
     pub validation: Option<Validation>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -322,6 +357,8 @@ pub struct CopyOf {
     pub copy_namespaces: Option<bool>,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -339,6 +376,8 @@ pub struct DecimalFormat {
     pub zero_digit: Option<char>,
     pub digit: Option<char>,
     pub pattern_separator: Option<char>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -347,33 +386,39 @@ pub struct Document {
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Element {
-    name: Templ<EqName>,
-    namespace: Option<Templ<Uri>>,
-    inherit_namespaces: Option<bool>,
-    use_attribute_sets: Option<Vec<EqName>>,
-    type_: Option<EqName>,
-    validation: Option<Validation>,
+    pub name: Templ<EqName>,
+    pub namespace: Option<Templ<Uri>>,
+    pub inherit_namespaces: Option<bool>,
+    pub use_attribute_sets: Option<Vec<EqName>>,
+    pub type_: Option<EqName>,
+    pub validation: Option<Validation>,
 
-    content: SequenceConstructor,
+    pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Evaluate {
-    xpath: Expression,
-    as_: Option<SequenceType>,
-    base_uri: Option<Templ<Uri>>,
-    with_params: Option<Expression>,
-    context_item: Option<Expression>,
-    namespace_context: Option<Expression>,
-    schema_aware: Option<Templ<bool>>,
+    pub xpath: Expression,
+    pub as_: Option<SequenceType>,
+    pub base_uri: Option<Templ<Uri>>,
+    pub with_params: Option<Expression>,
+    pub context_item: Option<Expression>,
+    pub namespace_context: Option<Expression>,
+    pub schema_aware: Option<Templ<bool>>,
 
-    content: Vec<EvaluateContent>,
+    pub content: Vec<EvaluateContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -389,12 +434,16 @@ pub struct Expose {
     pub component: Component,
     pub names: Vec<Token>,
     pub visibility: VisibilityWithAbstract,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Fallback {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -404,6 +453,8 @@ pub struct ForEach {
 
     pub sort: Vec<Sort>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -419,12 +470,16 @@ pub struct ForEachGroup {
 
     pub sort: Vec<Sort>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Fork {
     pub content: ForkContent,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -448,6 +503,8 @@ pub struct Function {
 
     pub params: Vec<Param>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -474,8 +531,10 @@ pub enum NewEachTime {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct GlobalContextItem {
-    as_: Option<ItemType>,
-    use_: Option<Use>,
+    pub as_: Option<ItemType>,
+    pub use_: Option<Use>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -483,12 +542,16 @@ pub struct GlobalContextItem {
 pub struct If {
     pub test: Expression,
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Import {
     href: Uri,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -498,12 +561,16 @@ pub struct ImportSchema {
     schema_location: Option<Uri>,
 
     content: Option<Schema>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Include {
-    href: Uri,
+    pub href: Uri,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -514,6 +581,8 @@ pub struct Iterate {
     pub params: Vec<Param>,
     pub on_completion: Option<OnCompletion>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -526,12 +595,16 @@ pub struct Key {
     pub collation: Option<Uri>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Map {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -541,12 +614,16 @@ pub struct MapEntry {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MatchingSubstring {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -555,12 +632,16 @@ pub struct Merge {
     pub merge_source: Vec<MergeSource>,
     pub merge_action: MergeAction,
     pub fallback: Vec<Fallback>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MergeAction {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -574,6 +655,8 @@ pub struct MergeKey {
     pub data_type: Option<Templ<DataType>>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -590,6 +673,8 @@ pub struct MergeSource {
     pub type_: Option<EqName>,
 
     pub content: Vec<MergeKey>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -600,6 +685,8 @@ pub struct Message {
     pub error_code: Option<Templ<EqName>>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -614,6 +701,8 @@ pub struct Mode {
     pub warning_on_multiple_match: Option<bool>,
     pub typed: Option<Typed>,
     pub visibility: Option<Visibility>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -650,6 +739,8 @@ pub struct Namespace {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -657,6 +748,8 @@ pub struct Namespace {
 pub struct NamespaceAlias {
     pub stylesheet_prefix: PrefixOrDefault,
     pub result_prefix: PrefixOrDefault,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -670,12 +763,16 @@ pub enum PrefixOrDefault {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NextIteration {
     pub params: Vec<Param>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NextMatch {
     pub content: Vec<NextMatchContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -689,6 +786,8 @@ pub enum NextMatchContent {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NonMatchingSubstring {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -706,6 +805,8 @@ pub struct Number {
     pub start_at: Option<Templ<String>>,
     pub grouping_separator: Option<Templ<char>>,
     pub grouping_size: Option<Templ<usize>>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -729,6 +830,8 @@ pub struct OnCompletion {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -737,6 +840,8 @@ pub struct OnEmpty {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -745,12 +850,16 @@ pub struct OnNonEmpty {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Otherwise {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -779,6 +888,8 @@ pub struct Output {
     pub undeclare_prefixes: Option<bool>,
     pub use_character_maps: Option<Vec<EqName>>,
     pub version: Option<NmToken>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -827,12 +938,16 @@ pub enum Standalone {
 pub struct OutputCharacter {
     pub character: char,
     pub string: String,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Override {
     pub content: Vec<OverrideContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -864,6 +979,8 @@ pub struct Package {
     pub xpath_default_namespace: Option<Uri>,
 
     pub content: Vec<PackageContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -906,6 +1023,8 @@ pub struct Param {
     pub static_: Option<bool>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -915,12 +1034,16 @@ pub struct PerformSort {
 
     pub sorts: Vec<Sort>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct PreserveSpace {
     pub elements: Vec<Token>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -930,6 +1053,8 @@ pub struct ProcessingInstruction {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -964,6 +1089,8 @@ pub struct ResultDocument {
     pub version: Option<Templ<NmToken>>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -972,6 +1099,8 @@ pub struct Sequence {
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -986,6 +1115,8 @@ pub struct Sort {
     pub data_type: Option<Templ<DataType>>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -998,12 +1129,16 @@ pub struct SourceDocument {
     pub type_: Option<EqName>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct StripSpace {
     pub elements: Vec<Token>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1022,9 +1157,11 @@ pub struct Stylesheet {
     pub xpath_default_namespace: Option<Uri>,
 
     pub declarations: Declarations,
+
+    pub span: Span,
 }
 
-// Transform is an alias for Stylesheet
+// Transform is an alias for Stylesheet. TODO: rename to Transform?
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -1039,6 +1176,8 @@ pub struct Template {
     pub context_item: Option<ContextItem>,
     pub params: Vec<Param>,
     pub constructor: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1047,6 +1186,8 @@ pub struct Text {
     // DEPRECATED
     pub disable_output_escaping: Option<bool>,
     pub content: PcData,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1060,6 +1201,8 @@ pub struct Try {
     // the catches block
     pub catch: Catch,
     pub catches: Vec<TryCatchOrFinally>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1076,6 +1219,8 @@ pub struct UsePackage {
     pub package_version: Option<String>,
 
     pub content: Vec<UsePackageContent>,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1094,6 +1239,8 @@ pub struct ValueOf {
     pub disable_output_escaping: Option<bool>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1106,6 +1253,8 @@ pub struct Variable {
     pub visibility: Option<VisibilityWithAbstract>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1114,12 +1263,16 @@ pub struct When {
     pub test: Expression,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct WherePopulated {
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1131,6 +1284,8 @@ pub struct WithParam {
     pub tunnel: Option<bool>,
 
     pub content: SequenceConstructor,
+
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

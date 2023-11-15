@@ -140,6 +140,7 @@ impl<'a> XsltParser<'a> {
         Ok(ast::If {
             test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
             content,
+            span: element.span,
         })
     }
 
@@ -153,6 +154,7 @@ impl<'a> XsltParser<'a> {
             static_: None,
             visibility: None,
             content: self.parse_sequence_constructor(node)?,
+            span: element.span,
         })
     }
 
