@@ -999,7 +999,8 @@ pub struct Template {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Text {
-    // TODO: disable-output-escaping
+    // DEPRECATED
+    pub disable_output_escaping: Option<bool>,
     pub content: PcData,
 }
 
@@ -1044,7 +1045,9 @@ pub enum UsePackageContent {
 pub struct ValueOf {
     pub select: Option<Expression>,
     pub separator: Option<Templ<String>>,
-    // TODO disable-output-escaping
+    // DEPRECATED
+    pub disable_output_escaping: Option<bool>,
+
     pub content: SequenceConstructor,
 }
 
@@ -1089,7 +1092,8 @@ pub struct WithParam {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
     TextNode(String),
-
+    // TODO: to add: literal result element, which can contain sequence constructor
+    // in turn as well
     AnalyzeString(Box<AnalyzeString>),
     ApplyImports(Box<ApplyImports>),
     ApplyTemplates(Box<ApplyTemplates>),
