@@ -1,5 +1,5 @@
 use xee_xpath_ast::Namespaces;
-use xot::{Element, NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
+use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
 use crate::ast_core::Span;
@@ -97,38 +97,8 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
-        let span = self.attribute_missing_span(node);
-        match span {
-            Ok(span) => f(span),
-            Err(e) => e,
-        }
-    }
-
-    fn attribute_value_error_with_span(
-        &self,
-        node: Node,
-        name: NameId,
-        f: impl Fn(Span) -> Error,
-    ) -> Error {
-        let span = self.attribute_value_span(node, name);
-        match span {
-            Ok(span) => f(span),
-            Err(e) => e,
-        }
-    }
-
-    fn attribute_missing_span(&self, node: Node) -> Result<Span, Error> {
+    fn element_span(&self, node: Node) -> Result<Span, Error> {
         let span = self.span_info.get(SpanInfoKey::ElementStart(node));
-        if let Some(span) = span {
-            Ok(span.into())
-        } else {
-            Err(Error::MissingSpan)
-        }
-    }
-
-    fn attribute_value_span(&self, node: Node, name: NameId) -> Result<Span, Error> {
-        let span = self.span_info.get(SpanInfoKey::AttributeValue(node, name));
         if let Some(span) = span {
             Ok(span.into())
         } else {
@@ -145,6 +115,7 @@ impl<'a> XsltParser<'a> {
             node,
             element,
             xslt_parser: self,
+            span: self.element_span(node)?,
         })
     }
 
@@ -207,8 +178,9 @@ impl<'a> XsltParser<'a> {
 
 struct Attributes<'a> {
     node: Node,
-    element: &'a Element,
+    element: &'a xot::Element,
     xslt_parser: &'a XsltParser<'a>,
+    span: Span,
 }
 
 impl<'a> Attributes<'a> {
@@ -247,15 +219,12 @@ impl<'a> Attributes<'a> {
         parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<T, Error> {
         self.attribute(name, parse_value)?.ok_or_else(|| {
-            self.xslt_parser
-                .attribute_missing_error_with_span(self.node, |span| {
-                    let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
-                    Error::AttributeExpected {
-                        namespace: namespace.to_string(),
-                        local: local.to_string(),
-                        span,
-                    }
-                })
+            let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
+            Error::AttributeExpected {
+                namespace: namespace.to_string(),
+                local: local.to_string(),
+                span: self.span,
+            }
         })
     }
 
