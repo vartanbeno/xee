@@ -50,6 +50,10 @@ struct Names {
     as_: xot::NameId,
     static_: xot::NameId,
     visibility: xot::NameId,
+    copy_namespaces: xot::NameId,
+    inherit_namespaces: xot::NameId,
+    use_attribute_sets: xot::NameId,
+    validation: xot::NameId,
 }
 
 impl Names {
@@ -64,6 +68,10 @@ impl Names {
             as_: xot.add_name("as"),
             static_: xot.add_name("static"),
             visibility: xot.add_name("visibility"),
+            copy_namespaces: xot.add_name("copy-namespaces"),
+            inherit_namespaces: xot.add_name("inherit-namespaces"),
+            use_attribute_sets: xot.add_name("use-attribute-sets"),
+            validation: xot.add_name("validation"),
         }
     }
 }
@@ -128,6 +136,29 @@ impl<'a> XsltParser<'a> {
         }
     }
 
+    fn eqnames(s: &str, span: Span) -> Result<Vec<String>, Error> {
+        let mut result = Vec::new();
+        for s in s.split_whitespace() {
+            result.push(Self::eqname(s, span)?);
+        }
+        Ok(result)
+    }
+
+    fn validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
+        use ast::Validation::*;
+
+        match s {
+            "strict" => Ok(Strict),
+            "lax" => Ok(Lax),
+            "preserve" => Ok(Preserve),
+            "strip" => Ok(Strip),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
     fn element_span(&self, node: Node) -> Result<Span, Error> {
         let span = self
             .span_info
@@ -156,7 +187,12 @@ impl<'a> XsltParser<'a> {
             Err(e) if e.is_unexpected() => {
                 match self.parse_variable(node).map(ast::Instruction::Variable) {
                     Ok(instruction) => Ok(instruction),
-                    // Err(e) if e.is_unexpected() => Err(Error::Unexpected),
+                    Err(e) if e.is_unexpected() => {
+                        match self.parse_copy(node).map(ast::Instruction::Copy) {
+                            Ok(instruction) => Ok(instruction),
+                            Err(e) => Err(e),
+                        }
+                    }
                     Err(e) => Err(e),
                 }
             }
@@ -182,6 +218,8 @@ impl<'a> XsltParser<'a> {
         let static_ = element.boolean(self.names.static_, false)?;
 
         let visibility = element.optional(self.names.visibility, Self::visibility_with_abstract)?;
+        // This is a rule somewhere, but not sure whether it's correct;
+        // can visibility be absent or is there a default visibility?
         // let visibility = visibility.unwrap_or(if static_ {
         //     ast::VisibilityWithAbstract::Private
         // } else {
@@ -208,11 +246,21 @@ impl<'a> XsltParser<'a> {
         })
     }
 
-    // fn parse_copy(&self, node: Node) -> Result<ast::Copy, Error> {
-    //     let element = self.parse_element(node, self.names.copy)?;
-    //     let select = self.get_xpath_attribute(node, element, self.names.select)?;
-    //     let copy_namespaces = self.get_boolean_attribute(node, element, self.names.copy_namespaces, true)?
-    // }
+    fn parse_copy(&self, node: Node) -> Result<ast::Copy, Error> {
+        let element = self.element(node, self.names.copy)?;
+
+        let content = self.parse_sequence_constructor(node)?;
+        Ok(ast::Copy {
+            select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
+            copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
+            inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
+            use_attribute_sets: element.optional(self.names.use_attribute_sets, Self::eqnames)?,
+            type_: element.optional(self.names.as_, Self::eqname)?,
+            validation: element.required(self.names.validation, Self::validation)?,
+            content,
+            span: element.span,
+        })
+    }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
@@ -367,6 +415,13 @@ mod tests {
     fn test_variable_visibility_abstract_with_select_is_error() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" visibility="abstract" select="true()">Hello</variable>"#
+        ));
+    }
+
+    #[test]
+    fn test_copy() {
+        assert_ron_snapshot!(parse(
+            r#"<copy select="true()" copy-namespaces="no" inherit-namespaces="no" validation="strict">Hello</copy>"#
         ));
     }
 }

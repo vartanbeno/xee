@@ -338,11 +338,11 @@ pub struct ContextItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Copy {
     pub select: Option<Expression>,
-    pub copy_namespaces: Option<bool>,
-    pub inherit_namespaces: Option<bool>,
+    pub copy_namespaces: bool,
+    pub inherit_namespaces: bool,
     pub use_attribute_sets: Option<Vec<EqName>>,
     pub type_: Option<EqName>,
-    pub validation: Option<Validation>,
+    pub validation: Validation,
 
     pub content: SequenceConstructor,
 
@@ -1368,6 +1368,7 @@ pub type Declarations = Vec<Declaration>;
 pub enum Instruction {
     Variable(Variable),
     If(If),
+    Copy(Copy),
 }
 
 // xs:schema
