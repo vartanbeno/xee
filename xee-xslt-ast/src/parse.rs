@@ -261,14 +261,9 @@ impl<'a> Attributes<'a> {
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
         self.attribute(name, |s, span| {
-            XsltParser::boolean(s).ok_or_else(|| {
-                self.xslt_parser
-                    .attribute_value_error_with_span(self.node, name, |span| {
-                        Error::InvalidBoolean {
-                            value: s.to_string(),
-                            span,
-                        }
-                    })
+            XsltParser::boolean(s).ok_or_else(|| Error::InvalidBoolean {
+                value: s.to_string(),
+                span,
             })
         })
         .map(|v| v.unwrap_or(default))
