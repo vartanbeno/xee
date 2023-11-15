@@ -18,6 +18,9 @@ Ok(Variable(Variable(
       ],
     )),
   ]))),
+  as_: None,
+  static_: None,
+  visibility: None,
   content: [
     Text("Hello"),
   ],

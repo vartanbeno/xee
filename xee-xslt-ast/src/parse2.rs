@@ -224,6 +224,9 @@ where
                 name: name.ok_or(ParserError::ExpectedFound { span })?,
                 select,
                 content: vec![content],
+                as_: None,
+                static_: None,
+                visibility: None,
             })
         })
         .then_ignore(element_close())

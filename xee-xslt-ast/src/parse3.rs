@@ -450,6 +450,9 @@ where
                     span: element_span,
                 })?,
                 select,
+                as_: None,
+                static_: None,
+                visibility: None,
                 content: vec![content],
             })
         })

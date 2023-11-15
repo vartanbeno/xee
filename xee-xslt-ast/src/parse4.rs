@@ -182,6 +182,9 @@ impl<'a> XsltParser<'a> {
         Ok(ast::Variable {
             name: name.to_string(),
             select,
+            as_: None,
+            static_: None,
+            visibility: None,
             content: self.parse_sequence_constructor(node)?,
         })
     }
