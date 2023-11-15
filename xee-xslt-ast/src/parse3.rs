@@ -379,7 +379,7 @@ where
     .boxed();
 
     let sequence_constructor = text
-        .map(|text| ast::SequenceConstructorItem::Text(text.to_string()))
+        .map(|text| ast::SequenceConstructorItem::TextNode(text.to_string()))
         .boxed();
 
     let parse_xpath = |value, span: Span, state: &mut State| {

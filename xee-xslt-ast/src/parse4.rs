@@ -193,9 +193,9 @@ impl<'a> XsltParser<'a> {
         let mut result = Vec::new();
         for node in self.xot.children(node) {
             match self.xot.value(node) {
-                Value::Text(text) => {
-                    result.push(ast::SequenceConstructorItem::Text(text.get().to_string()))
-                }
+                Value::Text(text) => result.push(ast::SequenceConstructorItem::TextNode(
+                    text.get().to_string(),
+                )),
                 _ => return Err(Error::UnexpectedSequenceConstructor),
             }
         }

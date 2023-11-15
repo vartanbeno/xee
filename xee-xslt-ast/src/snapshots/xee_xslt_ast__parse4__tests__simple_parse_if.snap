@@ -18,6 +18,6 @@ Ok(If(If(
     )),
   ])),
   content: [
-    Text("Hello"),
+    TextNode("Hello"),
   ],
 )))

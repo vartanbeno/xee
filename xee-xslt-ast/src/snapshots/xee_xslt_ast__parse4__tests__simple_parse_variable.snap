@@ -22,6 +22,6 @@ Ok(Variable(Variable(
   static_: None,
   visibility: None,
   content: [
-    Text("Hello"),
+    TextNode("Hello"),
   ],
 )))

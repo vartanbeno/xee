@@ -979,6 +979,8 @@ pub struct Stylesheet {
     pub declarations: Declarations,
 }
 
+// Transform is an alias for Stylesheet
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Template {
@@ -999,24 +1001,6 @@ pub struct Template {
 pub struct Text {
     // TODO: disable-output-escaping
     pub content: PcData,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Transform {
-    pub id: Option<Id>,
-    pub version: Decimal,
-    pub default_mode: Option<DefaultMode>,
-    pub default_validation: Option<DefaultValidation>,
-    pub input_type_annotations: Option<InputTypeAnnotations>,
-    pub default_collation: Option<Vec<Uri>>,
-    pub extension_element_prefixes: Option<Vec<Prefix>>,
-    pub exclude_result_prefixes: Option<Vec<Prefix>>,
-    pub expand_text: Option<bool>,
-    pub use_when: Option<Expression>,
-    pub xpath_default_namespace: Option<Uri>,
-
-    pub declarations: Declarations,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1079,7 +1063,15 @@ pub struct Variable {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct When {
-    // TODO
+    pub test: Expression,
+
+    pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct WherePopulated {
+    pub content: SequenceConstructor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1089,22 +1081,83 @@ pub struct WithParam {
     pub select: Option<Expression>,
     pub as_: Option<SequenceType>,
     pub tunnel: Option<bool>,
+
     pub content: SequenceConstructor,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum SequenceConstructorItem {
+    TextNode(String),
+
+    AnalyzeString(Box<AnalyzeString>),
+    ApplyImports(Box<ApplyImports>),
+    ApplyTemplates(Box<ApplyTemplates>),
+    Assert(Box<Assert>),
+    Attribute(Box<Attribute>),
+    Break(Box<Break>),
+    CallTemplate(Box<CallTemplate>),
+    Choose(Box<Choose>),
+    Comment(Box<Comment>),
+    Copy(Box<Copy>),
+    CopyOf(Box<CopyOf>),
+    Document(Box<Document>),
+    Element(Box<Element>),
+    Evaluate(Box<Evaluate>),
+    Fallback(Box<Fallback>),
+    ForEach(Box<ForEach>),
+    ForEachGroup(Box<ForEachGroup>),
+    Fork(Box<Fork>),
+    If(Box<If>),
+    Iterate(Box<Iterate>),
+    Map(Box<Map>),
+    MapEntry(Box<MapEntry>),
+    Merge(Box<Merge>),
+    Message(Box<Message>),
+    Namespace(Box<Namespace>),
+    NextIteration(Box<NextIteration>),
+    NextMatch(Box<NextMatch>),
+    Number(Box<Number>),
+    OnEmpty(Box<OnEmpty>),
+    OnNonEmpty(Box<OnNonEmpty>),
+    PerformSort(Box<PerformSort>),
+    ProcessingInstruction(Box<ProcessingInstruction>),
+    ResultDocument(Box<ResultDocument>),
+    Sequence(Box<Sequence>),
+    SourceDocument(Box<SourceDocument>),
+    Text(Box<Text>),
+    Try(Box<Try>),
+    ValueOf(Box<ValueOf>),
+    Variable(Box<Variable>),
+    WherePopulated(Box<WherePopulated>),
 }
 
 pub type SequenceConstructor = Vec<SequenceConstructorItem>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Declarations {
-    // TODO
+pub enum Declaration {
+    Accumulator(Box<Accumulator>),
+    CharacterMap(Box<CharacterMap>),
+    DecimalFormat(Box<DecimalFormat>),
+    Function(Box<Function>),
+    GlobalContextItem(Box<GlobalContextItem>),
+    Import(Box<Import>),
+    ImportSchema(Box<ImportSchema>),
+    Include(Box<Include>),
+    Key(Box<Key>),
+    Mode(Box<Mode>),
+    NamespaceAlias(Box<NamespaceAlias>),
+    Output(Box<Output>),
+    Param(Box<Param>),
+    PreserveSpace(Box<PreserveSpace>),
+    StripSpace(Box<StripSpace>),
+    Template(Box<Template>),
+    UsePackage(Box<UsePackage>),
+    Variable(Box<Variable>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum SequenceConstructorItem {
-    Text(String),
-}
+pub type Declarations = Vec<Declaration>;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Instruction {
