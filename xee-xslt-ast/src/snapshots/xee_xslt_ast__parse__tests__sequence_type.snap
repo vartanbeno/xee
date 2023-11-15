@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser.parse(node)
+expression: "parse(r#\"<variable name=\"foo\" as=\"xs:string\" select=\"true()\">Hello</variable>\"#)"
 ---
 Ok(Variable(Variable(
   name: "foo",
@@ -20,15 +20,15 @@ Ok(Variable(Variable(
       )),
     ])),
     span: Span(
-      start: 57,
-      end: 63,
+      start: 44,
+      end: 50,
     ),
   )),
   as_: Some(Item(Item(
     item_type: AtomicOrUnionType(String),
     occurrence: One,
   ))),
-  static_: true,
+  static_: false,
   visibility: None,
   content: [
     TextNode("Hello"),

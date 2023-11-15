@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser.parse(node)
+expression: "parse(r#\"<if test=\"true()\">Hello</if>\"#)"
 ---
 Ok(If(If(
   test: Expression(

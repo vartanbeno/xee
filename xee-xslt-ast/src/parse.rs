@@ -268,38 +268,38 @@ mod tests {
     }
 
     #[test]
-    fn test_simple_parse_if() {
+    fn test_if() {
         assert_ron_snapshot!(parse(r#"<if test="true()">Hello</if>"#));
     }
 
     #[test]
-    fn test_simple_parse_variable() {
+    fn test_variable() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" select="true()">Hello</variable>"#
         ));
     }
 
     #[test]
-    fn test_simple_parse_variable_missing_required_name_attribute() {
+    fn test_missing_required() {
         assert_ron_snapshot!(parse(r#"<variable select="true()">Hello</variable>"#));
     }
 
     #[test]
-    fn test_simple_parse_variable_broken_xpath() {
+    fn test_broken_xpath() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" select="let $x := 1">Hello</variable>"#
         ));
     }
 
     #[test]
-    fn test_parse_variable_sequence_type() {
+    fn test_sequence_type() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#
         ));
     }
 
     #[test]
-    fn test_parse_variable_static_yes() {
+    fn test_boolean_default_no_with_explicit_yes() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#
         ));

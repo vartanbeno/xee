@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser.parse(node)
+expression: "parse(r#\"<variable select=\"true()\">Hello</variable>\"#)"
 ---
 Err(AttributeExpected(
   namespace: "",

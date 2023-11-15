@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser.parse(node)
+expression: "parse(r#\"<variable name=\"foo\" select=\"let $x := 1\">Hello</variable>\"#)"
 ---
 Err(XPath(ExpectedFound(
   span: SimpleSpan(

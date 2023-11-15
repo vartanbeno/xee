@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: parser.parse(node)
+expression: "parse(r#\"<variable name=\"foo\" select=\"true()\">Hello</variable>\"#)"
 ---
 Ok(Variable(Variable(
   name: "foo",
