@@ -106,12 +106,12 @@ impl<'a> XsltParser<'a> {
         Ok(span.into())
     }
 
-    fn parse_attributes(&self, node: Node, name: NameId) -> Result<Attributes, Error> {
+    fn element(&self, node: Node, name: NameId) -> Result<Element, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         if element.name() != name {
             return Err(Error::Unexpected);
         }
-        Ok(Attributes {
+        Ok(Element {
             node,
             element,
             xslt_parser: self,
@@ -134,21 +134,21 @@ impl<'a> XsltParser<'a> {
     }
 
     fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
-        let attributes = self.parse_attributes(node, self.names.if_)?;
+        let element = self.element(node, self.names.if_)?;
 
         let content = self.parse_sequence_constructor(node)?;
         Ok(ast::If {
-            test: attributes.required_attribute(self.names.test, |s, span| self.xpath(s, span))?,
+            test: element.required_attribute(self.names.test, |s, span| self.xpath(s, span))?,
             content,
         })
     }
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
-        let attributes = self.parse_attributes(node, self.names.variable)?;
+        let element = self.element(node, self.names.variable)?;
 
         Ok(ast::Variable {
-            name: attributes.required_attribute(self.names.name, Self::eqname)?,
-            select: attributes.attribute(self.names.select, |s, span| self.xpath(s, span))?,
+            name: element.required_attribute(self.names.name, Self::eqname)?,
+            select: element.attribute(self.names.select, |s, span| self.xpath(s, span))?,
             as_: None,
             static_: None,
             visibility: None,
@@ -176,14 +176,14 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-struct Attributes<'a> {
+struct Element<'a> {
     node: Node,
     element: &'a xot::Element,
     xslt_parser: &'a XsltParser<'a>,
     span: Span,
 }
 
-impl<'a> Attributes<'a> {
+impl<'a> Element<'a> {
     fn value_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
             .xslt_parser
