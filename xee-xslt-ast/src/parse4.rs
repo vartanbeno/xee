@@ -93,37 +93,60 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn string<T>(
+    fn attribute<T>(
         &self,
+        node: Node,
         element: &'a Element,
         name: NameId,
         parse_value: impl Fn(&'a str) -> Result<T, Error>,
     ) -> Result<Option<T>, Error> {
         if let Some(value) = element.get_attribute(name) {
-            let value = parse_value(value)?;
+            let value = parse_value(value).map_err(|e| {
+                if let Error::XPath(e) = e {
+                    Error::XPath(
+                        e.adjust(
+                            self.span_info
+                                .get(SpanInfoKey::AttributeValue(node, name))
+                                .unwrap()
+                                .start,
+                        ),
+                    )
+                } else {
+                    e
+                }
+            })?;
             Ok(Some(value))
         } else {
             Ok(None)
         }
     }
 
-    fn required_string<T>(
+    fn required_attribute<T>(
         &self,
         node: Node,
         element: &'a Element,
         name: NameId,
         parse_value: impl Fn(&'a str) -> Result<T, Error>,
     ) -> Result<T, Error> {
-        self.string(element, name, parse_value)?.ok_or_else(|| {
-            self.attribute_missing_error_with_span(node, |span| {
-                let (local, namespace) = self.xot.name_ns_str(name);
-                Error::AttributeExpected {
-                    namespace: namespace.to_string(),
-                    local: local.to_string(),
-                    span,
-                }
+        self.attribute(node, element, name, parse_value)?
+            .ok_or_else(|| {
+                self.attribute_missing_error_with_span(node, |span| {
+                    let (local, namespace) = self.xot.name_ns_str(name);
+                    Error::AttributeExpected {
+                        namespace: namespace.to_string(),
+                        local: local.to_string(),
+                        span,
+                    }
+                })
             })
-        })
+    }
+
+    fn eqname2(&self, s: &str) -> Result<String, Error> {
+        Ok(s.to_string())
+    }
+
+    fn xpath2(&self, s: &str) -> Result<xee_xpath_ast::ast::XPath, Error> {
+        Ok(xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?)
     }
 
     fn xpath(
@@ -132,7 +155,7 @@ impl<'a> XsltParser<'a> {
         element: &'a Element,
         name: NameId,
     ) -> Result<Option<xee_xpath_ast::ast::XPath>, Error> {
-        self.string(element, name, |s| {
+        self.attribute(node, element, name, |s| {
             Ok(
                 xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[]).map_err(|e| {
                     e.adjust(
@@ -153,7 +176,7 @@ impl<'a> XsltParser<'a> {
         name: NameId,
         default: bool,
     ) -> Result<bool, Error> {
-        self.string(element, name, |s| {
+        self.attribute(node, element, name, |s| {
             self.parse_boolean(s).ok_or_else(|| {
                 self.attribute_value_error_with_span(node, name, |span| Error::InvalidBoolean {
                     value: s.to_string(),
@@ -170,7 +193,7 @@ impl<'a> XsltParser<'a> {
         element: &'a Element,
         name: NameId,
     ) -> Result<String, Error> {
-        self.required_string(node, element, name, |value| Ok(value.to_string()))
+        self.required_attribute(node, element, name, |value| Ok(value.to_string()))
     }
 
     fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
@@ -244,16 +267,18 @@ impl<'a> XsltParser<'a> {
 
     fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
         let element = self.parse_element(node, self.names.if_)?;
-        let test = self.required_string(node, element, self.names.test, Ok)?;
-        let test = xee_xpath_ast::ast::XPath::parse(test, &self.namespaces, &[])?;
+
+        let test = self.required_attribute(node, element, self.names.test, |s| self.xpath2(s))?;
+
         let content = self.parse_sequence_constructor(node)?;
         Ok(ast::If { test, content })
     }
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let element = self.parse_element(node, self.names.variable)?;
-        let name = self.required_eqname(node, element, self.names.name)?;
-        let select = self.xpath(node, element, self.names.select)?;
+
+        let name = self.required_attribute(node, element, self.names.name, |s| self.eqname2(s))?;
+        let select = self.attribute(node, element, self.names.select, |s| self.xpath2(s))?;
 
         Ok(ast::Variable {
             name,
