@@ -13,8 +13,14 @@ enum Error {
         local: String,
         span: Span,
     },
+    AttributeUnexpected {
+        namespace: String,
+        local: String,
+        span: Span,
+        message: String,
+    },
     UnexpectedSequenceConstructor,
-    InvalidBoolean {
+    Invalid {
         value: String,
         span: Span,
     },
@@ -43,6 +49,7 @@ struct Names {
     name: xot::NameId,
     as_: xot::NameId,
     static_: xot::NameId,
+    visibility: xot::NameId,
 }
 
 impl Names {
@@ -56,6 +63,7 @@ impl Names {
             name: xot.add_name("name"),
             as_: xot.add_name("as"),
             static_: xot.add_name("static"),
+            visibility: xot.add_name("visibility"),
         }
     }
 }
@@ -102,6 +110,21 @@ impl<'a> XsltParser<'a> {
             "yes" | "true" | "1" => Some(true),
             "no" | "false" | "0" => Some(false),
             _ => None,
+        }
+    }
+
+    fn visibility_with_abstract(s: &str, span: Span) -> Result<ast::VisibilityWithAbstract, Error> {
+        use ast::VisibilityWithAbstract::*;
+
+        match s {
+            "public" => Ok(Public),
+            "private" => Ok(Private),
+            "final" => Ok(Final),
+            "abstract" => Ok(Abstract),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
         }
     }
 
@@ -155,12 +178,31 @@ impl<'a> XsltParser<'a> {
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let element = self.element(node, self.names.variable)?;
 
+        let select = element.optional(self.names.select, |s, span| self.xpath(s, span))?;
+        let static_ = element.boolean(self.names.static_, false)?;
+
+        let visibility = element.optional(self.names.visibility, Self::visibility_with_abstract)?;
+        // let visibility = visibility.unwrap_or(if static_ {
+        //     ast::VisibilityWithAbstract::Private
+        // } else {
+        //     ast::VisibilityWithAbstract::Public
+        // });
+        if visibility == Some(ast::VisibilityWithAbstract::Abstract) && select.is_some() {
+            let (local, namespace) = self.xot.name_ns_str(self.names.select);
+            return Err(Error::AttributeUnexpected {
+                namespace: namespace.to_string(),
+                local: local.to_string(),
+                span: element.name_span(self.names.visibility)?,
+                message: "select attribute is not allowed when visibility is abstract".to_string(),
+            });
+        }
+
         Ok(ast::Variable {
             name: element.required(self.names.name, Self::eqname)?,
-            select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
+            select,
             as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
-            static_: element.boolean(self.names.static_, false)?,
-            visibility: None,
+            static_,
+            visibility,
             content: self.parse_sequence_constructor(node)?,
             span: element.span,
         })
@@ -194,6 +236,15 @@ struct Element<'a> {
 }
 
 impl<'a> Element<'a> {
+    fn name_span(&self, name: NameId) -> Result<Span, Error> {
+        let span = self
+            .xslt_parser
+            .span_info
+            .get(SpanInfoKey::AttributeName(self.node, name))
+            .ok_or(Error::MissingSpan)?;
+        Ok(span.into())
+    }
+
     fn value_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
             .xslt_parser
@@ -240,7 +291,7 @@ impl<'a> Element<'a> {
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
         self.optional(name, |s, span| {
-            XsltParser::boolean(s).ok_or_else(|| Error::InvalidBoolean {
+            XsltParser::boolean(s).ok_or_else(|| Error::Invalid {
                 value: s.to_string(),
                 span,
             })
@@ -302,6 +353,20 @@ mod tests {
     fn test_boolean_default_no_with_explicit_yes() {
         assert_ron_snapshot!(parse(
             r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#
+        ));
+    }
+
+    #[test]
+    fn test_variable_visibility() {
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" visibility="public">Hello</variable>"#
+        ));
+    }
+
+    #[test]
+    fn test_variable_visibility_abstract_with_select_is_error() {
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" visibility="abstract" select="true()">Hello</variable>"#
         ));
     }
 }

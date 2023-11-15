@@ -1,0 +1,18 @@
+---
+source: xee-xslt-ast/src/parse.rs
+expression: "parse(r#\"<variable name=\"foo\" visibility=\"public\">Hello</variable>\"#)"
+---
+Ok(Variable(Variable(
+  name: "foo",
+  select: None,
+  as_: None,
+  static_: false,
+  visibility: Some(Public),
+  content: [
+    TextNode("Hello"),
+  ],
+  span: Span(
+    start: 1,
+    end: 9,
+  ),
+)))
