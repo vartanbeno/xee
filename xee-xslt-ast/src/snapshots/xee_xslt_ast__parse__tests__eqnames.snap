@@ -1,0 +1,23 @@
+---
+source: xee-xslt-ast/src/parse.rs
+expression: "parse(r#\"<copy use-attribute-sets=\"foo bar baz\">Hello</copy>\"#)"
+---
+Ok(Copy(Copy(
+  select: None,
+  copy_namespaces: true,
+  inherit_namespaces: true,
+  use_attribute_sets: Some([
+    "foo",
+    "bar",
+    "baz",
+  ]),
+  type_: None,
+  validation: Strip,
+  content: [
+    TextNode("Hello"),
+  ],
+  span: Span(
+    start: 1,
+    end: 5,
+  ),
+)))

@@ -256,7 +256,10 @@ impl<'a> XsltParser<'a> {
             inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
             use_attribute_sets: element.optional(self.names.use_attribute_sets, Self::eqnames)?,
             type_: element.optional(self.names.as_, Self::eqname)?,
-            validation: element.required(self.names.validation, Self::validation)?,
+            validation: element
+                .optional(self.names.validation, Self::validation)?
+                // TODO: should depend on global validation attribute
+                .unwrap_or(ast::Validation::Strip),
             content,
             span: element.span,
         })
@@ -422,6 +425,13 @@ mod tests {
     fn test_copy() {
         assert_ron_snapshot!(parse(
             r#"<copy select="true()" copy-namespaces="no" inherit-namespaces="no" validation="strict">Hello</copy>"#
+        ));
+    }
+
+    #[test]
+    fn test_eqnames() {
+        assert_ron_snapshot!(parse(
+            r#"<copy use-attribute-sets="foo bar baz">Hello</copy>"#
         ));
     }
 }
