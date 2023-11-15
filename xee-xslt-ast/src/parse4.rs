@@ -29,6 +29,10 @@ enum Error {
         span: Span,
     },
     UnexpectedSequenceConstructor,
+    InvalidBoolean {
+        value: String,
+        span: Span,
+    },
     MissingSpan,
     XPath(xee_xpath_ast::ParserError),
 }
@@ -46,6 +50,7 @@ impl Error {
 }
 
 struct Names {
+    copy: xot::NameId,
     if_: xot::NameId,
     test: xot::NameId,
     variable: xot::NameId,
@@ -56,6 +61,7 @@ struct Names {
 impl Names {
     fn new(xot: &mut Xot) -> Self {
         Self {
+            copy: xot.add_name("copy"),
             if_: xot.add_name("if"),
             test: xot.add_name("test"),
             variable: xot.add_name("variable"),
@@ -121,6 +127,68 @@ impl<'a> XsltParser<'a> {
         })
     }
 
+    fn get_boolean_attribute(
+        &self,
+        node: Node,
+        element: &'a Element,
+        name: NameId,
+        default: bool,
+    ) -> Result<bool, Error> {
+        self.get_attribute(element, name, |s| {
+            self.parse_boolean(s).ok_or_else(|| {
+                self.attribute_value_error_with_span(node, name, |span| Error::InvalidBoolean {
+                    value: s.to_string(),
+                    span,
+                })
+            })
+        })
+        .map(|v| v.unwrap_or(default))
+    }
+
+    fn attribute_missing_error_with_span(
+        &self,
+        node: Node,
+        name: NameId,
+        f: impl Fn(Span) -> Error,
+    ) -> Error {
+        let span = self.attribute_missing_span(node);
+        match span {
+            Ok(span) => f(span),
+            Err(e) => e,
+        }
+    }
+
+    fn attribute_value_error_with_span(
+        &self,
+        node: Node,
+        name: NameId,
+        f: impl Fn(Span) -> Error,
+    ) -> Error {
+        let span = self.attribute_value_span(node, name);
+        match span {
+            Ok(span) => f(span),
+            Err(e) => e,
+        }
+    }
+
+    fn attribute_missing_span(&self, node: Node) -> Result<Span, Error> {
+        let span = self.span_info.get(SpanInfoKey::ElementStart(node));
+        if let Some(span) = span {
+            Ok(span.into())
+        } else {
+            Err(Error::MissingSpan)
+        }
+    }
+
+    fn attribute_value_span(&self, node: Node, name: NameId) -> Result<Span, Error> {
+        let span = self.span_info.get(SpanInfoKey::AttributeValue(node, name));
+        if let Some(span) = span {
+            Ok(span.into())
+        } else {
+            Err(Error::MissingSpan)
+        }
+    }
+
     fn get_required_attribute<T>(
         &self,
         node: Node,
@@ -129,17 +197,14 @@ impl<'a> XsltParser<'a> {
         parse_value: impl Fn(&'a str) -> Result<T, Error>,
     ) -> Result<T, Error> {
         let value = element.get_attribute(name).ok_or_else(|| {
-            let span = self.span_info.get(SpanInfoKey::ElementStart(node));
-            if let Some(span) = span {
+            self.attribute_missing_error_with_span(node, name, |span| {
                 let (local, namespace) = self.xot.name_ns_str(name);
                 Error::AttributeExpected {
                     namespace: namespace.to_string(),
                     local: local.to_string(),
-                    span: span.into(),
+                    span,
                 }
-            } else {
-                Error::MissingSpan
-            }
+            })
         })?;
         parse_value(value)
     }
@@ -166,6 +231,14 @@ impl<'a> XsltParser<'a> {
         }
     }
 
+    fn parse_boolean(&self, s: &str) -> Option<bool> {
+        match s {
+            "yes" | "true" | "1" => Some(true),
+            "no" | "false" | "0" => Some(false),
+            _ => None,
+        }
+    }
+
     fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
         let element = self.parse_element(node, self.names.if_)?;
         let test = self.get_required_attribute(node, element, self.names.test, Ok)?;
@@ -188,6 +261,12 @@ impl<'a> XsltParser<'a> {
             content: self.parse_sequence_constructor(node)?,
         })
     }
+
+    // fn parse_copy(&self, node: Node) -> Result<ast::Copy, Error> {
+    //     let element = self.parse_element(node, self.names.copy)?;
+    //     let select = self.get_xpath_attribute(node, element, self.names.select)?;
+    //     let copy_namespaces = self.get_boolean_attribute(node, element, self.names.copy_namespaces, true)?
+    // }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
