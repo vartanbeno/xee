@@ -1,4 +1,4 @@
-use xee_xpath_ast::Namespaces;
+use xee_xpath_ast::{ast as xpath_ast, Namespaces};
 use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
@@ -84,7 +84,7 @@ impl<'a> XsltParser<'a> {
 
     fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
         Ok(ast::Expression {
-            xpath: xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?,
+            xpath: xpath_ast::XPath::parse(s, &self.namespaces, &[])?,
             span,
         })
     }
