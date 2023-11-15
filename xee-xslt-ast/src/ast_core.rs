@@ -1249,7 +1249,7 @@ pub struct Variable {
     pub name: EqName,
     pub select: Option<Expression>,
     pub as_: Option<SequenceType>,
-    pub static_: Option<bool>,
+    pub static_: bool,
     pub visibility: Option<VisibilityWithAbstract>,
 
     pub content: SequenceConstructor,

@@ -25,7 +25,7 @@ Ok(Variable(Variable(
     ),
   )),
   as_: None,
-  static_: None,
+  static_: false,
   visibility: None,
   content: [
     TextNode("Hello"),

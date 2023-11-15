@@ -42,6 +42,7 @@ struct Names {
     select: xot::NameId,
     name: xot::NameId,
     as_: xot::NameId,
+    static_: xot::NameId,
 }
 
 impl Names {
@@ -54,6 +55,7 @@ impl Names {
             select: xot.add_name("select"),
             name: xot.add_name("name"),
             as_: xot.add_name("as"),
+            static_: xot.add_name("static"),
         }
     }
 }
@@ -157,7 +159,7 @@ impl<'a> XsltParser<'a> {
             name: element.required(self.names.name, Self::eqname)?,
             select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
             as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
-            static_: None,
+            static_: element.boolean(self.names.static_, false)?,
             visibility: None,
             content: self.parse_sequence_constructor(node)?,
             span: element.span,
@@ -322,6 +324,23 @@ mod tests {
         let (node, span_info) = xot
             .parse_with_span_info(
                 r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#,
+            )
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+
+        assert_ron_snapshot!(parser.parse(node));
+    }
+
+    #[test]
+    fn test_parse_variable_static_yes() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
+
+        let (node, span_info) = xot
+            .parse_with_span_info(
+                r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#,
             )
             .unwrap();
         let node = xot.document_element(node).unwrap();

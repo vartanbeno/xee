@@ -20,15 +20,15 @@ Ok(Variable(Variable(
       )),
     ])),
     span: Span(
-      start: 44,
-      end: 50,
+      start: 57,
+      end: 63,
     ),
   )),
   as_: Some(Item(Item(
     item_type: AtomicOrUnionType(String),
     occurrence: One,
   ))),
-  static_: false,
+  static_: true,
   visibility: None,
   content: [
     TextNode("Hello"),
