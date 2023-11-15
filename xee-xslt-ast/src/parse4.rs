@@ -93,7 +93,7 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn get_attribute<T>(
+    fn string_<T>(
         &self,
         element: &'a Element,
         name: NameId,
@@ -107,13 +107,13 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn get_xpath_attribute(
+    fn xpath(
         &self,
         node: Node,
         element: &'a Element,
         name: NameId,
     ) -> Result<Option<xee_xpath_ast::ast::XPath>, Error> {
-        self.get_attribute(element, name, |s| {
+        self.string_(element, name, |s| {
             Ok(
                 xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[]).map_err(|e| {
                     e.adjust(
@@ -127,14 +127,14 @@ impl<'a> XsltParser<'a> {
         })
     }
 
-    fn get_boolean_attribute(
+    fn boolean(
         &self,
         node: Node,
         element: &'a Element,
         name: NameId,
         default: bool,
     ) -> Result<bool, Error> {
-        self.get_attribute(element, name, |s| {
+        self.string_(element, name, |s| {
             self.parse_boolean(s).ok_or_else(|| {
                 self.attribute_value_error_with_span(node, name, |span| Error::InvalidBoolean {
                     value: s.to_string(),
@@ -143,6 +143,35 @@ impl<'a> XsltParser<'a> {
             })
         })
         .map(|v| v.unwrap_or(default))
+    }
+
+    fn get_required_attribute<T>(
+        &self,
+        node: Node,
+        element: &'a Element,
+        name: NameId,
+        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        let value = element.get_attribute(name).ok_or_else(|| {
+            self.attribute_missing_error_with_span(node, |span| {
+                let (local, namespace) = self.xot.name_ns_str(name);
+                Error::AttributeExpected {
+                    namespace: namespace.to_string(),
+                    local: local.to_string(),
+                    span,
+                }
+            })
+        })?;
+        parse_value(value)
+    }
+
+    fn required_eqname(
+        &self,
+        node: Node,
+        element: &'a Element,
+        name: NameId,
+    ) -> Result<String, Error> {
+        self.get_required_attribute(node, element, name, |value| Ok(value.to_string()))
     }
 
     fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
@@ -182,35 +211,6 @@ impl<'a> XsltParser<'a> {
         } else {
             Err(Error::MissingSpan)
         }
-    }
-
-    fn get_required_attribute<T>(
-        &self,
-        node: Node,
-        element: &'a Element,
-        name: NameId,
-        parse_value: impl Fn(&'a str) -> Result<T, Error>,
-    ) -> Result<T, Error> {
-        let value = element.get_attribute(name).ok_or_else(|| {
-            self.attribute_missing_error_with_span(node, |span| {
-                let (local, namespace) = self.xot.name_ns_str(name);
-                Error::AttributeExpected {
-                    namespace: namespace.to_string(),
-                    local: local.to_string(),
-                    span,
-                }
-            })
-        })?;
-        parse_value(value)
-    }
-
-    fn get_required_eqname(
-        &self,
-        node: Node,
-        element: &'a Element,
-        name: NameId,
-    ) -> Result<String, Error> {
-        self.get_required_attribute(node, element, name, |value| Ok(value.to_string()))
     }
 
     fn parse_element(&self, node: Node, name: NameId) -> Result<&'a Element, Error> {
@@ -253,8 +253,8 @@ impl<'a> XsltParser<'a> {
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let element = self.parse_element(node, self.names.variable)?;
-        let name = self.get_required_eqname(node, element, self.names.name)?;
-        let select = self.get_xpath_attribute(node, element, self.names.select)?;
+        let name = self.required_eqname(node, element, self.names.name)?;
+        let select = self.xpath(node, element, self.names.select)?;
 
         Ok(ast::Variable {
             name: name.to_string(),
