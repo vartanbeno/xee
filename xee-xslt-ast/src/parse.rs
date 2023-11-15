@@ -98,12 +98,12 @@ impl<'a> XsltParser<'a> {
     }
 
     fn element_span(&self, node: Node) -> Result<Span, Error> {
-        let span = self.span_info.get(SpanInfoKey::ElementStart(node));
-        if let Some(span) = span {
-            Ok(span.into())
-        } else {
-            Err(Error::MissingSpan)
-        }
+        let span = self
+            .span_info
+            .get(SpanInfoKey::ElementStart(node))
+            .ok_or(Error::MissingSpan)?;
+
+        Ok(span.into())
     }
 
     fn parse_attributes(&self, node: Node, name: NameId) -> Result<Attributes, Error> {
