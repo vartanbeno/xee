@@ -138,7 +138,7 @@ impl<'a> XsltParser<'a> {
 
         let content = self.parse_sequence_constructor(node)?;
         Ok(ast::If {
-            test: element.required_attribute(self.names.test, |s, span| self.xpath(s, span))?,
+            test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
             content,
         })
     }
@@ -147,8 +147,8 @@ impl<'a> XsltParser<'a> {
         let element = self.element(node, self.names.variable)?;
 
         Ok(ast::Variable {
-            name: element.required_attribute(self.names.name, Self::eqname)?,
-            select: element.attribute(self.names.select, |s, span| self.xpath(s, span))?,
+            name: element.required(self.names.name, Self::eqname)?,
+            select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
             as_: None,
             static_: None,
             visibility: None,
@@ -193,7 +193,7 @@ impl<'a> Element<'a> {
         Ok(span.into())
     }
 
-    fn attribute<T>(
+    fn optional<T>(
         &self,
         name: NameId,
         parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
@@ -213,12 +213,12 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn required_attribute<T>(
+    fn required<T>(
         &self,
         name: NameId,
         parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<T, Error> {
-        self.attribute(name, parse_value)?.ok_or_else(|| {
+        self.optional(name, parse_value)?.ok_or_else(|| {
             let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
             Error::AttributeExpected {
                 namespace: namespace.to_string(),
@@ -229,7 +229,7 @@ impl<'a> Element<'a> {
     }
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
-        self.attribute(name, |s, span| {
+        self.optional(name, |s, span| {
             XsltParser::boolean(s).ok_or_else(|| Error::InvalidBoolean {
                 value: s.to_string(),
                 span,
