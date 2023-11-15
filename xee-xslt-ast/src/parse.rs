@@ -256,96 +256,52 @@ mod tests {
     use insta::assert_ron_snapshot;
     use xee_xpath_ast::Namespaces;
 
-    #[test]
-    fn test_simple_parse_if() {
+    fn parse(s: &str) -> Result<ast::Instruction, Error> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
         let namespaces = Namespaces::default();
 
-        let (node, span_info) = xot
-            .parse_with_span_info(r#"<if test="true()">Hello</if>"#)
-            .unwrap();
+        let (node, span_info) = xot.parse_with_span_info(s).unwrap();
         let node = xot.document_element(node).unwrap();
         let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-        assert_ron_snapshot!(parser.parse(node));
+        parser.parse(node)
+    }
+
+    #[test]
+    fn test_simple_parse_if() {
+        assert_ron_snapshot!(parse(r#"<if test="true()">Hello</if>"#));
     }
 
     #[test]
     fn test_simple_parse_variable() {
-        let mut xot = Xot::new();
-        let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
-
-        let (node, span_info) = xot
-            .parse_with_span_info(r#"<variable name="foo" select="true()">Hello</variable>"#)
-            .unwrap();
-        let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-
-        assert_ron_snapshot!(parser.parse(node));
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" select="true()">Hello</variable>"#
+        ));
     }
 
     #[test]
     fn test_simple_parse_variable_missing_required_name_attribute() {
-        let mut xot = Xot::new();
-        let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
-
-        let (node, span_info) = xot
-            .parse_with_span_info(r#"<variable select="true()">Hello</variable>"#)
-            .unwrap();
-        let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-
-        assert_ron_snapshot!(parser.parse(node));
+        assert_ron_snapshot!(parse(r#"<variable select="true()">Hello</variable>"#));
     }
 
     #[test]
     fn test_simple_parse_variable_broken_xpath() {
-        let mut xot = Xot::new();
-        let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
-
-        let (node, span_info) = xot
-            .parse_with_span_info(r#"<variable name="foo" select="let $x := 1">Hello</variable>"#)
-            .unwrap();
-        let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-
-        assert_ron_snapshot!(parser.parse(node));
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" select="let $x := 1">Hello</variable>"#
+        ));
     }
 
     #[test]
     fn test_parse_variable_sequence_type() {
-        let mut xot = Xot::new();
-        let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
-
-        let (node, span_info) = xot
-            .parse_with_span_info(
-                r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#,
-            )
-            .unwrap();
-        let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-
-        assert_ron_snapshot!(parser.parse(node));
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#
+        ));
     }
 
     #[test]
     fn test_parse_variable_static_yes() {
-        let mut xot = Xot::new();
-        let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
-
-        let (node, span_info) = xot
-            .parse_with_span_info(
-                r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#,
-            )
-            .unwrap();
-        let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
-
-        assert_ron_snapshot!(parser.parse(node));
+        assert_ron_snapshot!(parse(
+            r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#
+        ));
     }
 }
