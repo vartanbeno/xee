@@ -41,6 +41,7 @@ struct Names {
     variable: xot::NameId,
     select: xot::NameId,
     name: xot::NameId,
+    as_: xot::NameId,
 }
 
 impl Names {
@@ -52,6 +53,7 @@ impl Names {
             variable: xot.add_name("variable"),
             select: xot.add_name("select"),
             name: xot.add_name("name"),
+            as_: xot.add_name("as"),
         }
     }
 }
@@ -87,6 +89,10 @@ impl<'a> XsltParser<'a> {
             xpath: xpath_ast::XPath::parse(s, &self.namespaces, &[])?,
             span,
         })
+    }
+
+    fn sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
+        Ok(xpath_ast::SequenceType::parse(s, &self.namespaces)?)
     }
 
     fn boolean(s: &str) -> Option<bool> {
@@ -150,7 +156,7 @@ impl<'a> XsltParser<'a> {
         Ok(ast::Variable {
             name: element.required(self.names.name, Self::eqname)?,
             select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
-            as_: None,
+            as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
             static_: None,
             visibility: None,
             content: self.parse_sequence_constructor(node)?,
@@ -300,6 +306,23 @@ mod tests {
 
         let (node, span_info) = xot
             .parse_with_span_info(r#"<variable name="foo" select="let $x := 1">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+
+        assert_ron_snapshot!(parser.parse(node));
+    }
+
+    #[test]
+    fn test_parse_variable_sequence_type() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
+
+        let (node, span_info) = xot
+            .parse_with_span_info(
+                r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#,
+            )
             .unwrap();
         let node = xot.document_element(node).unwrap();
         let parser = XsltParser::new(&xot, &names, &span_info, namespaces);

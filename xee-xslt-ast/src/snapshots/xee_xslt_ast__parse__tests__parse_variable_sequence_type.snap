@@ -1,0 +1,40 @@
+---
+source: xee-xslt-ast/src/parse.rs
+expression: parser.parse(node)
+---
+Ok(Variable(Variable(
+  name: "foo",
+  select: Some(Expression(
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          PrimaryExpr(FunctionCall(FunctionCall(
+            name: Name(
+              name: "true",
+              prefix: None,
+              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            ),
+            arguments: [],
+          ))),
+        ],
+      )),
+    ])),
+    span: Span(
+      start: 44,
+      end: 50,
+    ),
+  )),
+  as_: Some(Item(Item(
+    item_type: AtomicOrUnionType(String),
+    occurrence: One,
+  ))),
+  static_: None,
+  visibility: None,
+  content: [
+    TextNode("Hello"),
+  ],
+  span: Span(
+    start: 1,
+    end: 9,
+  ),
+)))
