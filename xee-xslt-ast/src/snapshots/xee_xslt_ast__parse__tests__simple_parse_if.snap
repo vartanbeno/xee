@@ -1,8 +1,8 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: "parser().parse_with_state(stream, &mut state).into_result()"
+expression: parser.parse(node)
 ---
-Ok(If(
+Ok(If(If(
   test: XPath(Expr([
     Path(PathExpr(
       steps: [
@@ -20,4 +20,4 @@ Ok(If(
   content: [
     TextNode("Hello"),
   ],
-))
+)))

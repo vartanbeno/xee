@@ -1,206 +1,353 @@
-use ahash::HashMap;
-use chumsky::util::MaybeRef;
-use chumsky::{extra::Full, input::ValueInput, prelude::*};
-use std::borrow::Cow;
 use xee_xpath_ast::Namespaces;
-use xot::{Node, Xot};
+use xot::{Element, NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
 
-pub(crate) struct State<'a> {
-    pub(crate) namespaces: Cow<'a, Namespaces<'a>>,
-}
-
-type Extra<'a> = Full<ParserError, State<'a>, ()>;
-
-pub(crate) type BoxedParser<'a, I, T> = Boxed<'a, 'a, I, T, Extra<'a>>;
-
-pub type Span = SimpleSpan;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub enum Token<'a> {
-    ElementStart(Name<'a>, HashMap<Name<'a>, &'a str>),
-    ElementEnd(Name<'a>),
-    Text(&'a str),
-    Comment(&'a str),
-    ProcessingInstruction(&'a str, Option<&'a str>),
+struct Span {
+    start: usize,
+    end: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct Name<'a> {
-    namespace: &'a str,
-    localname: &'a str,
-}
-
-impl<'a> From<(&'a str, &'a str)> for Name<'a> {
-    fn from((localname, namespace): (&'a str, &'a str)) -> Self {
+impl From<&xot::Span> for Span {
+    fn from(span: &xot::Span) -> Self {
         Self {
-            namespace,
-            localname,
+            start: span.start,
+            end: span.end,
         }
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub enum ParserError {
-    ExpectedFound { span: Span },
-    MyError,
+enum Error {
+    Unexpected,
+    AttributeExpected {
+        namespace: String,
+        local: String,
+        span: Span,
+    },
+    UnexpectedSequenceConstructor,
+    InvalidBoolean {
+        value: String,
+        span: Span,
+    },
+    MissingSpan,
     XPath(xee_xpath_ast::ParserError),
 }
 
-impl From<xee_xpath_ast::ParserError> for ParserError {
-    fn from(e: xee_xpath_ast::ParserError) -> Self {
-        Self::XPath(e)
+impl From<xee_xpath_ast::ParserError> for Error {
+    fn from(error: xee_xpath_ast::ParserError) -> Self {
+        Self::XPath(error)
     }
 }
 
-impl<'a, I> chumsky::error::Error<'a, I> for ParserError
-where
-    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-{
-    // we don't do anything with expected and found, instead just retaining
-    // the span. This is because these contain tokens with a lifetime, and
-    // having a lifetime for the ParserError turns out open up a world of trouble
-    // as soon as we want to build on it in the XSLT parser. We also don't
-    // have a good way to turn a logos token into a human-readable string, so
-    // we couldn't really construct good error messages anyway.
-    fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, Token<'a>>>>>(
-        _expected: E,
-        _found: Option<MaybeRef<'a, Token<'a>>>,
-        span: Span,
-    ) -> Self {
-        Self::ExpectedFound { span }
+impl Error {
+    fn is_unexpected(&self) -> bool {
+        matches!(self, Self::Unexpected)
     }
+}
 
-    fn merge(self, other: Self) -> Self {
-        match (self, other) {
-            (
-                ParserError::ExpectedFound { span: span_a },
-                ParserError::ExpectedFound { span: _ },
-            ) => ParserError::ExpectedFound { span: span_a },
-            (ParserError::ExpectedFound { .. }, a) => a,
-            (a, ParserError::ExpectedFound { .. }) => a,
-            (a, _) => a,
+struct Names {
+    copy: xot::NameId,
+    if_: xot::NameId,
+    test: xot::NameId,
+    variable: xot::NameId,
+    select: xot::NameId,
+    name: xot::NameId,
+}
+
+impl Names {
+    fn new(xot: &mut Xot) -> Self {
+        Self {
+            copy: xot.add_name("copy"),
+            if_: xot.add_name("if"),
+            test: xot.add_name("test"),
+            variable: xot.add_name("variable"),
+            select: xot.add_name("select"),
+            name: xot.add_name("name"),
         }
     }
 }
 
-struct TokenizedTraverse<'a, T: Iterator<Item = xot::NodeEdge>> {
+struct XsltParser<'a> {
     xot: &'a Xot,
-    traverse: T,
+    names: &'a Names,
+    span_info: &'a SpanInfo,
+    namespaces: Namespaces<'a>,
 }
 
-impl<'a, T: Iterator<Item = xot::NodeEdge>> Iterator for TokenizedTraverse<'a, T> {
-    type Item = Token<'a>;
+impl<'a> XsltParser<'a> {
+    fn new(
+        xot: &'a Xot,
+        names: &'a Names,
+        span_info: &'a SpanInfo,
+        namespaces: Namespaces<'a>,
+    ) -> Self {
+        Self {
+            xot,
+            names,
+            span_info,
+            namespaces,
+        }
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let edge = self.traverse.next()?;
-        Some(match edge {
-            xot::NodeEdge::Start(node) => match self.xot.value(node) {
-                xot::Value::Element(e) => {
-                    let name: Name = self.xot.name_ns_str(e.name()).into();
-                    let attributes = e
-                        .attributes()
-                        .iter()
-                        .map(|(name, value)| {
-                            let name: Name = self.xot.name_ns_str(*name).into();
-                            (name, value.as_ref())
-                        })
-                        .collect::<HashMap<_, _>>();
-                    Token::ElementStart(name, attributes)
-                }
-                xot::Value::Text(text) => Token::Text(text.get()),
-                xot::Value::Comment(comment) => Token::Comment(comment.get()),
-                xot::Value::ProcessingInstruction(pi) => {
-                    Token::ProcessingInstruction(pi.target(), pi.data())
-                }
-                xot::Value::Root => self.next()?,
-            },
-            xot::NodeEdge::End(node) => {
-                if let xot::Value::Element(e) = self.xot.value(node) {
-                    let name: Name = self.xot.name_ns_str(e.name()).into();
-                    Token::ElementEnd(name)
-                } else {
-                    self.next()?
+    fn eqname(s: &str) -> Result<String, Error> {
+        Ok(s.to_string())
+    }
+
+    fn xpath(&self, s: &str) -> Result<xee_xpath_ast::ast::XPath, Error> {
+        Ok(xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?)
+    }
+
+    fn boolean(s: &str) -> Option<bool> {
+        match s {
+            "yes" | "true" | "1" => Some(true),
+            "no" | "false" | "0" => Some(false),
+            _ => None,
+        }
+    }
+
+    fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
+        let span = self.attribute_missing_span(node);
+        match span {
+            Ok(span) => f(span),
+            Err(e) => e,
+        }
+    }
+
+    fn attribute_value_error_with_span(
+        &self,
+        node: Node,
+        name: NameId,
+        f: impl Fn(Span) -> Error,
+    ) -> Error {
+        let span = self.attribute_value_span(node, name);
+        match span {
+            Ok(span) => f(span),
+            Err(e) => e,
+        }
+    }
+
+    fn attribute_missing_span(&self, node: Node) -> Result<Span, Error> {
+        let span = self.span_info.get(SpanInfoKey::ElementStart(node));
+        if let Some(span) = span {
+            Ok(span.into())
+        } else {
+            Err(Error::MissingSpan)
+        }
+    }
+
+    fn attribute_value_span(&self, node: Node, name: NameId) -> Result<Span, Error> {
+        let span = self.span_info.get(SpanInfoKey::AttributeValue(node, name));
+        if let Some(span) = span {
+            Ok(span.into())
+        } else {
+            Err(Error::MissingSpan)
+        }
+    }
+
+    fn parse_attributes(&self, node: Node, name: NameId) -> Result<Attributes, Error> {
+        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        if element.name() != name {
+            return Err(Error::Unexpected);
+        }
+        Ok(Attributes {
+            node,
+            element,
+            xslt_parser: self,
+        })
+    }
+
+    fn parse(&self, node: Node) -> Result<ast::Instruction, Error> {
+        match self.parse_if(node).map(ast::Instruction::If) {
+            Ok(instruction) => Ok(instruction),
+            Err(e) if e.is_unexpected() => {
+                match self.parse_variable(node).map(ast::Instruction::Variable) {
+                    Ok(instruction) => Ok(instruction),
+                    // Err(e) if e.is_unexpected() => Err(Error::Unexpected),
+                    Err(e) => Err(e),
                 }
             }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
+        let attributes = self.parse_attributes(node, self.names.if_)?;
+
+        let content = self.parse_sequence_constructor(node)?;
+        Ok(ast::If {
+            test: attributes.required_attribute(self.names.test, |s| self.xpath(s))?,
+            content,
         })
     }
-}
 
-fn tokenize(xot: &Xot, node: Node) -> TokenizedTraverse<impl Iterator<Item = xot::NodeEdge> + '_> {
-    TokenizedTraverse {
-        xot,
-        traverse: xot.traverse(node),
+    fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
+        let attributes = self.parse_attributes(node, self.names.variable)?;
+
+        Ok(ast::Variable {
+            name: attributes.required_attribute(self.names.name, Self::eqname)?,
+            select: attributes.attribute(self.names.select, |s| self.xpath(s))?,
+            as_: None,
+            static_: None,
+            visibility: None,
+            content: self.parse_sequence_constructor(node)?,
+        })
+    }
+
+    // fn parse_copy(&self, node: Node) -> Result<ast::Copy, Error> {
+    //     let element = self.parse_element(node, self.names.copy)?;
+    //     let select = self.get_xpath_attribute(node, element, self.names.select)?;
+    //     let copy_namespaces = self.get_boolean_attribute(node, element, self.names.copy_namespaces, true)?
+    // }
+
+    fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
+        let mut result = Vec::new();
+        for node in self.xot.children(node) {
+            match self.xot.value(node) {
+                Value::Text(text) => result.push(ast::SequenceConstructorItem::TextNode(
+                    text.get().to_string(),
+                )),
+                _ => return Err(Error::UnexpectedSequenceConstructor),
+            }
+        }
+        Ok(result)
     }
 }
 
-fn parser<'a, I>() -> BoxedParser<'a, I, ast::If>
-where
-    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
-{
-    let if_ = select! {
-        Token::ElementStart(Name { namespace: "", localname: "if"}, attrs) => attrs,
+struct Attributes<'a> {
+    node: Node,
+    element: &'a Element,
+    xslt_parser: &'a XsltParser<'a>,
+}
+
+impl<'a> Attributes<'a> {
+    fn attribute<T>(
+        &self,
+        name: NameId,
+        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+    ) -> Result<Option<T>, Error> {
+        if let Some(value) = self.element.get_attribute(name) {
+            let value = parse_value(value).map_err(|e| {
+                if let Error::XPath(e) = e {
+                    Error::XPath(
+                        e.adjust(
+                            self.xslt_parser
+                                .span_info
+                                .get(SpanInfoKey::AttributeValue(self.node, name))
+                                .unwrap()
+                                .start,
+                        ),
+                    )
+                } else {
+                    e
+                }
+            })?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
     }
-    .boxed();
 
-    let text = select! {
-        Token::Text(s) => s,
+    fn required_attribute<T>(
+        &self,
+        name: NameId,
+        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        self.attribute(name, parse_value)?.ok_or_else(|| {
+            self.xslt_parser
+                .attribute_missing_error_with_span(self.node, |span| {
+                    let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
+                    Error::AttributeExpected {
+                        namespace: namespace.to_string(),
+                        local: local.to_string(),
+                        span,
+                    }
+                })
+        })
     }
-    .boxed();
 
-    let sequence_constructor = text
-        .map(|text| ast::SequenceConstructorItem::TextNode(text.to_string()))
-        .boxed();
-
-    if_.then(sequence_constructor)
-        .try_map_with_state(|(attributes, content), _span, state: &mut State| {
-            let name = Name {
-                namespace: "",
-                localname: "test",
-            };
-            let test = attributes.get(&name).unwrap();
-            let namespaces = state.namespaces.as_ref();
-
-            let test = xee_xpath_ast::ast::XPath::parse(test, namespaces, &[])?;
-            Ok(ast::If {
-                test,
-                content: vec![content],
+    fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
+        self.attribute(name, |s| {
+            XsltParser::boolean(s).ok_or_else(|| {
+                self.xslt_parser
+                    .attribute_value_error_with_span(self.node, name, |span| {
+                        Error::InvalidBoolean {
+                            value: s.to_string(),
+                            span,
+                        }
+                    })
             })
         })
-        .then_ignore(just(Token::ElementEnd(Name {
-            namespace: "",
-            localname: "if",
-        })))
-        .boxed()
+        .map(|v| v.unwrap_or(default))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use chumsky::input::Stream;
-    use insta::assert_ron_snapshot;
 
-    #[test]
-    fn test_tokenize() {
-        let mut xot = Xot::new();
-        let doc = xot.parse(r#"<if test="true()">Hello</if>"#).unwrap();
-        let tokens = tokenize(&xot, doc).collect::<Vec<_>>();
-        assert_ron_snapshot!(tokens);
-    }
+    use super::*;
+    use insta::assert_ron_snapshot;
+    use xee_xpath_ast::Namespaces;
 
     #[test]
     fn test_simple_parse_if() {
         let mut xot = Xot::new();
-        let doc = xot.parse(r#"<if test="true()">Hello</if>"#).unwrap();
-        let tokens = tokenize(&xot, doc);
-        let stream = Stream::from_iter(tokens);
+        let names = Names::new(&mut xot);
         let namespaces = Namespaces::default();
-        let mut state = State {
-            namespaces: Cow::Owned(namespaces),
-        };
-        assert_ron_snapshot!(parser().parse_with_state(stream, &mut state).into_result());
+
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<if test="true()">Hello</if>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+        assert_ron_snapshot!(parser.parse(node));
+    }
+
+    #[test]
+    fn test_simple_parse_variable() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
+
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<variable name="foo" select="true()">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+
+        assert_ron_snapshot!(parser.parse(node));
+    }
+
+    #[test]
+    fn test_simple_parse_variable_missing_required_name_attribute() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
+
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<variable select="true()">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+
+        assert_ron_snapshot!(parser.parse(node));
+    }
+
+    #[test]
+    fn test_simple_parse_variable_broken_xpath() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let namespaces = Namespaces::default();
+
+        let (node, span_info) = xot
+            .parse_with_span_info(r#"<variable name="foo" select="let $x := 1">Hello</variable>"#)
+            .unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+
+        assert_ron_snapshot!(parser.parse(node));
     }
 }

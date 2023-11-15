@@ -3537,14 +3537,12 @@ name = "xee-xslt-ast"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
- "chumsky",
  "insta",
  "ron 0.8.1",
  "serde",
  "thiserror",
  "xee-xpath-ast",
  "xee-xslt-ast",
- "xmlparser",
  "xot",
 ]
 

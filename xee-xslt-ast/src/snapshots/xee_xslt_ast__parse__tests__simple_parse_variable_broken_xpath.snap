@@ -1,5 +1,5 @@
 ---
-source: xee-xslt-ast/src/parse4.rs
+source: xee-xslt-ast/src/parse.rs
 expression: parser.parse(node)
 ---
 Err(XPath(ExpectedFound(

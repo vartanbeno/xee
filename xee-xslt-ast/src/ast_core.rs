@@ -4,6 +4,8 @@ use xee_xpath_ast::ast as xpath_ast;
 // should be respected and parse into the right thing, so the AST does not need
 // to retain knowledge of expand-text
 
+// TODO: add span information everywhere
+
 type Expression = xpath_ast::XPath;
 type EqName = String;
 type QName = String;
