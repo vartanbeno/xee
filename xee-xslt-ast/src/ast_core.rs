@@ -1,5 +1,9 @@
 use xee_xpath_ast::ast as xpath_ast;
 
+// TODO: standard attribute support such as expand-text during the parse, this
+// should be respected and parse into the right thing, so the AST does not need
+// to retain knowledge of expand-text
+
 type Expression = xpath_ast::XPath;
 type EqName = String;
 type QName = String;
@@ -18,19 +22,24 @@ type PcData = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Tokens(Vec<Token>);
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct EqNames(Vec<EqName>);
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Templ<V>
 where
     V: Clone + PartialEq + Eq,
 {
+    // TODO: this is not right; we need to produce a V from an
+    // AttributeValueTemplate during runtime
     pub value: V,
+    pub template: AttributeValueTemplate,
+}
+
+type AttributeValueTemplate = Vec<AttributeValueTemplateItem>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum AttributeValueTemplateItem {
+    // TODO: we probably need to store span information in here too
+    Expression(Expression),
+    String(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,7 +123,7 @@ pub enum DataType {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Accept {
     pub component: Component,
-    pub names: Tokens,
+    pub names: Vec<Token>,
     pub visibility: VisibilityWithHidden,
 }
 
@@ -151,9 +160,9 @@ pub struct AnalyzeString {
     pub regex: Templ<String>,
     pub flags: Option<Templ<String>>,
 
-    pub matching_substring: Option<SequenceConstructor>,
-    pub non_matching_substring: Option<SequenceConstructor>,
-    pub fallbacks: Vec<SequenceConstructor>,
+    pub matching_substring: Option<MatchingSubstring>,
+    pub non_matching_substring: Option<NonMatchingSubstring>,
+    pub fallbacks: Vec<Fallback>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -167,6 +176,7 @@ pub struct ApplyImports {
 pub struct ApplyTemplates {
     pub select: Option<Expression>,
     pub mode: Option<Token>,
+
     pub content: Vec<ApplyTemplatesContent>,
 }
 
@@ -183,6 +193,7 @@ pub struct Assert {
     pub test: Expression,
     pub select: Option<Expression>,
     pub error_code: Option<Templ<EqName>>,
+
     pub content: SequenceConstructor,
 }
 
@@ -195,6 +206,7 @@ pub struct Attribute {
     pub separator: Option<Templ<String>>,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
+
     pub content: SequenceConstructor,
 }
 
@@ -202,9 +214,10 @@ pub struct Attribute {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AttributeSet {
     pub name: EqName,
-    pub use_attribute_sets: Option<EqNames>,
+    pub use_attribute_sets: Option<Vec<EqName>>,
     pub visibility: Option<VisibilityWithAbstract>,
     pub streamable: Option<bool>,
+
     pub content: Vec<Attribute>,
 }
 
@@ -212,6 +225,7 @@ pub struct AttributeSet {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Break {
     pub select: Option<Expression>,
+
     pub content: SequenceConstructor,
 }
 
@@ -219,14 +233,16 @@ pub struct Break {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CallTemplate {
     pub name: EqName,
+
     pub content: Vec<WithParam>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Catch {
-    pub errors: Option<Tokens>,
+    pub errors: Option<Vec<Token>>,
     pub select: Option<Expression>,
+
     pub content: Vec<SequenceConstructor>,
 }
 
@@ -234,7 +250,8 @@ pub struct Catch {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CharacterMap {
     pub name: EqName,
-    pub use_character_maps: Option<EqNames>,
+    pub use_character_maps: Option<Vec<EqName>>,
+
     pub content: Vec<OutputCharacter>,
 }
 
@@ -249,6 +266,7 @@ pub struct Choose {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Comment {
     pub select: Option<Expression>,
+
     pub content: SequenceConstructor,
 }
 
@@ -265,9 +283,10 @@ pub struct Copy {
     pub select: Option<Expression>,
     pub copy_namespaces: Option<bool>,
     pub inherit_namespaces: Option<bool>,
-    pub use_attribute_sets: Option<EqNames>,
+    pub use_attribute_sets: Option<Vec<EqName>>,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
+
     pub content: SequenceConstructor,
 }
 
@@ -312,9 +331,10 @@ pub struct Element {
     name: Templ<EqName>,
     namespace: Option<Templ<Uri>>,
     inherit_namespaces: Option<bool>,
-    use_attribute_sets: Option<EqNames>,
+    use_attribute_sets: Option<Vec<EqName>>,
     type_: Option<EqName>,
     validation: Option<Validation>,
+
     content: SequenceConstructor,
 }
 
@@ -328,6 +348,7 @@ pub struct Evaluate {
     context_item: Option<Expression>,
     namespace_context: Option<Expression>,
     schema_aware: Option<Templ<bool>>,
+
     content: Vec<EvaluateContent>,
 }
 
@@ -342,7 +363,7 @@ pub enum EvaluateContent {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Expose {
     pub component: Component,
-    pub names: Tokens,
+    pub names: Vec<Token>,
     pub visibility: VisibilityWithAbstract,
 }
 
@@ -539,7 +560,7 @@ pub struct MergeSource {
     pub for_each_source: Option<Expression>,
     pub select: Expression,
     pub streamable: Option<bool>,
-    pub use_accumlators: Option<Tokens>,
+    pub use_accumlators: Option<Vec<Token>>,
     pub sort_before_merge: Option<bool>,
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
@@ -562,7 +583,7 @@ pub struct Message {
 pub struct Mode {
     pub name: Option<EqName>,
     pub streamable: Option<bool>,
-    pub use_accumulators: Option<Tokens>,
+    pub use_accumulators: Option<Vec<Token>>,
     pub on_no_match: Option<OnNoMatch>,
     pub on_multiple_match: Option<OnMultipleMatch>,
     pub warning_on_no_match: Option<bool>,
@@ -716,7 +737,7 @@ pub struct Output {
     pub allow_duplicate_names: Option<bool>,
     pub build_tree: Option<bool>,
     pub byte_order_mark: Option<bool>,
-    pub cdata_section_elements: Option<EqNames>,
+    pub cdata_section_elements: Option<Vec<EqName>>,
     pub doctype_public: Option<String>,
     pub doctype_system: Option<String>,
     pub encoding: Option<String>,
@@ -730,9 +751,9 @@ pub struct Output {
     pub omit_xml_declaration: Option<bool>,
     pub parameter_document: Option<Uri>,
     pub standalone: Option<Standalone>,
-    pub suppress_indentation: Option<EqNames>,
+    pub suppress_indentation: Option<Vec<EqName>>,
     pub undeclare_prefixes: Option<bool>,
-    pub use_character_maps: Option<EqNames>,
+    pub use_character_maps: Option<Vec<EqName>>,
     pub version: Option<NmToken>,
 }
 
@@ -875,7 +896,7 @@ pub struct PerformSort {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct PreserveSpace {
-    pub elements: Tokens,
+    pub elements: Vec<Token>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -898,7 +919,7 @@ pub struct ResultDocument {
     pub allow_duplicate_names: Option<Templ<bool>>,
     pub build_tree: Option<Templ<bool>>,
     pub bye_order_mark: Option<Templ<bool>>,
-    pub cdata_section_elements: Option<Templ<EqNames>>,
+    pub cdata_section_elements: Option<Templ<Vec<EqName>>>,
     pub doctype_public: Option<Templ<String>>,
     pub doctype_system: Option<Templ<String>>,
     pub encoding: Option<Templ<String>>,
@@ -913,9 +934,9 @@ pub struct ResultDocument {
     pub omit_xml_declaration: Option<Templ<bool>>,
     pub parameter_document: Option<Templ<Uri>>,
     pub standalone: Option<Templ<Standalone>>,
-    pub suppress_indentation: Option<Templ<EqNames>>,
+    pub suppress_indentation: Option<Templ<Vec<EqName>>>,
     pub undeclare_prefixes: Option<Templ<bool>>,
-    pub use_character_maps: Option<EqNames>,
+    pub use_character_maps: Option<Vec<EqName>>,
     pub version: Option<Templ<NmToken>>,
 
     pub content: SequenceConstructor,
@@ -948,7 +969,7 @@ pub struct Sort {
 pub struct SourceDocument {
     pub href: Templ<Uri>,
     pub streamable: Option<bool>,
-    pub use_accumulators: Option<Tokens>,
+    pub use_accumulators: Option<Vec<Token>>,
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
 
@@ -958,7 +979,7 @@ pub struct SourceDocument {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct StripSpace {
-    pub elements: Tokens,
+    pub elements: Vec<Token>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -987,7 +1008,7 @@ pub struct Template {
     pub match_: Option<Pattern>,
     pub name: Option<EqName>,
     pub priority: Option<Decimal>,
-    pub mode: Option<Tokens>,
+    pub mode: Option<Vec<Token>>,
     pub as_: Option<SequenceType>,
     pub visibility: Option<VisibilityWithAbstract>,
 
@@ -1091,6 +1112,7 @@ pub struct WithParam {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
+    // TODO: should support text value template
     TextNode(String),
     // TODO: to add: literal result element, which can contain sequence constructor
     // in turn as well
