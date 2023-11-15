@@ -2,22 +2,7 @@ use xee_xpath_ast::Namespaces;
 use xot::{Element, NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(test, derive(serde::Serialize))]
-struct Span {
-    start: usize,
-    end: usize,
-}
-
-impl From<&xot::Span> for Span {
-    fn from(span: &xot::Span) -> Self {
-        Self {
-            start: span.start,
-            end: span.end,
-        }
-    }
-}
+use crate::ast_core::Span;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]

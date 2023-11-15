@@ -4,9 +4,22 @@ use xee_xpath_ast::ast as xpath_ast;
 // should be respected and parse into the right thing, so the AST does not need
 // to retain knowledge of expand-text
 
-// TODO: add span information everywhere
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Span {
+    pub start: usize,
+    pub end: usize,
+}
 
-type Expression = xpath_ast::XPath;
+impl From<&xot::Span> for Span {
+    fn from(span: &xot::Span) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+}
+
 type EqName = String;
 type QName = String;
 type NcName = String;
@@ -21,6 +34,15 @@ type Decimal = String; // HTML version
 type NmToken = String;
 type Id = String;
 type PcData = String;
+
+type Expression = xpath_ast::XPath;
+
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+// struct Expression {
+//     xpath: xpath_ast::XPath,
+//     span: Span,
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
