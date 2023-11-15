@@ -204,6 +204,15 @@ impl<'a> XsltParser<'a> {
         parse_value(value)
     }
 
+    fn get_required_eqname(
+        &self,
+        node: Node,
+        element: &'a Element,
+        name: NameId,
+    ) -> Result<String, Error> {
+        self.get_required_attribute(node, element, name, |value| Ok(value.to_string()))
+    }
+
     fn parse_element(&self, node: Node, name: NameId) -> Result<&'a Element, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         if element.name() != name {
@@ -244,7 +253,7 @@ impl<'a> XsltParser<'a> {
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let element = self.parse_element(node, self.names.variable)?;
-        let name = self.get_required_attribute(node, element, self.names.name, Ok)?;
+        let name = self.get_required_eqname(node, element, self.names.name)?;
         let select = self.get_xpath_attribute(node, element, self.names.select)?;
 
         Ok(ast::Variable {
