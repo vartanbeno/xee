@@ -93,12 +93,20 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn eqname(&self, s: &str) -> Result<String, Error> {
+    fn eqname(s: &str) -> Result<String, Error> {
         Ok(s.to_string())
     }
 
     fn xpath(&self, s: &str) -> Result<xee_xpath_ast::ast::XPath, Error> {
         Ok(xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?)
+    }
+
+    fn boolean(s: &str) -> Option<bool> {
+        match s {
+            "yes" | "true" | "1" => Some(true),
+            "no" | "false" | "0" => Some(false),
+            _ => None,
+        }
     }
 
     fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
@@ -140,14 +148,6 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn parse_element(&self, node: Node, name: NameId) -> Result<&'a Element, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-        if element.name() != name {
-            return Err(Error::Unexpected);
-        }
-        Ok(element)
-    }
-
     fn parse_attributes(&self, node: Node, name: NameId) -> Result<Attributes, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         if element.name() != name {
@@ -174,32 +174,22 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn parse_boolean(&self, s: &str) -> Option<bool> {
-        match s {
-            "yes" | "true" | "1" => Some(true),
-            "no" | "false" | "0" => Some(false),
-            _ => None,
-        }
-    }
-
     fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
         let attributes = self.parse_attributes(node, self.names.if_)?;
 
-        let test = attributes.required_attribute(self.names.test, |s| self.xpath(s))?;
-
         let content = self.parse_sequence_constructor(node)?;
-        Ok(ast::If { test, content })
+        Ok(ast::If {
+            test: attributes.required_attribute(self.names.test, |s| self.xpath(s))?,
+            content,
+        })
     }
 
     fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
         let attributes = self.parse_attributes(node, self.names.variable)?;
 
-        let name = attributes.required_attribute(self.names.name, |s| self.eqname(s))?;
-        let select = attributes.attribute(self.names.select, |s| self.xpath(s))?;
-
         Ok(ast::Variable {
-            name,
-            select,
+            name: attributes.required_attribute(self.names.name, Self::eqname)?,
+            select: attributes.attribute(self.names.select, |s| self.xpath(s))?,
             as_: None,
             static_: None,
             visibility: None,
@@ -281,7 +271,7 @@ impl<'a> Attributes<'a> {
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
         self.attribute(name, |s| {
-            self.xslt_parser.parse_boolean(s).ok_or_else(|| {
+            XsltParser::boolean(s).ok_or_else(|| {
                 self.xslt_parser
                     .attribute_value_error_with_span(self.node, name, |span| {
                         Error::InvalidBoolean {
