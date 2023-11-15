@@ -145,12 +145,7 @@ impl<'a> XsltParser<'a> {
         .map(|v| v.unwrap_or(default))
     }
 
-    fn attribute_missing_error_with_span(
-        &self,
-        node: Node,
-        name: NameId,
-        f: impl Fn(Span) -> Error,
-    ) -> Error {
+    fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
         let span = self.attribute_missing_span(node);
         match span {
             Ok(span) => f(span),
@@ -197,7 +192,7 @@ impl<'a> XsltParser<'a> {
         parse_value: impl Fn(&'a str) -> Result<T, Error>,
     ) -> Result<T, Error> {
         let value = element.get_attribute(name).ok_or_else(|| {
-            self.attribute_missing_error_with_span(node, name, |span| {
+            self.attribute_missing_error_with_span(node, |span| {
                 let (local, namespace) = self.xot.name_ns_str(name);
                 Error::AttributeExpected {
                     namespace: namespace.to_string(),
