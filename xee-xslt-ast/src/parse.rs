@@ -99,6 +99,7 @@ impl<'a> XsltParser<'a> {
     }
 
     fn eqname(s: &str, _span: Span) -> Result<String, Error> {
+        // TODO: should actually parse
         Ok(s.to_string())
     }
 
