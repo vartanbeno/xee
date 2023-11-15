@@ -35,14 +35,14 @@ type NmToken = String;
 type Id = String;
 type PcData = String;
 
-type Expression = xpath_ast::XPath;
+// type Expression = xpath_ast::XPath;
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// struct Expression {
-//     xpath: xpath_ast::XPath,
-//     span: Span,
-// }
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Expression {
+    pub xpath: xpath_ast::XPath,
+    pub span: Span,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

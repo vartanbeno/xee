@@ -78,12 +78,15 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn eqname(s: &str) -> Result<String, Error> {
+    fn eqname(s: &str, _span: Span) -> Result<String, Error> {
         Ok(s.to_string())
     }
 
-    fn xpath(&self, s: &str) -> Result<xee_xpath_ast::ast::XPath, Error> {
-        Ok(xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?)
+    fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
+        Ok(ast::Expression {
+            xpath: xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?,
+            span,
+        })
     }
 
     fn boolean(s: &str) -> Option<bool> {
@@ -164,7 +167,7 @@ impl<'a> XsltParser<'a> {
 
         let content = self.parse_sequence_constructor(node)?;
         Ok(ast::If {
-            test: attributes.required_attribute(self.names.test, |s| self.xpath(s))?,
+            test: attributes.required_attribute(self.names.test, |s, span| self.xpath(s, span))?,
             content,
         })
     }
@@ -174,7 +177,7 @@ impl<'a> XsltParser<'a> {
 
         Ok(ast::Variable {
             name: attributes.required_attribute(self.names.name, Self::eqname)?,
-            select: attributes.attribute(self.names.select, |s| self.xpath(s))?,
+            select: attributes.attribute(self.names.select, |s, span| self.xpath(s, span))?,
             as_: None,
             static_: None,
             visibility: None,
@@ -209,23 +212,25 @@ struct Attributes<'a> {
 }
 
 impl<'a> Attributes<'a> {
+    fn value_span(&self, name: NameId) -> Result<Span, Error> {
+        let span = self
+            .xslt_parser
+            .span_info
+            .get(SpanInfoKey::AttributeValue(self.node, name))
+            .ok_or(Error::MissingSpan)?;
+        Ok(span.into())
+    }
+
     fn attribute<T>(
         &self,
         name: NameId,
-        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+        parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<Option<T>, Error> {
         if let Some(value) = self.element.get_attribute(name) {
-            let value = parse_value(value).map_err(|e| {
+            let span = self.value_span(name)?;
+            let value = parse_value(value, span).map_err(|e| {
                 if let Error::XPath(e) = e {
-                    Error::XPath(
-                        e.adjust(
-                            self.xslt_parser
-                                .span_info
-                                .get(SpanInfoKey::AttributeValue(self.node, name))
-                                .unwrap()
-                                .start,
-                        ),
-                    )
+                    Error::XPath(e.adjust(span.start))
                 } else {
                     e
                 }
@@ -239,7 +244,7 @@ impl<'a> Attributes<'a> {
     fn required_attribute<T>(
         &self,
         name: NameId,
-        parse_value: impl Fn(&'a str) -> Result<T, Error>,
+        parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<T, Error> {
         self.attribute(name, parse_value)?.ok_or_else(|| {
             self.xslt_parser
@@ -255,7 +260,7 @@ impl<'a> Attributes<'a> {
     }
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
-        self.attribute(name, |s| {
+        self.attribute(name, |s, span| {
             XsltParser::boolean(s).ok_or_else(|| {
                 self.xslt_parser
                     .attribute_value_error_with_span(self.node, name, |span| {

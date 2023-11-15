@@ -4,20 +4,26 @@ expression: parser.parse(node)
 ---
 Ok(Variable(Variable(
   name: "foo",
-  select: Some(XPath(Expr([
-    Path(PathExpr(
-      steps: [
-        PrimaryExpr(FunctionCall(FunctionCall(
-          name: Name(
-            name: "true",
-            prefix: None,
-            namespace: Some("http://www.w3.org/2005/xpath-functions"),
-          ),
-          arguments: [],
-        ))),
-      ],
-    )),
-  ]))),
+  select: Some(Expression(
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          PrimaryExpr(FunctionCall(FunctionCall(
+            name: Name(
+              name: "true",
+              prefix: None,
+              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            ),
+            arguments: [],
+          ))),
+        ],
+      )),
+    ])),
+    span: Span(
+      start: 29,
+      end: 35,
+    ),
+  )),
   as_: None,
   static_: None,
   visibility: None,
