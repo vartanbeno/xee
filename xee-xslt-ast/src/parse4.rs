@@ -149,26 +149,6 @@ impl<'a> XsltParser<'a> {
         Ok(xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[])?)
     }
 
-    fn xpath(
-        &self,
-        node: Node,
-        element: &'a Element,
-        name: NameId,
-    ) -> Result<Option<xee_xpath_ast::ast::XPath>, Error> {
-        self.attribute(node, element, name, |s| {
-            Ok(
-                xee_xpath_ast::ast::XPath::parse(s, &self.namespaces, &[]).map_err(|e| {
-                    e.adjust(
-                        self.span_info
-                            .get(SpanInfoKey::AttributeValue(node, name))
-                            .unwrap()
-                            .start,
-                    )
-                })?,
-            )
-        })
-    }
-
     fn boolean(
         &self,
         node: Node,
@@ -185,15 +165,6 @@ impl<'a> XsltParser<'a> {
             })
         })
         .map(|v| v.unwrap_or(default))
-    }
-
-    fn required_eqname(
-        &self,
-        node: Node,
-        element: &'a Element,
-        name: NameId,
-    ) -> Result<String, Error> {
-        self.required_attribute(node, element, name, |value| Ok(value.to_string()))
     }
 
     fn attribute_missing_error_with_span(&self, node: Node, f: impl Fn(Span) -> Error) -> Error {
