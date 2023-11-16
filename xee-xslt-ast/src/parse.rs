@@ -73,6 +73,7 @@ struct Names {
     inherit_namespaces: xot::NameId,
     use_attribute_sets: xot::NameId,
     validation: xot::NameId,
+    error_code: xot::NameId,
 
     // standard attributes on XSLT elements
     standard: StandardNames,
@@ -154,6 +155,7 @@ impl Names {
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
+            error_code: xot.add_name("error-code"),
 
             // standard attributes
             standard: StandardNames::no_ns(xot),
@@ -201,7 +203,7 @@ impl<'a> XsltParser<'a> {
     fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         let element = Element::new(node, element, self)?;
-        element.parse(node)
+        element.sequence_constructor_item(node)
     }
 }
 
@@ -236,19 +238,6 @@ impl<'a> Element<'a> {
         })
     }
 
-    fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
-        match self.xot.value(node) {
-            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-                text.get().to_string(),
-            )),
-            Value::Element(element) => {
-                let element = Element::new(node, element, self.xslt_parser)?;
-                ast::SequenceConstructorItem::parse(&element)
-            }
-            _ => Err(Error::Unexpected),
-        }
-    }
-
     fn standard(&self) -> Result<ast::Standard, Error> {
         self._standard(&self.names.standard)
     }
@@ -277,10 +266,23 @@ impl<'a> Element<'a> {
     fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
         for node in self.xot.children(self.node) {
-            let item = self.parse(node)?;
+            let item = self.sequence_constructor_item(node)?;
             result.push(item);
         }
         Ok(result)
+    }
+
+    fn sequence_constructor_item(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
+        match self.xot.value(node) {
+            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                text.get().to_string(),
+            )),
+            Value::Element(element) => {
+                let element = Element::new(node, element, self.xslt_parser)?;
+                ast::SequenceConstructorItem::parse(&element)
+            }
+            _ => Err(Error::Unexpected),
+        }
     }
 
     fn optional<T>(
@@ -338,6 +340,10 @@ impl<'a> Element<'a> {
             .ok_or(Error::MissingSpan)?;
         Ok(span.into())
     }
+
+    // fn attribute_value<T>(&self, s: &str, span: Span) -> Result<ast::Templ<T>, Error> {
+    //     // parse
+    // }
 
     fn eqname(s: &str, _span: Span) -> Result<String, Error> {
         // TODO: should actually parse
@@ -548,9 +554,24 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
     }
 }
 
+// impl InstructionParser for ast::Assert {
+//     fn parse_ast(element: &Element) -> Result<Self, Error> {
+//         let names = element.names;
+//         Ok(ast::Assert {
+//             test: element.required(names.test, |s, span| element.xpath(s, span))?,
+//             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
+//             error_code: element
+//                 .optional(names.error_code, |s, span| element.attribute_value(s, span))?,
+//             content: element.sequence_constructor()?,
+
+//             standard: element.standard()?,
+//             span: element.span,
+//         })
+//     }
+// }
+
 impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
-        let content = element.sequence_constructor()?;
         let names = element.names;
         Ok(ast::Copy {
             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
@@ -562,7 +583,7 @@ impl InstructionParser for ast::Copy {
                 .optional(names.validation, Element::validation)?
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
-            content,
+            content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
         })

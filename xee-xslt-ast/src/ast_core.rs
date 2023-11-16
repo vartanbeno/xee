@@ -12,6 +12,12 @@ pub struct Span {
     pub end: usize,
 }
 
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+}
+
 impl From<&xot::Span> for Span {
     fn from(span: &xot::Span) -> Self {
         Self {
@@ -51,13 +57,18 @@ pub struct Templ<V>
 where
     V: Clone + PartialEq + Eq,
 {
-    // TODO: this is not right; we need to produce a V from an
-    // AttributeValueTemplate during runtime
-    pub value: V,
-    pub template: AttributeValueTemplate,
+    pub template: Vec<AttributeValueTemplateItem>,
+
+    // TODO: not sure this type information is useful
+    pub phantom: std::marker::PhantomData<V>,
 }
 
-type AttributeValueTemplate = Vec<AttributeValueTemplateItem>;
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum AttributeValueTemplateItem {
+    Expression(Expression),
+    String(String),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -85,14 +96,6 @@ pub enum ExcludeResultPrefixes {
 pub enum ExcludeResultPrefix {
     Prefix(Prefix),
     Default,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum AttributeValueTemplateItem {
-    // TODO: we probably need to store span information in here too
-    Expression(Expression),
-    String(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -271,6 +274,12 @@ pub struct Assert {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Assert> for SequenceConstructorItem {
+    fn from(i: Assert) -> Self {
+        SequenceConstructorItem::Assert(Box::new(i))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
