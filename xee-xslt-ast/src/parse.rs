@@ -128,21 +128,6 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn element(&self, node: Node) -> Result<Element, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-
-        Ok(Element {
-            node,
-            element,
-            names: self.names,
-            span_info: self.span_info,
-            xot: self.xot,
-            namespaces: &self.namespaces,
-            xslt_parser: self,
-            span: self.element_span(node)?,
-        })
-    }
-
     fn element_span(&self, node: Node) -> Result<Span, Error> {
         let span = self
             .span_info
@@ -153,19 +138,23 @@ impl<'a> XsltParser<'a> {
     }
 
     fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
-        let element = self.element(node)?;
-        ast::SequenceConstructorItem::parse(&element)
+        match self.xot.value(node) {
+            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                text.get().to_string(),
+            )),
+            Value::Element(element) => {
+                let element = Element::new(node, element, self)?;
+                ast::SequenceConstructorItem::parse(&element)
+            }
+            _ => Err(Error::Unexpected),
+        }
     }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
         for node in self.xot.children(node) {
-            match self.xot.value(node) {
-                Value::Text(text) => result.push(ast::SequenceConstructorItem::TextNode(
-                    text.get().to_string(),
-                )),
-                _ => return Err(Error::UnexpectedSequenceConstructor),
-            }
+            let item = self.parse(node)?;
+            result.push(item);
         }
         Ok(result)
     }
@@ -184,6 +173,24 @@ struct Element<'a> {
 }
 
 impl<'a> Element<'a> {
+    fn new(
+        node: Node,
+        element: &'a xot::Element,
+        xslt_parser: &'a XsltParser<'a>,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            node,
+            element,
+            span: xslt_parser.element_span(node)?,
+
+            names: xslt_parser.names,
+            span_info: xslt_parser.span_info,
+            xot: xslt_parser.xot,
+            namespaces: &xslt_parser.namespaces,
+            xslt_parser,
+        })
+    }
+
     fn name_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
             .span_info
@@ -499,6 +506,13 @@ mod tests {
     fn test_eqnames() {
         assert_ron_snapshot!(parse(
             r#"<copy use-attribute-sets="foo bar baz">Hello</copy>"#
+        ));
+    }
+
+    #[test]
+    fn test_nested_if() {
+        assert_ron_snapshot!(parse(
+            r#"<if test="true()"><if test="true()">Hello</if></if>"#
         ));
     }
 }
