@@ -50,10 +50,13 @@ enum SequenceConstructorName {
 }
 
 struct Names {
+    sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
+
     copy: xot::NameId,
     if_: xot::NameId,
-    test: xot::NameId,
     variable: xot::NameId,
+
+    test: xot::NameId,
     select: xot::NameId,
     name: xot::NameId,
     as_: xot::NameId,
@@ -63,8 +66,6 @@ struct Names {
     inherit_namespaces: xot::NameId,
     use_attribute_sets: xot::NameId,
     validation: xot::NameId,
-
-    sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 }
 
 impl Names {
