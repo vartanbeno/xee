@@ -371,7 +371,7 @@ impl InstructionParser for ast::Variable {
             return Err(Error::AttributeUnexpected {
                 namespace: namespace.to_string(),
                 local: local.to_string(),
-                span: element.name_span(names.visibility)?,
+                span: element.name_span(names.select)?,
                 message: "select attribute is not allowed when visibility is abstract".to_string(),
             });
         }

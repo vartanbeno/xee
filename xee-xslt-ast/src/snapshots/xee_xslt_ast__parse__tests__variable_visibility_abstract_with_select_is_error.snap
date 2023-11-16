@@ -6,8 +6,8 @@ Err(AttributeUnexpected(
   namespace: "",
   local: "select",
   span: Span(
-    start: 21,
-    end: 31,
+    start: 43,
+    end: 49,
   ),
   message: "select attribute is not allowed when visibility is abstract",
 ))
