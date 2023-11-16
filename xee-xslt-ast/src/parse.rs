@@ -309,19 +309,16 @@ impl<'a> Element<'a> {
     }
 }
 
-trait InstructionParser: Sized {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error>;
+trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
+    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        let ast = Self::parse_ast(element)?;
+        Ok(ast.into())
+    }
 
     fn parse_ast(element: Element) -> Result<Self, Error>;
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        Ok(ast::SequenceConstructorItem::Copy(Box::new(
-            Self::parse_ast(element)?,
-        )))
-    }
-
     fn parse_ast(element: Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let content = parser.parse_sequence_constructor(element.node)?;
@@ -343,12 +340,6 @@ impl InstructionParser for ast::Copy {
 }
 
 impl InstructionParser for ast::If {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        Ok(ast::SequenceConstructorItem::If(Box::new(Self::parse_ast(
-            element,
-        )?)))
-    }
-
     fn parse_ast(element: Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         Ok(ast::If {
@@ -360,12 +351,6 @@ impl InstructionParser for ast::If {
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        Ok(ast::SequenceConstructorItem::Variable(Box::new(
-            Self::parse_ast(element)?,
-        )))
-    }
-
     fn parse_ast(element: Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let names = parser.names;

@@ -349,6 +349,12 @@ pub struct Copy {
     pub span: Span,
 }
 
+impl From<Copy> for SequenceConstructorItem {
+    fn from(i: Copy) -> Self {
+        SequenceConstructorItem::Copy(Box::new(i))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CopyOf {
@@ -544,6 +550,12 @@ pub struct If {
     pub content: SequenceConstructor,
 
     pub span: Span,
+}
+
+impl From<If> for SequenceConstructorItem {
+    fn from(i: If) -> Self {
+        SequenceConstructorItem::If(Box::new(i))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1255,6 +1267,12 @@ pub struct Variable {
     pub content: SequenceConstructor,
 
     pub span: Span,
+}
+
+impl From<Variable> for SequenceConstructorItem {
+    fn from(v: Variable) -> Self {
+        SequenceConstructorItem::Variable(Box::new(v))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
