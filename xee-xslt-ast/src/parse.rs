@@ -128,15 +128,6 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn element_span(&self, node: Node) -> Result<Span, Error> {
-        let span = self
-            .span_info
-            .get(SpanInfoKey::ElementStart(node))
-            .ok_or(Error::MissingSpan)?;
-
-        Ok(span.into())
-    }
-
     fn element(&self, node: Node) -> Result<Element, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
 
@@ -152,17 +143,18 @@ impl<'a> XsltParser<'a> {
         })
     }
 
+    fn element_span(&self, node: Node) -> Result<Span, Error> {
+        let span = self
+            .span_info
+            .get(SpanInfoKey::ElementStart(node))
+            .ok_or(Error::MissingSpan)?;
+
+        Ok(span.into())
+    }
+
     fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
         let element = self.element(node)?;
-        let sname = self
-            .names
-            .sequence_constructor_name(element.element.name())
-            .ok_or(Error::Unexpected)?;
-        match sname {
-            SequenceConstructorName::Copy => ast::Copy::parse(&element),
-            SequenceConstructorName::If => ast::If::parse(&element),
-            SequenceConstructorName::Variable => ast::Variable::parse(&element),
-        }
+        ast::SequenceConstructorItem::parse(&element)
     }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
@@ -342,6 +334,20 @@ trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
     }
 
     fn parse_ast(element: &Element) -> Result<Self, Error>;
+}
+
+impl InstructionParser for ast::SequenceConstructorItem {
+    fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
+        let sname = element
+            .names
+            .sequence_constructor_name(element.element.name())
+            .ok_or(Error::Unexpected)?;
+        match sname {
+            SequenceConstructorName::Copy => ast::Copy::parse(element),
+            SequenceConstructorName::If => ast::If::parse(element),
+            SequenceConstructorName::Variable => ast::Variable::parse(element),
+        }
+    }
 }
 
 impl InstructionParser for ast::Copy {
