@@ -514,6 +514,7 @@ impl InstructionParser for ast::Copy {
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
             content,
+            standard: element.standard()?,
             span: element.span,
         })
     }
@@ -561,6 +562,7 @@ impl InstructionParser for ast::Variable {
             static_: element.boolean(names.static_, false)?,
             visibility: element.optional(names.visibility, Element::visibility_with_abstract)?,
             content: element.sequence_constructor()?,
+            standard: element.standard()?,
             span: element.span,
         })
     }
