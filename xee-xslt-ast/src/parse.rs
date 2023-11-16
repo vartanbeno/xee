@@ -79,6 +79,8 @@ impl Names {
         sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
 
         Self {
+            sequence_constructor_names,
+
             copy,
             if_,
             variable,
@@ -93,8 +95,6 @@ impl Names {
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
-
-            sequence_constructor_names,
         }
     }
 
