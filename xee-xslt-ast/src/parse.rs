@@ -217,9 +217,9 @@ impl<'a> XsltParser<'a> {
             .sequence_constructor_name(element.element.name())
             .ok_or(Error::Unexpected)?;
         match sname {
-            SequenceConstructorName::Copy => ast::Copy::parse(element),
-            SequenceConstructorName::If => ast::If::parse(element),
-            SequenceConstructorName::Variable => ast::Variable::parse(element),
+            SequenceConstructorName::Copy => ast::Copy::parse(&element),
+            SequenceConstructorName::If => ast::If::parse(&element),
+            SequenceConstructorName::Variable => ast::Variable::parse(&element),
         }
     }
 
@@ -332,16 +332,21 @@ impl<'a> Element<'a> {
 }
 
 trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
         let ast = Self::parse_ast(element)?;
+        ast.validate(element)?;
         Ok(ast.into())
     }
 
-    fn parse_ast(element: Element) -> Result<Self, Error>;
+    fn validate(&self, _element: &Element) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn parse_ast(element: &Element) -> Result<Self, Error>;
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse_ast(element: Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let content = parser.parse_sequence_constructor(element.node)?;
         let names = parser.names;
@@ -362,7 +367,7 @@ impl InstructionParser for ast::Copy {
 }
 
 impl InstructionParser for ast::If {
-    fn parse_ast(element: Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         Ok(ast::If {
             test: element.required(parser.names.test, |s, span| parser.xpath(s, span))?,
@@ -373,14 +378,10 @@ impl InstructionParser for ast::If {
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse_ast(element: Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let names = parser.names;
-        let select = element.optional(names.select, |s, span| parser.xpath(s, span))?;
-        let static_ = element.boolean(names.static_, false)?;
 
-        let visibility =
-            element.optional(names.visibility, XsltParser::visibility_with_abstract)?;
         // This is a rule somewhere, but not sure whether it's correct;
         // can visibility be absent or is there a default visibility?
         // let visibility = visibility.unwrap_or(if static_ {
@@ -388,23 +389,27 @@ impl InstructionParser for ast::Variable {
         // } else {
         //     ast::VisibilityWithAbstract::Public
         // });
-        if visibility == Some(ast::VisibilityWithAbstract::Abstract) && select.is_some() {
-            return Err(parser.attribute_unexpected(
-                element.node,
-                names.select,
-                "select attribute is not allowed when visibility is abstract",
-            ));
-        }
 
         Ok(ast::Variable {
             name: element.required(names.name, XsltParser::eqname)?,
-            select,
+            select: element.optional(names.select, |s, span| parser.xpath(s, span))?,
             as_: element.optional(names.as_, |s, span| parser.sequence_type(s, span))?,
-            static_,
-            visibility,
+            static_: element.boolean(names.static_, false)?,
+            visibility: element.optional(names.visibility, XsltParser::visibility_with_abstract)?,
             content: parser.parse_sequence_constructor(element.node)?,
             span: element.span,
         })
+    }
+
+    fn validate(&self, element: &Element) -> Result<(), Error> {
+        if self.visibility == Some(ast::VisibilityWithAbstract::Abstract) && self.select.is_some() {
+            return Err(element.xslt_parser.attribute_unexpected(
+                element.node,
+                element.xslt_parser.names.select,
+                "select attribute is not allowed when visibility is abstract",
+            ));
+        }
+        Ok(())
     }
 }
 
