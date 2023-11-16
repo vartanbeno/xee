@@ -52,6 +52,8 @@ enum SequenceConstructorName {
 }
 
 struct Names {
+    xsl_ns: xot::NamespaceId,
+
     sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 
     copy: xot::NameId,
@@ -106,6 +108,8 @@ impl Names {
         sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
 
         Self {
+            xsl_ns,
+
             sequence_constructor_names,
 
             copy,
