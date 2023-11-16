@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use xee_xpath_ast::{ast as xpath_ast, Namespaces};
-use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
+use xot::{NameId, NamespaceId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
 use crate::ast_core::Span;
@@ -52,7 +52,7 @@ enum SequenceConstructorName {
 }
 
 struct Names {
-    xsl_ns: xot::NamespaceId,
+    xsl_ns: NamespaceId,
 
     sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 
@@ -72,6 +72,12 @@ struct Names {
     validation: xot::NameId,
 
     // standard attributes on XSLT elements
+    standard: StandardNames,
+    // standard attributes on literal result elements
+    xsl_standard: StandardNames,
+}
+
+struct StandardNames {
     default_collation: xot::NameId,
     default_mode: xot::NameId,
     default_validation: xot::NameId,
@@ -81,17 +87,36 @@ struct Names {
     use_when: xot::NameId,
     version: xot::NameId,
     xpath_default_namespace: xot::NameId,
+}
 
-    // standard attributes on literal result elements
-    xsl_default_collation: xot::NameId,
-    xsl_default_mode: xot::NameId,
-    xsl_default_validation: xot::NameId,
-    xsl_exclude_result_prefixes: xot::NameId,
-    xsl_expand_text: xot::NameId,
-    xsl_extension_element_prefixes: xot::NameId,
-    xsl_use_when: xot::NameId,
-    xsl_version: xot::NameId,
-    xsl_xpath_default_namespace: xot::NameId,
+impl StandardNames {
+    fn no_ns(xot: &mut Xot) -> Self {
+        Self {
+            default_collation: xot.add_name("default-collation"),
+            default_mode: xot.add_name("default-mode"),
+            default_validation: xot.add_name("default-validation"),
+            exclude_result_prefixes: xot.add_name("exclude-result-prefixes"),
+            expand_text: xot.add_name("expand-text"),
+            extension_element_prefixes: xot.add_name("extension-element-prefixes"),
+            use_when: xot.add_name("use-when"),
+            version: xot.add_name("version"),
+            xpath_default_namespace: xot.add_name("xpath-default-namespace"),
+        }
+    }
+
+    fn xsl(xot: &mut Xot, xsl_ns: NamespaceId) -> Self {
+        Self {
+            default_collation: xot.add_name_ns("default-collation", xsl_ns),
+            default_mode: xot.add_name_ns("default-mode", xsl_ns),
+            default_validation: xot.add_name_ns("default-validation", xsl_ns),
+            exclude_result_prefixes: xot.add_name_ns("exclude-result-prefixes", xsl_ns),
+            expand_text: xot.add_name_ns("expand-text", xsl_ns),
+            extension_element_prefixes: xot.add_name_ns("extension-element-prefixes", xsl_ns),
+            use_when: xot.add_name_ns("use-when", xsl_ns),
+            version: xot.add_name_ns("version", xsl_ns),
+            xpath_default_namespace: xot.add_name_ns("xpath-default-namespace", xsl_ns),
+        }
+    }
 }
 
 impl Names {
@@ -128,25 +153,9 @@ impl Names {
             validation: xot.add_name("validation"),
 
             // standard attributes
-            default_collation: xot.add_name("default-collation"),
-            default_mode: xot.add_name("default-mode"),
-            default_validation: xot.add_name("default-validation"),
-            exclude_result_prefixes: xot.add_name("exclude-result-prefixes"),
-            expand_text: xot.add_name("expand-text"),
-            extension_element_prefixes: xot.add_name("extension-element-prefixes"),
-            use_when: xot.add_name("use-when"),
-            version: xot.add_name("version"),
-            xpath_default_namespace: xot.add_name("xpath-default-namespace"),
+            standard: StandardNames::no_ns(xot),
             // standard attributes on literal result elements
-            xsl_default_collation: xot.add_name_ns("default-collation", xsl_ns),
-            xsl_default_mode: xot.add_name_ns("default-mode", xsl_ns),
-            xsl_default_validation: xot.add_name_ns("default-validation", xsl_ns),
-            xsl_exclude_result_prefixes: xot.add_name_ns("exclude-result-prefixes", xsl_ns),
-            xsl_expand_text: xot.add_name_ns("expand-text", xsl_ns),
-            xsl_extension_element_prefixes: xot.add_name_ns("extension-element-prefixes", xsl_ns),
-            xsl_use_when: xot.add_name_ns("use-when", xsl_ns),
-            xsl_version: xot.add_name_ns("version", xsl_ns),
-            xsl_xpath_default_namespace: xot.add_name_ns("xpath-default-namespace", xsl_ns),
+            xsl_standard: StandardNames::xsl(xot, xsl_ns),
         }
     }
 
@@ -238,8 +247,14 @@ impl<'a> Element<'a> {
     }
 
     fn standard(&self) -> Result<ast::Standard, Error> {
-        let names = self.names;
+        self._standard(&self.names.standard)
+    }
 
+    fn xsl_standard(&self) -> Result<ast::Standard, Error> {
+        self._standard(&self.names.xsl_standard)
+    }
+
+    fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, Error> {
         Ok(ast::Standard {
             default_collation: self.optional(names.default_collation, Self::uris)?,
             default_mode: self.optional(names.default_mode, Self::default_mode)?,
