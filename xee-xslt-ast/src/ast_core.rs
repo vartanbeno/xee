@@ -1476,9 +1476,8 @@ pub struct ElementNode {
     pub name: Name,
     // pub attributes: HashMap<Name, Templ<String>>,
     // pub content: SequenceConstructor,
-
-    // pub standard: Standard,
-    // pub span: Span,
+    pub standard: Standard,
+    pub span: Span,
 }
 
 impl From<ElementNode> for SequenceConstructorItem {

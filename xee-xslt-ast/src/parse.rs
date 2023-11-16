@@ -533,6 +533,9 @@ impl InstructionParser for ast::ElementNode {
     fn parse_ast(element: &Element) -> Result<ast::ElementNode, Error> {
         Ok(ast::ElementNode {
             name: to_name(element.xot, element.element.name()),
+
+            standard: element.xsl_standard()?,
+            span: element.span,
         })
     }
 }
