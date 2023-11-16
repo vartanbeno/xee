@@ -215,18 +215,14 @@ impl<'a> XsltParser<'a> {
             .sequence_constructor_name(element.element.name())
             .ok_or(Error::Unexpected)?;
         match sname {
-            SequenceConstructorName::Copy => self.parse_copy(node, element),
-            SequenceConstructorName::If => self.parse_if(node, element),
-            SequenceConstructorName::Variable => self.parse_variable(node, element),
+            SequenceConstructorName::Copy => self.parse_copy(element),
+            SequenceConstructorName::If => self.parse_if(element),
+            SequenceConstructorName::Variable => self.parse_variable(element),
         }
     }
 
-    fn parse_if(
-        &self,
-        node: Node,
-        element: Element,
-    ) -> Result<ast::SequenceConstructorItem, Error> {
-        let content = self.parse_sequence_constructor(node)?;
+    fn parse_if(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        let content = self.parse_sequence_constructor(element.node)?;
         Ok(ast::SequenceConstructorItem::If(Box::new(ast::If {
             test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
             content,
@@ -234,11 +230,7 @@ impl<'a> XsltParser<'a> {
         })))
     }
 
-    fn parse_variable(
-        &self,
-        node: Node,
-        element: Element,
-    ) -> Result<ast::SequenceConstructorItem, Error> {
+    fn parse_variable(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
         let select = element.optional(self.names.select, |s, span| self.xpath(s, span))?;
         let static_ = element.boolean(self.names.static_, false)?;
 
@@ -267,18 +259,14 @@ impl<'a> XsltParser<'a> {
                 as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
                 static_,
                 visibility,
-                content: self.parse_sequence_constructor(node)?,
+                content: self.parse_sequence_constructor(element.node)?,
                 span: element.span,
             },
         )))
     }
 
-    fn parse_copy(
-        &self,
-        node: Node,
-        element: Element,
-    ) -> Result<ast::SequenceConstructorItem, Error> {
-        let content = self.parse_sequence_constructor(node)?;
+    fn parse_copy(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        let content = self.parse_sequence_constructor(element.node)?;
         Ok(ast::SequenceConstructorItem::Copy(Box::new(ast::Copy {
             select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
             copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
