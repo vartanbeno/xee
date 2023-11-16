@@ -733,4 +733,11 @@ mod tests {
     fn test_literal_result_element() {
         assert_ron_snapshot!(parse(r#"<foo/>"#));
     }
+
+    #[test]
+    fn test_literal_result_element_with_standard_attribute() {
+        assert_ron_snapshot!(parse(
+            r#"<foo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:expand-text="yes"/>"#
+        ));
+    }
 }
