@@ -235,6 +235,28 @@ impl<'a> XsltParser<'a> {
         }
         Ok(result)
     }
+
+    fn name_span(&self, node: Node, name: NameId) -> Result<Span, Error> {
+        let span = self
+            .span_info
+            .get(SpanInfoKey::AttributeName(node, name))
+            .ok_or(Error::MissingSpan)?;
+        Ok(span.into())
+    }
+
+    fn attribute_unexpected(&self, node: Node, name: NameId, message: &str) -> Error {
+        let (local, namespace) = self.xot.name_ns_str(name);
+        let span = self.name_span(node, name);
+        match span {
+            Ok(span) => Error::AttributeUnexpected {
+                namespace: namespace.to_string(),
+                local: local.to_string(),
+                span,
+                message: message.to_string(),
+            },
+            Err(e) => e,
+        }
+    }
 }
 
 struct Element<'a> {
@@ -367,13 +389,11 @@ impl InstructionParser for ast::Variable {
         //     ast::VisibilityWithAbstract::Public
         // });
         if visibility == Some(ast::VisibilityWithAbstract::Abstract) && select.is_some() {
-            let (local, namespace) = parser.xot.name_ns_str(names.select);
-            return Err(Error::AttributeUnexpected {
-                namespace: namespace.to_string(),
-                local: local.to_string(),
-                span: element.name_span(names.select)?,
-                message: "select attribute is not allowed when visibility is abstract".to_string(),
-            });
+            return Err(parser.attribute_unexpected(
+                element.node,
+                names.select,
+                "select attribute is not allowed when visibility is abstract",
+            ));
         }
 
         Ok(ast::Variable {
