@@ -10,11 +10,13 @@ use crate::ast_core::Span;
 #[cfg_attr(test, derive(serde::Serialize))]
 enum Error {
     Unexpected,
+    // ns, name, span of the element on which the attribute is expected
     AttributeExpected {
         namespace: String,
         local: String,
         span: Span,
     },
+    // ns, name, span of the attribute that is unexpected
     AttributeUnexpected {
         namespace: String,
         local: String,
@@ -215,17 +217,16 @@ impl<'a> XsltParser<'a> {
             .sequence_constructor_name(element.element.name())
             .ok_or(Error::Unexpected)?;
         match sname {
-            SequenceConstructorName::Copy => self.parse_copy(element),
+            SequenceConstructorName::Copy => ast::Copy::parse(element),
             SequenceConstructorName::If => self.parse_if(element),
             SequenceConstructorName::Variable => self.parse_variable(element),
         }
     }
 
     fn parse_if(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        let content = self.parse_sequence_constructor(element.node)?;
         Ok(ast::SequenceConstructorItem::If(Box::new(ast::If {
             test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
-            content,
+            content: self.parse_sequence_constructor(element.node)?,
             span: element.span,
         })))
     }
@@ -265,22 +266,22 @@ impl<'a> XsltParser<'a> {
         )))
     }
 
-    fn parse_copy(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        let content = self.parse_sequence_constructor(element.node)?;
-        Ok(ast::SequenceConstructorItem::Copy(Box::new(ast::Copy {
-            select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
-            copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
-            inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
-            use_attribute_sets: element.optional(self.names.use_attribute_sets, Self::eqnames)?,
-            type_: element.optional(self.names.as_, Self::eqname)?,
-            validation: element
-                .optional(self.names.validation, Self::validation)?
-                // TODO: should depend on global validation attribute
-                .unwrap_or(ast::Validation::Strip),
-            content,
-            span: element.span,
-        })))
-    }
+    // fn parse_copy(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+    //     let content = self.parse_sequence_constructor(element.node)?;
+    //     Ok(ast::SequenceConstructorItem::Copy(Box::new(ast::Copy {
+    //         select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
+    //         copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
+    //         inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
+    //         use_attribute_sets: element.optional(self.names.use_attribute_sets, Self::eqnames)?,
+    //         type_: element.optional(self.names.as_, Self::eqname)?,
+    //         validation: element
+    //             .optional(self.names.validation, Self::validation)?
+    //             // TODO: should depend on global validation attribute
+    //             .unwrap_or(ast::Validation::Strip),
+    //         content,
+    //         span: element.span,
+    //     })))
+    // }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
@@ -365,6 +366,39 @@ impl<'a> Element<'a> {
             })
         })
         .map(|v| v.unwrap_or(default))
+    }
+}
+
+trait InstructionParser: Sized {
+    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error>;
+
+    fn parse_ast(element: Element) -> Result<Self, Error>;
+}
+
+impl InstructionParser for ast::Copy {
+    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        Ok(ast::SequenceConstructorItem::Copy(Box::new(
+            Self::parse_ast(element)?,
+        )))
+    }
+
+    fn parse_ast(element: Element) -> Result<Self, Error> {
+        let parser = element.xslt_parser;
+        let content = parser.parse_sequence_constructor(element.node)?;
+        let names = parser.names;
+        Ok(ast::Copy {
+            select: element.optional(names.select, |s, span| parser.xpath(s, span))?,
+            copy_namespaces: element.boolean(names.copy_namespaces, true)?,
+            inherit_namespaces: element.boolean(names.inherit_namespaces, true)?,
+            use_attribute_sets: element.optional(names.use_attribute_sets, XsltParser::eqnames)?,
+            type_: element.optional(names.as_, XsltParser::eqname)?,
+            validation: element
+                .optional(names.validation, XsltParser::validation)?
+                // TODO: should depend on global validation attribute
+                .unwrap_or(ast::Validation::Strip),
+            content,
+            span: element.span,
+        })
     }
 }
 
