@@ -143,6 +143,10 @@ impl<'a> XsltParser<'a> {
         Ok(Element {
             node,
             element,
+            names: self.names,
+            span_info: self.span_info,
+            xot: self.xot,
+            namespaces: &self.namespaces,
             xslt_parser: self,
             span: self.element_span(node)?,
         })
@@ -178,6 +182,10 @@ impl<'a> XsltParser<'a> {
 struct Element<'a> {
     node: Node,
     element: &'a xot::Element,
+    names: &'a Names,
+    span_info: &'a SpanInfo,
+    xot: &'a Xot,
+    namespaces: &'a Namespaces<'a>,
     xslt_parser: &'a XsltParser<'a>,
     span: Span,
 }
@@ -185,7 +193,6 @@ struct Element<'a> {
 impl<'a> Element<'a> {
     fn name_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
-            .xslt_parser
             .span_info
             .get(SpanInfoKey::AttributeName(self.node, name))
             .ok_or(Error::MissingSpan)?;
@@ -194,7 +201,6 @@ impl<'a> Element<'a> {
 
     fn value_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
-            .xslt_parser
             .span_info
             .get(SpanInfoKey::AttributeValue(self.node, name))
             .ok_or(Error::MissingSpan)?;
@@ -227,7 +233,7 @@ impl<'a> Element<'a> {
         parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<T, Error> {
         self.optional(name, parse_value)?.ok_or_else(|| {
-            let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
+            let (local, namespace) = self.xot.name_ns_str(name);
             Error::AttributeExpected {
                 namespace: namespace.to_string(),
                 local: local.to_string(),
@@ -253,7 +259,7 @@ impl<'a> Element<'a> {
 
     fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
         Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, &self.xslt_parser.namespaces, &[])?,
+            xpath: xpath_ast::XPath::parse(s, self.namespaces, &[])?,
             span,
         })
     }
@@ -267,10 +273,7 @@ impl<'a> Element<'a> {
     }
 
     fn sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
-        Ok(xpath_ast::SequenceType::parse(
-            s,
-            &self.xslt_parser.namespaces,
-        )?)
+        Ok(xpath_ast::SequenceType::parse(s, self.namespaces)?)
     }
 
     fn _boolean(s: &str) -> Option<bool> {
@@ -312,7 +315,7 @@ impl<'a> Element<'a> {
     }
 
     fn attribute_unexpected(&self, name: NameId, message: &str) -> Error {
-        let (local, namespace) = self.xslt_parser.xot.name_ns_str(name);
+        let (local, namespace) = self.xot.name_ns_str(name);
         let span = self.name_span(name);
         match span {
             Ok(span) => Error::AttributeUnexpected {
@@ -344,7 +347,7 @@ impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let content = parser.parse_sequence_constructor(element.node)?;
-        let names = parser.names;
+        let names = element.names;
         Ok(ast::Copy {
             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
             copy_namespaces: element.boolean(names.copy_namespaces, true)?,
@@ -364,8 +367,9 @@ impl InstructionParser for ast::Copy {
 impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
+        let names = element.names;
         Ok(ast::If {
-            test: element.required(parser.names.test, |s, span| element.xpath(s, span))?,
+            test: element.required(names.test, |s, span| element.xpath(s, span))?,
             content: parser.parse_sequence_constructor(element.node)?,
             span: element.span,
         })
@@ -375,7 +379,7 @@ impl InstructionParser for ast::If {
 impl InstructionParser for ast::Variable {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
-        let names = parser.names;
+        let names = element.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
         // can visibility be absent or is there a default visibility?
@@ -399,7 +403,7 @@ impl InstructionParser for ast::Variable {
     fn validate(&self, element: &Element) -> Result<(), Error> {
         if self.visibility == Some(ast::VisibilityWithAbstract::Abstract) && self.select.is_some() {
             return Err(element.attribute_unexpected(
-                element.xslt_parser.names.select,
+                element.names.select,
                 "select attribute is not allowed when visibility is abstract",
             ));
         }
