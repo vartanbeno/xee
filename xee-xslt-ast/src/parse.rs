@@ -723,6 +723,13 @@ mod tests {
     }
 
     #[test]
+    fn test_if_with_standard_attribute() {
+        assert_ron_snapshot!(parse(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes">Hello</xsl:if>"#
+        ));
+    }
+
+    #[test]
     fn test_literal_result_element() {
         assert_ron_snapshot!(parse(r#"<foo/>"#));
     }
