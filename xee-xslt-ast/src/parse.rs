@@ -218,70 +218,10 @@ impl<'a> XsltParser<'a> {
             .ok_or(Error::Unexpected)?;
         match sname {
             SequenceConstructorName::Copy => ast::Copy::parse(element),
-            SequenceConstructorName::If => self.parse_if(element),
-            SequenceConstructorName::Variable => self.parse_variable(element),
+            SequenceConstructorName::If => ast::If::parse(element),
+            SequenceConstructorName::Variable => ast::Variable::parse(element),
         }
     }
-
-    fn parse_if(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        Ok(ast::SequenceConstructorItem::If(Box::new(ast::If {
-            test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
-            content: self.parse_sequence_constructor(element.node)?,
-            span: element.span,
-        })))
-    }
-
-    fn parse_variable(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-        let select = element.optional(self.names.select, |s, span| self.xpath(s, span))?;
-        let static_ = element.boolean(self.names.static_, false)?;
-
-        let visibility = element.optional(self.names.visibility, Self::visibility_with_abstract)?;
-        // This is a rule somewhere, but not sure whether it's correct;
-        // can visibility be absent or is there a default visibility?
-        // let visibility = visibility.unwrap_or(if static_ {
-        //     ast::VisibilityWithAbstract::Private
-        // } else {
-        //     ast::VisibilityWithAbstract::Public
-        // });
-        if visibility == Some(ast::VisibilityWithAbstract::Abstract) && select.is_some() {
-            let (local, namespace) = self.xot.name_ns_str(self.names.select);
-            return Err(Error::AttributeUnexpected {
-                namespace: namespace.to_string(),
-                local: local.to_string(),
-                span: element.name_span(self.names.visibility)?,
-                message: "select attribute is not allowed when visibility is abstract".to_string(),
-            });
-        }
-
-        Ok(ast::SequenceConstructorItem::Variable(Box::new(
-            ast::Variable {
-                name: element.required(self.names.name, Self::eqname)?,
-                select,
-                as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
-                static_,
-                visibility,
-                content: self.parse_sequence_constructor(element.node)?,
-                span: element.span,
-            },
-        )))
-    }
-
-    // fn parse_copy(&self, element: Element) -> Result<ast::SequenceConstructorItem, Error> {
-    //     let content = self.parse_sequence_constructor(element.node)?;
-    //     Ok(ast::SequenceConstructorItem::Copy(Box::new(ast::Copy {
-    //         select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
-    //         copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
-    //         inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
-    //         use_attribute_sets: element.optional(self.names.use_attribute_sets, Self::eqnames)?,
-    //         type_: element.optional(self.names.as_, Self::eqname)?,
-    //         validation: element
-    //             .optional(self.names.validation, Self::validation)?
-    //             // TODO: should depend on global validation attribute
-    //             .unwrap_or(ast::Validation::Strip),
-    //         content,
-    //         span: element.span,
-    //     })))
-    // }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
@@ -397,6 +337,67 @@ impl InstructionParser for ast::Copy {
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
             content,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::If {
+    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        Ok(ast::SequenceConstructorItem::If(Box::new(Self::parse_ast(
+            element,
+        )?)))
+    }
+
+    fn parse_ast(element: Element) -> Result<Self, Error> {
+        let parser = element.xslt_parser;
+        Ok(ast::If {
+            test: element.required(parser.names.test, |s, span| parser.xpath(s, span))?,
+            content: parser.parse_sequence_constructor(element.node)?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::Variable {
+    fn parse(element: Element) -> Result<ast::SequenceConstructorItem, Error> {
+        Ok(ast::SequenceConstructorItem::Variable(Box::new(
+            Self::parse_ast(element)?,
+        )))
+    }
+
+    fn parse_ast(element: Element) -> Result<Self, Error> {
+        let parser = element.xslt_parser;
+        let names = parser.names;
+        let select = element.optional(names.select, |s, span| parser.xpath(s, span))?;
+        let static_ = element.boolean(names.static_, false)?;
+
+        let visibility =
+            element.optional(names.visibility, XsltParser::visibility_with_abstract)?;
+        // This is a rule somewhere, but not sure whether it's correct;
+        // can visibility be absent or is there a default visibility?
+        // let visibility = visibility.unwrap_or(if static_ {
+        //     ast::VisibilityWithAbstract::Private
+        // } else {
+        //     ast::VisibilityWithAbstract::Public
+        // });
+        if visibility == Some(ast::VisibilityWithAbstract::Abstract) && select.is_some() {
+            let (local, namespace) = parser.xot.name_ns_str(names.select);
+            return Err(Error::AttributeUnexpected {
+                namespace: namespace.to_string(),
+                local: local.to_string(),
+                span: element.name_span(names.visibility)?,
+                message: "select attribute is not allowed when visibility is abstract".to_string(),
+            });
+        }
+
+        Ok(ast::Variable {
+            name: element.required(names.name, XsltParser::eqname)?,
+            select,
+            as_: element.optional(names.as_, |s, span| parser.sequence_type(s, span))?,
+            static_,
+            visibility,
+            content: parser.parse_sequence_constructor(element.node)?,
             span: element.span,
         })
     }
