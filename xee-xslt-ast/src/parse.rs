@@ -182,12 +182,13 @@ impl<'a> XsltParser<'a> {
 struct Element<'a> {
     node: Node,
     element: &'a xot::Element,
+    span: Span,
+
     names: &'a Names,
     span_info: &'a SpanInfo,
     xot: &'a Xot,
     namespaces: &'a Namespaces<'a>,
     xslt_parser: &'a XsltParser<'a>,
-    span: Span,
 }
 
 impl<'a> Element<'a> {
