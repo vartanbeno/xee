@@ -1364,13 +1364,6 @@ pub enum Declaration {
 
 pub type Declarations = Vec<Declaration>;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum Instruction {
-    Variable(Variable),
-    If(If),
-    Copy(Copy),
-}
-
 // xs:schema
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

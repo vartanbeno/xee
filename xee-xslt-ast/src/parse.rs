@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use xee_xpath_ast::{ast as xpath_ast, Namespaces};
 use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
@@ -40,6 +42,13 @@ impl Error {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum SequenceConstructorName {
+    If,
+    Variable,
+    Copy,
+}
+
 struct Names {
     copy: xot::NameId,
     if_: xot::NameId,
@@ -54,15 +63,27 @@ struct Names {
     inherit_namespaces: xot::NameId,
     use_attribute_sets: xot::NameId,
     validation: xot::NameId,
+
+    sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 }
 
 impl Names {
     fn new(xot: &mut Xot) -> Self {
+        let copy = xot.add_name("copy");
+        let if_ = xot.add_name("if");
+        let variable = xot.add_name("variable");
+
+        let mut sequence_constructor_names = BTreeMap::new();
+        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
+        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
+        sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
+
         Self {
-            copy: xot.add_name("copy"),
-            if_: xot.add_name("if"),
+            copy,
+            if_,
+            variable,
+
             test: xot.add_name("test"),
-            variable: xot.add_name("variable"),
             select: xot.add_name("select"),
             name: xot.add_name("name"),
             as_: xot.add_name("as"),
@@ -72,7 +93,13 @@ impl Names {
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
+
+            sequence_constructor_names,
         }
+    }
+
+    fn sequence_constructor_name(&self, name: NameId) -> Option<SequenceConstructorName> {
+        self.sequence_constructor_names.get(&name).copied()
     }
 }
 
@@ -169,11 +196,9 @@ impl<'a> XsltParser<'a> {
         Ok(span.into())
     }
 
-    fn element(&self, node: Node, name: NameId) -> Result<Element, Error> {
+    fn element(&self, node: Node) -> Result<Element, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-        if element.name() != name {
-            return Err(Error::Unexpected);
-        }
+
         Ok(Element {
             node,
             element,
@@ -182,39 +207,37 @@ impl<'a> XsltParser<'a> {
         })
     }
 
-    fn parse(&self, node: Node) -> Result<ast::Instruction, Error> {
-        match self.parse_if(node).map(ast::Instruction::If) {
-            Ok(instruction) => Ok(instruction),
-            Err(e) if e.is_unexpected() => {
-                match self.parse_variable(node).map(ast::Instruction::Variable) {
-                    Ok(instruction) => Ok(instruction),
-                    Err(e) if e.is_unexpected() => {
-                        match self.parse_copy(node).map(ast::Instruction::Copy) {
-                            Ok(instruction) => Ok(instruction),
-                            Err(e) => Err(e),
-                        }
-                    }
-                    Err(e) => Err(e),
-                }
-            }
-            Err(e) => Err(e),
+    fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
+        let element = self.element(node)?;
+        let sname = self
+            .names
+            .sequence_constructor_name(element.element.name())
+            .ok_or(Error::Unexpected)?;
+        match sname {
+            SequenceConstructorName::Copy => self.parse_copy(node, element),
+            SequenceConstructorName::If => self.parse_if(node, element),
+            SequenceConstructorName::Variable => self.parse_variable(node, element),
         }
     }
 
-    fn parse_if(&self, node: Node) -> Result<ast::If, Error> {
-        let element = self.element(node, self.names.if_)?;
-
+    fn parse_if(
+        &self,
+        node: Node,
+        element: Element,
+    ) -> Result<ast::SequenceConstructorItem, Error> {
         let content = self.parse_sequence_constructor(node)?;
-        Ok(ast::If {
+        Ok(ast::SequenceConstructorItem::If(Box::new(ast::If {
             test: element.required(self.names.test, |s, span| self.xpath(s, span))?,
             content,
             span: element.span,
-        })
+        })))
     }
 
-    fn parse_variable(&self, node: Node) -> Result<ast::Variable, Error> {
-        let element = self.element(node, self.names.variable)?;
-
+    fn parse_variable(
+        &self,
+        node: Node,
+        element: Element,
+    ) -> Result<ast::SequenceConstructorItem, Error> {
         let select = element.optional(self.names.select, |s, span| self.xpath(s, span))?;
         let static_ = element.boolean(self.names.static_, false)?;
 
@@ -236,22 +259,26 @@ impl<'a> XsltParser<'a> {
             });
         }
 
-        Ok(ast::Variable {
-            name: element.required(self.names.name, Self::eqname)?,
-            select,
-            as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
-            static_,
-            visibility,
-            content: self.parse_sequence_constructor(node)?,
-            span: element.span,
-        })
+        Ok(ast::SequenceConstructorItem::Variable(Box::new(
+            ast::Variable {
+                name: element.required(self.names.name, Self::eqname)?,
+                select,
+                as_: element.optional(self.names.as_, |s, span| self.sequence_type(s, span))?,
+                static_,
+                visibility,
+                content: self.parse_sequence_constructor(node)?,
+                span: element.span,
+            },
+        )))
     }
 
-    fn parse_copy(&self, node: Node) -> Result<ast::Copy, Error> {
-        let element = self.element(node, self.names.copy)?;
-
+    fn parse_copy(
+        &self,
+        node: Node,
+        element: Element,
+    ) -> Result<ast::SequenceConstructorItem, Error> {
         let content = self.parse_sequence_constructor(node)?;
-        Ok(ast::Copy {
+        Ok(ast::SequenceConstructorItem::Copy(Box::new(ast::Copy {
             select: element.optional(self.names.select, |s, span| self.xpath(s, span))?,
             copy_namespaces: element.boolean(self.names.copy_namespaces, true)?,
             inherit_namespaces: element.boolean(self.names.inherit_namespaces, true)?,
@@ -263,7 +290,7 @@ impl<'a> XsltParser<'a> {
                 .unwrap_or(ast::Validation::Strip),
             content,
             span: element.span,
-        })
+        })))
     }
 
     fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
@@ -359,7 +386,7 @@ mod tests {
     use insta::assert_ron_snapshot;
     use xee_xpath_ast::Namespaces;
 
-    fn parse(s: &str) -> Result<ast::Instruction, Error> {
+    fn parse(s: &str) -> Result<ast::SequenceConstructorItem, Error> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
         let namespaces = Namespaces::default();
