@@ -128,68 +128,6 @@ impl<'a> XsltParser<'a> {
         }
     }
 
-    fn eqname(s: &str, _span: Span) -> Result<String, Error> {
-        // TODO: should actually parse
-        Ok(s.to_string())
-    }
-
-    fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
-        Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, &self.namespaces, &[])?,
-            span,
-        })
-    }
-
-    fn sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
-        Ok(xpath_ast::SequenceType::parse(s, &self.namespaces)?)
-    }
-
-    fn boolean(s: &str) -> Option<bool> {
-        match s {
-            "yes" | "true" | "1" => Some(true),
-            "no" | "false" | "0" => Some(false),
-            _ => None,
-        }
-    }
-
-    fn visibility_with_abstract(s: &str, span: Span) -> Result<ast::VisibilityWithAbstract, Error> {
-        use ast::VisibilityWithAbstract::*;
-
-        match s {
-            "public" => Ok(Public),
-            "private" => Ok(Private),
-            "final" => Ok(Final),
-            "abstract" => Ok(Abstract),
-            _ => Err(Error::Invalid {
-                value: s.to_string(),
-                span,
-            }),
-        }
-    }
-
-    fn eqnames(s: &str, span: Span) -> Result<Vec<String>, Error> {
-        let mut result = Vec::new();
-        for s in s.split_whitespace() {
-            result.push(Self::eqname(s, span)?);
-        }
-        Ok(result)
-    }
-
-    fn validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
-        use ast::Validation::*;
-
-        match s {
-            "strict" => Ok(Strict),
-            "lax" => Ok(Lax),
-            "preserve" => Ok(Preserve),
-            "strip" => Ok(Strip),
-            _ => Err(Error::Invalid {
-                value: s.to_string(),
-                span,
-            }),
-        }
-    }
-
     fn element_span(&self, node: Node) -> Result<Span, Error> {
         let span = self
             .span_info
@@ -322,12 +260,77 @@ impl<'a> Element<'a> {
 
     fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
         self.optional(name, |s, span| {
-            XsltParser::boolean(s).ok_or_else(|| Error::Invalid {
+            Self::_boolean(s).ok_or_else(|| Error::Invalid {
                 value: s.to_string(),
                 span,
             })
         })
         .map(|v| v.unwrap_or(default))
+    }
+
+    fn eqname(s: &str, _span: Span) -> Result<String, Error> {
+        // TODO: should actually parse
+        Ok(s.to_string())
+    }
+
+    fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
+        Ok(ast::Expression {
+            xpath: xpath_ast::XPath::parse(s, &self.xslt_parser.namespaces, &[])?,
+            span,
+        })
+    }
+
+    fn eqnames(s: &str, span: Span) -> Result<Vec<String>, Error> {
+        let mut result = Vec::new();
+        for s in s.split_whitespace() {
+            result.push(Self::eqname(s, span)?);
+        }
+        Ok(result)
+    }
+
+    fn sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
+        Ok(xpath_ast::SequenceType::parse(
+            s,
+            &self.xslt_parser.namespaces,
+        )?)
+    }
+
+    fn _boolean(s: &str) -> Option<bool> {
+        match s {
+            "yes" | "true" | "1" => Some(true),
+            "no" | "false" | "0" => Some(false),
+            _ => None,
+        }
+    }
+
+    fn visibility_with_abstract(s: &str, span: Span) -> Result<ast::VisibilityWithAbstract, Error> {
+        use ast::VisibilityWithAbstract::*;
+
+        match s {
+            "public" => Ok(Public),
+            "private" => Ok(Private),
+            "final" => Ok(Final),
+            "abstract" => Ok(Abstract),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
+        use ast::Validation::*;
+
+        match s {
+            "strict" => Ok(Strict),
+            "lax" => Ok(Lax),
+            "preserve" => Ok(Preserve),
+            "strip" => Ok(Strip),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
     }
 }
 
@@ -351,13 +354,13 @@ impl InstructionParser for ast::Copy {
         let content = parser.parse_sequence_constructor(element.node)?;
         let names = parser.names;
         Ok(ast::Copy {
-            select: element.optional(names.select, |s, span| parser.xpath(s, span))?,
+            select: element.optional(names.select, |s, span| element.xpath(s, span))?,
             copy_namespaces: element.boolean(names.copy_namespaces, true)?,
             inherit_namespaces: element.boolean(names.inherit_namespaces, true)?,
-            use_attribute_sets: element.optional(names.use_attribute_sets, XsltParser::eqnames)?,
-            type_: element.optional(names.as_, XsltParser::eqname)?,
+            use_attribute_sets: element.optional(names.use_attribute_sets, Element::eqnames)?,
+            type_: element.optional(names.as_, Element::eqname)?,
             validation: element
-                .optional(names.validation, XsltParser::validation)?
+                .optional(names.validation, Element::validation)?
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
             content,
@@ -370,7 +373,7 @@ impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         Ok(ast::If {
-            test: element.required(parser.names.test, |s, span| parser.xpath(s, span))?,
+            test: element.required(parser.names.test, |s, span| element.xpath(s, span))?,
             content: parser.parse_sequence_constructor(element.node)?,
             span: element.span,
         })
@@ -391,11 +394,11 @@ impl InstructionParser for ast::Variable {
         // });
 
         Ok(ast::Variable {
-            name: element.required(names.name, XsltParser::eqname)?,
-            select: element.optional(names.select, |s, span| parser.xpath(s, span))?,
-            as_: element.optional(names.as_, |s, span| parser.sequence_type(s, span))?,
+            name: element.required(names.name, Element::eqname)?,
+            select: element.optional(names.select, |s, span| element.xpath(s, span))?,
+            as_: element.optional(names.as_, |s, span| element.sequence_type(s, span))?,
             static_: element.boolean(names.static_, false)?,
-            visibility: element.optional(names.visibility, XsltParser::visibility_with_abstract)?,
+            visibility: element.optional(names.visibility, Element::visibility_with_abstract)?,
             content: parser.parse_sequence_constructor(element.node)?,
             span: element.span,
         })
