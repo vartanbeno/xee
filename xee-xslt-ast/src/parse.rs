@@ -68,13 +68,37 @@ struct Names {
     inherit_namespaces: xot::NameId,
     use_attribute_sets: xot::NameId,
     validation: xot::NameId,
+
+    // standard attributes on XSLT elements
+    default_collation: xot::NameId,
+    default_mode: xot::NameId,
+    default_validation: xot::NameId,
+    exclude_result_prefixes: xot::NameId,
+    expand_text: xot::NameId,
+    extension_element_prefixes: xot::NameId,
+    use_when: xot::NameId,
+    version: xot::NameId,
+    xpath_default_namespace: xot::NameId,
+
+    // standard attributes on literal result elements
+    xsl_default_collation: xot::NameId,
+    xsl_default_mode: xot::NameId,
+    xsl_default_validation: xot::NameId,
+    xsl_exclude_result_prefixes: xot::NameId,
+    xsl_expand_text: xot::NameId,
+    xsl_extension_element_prefixes: xot::NameId,
+    xsl_use_when: xot::NameId,
+    xsl_version: xot::NameId,
+    xsl_xpath_default_namespace: xot::NameId,
 }
 
 impl Names {
     fn new(xot: &mut Xot) -> Self {
-        let copy = xot.add_name("copy");
-        let if_ = xot.add_name("if");
-        let variable = xot.add_name("variable");
+        let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
+
+        let copy = xot.add_name_ns("copy", xsl_ns);
+        let if_ = xot.add_name_ns("if", xsl_ns);
+        let variable = xot.add_name_ns("variable", xsl_ns);
 
         let mut sequence_constructor_names = BTreeMap::new();
         sequence_constructor_names.insert(if_, SequenceConstructorName::If);
@@ -98,6 +122,27 @@ impl Names {
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
+
+            // standard attributes
+            default_collation: xot.add_name("default-collation"),
+            default_mode: xot.add_name("default-mode"),
+            default_validation: xot.add_name("default-validation"),
+            exclude_result_prefixes: xot.add_name("exclude-result-prefixes"),
+            expand_text: xot.add_name("expand-text"),
+            extension_element_prefixes: xot.add_name("extension-element-prefixes"),
+            use_when: xot.add_name("use-when"),
+            version: xot.add_name("version"),
+            xpath_default_namespace: xot.add_name("xpath-default-namespace"),
+            // standard attributes on literal result elements
+            xsl_default_collation: xot.add_name_ns("default-collation", xsl_ns),
+            xsl_default_mode: xot.add_name_ns("default-mode", xsl_ns),
+            xsl_default_validation: xot.add_name_ns("default-validation", xsl_ns),
+            xsl_exclude_result_prefixes: xot.add_name_ns("exclude-result-prefixes", xsl_ns),
+            xsl_expand_text: xot.add_name_ns("expand-text", xsl_ns),
+            xsl_extension_element_prefixes: xot.add_name_ns("extension-element-prefixes", xsl_ns),
+            xsl_use_when: xot.add_name_ns("use-when", xsl_ns),
+            xsl_version: xot.add_name_ns("version", xsl_ns),
+            xsl_xpath_default_namespace: xot.add_name_ns("xpath-default-namespace", xsl_ns),
         }
     }
 
@@ -365,7 +410,6 @@ impl InstructionParser for ast::SequenceConstructorItem {
 
 impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
-        let parser = element.xslt_parser;
         let content = element.sequence_constructor()?;
         let names = element.names;
         Ok(ast::Copy {
@@ -397,7 +441,6 @@ impl InstructionParser for ast::Copy {
 
 impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
-        let parser = element.xslt_parser;
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, |s, span| element.xpath(s, span))?,
@@ -409,7 +452,6 @@ impl InstructionParser for ast::If {
 
 impl InstructionParser for ast::Variable {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
-        let parser = element.xslt_parser;
         let names = element.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
@@ -462,74 +504,78 @@ mod tests {
 
     #[test]
     fn test_if() {
-        assert_ron_snapshot!(parse(r#"<if test="true()">Hello</if>"#));
+        assert_ron_snapshot!(parse(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()">Hello</xsl:if>"#
+        ));
     }
 
     #[test]
     fn test_variable() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" select="true()">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_missing_required() {
-        assert_ron_snapshot!(parse(r#"<variable select="true()">Hello</variable>"#));
+        assert_ron_snapshot!(parse(
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()">Hello</xsl:variable>"#
+        ));
     }
 
     #[test]
     fn test_broken_xpath() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" select="let $x := 1">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" select="let $x := 1">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_sequence_type() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" as="xs:string" select="true()">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" as="xs:string" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_boolean_default_no_with_explicit_yes() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" static="yes" as="xs:string" select="true()">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" static="yes" as="xs:string" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_variable_visibility() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" visibility="public">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" visibility="public">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_variable_visibility_abstract_with_select_is_error() {
         assert_ron_snapshot!(parse(
-            r#"<variable name="foo" visibility="abstract" select="true()">Hello</variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" visibility="abstract" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_copy() {
         assert_ron_snapshot!(parse(
-            r#"<copy select="true()" copy-namespaces="no" inherit-namespaces="no" validation="strict">Hello</copy>"#
+            r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" copy-namespaces="no" inherit-namespaces="no" validation="strict">Hello</xsl:copy>"#
         ));
     }
 
     #[test]
     fn test_eqnames() {
         assert_ron_snapshot!(parse(
-            r#"<copy use-attribute-sets="foo bar baz">Hello</copy>"#
+            r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" use-attribute-sets="foo bar baz">Hello</xsl:copy>"#
         ));
     }
 
     #[test]
     fn test_nested_if() {
         assert_ron_snapshot!(parse(
-            r#"<if test="true()"><if test="true()">Hello</if></if>"#
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><xsl:if test="true()">Hello</xsl:if></xsl:if>"#
         ));
     }
 }

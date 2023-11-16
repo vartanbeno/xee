@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: "parse(r#\"<copy use-attribute-sets=\"foo bar baz\">Hello</copy>\"#)"
+expression: "parse(r#\"<xsl:copy xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" use-attribute-sets=\"foo bar baz\">Hello</xsl:copy>\"#)"
 ---
 Ok(Copy(Copy(
   select: None,
@@ -18,6 +18,6 @@ Ok(Copy(Copy(
   ],
   span: Span(
     start: 1,
-    end: 5,
+    end: 9,
   ),
 )))

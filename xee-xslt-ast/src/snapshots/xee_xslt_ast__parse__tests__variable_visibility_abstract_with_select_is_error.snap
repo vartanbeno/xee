@@ -1,13 +1,13 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: "parse(r#\"<variable name=\"foo\" visibility=\"abstract\" select=\"true()\">Hello</variable>\"#)"
+expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"abstract\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Err(AttributeUnexpected(
   namespace: "",
   local: "select",
   span: Span(
-    start: 43,
-    end: 49,
+    start: 96,
+    end: 102,
   ),
   message: "select attribute is not allowed when visibility is abstract",
 ))

@@ -1,11 +1,11 @@
 ---
 source: xee-xslt-ast/src/parse.rs
-expression: "parse(r#\"<variable name=\"foo\" select=\"let $x := 1\">Hello</variable>\"#)"
+expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" select=\"let $x := 1\">Hello</xsl:variable>\"#)"
 ---
 Err(XPath(ExpectedFound(
   span: SimpleSpan(
-    start: 39,
-    end: 40,
+    start: 92,
+    end: 93,
     context: (),
   ),
 )))
