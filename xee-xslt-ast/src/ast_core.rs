@@ -20,20 +20,20 @@ impl From<&xot::Span> for Span {
     }
 }
 
-type EqName = String;
-type QName = String;
-type NcName = String;
-type SequenceType = xpath_ast::SequenceType;
-type ItemType = xpath_ast::ItemType;
-type Pattern = String;
-type Token = String;
-type Uri = String;
-type Language = String;
-type Prefix = String;
-type Decimal = String; // HTML version
-type NmToken = String;
-type Id = String;
-type PcData = String;
+pub type EqName = String;
+pub type QName = String;
+pub type NcName = String;
+pub type SequenceType = xpath_ast::SequenceType;
+pub type ItemType = xpath_ast::ItemType;
+pub type Pattern = String;
+pub type Token = String;
+pub type Uri = String;
+pub type Language = String;
+pub type Prefix = String;
+pub type Decimal = String; // HTML version
+pub type NmToken = String;
+pub type Id = String;
+pub type PcData = String;
 
 // type Expression = xpath_ast::XPath;
 
@@ -57,6 +57,34 @@ where
 }
 
 type AttributeValueTemplate = Vec<AttributeValueTemplateItem>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Standard {
+    pub default_collation: Option<Vec<Uri>>,
+    pub default_mode: Option<DefaultMode>,
+    pub default_validation: Option<DefaultValidation>,
+    pub exclude_result_prefixes: Option<ExcludeResultPrefixes>,
+    pub expand_text: Option<bool>,
+    pub extension_element_prefixes: Option<Vec<Prefix>>,
+    pub use_when: Option<Expression>,
+    pub version: Option<Decimal>,
+    pub xpath_default_namespace: Option<Uri>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum ExcludeResultPrefixes {
+    All,
+    Prefixes(Vec<ExcludeResultPrefix>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum ExcludeResultPrefix {
+    Prefix(Prefix),
+    Default,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -555,6 +583,7 @@ pub struct If {
     pub test: Expression,
     pub content: SequenceConstructor,
 
+    pub standard: Standard,
     pub span: Span,
 }
 
