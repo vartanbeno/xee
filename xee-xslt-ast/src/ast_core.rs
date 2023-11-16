@@ -1,3 +1,4 @@
+use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
 // TODO: standard attribute support such as expand-text during the parse, this
@@ -1423,8 +1424,8 @@ pub struct WithParam {
 pub enum SequenceConstructorItem {
     // TODO: should support text value template
     TextNode(String),
-    // TODO: to add: literal result element, which can contain sequence constructor
-    // in turn as well
+    ElementNode(Box<ElementNode>),
+
     AnalyzeString(Box<AnalyzeString>),
     ApplyImports(Box<ApplyImports>),
     ApplyTemplates(Box<ApplyTemplates>),
@@ -1468,6 +1469,30 @@ pub enum SequenceConstructorItem {
 }
 
 pub type SequenceConstructor = Vec<SequenceConstructorItem>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ElementNode {
+    pub name: Name,
+    // pub attributes: HashMap<Name, Templ<String>>,
+    // pub content: SequenceConstructor,
+
+    // pub standard: Standard,
+    // pub span: Span,
+}
+
+impl From<ElementNode> for SequenceConstructorItem {
+    fn from(e: ElementNode) -> Self {
+        SequenceConstructorItem::ElementNode(Box::new(e))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Name {
+    pub namespace: String,
+    pub local: String,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

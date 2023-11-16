@@ -1,0 +1,10 @@
+---
+source: xee-xslt-ast/src/parse.rs
+expression: "parse(r#\"<foo/>\"#)"
+---
+Ok(ElementNode(ElementNode(
+  name: Name(
+    namespace: "",
+    local: "foo",
+  ),
+)))

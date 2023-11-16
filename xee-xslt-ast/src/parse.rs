@@ -28,6 +28,9 @@ enum Error {
         value: String,
         span: Span,
     },
+    InvalidInstruction {
+        span: Span,
+    },
     MissingSpan,
     XPath(xee_xpath_ast::ParserError),
 }
@@ -403,7 +406,7 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn prefix(s: &str, span: Span) -> Result<ast::Prefix, Error> {
+    fn prefix(s: &str, _span: Span) -> Result<ast::Prefix, Error> {
         // TODO: check whether it's a valid prefix
         Ok(s.to_string())
     }
@@ -416,7 +419,7 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    fn decimal(s: &str, span: Span) -> Result<ast::Decimal, Error> {
+    fn decimal(s: &str, _span: Span) -> Result<ast::Decimal, Error> {
         // TODO
         Ok(s.to_string())
     }
@@ -504,13 +507,41 @@ impl InstructionParser for ast::SequenceConstructorItem {
     fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
         let sname = element
             .names
-            .sequence_constructor_name(element.element.name())
-            .ok_or(Error::Unexpected)?;
-        match sname {
-            SequenceConstructorName::Copy => ast::Copy::parse(element),
-            SequenceConstructorName::If => ast::If::parse(element),
-            SequenceConstructorName::Variable => ast::Variable::parse(element),
+            .sequence_constructor_name(element.element.name());
+
+        if let Some(sname) = sname {
+            // parse a known sequence constructor instruction
+            match sname {
+                SequenceConstructorName::Copy => ast::Copy::parse(element),
+                SequenceConstructorName::If => ast::If::parse(element),
+                SequenceConstructorName::Variable => ast::Variable::parse(element),
+            }
+        } else {
+            let ns = element.xot.namespace_for_name(element.element.name());
+            if ns == element.names.xsl_ns {
+                // we have an unknown xsl instruction, fail with error
+                Err(Error::InvalidInstruction { span: element.span })
+            } else {
+                // we parse the literal element
+                ast::ElementNode::parse(element)
+            }
         }
+    }
+}
+
+impl InstructionParser for ast::ElementNode {
+    fn parse_ast(element: &Element) -> Result<ast::ElementNode, Error> {
+        Ok(ast::ElementNode {
+            name: to_name(element.xot, element.element.name()),
+        })
+    }
+}
+
+fn to_name(xot: &Xot, name: NameId) -> ast::Name {
+    let (local, namespace) = xot.name_ns_str(name);
+    ast::Name {
+        namespace: namespace.to_string(),
+        local: local.to_string(),
     }
 }
 
@@ -686,5 +717,10 @@ mod tests {
         assert_ron_snapshot!(parse(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><xsl:if test="true()">Hello</xsl:if></xsl:if>"#
         ));
+    }
+
+    #[test]
+    fn test_literal_result_element() {
+        assert_ron_snapshot!(parse(r#"<foo/>"#));
     }
 }
