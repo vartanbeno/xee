@@ -452,6 +452,12 @@ pub struct Fallback {
     pub span: Span,
 }
 
+impl From<Fallback> for SequenceConstructorItem {
+    fn from(i: Fallback) -> Self {
+        SequenceConstructorItem::Fallback(Box::new(i))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ForEach {

@@ -138,25 +138,9 @@ impl<'a> XsltParser<'a> {
     }
 
     fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
-        match self.xot.value(node) {
-            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-                text.get().to_string(),
-            )),
-            Value::Element(element) => {
-                let element = Element::new(node, element, self)?;
-                ast::SequenceConstructorItem::parse(&element)
-            }
-            _ => Err(Error::Unexpected),
-        }
-    }
-
-    fn parse_sequence_constructor(&self, node: Node) -> Result<ast::SequenceConstructor, Error> {
-        let mut result = Vec::new();
-        for node in self.xot.children(node) {
-            let item = self.parse(node)?;
-            result.push(item);
-        }
-        Ok(result)
+        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element = Element::new(node, element, self)?;
+        element.parse(node)
     }
 }
 
@@ -191,20 +175,26 @@ impl<'a> Element<'a> {
         })
     }
 
-    fn name_span(&self, name: NameId) -> Result<Span, Error> {
-        let span = self
-            .span_info
-            .get(SpanInfoKey::AttributeName(self.node, name))
-            .ok_or(Error::MissingSpan)?;
-        Ok(span.into())
+    fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
+        match self.xot.value(node) {
+            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                text.get().to_string(),
+            )),
+            Value::Element(element) => {
+                let element = Element::new(node, element, self.xslt_parser)?;
+                ast::SequenceConstructorItem::parse(&element)
+            }
+            _ => Err(Error::Unexpected),
+        }
     }
 
-    fn value_span(&self, name: NameId) -> Result<Span, Error> {
-        let span = self
-            .span_info
-            .get(SpanInfoKey::AttributeValue(self.node, name))
-            .ok_or(Error::MissingSpan)?;
-        Ok(span.into())
+    fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, Error> {
+        let mut result = Vec::new();
+        for node in self.xot.children(self.node) {
+            let item = self.parse(node)?;
+            result.push(item);
+        }
+        Ok(result)
     }
 
     fn optional<T>(
@@ -250,6 +240,22 @@ impl<'a> Element<'a> {
             })
         })
         .map(|v| v.unwrap_or(default))
+    }
+
+    fn name_span(&self, name: NameId) -> Result<Span, Error> {
+        let span = self
+            .span_info
+            .get(SpanInfoKey::AttributeName(self.node, name))
+            .ok_or(Error::MissingSpan)?;
+        Ok(span.into())
+    }
+
+    fn value_span(&self, name: NameId) -> Result<Span, Error> {
+        let span = self
+            .span_info
+            .get(SpanInfoKey::AttributeValue(self.node, name))
+            .ok_or(Error::MissingSpan)?;
+        Ok(span.into())
     }
 
     fn eqname(s: &str, _span: Span) -> Result<String, Error> {
@@ -360,7 +366,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
 impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
-        let content = parser.parse_sequence_constructor(element.node)?;
+        let content = element.sequence_constructor()?;
         let names = element.names;
         Ok(ast::Copy {
             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
@@ -378,13 +384,24 @@ impl InstructionParser for ast::Copy {
     }
 }
 
+// impl InstructionParser for ast::Fallback {
+//     fn parse_ast(element: &Element) -> Result<Self, Error> {
+//         let parser = element.xslt_parser;
+//         let content =
+//         Ok(ast::Fallback {
+//             content: parser.parse_sequence_constructor(element.node)?;
+//             span: element.span,
+//         })
+//     }
+// }
+
 impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let parser = element.xslt_parser;
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, |s, span| element.xpath(s, span))?,
-            content: parser.parse_sequence_constructor(element.node)?,
+            content: element.sequence_constructor()?,
             span: element.span,
         })
     }
@@ -409,7 +426,7 @@ impl InstructionParser for ast::Variable {
             as_: element.optional(names.as_, |s, span| element.sequence_type(s, span))?,
             static_: element.boolean(names.static_, false)?,
             visibility: element.optional(names.visibility, Element::visibility_with_abstract)?,
-            content: parser.parse_sequence_constructor(element.node)?,
+            content: element.sequence_constructor()?,
             span: element.span,
         })
     }
