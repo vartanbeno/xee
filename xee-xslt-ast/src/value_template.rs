@@ -28,23 +28,6 @@ impl<'a> ValueTemplateTokenizer<'a> {
         }
     }
 
-    fn item(
-        &self,
-        start: usize,
-        end: usize,
-        f: impl Fn(&'a str, Span) -> ValueTemplateItem<'a>,
-    ) -> Result<ValueTemplateItem<'a>, Error> {
-        if let Some(text) = self.s.get(start..end) {
-            let span = Span {
-                start: self.span.start + start,
-                end: self.span.start + end,
-            };
-            Ok(f(text, span))
-        } else {
-            Err(Error::IllegalSlice)
-        }
-    }
-
     fn string_item(
         &mut self,
         start: usize,
@@ -65,10 +48,15 @@ impl<'a> ValueTemplateTokenizer<'a> {
     }
 
     fn value_item(&self, start: usize, end: usize) -> Result<ValueTemplateItem<'a>, Error> {
-        self.item(start, end, |text, span| ValueTemplateItem::Value {
-            text,
-            span,
-        })
+        if let Some(text) = self.s.get(start..end) {
+            let span = Span {
+                start: self.span.start + start,
+                end: self.span.start + end,
+            };
+            Ok(ValueTemplateItem::Value { text, span })
+        } else {
+            Err(Error::IllegalSlice)
+        }
     }
 
     fn start_curly_item(&self) -> Result<ValueTemplateItem<'a>, Error> {
