@@ -82,7 +82,7 @@ enum ValueTemplateItem<'a> {
 
 #[derive(Debug, PartialEq, Eq)]
 enum Error {
-    UnfinishedValue(Span),
+    UnescapedCurly { c: char, span: Span },
     IllegalSlice,
 }
 
@@ -124,20 +124,20 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
             Mode::Value => loop {
                 if let Some((i, c)) = self.char_indices.next() {
                     if c == '}' {
-                        self.mode = Mode::EndCurly;
+                        self.mode = Mode::String;
                         end = i;
                         self.start = end + 1;
                         return Some(self.value_item(start, end));
                     }
                 } else {
-                    // we cannot have a start curly without an end curly
-                    end = self.s.len();
-                    let span = Span {
-                        start: self.span.start + self.start,
-                        end: self.span.start + end,
-                    };
                     self.done = true;
-                    return Some(Err(Error::UnfinishedValue(span)));
+                    return Some(Err(Error::UnescapedCurly {
+                        c: '{',
+                        span: Span {
+                            start: self.span.start + self.start,
+                            end: self.span.start + self.start + 1,
+                        },
+                    }));
                 }
             },
             Mode::StartCurly => {
@@ -169,9 +169,14 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
                         }
                     }
                 }
-
-                self.mode = Mode::String;
-                self.next()
+                self.done = true;
+                Some(Err(Error::UnescapedCurly {
+                    c: '}',
+                    span: Span {
+                        start: self.span.start + self.start,
+                        end: self.span.start + self.start + 1,
+                    },
+                }))
             }
         }
     }
@@ -272,6 +277,34 @@ mod tests {
     }
 
     #[test]
+    fn test_string_with_value_in_span() {
+        let s = "hello {world}!";
+        let span = Span {
+            start: 10,
+            end: s.len() + 10,
+        };
+        let tokenizer = ValueTemplateTokenizer::new(s, span);
+        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                ValueTemplateItem::String {
+                    text: "hello ",
+                    span: Span { start: 10, end: 16 },
+                },
+                ValueTemplateItem::Value {
+                    text: "world",
+                    span: Span { start: 17, end: 22 },
+                },
+                ValueTemplateItem::String {
+                    text: "!",
+                    span: Span { start: 23, end: 24 },
+                },
+            ]
+        );
+    }
+
+    #[test]
     fn test_string_with_empty_value() {
         let s = "hello {}!";
         let span = Span {
@@ -364,6 +397,60 @@ mod tests {
                     span: Span { start: 12, end: 13 },
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn test_string_unescaped_unclosed_start_curly() {
+        let s = "hello{world";
+        let span = Span {
+            start: 0,
+            end: s.len(),
+        };
+        let tokenizer = ValueTemplateTokenizer::new(s, span);
+        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
+        assert_eq!(
+            tokens,
+            Err(Error::UnescapedCurly {
+                c: '{',
+                span: Span { start: 6, end: 7 }
+            })
+        );
+    }
+
+    #[test]
+    fn test_string_unescaped_unclosed_start_curly_with_span() {
+        let s = "hello{world";
+        let span = Span {
+            start: 10,
+            end: 10 + s.len(),
+        };
+        let tokenizer = ValueTemplateTokenizer::new(s, span);
+        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
+        assert_eq!(
+            tokens,
+            Err(Error::UnescapedCurly {
+                c: '{',
+                span: Span { start: 16, end: 17 }
+            })
+        );
+    }
+
+    #[test]
+    fn test_string_unescaped_end_curly() {
+        let s = "hello}world";
+        let span = Span {
+            start: 0,
+            end: s.len(),
+        };
+        let tokenizer = ValueTemplateTokenizer::new(s, span);
+        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
+        assert_eq!(
+            tokens,
+            Err(Error::UnescapedCurly {
+                c: '}',
+                span: Span { start: 6, end: 7 }
+            })
         );
     }
 }
