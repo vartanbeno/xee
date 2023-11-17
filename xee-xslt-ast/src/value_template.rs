@@ -122,6 +122,12 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
                 }
             },
             Mode::Value => loop {
+                // TODO: this should parse an XPath expression
+                // with the following string and return the index
+                // of the end of the expression, which should contain
+                // a close curly brace or be an error
+                // this should be fed into the lexer in an iterative way
+
                 if let Some((i, c)) = self.char_indices.next() {
                     if c == '}' {
                         self.mode = Mode::String;
