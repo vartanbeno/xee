@@ -74,6 +74,7 @@ impl<'a> ValueTemplateTokenizer<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 enum ValueTemplateItem<'a> {
     String { text: &'a str, span: Span },
     Curly { c: char },
@@ -81,6 +82,7 @@ enum ValueTemplateItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 enum Error {
     UnescapedCurly { c: char, span: Span },
     IllegalSlice,
@@ -191,95 +193,39 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_ron_snapshot;
 
-    #[test]
-    fn test_string_without_curly() {
-        let s = "hello world";
+    fn parse_with_span(s: &str, span: Span) -> Result<Vec<ValueTemplateItem>, Error> {
+        let tokenizer = ValueTemplateTokenizer::new(s, span);
+        tokenizer.collect()
+    }
+
+    fn parse(s: &str) -> Result<Vec<ValueTemplateItem>, Error> {
         let span = Span {
             start: 0,
             end: s.len(),
         };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(tokens, vec![ValueTemplateItem::String { text: s, span }]);
+        parse_with_span(s, span)
+    }
+
+    #[test]
+    fn test_string_without_curly() {
+        assert_ron_snapshot!(parse("hello world"));
     }
 
     #[test]
     fn test_string_start_curly_escaped() {
-        let s = "hello{{world";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello",
-                    span: Span { start: 0, end: 5 }
-                },
-                ValueTemplateItem::Curly { c: '{' },
-                ValueTemplateItem::String {
-                    text: "world",
-                    span: Span { start: 7, end: 12 }
-                }
-            ]
-        );
+        assert_ron_snapshot!(parse("hello{{world"));
     }
 
     #[test]
     fn test_string_end_curly_escaped() {
-        let s = "hello}}world";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello",
-                    span: Span { start: 0, end: 5 }
-                },
-                ValueTemplateItem::Curly { c: '}' },
-                ValueTemplateItem::String {
-                    text: "world",
-                    span: Span { start: 7, end: 12 }
-                }
-            ]
-        );
+        assert_ron_snapshot!(parse("hello}}world"));
     }
 
     #[test]
     fn test_string_with_value() {
-        let s = "hello {world}!";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello ",
-                    span: Span { start: 0, end: 6 },
-                },
-                ValueTemplateItem::Value {
-                    text: "world",
-                    span: Span { start: 7, end: 12 },
-                },
-                ValueTemplateItem::String {
-                    text: "!",
-                    span: Span { start: 13, end: 14 },
-                },
-            ]
-        );
+        assert_ron_snapshot!(parse("hello {world}!"));
     }
 
     #[test]
@@ -289,139 +235,27 @@ mod tests {
             start: 10,
             end: s.len() + 10,
         };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello ",
-                    span: Span { start: 10, end: 16 },
-                },
-                ValueTemplateItem::Value {
-                    text: "world",
-                    span: Span { start: 17, end: 22 },
-                },
-                ValueTemplateItem::String {
-                    text: "!",
-                    span: Span { start: 23, end: 24 },
-                },
-            ]
-        );
+        assert_ron_snapshot!(parse_with_span(s, span));
     }
 
     #[test]
     fn test_string_with_empty_value() {
-        let s = "hello {}!";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello ",
-                    span: Span { start: 0, end: 6 },
-                },
-                ValueTemplateItem::Value {
-                    text: "",
-                    span: Span { start: 7, end: 7 },
-                },
-                ValueTemplateItem::String {
-                    text: "!",
-                    span: Span { start: 8, end: 9 },
-                },
-            ]
-        );
+        assert_ron_snapshot!(parse("hello {}!"));
     }
 
     #[test]
     fn test_string_with_multiple_values() {
-        let s = "hello {a} and {b}!";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello ",
-                    span: Span { start: 0, end: 6 },
-                },
-                ValueTemplateItem::Value {
-                    text: "a",
-                    span: Span { start: 7, end: 8 },
-                },
-                ValueTemplateItem::String {
-                    text: " and ",
-                    span: Span { start: 9, end: 14 },
-                },
-                ValueTemplateItem::Value {
-                    text: "b",
-                    span: Span { start: 15, end: 16 },
-                },
-                ValueTemplateItem::String {
-                    text: "!",
-                    span: Span { start: 17, end: 18 },
-                },
-            ]
-        );
+        assert_ron_snapshot!(parse("hello {a} and {b}!"));
     }
 
     #[test]
     fn test_string_with_multiple_adjacent_values() {
-        let s = "hello {a}{b}!";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>().unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                ValueTemplateItem::String {
-                    text: "hello ",
-                    span: Span { start: 0, end: 6 },
-                },
-                ValueTemplateItem::Value {
-                    text: "a",
-                    span: Span { start: 7, end: 8 },
-                },
-                ValueTemplateItem::Value {
-                    text: "b",
-                    span: Span { start: 10, end: 11 },
-                },
-                ValueTemplateItem::String {
-                    text: "!",
-                    span: Span { start: 12, end: 13 },
-                },
-            ]
-        );
+        assert_ron_snapshot!(parse("hello {a}{b}!"));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly() {
-        let s = "hello{world";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
-        assert_eq!(
-            tokens,
-            Err(Error::UnescapedCurly {
-                c: '{',
-                span: Span { start: 6, end: 7 }
-            })
-        );
+        assert_ron_snapshot!(parse("hello{world"));
     }
 
     #[test]
@@ -431,32 +265,11 @@ mod tests {
             start: 10,
             end: 10 + s.len(),
         };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
-        assert_eq!(
-            tokens,
-            Err(Error::UnescapedCurly {
-                c: '{',
-                span: Span { start: 16, end: 17 }
-            })
-        );
+        assert_ron_snapshot!(parse_with_span(s, span));
     }
 
     #[test]
     fn test_string_unescaped_end_curly() {
-        let s = "hello}world";
-        let span = Span {
-            start: 0,
-            end: s.len(),
-        };
-        let tokenizer = ValueTemplateTokenizer::new(s, span);
-        let tokens = tokenizer.collect::<Result<Vec<_>, Error>>();
-        assert_eq!(
-            tokens,
-            Err(Error::UnescapedCurly {
-                c: '}',
-                span: Span { start: 6, end: 7 }
-            })
-        );
+        assert_ron_snapshot!(parse("hello}world"));
     }
 }

@@ -1,0 +1,11 @@
+---
+source: xee-xslt-ast/src/value_template.rs
+expression: "parse_with_span(s, span)"
+---
+Err(UnescapedCurly(
+  c: '{',
+  span: Span(
+    start: 16,
+    end: 17,
+  ),
+))

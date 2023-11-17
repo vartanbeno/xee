@@ -1,0 +1,34 @@
+---
+source: xee-xslt-ast/src/value_template.rs
+expression: "parse(\"hello {a}{b}!\")"
+---
+Ok([
+  String(
+    text: "hello ",
+    span: Span(
+      start: 0,
+      end: 6,
+    ),
+  ),
+  Value(
+    text: "a",
+    span: Span(
+      start: 7,
+      end: 8,
+    ),
+  ),
+  Value(
+    text: "b",
+    span: Span(
+      start: 10,
+      end: 11,
+    ),
+  ),
+  String(
+    text: "!",
+    span: Span(
+      start: 12,
+      end: 13,
+    ),
+  ),
+])

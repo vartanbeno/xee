@@ -1,0 +1,27 @@
+---
+source: xee-xslt-ast/src/value_template.rs
+expression: "parse_with_span(s, span)"
+---
+Ok([
+  String(
+    text: "hello ",
+    span: Span(
+      start: 10,
+      end: 16,
+    ),
+  ),
+  Value(
+    text: "world",
+    span: Span(
+      start: 17,
+      end: 22,
+    ),
+  ),
+  String(
+    text: "!",
+    span: Span(
+      start: 23,
+      end: 24,
+    ),
+  ),
+])
