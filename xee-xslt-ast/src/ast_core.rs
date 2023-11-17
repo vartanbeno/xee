@@ -1,4 +1,4 @@
-use ahash::HashMap;
+// use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
 // TODO: standard attribute support such as expand-text during the parse, this
