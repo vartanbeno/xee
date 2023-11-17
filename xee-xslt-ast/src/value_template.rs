@@ -28,6 +28,13 @@ impl<'a> ValueTemplateTokenizer<'a> {
         }
     }
 
+    fn span(&self, start: usize, end: usize) -> Span {
+        Span {
+            start: self.span.start + start,
+            end: self.span.start + end,
+        }
+    }
+
     fn string_item(
         &mut self,
         start: usize,
@@ -37,11 +44,10 @@ impl<'a> ValueTemplateTokenizer<'a> {
             if text.is_empty() {
                 return self.next();
             }
-            let span = Span {
-                start: self.span.start + start,
-                end: self.span.start + end,
-            };
-            Some(Ok(ValueTemplateItem::String { text, span }))
+            Some(Ok(ValueTemplateItem::String {
+                text,
+                span: self.span(start, end),
+            }))
         } else {
             Some(Err(Error::IllegalSlice))
         }
@@ -49,11 +55,10 @@ impl<'a> ValueTemplateTokenizer<'a> {
 
     fn value_item(&self, start: usize, end: usize) -> Result<ValueTemplateItem<'a>, Error> {
         if let Some(text) = self.s.get(start..end) {
-            let span = Span {
-                start: self.span.start + start,
-                end: self.span.start + end,
-            };
-            Ok(ValueTemplateItem::Value { text, span })
+            Ok(ValueTemplateItem::Value {
+                text,
+                span: self.span(start, end),
+            })
         } else {
             Err(Error::IllegalSlice)
         }
