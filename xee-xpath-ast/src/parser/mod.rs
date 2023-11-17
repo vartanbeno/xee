@@ -105,12 +105,12 @@ mod tests {
 
     use insta::assert_ron_snapshot;
 
-    fn parse_xpath_simple<'a>(src: &'a str) -> Result<ast::XPath, ParserError> {
+    fn parse_xpath_simple(src: &str) -> Result<ast::XPath, ParserError> {
         let namespaces = Namespaces::default();
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 
-    fn parse_xpath_simple_element_ns<'a>(src: &'a str) -> Result<ast::XPath, ParserError> {
+    fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParserError> {
         let namespaces = Namespaces::new(Some("http://example.com"), None);
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
