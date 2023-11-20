@@ -1,6 +1,8 @@
 // use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
+use crate::error::Error;
+
 // TODO: standard attribute support such as expand-text during the parse, this
 // should be respected and parse into the right thing, so the AST does not need
 // to retain knowledge of expand-text
@@ -53,7 +55,7 @@ pub struct Expression {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Templ<V>
+pub struct ValueTemplate<V>
 where
     V: Clone + PartialEq + Eq,
 {
@@ -62,6 +64,13 @@ where
     // TODO: not sure this type information is useful
     pub phantom: std::marker::PhantomData<V>,
 }
+
+// impl<V> ValueTemplate<V>
+// where
+//     V: Clone + PartialEq + Eq,
+// {
+//     fn convert(&self) -> Result<V, Error> {}
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -223,8 +232,8 @@ pub enum AccumulatorPhase {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AnalyzeString {
     pub select: Expression,
-    pub regex: Templ<String>,
-    pub flags: Option<Templ<String>>,
+    pub regex: ValueTemplate<String>,
+    pub flags: Option<ValueTemplate<String>>,
 
     pub matching_substring: Option<MatchingSubstring>,
     pub non_matching_substring: Option<NonMatchingSubstring>,
@@ -268,7 +277,7 @@ pub enum ApplyTemplatesContent {
 pub struct Assert {
     pub test: Expression,
     pub select: Option<Expression>,
-    pub error_code: Option<Templ<EqName>>,
+    pub error_code: Option<ValueTemplate<EqName>>,
 
     pub content: SequenceConstructor,
 
@@ -285,10 +294,10 @@ impl From<Assert> for SequenceConstructorItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Attribute {
-    pub name: Templ<QName>,
-    pub namespace: Option<Templ<Uri>>,
+    pub name: ValueTemplate<QName>,
+    pub namespace: Option<ValueTemplate<Uri>>,
     pub select: Option<Expression>,
-    pub separator: Option<Templ<String>>,
+    pub separator: Option<ValueTemplate<String>>,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
 
@@ -458,8 +467,8 @@ pub struct Document {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Element {
-    pub name: Templ<EqName>,
-    pub namespace: Option<Templ<Uri>>,
+    pub name: ValueTemplate<EqName>,
+    pub namespace: Option<ValueTemplate<Uri>>,
     pub inherit_namespaces: Option<bool>,
     pub use_attribute_sets: Option<Vec<EqName>>,
     pub type_: Option<EqName>,
@@ -476,11 +485,11 @@ pub struct Element {
 pub struct Evaluate {
     pub xpath: Expression,
     pub as_: Option<SequenceType>,
-    pub base_uri: Option<Templ<Uri>>,
+    pub base_uri: Option<ValueTemplate<Uri>>,
     pub with_params: Option<Expression>,
     pub context_item: Option<Expression>,
     pub namespace_context: Option<Expression>,
-    pub schema_aware: Option<Templ<bool>>,
+    pub schema_aware: Option<ValueTemplate<bool>>,
 
     pub content: Vec<EvaluateContent>,
 
@@ -542,7 +551,7 @@ pub struct ForEachGroup {
     pub group_starting_with: Option<Pattern>,
     pub group_ending_with: Option<Pattern>,
     pub composite: Option<bool>,
-    pub collation: Option<Templ<Uri>>,
+    pub collation: Option<ValueTemplate<Uri>>,
 
     pub sort: Vec<Sort>,
     pub constructor: SequenceConstructor,
@@ -745,11 +754,11 @@ pub struct MergeAction {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MergeKey {
     pub select: Option<Expression>,
-    pub lang: Option<Templ<Language>>,
-    pub order: Option<Templ<Order>>,
-    pub collation: Option<Templ<Uri>>,
-    pub case_order: Option<Templ<CaseOrder>>,
-    pub data_type: Option<Templ<DataType>>,
+    pub lang: Option<ValueTemplate<Language>>,
+    pub order: Option<ValueTemplate<Order>>,
+    pub collation: Option<ValueTemplate<Uri>>,
+    pub case_order: Option<ValueTemplate<CaseOrder>>,
+    pub data_type: Option<ValueTemplate<DataType>>,
 
     pub content: SequenceConstructor,
 
@@ -780,8 +789,8 @@ pub struct MergeSource {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Message {
     pub select: Option<Expression>,
-    pub terminate: Option<Templ<bool>>,
-    pub error_code: Option<Templ<EqName>>,
+    pub terminate: Option<ValueTemplate<bool>>,
+    pub error_code: Option<ValueTemplate<EqName>>,
 
     pub content: SequenceConstructor,
 
@@ -836,7 +845,7 @@ pub enum Typed {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Namespace {
-    pub name: Option<Templ<NcName>>,
+    pub name: Option<ValueTemplate<NcName>>,
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
@@ -904,13 +913,13 @@ pub struct Number {
     pub level: Option<NumberLevel>,
     pub count: Option<Pattern>,
     pub from: Option<Pattern>,
-    pub format: Option<Templ<String>>,
-    pub lang: Option<Templ<Language>>,
-    pub letter_value: Option<Templ<LetterValue>>,
-    pub ordinal: Option<Templ<String>>,
-    pub start_at: Option<Templ<String>>,
-    pub grouping_separator: Option<Templ<char>>,
-    pub grouping_size: Option<Templ<usize>>,
+    pub format: Option<ValueTemplate<String>>,
+    pub lang: Option<ValueTemplate<Language>>,
+    pub letter_value: Option<ValueTemplate<LetterValue>>,
+    pub ordinal: Option<ValueTemplate<String>>,
+    pub start_at: Option<ValueTemplate<String>>,
+    pub grouping_separator: Option<ValueTemplate<char>>,
+    pub grouping_size: Option<ValueTemplate<usize>>,
 
     pub standard: Standard,
     pub span: Span,
@@ -1167,7 +1176,7 @@ pub struct PreserveSpace {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ProcessingInstruction {
-    pub name: Templ<NcName>,
+    pub name: ValueTemplate<NcName>,
     pub select: Option<Expression>,
 
     pub content: SequenceConstructor,
@@ -1179,33 +1188,33 @@ pub struct ProcessingInstruction {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ResultDocument {
-    pub format: Option<Templ<EqName>>,
-    pub href: Option<Templ<Uri>>,
+    pub format: Option<ValueTemplate<EqName>>,
+    pub href: Option<ValueTemplate<Uri>>,
     pub validation: Option<Validation>,
     pub type_: EqName,
-    pub method: Option<Templ<OutputMethod>>,
-    pub allow_duplicate_names: Option<Templ<bool>>,
-    pub build_tree: Option<Templ<bool>>,
-    pub bye_order_mark: Option<Templ<bool>>,
-    pub cdata_section_elements: Option<Templ<Vec<EqName>>>,
-    pub doctype_public: Option<Templ<String>>,
-    pub doctype_system: Option<Templ<String>>,
-    pub encoding: Option<Templ<String>>,
-    pub escape_uri_attributes: Option<Templ<bool>>,
-    pub html_version: Option<Templ<Decimal>>,
-    pub include_content_type: Option<Templ<bool>>,
-    pub indent: Option<Templ<bool>>,
-    pub item_separator: Option<Templ<String>>,
-    pub json_node_output_method: Option<Templ<JsonNodeOutputMethod>>,
-    pub media_type: Option<Templ<String>>,
-    pub normalization_form: Option<Templ<NormalizationForm>>,
-    pub omit_xml_declaration: Option<Templ<bool>>,
-    pub parameter_document: Option<Templ<Uri>>,
-    pub standalone: Option<Templ<Standalone>>,
-    pub suppress_indentation: Option<Templ<Vec<EqName>>>,
-    pub undeclare_prefixes: Option<Templ<bool>>,
+    pub method: Option<ValueTemplate<OutputMethod>>,
+    pub allow_duplicate_names: Option<ValueTemplate<bool>>,
+    pub build_tree: Option<ValueTemplate<bool>>,
+    pub bye_order_mark: Option<ValueTemplate<bool>>,
+    pub cdata_section_elements: Option<ValueTemplate<Vec<EqName>>>,
+    pub doctype_public: Option<ValueTemplate<String>>,
+    pub doctype_system: Option<ValueTemplate<String>>,
+    pub encoding: Option<ValueTemplate<String>>,
+    pub escape_uri_attributes: Option<ValueTemplate<bool>>,
+    pub html_version: Option<ValueTemplate<Decimal>>,
+    pub include_content_type: Option<ValueTemplate<bool>>,
+    pub indent: Option<ValueTemplate<bool>>,
+    pub item_separator: Option<ValueTemplate<String>>,
+    pub json_node_output_method: Option<ValueTemplate<JsonNodeOutputMethod>>,
+    pub media_type: Option<ValueTemplate<String>>,
+    pub normalization_form: Option<ValueTemplate<NormalizationForm>>,
+    pub omit_xml_declaration: Option<ValueTemplate<bool>>,
+    pub parameter_document: Option<ValueTemplate<Uri>>,
+    pub standalone: Option<ValueTemplate<Standalone>>,
+    pub suppress_indentation: Option<ValueTemplate<Vec<EqName>>>,
+    pub undeclare_prefixes: Option<ValueTemplate<bool>>,
     pub use_character_maps: Option<Vec<EqName>>,
-    pub version: Option<Templ<NmToken>>,
+    pub version: Option<ValueTemplate<NmToken>>,
 
     pub content: SequenceConstructor,
 
@@ -1228,12 +1237,12 @@ pub struct Sequence {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Sort {
     pub select: Option<Expression>,
-    pub lang: Option<Templ<Language>>,
-    pub order: Option<Templ<Order>>,
-    pub collation: Option<Templ<Uri>>,
-    pub stable: Option<Templ<bool>>,
-    pub case_order: Option<Templ<CaseOrder>>,
-    pub data_type: Option<Templ<DataType>>,
+    pub lang: Option<ValueTemplate<Language>>,
+    pub order: Option<ValueTemplate<Order>>,
+    pub collation: Option<ValueTemplate<Uri>>,
+    pub stable: Option<ValueTemplate<bool>>,
+    pub case_order: Option<ValueTemplate<CaseOrder>>,
+    pub data_type: Option<ValueTemplate<DataType>>,
 
     pub content: SequenceConstructor,
 
@@ -1244,7 +1253,7 @@ pub struct Sort {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SourceDocument {
-    pub href: Templ<Uri>,
+    pub href: ValueTemplate<Uri>,
     pub streamable: Option<bool>,
     pub use_accumulators: Option<Vec<Token>>,
     pub validation: Option<Validation>,
@@ -1363,7 +1372,7 @@ pub enum UsePackageContent {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ValueOf {
     pub select: Option<Expression>,
-    pub separator: Option<Templ<String>>,
+    pub separator: Option<ValueTemplate<String>>,
     // DEPRECATED
     pub disable_output_escaping: Option<bool>,
 
