@@ -25,8 +25,6 @@ fn resolve_qname(
         // that used NamespaceLookup instead of Namespaces, but that requires a lot
         // of generics we're not ready for at this point.
         let namespaces = element_namespaces(node, context.xot);
-        // TODO: we should distinguish a parse error from a non-existing prefix,
-        // but that requires work in the parser itself
         let name = ast::Name::parse(qname, &namespaces)?.value;
         Ok(Some(name.into()))
     } else {
