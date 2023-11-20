@@ -840,6 +840,12 @@ where
         .then_ignore(end())
         .map(ast::XPath)
         .boxed();
+    // TODO: how well does this scale? what we intend is parse up to the end of
+    // the right brace, and after that stop caring and tokenizing.
+    // Unfortunately I can't seem to make it do that without actually going
+    // through the rest of the tokens. But I'm afraid that `any().repeated()`
+    // tries to tokenize the rest of the tet of the XSLT template in which this
+    // xpath is embedded, which is not very efficient.
     let xpath_right_brace = expr_
         .unwrap()
         .then_ignore(just(Token::RightBrace))
