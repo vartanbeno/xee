@@ -1,18 +1,34 @@
 use xee_xpath_ast::{ast as xpath_ast, Namespaces, ParserError};
 
+use crate::ast_core as ast;
 use crate::ast_core::Span;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-enum ValueTemplateItem<'a> {
+pub enum ValueTemplateItem<'a> {
     String { text: &'a str, span: Span },
     Curly { c: char },
     Value { xpath: xpath_ast::XPath, span: Span },
 }
 
+impl<'a> From<ValueTemplateItem<'a>> for ast::ValueTemplateItem {
+    fn from(item: ValueTemplateItem<'a>) -> Self {
+        match item {
+            ValueTemplateItem::String { text, span } => ast::ValueTemplateItem::String {
+                text: text.to_string(),
+                span,
+            },
+            ValueTemplateItem::Curly { c } => ast::ValueTemplateItem::Curly { c },
+            ValueTemplateItem::Value { xpath, span } => {
+                ast::ValueTemplateItem::Value { xpath, span }
+            }
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-enum Error {
+pub(crate) enum Error {
     UnescapedCurly { c: char, span: Span },
     IllegalSlice,
     XPath(ParserError),
@@ -24,7 +40,7 @@ impl From<ParserError> for Error {
     }
 }
 
-struct ValueTemplateTokenizer<'a> {
+pub(crate) struct ValueTemplateTokenizer<'a> {
     s: &'a str,
     char_indices: std::iter::Peekable<std::str::CharIndices<'a>>,
     span: Span,
@@ -43,7 +59,7 @@ enum Mode {
 }
 
 impl<'a> ValueTemplateTokenizer<'a> {
-    fn new(
+    pub(crate) fn new(
         s: &'a str,
         span: Span,
         namespaces: &'a Namespaces<'a>,

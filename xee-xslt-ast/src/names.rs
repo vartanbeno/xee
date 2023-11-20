@@ -5,6 +5,7 @@ use xot::{NameId, NamespaceId, Xot};
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SequenceConstructorName {
     If,
+    Fallback,
     Variable,
     Copy,
 }
@@ -15,6 +16,7 @@ pub(crate) struct Names {
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 
     pub(crate) copy: xot::NameId,
+    pub(crate) fallback: xot::NameId,
     pub(crate) if_: xot::NameId,
     pub(crate) variable: xot::NameId,
 
@@ -83,11 +85,13 @@ impl Names {
         let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
 
         let copy = xot.add_name_ns("copy", xsl_ns);
+        let fallback = xot.add_name_ns("fallback", xsl_ns);
         let if_ = xot.add_name_ns("if", xsl_ns);
         let variable = xot.add_name_ns("variable", xsl_ns);
 
         let mut sequence_constructor_names = BTreeMap::new();
         sequence_constructor_names.insert(if_, SequenceConstructorName::If);
+        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
         sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
         sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
 
@@ -97,6 +101,7 @@ impl Names {
             sequence_constructor_names,
 
             copy,
+            fallback,
             if_,
             variable,
 

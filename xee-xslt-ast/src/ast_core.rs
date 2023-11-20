@@ -1,8 +1,6 @@
 // use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
-use crate::error::Error;
-
 // TODO: standard attribute support such as expand-text during the parse, this
 // should be respected and parse into the right thing, so the AST does not need
 // to retain knowledge of expand-text
@@ -59,10 +57,18 @@ pub struct ValueTemplate<V>
 where
     V: Clone + PartialEq + Eq,
 {
-    pub template: Vec<AttributeValueTemplateItem>,
+    pub template: Vec<ValueTemplateItem>,
 
     // TODO: not sure this type information is useful
     pub phantom: std::marker::PhantomData<V>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum ValueTemplateItem {
+    String { text: String, span: Span },
+    Curly { c: char },
+    Value { xpath: xpath_ast::XPath, span: Span },
 }
 
 // impl<V> ValueTemplate<V>
@@ -72,12 +78,12 @@ where
 //     fn convert(&self) -> Result<V, Error> {}
 // }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum AttributeValueTemplateItem {
-    Expression(Expression),
-    String(String),
-}
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+// pub enum AttributeValueTemplateItem {
+//     Expression(Expression),
+//     String(String),
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

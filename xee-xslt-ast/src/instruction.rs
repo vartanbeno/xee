@@ -31,6 +31,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
                 SequenceConstructorName::Copy => ast::Copy::parse(element),
                 SequenceConstructorName::If => ast::If::parse(element),
                 SequenceConstructorName::Variable => ast::Variable::parse(element),
+                SequenceConstructorName::Fallback => ast::Fallback::parse(element),
             }
         } else {
             let ns = element.xot.namespace_for_name(element.element.name());
@@ -68,10 +69,11 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
 //     fn parse_ast(element: &Element) -> Result<Self, Error> {
 //         let names = element.names;
 //         Ok(ast::Assert {
-//             test: element.required(names.test, |s, span| element.xpath(s, span))?,
-//             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
+//             test: element.required(names.test, element.xpath())?,
+//             select: element.optional(names.select, element.xpath())?,
 //             error_code: element
-//                 .optional(names.error_code, |s, span| element.attribute_value(s, span))?,
+//                 .optional(names.error_code, element.value_template(element.eqname()))?,
+
 //             content: element.sequence_constructor()?,
 
 //             standard: element.standard()?,
@@ -100,16 +102,16 @@ impl InstructionParser for ast::Copy {
     }
 }
 
-// impl InstructionParser for ast::Fallback {
-//     fn parse_ast(element: &Element) -> Result<Self, Error> {
-//         let parser = element.xslt_parser;
-//         let content =
-//         Ok(ast::Fallback {
-//             content: parser.parse_sequence_constructor(element.node)?;
-//             span: element.span,
-//         })
-//     }
-// }
+impl InstructionParser for ast::Fallback {
+    fn parse_ast(element: &Element) -> Result<Self, Error> {
+        Ok(ast::Fallback {
+            content: element.sequence_constructor()?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
 
 impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {

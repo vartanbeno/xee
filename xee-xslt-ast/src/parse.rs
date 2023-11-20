@@ -8,6 +8,7 @@ use crate::error::Error;
 use crate::instruction::InstructionParser;
 use crate::names::{Names, StandardNames};
 use crate::tokenize::split_whitespace_with_spans;
+use crate::value_template::ValueTemplateTokenizer;
 
 pub(crate) struct XsltParser<'a> {
     xot: &'a Xot,
@@ -183,6 +184,38 @@ impl<'a> Element<'a> {
             .get(SpanInfoKey::AttributeValue(self.node, name))
             .ok_or(Error::MissingSpan)?;
         Ok(span.into())
+    }
+
+    fn _value_template<T>(
+        &self,
+        s: &'a str,
+        span: Span,
+        parse_value: &'a (impl Fn(&'a str, Span) -> Result<T, Error> + 'a),
+    ) -> Result<ast::ValueTemplate<T>, Error>
+    where
+        T: Clone + PartialEq + Eq,
+    {
+        unimplemented!()
+
+        // let iter = ValueTemplateTokenizer::new(s, span, &self.namespaces(), &[]);
+        // let tokens: Result<Vec<ast::ValueTemplateItem>, Error> = iter.map(|token| {
+
+        // }).collect();
+        // let owned_tokens =
+        // Ok(ast::ValueTemplate {
+        //     template: tokens?,
+        //     phantom: std::marker::PhantomData,
+        // })
+    }
+
+    pub(crate) fn value_template<T>(
+        &self,
+        parse_value: &'a (impl Fn(&'a str, Span) -> Result<T, Error> + 'a),
+    ) -> impl Fn(&'a str, Span) -> Result<ast::ValueTemplate<T>, Error> + '_
+    where
+        T: Clone + PartialEq + Eq,
+    {
+        |s, span| self._value_template(s, span, parse_value)
     }
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
