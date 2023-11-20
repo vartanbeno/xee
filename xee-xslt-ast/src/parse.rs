@@ -1,4 +1,5 @@
-use xee_xpath_ast::{ast as xpath_ast, Namespaces};
+use ahash::{HashMap, HashMapExt};
+use xee_xpath_ast::{ast as xpath_ast, Namespaces, FN_NAMESPACE};
 use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
@@ -410,5 +411,47 @@ impl<'a> Element<'a> {
             },
             Err(e) => e,
         }
+    }
+}
+
+struct ElementNamespaces<'a> {
+    xot: &'a Xot,
+    element_prefixes: Vec<&'a xot::Prefixes>,
+}
+
+impl<'a> ElementNamespaces<'a> {
+    fn new(xot: &'a Xot) -> Self {
+        Self {
+            xot,
+            element_prefixes: Vec::new(),
+        }
+    }
+
+    fn push(&mut self, element: &'a xot::Element) {
+        self.element_prefixes.push(element.prefixes());
+    }
+
+    fn pop(&mut self) {
+        self.element_prefixes.pop();
+    }
+
+    fn prefixes(&self) -> xot::Prefixes {
+        let mut combined_prefixes = xot::Prefixes::new();
+        for prefixes in &self.element_prefixes {
+            for (prefix, uri) in prefixes.iter() {
+                combined_prefixes.insert(*prefix, *uri);
+            }
+        }
+        combined_prefixes
+    }
+
+    fn namespaces(&self) -> Namespaces {
+        let mut namespaces = HashMap::new();
+        for (prefix, ns) in self.prefixes() {
+            let prefix = self.xot.prefix_str(prefix);
+            let uri = self.xot.namespace_str(ns);
+            namespaces.insert(prefix, uri);
+        }
+        Namespaces::new_with_namespaces(namespaces, None, Some(FN_NAMESPACE))
     }
 }

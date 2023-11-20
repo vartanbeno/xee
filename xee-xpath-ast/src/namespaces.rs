@@ -38,6 +38,23 @@ impl<'a> Namespaces<'a> {
         }
     }
 
+    pub fn new_with_namespaces(
+        namespaces: HashMap<&'a str, &'a str>,
+        default_element_namespace: Option<&'a str>,
+        default_function_namespace: Option<&'a str>,
+    ) -> Self {
+        let mut namespaces = namespaces;
+        namespaces.insert("xml", XML_NAMESPACE);
+        for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
+            namespaces.insert(prefix, uri);
+        }
+        Self {
+            namespaces,
+            default_element_namespace,
+            default_function_namespace,
+        }
+    }
+
     pub fn from_namespaces(namespace_pairs: &[(&'a str, &'a str)]) -> Self {
         let mut namespaces = HashMap::new();
         for (prefix, uri) in namespace_pairs {
