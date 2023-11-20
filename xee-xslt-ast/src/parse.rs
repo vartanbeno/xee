@@ -1,10 +1,9 @@
-use std::collections::BTreeMap;
-
 use xee_xpath_ast::{ast as xpath_ast, Namespaces};
-use xot::{NameId, NamespaceId, Node, SpanInfo, SpanInfoKey, Value, Xot};
+use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core as ast;
 use crate::ast_core::Span;
+use crate::names::{Names, SequenceConstructorName, StandardNames};
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -44,128 +43,6 @@ impl From<xee_xpath_ast::ParserError> for Error {
 impl Error {
     fn is_unexpected(&self) -> bool {
         matches!(self, Self::Unexpected)
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum SequenceConstructorName {
-    If,
-    Variable,
-    Copy,
-}
-
-struct Names {
-    xsl_ns: NamespaceId,
-
-    sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
-
-    copy: xot::NameId,
-    if_: xot::NameId,
-    variable: xot::NameId,
-
-    test: xot::NameId,
-    select: xot::NameId,
-    name: xot::NameId,
-    as_: xot::NameId,
-    static_: xot::NameId,
-    visibility: xot::NameId,
-    copy_namespaces: xot::NameId,
-    inherit_namespaces: xot::NameId,
-    use_attribute_sets: xot::NameId,
-    validation: xot::NameId,
-    error_code: xot::NameId,
-
-    // standard attributes on XSLT elements
-    standard: StandardNames,
-    // standard attributes on literal result elements
-    xsl_standard: StandardNames,
-}
-
-struct StandardNames {
-    default_collation: xot::NameId,
-    default_mode: xot::NameId,
-    default_validation: xot::NameId,
-    exclude_result_prefixes: xot::NameId,
-    expand_text: xot::NameId,
-    extension_element_prefixes: xot::NameId,
-    use_when: xot::NameId,
-    version: xot::NameId,
-    xpath_default_namespace: xot::NameId,
-}
-
-impl StandardNames {
-    fn no_ns(xot: &mut Xot) -> Self {
-        Self {
-            default_collation: xot.add_name("default-collation"),
-            default_mode: xot.add_name("default-mode"),
-            default_validation: xot.add_name("default-validation"),
-            exclude_result_prefixes: xot.add_name("exclude-result-prefixes"),
-            expand_text: xot.add_name("expand-text"),
-            extension_element_prefixes: xot.add_name("extension-element-prefixes"),
-            use_when: xot.add_name("use-when"),
-            version: xot.add_name("version"),
-            xpath_default_namespace: xot.add_name("xpath-default-namespace"),
-        }
-    }
-
-    fn xsl(xot: &mut Xot, xsl_ns: NamespaceId) -> Self {
-        Self {
-            default_collation: xot.add_name_ns("default-collation", xsl_ns),
-            default_mode: xot.add_name_ns("default-mode", xsl_ns),
-            default_validation: xot.add_name_ns("default-validation", xsl_ns),
-            exclude_result_prefixes: xot.add_name_ns("exclude-result-prefixes", xsl_ns),
-            expand_text: xot.add_name_ns("expand-text", xsl_ns),
-            extension_element_prefixes: xot.add_name_ns("extension-element-prefixes", xsl_ns),
-            use_when: xot.add_name_ns("use-when", xsl_ns),
-            version: xot.add_name_ns("version", xsl_ns),
-            xpath_default_namespace: xot.add_name_ns("xpath-default-namespace", xsl_ns),
-        }
-    }
-}
-
-impl Names {
-    fn new(xot: &mut Xot) -> Self {
-        let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
-
-        let copy = xot.add_name_ns("copy", xsl_ns);
-        let if_ = xot.add_name_ns("if", xsl_ns);
-        let variable = xot.add_name_ns("variable", xsl_ns);
-
-        let mut sequence_constructor_names = BTreeMap::new();
-        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
-        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
-        sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
-
-        Self {
-            xsl_ns,
-
-            sequence_constructor_names,
-
-            copy,
-            if_,
-            variable,
-
-            test: xot.add_name("test"),
-            select: xot.add_name("select"),
-            name: xot.add_name("name"),
-            as_: xot.add_name("as"),
-            static_: xot.add_name("static"),
-            visibility: xot.add_name("visibility"),
-            copy_namespaces: xot.add_name("copy-namespaces"),
-            inherit_namespaces: xot.add_name("inherit-namespaces"),
-            use_attribute_sets: xot.add_name("use-attribute-sets"),
-            validation: xot.add_name("validation"),
-            error_code: xot.add_name("error-code"),
-
-            // standard attributes
-            standard: StandardNames::no_ns(xot),
-            // standard attributes on literal result elements
-            xsl_standard: StandardNames::xsl(xot, xsl_ns),
-        }
-    }
-
-    fn sequence_constructor_name(&self, name: NameId) -> Option<SequenceConstructorName> {
-        self.sequence_constructor_names.get(&name).copied()
     }
 }
 
