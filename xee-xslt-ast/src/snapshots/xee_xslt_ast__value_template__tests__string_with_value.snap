@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/value_template.rs
-expression: "parse(\"hello {world}!\")"
+expression: "parse(\"hello {world}!\", &namespaces)"
 ---
 Ok([
   String(
@@ -11,7 +11,21 @@ Ok([
     ),
   ),
   Value(
-    text: "world",
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          AxisStep(AxisStep(
+            axis: Child,
+            node_test: NameTest(Name(Name(
+              name: "world",
+              prefix: None,
+              namespace: None,
+            ))),
+            predicates: [],
+          )),
+        ],
+      )),
+    ])),
     span: Span(
       start: 7,
       end: 12,

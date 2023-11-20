@@ -59,6 +59,29 @@ impl ast::XPath {
         unique_names(&mut xpath, variables);
         Ok(xpath)
     }
+
+    // parse xpath, and then a single }
+    // This is useful to support XSLT value templates
+    pub fn parse_value_template<'a>(
+        input: &'a str,
+        namespaces: &'a Namespaces,
+        variables: &'a [ast::Name],
+    ) -> Result<Self, ParserError> {
+        let mut state = State {
+            namespaces: Cow::Borrowed(namespaces),
+        };
+        let r = parser()
+            .xpath_right_brace
+            .parse_with_state(tokens(input), &mut state);
+        let (output, errors) = r.into_output_errors();
+        if let Some(mut xpath) = output {
+            // rename all variables to unique names
+            unique_names(&mut xpath, variables);
+            Ok(xpath)
+        } else {
+            Err(errors.into_iter().next().unwrap())
+        }
+    }
 }
 
 impl ast::ExprSingle {
@@ -800,6 +823,38 @@ mod tests {
     #[test]
     fn test_arrow_function_static_with_placeholder() {
         assert_ron_snapshot!(parse_xpath_simple("'$' => fn:concat(?)"))
+    }
+
+    #[test]
+    fn test_xpath_parse_value_template() {
+        let namespaces = Namespaces::default();
+        let xpath = ast::XPath::parse_value_template("1 + 2}", &namespaces, &[]).unwrap();
+        assert_eq!(xpath.0.span, Span::new(0, 5));
+        assert_ron_snapshot!(xpath);
+    }
+
+    #[test]
+    fn test_xpath_parse_value_template_with_leftover() {
+        let namespaces = Namespaces::default();
+        let xpath = ast::XPath::parse_value_template("1 + 2}foo", &namespaces, &[]).unwrap();
+        assert_eq!(xpath.0.span, Span::new(0, 5));
+        assert_ron_snapshot!(xpath);
+    }
+
+    #[test]
+    fn test_xpath_parse_value_template_a_with_leftover() {
+        let namespaces = Namespaces::default();
+        let xpath = ast::XPath::parse_value_template("a}foo", &namespaces, &[]).unwrap();
+        assert_eq!(xpath.0.span, Span::new(0, 1));
+        assert_ron_snapshot!(xpath);
+    }
+
+    #[test]
+    fn test_xpath_parse_value_template_with_second_value_following() {
+        let namespaces = Namespaces::default();
+        let xpath = ast::XPath::parse_value_template("a}foo{b}!", &namespaces, &[]).unwrap();
+        assert_eq!(xpath.0.span, Span::new(0, 1));
+        assert_ron_snapshot!(xpath);
     }
 
     // #[test]

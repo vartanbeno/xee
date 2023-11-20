@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/value_template.rs
-expression: "parse(\"hello {a} and {b}!\")"
+expression: "parse(\"hello {a} and {b}!\", &namespaces)"
 ---
 Ok([
   String(
@@ -11,7 +11,21 @@ Ok([
     ),
   ),
   Value(
-    text: "a",
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          AxisStep(AxisStep(
+            axis: Child,
+            node_test: NameTest(Name(Name(
+              name: "a",
+              prefix: None,
+              namespace: None,
+            ))),
+            predicates: [],
+          )),
+        ],
+      )),
+    ])),
     span: Span(
       start: 7,
       end: 8,
@@ -25,7 +39,21 @@ Ok([
     ),
   ),
   Value(
-    text: "b",
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          AxisStep(AxisStep(
+            axis: Child,
+            node_test: NameTest(Name(Name(
+              name: "b",
+              prefix: None,
+              namespace: None,
+            ))),
+            predicates: [],
+          )),
+        ],
+      )),
+    ])),
     span: Span(
       start: 15,
       end: 16,

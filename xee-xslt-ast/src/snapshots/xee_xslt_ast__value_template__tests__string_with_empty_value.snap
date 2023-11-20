@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/value_template.rs
-expression: "parse(\"hello {}!\")"
+expression: "parse(\"hello {}!\", &namespaces)"
 ---
 Ok([
   String(
@@ -8,13 +8,6 @@ Ok([
     span: Span(
       start: 0,
       end: 6,
-    ),
-  ),
-  Value(
-    text: "",
-    span: Span(
-      start: 7,
-      end: 7,
     ),
   ),
   String(

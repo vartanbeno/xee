@@ -27,6 +27,7 @@ where
     pub(crate) sequence_type: BoxedParser<'a, I, ast::SequenceType>,
     pub(crate) kind_test: BoxedParser<'a, I, ast::KindTest>,
     pub(crate) xpath: BoxedParser<'a, I, ast::XPath>,
+    pub(crate) xpath_right_brace: BoxedParser<'a, I, ast::XPath>,
 }
 
 pub(crate) fn parser<'a, I>() -> ParserOutput<'a, I>
@@ -833,7 +834,18 @@ where
 
     let name = eqname.clone().then_ignore(end()).boxed();
     let expr_single = expr_single.then_ignore(end()).boxed();
-    let xpath = expr_.unwrap().then_ignore(end()).map(ast::XPath).boxed();
+    let xpath = expr_
+        .clone()
+        .unwrap()
+        .then_ignore(end())
+        .map(ast::XPath)
+        .boxed();
+    let xpath_right_brace = expr_
+        .unwrap()
+        .then_ignore(just(Token::RightBrace))
+        .then_ignore(any().repeated())
+        .map(ast::XPath)
+        .boxed();
     let signature = signature.then_ignore(end()).boxed();
     let sequence_type = sequence_type.then_ignore(end()).boxed();
     let kind_test = kind_test.then_ignore(end()).boxed();
@@ -842,6 +854,7 @@ where
         name,
         expr_single,
         xpath,
+        xpath_right_brace,
         signature,
         sequence_type,
         kind_test,

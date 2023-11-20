@@ -1,11 +1,11 @@
 ---
 source: xee-xslt-ast/src/value_template.rs
-expression: "parse(\"hello{world\")"
+expression: "parse(\"hello{world\", &namespaces)"
 ---
-Err(UnescapedCurly(
-  c: '{',
-  span: Span(
+Err(XPath(ExpectedFound(
+  span: SimpleSpan(
     start: 6,
-    end: 7,
+    end: 11,
+    context: (),
   ),
-))
+)))
