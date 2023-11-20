@@ -46,7 +46,10 @@ impl<'a> Iterator for WhitespaceSplitter<'a> {
     }
 }
 
-fn split_whitespace_with_spans(s: &str, span: Span) -> impl Iterator<Item = (&str, Span)> {
+pub(crate) fn split_whitespace_with_spans(
+    s: &str,
+    span: Span,
+) -> impl Iterator<Item = (&str, Span)> {
     WhitespaceSplitter {
         s,
         char_indices: s.char_indices(),

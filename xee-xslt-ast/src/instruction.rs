@@ -250,6 +250,13 @@ mod tests {
     }
 
     #[test]
+    fn test_eqnames_error() {
+        assert_ron_snapshot!(parse(
+            r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" use-attribute-sets="foo br!ken bar">Hello</xsl:copy>"#
+        ));
+    }
+
+    #[test]
     fn test_nested_if() {
         assert_ron_snapshot!(parse(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><xsl:if test="true()">Hello</xsl:if></xsl:if>"#

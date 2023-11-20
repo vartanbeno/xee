@@ -6,6 +6,7 @@ use crate::ast_core::Span;
 use crate::error::Error;
 use crate::instruction::InstructionParser;
 use crate::names::{Names, StandardNames};
+use crate::tokenize::split_whitespace_with_spans;
 
 pub(crate) struct XsltParser<'a> {
     xot: &'a Xot,
@@ -217,7 +218,7 @@ impl<'a> Element<'a> {
 
     pub(crate) fn eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
         let mut result = Vec::new();
-        for s in s.split_whitespace() {
+        for (s, span) in split_whitespace_with_spans(s, span) {
             result.push(self.eqname(s, span)?);
         }
         Ok(result)
