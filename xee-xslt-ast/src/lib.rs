@@ -2,6 +2,7 @@
 
 mod ast_core;
 mod error;
+mod instruction;
 mod names;
 mod parse;
 mod tokenize;

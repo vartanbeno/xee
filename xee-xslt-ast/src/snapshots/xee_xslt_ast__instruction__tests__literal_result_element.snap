@@ -1,5 +1,5 @@
 ---
-source: xee-xslt-ast/src/parse.rs
+source: xee-xslt-ast/src/instruction.rs
 expression: "parse(r#\"<foo/>\"#)"
 ---
 Ok(ElementNode(ElementNode(

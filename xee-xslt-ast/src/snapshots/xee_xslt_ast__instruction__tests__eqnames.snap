@@ -1,5 +1,5 @@
 ---
-source: xee-xslt-ast/src/parse.rs
+source: xee-xslt-ast/src/instruction.rs
 expression: "parse(r#\"<xsl:copy xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" use-attribute-sets=\"foo bar baz\">Hello</xsl:copy>\"#)"
 ---
 Ok(Copy(Copy(

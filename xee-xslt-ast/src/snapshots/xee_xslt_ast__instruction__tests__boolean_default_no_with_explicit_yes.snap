@@ -1,6 +1,6 @@
 ---
-source: xee-xslt-ast/src/parse.rs
-expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" select=\"true()\">Hello</xsl:variable>\"#)"
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" static=\"yes\" as=\"xs:string\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Ok(Variable(Variable(
   name: "foo",
@@ -20,12 +20,15 @@ Ok(Variable(Variable(
       )),
     ])),
     span: Span(
-      start: 82,
-      end: 88,
+      start: 110,
+      end: 116,
     ),
   )),
-  as_: None,
-  static_: false,
+  as_: Some(Item(Item(
+    item_type: AtomicOrUnionType(String),
+    occurrence: One,
+  ))),
+  static_: true,
   visibility: None,
   content: [
     TextNode("Hello"),

@@ -1,9 +1,9 @@
 ---
-source: xee-xslt-ast/src/parse.rs
-expression: "parse(r#\"<xsl:copy xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" select=\"true()\" copy-namespaces=\"no\" inherit-namespaces=\"no\" validation=\"strict\">Hello</xsl:copy>\"#)"
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse(r#\"<xsl:if xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\" expand-text=\"yes\">Hello</xsl:if>\"#)"
 ---
-Ok(Copy(Copy(
-  select: Some(Expression(
+Ok(If(If(
+  test: Expression(
     xpath: XPath(Expr([
       Path(PathExpr(
         steps: [
@@ -19,15 +19,10 @@ Ok(Copy(Copy(
       )),
     ])),
     span: Span(
-      start: 67,
-      end: 73,
+      start: 63,
+      end: 69,
     ),
-  )),
-  copy_namespaces: false,
-  inherit_namespaces: false,
-  use_attribute_sets: None,
-  type_: None,
-  validation: Strict,
+  ),
   content: [
     TextNode("Hello"),
   ],
@@ -36,7 +31,7 @@ Ok(Copy(Copy(
     default_mode: None,
     default_validation: None,
     exclude_result_prefixes: None,
-    expand_text: None,
+    expand_text: Some(true),
     extension_element_prefixes: None,
     use_when: None,
     version: None,
@@ -44,6 +39,6 @@ Ok(Copy(Copy(
   ),
   span: Span(
     start: 1,
-    end: 9,
+    end: 7,
   ),
 )))

@@ -1,5 +1,5 @@
 ---
-source: xee-xslt-ast/src/parse.rs
+source: xee-xslt-ast/src/instruction.rs
 expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"abstract\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Err(AttributeUnexpected(
