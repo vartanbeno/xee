@@ -122,7 +122,6 @@ impl ast::Name {
 
 #[cfg(test)]
 mod tests {
-    use crate::FN_NAMESPACE;
 
     use super::*;
 
@@ -134,7 +133,11 @@ mod tests {
     }
 
     fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParserError> {
-        let namespaces = Namespaces::new(Some("http://example.com"), None);
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            Some("http://example.com"),
+            None,
+        );
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 
@@ -534,13 +537,13 @@ mod tests {
 
     #[test]
     fn test_signature_without_params() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse("fn:foo() as xs:integer", &namespaces));
     }
 
     #[test]
     fn test_signature_without_params2() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo() as xs:integer*",
             &namespaces
@@ -549,7 +552,7 @@ mod tests {
 
     #[test]
     fn test_signature_with_params() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as xs:decimal*) as xs:integer",
             &namespaces
@@ -558,7 +561,7 @@ mod tests {
 
     #[test]
     fn test_signature_with_node_param() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as node()) as xs:integer",
             &namespaces
@@ -567,7 +570,7 @@ mod tests {
 
     #[test]
     fn test_signature_with_node_param_and_question_mark() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo($a as node()?) as xs:integer",
             &namespaces
@@ -576,7 +579,7 @@ mod tests {
 
     #[test]
     fn test_signature_with_minus_in_name() {
-        let namespaces = Namespaces::new(None, Some(FN_NAMESPACE));
+        let namespaces = Namespaces::default();
         assert_ron_snapshot!(ast::Signature::parse(
             "fn:foo-bar($a as node()?) as xs:integer",
             &namespaces

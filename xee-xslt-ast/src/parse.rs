@@ -13,21 +13,14 @@ pub(crate) struct XsltParser<'a> {
     xot: &'a Xot,
     names: &'a Names,
     span_info: &'a SpanInfo,
-    namespaces: Namespaces<'a>,
 }
 
 impl<'a> XsltParser<'a> {
-    pub(crate) fn new(
-        xot: &'a Xot,
-        names: &'a Names,
-        span_info: &'a SpanInfo,
-        namespaces: Namespaces<'a>,
-    ) -> Self {
+    pub(crate) fn new(xot: &'a Xot, names: &'a Names, span_info: &'a SpanInfo) -> Self {
         Self {
             xot,
             names,
             span_info,
-            namespaces,
         }
     }
 
@@ -42,7 +35,8 @@ impl<'a> XsltParser<'a> {
 
     pub(crate) fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-        let element = Element::new(node, element, self)?;
+        let element_namespaces = ElementNamespaces::new(self.xot, element);
+        let element = Element::new(node, element, self, element_namespaces)?;
         element.sequence_constructor_item(node)
     }
 }
@@ -55,7 +49,8 @@ pub(crate) struct Element<'a> {
     pub(crate) names: &'a Names,
     span_info: &'a SpanInfo,
     pub(crate) xot: &'a Xot,
-    namespaces: &'a Namespaces<'a>,
+
+    element_namespaces: ElementNamespaces<'a>,
     xslt_parser: &'a XsltParser<'a>,
 }
 
@@ -64,6 +59,7 @@ impl<'a> Element<'a> {
         node: Node,
         element: &'a xot::Element,
         xslt_parser: &'a XsltParser<'a>,
+        element_namespaces: ElementNamespaces<'a>,
     ) -> Result<Self, Error> {
         Ok(Self {
             node,
@@ -73,7 +69,8 @@ impl<'a> Element<'a> {
             names: xslt_parser.names,
             span_info: xslt_parser.span_info,
             xot: xslt_parser.xot,
-            namespaces: &xslt_parser.namespaces,
+
+            element_namespaces,
             xslt_parser,
         })
     }
@@ -120,7 +117,8 @@ impl<'a> Element<'a> {
                 text.get().to_string(),
             )),
             Value::Element(element) => {
-                let element = Element::new(node, element, self.xslt_parser)?;
+                let element_namespaces = self.element_namespaces.push(element);
+                let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
                 ast::SequenceConstructorItem::parse(&element)
             }
             _ => Err(Error::Unexpected),
@@ -167,6 +165,10 @@ impl<'a> Element<'a> {
             .map(|v| v.unwrap_or(default))
     }
 
+    fn namespaces(&'a self) -> Namespaces<'a> {
+        self.element_namespaces.namespaces()
+    }
+
     fn name_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
             .span_info
@@ -184,7 +186,7 @@ impl<'a> Element<'a> {
     }
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
-        if let Ok(name) = xpath_ast::Name::parse(s, self.namespaces).map(|n| n.value) {
+        if let Ok(name) = xpath_ast::Name::parse(s, &self.namespaces()).map(|n| n.value) {
             Ok(name)
         } else {
             Err(Error::InvalidEqName {
@@ -221,7 +223,7 @@ impl<'a> Element<'a> {
 
     fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
         Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, self.namespaces, &[])?,
+            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), &[])?,
             span,
         })
     }
@@ -245,7 +247,7 @@ impl<'a> Element<'a> {
     }
 
     fn _sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
-        Ok(xpath_ast::SequenceType::parse(s, self.namespaces)?)
+        Ok(xpath_ast::SequenceType::parse(s, &self.namespaces())?)
     }
 
     pub(crate) fn sequence_type(
@@ -416,33 +418,42 @@ impl<'a> Element<'a> {
 
 struct ElementNamespaces<'a> {
     xot: &'a Xot,
-    element_prefixes: Vec<&'a xot::Prefixes>,
+    element: &'a xot::Element,
+    next: Option<&'a ElementNamespaces<'a>>,
 }
 
 impl<'a> ElementNamespaces<'a> {
-    fn new(xot: &'a Xot) -> Self {
+    fn new(xot: &'a Xot, element: &'a xot::Element) -> Self {
         Self {
             xot,
-            element_prefixes: Vec::new(),
+            element,
+            next: None,
         }
     }
 
-    fn push(&mut self, element: &'a xot::Element) {
-        self.element_prefixes.push(element.prefixes());
+    fn push(&'a self, element: &'a xot::Element) -> Self {
+        Self {
+            xot: self.xot,
+            element,
+            next: Some(self),
+        }
     }
 
-    fn pop(&mut self) {
-        self.element_prefixes.pop();
+    fn pop(self) -> Option<&'a Self> {
+        self.next
     }
 
     fn prefixes(&self) -> xot::Prefixes {
-        let mut combined_prefixes = xot::Prefixes::new();
-        for prefixes in &self.element_prefixes {
+        if let Some(next) = &self.next {
+            let mut combined_prefixes = xot::Prefixes::new();
+            let prefixes = next.prefixes();
             for (prefix, uri) in prefixes.iter() {
                 combined_prefixes.insert(*prefix, *uri);
             }
+            combined_prefixes
+        } else {
+            self.element.prefixes().clone()
         }
-        combined_prefixes
     }
 
     fn namespaces(&self) -> Namespaces {
@@ -452,6 +463,6 @@ impl<'a> ElementNamespaces<'a> {
             let uri = self.xot.namespace_str(ns);
             namespaces.insert(prefix, uri);
         }
-        Namespaces::new_with_namespaces(namespaces, None, Some(FN_NAMESPACE))
+        Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
     }
 }

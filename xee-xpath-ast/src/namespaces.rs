@@ -22,32 +22,13 @@ pub struct Namespaces<'a> {
 }
 
 impl<'a> Namespaces<'a> {
-    pub fn new(
-        default_element_namespace: Option<&'a str>,
-        default_function_namespace: Option<&'a str>,
-    ) -> Self {
-        let mut namespaces = HashMap::new();
-        namespaces.insert("xml", XML_NAMESPACE);
-        for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
-            namespaces.insert(prefix, uri);
-        }
-        Self {
-            namespaces,
-            default_element_namespace,
-            default_function_namespace,
-        }
-    }
+    pub const FN_NAMESPACE: &'static str = FN_NAMESPACE;
 
-    pub fn new_with_namespaces(
+    pub fn new(
         namespaces: HashMap<&'a str, &'a str>,
         default_element_namespace: Option<&'a str>,
         default_function_namespace: Option<&'a str>,
     ) -> Self {
-        let mut namespaces = namespaces;
-        namespaces.insert("xml", XML_NAMESPACE);
-        for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
-            namespaces.insert(prefix, uri);
-        }
         Self {
             namespaces,
             default_element_namespace,
@@ -55,20 +36,13 @@ impl<'a> Namespaces<'a> {
         }
     }
 
-    pub fn from_namespaces(namespace_pairs: &[(&'a str, &'a str)]) -> Self {
+    pub fn default_namespaces() -> HashMap<&'a str, &'a str> {
         let mut namespaces = HashMap::new();
-        for (prefix, uri) in namespace_pairs {
-            namespaces.insert(*prefix, *uri);
+        namespaces.insert("xml", XML_NAMESPACE);
+        for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
+            namespaces.insert(prefix, uri);
         }
-        Self {
-            namespaces,
-            default_element_namespace: None,
-            default_function_namespace: None,
-        }
-    }
-
-    pub fn with_default_element_namespace(uri: &'a str) -> Self {
-        Self::new(Some(uri), Some(FN_NAMESPACE))
+        namespaces
     }
 
     pub fn add(&mut self, namespace_pairs: &[(&'a str, &'a str)]) {
@@ -92,7 +66,7 @@ impl<'a> Namespaces<'a> {
 
 impl Default for Namespaces<'_> {
     fn default() -> Self {
-        Self::new(None, Some(FN_NAMESPACE))
+        Self::new(Self::default_namespaces(), None, Some(FN_NAMESPACE))
     }
 }
 

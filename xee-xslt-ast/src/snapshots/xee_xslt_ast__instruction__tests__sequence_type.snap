@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" as=\"xs:string\" select=\"true()\">Hello</xsl:variable>\"#)"
+expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" name=\"foo\" as=\"xs:string\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Ok(Variable(Variable(
   name: Name(
@@ -24,8 +24,8 @@ Ok(Variable(Variable(
       )),
     ])),
     span: Span(
-      start: 97,
-      end: 103,
+      start: 141,
+      end: 147,
     ),
   )),
   as_: Some(Item(Item(

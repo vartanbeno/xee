@@ -28,7 +28,11 @@ pub fn evaluate_root(
     let uri = xml::Uri("http://example.com".to_string());
     let mut documents = xml::Documents::new();
     documents.add_root(xot, &uri, root);
-    let namespaces = Namespaces::new(default_element_namespace, Some(FN_NAMESPACE));
+    let namespaces = Namespaces::new(
+        Namespaces::default_namespaces(),
+        default_element_namespace,
+        Some(FN_NAMESPACE),
+    );
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::with_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();

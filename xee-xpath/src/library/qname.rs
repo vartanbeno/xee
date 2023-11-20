@@ -1,5 +1,6 @@
 // https://www.w3.org/TR/xpath-functions-31/#QName-funcs
 
+use ahash::HashMap;
 use std::rc::Rc;
 use xot::Xot;
 
@@ -39,9 +40,9 @@ fn element_namespaces(node: xml::Node, xot: &Xot) -> Namespaces {
         .map(|(prefix_id, namespace_id)| {
             (xot.prefix_str(prefix_id), xot.namespace_str(namespace_id))
         })
-        .collect::<Vec<_>>();
+        .collect::<HashMap<_, _>>();
 
-    Namespaces::from_namespaces(&pairs)
+    Namespaces::new(pairs, None, None)
 }
 
 #[xpath_fn("fn:QName($paramURI as xs:string?, $paramQName as xs:string) as xs:QName")]
@@ -65,8 +66,9 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
         // no prefix, so default namespace
         vec![("", param_uri)]
     };
+    let pairs = HashMap::from_iter(pairs);
     // TODO: see efficiency note for resolve-QName
-    let namespaces = Namespaces::from_namespaces(&pairs);
+    let namespaces = Namespaces::new(pairs, None, None);
     let name = ast::Name::parse(param_qname, &namespaces)
         .map_err(|_| error::Error::FOCA0002)?
         .value;

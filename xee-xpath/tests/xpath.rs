@@ -49,7 +49,7 @@ where
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
     documents.add(&mut xot, &uri, xml).unwrap();
-    let namespaces = Namespaces::new(None, None);
+    let namespaces = Namespaces::new(Namespaces::default_namespaces(), None, None);
     let static_context = StaticContext::new(&namespaces);
     let context = DynamicContext::with_documents(&xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();

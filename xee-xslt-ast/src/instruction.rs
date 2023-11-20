@@ -165,16 +165,14 @@ mod tests {
 
     use super::*;
     use insta::assert_ron_snapshot;
-    use xee_xpath_ast::Namespaces;
 
     fn parse(s: &str) -> Result<ast::SequenceConstructorItem, Error> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
-        let namespaces = Namespaces::default();
 
         let (node, span_info) = xot.parse_with_span_info(s).unwrap();
         let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info, namespaces);
+        let parser = XsltParser::new(&xot, &names, &span_info);
         parser.parse(node)
     }
 
@@ -209,14 +207,14 @@ mod tests {
     #[test]
     fn test_sequence_type() {
         assert_ron_snapshot!(parse(
-            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" as="xs:string" select="true()">Hello</xsl:variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" name="foo" as="xs:string" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_boolean_default_no_with_explicit_yes() {
         assert_ron_snapshot!(parse(
-            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" static="yes" as="xs:string" select="true()">Hello</xsl:variable>"#
+            r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" static="yes" select="true()">Hello</xsl:variable>"#
         ));
     }
 
@@ -278,6 +276,13 @@ mod tests {
     fn test_literal_result_element_with_standard_attribute() {
         assert_ron_snapshot!(parse(
             r#"<foo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:expand-text="yes"/>"#
+        ));
+    }
+
+    #[test]
+    fn test_no_fn_namespace_by_default() {
+        assert_ron_snapshot!(parse(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="fn:true()">Hello</xsl:if>"#
         ));
     }
 }

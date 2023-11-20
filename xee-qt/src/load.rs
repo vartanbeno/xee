@@ -28,7 +28,11 @@ impl qt::TestSet {
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
-        let namespaces = Namespaces::with_default_element_namespace(NS);
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            Some(NS),
+            Some(Namespaces::FN_NAMESPACE),
+        );
 
         let static_context = StaticContext::new(&namespaces);
         let r = {
@@ -60,7 +64,11 @@ impl qt::Catalog {
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
         let xot_root = xot.parse(xml)?;
         let root = Node::Xot(xot_root);
-        let namespaces = Namespaces::with_default_element_namespace(NS);
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            Some(NS),
+            Some(Namespaces::FN_NAMESPACE),
+        );
 
         let static_context = StaticContext::new(&namespaces);
 
