@@ -3,7 +3,11 @@ source: xee-xslt-ast/src/instruction.rs
 expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" static=\"yes\" as=\"xs:string\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Ok(Variable(Variable(
-  name: "foo",
+  name: Name(
+    name: "foo",
+    prefix: None,
+    namespace: None,
+  ),
   select: Some(Expression(
     xpath: XPath(Expr([
       Path(PathExpr(

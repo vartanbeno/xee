@@ -87,7 +87,8 @@ impl<'a> Element<'a> {
     fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, Error> {
         Ok(ast::Standard {
             default_collation: self.optional(names.default_collation, Self::uris)?,
-            default_mode: self.optional(names.default_mode, Self::default_mode)?,
+            default_mode: self
+                .optional(names.default_mode, |s, span| self.default_mode(s, span))?,
             default_validation: self
                 .optional(names.default_validation, Self::default_validation)?,
             exclude_result_prefixes: self
@@ -183,9 +184,15 @@ impl<'a> Element<'a> {
     //     // parse
     // }
 
-    pub(crate) fn eqname(s: &str, _span: Span) -> Result<String, Error> {
-        // TODO: should actually parse
-        Ok(s.to_string())
+    pub(crate) fn eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
+        if let Ok(name) = xpath_ast::Name::parse(s, self.namespaces).map(|n| n.value) {
+            Ok(name)
+        } else {
+            Err(Error::InvalidEqName {
+                value: s.to_string(),
+                span,
+            })
+        }
     }
 
     pub(crate) fn uri(s: &str, _span: Span) -> Result<ast::Uri, Error> {
@@ -208,10 +215,10 @@ impl<'a> Element<'a> {
         })
     }
 
-    pub(crate) fn eqnames(s: &str, span: Span) -> Result<Vec<String>, Error> {
+    pub(crate) fn eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
-            result.push(Self::eqname(s, span)?);
+            result.push(self.eqname(s, span)?);
         }
         Ok(result)
     }
@@ -235,11 +242,11 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn default_mode(s: &str, span: Span) -> Result<ast::DefaultMode, Error> {
+    fn default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, Error> {
         if s == "#unnamed" {
             Ok(ast::DefaultMode::Unnamed)
         } else {
-            Ok(ast::DefaultMode::EqName(Self::eqname(s, span)?))
+            Ok(ast::DefaultMode::EqName(self.eqname(s, span)?))
         }
     }
 

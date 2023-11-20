@@ -26,6 +26,10 @@ pub enum Error {
         span: Span,
     },
     MissingSpan,
+    InvalidEqName {
+        value: String,
+        span: Span,
+    },
     XPath(xee_xpath_ast::ParserError),
 }
 

@@ -27,7 +27,7 @@ impl From<&xot::Span> for Span {
     }
 }
 
-pub type EqName = String;
+pub type EqName = xpath_ast::Name;
 pub type QName = String;
 pub type NcName = String;
 pub type SequenceType = xpath_ast::SequenceType;

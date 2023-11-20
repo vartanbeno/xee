@@ -3,7 +3,11 @@ source: xee-xslt-ast/src/instruction.rs
 expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"public\">Hello</xsl:variable>\"#)"
 ---
 Ok(Variable(Variable(
-  name: "foo",
+  name: Name(
+    name: "foo",
+    prefix: None,
+    namespace: None,
+  ),
   select: None,
   as_: None,
   static_: false,

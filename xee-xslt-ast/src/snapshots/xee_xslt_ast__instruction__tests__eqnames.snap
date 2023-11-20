@@ -7,9 +7,21 @@ Ok(Copy(Copy(
   copy_namespaces: true,
   inherit_namespaces: true,
   use_attribute_sets: Some([
-    "foo",
-    "bar",
-    "baz",
+    Name(
+      name: "foo",
+      prefix: None,
+      namespace: None,
+    ),
+    Name(
+      name: "bar",
+      prefix: None,
+      namespace: None,
+    ),
+    Name(
+      name: "baz",
+      prefix: None,
+      namespace: None,
+    ),
   ]),
   type_: None,
   validation: Strip,

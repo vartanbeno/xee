@@ -87,8 +87,9 @@ impl InstructionParser for ast::Copy {
             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
             copy_namespaces: element.boolean(names.copy_namespaces, true)?,
             inherit_namespaces: element.boolean(names.inherit_namespaces, true)?,
-            use_attribute_sets: element.optional(names.use_attribute_sets, Element::eqnames)?,
-            type_: element.optional(names.as_, Element::eqname)?,
+            use_attribute_sets: element
+                .optional(names.use_attribute_sets, |s, span| element.eqnames(s, span))?,
+            type_: element.optional(names.as_, |s, span| element.eqname(s, span))?,
             validation: element
                 .optional(names.validation, Element::validation)?
                 // TODO: should depend on global validation attribute
@@ -136,7 +137,7 @@ impl InstructionParser for ast::Variable {
         // });
 
         Ok(ast::Variable {
-            name: element.required(names.name, Element::eqname)?,
+            name: element.required(names.name, |s, span| element.eqname(s, span))?,
             select: element.optional(names.select, |s, span| element.xpath(s, span))?,
             as_: element.optional(names.as_, |s, span| element.sequence_type(s, span))?,
             static_: element.boolean(names.static_, false)?,
