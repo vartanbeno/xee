@@ -1,0 +1,12 @@
+---
+source: xee-xslt-ast/src/value_template.rs
+assertion_line: 325
+expression: "parse(\"hello {a +}!\", &namespaces)"
+---
+Err(XPath(ExpectedFound(
+  span: SimpleSpan(
+    start: 10,
+    end: 11,
+    context: (),
+  ),
+)))

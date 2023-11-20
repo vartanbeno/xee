@@ -318,4 +318,10 @@ mod tests {
         let namespaces = Namespaces::default();
         assert_ron_snapshot!(parse("hello}world", &namespaces));
     }
+
+    #[test]
+    fn test_broken_xpath() {
+        let namespaces = Namespaces::default();
+        assert_ron_snapshot!(parse("hello {a +}!", &namespaces));
+    }
 }
