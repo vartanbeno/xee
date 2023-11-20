@@ -84,14 +84,13 @@ impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let names = element.names;
         Ok(ast::Copy {
-            select: element.optional(names.select, |s, span| element.xpath(s, span))?,
-            copy_namespaces: element.boolean(names.copy_namespaces, true)?,
-            inherit_namespaces: element.boolean(names.inherit_namespaces, true)?,
-            use_attribute_sets: element
-                .optional(names.use_attribute_sets, |s, span| element.eqnames(s, span))?,
-            type_: element.optional(names.as_, |s, span| element.eqname(s, span))?,
+            select: element.optional(names.select, element.xpath())?,
+            copy_namespaces: element.boolean_with_default(names.copy_namespaces, true)?,
+            inherit_namespaces: element.boolean_with_default(names.inherit_namespaces, true)?,
+            use_attribute_sets: element.optional(names.use_attribute_sets, element.eqnames())?,
+            type_: element.optional(names.as_, element.eqname())?,
             validation: element
-                .optional(names.validation, Element::validation)?
+                .optional(names.validation, element.validation())?
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
             content: element.sequence_constructor()?,
@@ -116,7 +115,7 @@ impl InstructionParser for ast::If {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
         let names = element.names;
         Ok(ast::If {
-            test: element.required(names.test, |s, span| element.xpath(s, span))?,
+            test: element.required(names.test, element.xpath())?,
             content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
@@ -137,11 +136,11 @@ impl InstructionParser for ast::Variable {
         // });
 
         Ok(ast::Variable {
-            name: element.required(names.name, |s, span| element.eqname(s, span))?,
-            select: element.optional(names.select, |s, span| element.xpath(s, span))?,
-            as_: element.optional(names.as_, |s, span| element.sequence_type(s, span))?,
-            static_: element.boolean(names.static_, false)?,
-            visibility: element.optional(names.visibility, Element::visibility_with_abstract)?,
+            name: element.required(names.name, element.eqname())?,
+            select: element.optional(names.select, element.xpath())?,
+            as_: element.optional(names.as_, element.sequence_type())?,
+            static_: element.boolean_with_default(names.static_, false)?,
+            visibility: element.optional(names.visibility, element.visibility_with_abstract())?,
             content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,

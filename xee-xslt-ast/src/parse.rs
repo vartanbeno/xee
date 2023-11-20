@@ -87,19 +87,20 @@ impl<'a> Element<'a> {
 
     fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, Error> {
         Ok(ast::Standard {
-            default_collation: self.optional(names.default_collation, Self::uris)?,
-            default_mode: self
-                .optional(names.default_mode, |s, span| self.default_mode(s, span))?,
+            default_collation: self.optional(names.default_collation, self.uris())?,
+            default_mode: self.optional(names.default_mode, self.default_mode())?,
             default_validation: self
-                .optional(names.default_validation, Self::default_validation)?,
-            exclude_result_prefixes: self
-                .optional(names.exclude_result_prefixes, Self::exclude_result_prefixes)?,
-            expand_text: self.optional(names.expand_text, Self::_boolean)?,
+                .optional(names.default_validation, self.default_validation())?,
+            exclude_result_prefixes: self.optional(
+                names.exclude_result_prefixes,
+                self.exclude_result_prefixes(),
+            )?,
+            expand_text: self.optional(names.expand_text, self.boolean())?,
             extension_element_prefixes: self
-                .optional(names.extension_element_prefixes, Self::prefixes)?,
-            use_when: self.optional(names.use_when, |s, span| self.xpath(s, span))?,
+                .optional(names.extension_element_prefixes, self.prefixes())?,
+            use_when: self.optional(names.use_when, self.xpath())?,
             version: self.optional(names.version, Self::decimal)?,
-            xpath_default_namespace: self.optional(names.xpath_default_namespace, Self::uri)?,
+            xpath_default_namespace: self.optional(names.xpath_default_namespace, self.uri())?,
         })
     }
 
@@ -160,7 +161,7 @@ impl<'a> Element<'a> {
         })
     }
 
-    pub(crate) fn boolean(&self, name: NameId, default: bool) -> Result<bool, Error> {
+    pub(crate) fn boolean_with_default(&self, name: NameId, default: bool) -> Result<bool, Error> {
         self.optional(name, Self::_boolean)
             .map(|v| v.unwrap_or(default))
     }
@@ -181,11 +182,7 @@ impl<'a> Element<'a> {
         Ok(span.into())
     }
 
-    // fn attribute_value<T>(&self, s: &str, span: Span) -> Result<ast::Templ<T>, Error> {
-    //     // parse
-    // }
-
-    pub(crate) fn eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
+    fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
         if let Ok(name) = xpath_ast::Name::parse(s, self.namespaces).map(|n| n.value) {
             Ok(name)
         } else {
@@ -196,40 +193,64 @@ impl<'a> Element<'a> {
         }
     }
 
-    pub(crate) fn uri(s: &str, _span: Span) -> Result<ast::Uri, Error> {
+    pub(crate) fn eqname(&self) -> impl Fn(&'a str, Span) -> Result<xpath_ast::Name, Error> + '_ {
+        |s, span| self._eqname(s, span)
+    }
+
+    fn _uri(s: &str, _span: Span) -> Result<ast::Uri, Error> {
         // TODO: should actually verify URI?
         Ok(s.to_string())
     }
 
-    pub(crate) fn uris(s: &str, span: Span) -> Result<Vec<ast::Uri>, Error> {
+    pub(crate) fn uri(&self) -> impl Fn(&'a str, Span) -> Result<ast::Uri, Error> + '_ {
+        Self::_uri
+    }
+
+    fn _uris(s: &str, span: Span) -> Result<Vec<ast::Uri>, Error> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
-            result.push(Self::uri(s, span)?);
+            result.push(Self::_uri(s, span)?);
         }
         Ok(result)
     }
 
-    pub(crate) fn xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
+    pub(crate) fn uris(&self) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Uri>, Error> + '_ {
+        Self::_uris
+    }
+
+    fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
         Ok(ast::Expression {
             xpath: xpath_ast::XPath::parse(s, self.namespaces, &[])?,
             span,
         })
     }
 
-    pub(crate) fn eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
+    pub(crate) fn xpath(&self) -> impl Fn(&'a str, Span) -> Result<ast::Expression, Error> + '_ {
+        |s, span| self._xpath(s, span)
+    }
+
+    fn _eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
         let mut result = Vec::new();
         for (s, span) in split_whitespace_with_spans(s, span) {
-            result.push(self.eqname(s, span)?);
+            result.push(self._eqname(s, span)?);
         }
         Ok(result)
     }
 
+    pub(crate) fn eqnames(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<xpath_ast::Name>, Error> + '_ {
+        |s, span| self._eqnames(s, span)
+    }
+
+    fn _sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
+        Ok(xpath_ast::SequenceType::parse(s, self.namespaces)?)
+    }
+
     pub(crate) fn sequence_type(
         &self,
-        s: &str,
-        _span: Span,
-    ) -> Result<xpath_ast::SequenceType, Error> {
-        Ok(xpath_ast::SequenceType::parse(s, self.namespaces)?)
+    ) -> impl Fn(&'a str, Span) -> Result<xpath_ast::SequenceType, Error> + '_ {
+        |s, span| self._sequence_type(s, span)
     }
 
     fn _boolean(s: &str, _span: Span) -> Result<bool, Error> {
@@ -243,15 +264,25 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, Error> {
+    pub(crate) fn boolean(&self) -> impl Fn(&'a str, Span) -> Result<bool, Error> + '_ {
+        Self::_boolean
+    }
+
+    fn _default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, Error> {
         if s == "#unnamed" {
             Ok(ast::DefaultMode::Unnamed)
         } else {
-            Ok(ast::DefaultMode::EqName(self.eqname(s, span)?))
+            Ok(ast::DefaultMode::EqName(self._eqname(s, span)?))
         }
     }
 
-    fn default_validation(s: &str, span: Span) -> Result<ast::DefaultValidation, Error> {
+    pub(crate) fn default_mode(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultMode, Error> + '_ {
+        |s, span| self._default_mode(s, span)
+    }
+
+    fn _default_validation(s: &str, span: Span) -> Result<ast::DefaultValidation, Error> {
         match s {
             "preserve" => Ok(ast::DefaultValidation::Preserve),
             "strip" => Ok(ast::DefaultValidation::Strip),
@@ -262,17 +293,33 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn prefix(s: &str, _span: Span) -> Result<ast::Prefix, Error> {
+    pub(crate) fn default_validation(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultValidation, Error> + '_ {
+        Self::_default_validation
+    }
+
+    fn _prefix(s: &str, _span: Span) -> Result<ast::Prefix, Error> {
         // TODO: check whether it's a valid prefix
         Ok(s.to_string())
     }
 
-    fn prefixes(s: &str, span: Span) -> Result<Vec<ast::Prefix>, Error> {
+    pub(crate) fn prefix(&self) -> impl Fn(&'a str, Span) -> Result<ast::Prefix, Error> + '_ {
+        Self::_prefix
+    }
+
+    fn _prefixes(s: &str, span: Span) -> Result<Vec<ast::Prefix>, Error> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
-            result.push(Self::prefix(s, span)?);
+            result.push(Self::_prefix(s, span)?);
         }
         Ok(result)
+    }
+
+    pub(crate) fn prefixes(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Prefix>, Error> + '_ {
+        Self::_prefixes
     }
 
     fn decimal(s: &str, _span: Span) -> Result<ast::Decimal, Error> {
@@ -280,27 +327,33 @@ impl<'a> Element<'a> {
         Ok(s.to_string())
     }
 
-    fn exclude_result_prefixes(s: &str, span: Span) -> Result<ast::ExcludeResultPrefixes, Error> {
+    fn _exclude_result_prefixes(s: &str, span: Span) -> Result<ast::ExcludeResultPrefixes, Error> {
         if s == "#all" {
             Ok(ast::ExcludeResultPrefixes::All)
         } else {
             let mut prefixes = Vec::new();
             for s in s.split_whitespace() {
-                prefixes.push(Self::exclude_result_prefix(s, span)?);
+                prefixes.push(Self::_exclude_result_prefix(s, span)?);
             }
             Ok(ast::ExcludeResultPrefixes::Prefixes(prefixes))
         }
     }
 
-    fn exclude_result_prefix(s: &str, span: Span) -> Result<ast::ExcludeResultPrefix, Error> {
+    pub(crate) fn exclude_result_prefixes(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::ExcludeResultPrefixes, Error> {
+        Self::_exclude_result_prefixes
+    }
+
+    fn _exclude_result_prefix(s: &str, span: Span) -> Result<ast::ExcludeResultPrefix, Error> {
         if s == "#default" {
             Ok(ast::ExcludeResultPrefix::Default)
         } else {
-            Ok(ast::ExcludeResultPrefix::Prefix(Self::prefix(s, span)?))
+            Ok(ast::ExcludeResultPrefix::Prefix(Self::_prefix(s, span)?))
         }
     }
 
-    pub(crate) fn visibility_with_abstract(
+    fn _visibility_with_abstract(
         s: &str,
         span: Span,
     ) -> Result<ast::VisibilityWithAbstract, Error> {
@@ -318,7 +371,13 @@ impl<'a> Element<'a> {
         }
     }
 
-    pub(crate) fn validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
+    pub(crate) fn visibility_with_abstract(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithAbstract, Error> {
+        Self::_visibility_with_abstract
+    }
+
+    fn _validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
         use ast::Validation::*;
 
         match s {
@@ -331,6 +390,12 @@ impl<'a> Element<'a> {
                 span,
             }),
         }
+    }
+
+    pub(crate) fn validation(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Validation, Error> + '_ {
+        Self::_validation
     }
 
     pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> Error {
