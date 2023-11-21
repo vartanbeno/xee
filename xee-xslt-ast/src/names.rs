@@ -4,21 +4,17 @@ use xot::{NameId, NamespaceId, Xot};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SequenceConstructorName {
-    If,
+    Assert,
     Fallback,
-    Variable,
     Copy,
+    If,
+    Variable,
 }
 
 pub(crate) struct Names {
     pub(crate) xsl_ns: NamespaceId,
 
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
-
-    pub(crate) copy: xot::NameId,
-    pub(crate) fallback: xot::NameId,
-    pub(crate) if_: xot::NameId,
-    pub(crate) variable: xot::NameId,
 
     pub(crate) test: xot::NameId,
     pub(crate) select: xot::NameId,
@@ -84,26 +80,23 @@ impl Names {
     pub(crate) fn new(xot: &mut Xot) -> Self {
         let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
 
+        let assert = xot.add_name_ns("assert", xsl_ns);
         let copy = xot.add_name_ns("copy", xsl_ns);
         let fallback = xot.add_name_ns("fallback", xsl_ns);
         let if_ = xot.add_name_ns("if", xsl_ns);
         let variable = xot.add_name_ns("variable", xsl_ns);
 
         let mut sequence_constructor_names = BTreeMap::new();
-        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
-        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
-        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
+        sequence_constructor_names.insert(assert, SequenceConstructorName::Assert);
         sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
+        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
+        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
+        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
 
         Self {
             xsl_ns,
 
             sequence_constructor_names,
-
-            copy,
-            fallback,
-            if_,
-            variable,
 
             test: xot.add_name("test"),
             select: xot.add_name("select"),

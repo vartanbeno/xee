@@ -1,0 +1,57 @@
+---
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse(r#\"<xsl:assert xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\" error-code=\"foo\">Hello</xsl:assert>\"#)"
+---
+Ok(Assert(Assert(
+  test: Expression(
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          PrimaryExpr(FunctionCall(FunctionCall(
+            name: Name(
+              name: "true",
+              prefix: None,
+              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            ),
+            arguments: [],
+          ))),
+        ],
+      )),
+    ])),
+    span: Span(
+      start: 67,
+      end: 73,
+    ),
+  ),
+  select: None,
+  error_code: Some(ValueTemplate(
+    template: [
+      String(
+        text: "foo",
+        span: Span(
+          start: 87,
+          end: 90,
+        ),
+      ),
+    ],
+    phantom: PhantomData,
+  )),
+  content: [
+    TextNode("Hello"),
+  ],
+  standard: Standard(
+    default_collation: None,
+    default_mode: None,
+    default_validation: None,
+    exclude_result_prefixes: None,
+    expand_text: None,
+    extension_element_prefixes: None,
+    use_when: None,
+    version: None,
+    xpath_default_namespace: None,
+  ),
+  span: Span(
+    start: 1,
+    end: 11,
+  ),
+)))

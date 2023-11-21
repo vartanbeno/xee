@@ -28,6 +28,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
         if let Some(sname) = sname {
             // parse a known sequence constructor instruction
             match sname {
+                SequenceConstructorName::Assert => ast::Assert::parse(element),
                 SequenceConstructorName::Copy => ast::Copy::parse(element),
                 SequenceConstructorName::If => ast::If::parse(element),
                 SequenceConstructorName::Variable => ast::Variable::parse(element),
@@ -65,22 +66,22 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
     }
 }
 
-// impl InstructionParser for ast::Assert {
-//     fn parse_ast(element: &Element) -> Result<Self, Error> {
-//         let names = element.names;
-//         Ok(ast::Assert {
-//             test: element.required(names.test, element.xpath())?,
-//             select: element.optional(names.select, element.xpath())?,
-//             error_code: element
-//                 .optional(names.error_code, element.value_template(element.eqname()))?,
+impl InstructionParser for ast::Assert {
+    fn parse_ast(element: &Element) -> Result<Self, Error> {
+        let names = element.names;
+        Ok(ast::Assert {
+            test: element.required(names.test, element.xpath())?,
+            select: element.optional(names.select, element.xpath())?,
+            error_code: element
+                .optional(names.error_code, element.value_template(element.eqname()))?,
 
-//             content: element.sequence_constructor()?,
+            content: element.sequence_constructor()?,
 
-//             standard: element.standard()?,
-//             span: element.span,
-//         })
-//     }
-// }
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
 
 impl InstructionParser for ast::Copy {
     fn parse_ast(element: &Element) -> Result<Self, Error> {
@@ -285,6 +286,13 @@ mod tests {
     fn test_no_fn_namespace_by_default() {
         assert_ron_snapshot!(parse(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="fn:true()">Hello</xsl:if>"#
+        ));
+    }
+
+    #[test]
+    fn test_attribute_value_template_just_string() {
+        assert_ron_snapshot!(parse(
+            r#"<xsl:assert xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" error-code="foo">Hello</xsl:assert>"#
         ));
     }
 }

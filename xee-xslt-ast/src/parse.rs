@@ -186,36 +186,27 @@ impl<'a> Element<'a> {
         Ok(span.into())
     }
 
-    fn _value_template<T>(
-        &self,
-        s: &'a str,
-        span: Span,
-        parse_value: &'a (impl Fn(&'a str, Span) -> Result<T, Error> + 'a),
-    ) -> Result<ast::ValueTemplate<T>, Error>
-    where
-        T: Clone + PartialEq + Eq,
-    {
-        unimplemented!()
-
-        // let iter = ValueTemplateTokenizer::new(s, span, &self.namespaces(), &[]);
-        // let tokens: Result<Vec<ast::ValueTemplateItem>, Error> = iter.map(|token| {
-
-        // }).collect();
-        // let owned_tokens =
-        // Ok(ast::ValueTemplate {
-        //     template: tokens?,
-        //     phantom: std::marker::PhantomData,
-        // })
-    }
-
     pub(crate) fn value_template<T>(
         &self,
-        parse_value: &'a (impl Fn(&'a str, Span) -> Result<T, Error> + 'a),
+        _parse_value: impl Fn(&'a str, Span) -> Result<T, Error> + 'a,
     ) -> impl Fn(&'a str, Span) -> Result<ast::ValueTemplate<T>, Error> + '_
     where
         T: Clone + PartialEq + Eq,
     {
-        |s, span| self._value_template(s, span, parse_value)
+        let namespaces = self.namespaces();
+        move |s, span| {
+            let iter = ValueTemplateTokenizer::new(s, span, &namespaces, &[]);
+            let mut tokens = Vec::new();
+            for t in iter {
+                let t = t?;
+                tokens.push(t.into());
+            }
+
+            Ok(ast::ValueTemplate {
+                template: tokens,
+                phantom: std::marker::PhantomData,
+            })
+        }
     }
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {

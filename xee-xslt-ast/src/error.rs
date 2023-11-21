@@ -1,4 +1,5 @@
 use crate::ast_core::Span;
+use crate::value_template;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -25,17 +26,36 @@ pub enum Error {
     InvalidInstruction {
         span: Span,
     },
+    InvalidValueTemplate {
+        span: Span,
+    },
+
     MissingSpan,
     InvalidEqName {
         value: String,
         span: Span,
     },
+    /// An internal error; this indicates a bug as some invariant in the
+    /// code wasn't met.
+    Internal(&'static str),
     XPath(xee_xpath_ast::ParserError),
 }
 
 impl From<xee_xpath_ast::ParserError> for Error {
     fn from(error: xee_xpath_ast::ParserError) -> Self {
         Self::XPath(error)
+    }
+}
+
+impl From<value_template::Error> for Error {
+    fn from(error: value_template::Error) -> Self {
+        match error {
+            value_template::Error::UnescapedCurly { span, .. } => {
+                Self::InvalidValueTemplate { span }
+            }
+            value_template::Error::IllegalSlice => Self::Internal("Illegal slice"),
+            value_template::Error::XPath(e) => Self::XPath(e),
+        }
     }
 }
 
