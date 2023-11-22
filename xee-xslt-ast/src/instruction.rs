@@ -67,19 +67,19 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
     }
 }
 
-// impl InstructionParser for ast::Accept {
-//     fn parse_ast(element: &Element) -> Result<Self> {
-//         let names = element.names;
-//         Ok(ast::Accept {
-//             component: element.required(names.component, element.component)?,
-//             names: element.required(names.names, element.tokens())?,
-//             visibility: element.required(names.visibility, element.visibility())?,
+impl InstructionParser for ast::Accept {
+    fn parse_ast(element: &Element) -> Result<Self> {
+        let names = element.names;
+        Ok(ast::Accept {
+            component: element.required(names.component, element.component())?,
+            names: element.required(names.names, element.tokens())?,
+            visibility: element.required(names.visibility, element.visibility_with_hidden())?,
 
-//             standard: element.standard()?,
-//             span: element.span,
-//         })
-//     }
-// }
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
 
 impl InstructionParser for ast::Assert {
     fn parse_ast(element: &Element) -> Result<Self> {

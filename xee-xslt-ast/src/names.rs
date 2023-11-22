@@ -47,17 +47,19 @@ pub(crate) struct Names {
 
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
 
-    pub(crate) test: xot::NameId,
-    pub(crate) select: xot::NameId,
-    pub(crate) name: xot::NameId,
     pub(crate) as_: xot::NameId,
-    pub(crate) static_: xot::NameId,
-    pub(crate) visibility: xot::NameId,
+    pub(crate) component: xot::NameId,
     pub(crate) copy_namespaces: xot::NameId,
+    pub(crate) error_code: xot::NameId,
     pub(crate) inherit_namespaces: xot::NameId,
+    pub(crate) name: xot::NameId,
+    pub(crate) names: xot::NameId,
+    pub(crate) select: xot::NameId,
+    pub(crate) static_: xot::NameId,
+    pub(crate) test: xot::NameId,
     pub(crate) use_attribute_sets: xot::NameId,
     pub(crate) validation: xot::NameId,
-    pub(crate) error_code: xot::NameId,
+    pub(crate) visibility: xot::NameId,
 
     // standard attributes on XSLT elements
     pub(crate) standard: StandardNames,
@@ -116,17 +118,19 @@ impl Names {
 
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
 
-            test: xot.add_name("test"),
-            select: xot.add_name("select"),
-            name: xot.add_name("name"),
             as_: xot.add_name("as"),
-            static_: xot.add_name("static"),
-            visibility: xot.add_name("visibility"),
+            component: xot.add_name("component"),
             copy_namespaces: xot.add_name("copy-namespaces"),
+            error_code: xot.add_name("error-code"),
             inherit_namespaces: xot.add_name("inherit-namespaces"),
+            name: xot.add_name("name"),
+            names: xot.add_name("names"),
+            select: xot.add_name("select"),
+            static_: xot.add_name("static"),
+            test: xot.add_name("test"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
-            error_code: xot.add_name("error-code"),
+            visibility: xot.add_name("visibility"),
 
             // standard attributes
             standard: StandardNames::no_ns(xot),

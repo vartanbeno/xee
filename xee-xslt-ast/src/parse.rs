@@ -224,6 +224,26 @@ impl<'a> Element<'a> {
         |s, span| self._eqname(s, span)
     }
 
+    fn _token(s: &str, span: Span) -> Result<ast::Token, Error> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn token(&self) -> impl Fn(&'a str, Span) -> Result<ast::Token, Error> + '_ {
+        Self::_token
+    }
+
+    fn _tokens(s: &str, span: Span) -> Result<Vec<ast::Token>, Error> {
+        let mut result = Vec::new();
+        for s in s.split_whitespace() {
+            result.push(Self::_token(s, span)?);
+        }
+        Ok(result)
+    }
+
+    pub(crate) fn tokens(&self) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Token>, Error> + '_ {
+        Self::_tokens
+    }
+
     fn _uri(s: &str, _span: Span) -> Result<ast::Uri, Error> {
         // TODO: should actually verify URI?
         Ok(s.to_string())
@@ -380,6 +400,27 @@ impl<'a> Element<'a> {
         }
     }
 
+    fn _component(s: &str, span: Span) -> Result<ast::Component, Error> {
+        use ast::Component::*;
+
+        match s {
+            "template" => Ok(Template),
+            "function" => Ok(Function),
+            "attribute-set" => Ok(AttributeSet),
+            "variable" => Ok(Variable),
+            "mode" => Ok(Mode),
+            "*" => Ok(Star),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn component(&self) -> impl Fn(&'a str, Span) -> Result<ast::Component, Error> + '_ {
+        Self::_component
+    }
+
     fn _visibility_with_abstract(
         s: &str,
         span: Span,
@@ -402,6 +443,27 @@ impl<'a> Element<'a> {
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithAbstract, Error> {
         Self::_visibility_with_abstract
+    }
+
+    fn _visibility_with_hidden(s: &str, span: Span) -> Result<ast::VisibilityWithHidden, Error> {
+        use ast::VisibilityWithHidden::*;
+
+        match s {
+            "public" => Ok(Public),
+            "private" => Ok(Private),
+            "final" => Ok(Final),
+            "hidden" => Ok(Hidden),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn visibility_with_hidden(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithHidden, Error> {
+        Self::_visibility_with_hidden
     }
 
     fn _validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
