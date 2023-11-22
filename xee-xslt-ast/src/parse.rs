@@ -49,7 +49,7 @@ impl<'a> XsltParser<'a> {
         let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = Element::new(node, element, self, element_namespaces)?;
         if element.element.name() != self.names.xsl_transform {
-            return Err(Error::Unexpected);
+            return Err(Error::InvalidInstruction { span: element.span });
         }
         ast::Transform::parse(&element)
     }
@@ -176,6 +176,9 @@ impl<'a> Element<'a> {
             Value::Element(element) => {
                 let element_namespaces = self.element_namespaces.push(element);
                 let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
+                if element.element.name() != self.names.xsl_accumulator_rule {
+                    return Err(Error::InvalidInstruction { span: element.span });
+                }
                 ast::AccumulatorRule::parse(&element)
             }
             _ => Err(Error::Unexpected),

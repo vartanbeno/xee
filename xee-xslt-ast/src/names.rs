@@ -77,6 +77,8 @@ pub(crate) struct Names {
 
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
+
+    pub(crate) xsl_accumulator_rule: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
 
     pub(crate) as_: xot::NameId,
@@ -158,6 +160,7 @@ impl Names {
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
             declaration_names: DeclarationName::names(xot, xsl_ns),
 
+            xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
             xsl_transform: xot.add_name_ns("transform", xsl_ns),
 
             as_: xot.add_name("as"),
