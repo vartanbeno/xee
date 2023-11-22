@@ -23,6 +23,8 @@ xee-xpath-ast = { path = "../xee-xpath-ast" }
 thiserror = "1.0.40"
 xot = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
+strum = "0.25"
+strum_macros = "0.25"
 
 [dev-dependencies]
 xee-xslt-ast = { path = ".", features = ["serde"] }

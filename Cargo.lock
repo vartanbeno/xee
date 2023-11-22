@@ -3540,6 +3540,8 @@ dependencies = [
  "insta",
  "ron 0.8.1",
  "serde",
+ "strum",
+ "strum_macros",
  "thiserror",
  "xee-xpath-ast",
  "xee-xslt-ast",

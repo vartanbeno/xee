@@ -1,5 +1,8 @@
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
+use strum::VariantNames;
+use strum_macros::{EnumString, EnumVariantNames};
 use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core as ast;
@@ -7,7 +10,8 @@ use crate::error::Error;
 use crate::instruction::InstructionParser;
 use crate::parse::Element;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
+#[strum(serialize_all = "kebab-case")]
 pub(crate) enum SequenceConstructorName {
     Assert,
     Fallback,
@@ -28,17 +32,12 @@ impl SequenceConstructorName {
     }
 
     fn names(xot: &mut Xot, xsl_ns: xot::NamespaceId) -> BTreeMap<NameId, SequenceConstructorName> {
-        let assert = xot.add_name_ns("assert", xsl_ns);
-        let copy = xot.add_name_ns("copy", xsl_ns);
-        let fallback = xot.add_name_ns("fallback", xsl_ns);
-        let if_ = xot.add_name_ns("if", xsl_ns);
-        let variable = xot.add_name_ns("variable", xsl_ns);
         let mut sequence_constructor_names = BTreeMap::new();
-        sequence_constructor_names.insert(assert, SequenceConstructorName::Assert);
-        sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
-        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
-        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
-        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
+        for variant_name in Self::VARIANTS {
+            let name = xot.add_name_ns(variant_name, xsl_ns);
+            let constructor = SequenceConstructorName::from_str(variant_name).unwrap();
+            sequence_constructor_names.insert(name, constructor);
+        }
         sequence_constructor_names
     }
 }
