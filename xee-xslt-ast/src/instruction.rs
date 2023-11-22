@@ -81,6 +81,39 @@ impl InstructionParser for ast::Accept {
     }
 }
 
+impl InstructionParser for ast::Accumulator {
+    fn parse_ast(element: &Element) -> Result<Self> {
+        let names = element.names;
+        Ok(ast::Accumulator {
+            name: element.required(names.name, element.eqname())?,
+            initial_value: element.required(names.initial_value, element.xpath())?,
+            as_: element.optional(names.as_, element.sequence_type())?,
+            streamable: element.boolean_with_default(names.streamable, false)?,
+
+            rules: element.accumulator_rules()?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::AccumulatorRule {
+    fn parse_ast(element: &Element) -> Result<Self> {
+        let names = element.names;
+        Ok(ast::AccumulatorRule {
+            match_: element.required(names.match_, element.pattern())?,
+            phase: element.optional(names.phase, element.phase())?,
+            select: element.optional(names.select, element.xpath())?,
+
+            content: element.sequence_constructor()?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::Assert {
     fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
@@ -310,4 +343,11 @@ mod tests {
             r#"<xsl:assert xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" error-code="foo">Hello</xsl:assert>"#
         ));
     }
+
+    // #[test]
+    // fn test_accumulator() {
+    //     assert_ron_snapshot!(parse(
+    //         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator name="foo" initial-value="1"><xsl:accumulator-rule match="foo"/></xsl:accumulator></xsl:transform>"#
+    //     ));
+    // }
 }

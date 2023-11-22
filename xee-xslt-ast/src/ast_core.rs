@@ -193,7 +193,7 @@ pub struct Accumulator {
     pub name: EqName,
     pub initial_value: Expression,
     pub as_: Option<SequenceType>,
-    pub streamable: Option<bool>,
+    pub streamable: bool,
 
     pub rules: Vec<AccumulatorRule>,
 

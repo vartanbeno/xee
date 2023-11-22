@@ -35,6 +35,10 @@ pub enum Error {
         value: String,
         span: Span,
     },
+
+    AccumulatorRuleMissing {
+        span: Span,
+    },
     /// An internal error; this indicates a bug as some invariant in the
     /// code wasn't met.
     Internal(&'static str),

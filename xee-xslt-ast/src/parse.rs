@@ -5,7 +5,7 @@ use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 use crate::ast_core as ast;
 use crate::ast_core::Span;
 use crate::error::Error;
-use crate::instruction::SequenceConstructorParser;
+use crate::instruction::{InstructionParser, SequenceConstructorParser};
 use crate::names::{Names, StandardNames};
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
@@ -126,6 +126,29 @@ impl<'a> Element<'a> {
         }
     }
 
+    pub(crate) fn accumulator_rules(&self) -> Result<Vec<ast::AccumulatorRule>, Error> {
+        let mut result = Vec::new();
+        for node in self.xot.children(self.node) {
+            let item = self.accumulator_rule_item(node)?;
+            result.push(item);
+        }
+        if result.is_empty() {
+            return Err(Error::AccumulatorRuleMissing { span: self.span });
+        }
+        Ok(result)
+    }
+
+    fn accumulator_rule_item(&self, node: Node) -> Result<ast::AccumulatorRule, Error> {
+        match self.xot.value(node) {
+            Value::Element(element) => {
+                let element_namespaces = self.element_namespaces.push(element);
+                let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
+                ast::AccumulatorRule::parse_ast(&element)
+            }
+            _ => Err(Error::Unexpected),
+        }
+    }
+
     pub(crate) fn optional<T>(
         &self,
         name: NameId,
@@ -224,7 +247,7 @@ impl<'a> Element<'a> {
         |s, span| self._eqname(s, span)
     }
 
-    fn _token(s: &str, span: Span) -> Result<ast::Token, Error> {
+    fn _token(s: &str, _span: Span) -> Result<ast::Token, Error> {
         Ok(s.to_string())
     }
 
@@ -274,6 +297,31 @@ impl<'a> Element<'a> {
 
     pub(crate) fn xpath(&self) -> impl Fn(&'a str, Span) -> Result<ast::Expression, Error> + '_ {
         |s, span| self._xpath(s, span)
+    }
+
+    fn _pattern(s: &str, _span: Span) -> Result<ast::Pattern, Error> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn pattern(&self) -> impl Fn(&'a str, Span) -> Result<ast::Pattern, Error> + '_ {
+        Self::_pattern
+    }
+
+    fn _phase(s: &str, span: Span) -> Result<ast::AccumulatorPhase, Error> {
+        match s {
+            "start" => Ok(ast::AccumulatorPhase::Start),
+            "end" => Ok(ast::AccumulatorPhase::End),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn phase(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::AccumulatorPhase, Error> + '_ {
+        Self::_phase
     }
 
     fn _eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
