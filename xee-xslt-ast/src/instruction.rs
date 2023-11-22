@@ -9,14 +9,14 @@ pub(crate) trait InstructionParser: Sized {
         Ok(())
     }
 
-    fn parse_ast(element: &Element) -> Result<Self>;
+    fn parse(element: &Element) -> Result<Self>;
 }
 
 pub(crate) trait SequenceConstructorParser:
     InstructionParser + Into<ast::SequenceConstructorItem>
 {
-    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
-        let ast = Self::parse_ast(element)?;
+    fn parse_sequence_constructor_item(element: &Element) -> Result<ast::SequenceConstructorItem> {
+        let ast = Self::parse(element)?;
         ast.validate(element)?;
         Ok(ast.into())
     }
@@ -29,7 +29,7 @@ impl<T> SequenceConstructorParser for T where
 
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
     fn parse_declaration(element: &Element) -> Result<ast::Declaration> {
-        let ast = Self::parse_ast(element)?;
+        let ast = Self::parse(element)?;
         ast.validate(element)?;
         Ok(ast.into())
     }
@@ -38,7 +38,7 @@ pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
 impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declaration> {}
 
 impl InstructionParser for ast::SequenceConstructorItem {
-    fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem> {
+    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let name = element
             .names
             .sequence_constructor_name(element.element.name());
@@ -52,14 +52,14 @@ impl InstructionParser for ast::SequenceConstructorItem {
                 Err(Error::InvalidInstruction { span: element.span })
             } else {
                 // we parse the literal element
-                ast::ElementNode::parse(element)
+                ast::ElementNode::parse_sequence_constructor_item(element)
             }
         }
     }
 }
 
 impl InstructionParser for ast::Declaration {
-    fn parse_ast(element: &Element) -> Result<ast::Declaration> {
+    fn parse(element: &Element) -> Result<ast::Declaration> {
         let name = element.names.declaration_name(element.element.name());
 
         if let Some(name) = name {
@@ -71,7 +71,7 @@ impl InstructionParser for ast::Declaration {
 }
 
 impl InstructionParser for ast::ElementNode {
-    fn parse_ast(element: &Element) -> Result<ast::ElementNode> {
+    fn parse(element: &Element) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
             name: to_name(element.xot, element.element.name()),
 
@@ -90,7 +90,7 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
 }
 
 impl InstructionParser for ast::Accept {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Accept {
             component: element.required(names.component, element.component())?,
@@ -104,7 +104,7 @@ impl InstructionParser for ast::Accept {
 }
 
 impl InstructionParser for ast::Accumulator {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
@@ -121,7 +121,7 @@ impl InstructionParser for ast::Accumulator {
 }
 
 impl InstructionParser for ast::AccumulatorRule {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::AccumulatorRule {
             match_: element.required(names.match_, element.pattern())?,
@@ -137,7 +137,7 @@ impl InstructionParser for ast::AccumulatorRule {
 }
 
 impl InstructionParser for ast::Assert {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Assert {
             test: element.required(names.test, element.xpath())?,
@@ -154,7 +154,7 @@ impl InstructionParser for ast::Assert {
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Copy {
             select: element.optional(names.select, element.xpath())?,
@@ -174,7 +174,7 @@ impl InstructionParser for ast::Copy {
 }
 
 impl InstructionParser for ast::Fallback {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
             content: element.sequence_constructor()?,
 
@@ -185,7 +185,7 @@ impl InstructionParser for ast::Fallback {
 }
 
 impl InstructionParser for ast::If {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
@@ -197,7 +197,7 @@ impl InstructionParser for ast::If {
 }
 
 impl InstructionParser for ast::Transform {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Transform {
             id: element.optional(names.id, element.id())?,
@@ -217,7 +217,7 @@ impl InstructionParser for ast::Transform {
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse_ast(element: &Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = element.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
@@ -259,14 +259,14 @@ mod tests {
     use super::*;
     use insta::assert_ron_snapshot;
 
-    fn parse(s: &str) -> Result<ast::SequenceConstructorItem> {
+    fn parse_sequence_constructor_item(s: &str) -> Result<ast::SequenceConstructorItem> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
 
         let (node, span_info) = xot.parse_with_span_info(s).unwrap();
         let node = xot.document_element(node).unwrap();
         let parser = XsltParser::new(&xot, &names, &span_info);
-        parser.parse(node)
+        parser.parse_sequence_constructor_item(node)
     }
 
     fn parse_transform(s: &str) -> Result<ast::Transform> {
@@ -281,117 +281,117 @@ mod tests {
 
     #[test]
     fn test_if() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()">Hello</xsl:if>"#
         ));
     }
 
     #[test]
     fn test_variable() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_missing_required() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_broken_xpath() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" select="let $x := 1">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_sequence_type() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" name="foo" as="xs:string" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_boolean_default_no_with_explicit_yes() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" static="yes" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_variable_visibility() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" visibility="public">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_variable_visibility_abstract_with_select_is_error() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="foo" visibility="abstract" select="true()">Hello</xsl:variable>"#
         ));
     }
 
     #[test]
     fn test_copy() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" copy-namespaces="no" inherit-namespaces="no" validation="strict">Hello</xsl:copy>"#
         ));
     }
 
     #[test]
     fn test_eqnames() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" use-attribute-sets="foo bar baz">Hello</xsl:copy>"#
         ));
     }
 
     #[test]
     fn test_eqnames_error() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:copy xmlns:xsl="http://www.w3.org/1999/XSL/Transform" use-attribute-sets="foo br!ken bar">Hello</xsl:copy>"#
         ));
     }
 
     #[test]
     fn test_nested_if() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><xsl:if test="true()">Hello</xsl:if></xsl:if>"#
         ));
     }
 
     #[test]
     fn test_if_with_standard_attribute() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes">Hello</xsl:if>"#
         ));
     }
 
     #[test]
     fn test_literal_result_element() {
-        assert_ron_snapshot!(parse(r#"<foo/>"#));
+        assert_ron_snapshot!(parse_sequence_constructor_item(r#"<foo/>"#));
     }
 
     #[test]
     fn test_literal_result_element_with_standard_attribute() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<foo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:expand-text="yes"/>"#
         ));
     }
 
     #[test]
     fn test_no_fn_namespace_by_default() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="fn:true()">Hello</xsl:if>"#
         ));
     }
 
     #[test]
     fn test_attribute_value_template_just_string() {
-        assert_ron_snapshot!(parse(
+        assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:assert xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" error-code="foo">Hello</xsl:assert>"#
         ));
     }

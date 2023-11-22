@@ -34,7 +34,10 @@ impl<'a> XsltParser<'a> {
         Ok(span.into())
     }
 
-    pub(crate) fn parse(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
+    pub(crate) fn parse_sequence_constructor_item(
+        &self,
+        node: Node,
+    ) -> Result<ast::SequenceConstructorItem, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = Element::new(node, element, self, element_namespaces)?;
@@ -48,7 +51,7 @@ impl<'a> XsltParser<'a> {
         if element.element.name() != self.names.xsl_transform {
             return Err(Error::Unexpected);
         }
-        ast::Transform::parse_ast(&element)
+        ast::Transform::parse(&element)
     }
 }
 
@@ -130,7 +133,7 @@ impl<'a> Element<'a> {
             Value::Element(element) => {
                 let element_namespaces = self.element_namespaces.push(element);
                 let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
-                ast::SequenceConstructorItem::parse(&element)
+                ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
             }
             _ => Err(Error::Unexpected),
         }
@@ -173,7 +176,7 @@ impl<'a> Element<'a> {
             Value::Element(element) => {
                 let element_namespaces = self.element_namespaces.push(element);
                 let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
-                ast::AccumulatorRule::parse_ast(&element)
+                ast::AccumulatorRule::parse(&element)
             }
             _ => Err(Error::Unexpected),
         }

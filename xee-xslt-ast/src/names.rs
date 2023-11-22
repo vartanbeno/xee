@@ -23,11 +23,17 @@ pub(crate) enum SequenceConstructorName {
 impl SequenceConstructorName {
     pub(crate) fn parse(&self, element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
         match self {
-            SequenceConstructorName::Assert => ast::Assert::parse(element),
-            SequenceConstructorName::Copy => ast::Copy::parse(element),
-            SequenceConstructorName::If => ast::If::parse(element),
-            SequenceConstructorName::Variable => ast::Variable::parse(element),
-            SequenceConstructorName::Fallback => ast::Fallback::parse(element),
+            SequenceConstructorName::Assert => {
+                ast::Assert::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
+            SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
+            SequenceConstructorName::Variable => {
+                ast::Variable::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::Fallback => {
+                ast::Fallback::parse_sequence_constructor_item(element)
+            }
         }
     }
 
