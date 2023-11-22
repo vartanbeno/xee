@@ -1524,8 +1524,11 @@ pub struct Name {
     pub local: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(strum(serialize_all = "kebab-case"))]
+#[strum_discriminants(name(DeclarationName))]
 pub enum Declaration {
     Accumulator(Box<Accumulator>),
     CharacterMap(Box<CharacterMap>),

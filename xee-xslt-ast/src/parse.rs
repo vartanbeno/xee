@@ -66,8 +66,6 @@ impl<'a> XsltParser<'a> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = Element::new(node, element, self, element_namespaces)?;
-        dbg!(self.xot.name_ns_str(element.element.name()));
-        // dbg!(element.element.name() == self.names.xsl_matching_substring);
         if element.element.name() != name {
             return Ok(None);
         }
@@ -191,7 +189,7 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    pub(crate) fn at_least_one_element<T>(&self, name: NameId) -> Result<Vec<T>, Error>
+    pub(crate) fn one_or_more_elements<T>(&self, name: NameId) -> Result<Vec<T>, Error>
     where
         T: InstructionParser,
     {
@@ -644,6 +642,8 @@ impl<'a> Element<'a> {
     }
 }
 
+// TODO: I think Xot has a way to get the namespaces for an element
+// already, so we should use just that.
 struct ElementNamespaces<'a> {
     xot: &'a Xot,
     element: &'a xot::Element,

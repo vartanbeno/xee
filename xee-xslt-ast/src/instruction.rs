@@ -17,6 +17,7 @@ pub(crate) trait SequenceConstructorParser:
 {
     fn parse_sequence_constructor_item(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let ast = Self::parse(element)?;
+        // TODO: the instruction parser should validate
         ast.validate(element)?;
         Ok(ast.into())
     }
@@ -30,6 +31,7 @@ impl<T> SequenceConstructorParser for T where
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
     fn parse_declaration(element: &Element) -> Result<ast::Declaration> {
         let ast = Self::parse(element)?;
+        // TODO: the instruction parser should validate
         ast.validate(element)?;
         Ok(ast.into())
     }
@@ -112,7 +114,7 @@ impl InstructionParser for ast::Accumulator {
             as_: element.optional(names.as_, element.sequence_type())?,
             streamable: element.boolean_with_default(names.streamable, false)?,
 
-            rules: element.at_least_one_element(names.xsl_accumulator_rule)?,
+            rules: element.one_or_more_elements(names.xsl_accumulator_rule)?,
 
             standard: element.standard()?,
             span: element.span,

@@ -2,10 +2,9 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use strum::VariantNames;
-use strum_macros::{EnumString, EnumVariantNames};
 use xot::{NameId, NamespaceId, Xot};
 
-use crate::ast_core::{self as ast, SequenceConstructorName};
+use crate::ast_core::{self as ast, DeclarationName, SequenceConstructorName};
 use crate::error::Error;
 use crate::instruction::{DeclarationParser, SequenceConstructorParser};
 use crate::parse::Element;
@@ -44,16 +43,13 @@ impl SequenceConstructorName {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
-#[strum(serialize_all = "kebab-case")]
-pub(crate) enum DeclarationName {
-    Accumulator,
-}
-
 impl DeclarationName {
     pub(crate) fn parse(&self, element: &Element) -> Result<ast::Declaration, Error> {
         match self {
             DeclarationName::Accumulator => ast::Accumulator::parse_declaration(element),
+            _ => {
+                unimplemented!()
+            }
         }
     }
 
@@ -74,12 +70,14 @@ pub(crate) struct Names {
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
 
+    // XSL elements
     pub(crate) xsl_accumulator_rule: xot::NameId,
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
     pub(crate) xsl_non_matching_substring: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
 
+    // attributes on XSLT elements
     pub(crate) as_: xot::NameId,
     pub(crate) component: xot::NameId,
     pub(crate) copy_namespaces: xot::NameId,
