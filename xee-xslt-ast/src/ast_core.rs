@@ -1,3 +1,4 @@
+use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
 // use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
@@ -1444,8 +1445,11 @@ pub enum SequenceConstructorItem {
     Instruction(SequenceConstructorInstruction),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(strum(serialize_all = "kebab-case"))]
+#[strum_discriminants(name(SequenceConstructorName))]
 pub enum SequenceConstructorInstruction {
     AnalyzeString(Box<AnalyzeString>),
     ApplyImports(Box<ApplyImports>),

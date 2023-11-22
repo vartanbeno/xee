@@ -5,21 +5,10 @@ use strum::VariantNames;
 use strum_macros::{EnumString, EnumVariantNames};
 use xot::{NameId, NamespaceId, Xot};
 
-use crate::ast_core as ast;
+use crate::ast_core::{self as ast, SequenceConstructorName};
 use crate::error::Error;
 use crate::instruction::{DeclarationParser, SequenceConstructorParser};
 use crate::parse::Element;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
-#[strum(serialize_all = "kebab-case")]
-pub(crate) enum SequenceConstructorName {
-    AnalyzeString,
-    Assert,
-    Fallback,
-    Copy,
-    If,
-    Variable,
-}
 
 impl SequenceConstructorName {
     pub(crate) fn parse(&self, element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
@@ -37,6 +26,9 @@ impl SequenceConstructorName {
             }
             SequenceConstructorName::Fallback => {
                 ast::Fallback::parse_sequence_constructor_item(element)
+            }
+            _ => {
+                unimplemented!()
             }
         }
     }
