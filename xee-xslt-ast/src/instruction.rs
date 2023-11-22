@@ -1,25 +1,25 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::parse::Element;
 
 pub(crate) trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
-    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
+    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let ast = Self::parse_ast(element)?;
         ast.validate(element)?;
         Ok(ast.into())
     }
 
-    fn validate(&self, _element: &Element) -> Result<(), Error> {
+    fn validate(&self, _element: &Element) -> Result<()> {
         Ok(())
     }
 
-    fn parse_ast(element: &Element) -> Result<Self, Error>;
+    fn parse_ast(element: &Element) -> Result<Self>;
 }
 
 impl InstructionParser for ast::SequenceConstructorItem {
-    fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
+    fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let sname = element
             .names
             .sequence_constructor_name(element.element.name());
@@ -40,7 +40,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
 }
 
 impl InstructionParser for ast::ElementNode {
-    fn parse_ast(element: &Element) -> Result<ast::ElementNode, Error> {
+    fn parse_ast(element: &Element) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
             name: to_name(element.xot, element.element.name()),
 
@@ -59,7 +59,7 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
 }
 
 impl InstructionParser for ast::Assert {
-    fn parse_ast(element: &Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Assert {
             test: element.required(names.test, element.xpath())?,
@@ -76,7 +76,7 @@ impl InstructionParser for ast::Assert {
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse_ast(element: &Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::Copy {
             select: element.optional(names.select, element.xpath())?,
@@ -96,7 +96,7 @@ impl InstructionParser for ast::Copy {
 }
 
 impl InstructionParser for ast::Fallback {
-    fn parse_ast(element: &Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
             content: element.sequence_constructor()?,
 
@@ -107,7 +107,7 @@ impl InstructionParser for ast::Fallback {
 }
 
 impl InstructionParser for ast::If {
-    fn parse_ast(element: &Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
@@ -119,7 +119,7 @@ impl InstructionParser for ast::If {
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse_ast(element: &Element) -> Result<Self, Error> {
+    fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
@@ -142,7 +142,7 @@ impl InstructionParser for ast::Variable {
         })
     }
 
-    fn validate(&self, element: &Element) -> Result<(), Error> {
+    fn validate(&self, element: &Element) -> Result<()> {
         if self.visibility == Some(ast::VisibilityWithAbstract::Abstract) && self.select.is_some() {
             return Err(element.attribute_unexpected(
                 element.names.select,
@@ -161,7 +161,7 @@ mod tests {
     use super::*;
     use insta::assert_ron_snapshot;
 
-    fn parse(s: &str) -> Result<ast::SequenceConstructorItem, Error> {
+    fn parse(s: &str) -> Result<ast::SequenceConstructorItem> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
 

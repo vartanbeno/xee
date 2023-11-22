@@ -41,6 +41,8 @@ pub enum Error {
     XPath(xee_xpath_ast::ParserError),
 }
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 impl From<xee_xpath_ast::ParserError> for Error {
     fn from(error: xee_xpath_ast::ParserError) -> Self {
         Self::XPath(error)

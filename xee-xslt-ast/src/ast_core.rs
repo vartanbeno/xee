@@ -71,20 +71,6 @@ pub enum ValueTemplateItem {
     Value { xpath: xpath_ast::XPath, span: Span },
 }
 
-// impl<V> ValueTemplate<V>
-// where
-//     V: Clone + PartialEq + Eq,
-// {
-//     fn convert(&self) -> Result<V, Error> {}
-// }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub enum AttributeValueTemplateItem {
-//     Expression(Expression),
-//     String(String),
-// }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Standard {
