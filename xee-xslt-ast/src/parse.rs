@@ -166,7 +166,7 @@ impl<'a> Element<'a> {
     pub(crate) fn accumulator_rules(&self) -> Result<Vec<ast::AccumulatorRule>, Error> {
         let mut result = Vec::new();
         for node in self.xot.children(self.node) {
-            let item = self.accumulator_rule_item(node)?;
+            let item = self.element_item(node, self.names.xsl_accumulator_rule)?;
             result.push(item);
         }
         if result.is_empty() {
@@ -175,18 +175,14 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    fn accumulator_rule_item(&self, node: Node) -> Result<ast::AccumulatorRule, Error> {
-        match self.xot.value(node) {
-            Value::Element(element) => {
-                let element_namespaces = self.element_namespaces.push(element);
-                let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
-                if element.element.name() != self.names.xsl_accumulator_rule {
-                    return Err(Error::InvalidInstruction { span: element.span });
-                }
-                ast::AccumulatorRule::parse(&element)
-            }
-            _ => Err(Error::Unexpected),
+    fn element_item<T: InstructionParser>(&self, node: Node, name: NameId) -> Result<T, Error> {
+        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element_namespaces = ElementNamespaces::new(self.xot, element);
+        let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
+        if element.element.name() != name {
+            return Err(Error::InvalidInstruction { span: element.span });
         }
+        T::parse(&element)
     }
 
     pub(crate) fn optional<T>(
