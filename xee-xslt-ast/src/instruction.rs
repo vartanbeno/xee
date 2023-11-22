@@ -4,18 +4,27 @@ use crate::ast_core as ast;
 use crate::error::{Error, Result};
 use crate::parse::Element;
 
-pub(crate) trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
-    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
-        let ast = Self::parse_ast(element)?;
-        ast.validate(element)?;
-        Ok(ast.into())
-    }
-
+pub(crate) trait InstructionParser: Sized {
     fn validate(&self, _element: &Element) -> Result<()> {
         Ok(())
     }
 
     fn parse_ast(element: &Element) -> Result<Self>;
+}
+
+pub(crate) trait SequenceConstructorParser:
+    InstructionParser + Into<ast::SequenceConstructorItem>
+{
+    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
+        let ast = Self::parse_ast(element)?;
+        ast.validate(element)?;
+        Ok(ast.into())
+    }
+}
+
+impl<T> SequenceConstructorParser for T where
+    T: InstructionParser + Into<ast::SequenceConstructorItem>
+{
 }
 
 impl InstructionParser for ast::SequenceConstructorItem {
@@ -57,6 +66,20 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
         local: local.to_string(),
     }
 }
+
+// impl InstructionParser for ast::Accept {
+//     fn parse_ast(element: &Element) -> Result<Self> {
+//         let names = element.names;
+//         Ok(ast::Accept {
+//             component: element.required(names.component, element.component)?,
+//             names: element.required(names.names, element.tokens())?,
+//             visibility: element.required(names.visibility, element.visibility())?,
+
+//             standard: element.standard()?,
+//             span: element.span,
+//         })
+//     }
+// }
 
 impl InstructionParser for ast::Assert {
     fn parse_ast(element: &Element) -> Result<Self> {

@@ -5,7 +5,7 @@ use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 use crate::ast_core as ast;
 use crate::ast_core::Span;
 use crate::error::Error;
-use crate::instruction::InstructionParser;
+use crate::instruction::SequenceConstructorParser;
 use crate::names::{Names, StandardNames};
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;

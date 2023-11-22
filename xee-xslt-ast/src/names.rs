@@ -7,7 +7,7 @@ use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core as ast;
 use crate::error::Error;
-use crate::instruction::InstructionParser;
+use crate::instruction::SequenceConstructorParser;
 use crate::parse::Element;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
