@@ -45,13 +45,17 @@ impl<'a> XsltParser<'a> {
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
+        self.parse_element(node, self.names.xsl_transform)
+    }
+
+    fn parse_element<T: InstructionParser>(&self, node: Node, name: NameId) -> Result<T, Error> {
         let element = self.xot.element(node).ok_or(Error::Unexpected)?;
         let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = Element::new(node, element, self, element_namespaces)?;
-        if element.element.name() != self.names.xsl_transform {
+        if element.element.name() != name {
             return Err(Error::InvalidInstruction { span: element.span });
         }
-        ast::Transform::parse(&element)
+        T::parse(&element)
     }
 }
 
