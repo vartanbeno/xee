@@ -201,6 +201,12 @@ pub struct Accumulator {
     pub span: Span,
 }
 
+impl From<Accumulator> for Declaration {
+    fn from(i: Accumulator) -> Self {
+        Declaration::Accumulator(Box::new(i))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AccumulatorRule {
@@ -1268,29 +1274,6 @@ pub struct StripSpace {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Stylesheet {
-    pub id: Option<Id>,
-    pub version: Decimal,
-    pub default_mode: Option<DefaultMode>,
-    pub default_validation: Option<DefaultValidation>,
-    pub input_type_annotations: Option<InputTypeAnnotations>,
-    pub default_collation: Option<Vec<Uri>>,
-    pub extension_element_prefixes: Option<Vec<Prefix>>,
-    pub exclude_result_prefixes: Option<Vec<Prefix>>,
-    pub expand_text: Option<bool>,
-    pub use_when: Option<Expression>,
-    pub xpath_default_namespace: Option<Uri>,
-
-    pub declarations: Declarations,
-
-    pub standard: Standard,
-    pub span: Span,
-}
-
-// Transform is an alias for Stylesheet. TODO: rename to Transform?
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Template {
     pub match_: Option<Pattern>,
     pub name: Option<EqName>,
@@ -1317,6 +1300,23 @@ pub struct Text {
     pub standard: Standard,
     pub span: Span,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Transform {
+    pub id: Option<Id>,
+    pub input_type_annotations: Option<InputTypeAnnotations>,
+    pub extension_element_prefixes: Option<Vec<Prefix>>,
+
+    // even though the spec declares more attributes for this,
+    // they're all standard attributes
+    pub declarations: Declarations,
+
+    pub standard: Standard,
+    pub span: Span,
+}
+
+// Stylesheet is an alias for Transform
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

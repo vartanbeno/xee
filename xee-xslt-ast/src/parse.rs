@@ -5,7 +5,7 @@ use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 use crate::ast_core as ast;
 use crate::ast_core::Span;
 use crate::error::Error;
-use crate::instruction::{InstructionParser, SequenceConstructorParser};
+use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::{Names, StandardNames};
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
@@ -39,6 +39,16 @@ impl<'a> XsltParser<'a> {
         let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = Element::new(node, element, self, element_namespaces)?;
         element.sequence_constructor_item(node)
+    }
+
+    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
+        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element_namespaces = ElementNamespaces::new(self.xot, element);
+        let element = Element::new(node, element, self, element_namespaces)?;
+        if element.element.name() != self.names.xsl_transform {
+            return Err(Error::Unexpected);
+        }
+        ast::Transform::parse_ast(&element)
     }
 }
 
@@ -121,6 +131,26 @@ impl<'a> Element<'a> {
                 let element_namespaces = self.element_namespaces.push(element);
                 let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
                 ast::SequenceConstructorItem::parse(&element)
+            }
+            _ => Err(Error::Unexpected),
+        }
+    }
+
+    pub(crate) fn declarations(&self) -> Result<ast::Declarations, Error> {
+        let mut result = Vec::new();
+        for node in self.xot.children(self.node) {
+            let item = self.declaration_item(node)?;
+            result.push(item);
+        }
+        Ok(result)
+    }
+
+    fn declaration_item(&self, node: Node) -> Result<ast::Declaration, Error> {
+        match self.xot.value(node) {
+            Value::Element(element) => {
+                let element_namespaces = self.element_namespaces.push(element);
+                let element = Element::new(node, element, self.xslt_parser, element_namespaces)?;
+                ast::Declaration::parse_declaration(&element)
             }
             _ => Err(Error::Unexpected),
         }
@@ -245,6 +275,32 @@ impl<'a> Element<'a> {
 
     pub(crate) fn eqname(&self) -> impl Fn(&'a str, Span) -> Result<xpath_ast::Name, Error> + '_ {
         |s, span| self._eqname(s, span)
+    }
+
+    fn _id(s: &str, _span: Span) -> Result<ast::Id, Error> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn id(&self) -> impl Fn(&'a str, Span) -> Result<ast::Id, Error> + '_ {
+        Self::_id
+    }
+
+    fn _input_type_annotations(s: &str, span: Span) -> Result<ast::InputTypeAnnotations, Error> {
+        match s {
+            "strip" => Ok(ast::InputTypeAnnotations::Strip),
+            "preserve" => Ok(ast::InputTypeAnnotations::Preserve),
+            "unspecified" => Ok(ast::InputTypeAnnotations::Unspecified),
+            _ => Err(Error::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn input_type_annotations(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::InputTypeAnnotations, Error> + '_ {
+        Self::_input_type_annotations
     }
 
     fn _token(s: &str, _span: Span) -> Result<ast::Token, Error> {

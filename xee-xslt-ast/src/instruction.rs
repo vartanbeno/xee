@@ -27,14 +27,24 @@ impl<T> SequenceConstructorParser for T where
 {
 }
 
+pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
+    fn parse_declaration(element: &Element) -> Result<ast::Declaration> {
+        let ast = Self::parse_ast(element)?;
+        ast.validate(element)?;
+        Ok(ast.into())
+    }
+}
+
+impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declaration> {}
+
 impl InstructionParser for ast::SequenceConstructorItem {
     fn parse_ast(element: &Element) -> Result<ast::SequenceConstructorItem> {
-        let sname = element
+        let name = element
             .names
             .sequence_constructor_name(element.element.name());
 
-        if let Some(sname) = sname {
-            sname.parse(element)
+        if let Some(name) = name {
+            name.parse(element)
         } else {
             let ns = element.xot.namespace_for_name(element.element.name());
             if ns == element.names.xsl_ns {
@@ -44,6 +54,18 @@ impl InstructionParser for ast::SequenceConstructorItem {
                 // we parse the literal element
                 ast::ElementNode::parse(element)
             }
+        }
+    }
+}
+
+impl InstructionParser for ast::Declaration {
+    fn parse_ast(element: &Element) -> Result<ast::Declaration> {
+        let name = element.names.declaration_name(element.element.name());
+
+        if let Some(name) = name {
+            name.parse(element)
+        } else {
+            Err(Error::InvalidInstruction { span: element.span })
         }
     }
 }
@@ -174,6 +196,26 @@ impl InstructionParser for ast::If {
     }
 }
 
+impl InstructionParser for ast::Transform {
+    fn parse_ast(element: &Element) -> Result<Self> {
+        let names = element.names;
+        Ok(ast::Transform {
+            id: element.optional(names.id, element.id())?,
+            input_type_annotations: element.optional(
+                names.input_type_annotations,
+                element.input_type_annotations(),
+            )?,
+            extension_element_prefixes: element
+                .optional(names.extension_element_prefixes, element.prefixes())?,
+
+            declarations: element.declarations()?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::Variable {
     fn parse_ast(element: &Element) -> Result<Self> {
         let names = element.names;
@@ -225,6 +267,16 @@ mod tests {
         let node = xot.document_element(node).unwrap();
         let parser = XsltParser::new(&xot, &names, &span_info);
         parser.parse(node)
+    }
+
+    fn parse_transform(s: &str) -> Result<ast::Transform> {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (node, span_info) = xot.parse_with_span_info(s).unwrap();
+        let node = xot.document_element(node).unwrap();
+        let parser = XsltParser::new(&xot, &names, &span_info);
+        parser.parse_transform(node)
     }
 
     #[test]
@@ -344,10 +396,10 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn test_accumulator() {
-    //     assert_ron_snapshot!(parse(
-    //         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator name="foo" initial-value="1"><xsl:accumulator-rule match="foo"/></xsl:accumulator></xsl:transform>"#
-    //     ));
-    // }
+    #[test]
+    fn test_accumulator() {
+        assert_ron_snapshot!(parse_transform(
+            r#"<xsl:transform version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator name="foo" initial-value="1"><xsl:accumulator-rule match="foo"/></xsl:accumulator></xsl:transform>"#
+        ));
+    }
 }

@@ -7,7 +7,7 @@ use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core as ast;
 use crate::error::Error;
-use crate::instruction::SequenceConstructorParser;
+use crate::instruction::{DeclarationParser, SequenceConstructorParser};
 use crate::parse::Element;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
@@ -42,17 +42,46 @@ impl SequenceConstructorName {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
+#[strum(serialize_all = "kebab-case")]
+pub(crate) enum DeclarationName {
+    Accumulator,
+}
+
+impl DeclarationName {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::Declaration, Error> {
+        match self {
+            DeclarationName::Accumulator => ast::Accumulator::parse_declaration(element),
+        }
+    }
+
+    fn names(xot: &mut Xot, xsl_ns: xot::NamespaceId) -> BTreeMap<NameId, DeclarationName> {
+        let mut declaration_names = BTreeMap::new();
+        for variant_name in Self::VARIANTS {
+            let name = xot.add_name_ns(variant_name, xsl_ns);
+            let constructor = DeclarationName::from_str(variant_name).unwrap();
+            declaration_names.insert(name, constructor);
+        }
+        declaration_names
+    }
+}
+
 pub(crate) struct Names {
     pub(crate) xsl_ns: NamespaceId,
 
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
+    pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
+    pub(crate) xsl_transform: xot::NameId,
 
     pub(crate) as_: xot::NameId,
     pub(crate) component: xot::NameId,
     pub(crate) copy_namespaces: xot::NameId,
     pub(crate) error_code: xot::NameId,
+    pub(crate) extension_element_prefixes: xot::NameId,
+    pub(crate) id: xot::NameId,
     pub(crate) inherit_namespaces: xot::NameId,
     pub(crate) initial_value: xot::NameId,
+    pub(crate) input_type_annotations: xot::NameId,
     pub(crate) match_: xot::NameId,
     pub(crate) name: xot::NameId,
     pub(crate) names: xot::NameId,
@@ -121,13 +150,19 @@ impl Names {
             xsl_ns,
 
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
+            declaration_names: DeclarationName::names(xot, xsl_ns),
+
+            xsl_transform: xot.add_name_ns("transform", xsl_ns),
 
             as_: xot.add_name("as"),
             component: xot.add_name("component"),
             copy_namespaces: xot.add_name("copy-namespaces"),
             error_code: xot.add_name("error-code"),
+            extension_element_prefixes: xot.add_name("extension-element-prefixes"),
+            id: xot.add_name("id"),
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             initial_value: xot.add_name("initial-value"),
+            input_type_annotations: xot.add_name("input-type-annotations"),
             match_: xot.add_name("match"),
             name: xot.add_name("name"),
             names: xot.add_name("names"),
@@ -152,5 +187,9 @@ impl Names {
         name: NameId,
     ) -> Option<SequenceConstructorName> {
         self.sequence_constructor_names.get(&name).copied()
+    }
+
+    pub(crate) fn declaration_name(&self, name: NameId) -> Option<DeclarationName> {
+        self.declaration_names.get(&name).copied()
     }
 }
