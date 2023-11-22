@@ -1,8 +1,8 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<xsl:copy xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" select=\"true()\" copy-namespaces=\"no\" inherit-namespaces=\"no\" validation=\"strict\">Hello</xsl:copy>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<xsl:copy xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" select=\"true()\" copy-namespaces=\"no\" inherit-namespaces=\"no\" validation=\"strict\">Hello</xsl:copy>\"#)"
 ---
-Ok(Copy(Copy(
+Ok(Instruction(Copy(Copy(
   select: Some(Expression(
     xpath: XPath(Expr([
       Path(PathExpr(
@@ -46,4 +46,4 @@ Ok(Copy(Copy(
     start: 1,
     end: 9,
   ),
-)))
+))))

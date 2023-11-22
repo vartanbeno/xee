@@ -36,7 +36,7 @@ pub enum Error {
         span: Span,
     },
 
-    AccumulatorRuleMissing {
+    ElementMissing {
         span: Span,
     },
     /// An internal error; this indicates a bug as some invariant in the

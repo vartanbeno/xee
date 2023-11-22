@@ -1,8 +1,8 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"public\">Hello</xsl:variable>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"public\">Hello</xsl:variable>\"#)"
 ---
-Ok(Variable(Variable(
+Ok(Instruction(Variable(Variable(
   name: Name(
     name: "foo",
     prefix: None,
@@ -30,4 +30,4 @@ Ok(Variable(Variable(
     start: 1,
     end: 13,
   ),
-)))
+))))

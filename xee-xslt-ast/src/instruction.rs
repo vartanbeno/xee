@@ -112,7 +112,7 @@ impl InstructionParser for ast::Accumulator {
             as_: element.optional(names.as_, element.sequence_type())?,
             streamable: element.boolean_with_default(names.streamable, false)?,
 
-            rules: element.accumulator_rules()?,
+            rules: element.at_least_one_element(names.xsl_accumulator_rule)?,
 
             standard: element.standard()?,
             span: element.span,
@@ -146,6 +146,24 @@ impl InstructionParser for ast::Assert {
                 .optional(names.error_code, element.value_template(element.eqname()))?,
 
             content: element.sequence_constructor()?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::AnalyzeString {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = element.names;
+        Ok(ast::AnalyzeString {
+            select: element.required(names.select, element.xpath())?,
+            regex: element.required(names.regex, element.value_template(element.string()))?,
+            flags: element.optional(names.flags, element.value_template(element.string()))?,
+
+            matching_substring: element.optional_element(names.xsl_matching_substring)?,
+            non_matching_substring: element.optional_element(names.xsl_non_matching_substring)?,
+            fallbacks: element.many_elements(names.xsl_fallback)?,
 
             standard: element.standard()?,
             span: element.span,
@@ -189,6 +207,26 @@ impl InstructionParser for ast::If {
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
+            content: element.sequence_constructor()?,
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::MatchingSubstring {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::MatchingSubstring {
+            content: element.sequence_constructor()?,
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::NonMatchingSubstring {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::NonMatchingSubstring {
             content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
@@ -395,6 +433,13 @@ mod tests {
             r#"<xsl:assert xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" error-code="foo">Hello</xsl:assert>"#
         ));
     }
+
+    // #[test]
+    // fn test_analyze_string() {
+    //     assert_ron_snapshot!(parse_sequence_constructor_item(
+    //         r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>"#
+    //     ));
+    // }
 
     #[test]
     fn test_accumulator() {

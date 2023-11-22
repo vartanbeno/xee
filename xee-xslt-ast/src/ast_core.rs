@@ -242,6 +242,12 @@ pub struct AnalyzeString {
     pub span: Span,
 }
 
+impl From<AnalyzeString> for SequenceConstructorItem {
+    fn from(i: AnalyzeString) -> Self {
+        SequenceConstructorInstruction::AnalyzeString(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ApplyImports {
@@ -285,7 +291,7 @@ pub struct Assert {
 
 impl From<Assert> for SequenceConstructorItem {
     fn from(i: Assert) -> Self {
-        SequenceConstructorItem::Assert(Box::new(i))
+        SequenceConstructorInstruction::Assert(Box::new(i)).into()
     }
 }
 
@@ -414,7 +420,7 @@ pub struct Copy {
 
 impl From<Copy> for SequenceConstructorItem {
     fn from(i: Copy) -> Self {
-        SequenceConstructorItem::Copy(Box::new(i))
+        SequenceConstructorInstruction::Copy(Box::new(i)).into()
     }
 }
 
@@ -524,7 +530,7 @@ pub struct Fallback {
 
 impl From<Fallback> for SequenceConstructorItem {
     fn from(i: Fallback) -> Self {
-        SequenceConstructorItem::Fallback(Box::new(i))
+        SequenceConstructorInstruction::Fallback(Box::new(i)).into()
     }
 }
 
@@ -636,7 +642,7 @@ pub struct If {
 
 impl From<If> for SequenceConstructorItem {
     fn from(i: If) -> Self {
-        SequenceConstructorItem::If(Box::new(i))
+        SequenceConstructorInstruction::If(Box::new(i)).into()
     }
 }
 
@@ -1391,7 +1397,7 @@ pub struct Variable {
 
 impl From<Variable> for SequenceConstructorItem {
     fn from(v: Variable) -> Self {
-        SequenceConstructorItem::Variable(Box::new(v))
+        SequenceConstructorInstruction::Variable(Box::new(v)).into()
     }
 }
 
@@ -1435,7 +1441,12 @@ pub enum SequenceConstructorItem {
     // TODO: should support text value template
     TextNode(String),
     ElementNode(Box<ElementNode>),
+    Instruction(SequenceConstructorInstruction),
+}
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum SequenceConstructorInstruction {
     AnalyzeString(Box<AnalyzeString>),
     ApplyImports(Box<ApplyImports>),
     ApplyTemplates(Box<ApplyTemplates>),
@@ -1476,6 +1487,12 @@ pub enum SequenceConstructorItem {
     ValueOf(Box<ValueOf>),
     Variable(Box<Variable>),
     WherePopulated(Box<WherePopulated>),
+}
+
+impl From<SequenceConstructorInstruction> for SequenceConstructorItem {
+    fn from(i: SequenceConstructorInstruction) -> Self {
+        SequenceConstructorItem::Instruction(i)
+    }
 }
 
 pub type SequenceConstructor = Vec<SequenceConstructorItem>;

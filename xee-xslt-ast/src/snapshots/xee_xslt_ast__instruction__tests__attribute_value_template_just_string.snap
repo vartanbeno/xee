@@ -1,8 +1,8 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<xsl:assert xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\" error-code=\"foo\">Hello</xsl:assert>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<xsl:assert xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\" error-code=\"foo\">Hello</xsl:assert>\"#)"
 ---
-Ok(Assert(Assert(
+Ok(Instruction(Assert(Assert(
   test: Expression(
     xpath: XPath(Expr([
       Path(PathExpr(
@@ -54,4 +54,4 @@ Ok(Assert(Assert(
     start: 1,
     end: 11,
   ),
-)))
+))))

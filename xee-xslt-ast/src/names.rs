@@ -13,6 +13,7 @@ use crate::parse::Element;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumString, EnumVariantNames)]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum SequenceConstructorName {
+    AnalyzeString,
     Assert,
     Fallback,
     Copy,
@@ -25,6 +26,9 @@ impl SequenceConstructorName {
         match self {
             SequenceConstructorName::Assert => {
                 ast::Assert::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::AnalyzeString => {
+                ast::AnalyzeString::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
@@ -79,6 +83,9 @@ pub(crate) struct Names {
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
 
     pub(crate) xsl_accumulator_rule: xot::NameId,
+    pub(crate) xsl_fallback: xot::NameId,
+    pub(crate) xsl_matching_substring: xot::NameId,
+    pub(crate) xsl_non_matching_substring: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
 
     pub(crate) as_: xot::NameId,
@@ -86,6 +93,7 @@ pub(crate) struct Names {
     pub(crate) copy_namespaces: xot::NameId,
     pub(crate) error_code: xot::NameId,
     pub(crate) extension_element_prefixes: xot::NameId,
+    pub(crate) flags: xot::NameId,
     pub(crate) id: xot::NameId,
     pub(crate) inherit_namespaces: xot::NameId,
     pub(crate) initial_value: xot::NameId,
@@ -94,6 +102,7 @@ pub(crate) struct Names {
     pub(crate) name: xot::NameId,
     pub(crate) names: xot::NameId,
     pub(crate) phase: xot::NameId,
+    pub(crate) regex: xot::NameId,
     pub(crate) select: xot::NameId,
     pub(crate) static_: xot::NameId,
     pub(crate) streamable: xot::NameId,
@@ -161,6 +170,9 @@ impl Names {
             declaration_names: DeclarationName::names(xot, xsl_ns),
 
             xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
+            xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
+            xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
+            xsl_non_matching_substring: xot.add_name_ns("non-matching-substring", xsl_ns),
             xsl_transform: xot.add_name_ns("transform", xsl_ns),
 
             as_: xot.add_name("as"),
@@ -168,6 +180,7 @@ impl Names {
             copy_namespaces: xot.add_name("copy-namespaces"),
             error_code: xot.add_name("error-code"),
             extension_element_prefixes: xot.add_name("extension-element-prefixes"),
+            flags: xot.add_name("flags"),
             id: xot.add_name("id"),
             inherit_namespaces: xot.add_name("inherit-namespaces"),
             initial_value: xot.add_name("initial-value"),
@@ -176,6 +189,7 @@ impl Names {
             name: xot.add_name("name"),
             names: xot.add_name("names"),
             phase: xot.add_name("phase"),
+            regex: xot.add_name("regex"),
             select: xot.add_name("select"),
             static_: xot.add_name("static"),
             streamable: xot.add_name("streamable"),

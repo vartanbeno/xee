@@ -57,6 +57,22 @@ impl<'a> XsltParser<'a> {
         }
         T::parse(&element)
     }
+
+    fn parse_optional_element<T: InstructionParser>(
+        &self,
+        node: Node,
+        name: NameId,
+    ) -> Result<Option<T>, Error> {
+        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element_namespaces = ElementNamespaces::new(self.xot, element);
+        let element = Element::new(node, element, self, element_namespaces)?;
+        dbg!(self.xot.name_ns_str(element.element.name()));
+        // dbg!(element.element.name() == self.names.xsl_matching_substring);
+        if element.element.name() != name {
+            return Ok(None);
+        }
+        T::parse(&element).map(Some)
+    }
 }
 
 pub(crate) struct Element<'a> {
@@ -163,18 +179,34 @@ impl<'a> Element<'a> {
         }
     }
 
-    pub(crate) fn accumulator_rules(&self) -> Result<Vec<ast::AccumulatorRule>, Error> {
+    pub(crate) fn many_elements<T>(&self, name: NameId) -> Result<Vec<T>, Error>
+    where
+        T: InstructionParser,
+    {
         let mut result = Vec::new();
         for node in self.xot.children(self.node) {
-            let item = self
-                .xslt_parser
-                .parse_element(node, self.names.xsl_accumulator_rule)?;
+            let item = self.xslt_parser.parse_element(node, name)?;
             result.push(item);
         }
+        Ok(result)
+    }
+
+    pub(crate) fn at_least_one_element<T>(&self, name: NameId) -> Result<Vec<T>, Error>
+    where
+        T: InstructionParser,
+    {
+        let result = self.many_elements(name)?;
         if result.is_empty() {
-            return Err(Error::AccumulatorRuleMissing { span: self.span });
+            return Err(Error::ElementMissing { span: self.span });
         }
         Ok(result)
+    }
+
+    pub(crate) fn optional_element<T>(&self, name: NameId) -> Result<Option<T>, Error>
+    where
+        T: InstructionParser,
+    {
+        self.xslt_parser.parse_optional_element(self.node, name)
     }
 
     pub(crate) fn optional<T>(
@@ -281,6 +313,14 @@ impl<'a> Element<'a> {
 
     pub(crate) fn id(&self) -> impl Fn(&'a str, Span) -> Result<ast::Id, Error> + '_ {
         Self::_id
+    }
+
+    fn _string(s: &str, _span: Span) -> Result<String, Error> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn string(&self) -> impl Fn(&'a str, Span) -> Result<String, Error> + '_ {
+        Self::_string
     }
 
     fn _input_type_annotations(s: &str, span: Span) -> Result<ast::InputTypeAnnotations, Error> {
