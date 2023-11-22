@@ -2,7 +2,6 @@ use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
 use crate::error::Error;
-use crate::names::SequenceConstructorName;
 use crate::parse::Element;
 
 pub(crate) trait InstructionParser: Sized + Into<ast::SequenceConstructorItem> {
@@ -26,14 +25,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
             .sequence_constructor_name(element.element.name());
 
         if let Some(sname) = sname {
-            // parse a known sequence constructor instruction
-            match sname {
-                SequenceConstructorName::Assert => ast::Assert::parse(element),
-                SequenceConstructorName::Copy => ast::Copy::parse(element),
-                SequenceConstructorName::If => ast::If::parse(element),
-                SequenceConstructorName::Variable => ast::Variable::parse(element),
-                SequenceConstructorName::Fallback => ast::Fallback::parse(element),
-            }
+            sname.parse(element)
         } else {
             let ns = element.xot.namespace_for_name(element.element.name());
             if ns == element.names.xsl_ns {

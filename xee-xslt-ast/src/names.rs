@@ -2,6 +2,11 @@ use std::collections::BTreeMap;
 
 use xot::{NameId, NamespaceId, Xot};
 
+use crate::ast_core as ast;
+use crate::error::Error;
+use crate::instruction::InstructionParser;
+use crate::parse::Element;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SequenceConstructorName {
     Assert,
@@ -9,6 +14,33 @@ pub(crate) enum SequenceConstructorName {
     Copy,
     If,
     Variable,
+}
+
+impl SequenceConstructorName {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
+        match self {
+            SequenceConstructorName::Assert => ast::Assert::parse(element),
+            SequenceConstructorName::Copy => ast::Copy::parse(element),
+            SequenceConstructorName::If => ast::If::parse(element),
+            SequenceConstructorName::Variable => ast::Variable::parse(element),
+            SequenceConstructorName::Fallback => ast::Fallback::parse(element),
+        }
+    }
+
+    fn names(xot: &mut Xot, xsl_ns: xot::NamespaceId) -> BTreeMap<NameId, SequenceConstructorName> {
+        let assert = xot.add_name_ns("assert", xsl_ns);
+        let copy = xot.add_name_ns("copy", xsl_ns);
+        let fallback = xot.add_name_ns("fallback", xsl_ns);
+        let if_ = xot.add_name_ns("if", xsl_ns);
+        let variable = xot.add_name_ns("variable", xsl_ns);
+        let mut sequence_constructor_names = BTreeMap::new();
+        sequence_constructor_names.insert(assert, SequenceConstructorName::Assert);
+        sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
+        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
+        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
+        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
+        sequence_constructor_names
+    }
 }
 
 pub(crate) struct Names {
@@ -80,23 +112,10 @@ impl Names {
     pub(crate) fn new(xot: &mut Xot) -> Self {
         let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
 
-        let assert = xot.add_name_ns("assert", xsl_ns);
-        let copy = xot.add_name_ns("copy", xsl_ns);
-        let fallback = xot.add_name_ns("fallback", xsl_ns);
-        let if_ = xot.add_name_ns("if", xsl_ns);
-        let variable = xot.add_name_ns("variable", xsl_ns);
-
-        let mut sequence_constructor_names = BTreeMap::new();
-        sequence_constructor_names.insert(assert, SequenceConstructorName::Assert);
-        sequence_constructor_names.insert(copy, SequenceConstructorName::Copy);
-        sequence_constructor_names.insert(fallback, SequenceConstructorName::Fallback);
-        sequence_constructor_names.insert(if_, SequenceConstructorName::If);
-        sequence_constructor_names.insert(variable, SequenceConstructorName::Variable);
-
         Self {
             xsl_ns,
 
-            sequence_constructor_names,
+            sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
 
             test: xot.add_name("test"),
             select: xot.add_name("select"),
