@@ -4,6 +4,18 @@ use crate::error::{Error, Result};
 
 trait ChildrenParser<T> {
     fn parse(&self, node: Option<Node>) -> Result<(T, Option<Node>)>;
+
+    fn then<B, O: ChildrenParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
+    where
+        Self: Sized,
+    {
+        CombinedParser {
+            first: self,
+            second: other,
+            ta: std::marker::PhantomData,
+            tb: std::marker::PhantomData,
+        }
+    }
 }
 
 struct OptionalChildParser<'a, V, P>
@@ -116,6 +128,22 @@ where
     }
 }
 
+struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
+    first: PA,
+    second: PB,
+    ta: std::marker::PhantomData<TA>,
+    tb: std::marker::PhantomData<TB>,
+}
+
+impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA, TB)>
+    for CombinedParser<TA, TB, PA, PB>
+{
+    fn parse(&self, node: Option<Node>) -> Result<((TA, TB), Option<Node>)> {
+        let (a, node) = self.first.parse(node)?;
+        let (b, node) = self.second.parse(node)?;
+        Ok(((a, b), node))
+    }
+}
 // * we need to be able to declare that an instruction has absolutely no content, so
 // if it finds content that's an error. Example xsl:accept
 
@@ -364,7 +392,6 @@ mod tests {
     #[test]
     fn test_optional_then_many() {
         let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
-        // let mut xot = Xot::new();
 
         let names = Names::new(&mut xot);
 
@@ -391,6 +418,80 @@ mod tests {
 
         let (optional_item, next) = optional_parser.parse(next).unwrap();
         let (many_items, next) = many_parser.parse(next).unwrap();
+
+        assert_eq!(optional_item, Some(ValueA));
+        assert_eq!(many_items, vec![ValueB, ValueB]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_combine() {
+        let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
+
+        let names = Names::new(&mut xot);
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let optional_parser = OptionalChildParser::new(&xot, &span_info, |node| {
+            if let Some(element) = xot.element(node) {
+                if element.name() == names.name_a {
+                    return Ok(ValueA);
+                }
+            }
+            Err(Error::Unexpected)
+        });
+
+        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| {
+            if let Some(element) = xot.element(_node) {
+                if element.name() == names.name_b {
+                    return Ok(ValueB);
+                }
+            }
+            Err(Error::Unexpected)
+        });
+
+        let combined = optional_parser.then(many_parser);
+
+        let ((optional_item, many_items), next) = combined.parse(next).unwrap();
+
+        assert_eq!(optional_item, Some(ValueA));
+        assert_eq!(many_items, vec![ValueB, ValueB]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_combine_3_values() {
+        let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
+
+        let names = Names::new(&mut xot);
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let optional_parser = OptionalChildParser::new(&xot, &span_info, |node| {
+            if let Some(element) = xot.element(node) {
+                if element.name() == names.name_a {
+                    return Ok(ValueA);
+                }
+            }
+            Err(Error::Unexpected)
+        });
+
+        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| {
+            if let Some(element) = xot.element(_node) {
+                if element.name() == names.name_b {
+                    return Ok(ValueB);
+                }
+            }
+            Err(Error::Unexpected)
+        });
+
+        let end_parser = EndParser::new();
+
+        let combined = optional_parser.then(many_parser).then(end_parser);
+
+        let (((optional_item, many_items), _), next) = combined.parse(next).unwrap();
 
         assert_eq!(optional_item, Some(ValueA));
         assert_eq!(many_items, vec![ValueB, ValueB]);
