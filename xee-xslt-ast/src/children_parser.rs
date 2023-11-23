@@ -1,4 +1,4 @@
-use xot::{Node, SpanInfo, Xot};
+use xot::Node;
 
 use crate::error::{Error, Result};
 
@@ -18,37 +18,35 @@ trait ChildrenParser<T> {
     }
 }
 
-struct OptionalChildParser<'a, V, P>
+struct OptionalChildParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
-    xot: &'a Xot,
-    span_info: &'a SpanInfo,
     parse_value: P,
+    next: N,
 }
 
-impl<'a, V, P> OptionalChildParser<'a, V, P>
+impl<V, P, N> OptionalChildParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
-    fn new(xot: &'a Xot, span_info: &'a SpanInfo, parse_value: P) -> Self {
-        Self {
-            xot,
-            span_info,
-            parse_value,
-        }
+    fn new(parse_value: P, next: N) -> Self {
+        Self { parse_value, next }
     }
 }
 
-impl<'a, V, P> ChildrenParser<Option<V>> for OptionalChildParser<'a, V, P>
+impl<V, P, N> ChildrenParser<Option<V>> for OptionalChildParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
     fn parse(&self, node: Option<Node>) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
             let item = (self.parse_value)(node);
             match item {
-                Ok(item) => Ok((Some(item), self.xot.next_sibling(node))),
+                Ok(item) => Ok((Some(item), (self.next)(node))),
                 Err(Error::Unexpected) => Ok((None, Some(node))),
                 Err(e) => Err(e),
             }
@@ -76,39 +74,36 @@ impl ChildrenParser<()> for EndParser {
     }
 }
 
-struct ManyChildrenParser<'a, V, P>
+struct ManyChildrenParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
-    xot: &'a Xot,
-    span_info: &'a SpanInfo,
     parse_value: P,
+    next: N,
 }
 
-impl<'a, V, P> ManyChildrenParser<'a, V, P>
+impl<V, P, N> ManyChildrenParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
-    fn new(xot: &'a Xot, span_info: &'a SpanInfo, parse_value: P) -> Self {
-        Self {
-            xot,
-            span_info,
-            parse_value,
-        }
+    fn new(parse_value: P, next: N) -> Self {
+        Self { parse_value, next }
     }
 }
 
-impl<'a, V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<'a, V, P>
+impl<V, P, N> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P, N>
 where
     P: Fn(Node) -> Result<V>,
+    N: Fn(Node) -> Option<Node>,
 {
     fn parse(&self, node: Option<Node>) -> Result<(Vec<V>, Option<Node>)> {
         let mut result = Vec::new();
         let mut current_node = node;
         let optional_parser = OptionalChildParser {
-            xot: self.xot,
-            span_info: self.span_info,
             parse_value: &self.parse_value,
+            next: &self.next,
         };
         loop {
             let (item, next) = optional_parser.parse(current_node)?;
@@ -160,6 +155,8 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA,
 #[cfg(test)]
 mod tests {
     use xot::NameId;
+    use xot::SpanInfo;
+    use xot::Xot;
 
     use crate::ast_core::Span;
 
@@ -175,12 +172,13 @@ mod tests {
 
     #[test]
     fn test_optional_present() {
-        let (xot, span_info, next) = parse2("<outer><a /></outer>");
+        let (xot, _span_info, next) = parse2("<outer><a /></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |_node| Ok(Value));
+        let optional_parser =
+            OptionalChildParser::new(|_node| Ok(Value), |node| xot.next_sibling(node));
 
         let (item, next) = optional_parser.parse(next).unwrap();
 
@@ -190,17 +188,20 @@ mod tests {
 
     #[test]
     fn test_optional_present_but_parse_error() {
-        let (xot, span_info, next) = parse2("<outer><a /></outer>");
+        let (xot, _span_info, next) = parse2("<outer><a /></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |_node| {
-            Err(Error::Invalid {
-                value: "".to_string(),
-                span: Span::new(0, 0),
-            })
-        });
+        let optional_parser = OptionalChildParser::new(
+            |_node| {
+                Err(Error::Invalid {
+                    value: "".to_string(),
+                    span: Span::new(0, 0),
+                })
+            },
+            |node| xot.next_sibling(node),
+        );
 
         let r: Result<(Option<Value>, Option<Node>)> = optional_parser.parse(next);
 
@@ -215,13 +216,15 @@ mod tests {
 
     #[test]
     fn test_optional_unexpected_node() {
-        let (xot, span_info, node) = parse2("<outer><a /></outer>");
+        let (xot, _span_info, node) = parse2("<outer><a /></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser =
-            OptionalChildParser::new(&xot, &span_info, |_node| Err(Error::Unexpected));
+        let optional_parser = OptionalChildParser::new(
+            |_node| Err(Error::Unexpected),
+            |node| xot.next_sibling(node),
+        );
         let (item, next): (Option<Value>, Option<Node>) = optional_parser.parse(node).unwrap();
         assert_eq!(item, None);
         assert_eq!(next, node);
@@ -229,12 +232,13 @@ mod tests {
 
     #[test]
     fn test_optional_not_present() {
-        let (xot, span_info, next) = parse2("<outer></outer>");
+        let (xot, _span_info, next) = parse2("<outer></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |_node| Ok(Value));
+        let optional_parser =
+            OptionalChildParser::new(|_node| Ok(Value), |node| xot.next_sibling(node));
         let (item, next) = optional_parser.parse(next).unwrap();
         assert_eq!(item, None);
         assert_eq!(next, None);
@@ -282,27 +286,33 @@ mod tests {
     fn parse_two_optional_elements(
         names: &Names,
         xot: &Xot,
-        span_info: &SpanInfo,
+        _span_info: &SpanInfo,
         next: Option<Node>,
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
-        let optional_parser_a = OptionalChildParser::new(xot, span_info, |node| {
-            if let Some(element) = xot.element(node) {
-                if element.name() == names.name_a {
-                    return Ok(ValueA);
+        let optional_parser_a = OptionalChildParser::new(
+            |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_a {
+                        return Ok(ValueA);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
         let (item_a, next) = optional_parser_a.parse(next).unwrap();
 
-        let optional_parser_b = OptionalChildParser::new(xot, span_info, |node| {
-            if let Some(element) = xot.element(node) {
-                if element.name() == names.name_b {
-                    return Ok(ValueB);
+        let optional_parser_b = OptionalChildParser::new(
+            |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_b {
+                        return Ok(ValueB);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
         let (item_b, next) = optional_parser_b.parse(next).unwrap();
 
         let end_parser = EndParser::new();
@@ -343,7 +353,7 @@ mod tests {
     #[test]
     fn test_two_optional_neither_present() {
         let (mut xot, span_info, next) = parse2("<outer></outer>");
-        // let mut xot = Xot::new();
+
         let names = Names::new(&mut xot);
 
         let (item_a, item_b) = parse_two_optional_elements(&names, &xot, &span_info, next).unwrap();
@@ -362,12 +372,12 @@ mod tests {
 
     #[test]
     fn test_many() {
-        let (xot, span_info, next) = parse2("<outer><a /><a /><a /></outer>");
+        let (xot, _span_info, next) = parse2("<outer><a /><a /><a /></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| Ok(Value));
+        let many_parser = ManyChildrenParser::new(|_node| Ok(Value), |node| xot.next_sibling(node));
 
         let (items, next) = many_parser.parse(next).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
@@ -376,12 +386,12 @@ mod tests {
 
     #[test]
     fn test_many_empty() {
-        let (xot, span_info, next) = parse2("<outer></outer>");
+        let (xot, _span_info, next) = parse2("<outer></outer>");
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| Ok(Value));
+        let many_parser = ManyChildrenParser::new(|_node| Ok(Value), |node| xot.next_sibling(node));
 
         let (items, next) = many_parser.parse(next).unwrap();
 
@@ -391,30 +401,36 @@ mod tests {
 
     #[test]
     fn test_optional_then_many() {
-        let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
+        let (mut xot, _span_info, next) = parse2("<outer><a /><b /><b /></outer>");
 
         let names = Names::new(&mut xot);
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |node| {
-            if let Some(element) = xot.element(node) {
-                if element.name() == names.name_a {
-                    return Ok(ValueA);
+        let optional_parser = OptionalChildParser::new(
+            |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_a {
+                        return Ok(ValueA);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
-        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| {
-            if let Some(element) = xot.element(_node) {
-                if element.name() == names.name_b {
-                    return Ok(ValueB);
+        let many_parser = ManyChildrenParser::new(
+            |_node| {
+                if let Some(element) = xot.element(_node) {
+                    if element.name() == names.name_b {
+                        return Ok(ValueB);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
         let (optional_item, next) = optional_parser.parse(next).unwrap();
         let (many_items, next) = many_parser.parse(next).unwrap();
@@ -426,30 +442,36 @@ mod tests {
 
     #[test]
     fn test_combine() {
-        let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
+        let (mut xot, _span_info, next) = parse2("<outer><a /><b /><b /></outer>");
 
         let names = Names::new(&mut xot);
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |node| {
-            if let Some(element) = xot.element(node) {
-                if element.name() == names.name_a {
-                    return Ok(ValueA);
+        let optional_parser = OptionalChildParser::new(
+            |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_a {
+                        return Ok(ValueA);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
-        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| {
-            if let Some(element) = xot.element(_node) {
-                if element.name() == names.name_b {
-                    return Ok(ValueB);
+        let many_parser = ManyChildrenParser::new(
+            |_node| {
+                if let Some(element) = xot.element(_node) {
+                    if element.name() == names.name_b {
+                        return Ok(ValueB);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
         let combined = optional_parser.then(many_parser);
 
@@ -462,30 +484,36 @@ mod tests {
 
     #[test]
     fn test_combine_3_values() {
-        let (mut xot, span_info, next) = parse2("<outer><a /><b /><b /></outer>");
+        let (mut xot, _span_info, next) = parse2("<outer><a /><b /><b /></outer>");
 
         let names = Names::new(&mut xot);
 
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(&xot, &span_info, |node| {
-            if let Some(element) = xot.element(node) {
-                if element.name() == names.name_a {
-                    return Ok(ValueA);
+        let optional_parser = OptionalChildParser::new(
+            |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_a {
+                        return Ok(ValueA);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
-        let many_parser = ManyChildrenParser::new(&xot, &span_info, |_node| {
-            if let Some(element) = xot.element(_node) {
-                if element.name() == names.name_b {
-                    return Ok(ValueB);
+        let many_parser = ManyChildrenParser::new(
+            |_node| {
+                if let Some(element) = xot.element(_node) {
+                    if element.name() == names.name_b {
+                        return Ok(ValueB);
+                    }
                 }
-            }
-            Err(Error::Unexpected)
-        });
+                Err(Error::Unexpected)
+            },
+            |node| xot.next_sibling(node),
+        );
 
         let end_parser = EndParser::new();
 
