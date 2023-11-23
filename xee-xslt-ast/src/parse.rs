@@ -2,9 +2,9 @@ use ahash::{HashMap, HashMapExt};
 use xee_xpath_ast::{ast as xpath_ast, Namespaces, FN_NAMESPACE};
 use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
-use crate::ast_core as ast;
 use crate::ast_core::Span;
-use crate::error::Error;
+use crate::ast_core::{self as ast};
+use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::{Names, StandardNames};
 use crate::tokenize::split_whitespace_with_spans;
@@ -177,6 +177,75 @@ impl<'a> Element<'a> {
         }
     }
 
+    pub(crate) fn many_elements2<T>(
+        &self,
+        node: Node,
+        parse: impl Fn(Node) -> Result<T, Error>,
+    ) -> Result<(Vec<T>, Option<Node>), Error>
+    where
+        T: InstructionParser,
+    {
+        let mut result = Vec::new();
+        let mut current_node = node;
+        loop {
+            let (item, next) = self.optional_element2(current_node, &parse)?;
+            if let Some(item) = item {
+                result.push(item);
+            } else {
+                // we couldn't match with another parseable item, so continue
+                return Ok((result, next));
+            }
+            if let Some(next) = next {
+                current_node = next;
+            } else {
+                // there are no more siblings
+                return Ok((result, None));
+            }
+        }
+    }
+
+    pub(crate) fn one_or_more_elements2<T>(
+        &self,
+        node: Node,
+        parse: impl Fn(Node) -> Result<T, Error>,
+    ) -> Result<(Vec<T>, Option<Node>), Error>
+    where
+        T: InstructionParser,
+    {
+        let (items, node) = self.many_elements2(node, parse)?;
+        if items.is_empty() {
+            return Err(Error::ElementMissing { span: self.span });
+        }
+        Ok((items, node))
+    }
+
+    pub(crate) fn many_elements_by_name<T>(
+        &self,
+        node: Node,
+        name: NameId,
+    ) -> Result<(Vec<T>, Option<Node>), Error>
+    where
+        T: InstructionParser,
+    {
+        self.many_elements2(node, |node| self.xslt_parser.parse_element(node, name))
+    }
+
+    pub(crate) fn optional_element2<T>(
+        &self,
+        node: Node,
+        parse: impl Fn(Node) -> Result<T, Error>,
+    ) -> Result<(Option<T>, Option<Node>), Error>
+    where
+        T: InstructionParser,
+    {
+        let item = parse(node);
+        match item {
+            Ok(item) => Ok((Some(item), self.xot.next_sibling(node))),
+            Err(Error::Unexpected) => Ok((None, Some(node))),
+            Err(e) => Err(e),
+        }
+    }
+
     pub(crate) fn many_elements<T>(&self, name: NameId) -> Result<Vec<T>, Error>
     where
         T: InstructionParser,
@@ -235,8 +304,10 @@ impl<'a> Element<'a> {
         self.optional(name, parse_value)?.ok_or_else(|| {
             let (local, namespace) = self.xot.name_ns_str(name);
             Error::AttributeExpected {
-                namespace: namespace.to_string(),
-                local: local.to_string(),
+                name: XmlName {
+                    namespace: namespace.to_string(),
+                    local: local.to_string(),
+                },
                 span: self.span,
             }
         })
@@ -632,8 +703,10 @@ impl<'a> Element<'a> {
         let span = self.name_span(name);
         match span {
             Ok(span) => Error::AttributeUnexpected {
-                namespace: namespace.to_string(),
-                local: local.to_string(),
+                name: XmlName {
+                    namespace: namespace.to_string(),
+                    local: local.to_string(),
+                },
                 span,
                 message: message.to_string(),
             },

@@ -3,26 +3,34 @@ use crate::value_template;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
+pub struct XmlName {
+    pub namespace: String,
+    pub local: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub enum Error {
+    // We didn't get the element we expect
     Unexpected,
-    // ns, name, span of the element on which the attribute is expected
+    // Expected attribute of name, not found (element span)
     AttributeExpected {
-        namespace: String,
-        local: String,
+        name: XmlName,
         span: Span,
     },
-    // ns, name, span of the attribute that is unexpected
+    // Did not expect attribute of name (attribute span)
     AttributeUnexpected {
-        namespace: String,
-        local: String,
+        name: XmlName,
         span: Span,
         message: String,
     },
-    UnexpectedSequenceConstructor,
+    // The value of the an attribute was invalid
     Invalid {
         value: String,
         span: Span,
     },
+
+    UnexpectedSequenceConstructor,
     InvalidInstruction {
         span: Span,
     },
@@ -37,6 +45,15 @@ pub enum Error {
     },
 
     ElementMissing {
+        span: Span,
+    },
+
+    UnexpectedElement {
+        name: XmlName,
+        span: Span,
+    },
+    ExpectedElementNotFound {
+        expected: XmlName,
         span: Span,
     },
     /// An internal error; this indicates a bug as some invariant in the
