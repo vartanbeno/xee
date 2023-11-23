@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 mod ast_core;
-mod element_parser;
+mod children_parser;
 mod error;
 mod instruction;
 mod names;

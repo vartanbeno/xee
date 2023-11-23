@@ -5,7 +5,7 @@ use crate::{
     instruction::InstructionParser,
 };
 
-struct ElementParser<'a> {
+struct ChildrenParser<'a> {
     xot: &'a Xot,
     span_info: &'a SpanInfo,
 }
@@ -15,7 +15,7 @@ struct ElementParser<'a> {
 // <content><foo/></content> or <content></content>
 // <content></content> <content><foo/></content> or <content><foo/></foo></content>
 
-impl<'a> ElementParser<'a> {
+impl<'a> ChildrenParser<'a> {
     // pub(crate) fn many_elements<T>(
     //     &self,
     //     node: Option<Node>,
@@ -139,8 +139,8 @@ mod tests {
         doc: Node,
         span_info: &'a SpanInfo,
         xot: &'a Xot,
-    ) -> (ElementParser<'a>, Option<Node>) {
-        let element_parser = ElementParser { xot, span_info };
+    ) -> (ChildrenParser<'a>, Option<Node>) {
+        let element_parser = ChildrenParser { xot, span_info };
         let outer = xot.document_element(doc).unwrap();
         let next = xot.first_child(outer);
         (element_parser, next)
@@ -259,7 +259,7 @@ mod tests {
     }
 
     fn parse_two_optional_elements(
-        element_parser: &ElementParser,
+        element_parser: &ChildrenParser,
         names: &Names,
         xot: &Xot,
         next: Option<Node>,
