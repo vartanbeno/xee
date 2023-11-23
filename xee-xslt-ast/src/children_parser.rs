@@ -1,6 +1,20 @@
 use xot::Node;
 
-use crate::error::{Error, Result};
+use crate::error::Error as InvalidError;
+
+#[derive(Debug, PartialEq)]
+enum Error {
+    Unexpected,
+    Invalid(InvalidError),
+}
+
+impl From<InvalidError> for Error {
+    fn from(error: InvalidError) -> Self {
+        Self::Invalid(error)
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 trait State {
     fn next(&self, node: Node) -> Option<Node>;
@@ -96,11 +110,11 @@ where
     P: Fn(Node) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, state: &S) -> Result<(Vec<V>, Option<Node>)> {
-        let mut result = Vec::new();
-        let mut current_node = node;
         let optional_parser = OptionalChildParser {
             parse_value: &self.parse_value,
         };
+        let mut result = Vec::new();
+        let mut current_node = node;
         loop {
             let (item, next) = optional_parser.parse(current_node, state)?;
             if let Some(item) = item {
@@ -115,6 +129,39 @@ where
                 // there are no more siblings
                 return Ok((result, None));
             }
+        }
+    }
+}
+
+struct AtLeastOneParser<V, P>
+where
+    P: Fn(Node) -> Result<V>,
+{
+    parse_value: P,
+}
+
+impl<V, P> AtLeastOneParser<V, P>
+where
+    P: Fn(Node) -> Result<V>,
+{
+    fn new(parse_value: P) -> Self {
+        Self { parse_value }
+    }
+}
+
+impl<V, P, S: State> ChildrenParser<Vec<V>, S> for AtLeastOneParser<V, P>
+where
+    P: Fn(Node) -> Result<V>,
+{
+    fn parse(&self, node: Option<Node>, state: &S) -> Result<(Vec<V>, Option<Node>)> {
+        let many_parser = ManyChildrenParser {
+            parse_value: &self.parse_value,
+        };
+        let (items, next) = many_parser.parse(node, state)?;
+        if !items.is_empty() {
+            Ok((items, next))
+        } else {
+            Err(Error::Unexpected)
         }
     }
 }
@@ -207,10 +254,11 @@ mod tests {
         struct Value;
 
         let optional_parser = OptionalChildParser::new(|_node| {
-            Err(Error::Invalid {
+            Err(InvalidError::Invalid {
                 value: "".to_string(),
                 span: Span::new(0, 0),
-            })
+            }
+            .into())
         });
         let state = NextState::new(&xot);
 
@@ -218,10 +266,11 @@ mod tests {
 
         assert_eq!(
             r,
-            Err(Error::Invalid {
+            Err(InvalidError::Invalid {
                 value: "".to_string(),
                 span: Span::new(0, 0)
-            })
+            }
+            .into())
         );
     }
 
