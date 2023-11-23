@@ -8,6 +8,15 @@ pub struct XmlName {
     pub local: String,
 }
 
+pub enum AttributeError {
+    // Expected attribute of name, not found (element span)
+    NotFound { name: XmlName, span: Span },
+    // Did not expect attribute of name (attribute span)
+    Unexpected { name: XmlName, span: Span },
+    // The value of an attribute was invalid
+    Invalid { value: String, span: Span },
+}
+
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum Error {
