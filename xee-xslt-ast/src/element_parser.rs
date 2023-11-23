@@ -88,7 +88,7 @@ impl<'a> ElementParser<'a> {
     //     self.many_elements2(node, |node| self.xslt_parser.parse_element(node, name))
     // }
 
-    pub(crate) fn optional_element<T>(
+    pub(crate) fn optional_node<T>(
         &self,
         node: Option<Node>,
         parse: impl Fn(Node) -> Result<T>,
@@ -129,43 +129,48 @@ impl<'a> ElementParser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use xot::NameId;
+
     use crate::ast_core::Span;
 
     use super::*;
 
+    fn parse<'a>(
+        doc: Node,
+        span_info: &'a SpanInfo,
+        xot: &'a Xot,
+    ) -> (ElementParser<'a>, Option<Node>) {
+        let element_parser = ElementParser { xot, span_info };
+        let outer = xot.document_element(doc).unwrap();
+        let next = xot.first_child(outer);
+        (element_parser, next)
+    }
+
     #[test]
-    fn test_optional_element() {
+    fn test_optional_present() {
         let mut xot = Xot::new();
         let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
         #[derive(Debug, PartialEq)]
         struct Value;
         let (item, next) = element_parser
-            .optional_element(a, |_node| Ok(Value))
+            .optional_node(next, |_node| Ok(Value))
             .unwrap();
         assert_eq!(item, Some(Value));
         assert_eq!(next, None);
     }
 
     #[test]
-    fn test_optional_element_parse_error() {
+    fn test_optional_present_but_parse_error() {
         let mut xot = Xot::new();
         let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
         #[derive(Debug, PartialEq)]
         struct Value;
         let r: Result<(Option<Value>, Option<Node>)> =
-            element_parser.optional_element(a, |_node| {
+            element_parser.optional_node(next, |_node| {
                 Err(Error::Invalid {
                     value: "".to_string(),
                     span: Span::new(0, 0),
@@ -181,38 +186,30 @@ mod tests {
     }
 
     #[test]
-    fn test_optional_element_parse_unexpected_element() {
+    fn test_optional_unexpected_node() {
         let mut xot = Xot::new();
         let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
+        let (element_parser, node) = parse(doc, &span_info, &xot);
+
         #[derive(Debug, PartialEq)]
         struct Value;
         let (item, next): (Option<Value>, Option<Node>) = element_parser
-            .optional_element(a, |_node| Err(Error::Unexpected))
+            .optional_node(node, |_node| Err(Error::Unexpected))
             .unwrap();
         assert_eq!(item, None);
-        assert_eq!(next, a);
+        assert_eq!(next, node);
     }
 
     #[test]
-    fn test_optional_element_parse_node_none() {
+    fn test_optional_not_present() {
         let mut xot = Xot::new();
         let (doc, span_info) = xot.parse_with_span_info("<outer></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
         #[derive(Debug, PartialEq)]
         struct Value;
         let (item, next): (Option<Value>, Option<Node>) = element_parser
-            .optional_element(a, |_node| Err(Error::Unexpected))
+            .optional_node(next, |_node| Err(Error::Unexpected))
             .unwrap();
         assert_eq!(item, None);
         assert_eq!(next, None);
@@ -221,14 +218,11 @@ mod tests {
     #[test]
     fn test_end_found() {
         let mut xot = Xot::new();
+
         let (doc, span_info) = xot.parse_with_span_info("<outer></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
-        let r = element_parser.end(a);
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let r = element_parser.end(next);
 
         assert!(r.is_ok());
     }
@@ -236,15 +230,131 @@ mod tests {
     #[test]
     fn test_end_not_found() {
         let mut xot = Xot::new();
-        let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
-        let outer = xot.document_element(doc).unwrap();
-        let a = xot.first_child(outer);
-        let element_parser = ElementParser {
-            xot: &xot,
-            span_info: &span_info,
-        };
-        let r = element_parser.end(a);
 
+        let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let r = element_parser.end(next);
+
+        assert_eq!(r, Err(Error::Unexpected));
+    }
+
+    #[derive(Debug, PartialEq)]
+    struct ValueA;
+    #[derive(Debug, PartialEq)]
+    struct ValueB;
+
+    struct Names {
+        name_a: NameId,
+        name_b: NameId,
+    }
+
+    impl Names {
+        fn new(xot: &mut Xot) -> Self {
+            Self {
+                name_a: xot.add_name("a"),
+                name_b: xot.add_name("b"),
+            }
+        }
+    }
+
+    fn parse_two_optional_elements(
+        element_parser: &ElementParser,
+        names: &Names,
+        xot: &Xot,
+        next: Option<Node>,
+    ) -> Result<(Option<ValueA>, Option<ValueB>)> {
+        let (item_a, next) = element_parser
+            .optional_node(next, |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_a {
+                        return Ok(ValueA);
+                    }
+                }
+                Err(Error::Unexpected)
+            })
+            .unwrap();
+        let (item_b, next) = element_parser
+            .optional_node(next, |node| {
+                if let Some(element) = xot.element(node) {
+                    if element.name() == names.name_b {
+                        return Ok(ValueB);
+                    }
+                }
+                Err(Error::Unexpected)
+            })
+            .unwrap();
+        element_parser.end(next)?;
+        Ok((item_a, item_b))
+    }
+
+    #[test]
+    fn test_two_optional_both_present() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (doc, span_info) = xot
+            .parse_with_span_info("<outer><a /><b /></outer>")
+            .unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let (item_a, item_b) =
+            parse_two_optional_elements(&element_parser, &names, &xot, next).unwrap();
+        assert_eq!(item_a, Some(ValueA));
+        assert_eq!(item_b, Some(ValueB));
+    }
+
+    #[test]
+    fn test_two_optional_only_a_present() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (doc, span_info) = xot.parse_with_span_info("<outer><a /></outer>").unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let (item_a, item_b) =
+            parse_two_optional_elements(&element_parser, &names, &xot, next).unwrap();
+        assert_eq!(item_a, Some(ValueA));
+        assert_eq!(item_b, None);
+    }
+
+    #[test]
+    fn test_two_optional_only_b_present() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (doc, span_info) = xot.parse_with_span_info("<outer><b /></outer>").unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let (item_a, item_b) =
+            parse_two_optional_elements(&element_parser, &names, &xot, next).unwrap();
+        assert_eq!(item_a, None);
+        assert_eq!(item_b, Some(ValueB));
+    }
+
+    #[test]
+    fn test_two_optional_neither_present() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (doc, span_info) = xot.parse_with_span_info("<outer></outer>").unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let (item_a, item_b) =
+            parse_two_optional_elements(&element_parser, &names, &xot, next).unwrap();
+        assert_eq!(item_a, None);
+        assert_eq!(item_b, None);
+    }
+
+    #[test]
+    fn test_two_optional_unexpected() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+
+        let (doc, span_info) = xot.parse_with_span_info("<outer><c /></outer>").unwrap();
+        let (element_parser, next) = parse(doc, &span_info, &xot);
+
+        let r = parse_two_optional_elements(&element_parser, &names, &xot, next);
         assert_eq!(r, Err(Error::Unexpected));
     }
 }
