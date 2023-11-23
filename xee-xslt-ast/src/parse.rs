@@ -241,7 +241,7 @@ impl<'a> Element<'a> {
         let item = parse(node);
         match item {
             Ok(item) => Ok((Some(item), self.xot.next_sibling(node))),
-            Err(Error::Unexpected) => Ok((None, Some(node))),
+            Err(Error::Unexpected { .. }) => Ok((None, Some(node))),
             Err(e) => Err(e),
         }
     }

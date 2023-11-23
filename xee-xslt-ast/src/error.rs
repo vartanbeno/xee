@@ -11,7 +11,7 @@ pub struct XmlName {
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub enum Error {
-    // We didn't get the element we expect
+    // We didn't get the node we expect
     Unexpected,
     // Expected attribute of name, not found (element span)
     AttributeExpected {
@@ -48,10 +48,6 @@ pub enum Error {
         span: Span,
     },
 
-    UnexpectedElement {
-        name: XmlName,
-        span: Span,
-    },
     ExpectedElementNotFound {
         expected: XmlName,
         span: Span,
