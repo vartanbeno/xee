@@ -1,11 +1,11 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" select=\"let $x := 1\">Hello</xsl:variable>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" select=\"let $x := 1\">Hello</xsl:variable>\"#)"
 ---
-Err(XPath(ExpectedFound(
+Err(Attribute(XPath(ExpectedFound(
   span: SimpleSpan(
     start: 92,
     end: 93,
     context: (),
   ),
-)))
+))))

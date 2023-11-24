@@ -10,7 +10,38 @@ use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstruct
 use crate::names::StandardNames;
 use crate::state::State;
 use crate::tokenize::split_whitespace_with_spans;
-use crate::value_template::ValueTemplateTokenizer;
+use crate::value_template::{self, ValueTemplateTokenizer};
+
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum AttributeError {
+    // Expected attribute of name, not found (element span)
+    NotFound { name: XmlName, span: Span },
+    // Did not expect attribute of name (attribute span)
+    Unexpected { name: XmlName, span: Span },
+    // The value of an attribute was invalid
+    Invalid { value: String, span: Span },
+    // An eqname was invalid
+    InvalidEqName { value: String, span: Span },
+    // XPath parser error
+    XPath(xee_xpath_ast::ParserError),
+    // A value templatecould not be parsed
+    ValueTemplateError(value_template::Error),
+    // Internal error; should not happen
+    Internal,
+}
+
+impl From<xee_xpath_ast::ParserError> for AttributeError {
+    fn from(e: xee_xpath_ast::ParserError) -> Self {
+        AttributeError::XPath(e)
+    }
+}
+
+impl From<value_template::Error> for AttributeError {
+    fn from(e: value_template::Error) -> Self {
+        AttributeError::ValueTemplateError(e)
+    }
+}
 
 // struct ElementParsers {
 //     sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
@@ -54,15 +85,27 @@ impl<'a> XsltParser<'a> {
     pub(crate) fn parse_sequence_constructor_item(
         &self,
         node: Node,
-    ) -> Result<ast::SequenceConstructorItem, Error> {
-        let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
+    ) -> Result<ast::SequenceConstructorItem, ElementError> {
+        let element = self
+            .state
+            .xot
+            .element(node)
+            .ok_or(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            })?;
         let context = Context::new(element);
         let element = Element::new(node, element, context, self.state)?;
         element.sequence_constructor_item(node)
     }
 
-    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
-        let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
+    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
+        let element = self
+            .state
+            .xot
+            .element(node)
+            .ok_or(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            })?;
         let context = Context::new(element);
         let element = Element::new(node, element, context, self.state)?;
         element.parse_transform(node)
@@ -84,8 +127,8 @@ impl<'a> Element<'a> {
         element: &'a xot::Element,
         context: Context<'a>,
         state: &'a State,
-    ) -> Result<Self, Error> {
-        let span = state.span(node).ok_or(Error::MissingSpan)?;
+    ) -> Result<Self, ElementError> {
+        let span = state.span(node).ok_or(ElementError::Internal)?;
 
         Ok(Self {
             node,
@@ -97,20 +140,20 @@ impl<'a> Element<'a> {
         })
     }
 
-    fn sub_element(&'a self, node: Node, element: &'a xot::Element) -> Result<Self, Error> {
+    fn sub_element(&'a self, node: Node, element: &'a xot::Element) -> Result<Self, ElementError> {
         let context = self.context.element(element);
         Self::new(node, element, context, self.state)
     }
 
-    pub(crate) fn standard(&self) -> Result<ast::Standard, Error> {
+    pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
         self._standard(&self.state.names.standard)
     }
 
-    pub(crate) fn xsl_standard(&self) -> Result<ast::Standard, Error> {
+    pub(crate) fn xsl_standard(&self) -> Result<ast::Standard, AttributeError> {
         self._standard(&self.state.names.xsl_standard)
     }
 
-    fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, Error> {
+    fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, AttributeError> {
         Ok(ast::Standard {
             default_collation: self.optional(names.default_collation, self.uris())?,
             default_mode: self.optional(names.default_mode, self.default_mode())?,
@@ -129,7 +172,7 @@ impl<'a> Element<'a> {
         })
     }
 
-    pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, Error> {
+    pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
         let mut result = Vec::new();
         for node in self.state.xot.children(self.node) {
             let item = self.sequence_constructor_item(node)?;
@@ -138,7 +181,10 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    fn sequence_constructor_item(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
+    fn sequence_constructor_item(
+        &self,
+        node: Node,
+    ) -> Result<ast::SequenceConstructorItem, ElementError> {
         match self.state.xot.value(node) {
             Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                 text.get().to_string(),
@@ -147,11 +193,13 @@ impl<'a> Element<'a> {
                 let element = self.sub_element(node, element)?;
                 ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
             }
-            _ => Err(Error::Unexpected),
+            _ => Err(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            }),
         }
     }
 
-    pub(crate) fn declarations(&self) -> Result<ast::Declarations, Error> {
+    pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
         let mut result = Vec::new();
         for node in self.state.xot.children(self.node) {
             let item = self.declaration_item(node)?;
@@ -160,21 +208,23 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    fn declaration_item(&self, node: Node) -> Result<ast::Declaration, Error> {
+    fn declaration_item(&self, node: Node) -> Result<ast::Declaration, ElementError> {
         match self.state.xot.value(node) {
             Value::Element(element) => {
                 let element = self.sub_element(node, element)?;
                 ast::Declaration::parse_declaration(&element)
             }
-            _ => Err(Error::Unexpected),
+            _ => Err(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            }),
         }
     }
 
     pub(crate) fn many_elements2<T>(
         &self,
         node: Node,
-        parse: impl Fn(Node) -> Result<T, Error>,
-    ) -> Result<(Vec<T>, Option<Node>), Error>
+        parse: impl Fn(Node) -> Result<T, ElementError>,
+    ) -> Result<(Vec<T>, Option<Node>), ElementError>
     where
         T: InstructionParser,
     {
@@ -200,14 +250,14 @@ impl<'a> Element<'a> {
     pub(crate) fn one_or_more_elements2<T>(
         &self,
         node: Node,
-        parse: impl Fn(Node) -> Result<T, Error>,
-    ) -> Result<(Vec<T>, Option<Node>), Error>
+        parse: impl Fn(Node) -> Result<T, ElementError>,
+    ) -> Result<(Vec<T>, Option<Node>), ElementError>
     where
         T: InstructionParser,
     {
         let (items, node) = self.many_elements2(node, parse)?;
         if items.is_empty() {
-            return Err(Error::ElementMissing { span: self.span });
+            return Err(ElementError::UnexpectedEnd);
         }
         Ok((items, node))
     }
@@ -216,7 +266,7 @@ impl<'a> Element<'a> {
         &self,
         node: Node,
         name: NameId,
-    ) -> Result<(Vec<T>, Option<Node>), Error>
+    ) -> Result<(Vec<T>, Option<Node>), ElementError>
     where
         T: InstructionParser,
     {
@@ -226,20 +276,20 @@ impl<'a> Element<'a> {
     pub(crate) fn optional_element2<T>(
         &self,
         node: Node,
-        parse: impl Fn(Node) -> Result<T, Error>,
-    ) -> Result<(Option<T>, Option<Node>), Error>
+        parse: impl Fn(Node) -> Result<T, ElementError>,
+    ) -> Result<(Option<T>, Option<Node>), ElementError>
     where
         T: InstructionParser,
     {
         let item = parse(node);
         match item {
             Ok(item) => Ok((Some(item), self.state.xot.next_sibling(node))),
-            Err(Error::Unexpected { .. }) => Ok((None, Some(node))),
+            Err(ElementError::Unexpected { .. }) => Ok((None, Some(node))),
             Err(e) => Err(e),
         }
     }
 
-    pub(crate) fn many_elements<T>(&self, name: NameId) -> Result<Vec<T>, Error>
+    pub(crate) fn many_elements<T>(&self, name: NameId) -> Result<Vec<T>, ElementError>
     where
         T: InstructionParser,
     {
@@ -251,18 +301,18 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    pub(crate) fn one_or_more_elements<T>(&self, name: NameId) -> Result<Vec<T>, Error>
+    pub(crate) fn one_or_more_elements<T>(&self, name: NameId) -> Result<Vec<T>, ElementError>
     where
         T: InstructionParser,
     {
         let result = self.many_elements(name)?;
         if result.is_empty() {
-            return Err(Error::ElementMissing { span: self.span });
+            return Err(ElementError::UnexpectedEnd);
         }
         Ok(result)
     }
 
-    pub(crate) fn optional_element<T>(&self, name: NameId) -> Result<Option<T>, Error>
+    pub(crate) fn optional_element<T>(&self, name: NameId) -> Result<Option<T>, ElementError>
     where
         T: InstructionParser,
     {
@@ -272,23 +322,39 @@ impl<'a> Element<'a> {
     pub(crate) fn parse_sequence_constructor_item(
         &self,
         node: Node,
-    ) -> Result<ast::SequenceConstructorItem, Error> {
-        let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
+    ) -> Result<ast::SequenceConstructorItem, ElementError> {
+        let element = self
+            .state
+            .xot
+            .element(node)
+            .ok_or(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            })?;
         let element = self.sub_element(node, element)?;
         element.sequence_constructor_item(node)
     }
 
-    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
+    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
         self.parse_element(node, self.state.names.xsl_transform)
     }
 
-    fn parse_element<T: InstructionParser>(&self, node: Node, name: NameId) -> Result<T, Error> {
-        let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
+    fn parse_element<T: InstructionParser>(
+        &self,
+        node: Node,
+        name: NameId,
+    ) -> Result<T, ElementError> {
+        let element = self
+            .state
+            .xot
+            .element(node)
+            .ok_or(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            })?;
         let element = self.sub_element(node, element)?;
         //     let element_namespaces = ElementNamespaces::new(self.xot, element);
         // let element = Element::new(node, element, self, element_namespaces)?;
         if element.element.name() != name {
-            return Err(Error::InvalidInstruction { span: element.span });
+            return Err(ElementError::Unexpected { span: element.span });
         }
         T::parse(&element)
     }
@@ -297,8 +363,14 @@ impl<'a> Element<'a> {
         &self,
         node: Node,
         name: NameId,
-    ) -> Result<Option<T>, Error> {
-        let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
+    ) -> Result<Option<T>, ElementError> {
+        let element = self
+            .state
+            .xot
+            .element(node)
+            .ok_or(ElementError::Unexpected {
+                span: self.state.span(node).ok_or(ElementError::Internal)?,
+            })?;
         // let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = self.sub_element(node, element)?;
         // let element = Element::new(node, element, self, element_namespaces)?;
@@ -311,13 +383,13 @@ impl<'a> Element<'a> {
     pub(crate) fn optional<T>(
         &self,
         name: NameId,
-        parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
-    ) -> Result<Option<T>, Error> {
+        parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError>,
+    ) -> Result<Option<T>, AttributeError> {
         if let Some(value) = self.element.get_attribute(name) {
             let span = self.value_span(name)?;
             let value = parse_value(value, span).map_err(|e| {
-                if let Error::XPath(e) = e {
-                    Error::XPath(e.adjust(span.start))
+                if let AttributeError::XPath(e) = e {
+                    AttributeError::XPath(e.adjust(span.start))
                 } else {
                     e
                 }
@@ -331,11 +403,11 @@ impl<'a> Element<'a> {
     pub(crate) fn required<T>(
         &self,
         name: NameId,
-        parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
-    ) -> Result<T, Error> {
+        parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError>,
+    ) -> Result<T, AttributeError> {
         self.optional(name, parse_value)?.ok_or_else(|| {
             let (local, namespace) = self.state.xot.name_ns_str(name);
-            Error::AttributeExpected {
+            AttributeError::Unexpected {
                 name: XmlName {
                     namespace: namespace.to_string(),
                     local: local.to_string(),
@@ -345,7 +417,11 @@ impl<'a> Element<'a> {
         })
     }
 
-    pub(crate) fn boolean_with_default(&self, name: NameId, default: bool) -> Result<bool, Error> {
+    pub(crate) fn boolean_with_default(
+        &self,
+        name: NameId,
+        default: bool,
+    ) -> Result<bool, AttributeError> {
         self.optional(name, Self::_boolean)
             .map(|v| v.unwrap_or(default))
     }
@@ -354,28 +430,28 @@ impl<'a> Element<'a> {
         self.context.namespaces(self.state)
     }
 
-    fn name_span(&self, name: NameId) -> Result<Span, Error> {
+    fn name_span(&self, name: NameId) -> Result<Span, AttributeError> {
         let span = self
             .state
             .span_info
             .get(SpanInfoKey::AttributeName(self.node, name))
-            .ok_or(Error::MissingSpan)?;
+            .ok_or(AttributeError::Internal)?;
         Ok(span.into())
     }
 
-    fn value_span(&self, name: NameId) -> Result<Span, Error> {
+    fn value_span(&self, name: NameId) -> Result<Span, AttributeError> {
         let span = self
             .state
             .span_info
             .get(SpanInfoKey::AttributeValue(self.node, name))
-            .ok_or(Error::MissingSpan)?;
+            .ok_or(AttributeError::Internal)?;
         Ok(span.into())
     }
 
     pub(crate) fn value_template<T>(
         &self,
-        _parse_value: impl Fn(&'a str, Span) -> Result<T, Error> + 'a,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::ValueTemplate<T>, Error> + '_
+        _parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError> + 'a,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::ValueTemplate<T>, AttributeError> + '_
     where
         T: Clone + PartialEq + Eq,
     {
@@ -395,43 +471,48 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, Error> {
+    fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, AttributeError> {
         if let Ok(name) = xpath_ast::Name::parse(s, &self.namespaces()).map(|n| n.value) {
             Ok(name)
         } else {
-            Err(Error::InvalidEqName {
+            Err(AttributeError::InvalidEqName {
                 value: s.to_string(),
                 span,
             })
         }
     }
 
-    pub(crate) fn eqname(&self) -> impl Fn(&'a str, Span) -> Result<xpath_ast::Name, Error> + '_ {
+    pub(crate) fn eqname(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<xpath_ast::Name, AttributeError> + '_ {
         |s, span| self._eqname(s, span)
     }
 
-    fn _id(s: &str, _span: Span) -> Result<ast::Id, Error> {
+    fn _id(s: &str, _span: Span) -> Result<ast::Id, AttributeError> {
         Ok(s.to_string())
     }
 
-    pub(crate) fn id(&self) -> impl Fn(&'a str, Span) -> Result<ast::Id, Error> + '_ {
+    pub(crate) fn id(&self) -> impl Fn(&'a str, Span) -> Result<ast::Id, AttributeError> + '_ {
         Self::_id
     }
 
-    fn _string(s: &str, _span: Span) -> Result<String, Error> {
+    fn _string(s: &str, _span: Span) -> Result<String, AttributeError> {
         Ok(s.to_string())
     }
 
-    pub(crate) fn string(&self) -> impl Fn(&'a str, Span) -> Result<String, Error> + '_ {
+    pub(crate) fn string(&self) -> impl Fn(&'a str, Span) -> Result<String, AttributeError> + '_ {
         Self::_string
     }
 
-    fn _input_type_annotations(s: &str, span: Span) -> Result<ast::InputTypeAnnotations, Error> {
+    fn _input_type_annotations(
+        s: &str,
+        span: Span,
+    ) -> Result<ast::InputTypeAnnotations, AttributeError> {
         match s {
             "strip" => Ok(ast::InputTypeAnnotations::Strip),
             "preserve" => Ok(ast::InputTypeAnnotations::Preserve),
             "unspecified" => Ok(ast::InputTypeAnnotations::Unspecified),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -440,19 +521,21 @@ impl<'a> Element<'a> {
 
     pub(crate) fn input_type_annotations(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::InputTypeAnnotations, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::InputTypeAnnotations, AttributeError> + '_ {
         Self::_input_type_annotations
     }
 
-    fn _token(s: &str, _span: Span) -> Result<ast::Token, Error> {
+    fn _token(s: &str, _span: Span) -> Result<ast::Token, AttributeError> {
         Ok(s.to_string())
     }
 
-    pub(crate) fn token(&self) -> impl Fn(&'a str, Span) -> Result<ast::Token, Error> + '_ {
+    pub(crate) fn token(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Token, AttributeError> + '_ {
         Self::_token
     }
 
-    fn _tokens(s: &str, span: Span) -> Result<Vec<ast::Token>, Error> {
+    fn _tokens(s: &str, span: Span) -> Result<Vec<ast::Token>, AttributeError> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
             result.push(Self::_token(s, span)?);
@@ -460,20 +543,22 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    pub(crate) fn tokens(&self) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Token>, Error> + '_ {
+    pub(crate) fn tokens(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Token>, AttributeError> + '_ {
         Self::_tokens
     }
 
-    fn _uri(s: &str, _span: Span) -> Result<ast::Uri, Error> {
+    fn _uri(s: &str, _span: Span) -> Result<ast::Uri, AttributeError> {
         // TODO: should actually verify URI?
         Ok(s.to_string())
     }
 
-    pub(crate) fn uri(&self) -> impl Fn(&'a str, Span) -> Result<ast::Uri, Error> + '_ {
+    pub(crate) fn uri(&self) -> impl Fn(&'a str, Span) -> Result<ast::Uri, AttributeError> + '_ {
         Self::_uri
     }
 
-    fn _uris(s: &str, span: Span) -> Result<Vec<ast::Uri>, Error> {
+    fn _uris(s: &str, span: Span) -> Result<Vec<ast::Uri>, AttributeError> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
             result.push(Self::_uri(s, span)?);
@@ -481,34 +566,40 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    pub(crate) fn uris(&self) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Uri>, Error> + '_ {
+    pub(crate) fn uris(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Uri>, AttributeError> + '_ {
         Self::_uris
     }
 
-    fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, Error> {
+    fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, AttributeError> {
         Ok(ast::Expression {
             xpath: xpath_ast::XPath::parse(s, &self.namespaces(), &[])?,
             span,
         })
     }
 
-    pub(crate) fn xpath(&self) -> impl Fn(&'a str, Span) -> Result<ast::Expression, Error> + '_ {
+    pub(crate) fn xpath(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Expression, AttributeError> + '_ {
         |s, span| self._xpath(s, span)
     }
 
-    fn _pattern(s: &str, _span: Span) -> Result<ast::Pattern, Error> {
+    fn _pattern(s: &str, _span: Span) -> Result<ast::Pattern, AttributeError> {
         Ok(s.to_string())
     }
 
-    pub(crate) fn pattern(&self) -> impl Fn(&'a str, Span) -> Result<ast::Pattern, Error> + '_ {
+    pub(crate) fn pattern(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Pattern, AttributeError> + '_ {
         Self::_pattern
     }
 
-    fn _phase(s: &str, span: Span) -> Result<ast::AccumulatorPhase, Error> {
+    fn _phase(s: &str, span: Span) -> Result<ast::AccumulatorPhase, AttributeError> {
         match s {
             "start" => Ok(ast::AccumulatorPhase::Start),
             "end" => Ok(ast::AccumulatorPhase::End),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -517,11 +608,11 @@ impl<'a> Element<'a> {
 
     pub(crate) fn phase(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::AccumulatorPhase, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::AccumulatorPhase, AttributeError> + '_ {
         Self::_phase
     }
 
-    fn _eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, Error> {
+    fn _eqnames(&self, s: &str, span: Span) -> Result<Vec<xpath_ast::Name>, AttributeError> {
         let mut result = Vec::new();
         for (s, span) in split_whitespace_with_spans(s, span) {
             result.push(self._eqname(s, span)?);
@@ -531,36 +622,40 @@ impl<'a> Element<'a> {
 
     pub(crate) fn eqnames(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<Vec<xpath_ast::Name>, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<xpath_ast::Name>, AttributeError> + '_ {
         |s, span| self._eqnames(s, span)
     }
 
-    fn _sequence_type(&self, s: &str, _span: Span) -> Result<xpath_ast::SequenceType, Error> {
+    fn _sequence_type(
+        &self,
+        s: &str,
+        _span: Span,
+    ) -> Result<xpath_ast::SequenceType, AttributeError> {
         Ok(xpath_ast::SequenceType::parse(s, &self.namespaces())?)
     }
 
     pub(crate) fn sequence_type(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<xpath_ast::SequenceType, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<xpath_ast::SequenceType, AttributeError> + '_ {
         |s, span| self._sequence_type(s, span)
     }
 
-    fn _boolean(s: &str, _span: Span) -> Result<bool, Error> {
+    fn _boolean(s: &str, _span: Span) -> Result<bool, AttributeError> {
         match s {
             "yes" | "true" | "1" => Ok(true),
             "no" | "false" | "0" => Ok(false),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span: _span,
             }),
         }
     }
 
-    pub(crate) fn boolean(&self) -> impl Fn(&'a str, Span) -> Result<bool, Error> + '_ {
+    pub(crate) fn boolean(&self) -> impl Fn(&'a str, Span) -> Result<bool, AttributeError> + '_ {
         Self::_boolean
     }
 
-    fn _default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, Error> {
+    fn _default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, AttributeError> {
         if s == "#unnamed" {
             Ok(ast::DefaultMode::Unnamed)
         } else {
@@ -570,15 +665,15 @@ impl<'a> Element<'a> {
 
     pub(crate) fn default_mode(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultMode, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultMode, AttributeError> + '_ {
         |s, span| self._default_mode(s, span)
     }
 
-    fn _default_validation(s: &str, span: Span) -> Result<ast::DefaultValidation, Error> {
+    fn _default_validation(s: &str, span: Span) -> Result<ast::DefaultValidation, AttributeError> {
         match s {
             "preserve" => Ok(ast::DefaultValidation::Preserve),
             "strip" => Ok(ast::DefaultValidation::Strip),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -587,20 +682,22 @@ impl<'a> Element<'a> {
 
     pub(crate) fn default_validation(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultValidation, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::DefaultValidation, AttributeError> + '_ {
         Self::_default_validation
     }
 
-    fn _prefix(s: &str, _span: Span) -> Result<ast::Prefix, Error> {
+    fn _prefix(s: &str, _span: Span) -> Result<ast::Prefix, AttributeError> {
         // TODO: check whether it's a valid prefix
         Ok(s.to_string())
     }
 
-    pub(crate) fn prefix(&self) -> impl Fn(&'a str, Span) -> Result<ast::Prefix, Error> + '_ {
+    pub(crate) fn prefix(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Prefix, AttributeError> + '_ {
         Self::_prefix
     }
 
-    fn _prefixes(s: &str, span: Span) -> Result<Vec<ast::Prefix>, Error> {
+    fn _prefixes(s: &str, span: Span) -> Result<Vec<ast::Prefix>, AttributeError> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
             result.push(Self::_prefix(s, span)?);
@@ -610,16 +707,19 @@ impl<'a> Element<'a> {
 
     pub(crate) fn prefixes(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Prefix>, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::Prefix>, AttributeError> + '_ {
         Self::_prefixes
     }
 
-    fn decimal(s: &str, _span: Span) -> Result<ast::Decimal, Error> {
+    fn decimal(s: &str, _span: Span) -> Result<ast::Decimal, AttributeError> {
         // TODO
         Ok(s.to_string())
     }
 
-    fn _exclude_result_prefixes(s: &str, span: Span) -> Result<ast::ExcludeResultPrefixes, Error> {
+    fn _exclude_result_prefixes(
+        s: &str,
+        span: Span,
+    ) -> Result<ast::ExcludeResultPrefixes, AttributeError> {
         if s == "#all" {
             Ok(ast::ExcludeResultPrefixes::All)
         } else {
@@ -633,11 +733,14 @@ impl<'a> Element<'a> {
 
     pub(crate) fn exclude_result_prefixes(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::ExcludeResultPrefixes, Error> {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::ExcludeResultPrefixes, AttributeError> {
         Self::_exclude_result_prefixes
     }
 
-    fn _exclude_result_prefix(s: &str, span: Span) -> Result<ast::ExcludeResultPrefix, Error> {
+    fn _exclude_result_prefix(
+        s: &str,
+        span: Span,
+    ) -> Result<ast::ExcludeResultPrefix, AttributeError> {
         if s == "#default" {
             Ok(ast::ExcludeResultPrefix::Default)
         } else {
@@ -645,7 +748,7 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn _component(s: &str, span: Span) -> Result<ast::Component, Error> {
+    fn _component(s: &str, span: Span) -> Result<ast::Component, AttributeError> {
         use ast::Component::*;
 
         match s {
@@ -655,21 +758,23 @@ impl<'a> Element<'a> {
             "variable" => Ok(Variable),
             "mode" => Ok(Mode),
             "*" => Ok(Star),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
         }
     }
 
-    pub(crate) fn component(&self) -> impl Fn(&'a str, Span) -> Result<ast::Component, Error> + '_ {
+    pub(crate) fn component(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Component, AttributeError> + '_ {
         Self::_component
     }
 
     fn _visibility_with_abstract(
         s: &str,
         span: Span,
-    ) -> Result<ast::VisibilityWithAbstract, Error> {
+    ) -> Result<ast::VisibilityWithAbstract, AttributeError> {
         use ast::VisibilityWithAbstract::*;
 
         match s {
@@ -677,7 +782,7 @@ impl<'a> Element<'a> {
             "private" => Ok(Private),
             "final" => Ok(Final),
             "abstract" => Ok(Abstract),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -686,11 +791,14 @@ impl<'a> Element<'a> {
 
     pub(crate) fn visibility_with_abstract(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithAbstract, Error> {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithAbstract, AttributeError> {
         Self::_visibility_with_abstract
     }
 
-    fn _visibility_with_hidden(s: &str, span: Span) -> Result<ast::VisibilityWithHidden, Error> {
+    fn _visibility_with_hidden(
+        s: &str,
+        span: Span,
+    ) -> Result<ast::VisibilityWithHidden, AttributeError> {
         use ast::VisibilityWithHidden::*;
 
         match s {
@@ -698,7 +806,7 @@ impl<'a> Element<'a> {
             "private" => Ok(Private),
             "final" => Ok(Final),
             "hidden" => Ok(Hidden),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -707,11 +815,11 @@ impl<'a> Element<'a> {
 
     pub(crate) fn visibility_with_hidden(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithHidden, Error> {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::VisibilityWithHidden, AttributeError> {
         Self::_visibility_with_hidden
     }
 
-    fn _validation(s: &str, span: Span) -> Result<ast::Validation, Error> {
+    fn _validation(s: &str, span: Span) -> Result<ast::Validation, AttributeError> {
         use ast::Validation::*;
 
         match s {
@@ -719,7 +827,7 @@ impl<'a> Element<'a> {
             "lax" => Ok(Lax),
             "preserve" => Ok(Preserve),
             "strip" => Ok(Strip),
-            _ => Err(Error::Invalid {
+            _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
                 span,
             }),
@@ -728,21 +836,21 @@ impl<'a> Element<'a> {
 
     pub(crate) fn validation(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::Validation, Error> + '_ {
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Validation, AttributeError> + '_ {
         Self::_validation
     }
 
-    pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> Error {
+    // TODO: message ignored
+    pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> AttributeError {
         let (local, namespace) = self.state.xot.name_ns_str(name);
         let span = self.name_span(name);
         match span {
-            Ok(span) => Error::AttributeUnexpected {
+            Ok(span) => AttributeError::Unexpected {
                 name: XmlName {
                     namespace: namespace.to_string(),
                     local: local.to_string(),
                 },
                 span,
-                message: message.to_string(),
             },
             Err(e) => e,
         }

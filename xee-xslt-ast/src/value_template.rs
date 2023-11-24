@@ -28,7 +28,7 @@ impl<'a> From<ValueTemplateItem<'a>> for ast::ValueTemplateItem {
 
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) enum Error {
+pub enum Error {
     UnescapedCurly { c: char, span: Span },
     IllegalSlice,
     XPath(ParserError),

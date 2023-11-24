@@ -5,12 +5,15 @@ use strum::VariantNames;
 use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core::{self as ast, DeclarationName, SequenceConstructorName};
-use crate::error::Error;
+use crate::children_parser::ElementError;
 use crate::instruction::{DeclarationParser, SequenceConstructorParser};
 use crate::parse::Element;
 
 impl SequenceConstructorName {
-    pub(crate) fn parse(&self, element: &Element) -> Result<ast::SequenceConstructorItem, Error> {
+    pub(crate) fn parse(
+        &self,
+        element: &Element,
+    ) -> Result<ast::SequenceConstructorItem, ElementError> {
         match self {
             SequenceConstructorName::Assert => {
                 ast::Assert::parse_sequence_constructor_item(element)
@@ -44,7 +47,7 @@ impl SequenceConstructorName {
 }
 
 impl DeclarationName {
-    pub(crate) fn parse(&self, element: &Element) -> Result<ast::Declaration, Error> {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::Declaration, ElementError> {
         match self {
             DeclarationName::Accumulator => ast::Accumulator::parse_declaration(element),
             _ => {

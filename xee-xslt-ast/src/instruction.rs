@@ -1,8 +1,10 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::error::{Error, Result};
+use crate::children_parser::ElementError as Error;
 use crate::parse::Element;
+
+type Result<V> = std::result::Result<V, Error>;
 
 pub(crate) trait InstructionParser: Sized {
     fn validate(&self, _element: &Element) -> Result<()> {
@@ -52,7 +54,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
             let ns = context.xot.namespace_for_name(element.element.name());
             if ns == context.names.xsl_ns {
                 // we have an unknown xsl instruction, fail with error
-                Err(Error::InvalidInstruction { span: element.span })
+                Err(Error::Unexpected { span: element.span })
             } else {
                 // we parse the literal element
                 ast::ElementNode::parse_sequence_constructor_item(element)
@@ -68,7 +70,7 @@ impl InstructionParser for ast::Declaration {
         if let Some(name) = name {
             name.parse(element)
         } else {
-            Err(Error::InvalidInstruction { span: element.span })
+            Err(Error::Unexpected { span: element.span })
         }
     }
 }
@@ -290,10 +292,12 @@ impl InstructionParser for ast::Variable {
 
     fn validate(&self, element: &Element) -> Result<()> {
         if self.visibility == Some(ast::VisibilityWithAbstract::Abstract) && self.select.is_some() {
-            return Err(element.attribute_unexpected(
-                element.state.names.select,
-                "select attribute is not allowed when visibility is abstract",
-            ));
+            return Err(element
+                .attribute_unexpected(
+                    element.state.names.select,
+                    "select attribute is not allowed when visibility is abstract",
+                )
+                .into());
         }
         Ok(())
     }

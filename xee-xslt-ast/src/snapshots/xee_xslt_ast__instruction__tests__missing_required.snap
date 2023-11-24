@@ -2,7 +2,7 @@
 source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
-Err(AttributeExpected(
+Err(Attribute(Unexpected(
   name: XmlName(
     namespace: "",
     local: "name",
@@ -11,4 +11,4 @@ Err(AttributeExpected(
     start: 1,
     end: 13,
   ),
-))
+)))

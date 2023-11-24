@@ -2,10 +2,12 @@ use xot::Node;
 
 use crate::ast_core::Span;
 use crate::context::Context;
-use crate::error::Error as AttributeError;
+// use crate::error::Error as AttributeError;
+use crate::parse::AttributeError;
 use crate::state::State;
 
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub(crate) enum ElementError {
     // Did not expect this node
     Unexpected { span: Span },

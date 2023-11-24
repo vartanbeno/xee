@@ -2,7 +2,7 @@ use crate::ast_core::Span;
 use crate::value_template;
 
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(test, derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct XmlName {
     pub namespace: String,
     pub local: String,
@@ -22,23 +22,22 @@ pub enum AttributeError {
 pub enum Error {
     // We didn't get the node we expect
     Unexpected,
-    // Expected attribute of name, not found (element span)
-    AttributeExpected {
-        name: XmlName,
-        span: Span,
-    },
-    // Did not expect attribute of name (attribute span)
-    AttributeUnexpected {
-        name: XmlName,
-        span: Span,
-        message: String,
-    },
-    // The value of the an attribute was invalid
-    Invalid {
-        value: String,
-        span: Span,
-    },
-
+    // // Expected attribute of name, not found (element span)
+    // AttributeExpected {
+    //     name: XmlName,
+    //     span: Span,
+    // },
+    // // Did not expect attribute of name (attribute span)
+    // AttributeUnexpected {
+    //     name: XmlName,
+    //     span: Span,
+    //     message: String,
+    // },
+    // // The value of the an attribute was invalid
+    // Invalid {
+    //     value: String,
+    //     span: Span,
+    // },
     UnexpectedSequenceConstructor,
     InvalidInstruction {
         span: Span,

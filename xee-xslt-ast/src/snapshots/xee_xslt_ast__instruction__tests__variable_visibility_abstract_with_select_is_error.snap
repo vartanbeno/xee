@@ -2,7 +2,7 @@
 source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" visibility=\"abstract\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
-Err(AttributeUnexpected(
+Err(Attribute(Unexpected(
   name: XmlName(
     namespace: "",
     local: "select",
@@ -11,5 +11,4 @@ Err(AttributeUnexpected(
     start: 96,
     end: 102,
   ),
-  message: "select attribute is not allowed when visibility is abstract",
-))
+)))
