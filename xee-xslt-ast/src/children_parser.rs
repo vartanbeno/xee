@@ -4,6 +4,7 @@ use xot::SpanInfoKey;
 use xot::Xot;
 
 use crate::ast_core::Span;
+use crate::element_namespaces::ElementNamespaces;
 use crate::error::Error as AttributeError;
 use crate::names::Names;
 

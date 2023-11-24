@@ -1,15 +1,15 @@
-use ahash::{HashMap, HashMapExt};
-use xee_xpath_ast::{ast as xpath_ast, Namespaces, FN_NAMESPACE};
-use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
+use xee_xpath_ast::{ast as xpath_ast, Namespaces};
+use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::children_parser::{
     ChildrenParser, Context, ElementError, EndParser, ManyChildrenParser,
 };
+use crate::element_namespaces::ElementNamespaces;
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
-use crate::names::{Names, StandardNames};
+use crate::names::StandardNames;
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
 
@@ -20,14 +20,13 @@ pub(crate) struct XsltParser<'a> {
 impl<'a> XsltParser<'a> {
     pub(crate) fn new(context: &'a Context) -> Self {
         // let sequence_constructor_parser =
-        //     ManyChildrenParser::new(|node, data| match xot.value(node) {
+        //     ManyChildrenParser::new(|node, context| match context.xot.value(node) {
         //         Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
         //             text.get().to_string(),
         //         )),
         //         Value::Element(element) => {
-        //             let element_namespaces = data.element_namespaces.push(element);
-        //             let element =
-        //                 Element::new(node, element, names, span_info, xot, element_namespaces)?;
+        //             let element_namespaces = context.element_namespaces.push(element);
+        //             let element = Element::new(node, element, element_namespaces, context)?;
         //             ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
         //         }
         //         _ => Err(ElementError::Unexpected {
@@ -737,58 +736,5 @@ impl<'a> Element<'a> {
             },
             Err(e) => e,
         }
-    }
-}
-
-// TODO: I think Xot has a way to get the namespaces for an element
-// already, so we should use just that.
-struct ElementNamespaces<'a> {
-    xot: &'a Xot,
-    element: &'a xot::Element,
-    next: Option<&'a ElementNamespaces<'a>>,
-}
-
-impl<'a> ElementNamespaces<'a> {
-    fn new(xot: &'a Xot, element: &'a xot::Element) -> Self {
-        Self {
-            xot,
-            element,
-            next: None,
-        }
-    }
-
-    fn push(&'a self, element: &'a xot::Element) -> Self {
-        Self {
-            xot: self.xot,
-            element,
-            next: Some(self),
-        }
-    }
-
-    fn pop(self) -> Option<&'a Self> {
-        self.next
-    }
-
-    fn prefixes(&self) -> xot::Prefixes {
-        if let Some(next) = &self.next {
-            let mut combined_prefixes = xot::Prefixes::new();
-            let prefixes = next.prefixes();
-            for (prefix, uri) in prefixes.iter() {
-                combined_prefixes.insert(*prefix, *uri);
-            }
-            combined_prefixes
-        } else {
-            self.element.prefixes().clone()
-        }
-    }
-
-    fn namespaces(&self) -> Namespaces {
-        let mut namespaces = HashMap::new();
-        for (prefix, ns) in self.prefixes() {
-            let prefix = self.xot.prefix_str(prefix);
-            let uri = self.xot.namespace_str(ns);
-            namespaces.insert(prefix, uri);
-        }
-        Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
     }
 }
