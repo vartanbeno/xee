@@ -7,7 +7,7 @@ use crate::ast_core::Span;
 use crate::error::Error as AttributeError;
 
 #[derive(Debug, PartialEq)]
-enum ElementError {
+pub(crate) enum ElementError {
     // Did not expect this node
     Unexpected { span: Span },
     // Did not expect end TODO: how to get span info?
@@ -27,7 +27,7 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
-struct Context<'a> {
+pub(crate) struct Context<'a> {
     xot: &'a Xot,
     span_info: &'a SpanInfo,
 }
@@ -59,7 +59,7 @@ fn span_for_node(xot: &Xot, span_info: &SpanInfo, node: Node) -> Option<Span> {
     .map(|span| span.into())
 }
 
-trait ChildrenParser<T> {
+pub(crate) trait ChildrenParser<T> {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(T, Option<Node>)>;
 
     fn then<B, O: ChildrenParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
@@ -90,7 +90,7 @@ trait ChildrenParser<T> {
     }
 }
 
-struct OptionalChildParser<V, P>
+pub(crate) struct OptionalChildParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
@@ -101,7 +101,7 @@ impl<V, P> OptionalChildParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn new(parse_value: P) -> Self {
+    pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
     }
 }
@@ -124,10 +124,10 @@ where
     }
 }
 
-struct EndParser;
+pub(crate) struct EndParser;
 
 impl EndParser {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self
     }
 }
@@ -144,7 +144,7 @@ impl ChildrenParser<()> for EndParser {
     }
 }
 
-struct ManyChildrenParser<V, P>
+pub(crate) struct ManyChildrenParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
@@ -155,7 +155,7 @@ impl<V, P> ManyChildrenParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn new(parse_value: P) -> Self {
+    pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
     }
 }
@@ -188,7 +188,7 @@ where
     }
 }
 
-struct AtLeastOneParser<V, P>
+pub(crate) struct AtLeastOneParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
@@ -199,7 +199,7 @@ impl<V, P> AtLeastOneParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn new(parse_value: P) -> Self {
+    pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
     }
 }
@@ -225,7 +225,7 @@ where
     }
 }
 
-struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
+pub(crate) struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
     first: PA,
     second: PB,
     ta: std::marker::PhantomData<TA>,
@@ -242,7 +242,8 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA,
     }
 }
 
-struct IgnoreRightCombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
+pub(crate) struct IgnoreRightCombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>>
+{
     first: PA,
     second: PB,
     ta: std::marker::PhantomData<TA>,
