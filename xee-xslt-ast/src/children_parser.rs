@@ -29,13 +29,13 @@ impl From<AttributeError> for ElementError {
 type Result<T> = std::result::Result<T, ElementError>;
 
 pub(crate) struct Context {
-    xot: Xot,
-    span_info: SpanInfo,
-    names: Names,
+    pub(crate) xot: Xot,
+    pub(crate) span_info: SpanInfo,
+    pub(crate) names: Names,
 }
 
 impl Context {
-    fn new(xot: Xot, span_info: SpanInfo, names: Names) -> Self {
+    pub(crate) fn new(xot: Xot, span_info: SpanInfo, names: Names) -> Self {
         Self {
             xot,
             span_info,
@@ -47,7 +47,7 @@ impl Context {
         self.xot.next_sibling(node)
     }
 
-    fn span(&self, node: Node) -> Option<Span> {
+    pub(crate) fn span(&self, node: Node) -> Option<Span> {
         use xot::Value::*;
 
         match self.xot.value(node) {

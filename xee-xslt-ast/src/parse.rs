@@ -4,7 +4,9 @@ use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::children_parser::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
+use crate::children_parser::{
+    ChildrenParser, Context, ElementError, EndParser, ManyChildrenParser,
+};
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::{Names, StandardNames};
@@ -12,14 +14,15 @@ use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
 
 pub(crate) struct XsltParser<'a> {
-    xot: &'a Xot,
-    names: &'a Names,
-    span_info: &'a SpanInfo,
+    context: &'a Context,
+    // xot: &'a Xot,
+    // names: &'a Names,
+    // span_info: &'a SpanInfo,
     // sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
 }
 
 impl<'a> XsltParser<'a> {
-    pub(crate) fn new(xot: &'a Xot, names: &'a Names, span_info: &'a SpanInfo) -> Self {
+    pub(crate) fn new(context: &'a Context) -> Self {
         // let sequence_constructor_parser =
         //     ManyChildrenParser::new(|node, data| match xot.value(node) {
         //         Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
@@ -39,50 +42,24 @@ impl<'a> XsltParser<'a> {
         //     .then_ignore(EndParser::new());
 
         Self {
-            xot,
-            names,
-            span_info,
-            // sequence_constructor_parser: Box::new(sequence_constructor_parser),
+            context, // sequence_constructor_parser: Box::new(sequence_constructor_parser),
         }
-    }
-
-    fn element_span(&self, node: Node) -> Result<Span, Error> {
-        let span = self
-            .span_info
-            .get(SpanInfoKey::ElementStart(node))
-            .ok_or(Error::MissingSpan)?;
-
-        Ok(span.into())
     }
 
     pub(crate) fn parse_sequence_constructor_item(
         &self,
         node: Node,
     ) -> Result<ast::SequenceConstructorItem, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-        let element_namespaces = ElementNamespaces::new(self.xot, element);
-        let element = Element::new(
-            node,
-            element,
-            self.names,
-            self.span_info,
-            self.xot,
-            element_namespaces,
-        )?;
+        let element = self.context.xot.element(node).ok_or(Error::Unexpected)?;
+        let element_namespaces = ElementNamespaces::new(&self.context.xot, element);
+        let element = Element::new(node, element, element_namespaces, self.context)?;
         element.sequence_constructor_item(node)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
-        let element_namespaces = ElementNamespaces::new(self.xot, element);
-        let element = Element::new(
-            node,
-            element,
-            self.names,
-            self.span_info,
-            self.xot,
-            element_namespaces,
-        )?;
+        let element = self.context.xot.element(node).ok_or(Error::Unexpected)?;
+        let element_namespaces = ElementNamespaces::new(&self.context.xot, element);
+        let element = Element::new(node, element, element_namespaces, self.context)?;
         element.parse_transform(node)
     }
 }
@@ -92,57 +69,40 @@ pub(crate) struct Element<'a> {
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
 
-    pub(crate) names: &'a Names,
-    span_info: &'a SpanInfo,
-    pub(crate) xot: &'a Xot,
-
     element_namespaces: ElementNamespaces<'a>,
+    pub(crate) context: &'a Context,
 }
 
 impl<'a> Element<'a> {
     fn new(
         node: Node,
         element: &'a xot::Element,
-        names: &'a Names,
-        span_info: &'a SpanInfo,
-        xot: &'a Xot,
         element_namespaces: ElementNamespaces<'a>,
+        context: &'a Context,
     ) -> Result<Self, Error> {
-        let span = span_info
-            .get(SpanInfoKey::ElementStart(node))
-            .ok_or(Error::MissingSpan)?;
+        let span = context.span(node).ok_or(Error::MissingSpan)?;
 
         Ok(Self {
             node,
             element,
-            span: span.into(),
-
-            names,
-            span_info,
-            xot,
-
+            span,
             element_namespaces,
+
+            context,
         })
     }
 
     fn sub_element(&'a self, node: Node, element: &'a xot::Element) -> Result<Self, Error> {
         let element_namespaces = self.element_namespaces.push(element);
-        Self::new(
-            node,
-            element,
-            self.names,
-            self.span_info,
-            self.xot,
-            element_namespaces,
-        )
+        Self::new(node, element, element_namespaces, self.context)
     }
 
     pub(crate) fn standard(&self) -> Result<ast::Standard, Error> {
-        self._standard(&self.names.standard)
+        self._standard(&self.context.names.standard)
     }
 
     pub(crate) fn xsl_standard(&self) -> Result<ast::Standard, Error> {
-        self._standard(&self.names.xsl_standard)
+        self._standard(&self.context.names.xsl_standard)
     }
 
     fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, Error> {
@@ -166,7 +126,7 @@ impl<'a> Element<'a> {
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, Error> {
         let mut result = Vec::new();
-        for node in self.xot.children(self.node) {
+        for node in self.context.xot.children(self.node) {
             let item = self.sequence_constructor_item(node)?;
             result.push(item);
         }
@@ -174,7 +134,7 @@ impl<'a> Element<'a> {
     }
 
     fn sequence_constructor_item(&self, node: Node) -> Result<ast::SequenceConstructorItem, Error> {
-        match self.xot.value(node) {
+        match self.context.xot.value(node) {
             Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                 text.get().to_string(),
             )),
@@ -188,7 +148,7 @@ impl<'a> Element<'a> {
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, Error> {
         let mut result = Vec::new();
-        for node in self.xot.children(self.node) {
+        for node in self.context.xot.children(self.node) {
             let item = self.declaration_item(node)?;
             result.push(item);
         }
@@ -196,7 +156,7 @@ impl<'a> Element<'a> {
     }
 
     fn declaration_item(&self, node: Node) -> Result<ast::Declaration, Error> {
-        match self.xot.value(node) {
+        match self.context.xot.value(node) {
             Value::Element(element) => {
                 let element = self.sub_element(node, element)?;
                 ast::Declaration::parse_declaration(&element)
@@ -268,7 +228,7 @@ impl<'a> Element<'a> {
     {
         let item = parse(node);
         match item {
-            Ok(item) => Ok((Some(item), self.xot.next_sibling(node))),
+            Ok(item) => Ok((Some(item), self.context.xot.next_sibling(node))),
             Err(Error::Unexpected { .. }) => Ok((None, Some(node))),
             Err(e) => Err(e),
         }
@@ -279,7 +239,7 @@ impl<'a> Element<'a> {
         T: InstructionParser,
     {
         let mut result = Vec::new();
-        for node in self.xot.children(self.node) {
+        for node in self.context.xot.children(self.node) {
             let item = self.parse_element(node, name)?;
             result.push(item);
         }
@@ -308,17 +268,17 @@ impl<'a> Element<'a> {
         &self,
         node: Node,
     ) -> Result<ast::SequenceConstructorItem, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element = self.context.xot.element(node).ok_or(Error::Unexpected)?;
         let element = self.sub_element(node, element)?;
         element.sequence_constructor_item(node)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
-        self.parse_element(node, self.names.xsl_transform)
+        self.parse_element(node, self.context.names.xsl_transform)
     }
 
     fn parse_element<T: InstructionParser>(&self, node: Node, name: NameId) -> Result<T, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element = self.context.xot.element(node).ok_or(Error::Unexpected)?;
         let element = self.sub_element(node, element)?;
         //     let element_namespaces = ElementNamespaces::new(self.xot, element);
         // let element = Element::new(node, element, self, element_namespaces)?;
@@ -333,7 +293,7 @@ impl<'a> Element<'a> {
         node: Node,
         name: NameId,
     ) -> Result<Option<T>, Error> {
-        let element = self.xot.element(node).ok_or(Error::Unexpected)?;
+        let element = self.context.xot.element(node).ok_or(Error::Unexpected)?;
         // let element_namespaces = ElementNamespaces::new(self.xot, element);
         let element = self.sub_element(node, element)?;
         // let element = Element::new(node, element, self, element_namespaces)?;
@@ -369,7 +329,7 @@ impl<'a> Element<'a> {
         parse_value: impl Fn(&'a str, Span) -> Result<T, Error>,
     ) -> Result<T, Error> {
         self.optional(name, parse_value)?.ok_or_else(|| {
-            let (local, namespace) = self.xot.name_ns_str(name);
+            let (local, namespace) = self.context.xot.name_ns_str(name);
             Error::AttributeExpected {
                 name: XmlName {
                     namespace: namespace.to_string(),
@@ -391,6 +351,7 @@ impl<'a> Element<'a> {
 
     fn name_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
+            .context
             .span_info
             .get(SpanInfoKey::AttributeName(self.node, name))
             .ok_or(Error::MissingSpan)?;
@@ -399,6 +360,7 @@ impl<'a> Element<'a> {
 
     fn value_span(&self, name: NameId) -> Result<Span, Error> {
         let span = self
+            .context
             .span_info
             .get(SpanInfoKey::AttributeValue(self.node, name))
             .ok_or(Error::MissingSpan)?;
@@ -766,7 +728,7 @@ impl<'a> Element<'a> {
     }
 
     pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> Error {
-        let (local, namespace) = self.xot.name_ns_str(name);
+        let (local, namespace) = self.context.xot.name_ns_str(name);
         let span = self.name_span(name);
         match span {
             Ok(span) => Error::AttributeUnexpected {

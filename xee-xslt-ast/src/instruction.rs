@@ -41,15 +41,16 @@ impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declarati
 
 impl InstructionParser for ast::SequenceConstructorItem {
     fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
-        let name = element
+        let context = element.context;
+        let name = context
             .names
             .sequence_constructor_name(element.element.name());
 
         if let Some(name) = name {
             name.parse(element)
         } else {
-            let ns = element.xot.namespace_for_name(element.element.name());
-            if ns == element.names.xsl_ns {
+            let ns = context.xot.namespace_for_name(element.element.name());
+            if ns == context.names.xsl_ns {
                 // we have an unknown xsl instruction, fail with error
                 Err(Error::InvalidInstruction { span: element.span })
             } else {
@@ -62,7 +63,10 @@ impl InstructionParser for ast::SequenceConstructorItem {
 
 impl InstructionParser for ast::Declaration {
     fn parse(element: &Element) -> Result<ast::Declaration> {
-        let name = element.names.declaration_name(element.element.name());
+        let name = element
+            .context
+            .names
+            .declaration_name(element.element.name());
 
         if let Some(name) = name {
             name.parse(element)
@@ -75,7 +79,7 @@ impl InstructionParser for ast::Declaration {
 impl InstructionParser for ast::ElementNode {
     fn parse(element: &Element) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
-            name: to_name(element.xot, element.element.name()),
+            name: to_name(&element.context.xot, element.element.name()),
 
             standard: element.xsl_standard()?,
             span: element.span,
@@ -93,7 +97,7 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
 
 impl InstructionParser for ast::Accept {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::Accept {
             component: element.required(names.component, element.component())?,
             names: element.required(names.names, element.tokens())?,
@@ -107,7 +111,7 @@ impl InstructionParser for ast::Accept {
 
 impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
             initial_value: element.required(names.initial_value, element.xpath())?,
@@ -124,7 +128,7 @@ impl InstructionParser for ast::Accumulator {
 
 impl InstructionParser for ast::AccumulatorRule {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::AccumulatorRule {
             match_: element.required(names.match_, element.pattern())?,
             phase: element.optional(names.phase, element.phase())?,
@@ -140,7 +144,7 @@ impl InstructionParser for ast::AccumulatorRule {
 
 impl InstructionParser for ast::Assert {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::Assert {
             test: element.required(names.test, element.xpath())?,
             select: element.optional(names.select, element.xpath())?,
@@ -157,7 +161,7 @@ impl InstructionParser for ast::Assert {
 
 impl InstructionParser for ast::AnalyzeString {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::AnalyzeString {
             select: element.required(names.select, element.xpath())?,
             regex: element.required(names.regex, element.value_template(element.string()))?,
@@ -175,7 +179,7 @@ impl InstructionParser for ast::AnalyzeString {
 
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::Copy {
             select: element.optional(names.select, element.xpath())?,
             copy_namespaces: element.boolean_with_default(names.copy_namespaces, true)?,
@@ -208,7 +212,7 @@ impl InstructionParser for ast::Fallback {
 
 impl InstructionParser for ast::If {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
             standard: element.standard()?,
@@ -243,7 +247,7 @@ impl InstructionParser for ast::NonMatchingSubstring {
 
 impl InstructionParser for ast::Transform {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
         Ok(ast::Transform {
             id: element.optional(names.id, element.id())?,
             input_type_annotations: element.optional(
@@ -263,7 +267,7 @@ impl InstructionParser for ast::Transform {
 
 impl InstructionParser for ast::Variable {
     fn parse(element: &Element) -> Result<Self> {
-        let names = element.names;
+        let names = &element.context.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
         // can visibility be absent or is there a default visibility?
@@ -290,7 +294,7 @@ impl InstructionParser for ast::Variable {
     fn validate(&self, element: &Element) -> Result<()> {
         if self.visibility == Some(ast::VisibilityWithAbstract::Abstract) && self.select.is_some() {
             return Err(element.attribute_unexpected(
-                element.names.select,
+                element.context.names.select,
                 "select attribute is not allowed when visibility is abstract",
             ));
         }
@@ -301,7 +305,7 @@ impl InstructionParser for ast::Variable {
 #[cfg(test)]
 mod tests {
 
-    use crate::{names::Names, parse::XsltParser};
+    use crate::{children_parser::Context, names::Names, parse::XsltParser};
 
     use super::*;
     use insta::assert_ron_snapshot;
@@ -312,7 +316,8 @@ mod tests {
 
         let (node, span_info) = xot.parse_with_span_info(s).unwrap();
         let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info);
+        let context = Context::new(xot, span_info, names);
+        let parser = XsltParser::new(&context);
         parser.parse_sequence_constructor_item(node)
     }
 
@@ -322,7 +327,8 @@ mod tests {
 
         let (node, span_info) = xot.parse_with_span_info(s).unwrap();
         let node = xot.document_element(node).unwrap();
-        let parser = XsltParser::new(&xot, &names, &span_info);
+        let context = Context::new(xot, span_info, names);
+        let parser = XsltParser::new(&context);
         parser.parse_transform(node)
     }
 
