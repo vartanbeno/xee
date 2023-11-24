@@ -12,29 +12,40 @@ use crate::state::State;
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
 
+// struct ElementParsers {
+//     sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
+// }
+
+// impl ElementParsers {
+//     fn new() -> Self {
+//         let sequence_constructor_parser =
+//             ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
+//                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+//                     text.get().to_string(),
+//                 )),
+//                 Value::Element(element) => {
+//                     let new_context = context.element(element);
+//                     let element = Element::new(node, element, new_context, state)?;
+//                     ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+//                 }
+//                 _ => Err(ElementError::Unexpected {
+//                     // TODO: get span right
+//                     span: Span::new(0, 0),
+//                 }),
+//             })
+//             .then_ignore(EndParser::new());
+
+//         Self {
+//             sequence_constructor_parser: Box::new(sequence_constructor_parser),
+//         }
+//     }
+// }
 pub(crate) struct XsltParser<'a> {
     state: &'a State,
 }
 
 impl<'a> XsltParser<'a> {
     pub(crate) fn new(state: &'a State) -> Self {
-        // let sequence_constructor_parser =
-        //     ManyChildrenParser::new(|node, context| match context.xot.value(node) {
-        //         Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-        //             text.get().to_string(),
-        //         )),
-        //         Value::Element(element) => {
-        //             let element_namespaces = context.element_namespaces.push(element);
-        //             let element = Element::new(node, element, element_namespaces, context)?;
-        //             ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
-        //         }
-        //         _ => Err(ElementError::Unexpected {
-        //             // TODO: get span right
-        //             span: Span::new(0, 0),
-        //         }),
-        //     })
-        //     .then_ignore(EndParser::new());
-
         Self {
             state, // sequence_constructor_parser: Box::new(sequence_constructor_parser),
         }
