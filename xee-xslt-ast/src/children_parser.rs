@@ -46,6 +46,19 @@ impl<'a> Context<'a> {
     }
 }
 
+fn span_for_node(xot: &Xot, span_info: &SpanInfo, node: Node) -> Option<Span> {
+    use xot::Value::*;
+
+    match xot.value(node) {
+        Element(_element) => span_info.get(SpanInfoKey::ElementStart(node)),
+        Text(_text) => span_info.get(SpanInfoKey::Text(node)),
+        Comment(_comment) => span_info.get(SpanInfoKey::Comment(node)),
+        ProcessingInstruction(_pi) => span_info.get(SpanInfoKey::PiTarget(node)),
+        Root => unreachable!(),
+    }
+    .map(|span| span.into())
+}
+
 trait ChildrenParser<T> {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(T, Option<Node>)>;
 
@@ -116,19 +129,6 @@ impl ChildrenParser<()> for EndParser {
     }
 }
 
-fn span_for_node(xot: &Xot, span_info: &SpanInfo, node: Node) -> Option<Span> {
-    use xot::Value::*;
-
-    match xot.value(node) {
-        Element(_element) => span_info.get(SpanInfoKey::ElementStart(node)),
-        Text(_text) => span_info.get(SpanInfoKey::Text(node)),
-        Comment(_comment) => span_info.get(SpanInfoKey::Comment(node)),
-        ProcessingInstruction(_pi) => span_info.get(SpanInfoKey::PiTarget(node)),
-        Root => unreachable!(),
-    }
-    .map(|span| span.into())
-}
-
 struct ManyChildrenParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
@@ -159,15 +159,15 @@ where
             let (item, next) = optional_parser.parse(current_node, context)?;
             if let Some(item) = item {
                 result.push(item);
+                if let Some(next) = next {
+                    current_node = Some(next);
+                } else {
+                    // there are no more siblings
+                    return Ok((result, None));
+                }
             } else {
                 // we couldn't match with another parseable item, so we're done
                 return Ok((result, next));
-            }
-            if let Some(next) = next {
-                current_node = Some(next);
-            } else {
-                // there are no more siblings
-                return Ok((result, None));
             }
         }
     }
