@@ -27,16 +27,29 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
-trait State {
-    fn next(&self, node: Node) -> Option<Node>;
-
-    fn span(&self, node: Node) -> Option<Span>;
+struct State<'a> {
+    xot: &'a Xot,
+    span_info: &'a SpanInfo,
 }
 
-trait ChildrenParser<T, S: State> {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<(T, Option<Node>)>;
+impl<'a> State<'a> {
+    fn new(xot: &'a Xot, span_info: &'a SpanInfo) -> Self {
+        Self { xot, span_info }
+    }
 
-    fn then<B, O: ChildrenParser<B, S>>(self, other: O) -> CombinedParser<T, B, S, Self, O>
+    fn next(&self, node: Node) -> Option<Node> {
+        self.xot.next_sibling(node)
+    }
+
+    fn span(&self, node: Node) -> Option<Span> {
+        span_for_node(self.xot, self.span_info, node)
+    }
+}
+
+trait ChildrenParser<T> {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<(T, Option<Node>)>;
+
+    fn then<B, O: ChildrenParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
     where
         Self: Sized,
     {
@@ -45,7 +58,6 @@ trait ChildrenParser<T, S: State> {
             second: other,
             ta: std::marker::PhantomData,
             tb: std::marker::PhantomData,
-            s: std::marker::PhantomData,
         }
     }
 }
@@ -66,11 +78,11 @@ where
     }
 }
 
-impl<V, P, S: State> ChildrenParser<Option<V>, S> for OptionalChildParser<V, P>
+impl<V, P> ChildrenParser<Option<V>> for OptionalChildParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<(Option<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
             let item = (self.parse_value)(node);
             match item {
@@ -92,8 +104,8 @@ impl EndParser {
     }
 }
 
-impl<S: State> ChildrenParser<(), S> for EndParser {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<((), Option<Node>)> {
+impl ChildrenParser<()> for EndParser {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<((), Option<Node>)> {
         if let Some(node) = node {
             Err(ElementError::Unexpected {
                 span: state.span(node).ok_or(ElementError::Internal)?,
@@ -133,11 +145,11 @@ where
     }
 }
 
-impl<V, P, S: State> ChildrenParser<Vec<V>, S> for ManyChildrenParser<V, P>
+impl<V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<(Vec<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Vec<V>, Option<Node>)> {
         let optional_parser = OptionalChildParser {
             parse_value: &self.parse_value,
         };
@@ -177,11 +189,11 @@ where
     }
 }
 
-impl<V, P, S: State> ChildrenParser<Vec<V>, S> for AtLeastOneParser<V, P>
+impl<V, P> ChildrenParser<Vec<V>> for AtLeastOneParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<(Vec<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Vec<V>, Option<Node>)> {
         let many_parser = ManyChildrenParser {
             parse_value: &self.parse_value,
         };
@@ -198,18 +210,17 @@ where
     }
 }
 
-struct CombinedParser<TA, TB, S: State, PA: ChildrenParser<TA, S>, PB: ChildrenParser<TB, S>> {
+struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
     first: PA,
     second: PB,
     ta: std::marker::PhantomData<TA>,
     tb: std::marker::PhantomData<TB>,
-    s: std::marker::PhantomData<S>,
 }
 
-impl<TA, TB, S: State, PA: ChildrenParser<TA, S>, PB: ChildrenParser<TB, S>>
-    ChildrenParser<(TA, TB), S> for CombinedParser<TA, TB, S, PA, PB>
+impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA, TB)>
+    for CombinedParser<TA, TB, PA, PB>
 {
-    fn parse(&self, node: Option<Node>, state: &S) -> Result<((TA, TB), Option<Node>)> {
+    fn parse(&self, node: Option<Node>, state: &State) -> Result<((TA, TB), Option<Node>)> {
         let (a, node) = self.first.parse(node, state)?;
         let (b, node) = self.second.parse(node, state)?;
         Ok(((a, b), node))
@@ -246,27 +257,6 @@ mod tests {
         (xot, span_info, next)
     }
 
-    struct NextState<'a> {
-        xot: &'a Xot,
-        span_info: &'a SpanInfo,
-    }
-
-    impl<'a> NextState<'a> {
-        fn new(xot: &'a Xot, span_info: &'a SpanInfo) -> Self {
-            Self { xot, span_info }
-        }
-    }
-
-    impl<'a> State for NextState<'a> {
-        fn next(&self, node: Node) -> Option<Node> {
-            self.xot.next_sibling(node)
-        }
-
-        fn span(&self, node: Node) -> Option<Span> {
-            span_for_node(self.xot, self.span_info, node)
-        }
-    }
-
     #[test]
     fn test_optional_present() {
         let (xot, span_info, next) = parse("<outer><a /></outer>");
@@ -275,7 +265,7 @@ mod tests {
         struct Value;
 
         let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (item, next) = optional_parser.parse(next, &state).unwrap();
 
@@ -297,7 +287,7 @@ mod tests {
             }
             .into())
         });
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let r: Result<(Option<Value>, Option<Node>)> = optional_parser.parse(next, &state);
 
@@ -323,7 +313,7 @@ mod tests {
                 span: span_for_node(&xot, &span_info, node).ok_or(ElementError::Internal)?,
             })
         });
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (item, next): (Option<Value>, Option<Node>) =
             optional_parser.parse(node, &state).unwrap();
@@ -339,7 +329,7 @@ mod tests {
         struct Value;
 
         let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (item, next) = optional_parser.parse(next, &state).unwrap();
         assert_eq!(item, None);
@@ -351,7 +341,7 @@ mod tests {
         let (xot, span_info, next) = parse("<outer></outer>");
 
         let end_parser = EndParser::new();
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
         let r = end_parser.parse(next, &state);
 
         assert!(r.is_ok());
@@ -362,7 +352,7 @@ mod tests {
         let (xot, span_info, next) = parse("<outer><a /></outer>");
 
         let end_parser = EndParser::new();
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
         let r = end_parser.parse(next, &state);
 
         assert_eq!(
@@ -398,7 +388,7 @@ mod tests {
         span_info: &SpanInfo,
         next: Option<Node>,
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
-        let state = NextState::new(xot, span_info);
+        let state = State::new(xot, span_info);
 
         let optional_parser_a = OptionalChildParser::new(|node| {
             if let Some(element) = xot.element(node) {
@@ -492,7 +482,7 @@ mod tests {
         struct Value;
 
         let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (items, next) = many_parser.parse(next, &state).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
@@ -507,7 +497,7 @@ mod tests {
         struct Value;
 
         let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (items, next) = many_parser.parse(next, &state).unwrap();
 
@@ -545,7 +535,7 @@ mod tests {
                 span: span_for_node(&xot, &span_info, _node).ok_or(ElementError::Internal)?,
             })
         });
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (optional_item, next) = optional_parser.parse(next, &state).unwrap();
         let (many_items, next) = many_parser.parse(next, &state).unwrap();
@@ -588,7 +578,7 @@ mod tests {
 
         let combined = optional_parser.then(many_parser);
 
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let ((optional_item, many_items), next) = combined.parse(next, &state).unwrap();
 
@@ -631,7 +621,7 @@ mod tests {
         let end_parser = EndParser::new();
 
         let combined = optional_parser.then(many_parser).then(end_parser);
-        let state = NextState::new(&xot, &span_info);
+        let state = State::new(&xot, &span_info);
 
         let (((optional_item, many_items), _), next) = combined.parse(next, &state).unwrap();
 
