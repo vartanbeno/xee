@@ -4,7 +4,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::children_parser::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
-use crate::element_namespaces::ElementNamespaces;
+use crate::context::Context;
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::StandardNames;
@@ -45,15 +45,15 @@ impl<'a> XsltParser<'a> {
         node: Node,
     ) -> Result<ast::SequenceConstructorItem, Error> {
         let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
-        let element_namespaces = ElementNamespaces::new(&self.state.xot, element);
-        let element = Element::new(node, element, element_namespaces, self.state)?;
+        let context = Context::new(element);
+        let element = Element::new(node, element, context, self.state)?;
         element.sequence_constructor_item(node)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, Error> {
         let element = self.state.xot.element(node).ok_or(Error::Unexpected)?;
-        let element_namespaces = ElementNamespaces::new(&self.state.xot, element);
-        let element = Element::new(node, element, element_namespaces, self.state)?;
+        let context = Context::new(element);
+        let element = Element::new(node, element, context, self.state)?;
         element.parse_transform(node)
     }
 }
@@ -62,8 +62,8 @@ pub(crate) struct Element<'a> {
     node: Node,
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
+    context: Context<'a>,
 
-    element_namespaces: ElementNamespaces<'a>,
     pub(crate) state: &'a State,
 }
 
@@ -71,7 +71,7 @@ impl<'a> Element<'a> {
     fn new(
         node: Node,
         element: &'a xot::Element,
-        element_namespaces: ElementNamespaces<'a>,
+        context: Context<'a>,
         state: &'a State,
     ) -> Result<Self, Error> {
         let span = state.span(node).ok_or(Error::MissingSpan)?;
@@ -80,15 +80,15 @@ impl<'a> Element<'a> {
             node,
             element,
             span,
-            element_namespaces,
+            context,
 
             state,
         })
     }
 
     fn sub_element(&'a self, node: Node, element: &'a xot::Element) -> Result<Self, Error> {
-        let element_namespaces = self.element_namespaces.push(element);
-        Self::new(node, element, element_namespaces, self.state)
+        let context = self.context.element(element);
+        Self::new(node, element, context, self.state)
     }
 
     pub(crate) fn standard(&self) -> Result<ast::Standard, Error> {
@@ -340,7 +340,7 @@ impl<'a> Element<'a> {
     }
 
     fn namespaces(&'a self) -> Namespaces<'a> {
-        self.element_namespaces.namespaces()
+        self.context.namespaces(self.state)
     }
 
     fn name_span(&self, name: NameId) -> Result<Span, Error> {

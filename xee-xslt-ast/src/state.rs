@@ -2,6 +2,7 @@ use xot::{Node, SpanInfo, SpanInfoKey, Xot};
 
 use crate::{ast_core::Span, names::Names};
 
+/// Parser state affects the parsing output but does not change during parsing.
 pub(crate) struct State {
     pub(crate) xot: Xot,
     pub(crate) span_info: SpanInfo,

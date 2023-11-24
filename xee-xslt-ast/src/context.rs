@@ -3,13 +3,15 @@ use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::state::State;
 
-struct StackedContext<'a> {
+/// Parser context is passed around. You can create new contexts as
+/// for particular sub-trees.
+pub(crate) struct Context<'a> {
     element: &'a xot::Element,
 
-    next: Option<&'a StackedContext<'a>>,
+    next: Option<&'a Context<'a>>,
 }
 
-impl<'a> StackedContext<'a> {
+impl<'a> Context<'a> {
     pub(crate) fn new(element: &'a xot::Element) -> Self {
         Self {
             element,
@@ -17,7 +19,7 @@ impl<'a> StackedContext<'a> {
         }
     }
 
-    pub(crate) fn push(&'a self, element: &'a xot::Element) -> Self {
+    pub(crate) fn element(&'a self, element: &'a xot::Element) -> Self {
         Self {
             element,
             next: Some(self),
