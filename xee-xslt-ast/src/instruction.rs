@@ -114,10 +114,10 @@ impl InstructionParser for ast::Accumulator {
             as_: element.optional(names.as_, element.sequence_type())?,
             streamable: element.boolean_with_default(names.streamable, false)?,
 
-            rules: element.one_or_more_elements(names.xsl_accumulator_rule)?,
-
             standard: element.standard()?,
             span: element.span,
+
+            rules: element.one_or_more_elements(names.xsl_accumulator_rule)?,
         })
     }
 }
@@ -130,10 +130,10 @@ impl InstructionParser for ast::AccumulatorRule {
             phase: element.optional(names.phase, element.phase())?,
             select: element.optional(names.select, element.xpath())?,
 
-            content: element.sequence_constructor()?,
-
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -147,10 +147,10 @@ impl InstructionParser for ast::Assert {
             error_code: element
                 .optional(names.error_code, element.value_template(element.eqname()))?,
 
-            content: element.sequence_constructor()?,
-
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -163,12 +163,12 @@ impl InstructionParser for ast::AnalyzeString {
             regex: element.required(names.regex, element.value_template(element.string()))?,
             flags: element.optional(names.flags, element.value_template(element.string()))?,
 
+            standard: element.standard()?,
+            span: element.span,
+
             matching_substring: element.optional_element(names.xsl_matching_substring)?,
             non_matching_substring: element.optional_element(names.xsl_non_matching_substring)?,
             fallbacks: element.many_elements(names.xsl_fallback)?,
-
-            standard: element.standard()?,
-            span: element.span,
         })
     }
 }
@@ -186,9 +186,11 @@ impl InstructionParser for ast::Copy {
                 .optional(names.validation, element.validation())?
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
-            content: element.sequence_constructor()?,
+
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -209,9 +211,10 @@ impl InstructionParser for ast::If {
         let names = element.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
-            content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -219,9 +222,10 @@ impl InstructionParser for ast::If {
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {
-            content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -229,9 +233,10 @@ impl InstructionParser for ast::MatchingSubstring {
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
-            content: element.sequence_constructor()?,
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }
@@ -248,10 +253,10 @@ impl InstructionParser for ast::Transform {
             extension_element_prefixes: element
                 .optional(names.extension_element_prefixes, element.prefixes())?,
 
-            declarations: element.declarations()?,
-
             standard: element.standard()?,
             span: element.span,
+
+            declarations: element.declarations()?,
         })
     }
 }
@@ -274,9 +279,11 @@ impl InstructionParser for ast::Variable {
             as_: element.optional(names.as_, element.sequence_type())?,
             static_: element.boolean_with_default(names.static_, false)?,
             visibility: element.optional(names.visibility, element.visibility_with_abstract())?,
-            content: element.sequence_constructor()?,
+
             standard: element.standard()?,
             span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 
