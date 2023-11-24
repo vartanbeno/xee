@@ -4,11 +4,11 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::children_parser::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
-use crate::context::State;
 use crate::element_namespaces::ElementNamespaces;
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::StandardNames;
+use crate::state::State;
 use crate::tokenize::split_whitespace_with_spans;
 use crate::value_template::ValueTemplateTokenizer;
 

@@ -4,9 +4,8 @@ use xot::SpanInfoKey;
 use xot::Xot;
 
 use crate::ast_core::Span;
-use crate::context::State;
 use crate::error::Error as AttributeError;
-use crate::names::Names;
+use crate::state::State;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum ElementError {
@@ -248,6 +247,7 @@ mod tests {
     use xot::Xot;
 
     use crate::ast_core::Span;
+    use crate::names::Names;
 
     use super::*;
 
