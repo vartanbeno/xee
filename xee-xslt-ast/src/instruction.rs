@@ -305,7 +305,7 @@ impl InstructionParser for ast::Variable {
 #[cfg(test)]
 mod tests {
 
-    use crate::{children_parser::Context, names::Names, parse::XsltParser};
+    use crate::{context::Context, names::Names, parse::XsltParser};
 
     use super::*;
     use insta::assert_ron_snapshot;

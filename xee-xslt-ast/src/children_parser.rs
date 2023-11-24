@@ -4,6 +4,7 @@ use xot::SpanInfoKey;
 use xot::Xot;
 
 use crate::ast_core::Span;
+use crate::context::Context;
 use crate::error::Error as AttributeError;
 use crate::names::Names;
 
@@ -27,39 +28,6 @@ impl From<AttributeError> for ElementError {
 }
 
 type Result<T> = std::result::Result<T, ElementError>;
-
-pub(crate) struct Context {
-    pub(crate) xot: Xot,
-    pub(crate) span_info: SpanInfo,
-    pub(crate) names: Names,
-}
-
-impl Context {
-    pub(crate) fn new(xot: Xot, span_info: SpanInfo, names: Names) -> Self {
-        Self {
-            xot,
-            span_info,
-            names,
-        }
-    }
-
-    fn next(&self, node: Node) -> Option<Node> {
-        self.xot.next_sibling(node)
-    }
-
-    pub(crate) fn span(&self, node: Node) -> Option<Span> {
-        use xot::Value::*;
-
-        match self.xot.value(node) {
-            Element(_element) => self.span_info.get(SpanInfoKey::ElementStart(node)),
-            Text(_text) => self.span_info.get(SpanInfoKey::Text(node)),
-            Comment(_comment) => self.span_info.get(SpanInfoKey::Comment(node)),
-            ProcessingInstruction(_pi) => self.span_info.get(SpanInfoKey::PiTarget(node)),
-            Root => unreachable!(),
-        }
-        .map(|span| span.into())
-    }
-}
 
 pub(crate) trait ChildrenParser<T> {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(T, Option<Node>)>;

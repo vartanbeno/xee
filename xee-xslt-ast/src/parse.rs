@@ -3,9 +3,8 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::children_parser::{
-    ChildrenParser, Context, ElementError, EndParser, ManyChildrenParser,
-};
+use crate::children_parser::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
+use crate::context::Context;
 use crate::element_namespaces::ElementNamespaces;
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
