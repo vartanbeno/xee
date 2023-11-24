@@ -27,12 +27,12 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
-struct State<'a> {
+struct Context<'a> {
     xot: &'a Xot,
     span_info: &'a SpanInfo,
 }
 
-impl<'a> State<'a> {
+impl<'a> Context<'a> {
     fn new(xot: &'a Xot, span_info: &'a SpanInfo) -> Self {
         Self { xot, span_info }
     }
@@ -47,7 +47,7 @@ impl<'a> State<'a> {
 }
 
 trait ChildrenParser<T> {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<(T, Option<Node>)>;
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<(T, Option<Node>)>;
 
     fn then<B, O: ChildrenParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
     where
@@ -82,11 +82,11 @@ impl<V, P> ChildrenParser<Option<V>> for OptionalChildParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Option<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
             let item = (self.parse_value)(node);
             match item {
-                Ok(item) => Ok((Some(item), state.next(node))),
+                Ok(item) => Ok((Some(item), context.next(node))),
                 Err(ElementError::Unexpected { .. }) => Ok((None, Some(node))),
                 Err(e) => Err(e),
             }
@@ -105,10 +105,10 @@ impl EndParser {
 }
 
 impl ChildrenParser<()> for EndParser {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<((), Option<Node>)> {
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<((), Option<Node>)> {
         if let Some(node) = node {
             Err(ElementError::Unexpected {
-                span: state.span(node).ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         } else {
             Ok(((), None))
@@ -149,14 +149,14 @@ impl<V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Vec<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let optional_parser = OptionalChildParser {
             parse_value: &self.parse_value,
         };
         let mut result = Vec::new();
         let mut current_node = node;
         loop {
-            let (item, next) = optional_parser.parse(current_node, state)?;
+            let (item, next) = optional_parser.parse(current_node, context)?;
             if let Some(item) = item {
                 result.push(item);
             } else {
@@ -193,16 +193,16 @@ impl<V, P> ChildrenParser<Vec<V>> for AtLeastOneParser<V, P>
 where
     P: Fn(Node) -> Result<V>,
 {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<(Vec<V>, Option<Node>)> {
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let many_parser = ManyChildrenParser {
             parse_value: &self.parse_value,
         };
-        let (items, next) = many_parser.parse(node, state)?;
+        let (items, next) = many_parser.parse(node, context)?;
         if !items.is_empty() {
             Ok((items, next))
         } else if let Some(node) = node {
             Err(ElementError::Unexpected {
-                span: state.span(node).ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         } else {
             Err(ElementError::UnexpectedEnd)
@@ -220,9 +220,9 @@ struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
 impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA, TB)>
     for CombinedParser<TA, TB, PA, PB>
 {
-    fn parse(&self, node: Option<Node>, state: &State) -> Result<((TA, TB), Option<Node>)> {
-        let (a, node) = self.first.parse(node, state)?;
-        let (b, node) = self.second.parse(node, state)?;
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<((TA, TB), Option<Node>)> {
+        let (a, node) = self.first.parse(node, context)?;
+        let (b, node) = self.second.parse(node, context)?;
         Ok(((a, b), node))
     }
 }
@@ -265,9 +265,9 @@ mod tests {
         struct Value;
 
         let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (item, next) = optional_parser.parse(next, &state).unwrap();
+        let (item, next) = optional_parser.parse(next, &context).unwrap();
 
         assert_eq!(item, Some(Value));
         assert_eq!(next, None);
@@ -287,9 +287,9 @@ mod tests {
             }
             .into())
         });
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let r: Result<(Option<Value>, Option<Node>)> = optional_parser.parse(next, &state);
+        let r: Result<(Option<Value>, Option<Node>)> = optional_parser.parse(next, &context);
 
         assert_eq!(
             r,
@@ -313,10 +313,10 @@ mod tests {
                 span: span_for_node(&xot, &span_info, node).ok_or(ElementError::Internal)?,
             })
         });
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
         let (item, next): (Option<Value>, Option<Node>) =
-            optional_parser.parse(node, &state).unwrap();
+            optional_parser.parse(node, &context).unwrap();
         assert_eq!(item, None);
         assert_eq!(next, node);
     }
@@ -329,9 +329,9 @@ mod tests {
         struct Value;
 
         let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (item, next) = optional_parser.parse(next, &state).unwrap();
+        let (item, next) = optional_parser.parse(next, &context).unwrap();
         assert_eq!(item, None);
         assert_eq!(next, None);
     }
@@ -341,8 +341,8 @@ mod tests {
         let (xot, span_info, next) = parse("<outer></outer>");
 
         let end_parser = EndParser::new();
-        let state = State::new(&xot, &span_info);
-        let r = end_parser.parse(next, &state);
+        let context = Context::new(&xot, &span_info);
+        let r = end_parser.parse(next, &context);
 
         assert!(r.is_ok());
     }
@@ -352,8 +352,8 @@ mod tests {
         let (xot, span_info, next) = parse("<outer><a /></outer>");
 
         let end_parser = EndParser::new();
-        let state = State::new(&xot, &span_info);
-        let r = end_parser.parse(next, &state);
+        let context = Context::new(&xot, &span_info);
+        let r = end_parser.parse(next, &context);
 
         assert_eq!(
             r,
@@ -388,7 +388,7 @@ mod tests {
         span_info: &SpanInfo,
         next: Option<Node>,
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
-        let state = State::new(xot, span_info);
+        let context = Context::new(xot, span_info);
 
         let optional_parser_a = OptionalChildParser::new(|node| {
             if let Some(element) = xot.element(node) {
@@ -397,10 +397,10 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: state.span(node).ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
-        let (item_a, next) = optional_parser_a.parse(next, &state).unwrap();
+        let (item_a, next) = optional_parser_a.parse(next, &context).unwrap();
 
         let optional_parser_b = OptionalChildParser::new(|node| {
             if let Some(element) = xot.element(node) {
@@ -409,13 +409,13 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: state.span(node).ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
-        let (item_b, next) = optional_parser_b.parse(next, &state).unwrap();
+        let (item_b, next) = optional_parser_b.parse(next, &context).unwrap();
 
         let end_parser = EndParser::new();
-        end_parser.parse(next, &state)?;
+        end_parser.parse(next, &context)?;
         Ok((item_a, item_b))
     }
 
@@ -482,9 +482,9 @@ mod tests {
         struct Value;
 
         let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (items, next) = many_parser.parse(next, &state).unwrap();
+        let (items, next) = many_parser.parse(next, &context).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
         assert_eq!(next, None);
     }
@@ -497,9 +497,9 @@ mod tests {
         struct Value;
 
         let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (items, next) = many_parser.parse(next, &state).unwrap();
+        let (items, next) = many_parser.parse(next, &context).unwrap();
 
         assert_eq!(items, vec![]);
         assert_eq!(next, None);
@@ -535,10 +535,10 @@ mod tests {
                 span: span_for_node(&xot, &span_info, _node).ok_or(ElementError::Internal)?,
             })
         });
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (optional_item, next) = optional_parser.parse(next, &state).unwrap();
-        let (many_items, next) = many_parser.parse(next, &state).unwrap();
+        let (optional_item, next) = optional_parser.parse(next, &context).unwrap();
+        let (many_items, next) = many_parser.parse(next, &context).unwrap();
 
         assert_eq!(optional_item, Some(ValueA));
         assert_eq!(many_items, vec![ValueB, ValueB]);
@@ -578,9 +578,9 @@ mod tests {
 
         let combined = optional_parser.then(many_parser);
 
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let ((optional_item, many_items), next) = combined.parse(next, &state).unwrap();
+        let ((optional_item, many_items), next) = combined.parse(next, &context).unwrap();
 
         assert_eq!(optional_item, Some(ValueA));
         assert_eq!(many_items, vec![ValueB, ValueB]);
@@ -621,9 +621,9 @@ mod tests {
         let end_parser = EndParser::new();
 
         let combined = optional_parser.then(many_parser).then(end_parser);
-        let state = State::new(&xot, &span_info);
+        let context = Context::new(&xot, &span_info);
 
-        let (((optional_item, many_items), _), next) = combined.parse(next, &state).unwrap();
+        let (((optional_item, many_items), _), next) = combined.parse(next, &context).unwrap();
 
         assert_eq!(optional_item, Some(ValueA));
         assert_eq!(many_items, vec![ValueB, ValueB]);
