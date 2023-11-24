@@ -27,14 +27,21 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
+pub(crate) struct Data {}
+
 pub(crate) struct Context<'a> {
     xot: &'a Xot,
     span_info: &'a SpanInfo,
+    data: Data,
 }
 
 impl<'a> Context<'a> {
     fn new(xot: &'a Xot, span_info: &'a SpanInfo) -> Self {
-        Self { xot, span_info }
+        Self {
+            xot,
+            span_info,
+            data: Data {},
+        }
     }
 
     fn next(&self, node: Node) -> Option<Node> {
@@ -92,14 +99,14 @@ pub(crate) trait ChildrenParser<T> {
 
 pub(crate) struct OptionalChildParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> OptionalChildParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -108,11 +115,11 @@ where
 
 impl<V, P> ChildrenParser<Option<V>> for OptionalChildParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
-            let item = (self.parse_value)(node);
+            let item = (self.parse_value)(node, &context.data);
             match item {
                 Ok(item) => Ok((Some(item), context.next(node))),
                 Err(ElementError::Unexpected { .. }) => Ok((None, Some(node))),
@@ -146,14 +153,14 @@ impl ChildrenParser<()> for EndParser {
 
 pub(crate) struct ManyChildrenParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> ManyChildrenParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -162,7 +169,7 @@ where
 
 impl<V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let optional_parser = OptionalChildParser {
@@ -190,14 +197,14 @@ where
 
 pub(crate) struct AtLeastOneParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> AtLeastOneParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -206,7 +213,7 @@ where
 
 impl<V, P> ChildrenParser<Vec<V>> for AtLeastOneParser<V, P>
 where
-    P: Fn(Node) -> Result<V>,
+    P: Fn(Node, &Data) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let many_parser = ManyChildrenParser {
@@ -297,7 +304,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
+        let optional_parser = OptionalChildParser::new(|_node, _| Ok(Value));
         let context = Context::new(&xot, &span_info);
 
         let (item, next) = optional_parser.parse(next, &context).unwrap();
@@ -313,7 +320,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node| {
+        let optional_parser = OptionalChildParser::new(|_node, _| {
             Err(AttributeError::Invalid {
                 value: "".to_string(),
                 span: Span::new(0, 0),
@@ -341,7 +348,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node| {
+        let optional_parser = OptionalChildParser::new(|node, _| {
             Err(ElementError::Unexpected {
                 span: span_for_node(&xot, &span_info, node).ok_or(ElementError::Internal)?,
             })
@@ -361,7 +368,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node| Ok(Value));
+        let optional_parser = OptionalChildParser::new(|_node, _| Ok(Value));
         let context = Context::new(&xot, &span_info);
 
         let (item, next) = optional_parser.parse(next, &context).unwrap();
@@ -423,7 +430,7 @@ mod tests {
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
         let context = Context::new(xot, span_info);
 
-        let optional_parser_a = OptionalChildParser::new(|node| {
+        let optional_parser_a = OptionalChildParser::new(|node, _| {
             if let Some(element) = xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -435,7 +442,7 @@ mod tests {
         });
         let (item_a, next) = optional_parser_a.parse(next, &context).unwrap();
 
-        let optional_parser_b = OptionalChildParser::new(|node| {
+        let optional_parser_b = OptionalChildParser::new(|node, _| {
             if let Some(element) = xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -514,7 +521,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
+        let many_parser = ManyChildrenParser::new(|_node, _| Ok(Value));
         let context = Context::new(&xot, &span_info);
 
         let (items, next) = many_parser.parse(next, &context).unwrap();
@@ -529,7 +536,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|_node| Ok(Value));
+        let many_parser = ManyChildrenParser::new(|_node, _| Ok(Value));
         let context = Context::new(&xot, &span_info);
 
         let (items, next) = many_parser.parse(next, &context).unwrap();
@@ -547,7 +554,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node| {
+        let optional_parser = OptionalChildParser::new(|node, _| {
             if let Some(element) = xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -558,7 +565,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|_node| {
+        let many_parser = ManyChildrenParser::new(|_node, _| {
             if let Some(element) = xot.element(_node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -587,7 +594,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node| {
+        let optional_parser = OptionalChildParser::new(|node, _| {
             if let Some(element) = xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -598,7 +605,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|_node| {
+        let many_parser = ManyChildrenParser::new(|_node, _| {
             if let Some(element) = xot.element(_node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -629,7 +636,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node| {
+        let optional_parser = OptionalChildParser::new(|node, _| {
             if let Some(element) = xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -640,7 +647,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|_node| {
+        let many_parser = ManyChildrenParser::new(|_node, _| {
             if let Some(element) = xot.element(_node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -672,7 +679,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|_node| {
+        let many_parser = ManyChildrenParser::new(|_node, _| {
             if let Some(element) = xot.element(_node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
