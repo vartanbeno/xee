@@ -4,7 +4,6 @@ use xot::SpanInfoKey;
 use xot::Xot;
 
 use crate::ast_core::Span;
-use crate::element_namespaces::ElementNamespaces;
 use crate::error::Error as AttributeError;
 use crate::names::Names;
 
@@ -115,7 +114,7 @@ where
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
-            let item = (self.parse_value)(node, &context);
+            let item = (self.parse_value)(node, context);
             match item {
                 Ok(item) => Ok((Some(item), context.next(node))),
                 Err(ElementError::Unexpected { .. }) => Ok((None, Some(node))),
@@ -278,7 +277,6 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<TA>
 #[cfg(test)]
 mod tests {
     use xot::NameId;
-    use xot::SpanInfo;
     use xot::Xot;
 
     use crate::ast_core::Span;
