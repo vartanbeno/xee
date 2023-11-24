@@ -27,22 +27,14 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
-#[derive(Debug, PartialEq, Clone)]
-pub(crate) struct Data {}
-
 pub(crate) struct Context<'a> {
     xot: &'a Xot,
     span_info: &'a SpanInfo,
-    data: Data,
 }
 
 impl<'a> Context<'a> {
     fn new(xot: &'a Xot, span_info: &'a SpanInfo) -> Self {
-        Self {
-            xot,
-            span_info,
-            data: Data {},
-        }
+        Self { xot, span_info }
     }
 
     fn next(&self, node: Node) -> Option<Node> {
@@ -100,14 +92,14 @@ pub(crate) trait ChildrenParser<T> {
 
 pub(crate) struct OptionalChildParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> OptionalChildParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -116,11 +108,11 @@ where
 
 impl<V, P> ChildrenParser<Option<V>> for OptionalChildParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Option<V>, Option<Node>)> {
         if let Some(node) = node {
-            let item = (self.parse_value)(node, &context.data);
+            let item = (self.parse_value)(node, &context);
             match item {
                 Ok(item) => Ok((Some(item), context.next(node))),
                 Err(ElementError::Unexpected { .. }) => Ok((None, Some(node))),
@@ -154,14 +146,14 @@ impl ChildrenParser<()> for EndParser {
 
 pub(crate) struct ManyChildrenParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> ManyChildrenParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -170,7 +162,7 @@ where
 
 impl<V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let optional_parser = OptionalChildParser {
@@ -198,14 +190,14 @@ where
 
 pub(crate) struct AtLeastOneParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
 impl<V, P> AtLeastOneParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     pub(crate) fn new(parse_value: P) -> Self {
         Self { parse_value }
@@ -214,7 +206,7 @@ where
 
 impl<V, P> ChildrenParser<Vec<V>> for AtLeastOneParser<V, P>
 where
-    P: Fn(Node, &Data) -> Result<V>,
+    P: Fn(Node, &Context) -> Result<V>,
 {
     fn parse(&self, node: Option<Node>, context: &Context) -> Result<(Vec<V>, Option<Node>)> {
         let many_parser = ManyChildrenParser {
@@ -412,6 +404,7 @@ mod tests {
     struct Names {
         name_a: NameId,
         name_b: NameId,
+        foo: NameId,
     }
 
     impl Names {
@@ -419,6 +412,7 @@ mod tests {
             Self {
                 name_a: xot.add_name("a"),
                 name_b: xot.add_name("b"),
+                foo: xot.add_name("foo"),
             }
         }
     }
@@ -700,5 +694,42 @@ mod tests {
 
         assert_eq!(many_items, vec![ValueB, ValueB]);
         assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_attribute() {
+        let (mut xot, span_info, next) = parse(r#"<outer><b foo="FOO"/></outer>"#);
+
+        let names = Names::new(&mut xot);
+
+        #[derive(Debug, PartialEq)]
+        struct Value {
+            foo: String,
+        }
+
+        let parser = OptionalChildParser::new(|_node, _| {
+            if let Some(element) = xot.element(_node) {
+                if element.name() == names.name_b {
+                    let value = element.get_attribute(names.foo).unwrap();
+                    return Ok(Value {
+                        foo: value.to_string(),
+                    });
+                }
+            }
+            Err(ElementError::Unexpected {
+                span: span_for_node(&xot, &span_info, _node).ok_or(ElementError::Internal)?,
+            })
+        });
+
+        let context = Context::new(&xot, &span_info);
+
+        let (item, _next) = parser.parse(next, &context).unwrap();
+
+        assert_eq!(
+            item,
+            Some(Value {
+                foo: "FOO".to_string()
+            })
+        );
     }
 }
