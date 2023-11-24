@@ -6,22 +6,22 @@ use crate::state::State;
 /// Parser context is passed around. You can create new contexts as
 /// for particular sub-trees.
 pub(crate) struct Context<'a> {
-    element: &'a xot::Element,
+    prefixes: xot::Prefixes,
 
     next: Option<&'a Context<'a>>,
 }
 
 impl<'a> Context<'a> {
-    pub(crate) fn new(element: &'a xot::Element) -> Self {
+    pub(crate) fn new(element: &xot::Element) -> Self {
         Self {
-            element,
+            prefixes: element.prefixes().clone(),
             next: None,
         }
     }
 
     pub(crate) fn element(&'a self, element: &'a xot::Element) -> Self {
         Self {
-            element,
+            prefixes: element.prefixes().clone(),
             next: Some(self),
         }
     }
@@ -35,7 +35,7 @@ impl<'a> Context<'a> {
             }
             combined_prefixes
         } else {
-            self.element.prefixes().clone()
+            self.prefixes.clone()
         }
     }
 
