@@ -27,6 +27,7 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct Data {}
 
 pub(crate) struct Context<'a> {

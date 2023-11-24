@@ -4,7 +4,7 @@ use xot::{NameId, Node, SpanInfo, SpanInfoKey, Value, Xot};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::children_parser::{ChildrenParser, EndParser, ManyChildrenParser};
+use crate::children_parser::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
 use crate::error::{Error, XmlName};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::names::{Names, StandardNames};
@@ -20,18 +20,23 @@ pub(crate) struct XsltParser<'a> {
 
 impl<'a> XsltParser<'a> {
     pub(crate) fn new(xot: &'a Xot, names: &'a Names, span_info: &'a SpanInfo) -> Self {
-        // let sequence_constructor_parser = ManyChildrenParser::new(|node| match xot.value(node) {
-        //     Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-        //         text.get().to_string(),
-        //     )),
-        //     Value::Element(element) => {
-        //         // let element_namespaces = self.element_namespaces.push(element);
-        //         let element = Element::new(node, element, names, span_info, xot)?;
-        //         ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
-        //     }
-        //     _ => Err(Error::Unexpected),
-        // })
-        // .then_ignore(EndParser::new());
+        // let sequence_constructor_parser =
+        //     ManyChildrenParser::new(|node, data| match xot.value(node) {
+        //         Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+        //             text.get().to_string(),
+        //         )),
+        //         Value::Element(element) => {
+        //             let element_namespaces = data.element_namespaces.push(element);
+        //             let element =
+        //                 Element::new(node, element, names, span_info, xot, element_namespaces)?;
+        //             ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+        //         }
+        //         _ => Err(ElementError::Unexpected {
+        //             // TODO: get span right
+        //             span: Span::new(0, 0),
+        //         }),
+        //     })
+        //     .then_ignore(EndParser::new());
 
         Self {
             xot,
