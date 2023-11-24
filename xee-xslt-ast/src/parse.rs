@@ -14,6 +14,7 @@ pub(crate) struct XsltParser<'a> {
     xot: &'a Xot,
     names: &'a Names,
     span_info: &'a SpanInfo,
+    // sequence_constructor_parser: Box<dyn ChildrenParser<(Vec<SequenceConstructorItem>, ())>>,
 }
 
 impl<'a> XsltParser<'a> {

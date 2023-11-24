@@ -73,6 +73,21 @@ trait ChildrenParser<T> {
             tb: std::marker::PhantomData,
         }
     }
+
+    fn then_ignore<B, O: ChildrenParser<B>>(
+        self,
+        other: O,
+    ) -> IgnoreRightCombinedParser<T, B, Self, O>
+    where
+        Self: Sized,
+    {
+        IgnoreRightCombinedParser {
+            first: self,
+            second: other,
+            ta: std::marker::PhantomData,
+            tb: std::marker::PhantomData,
+        }
+    }
 }
 
 struct OptionalChildParser<V, P>
@@ -224,6 +239,23 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA,
         let (a, node) = self.first.parse(node, context)?;
         let (b, node) = self.second.parse(node, context)?;
         Ok(((a, b), node))
+    }
+}
+
+struct IgnoreRightCombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
+    first: PA,
+    second: PB,
+    ta: std::marker::PhantomData<TA>,
+    tb: std::marker::PhantomData<TB>,
+}
+
+impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<TA>
+    for IgnoreRightCombinedParser<TA, TB, PA, PB>
+{
+    fn parse(&self, node: Option<Node>, context: &Context) -> Result<(TA, Option<Node>)> {
+        let (a, node) = self.first.parse(node, context)?;
+        let (_b, node) = self.second.parse(node, context)?;
+        Ok((a, node))
     }
 }
 // * we need to be able to declare that an instruction has absolutely no content, so
@@ -626,6 +658,37 @@ mod tests {
         let (((optional_item, many_items), _), next) = combined.parse(next, &context).unwrap();
 
         assert_eq!(optional_item, Some(ValueA));
+        assert_eq!(many_items, vec![ValueB, ValueB]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_combine_then_ignore() {
+        let (mut xot, span_info, next) = parse("<outer><b /><b /></outer>");
+
+        let names = Names::new(&mut xot);
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let many_parser = ManyChildrenParser::new(|_node| {
+            if let Some(element) = xot.element(_node) {
+                if element.name() == names.name_b {
+                    return Ok(ValueB);
+                }
+            }
+            Err(ElementError::Unexpected {
+                span: span_for_node(&xot, &span_info, _node).ok_or(ElementError::Internal)?,
+            })
+        });
+
+        let end_parser = EndParser::new();
+
+        let combined = many_parser.then_ignore(end_parser);
+        let context = Context::new(&xot, &span_info);
+
+        let (many_items, next) = combined.parse(next, &context).unwrap();
+
         assert_eq!(many_items, vec![ValueB, ValueB]);
         assert_eq!(next, None);
     }
