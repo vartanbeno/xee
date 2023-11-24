@@ -15,10 +15,6 @@ use crate::value_template::ValueTemplateTokenizer;
 
 pub(crate) struct XsltParser<'a> {
     context: &'a Context,
-    // xot: &'a Xot,
-    // names: &'a Names,
-    // span_info: &'a SpanInfo,
-    // sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
 }
 
 impl<'a> XsltParser<'a> {
