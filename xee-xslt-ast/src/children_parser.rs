@@ -48,21 +48,17 @@ impl Context {
     }
 
     fn span(&self, node: Node) -> Option<Span> {
-        span_for_node(&self.xot, &self.span_info, node)
-    }
-}
+        use xot::Value::*;
 
-fn span_for_node(xot: &Xot, span_info: &SpanInfo, node: Node) -> Option<Span> {
-    use xot::Value::*;
-
-    match xot.value(node) {
-        Element(_element) => span_info.get(SpanInfoKey::ElementStart(node)),
-        Text(_text) => span_info.get(SpanInfoKey::Text(node)),
-        Comment(_comment) => span_info.get(SpanInfoKey::Comment(node)),
-        ProcessingInstruction(_pi) => span_info.get(SpanInfoKey::PiTarget(node)),
-        Root => unreachable!(),
+        match self.xot.value(node) {
+            Element(_element) => self.span_info.get(SpanInfoKey::ElementStart(node)),
+            Text(_text) => self.span_info.get(SpanInfoKey::Text(node)),
+            Comment(_comment) => self.span_info.get(SpanInfoKey::Comment(node)),
+            ProcessingInstruction(_pi) => self.span_info.get(SpanInfoKey::PiTarget(node)),
+            Root => unreachable!(),
+        }
+        .map(|span| span.into())
     }
-    .map(|span| span.into())
 }
 
 pub(crate) trait ChildrenParser<T> {
@@ -347,10 +343,9 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node, _| {
+        let optional_parser = OptionalChildParser::new(|node, context| {
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -556,8 +551,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -568,8 +562,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -597,8 +590,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -609,8 +601,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -639,8 +630,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -651,8 +641,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -683,8 +672,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -719,8 +707,7 @@ mod tests {
                 }
             }
             Err(ElementError::Unexpected {
-                span: span_for_node(&context.xot, &context.span_info, node)
-                    .ok_or(ElementError::Internal)?,
+                span: context.span(node).ok_or(ElementError::Internal)?,
             })
         });
 
