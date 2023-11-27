@@ -18,9 +18,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Assert => {
                 ast::Assert::parse_sequence_constructor_item(element)
             }
-            SequenceConstructorName::AnalyzeString => {
-                ast::AnalyzeString::parse_sequence_constructor_item(element)
-            }
+            // SequenceConstructorName::AnalyzeString => {
+            //     ast::AnalyzeString::parse_sequence_constructor_item(element)
+            // }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {

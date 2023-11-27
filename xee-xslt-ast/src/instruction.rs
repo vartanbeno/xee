@@ -158,23 +158,23 @@ impl InstructionParser for ast::Assert {
     }
 }
 
-impl InstructionParser for ast::AnalyzeString {
-    fn parse(element: &Element) -> Result<Self> {
-        let names = &element.state.names;
-        Ok(ast::AnalyzeString {
-            select: element.required(names.select, element.xpath())?,
-            regex: element.required(names.regex, element.value_template(element.string()))?,
-            flags: element.optional(names.flags, element.value_template(element.string()))?,
+// impl InstructionParser for ast::AnalyzeString {
+//     fn parse(element: &Element) -> Result<Self> {
+//         let names = &element.state.names;
+//         Ok(ast::AnalyzeString {
+//             select: element.required(names.select, element.xpath())?,
+//             regex: element.required(names.regex, element.value_template(element.string()))?,
+//             flags: element.optional(names.flags, element.value_template(element.string()))?,
 
-            standard: element.standard()?,
-            span: element.span,
+//             standard: element.standard()?,
+//             span: element.span,
 
-            matching_substring: element.optional_element(names.xsl_matching_substring)?,
-            non_matching_substring: element.optional_element(names.xsl_non_matching_substring)?,
-            fallbacks: element.many_elements(names.xsl_fallback)?,
-        })
-    }
-}
+//             matching_substring: element.optional_element(names.xsl_matching_substring)?,
+//             non_matching_substring: element.optional_element(names.xsl_non_matching_substring)?,
+//             fallbacks: element.many_elements(names.xsl_fallback)?,
+//         })
+//     }
+// }
 
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {

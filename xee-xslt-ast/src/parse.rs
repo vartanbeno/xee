@@ -277,13 +277,6 @@ impl<'a> Element<'a> {
         Ok(result)
     }
 
-    pub(crate) fn optional_element<T>(&self, name: NameId) -> Result<Option<T>, ElementError>
-    where
-        T: InstructionParser,
-    {
-        self.parse_optional_element(self.node, name)
-    }
-
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
         self.parse_element(node, self.state.names.xsl_transform)
     }
@@ -307,27 +300,6 @@ impl<'a> Element<'a> {
             return Err(ElementError::Unexpected { span: element.span });
         }
         T::parse(&element)
-    }
-
-    fn parse_optional_element<T: InstructionParser>(
-        &self,
-        node: Node,
-        name: NameId,
-    ) -> Result<Option<T>, ElementError> {
-        let element = self
-            .state
-            .xot
-            .element(node)
-            .ok_or(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            })?;
-        // let element_namespaces = ElementNamespaces::new(self.xot, element);
-        let element = self.sub_element(node, element)?;
-        // let element = Element::new(node, element, self, element_namespaces)?;
-        if element.element.name() != name {
-            return Ok(None);
-        }
-        T::parse(&element).map(Some)
     }
 
     pub(crate) fn optional<T>(
