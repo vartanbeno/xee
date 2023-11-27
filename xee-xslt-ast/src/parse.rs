@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{ChildrenParser, ElementError, EndParser, ManyChildrenParser};
+use crate::combinator::{ElementError, EndParser, ManyChildrenParser, NodeParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -44,8 +44,8 @@ impl From<value_template::Error> for AttributeError {
 }
 
 struct ElementParsers {
-    sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
-    declarations_parser: Box<dyn ChildrenParser<Vec<ast::Declaration>>>,
+    sequence_constructor_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
+    declarations_parser: Box<dyn NodeParser<Vec<ast::Declaration>>>,
 }
 
 impl ElementParsers {

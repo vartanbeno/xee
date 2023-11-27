@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::combinator::{AtLeastOneParser, ChildrenParser, ElementError as Error, EndParser};
+use crate::combinator::{AtLeastOneParser, ElementError as Error, EndParser, NodeParser};
 use crate::parse::{element_parse, Element};
 
 type Result<V> = std::result::Result<V, Error>;

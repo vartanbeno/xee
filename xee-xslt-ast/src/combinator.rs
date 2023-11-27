@@ -28,7 +28,7 @@ impl From<AttributeError> for ElementError {
 
 type Result<T> = std::result::Result<T, ElementError>;
 
-pub(crate) trait ChildrenParser<T> {
+pub(crate) trait NodeParser<T> {
     fn parse_done(&self, node: Node, state: &State, context: &Context) -> Result<T> {
         let (item, _next) = self.parse(state.xot.first_child(node), state, context)?;
         Ok(item)
@@ -41,7 +41,7 @@ pub(crate) trait ChildrenParser<T> {
         context: &Context,
     ) -> Result<(T, Option<Node>)>;
 
-    fn then<B, O: ChildrenParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
+    fn then<B, O: NodeParser<B>>(self, other: O) -> CombinedParser<T, B, Self, O>
     where
         Self: Sized,
     {
@@ -53,10 +53,7 @@ pub(crate) trait ChildrenParser<T> {
         }
     }
 
-    fn then_ignore<B, O: ChildrenParser<B>>(
-        self,
-        other: O,
-    ) -> IgnoreRightCombinedParser<T, B, Self, O>
+    fn then_ignore<B, O: NodeParser<B>>(self, other: O) -> IgnoreRightCombinedParser<T, B, Self, O>
     where
         Self: Sized,
     {
@@ -85,7 +82,7 @@ where
     }
 }
 
-impl<V, P> ChildrenParser<Option<V>> for OptionalChildParser<V, P>
+impl<V, P> NodeParser<Option<V>> for OptionalChildParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -116,7 +113,7 @@ impl EndParser {
     }
 }
 
-impl ChildrenParser<()> for EndParser {
+impl NodeParser<()> for EndParser {
     fn parse(
         &self,
         node: Option<Node>,
@@ -149,7 +146,7 @@ where
     }
 }
 
-impl<V, P> ChildrenParser<Vec<V>> for ManyChildrenParser<V, P>
+impl<V, P> NodeParser<Vec<V>> for ManyChildrenParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -198,7 +195,7 @@ where
     }
 }
 
-impl<V, P> ChildrenParser<Vec<V>> for AtLeastOneParser<V, P>
+impl<V, P> NodeParser<Vec<V>> for AtLeastOneParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -224,14 +221,14 @@ where
     }
 }
 
-pub(crate) struct CombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> {
+pub(crate) struct CombinedParser<TA, TB, PA: NodeParser<TA>, PB: NodeParser<TB>> {
     first: PA,
     second: PB,
     ta: std::marker::PhantomData<TA>,
     tb: std::marker::PhantomData<TB>,
 }
 
-impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA, TB)>
+impl<TA, TB, PA: NodeParser<TA>, PB: NodeParser<TB>> NodeParser<(TA, TB)>
     for CombinedParser<TA, TB, PA, PB>
 {
     fn parse(
@@ -246,15 +243,14 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<(TA,
     }
 }
 
-pub(crate) struct IgnoreRightCombinedParser<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>>
-{
+pub(crate) struct IgnoreRightCombinedParser<TA, TB, PA: NodeParser<TA>, PB: NodeParser<TB>> {
     first: PA,
     second: PB,
     ta: std::marker::PhantomData<TA>,
     tb: std::marker::PhantomData<TB>,
 }
 
-impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<TA>
+impl<TA, TB, PA: NodeParser<TA>, PB: NodeParser<TB>> NodeParser<TA>
     for IgnoreRightCombinedParser<TA, TB, PA, PB>
 {
     fn parse(
