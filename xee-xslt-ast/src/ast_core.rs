@@ -258,6 +258,12 @@ pub struct ApplyImports {
     pub span: Span,
 }
 
+impl From<ApplyImports> for SequenceConstructorItem {
+    fn from(i: ApplyImports) -> Self {
+        SequenceConstructorInstruction::ApplyImports(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ApplyTemplates {
@@ -1434,7 +1440,7 @@ pub struct WithParam {
     pub name: EqName,
     pub select: Option<Expression>,
     pub as_: Option<SequenceType>,
-    pub tunnel: Option<bool>,
+    pub tunnel: bool,
 
     pub content: SequenceConstructor,
 

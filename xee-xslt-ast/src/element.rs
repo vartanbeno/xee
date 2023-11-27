@@ -695,6 +695,71 @@ impl<'a> Element<'a> {
         Self::_validation
     }
 
+    fn _language(s: &str, _span: Span) -> Result<ast::Language, AttributeError> {
+        // TODO
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn language(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Language, AttributeError> + '_ {
+        Self::_language
+    }
+
+    fn _order(s: &str, span: Span) -> Result<ast::Order, AttributeError> {
+        use ast::Order::*;
+
+        match s {
+            "ascending" => Ok(Ascending),
+            "descending" => Ok(Descending),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn order(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Order, AttributeError> + '_ {
+        Self::_order
+    }
+
+    fn _case_order(s: &str, span: Span) -> Result<ast::CaseOrder, AttributeError> {
+        use ast::CaseOrder::*;
+
+        match s {
+            "upper-first" => Ok(UpperFirst),
+            "lower-first" => Ok(LowerFirst),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn case_order(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::CaseOrder, AttributeError> + '_ {
+        Self::_case_order
+    }
+
+    fn _data_type(&self, s: &str, span: Span) -> Result<ast::DataType, AttributeError> {
+        use ast::DataType::*;
+
+        match s {
+            "text" => Ok(Text),
+            "number" => Ok(Number),
+            _ => Ok(EQName(self._eqname(s, span)?)),
+        }
+    }
+
+    pub(crate) fn data_type(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::DataType, AttributeError> + '_ {
+        |s, span| self._data_type(s, span)
+    }
+
     // TODO: message ignored
     pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> AttributeError {
         let (local, namespace) = self.state.xot.name_ns_str(name);

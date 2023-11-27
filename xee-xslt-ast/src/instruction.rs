@@ -1,8 +1,8 @@
 use xot::{NameId, Xot};
 
-use crate::ast_core as ast;
 use crate::combinator::{many, optional, ElementError as Error, NodeParser};
 use crate::element::{content_parse, instruction, Element};
+use crate::{ast_core as ast, element};
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -99,6 +99,12 @@ impl InstructionParser for ast::ElementNode {
     }
 }
 
+// impl InstructionParser for ast::ApplyTemplatesContent {
+//     fn parse(element: &Element) -> Result<Self> {
+
+//     }
+// }
+
 fn to_name(xot: &Xot, name: NameId) -> ast::Name {
     let (local, namespace) = xot.name_ns_str(name);
     ast::Name {
@@ -193,6 +199,35 @@ impl InstructionParser for ast::AnalyzeString {
         })
     }
 }
+
+impl InstructionParser for ast::ApplyImports {
+    fn parse(element: &Element) -> Result<Self> {
+        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+        Ok(ast::ApplyImports {
+            standard: element.standard()?,
+            span: element.span,
+
+            with_params: parse(element)?,
+        })
+    }
+}
+
+// impl InstructionParser for ast::ApplyTemplates {
+//     fn parse(element: &Element) -> Result<Self> {
+//         let names = &element.state.names;
+//         let parse = content_parse(many(instructions([names.xsl_with_param, names.xsl_sort])));
+
+//         Ok(ast::ApplyTemplates {
+//             select: element.optional(names.select, element.xpath())?,
+//             mode: element.optional(names.mode, element.token())?,
+
+//             standard: element.standard()?,
+//             span: element.span,
+
+//             content: element.sequence_constructor()?,
+//         })
+//     }
+// }
 
 impl InstructionParser for ast::Assert {
     fn parse(element: &Element) -> Result<Self> {
@@ -300,6 +335,30 @@ impl InstructionParser for ast::NonMatchingSubstring {
     }
 }
 
+impl InstructionParser for ast::Sort {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Sort {
+            select: element.optional(names.select, element.xpath())?,
+            lang: element.optional(names.lang, element.value_template(element.language()))?,
+            order: element.optional(names.order, element.value_template(element.order()))?,
+            collation: element.optional(names.collation, element.value_template(element.uri()))?,
+            stable: element.optional(names.stable, element.value_template(element.boolean()))?,
+            case_order: element.optional(
+                names.case_order,
+                element.value_template(element.case_order()),
+            )?,
+            data_type: element
+                .optional(names.data_type, element.value_template(element.data_type()))?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Transform {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -356,6 +415,23 @@ impl InstructionParser for ast::Variable {
                 .into());
         }
         Ok(())
+    }
+}
+
+impl InstructionParser for ast::WithParam {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::WithParam {
+            name: element.required(names.name, element.eqname())?,
+            select: element.optional(names.select, element.xpath())?,
+            as_: element.optional(names.as_, element.sequence_type())?,
+            tunnel: element.boolean_with_default(names.tunnel, false)?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
     }
 }
 
