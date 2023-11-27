@@ -4,7 +4,7 @@ use crate::ast_core as ast;
 use crate::combinator::{
     children, end, many, optional, ElementError as Error, EndParser, NodeParser, OneOrMoreParser,
 };
-use crate::element::{content_parse, element, element_name, Element};
+use crate::element::{content_parse, element, element_name, instruction, Element};
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -114,10 +114,7 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse_rules =
-            content_parse(many(element_name(names.xsl_accumulator_rule, |element| {
-                ast::AccumulatorRule::parse(&element)
-            })));
+        let parse_rules = content_parse(many(instruction(names.xsl_accumulator_rule)));
 
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
@@ -177,16 +174,9 @@ impl InstructionParser for ast::AnalyzeString {
         let standard = element.standard()?;
 
         let parse = content_parse(
-            optional(element_name(names.xsl_matching_substring, |element| {
-                ast::MatchingSubstring::parse(&element)
-            }))
-            .then(optional(element_name(
-                names.xsl_non_matching_substring,
-                |element| ast::NonMatchingSubstring::parse(&element),
-            )))
-            .then(many(element_name(names.xsl_fallback, |element| {
-                ast::Fallback::parse(&element)
-            }))),
+            optional(instruction(names.xsl_matching_substring))
+                .then(optional(instruction(names.xsl_non_matching_substring)))
+                .then(many(instruction(names.xsl_fallback))),
         );
 
         let ((matching_substring, non_matching_substring), fallbacks) = parse(element)?;
