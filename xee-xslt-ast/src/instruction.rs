@@ -4,7 +4,7 @@ use crate::ast_core as ast;
 use crate::combinator::{
     children, end, many, optional, ElementError as Error, EndParser, NodeParser, OneOrMoreParser,
 };
-use crate::element::{element, element_name, Element};
+use crate::element::{element, element_name, element_parse, Element};
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -114,12 +114,12 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parser = children(
+        let parse_rules = element_parse(children(
             many(element_name(names.xsl_accumulator_rule, |element| {
                 ast::AccumulatorRule::parse(&element)
             }))
             .then_ignore(end()),
-        );
+        ));
 
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
@@ -130,7 +130,7 @@ impl InstructionParser for ast::Accumulator {
             standard: element.standard()?,
             span: element.span,
 
-            rules: parser.parse(Some(element.node), element.state, &element.context)?,
+            rules: parse_rules(element)?,
         })
     }
 }

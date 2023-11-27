@@ -139,6 +139,13 @@ pub(crate) fn element_name<V>(
     })
 }
 
+pub(crate) fn element_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
+where
+    P: NodeParser<V>,
+{
+    move |element| parser.parse(Some(element.node), element.state, &element.context)
+}
+
 pub(crate) struct Element<'a> {
     pub(crate) node: Node,
     pub(crate) element: &'a xot::Element,
