@@ -29,6 +29,11 @@ impl From<AttributeError> for ElementError {
 type Result<T> = std::result::Result<T, ElementError>;
 
 pub(crate) trait ChildrenParser<T> {
+    fn parse_done(&self, node: Node, state: &State, context: &Context) -> Result<T> {
+        let (item, _next) = self.parse(state.xot.first_child(node), state, context)?;
+        Ok(item)
+    }
+
     fn parse(
         &self,
         node: Option<Node>,

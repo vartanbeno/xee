@@ -112,10 +112,10 @@ impl<'a> XsltParser<'a> {
 }
 
 pub(crate) struct Element<'a> {
-    node: Node,
+    pub(crate) node: Node,
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
-    context: Context<'a>,
+    pub(crate) context: Context<'a>,
 
     pub(crate) state: &'a State,
 }
@@ -188,29 +188,6 @@ impl<'a> Element<'a> {
             &self.context,
         )?;
         Ok(declarations)
-    }
-
-    pub(crate) fn many_elements<T>(&self, name: NameId) -> Result<Vec<T>, ElementError>
-    where
-        T: InstructionParser,
-    {
-        let mut result = Vec::new();
-        for node in self.state.xot.children(self.node) {
-            let item = self.parse_element(node, name)?;
-            result.push(item);
-        }
-        Ok(result)
-    }
-
-    pub(crate) fn one_or_more_elements<T>(&self, name: NameId) -> Result<Vec<T>, ElementError>
-    where
-        T: InstructionParser,
-    {
-        let result = self.many_elements(name)?;
-        if result.is_empty() {
-            return Err(ElementError::UnexpectedEnd);
-        }
-        Ok(result)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {

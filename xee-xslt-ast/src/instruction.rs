@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::children_parser::ElementError as Error;
+use crate::children_parser::{AtLeastOneParser, ChildrenParser, ElementError as Error, EndParser};
 use crate::parse::Element;
 
 type Result<V> = std::result::Result<V, Error>;
@@ -111,6 +111,19 @@ impl InstructionParser for ast::Accept {
 impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
+
+        let parse = AtLeastOneParser::new(|node, state, context| {
+            if let Some(element) = state.xot.element(node) {
+                if element.name() == names.xsl_accumulator_rule {
+                    let new_context = context.element(element);
+                    let element = Element::new(node, element, new_context, state)?;
+                    return ast::AccumulatorRule::parse(&element);
+                }
+            }
+            Err(Error::Unexpected { span: element.span })
+        })
+        .then_ignore(EndParser::new());
+
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
             initial_value: element.required(names.initial_value, element.xpath())?,
@@ -120,7 +133,7 @@ impl InstructionParser for ast::Accumulator {
             standard: element.standard()?,
             span: element.span,
 
-            rules: element.one_or_more_elements(names.xsl_accumulator_rule)?,
+            rules: parse.parse_done(element.node, element.state, &element.context)?,
         })
     }
 }
