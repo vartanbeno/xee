@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{ElementError, EndParser, ManyParser, NodeParser};
+use crate::combinator::{end, many, ElementError, EndParser, ManyParser, NodeParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -51,7 +51,7 @@ struct ElementParsers {
 impl ElementParsers {
     fn new() -> Self {
         let sequence_constructor_parser =
-            ManyParser::new(|node, state, context| match state.xot.value(node) {
+            many(|node, state, context| match state.xot.value(node) {
                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                     text.get().to_string(),
                 )),
@@ -65,21 +65,20 @@ impl ElementParsers {
                     span: Span::new(0, 0),
                 }),
             })
-            .then_ignore(EndParser::new());
+            .then_ignore(end());
 
-        let declarations_parser =
-            ManyParser::new(|node, state, context| match state.xot.value(node) {
-                Value::Element(element) => {
-                    let new_context = context.element(element);
-                    let element = Element::new(node, element, new_context, state)?;
-                    ast::Declaration::parse_declaration(&element)
-                }
-                _ => Err(ElementError::Unexpected {
-                    // TODO: get span right
-                    span: Span::new(0, 0),
-                }),
-            })
-            .then_ignore(EndParser::new());
+        let declarations_parser = many(|node, state, context| match state.xot.value(node) {
+            Value::Element(element) => {
+                let new_context = context.element(element);
+                let element = Element::new(node, element, new_context, state)?;
+                ast::Declaration::parse_declaration(&element)
+            }
+            _ => Err(ElementError::Unexpected {
+                // TODO: get span right
+                span: Span::new(0, 0),
+            }),
+        })
+        .then_ignore(end());
 
         Self {
             sequence_constructor_parser: Box::new(sequence_constructor_parser),
