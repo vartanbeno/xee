@@ -185,17 +185,18 @@ impl<'a> Element<'a> {
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
         let element_parsers = ElementParsers::new();
-        let (sequence_constructor, _next) = element_parsers.sequence_constructor_parser.parse(
-            self.state.xot.first_child(self.node),
-            self.state,
-            &self.context,
-        )?;
+        let (sequence_constructor, _next) =
+            element_parsers.sequence_constructor_parser.parse_next(
+                self.state.xot.first_child(self.node),
+                self.state,
+                &self.context,
+            )?;
         Ok(sequence_constructor)
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
         let element_parsers = ElementParsers::new();
-        let (declarations, _next) = element_parsers.declarations_parser.parse(
+        let (declarations, _next) = element_parsers.declarations_parser.parse_next(
             self.state.xot.first_child(self.node),
             self.state,
             &self.context,

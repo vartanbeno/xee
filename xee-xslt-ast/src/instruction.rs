@@ -1,7 +1,9 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::combinator::{ElementError as Error, EndParser, NodeParser, OneOrMoreParser};
+use crate::combinator::{
+    children, end, many, optional, ElementError as Error, EndParser, NodeParser, OneOrMoreParser,
+};
 use crate::parse::{element_parse, Element};
 
 type Result<V> = std::result::Result<V, Error>;
@@ -112,14 +114,16 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = OneOrMoreParser::new(element_parse(|element| {
-            if element.element.name() == names.xsl_accumulator_rule {
-                ast::AccumulatorRule::parse(&element)
-            } else {
-                Err(Error::Unexpected { span: element.span })
-            }
-        }))
-        .then_ignore(EndParser::new());
+        let parse = children(
+            many(element_parse(|element| {
+                if element.element.name() == names.xsl_accumulator_rule {
+                    ast::AccumulatorRule::parse(&element)
+                } else {
+                    Err(Error::Unexpected { span: element.span })
+                }
+            }))
+            .then_ignore(end()),
+        );
 
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
@@ -130,7 +134,7 @@ impl InstructionParser for ast::Accumulator {
             standard: element.standard()?,
             span: element.span,
 
-            rules: parse.parse_done(element.node, element.state, &element.context)?,
+            rules: parse.parse(Some(element.node), element.state, &element.context)?,
         })
     }
 }
