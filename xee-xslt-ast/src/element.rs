@@ -139,7 +139,7 @@ pub(crate) fn element_name<V>(
     })
 }
 
-pub(crate) fn element_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
+pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
 where
     P: NodeParser<V>,
 {
