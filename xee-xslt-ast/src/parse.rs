@@ -45,6 +45,7 @@ impl From<value_template::Error> for AttributeError {
 
 struct ElementParsers {
     sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
+    declarations_parser: Box<dyn ChildrenParser<Vec<ast::Declaration>>>,
 }
 
 impl ElementParsers {
@@ -66,8 +67,23 @@ impl ElementParsers {
             })
             .then_ignore(EndParser::new());
 
+        let declarations_parser =
+            ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
+                Value::Element(element) => {
+                    let new_context = context.element(element);
+                    let element = Element::new(node, element, new_context, state)?;
+                    ast::Declaration::parse_declaration(&element)
+                }
+                _ => Err(ElementError::Unexpected {
+                    // TODO: get span right
+                    span: Span::new(0, 0),
+                }),
+            })
+            .then_ignore(EndParser::new());
+
         Self {
             sequence_constructor_parser: Box::new(sequence_constructor_parser),
+            declarations_parser: Box::new(declarations_parser),
         }
     }
 }
@@ -165,24 +181,13 @@ impl<'a> Element<'a> {
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
-        let mut result = Vec::new();
-        for node in self.state.xot.children(self.node) {
-            let item = self.declaration_item(node)?;
-            result.push(item);
-        }
-        Ok(result)
-    }
-
-    fn declaration_item(&self, node: Node) -> Result<ast::Declaration, ElementError> {
-        match self.state.xot.value(node) {
-            Value::Element(element) => {
-                let element = self.sub_element(node, element)?;
-                ast::Declaration::parse_declaration(&element)
-            }
-            _ => Err(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            }),
-        }
+        let element_parsers = ElementParsers::new();
+        let (declarations, _next) = element_parsers.declarations_parser.parse(
+            self.state.xot.first_child(self.node),
+            self.state,
+            &self.context,
+        )?;
+        Ok(declarations)
     }
 
     pub(crate) fn many_elements2<T>(
