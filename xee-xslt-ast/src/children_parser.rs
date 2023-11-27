@@ -443,7 +443,7 @@ mod tests {
                 span: state.span(node).ok_or(ElementError::Internal)?,
             })
         });
-        let (item_a, next) = optional_parser_a.parse(next, &state, &context).unwrap();
+        let (item_a, next) = optional_parser_a.parse(next, state, context).unwrap();
 
         let optional_parser_b = OptionalChildParser::new(|node, _, _| {
             if let Some(element) = state.xot.element(node) {
@@ -455,10 +455,10 @@ mod tests {
                 span: state.span(node).ok_or(ElementError::Internal)?,
             })
         });
-        let (item_b, next) = optional_parser_b.parse(next, &state, &context).unwrap();
+        let (item_b, next) = optional_parser_b.parse(next, state, context).unwrap();
 
         let end_parser = EndParser::new();
-        end_parser.parse(next, &state, &context)?;
+        end_parser.parse(next, state, context)?;
         Ok((item_a, item_b))
     }
 

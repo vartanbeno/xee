@@ -207,8 +207,6 @@ impl<'a> Element<'a> {
                 span: self.state.span(node).ok_or(ElementError::Internal)?,
             })?;
         let element = self.sub_element(node, element)?;
-        //     let element_namespaces = ElementNamespaces::new(self.xot, element);
-        // let element = Element::new(node, element, self, element_namespaces)?;
         if element.element.name() != name {
             return Err(ElementError::Unexpected { span: element.span });
         }
