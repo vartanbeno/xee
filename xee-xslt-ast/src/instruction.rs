@@ -114,12 +114,12 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse_rules = content_parse(children(
+        let parse_rules = content_parse(
             many(element_name(names.xsl_accumulator_rule, |element| {
                 ast::AccumulatorRule::parse(&element)
             }))
             .then_ignore(end()),
-        ));
+        );
 
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,

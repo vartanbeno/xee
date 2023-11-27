@@ -143,7 +143,13 @@ pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, E
 where
     P: NodeParser<V>,
 {
-    move |element| parser.parse(Some(element.node), element.state, &element.context)
+    move |element| {
+        parser.parse(
+            element.state.xot.first_child(element.node),
+            element.state,
+            &element.context,
+        )
+    }
 }
 
 pub(crate) struct Element<'a> {
