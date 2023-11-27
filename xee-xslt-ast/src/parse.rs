@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{end, many, ElementError, EndParser, ManyParser, NodeParser};
+use crate::combinator::{children, end, many, ElementError, NodeParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -50,7 +50,7 @@ struct ElementParsers {
 
 impl ElementParsers {
     fn new() -> Self {
-        let sequence_constructor_parser =
+        let sequence_constructor_parser = children(
             many(|node, state, context| match state.xot.value(node) {
                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                     text.get().to_string(),
@@ -65,20 +65,23 @@ impl ElementParsers {
                     span: Span::new(0, 0),
                 }),
             })
-            .then_ignore(end());
+            .then_ignore(end()),
+        );
 
-        let declarations_parser = many(|node, state, context| match state.xot.value(node) {
-            Value::Element(element) => {
-                let new_context = context.element(element);
-                let element = Element::new(node, element, new_context, state)?;
-                ast::Declaration::parse_declaration(&element)
-            }
-            _ => Err(ElementError::Unexpected {
-                // TODO: get span right
-                span: Span::new(0, 0),
-            }),
-        })
-        .then_ignore(end());
+        let declarations_parser = children(
+            many(|node, state, context| match state.xot.value(node) {
+                Value::Element(element) => {
+                    let new_context = context.element(element);
+                    let element = Element::new(node, element, new_context, state)?;
+                    ast::Declaration::parse_declaration(&element)
+                }
+                _ => Err(ElementError::Unexpected {
+                    // TODO: get span right
+                    span: Span::new(0, 0),
+                }),
+            })
+            .then_ignore(end()),
+        );
 
         Self {
             sequence_constructor_parser: Box::new(sequence_constructor_parser),
@@ -184,23 +187,18 @@ impl<'a> Element<'a> {
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
         let element_parsers = ElementParsers::new();
-        let (sequence_constructor, _next) =
-            element_parsers.sequence_constructor_parser.parse_next(
-                self.state.xot.first_child(self.node),
-                self.state,
-                &self.context,
-            )?;
-        Ok(sequence_constructor)
+        element_parsers.sequence_constructor_parser.parse(
+            Some(self.node),
+            self.state,
+            &self.context,
+        )
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
         let element_parsers = ElementParsers::new();
-        let (declarations, _next) = element_parsers.declarations_parser.parse_next(
-            self.state.xot.first_child(self.node),
-            self.state,
-            &self.context,
-        )?;
-        Ok(declarations)
+        element_parsers
+            .declarations_parser
+            .parse(Some(self.node), self.state, &self.context)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
