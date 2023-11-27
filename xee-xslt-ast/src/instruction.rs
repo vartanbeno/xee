@@ -114,7 +114,7 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = children(
+        let parser = children(
             many(element_name(names.xsl_accumulator_rule, |element| {
                 ast::AccumulatorRule::parse(&element)
             }))
@@ -130,7 +130,7 @@ impl InstructionParser for ast::Accumulator {
             standard: element.standard()?,
             span: element.span,
 
-            rules: parse.parse(Some(element.node), element.state, &element.context)?,
+            rules: parser.parse(Some(element.node), element.state, &element.context)?,
         })
     }
 }
