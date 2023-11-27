@@ -150,8 +150,10 @@ where
             &element.context,
         )?;
         // handle end of content check here
-        if next.is_some() {
-            Err(ElementError::Unexpected { span: element.span })
+        if let Some(next) = next {
+            Err(ElementError::Unexpected {
+                span: element.state.span(next).ok_or(ElementError::Internal)?,
+            })
         } else {
             Ok(item)
         }

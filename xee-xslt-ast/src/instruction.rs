@@ -495,6 +495,41 @@ mod tests {
     }
 
     #[test]
+    fn test_analyze_string_absent_matching_substring() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>"#
+        ));
+    }
+
+    #[test]
+    fn test_analyze_string_absent_non_matching_substring() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>"#
+        ));
+    }
+
+    #[test]
+    fn test_analyze_string_absent_fallbacks() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring></xsl:analyze-string>"#
+        ));
+    }
+
+    #[test]
+    fn test_analyze_string_absent_all() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"></xsl:analyze-string>"#
+        ));
+    }
+
+    #[test]
+    fn test_analyze_string_matching_non_matching_wrong_order() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:matching-substring>Matching</xsl:matching-substring></xsl:analyze-string>"#
+        ));
+    }
+
+    #[test]
     fn test_accumulator() {
         assert_ron_snapshot!(parse_transform(
             r#"<xsl:transform version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator name="foo" initial-value="1"><xsl:accumulator-rule match="foo"/></xsl:accumulator></xsl:transform>"#
