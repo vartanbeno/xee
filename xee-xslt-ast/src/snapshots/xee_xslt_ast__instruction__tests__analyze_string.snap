@@ -1,0 +1,136 @@
+---
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse_sequence_constructor_item(r#\"<xsl:analyze-string xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" select=\"true()\" regex=\"foo\"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>\"#)"
+---
+Ok(Instruction(AnalyzeString(AnalyzeString(
+  select: Expression(
+    xpath: XPath(Expr([
+      Path(PathExpr(
+        steps: [
+          PrimaryExpr(FunctionCall(FunctionCall(
+            name: Name(
+              name: "true",
+              prefix: None,
+              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            ),
+            arguments: [],
+          ))),
+        ],
+      )),
+    ])),
+    span: Span(
+      start: 77,
+      end: 83,
+    ),
+  ),
+  regex: ValueTemplate(
+    template: [
+      String(
+        text: "foo",
+        span: Span(
+          start: 92,
+          end: 95,
+        ),
+      ),
+    ],
+    phantom: PhantomData,
+  ),
+  flags: None,
+  matching_substring: Some(MatchingSubstring(
+    content: [
+      TextNode("Matching"),
+    ],
+    standard: Standard(
+      default_collation: None,
+      default_mode: None,
+      default_validation: None,
+      exclude_result_prefixes: None,
+      expand_text: None,
+      extension_element_prefixes: None,
+      use_when: None,
+      version: None,
+      xpath_default_namespace: None,
+    ),
+    span: Span(
+      start: 98,
+      end: 120,
+    ),
+  )),
+  non_matching_substring: Some(NonMatchingSubstring(
+    content: [
+      TextNode("Nonmatching"),
+    ],
+    standard: Standard(
+      default_collation: None,
+      default_mode: None,
+      default_validation: None,
+      exclude_result_prefixes: None,
+      expand_text: None,
+      extension_element_prefixes: None,
+      use_when: None,
+      version: None,
+      xpath_default_namespace: None,
+    ),
+    span: Span(
+      start: 155,
+      end: 181,
+    ),
+  )),
+  fallbacks: [
+    Fallback(
+      content: [
+        TextNode("Fallback 1"),
+      ],
+      standard: Standard(
+        default_collation: None,
+        default_mode: None,
+        default_validation: None,
+        exclude_result_prefixes: None,
+        expand_text: None,
+        extension_element_prefixes: None,
+        use_when: None,
+        version: None,
+        xpath_default_namespace: None,
+      ),
+      span: Span(
+        start: 223,
+        end: 235,
+      ),
+    ),
+    Fallback(
+      content: [
+        TextNode("Fallback 2"),
+      ],
+      standard: Standard(
+        default_collation: None,
+        default_mode: None,
+        default_validation: None,
+        exclude_result_prefixes: None,
+        expand_text: None,
+        extension_element_prefixes: None,
+        use_when: None,
+        version: None,
+        xpath_default_namespace: None,
+      ),
+      span: Span(
+        start: 262,
+        end: 274,
+      ),
+    ),
+  ],
+  standard: Standard(
+    default_collation: None,
+    default_mode: None,
+    default_validation: None,
+    exclude_result_prefixes: None,
+    expand_text: None,
+    extension_element_prefixes: None,
+    use_when: None,
+    version: None,
+    xpath_default_namespace: None,
+  ),
+  span: Span(
+    start: 1,
+    end: 19,
+  ),
+))))

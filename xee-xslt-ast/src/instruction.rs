@@ -166,23 +166,45 @@ impl InstructionParser for ast::Assert {
     }
 }
 
-// impl InstructionParser for ast::AnalyzeString {
-//     fn parse(element: &Element) -> Result<Self> {
-//         let names = &element.state.names;
-//         Ok(ast::AnalyzeString {
-//             select: element.required(names.select, element.xpath())?,
-//             regex: element.required(names.regex, element.value_template(element.string()))?,
-//             flags: element.optional(names.flags, element.value_template(element.string()))?,
+impl InstructionParser for ast::AnalyzeString {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
 
-//             standard: element.standard()?,
-//             span: element.span,
+        let select = element.required(names.select, element.xpath())?;
+        let regex = element.required(names.regex, element.value_template(element.string()))?;
+        let flags = element.optional(names.flags, element.value_template(element.string()))?;
 
-//             matching_substring: element.optional_element(names.xsl_matching_substring)?,
-//             non_matching_substring: element.optional_element(names.xsl_non_matching_substring)?,
-//             fallbacks: element.many_elements(names.xsl_fallback)?,
-//         })
-//     }
-// }
+        let standard = element.standard()?;
+
+        let parse = content_parse(
+            optional(element_name(names.xsl_matching_substring, |element| {
+                ast::MatchingSubstring::parse(&element)
+            }))
+            .then(optional(element_name(
+                names.xsl_non_matching_substring,
+                |element| ast::NonMatchingSubstring::parse(&element),
+            )))
+            .then(many(element_name(names.xsl_fallback, |element| {
+                ast::Fallback::parse(&element)
+            }))),
+        );
+
+        let ((matching_substring, non_matching_substring), fallbacks) = parse(element)?;
+
+        Ok(ast::AnalyzeString {
+            select,
+            regex,
+            flags,
+            standard,
+
+            span: element.span,
+
+            matching_substring,
+            non_matching_substring,
+            fallbacks,
+        })
+    }
+}
 
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
@@ -465,12 +487,12 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn test_analyze_string() {
-    //     assert_ron_snapshot!(parse_sequence_constructor_item(
-    //         r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>"#
-    //     ));
-    // }
+    #[test]
+    fn test_analyze_string() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:analyze-string xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()" regex="foo"><xsl:matching-substring>Matching</xsl:matching-substring><xsl:non-matching-substring>Nonmatching</xsl:non-matching-substring><xsl:fallback>Fallback 1</xsl:fallback><xsl:fallback>Fallback 2</xsl:fallback></xsl:analyze-string>"#
+        ));
+    }
 
     #[test]
     fn test_accumulator() {
