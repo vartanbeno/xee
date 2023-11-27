@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::combinator::{many, optional, ElementError as Error, NodeParser};
-use crate::element::{content_parse, instruction, Element};
+use crate::element::{by_element, content_parse, instruction, Element};
 use crate::{ast_core as ast, element};
 
 type Result<V> = std::result::Result<V, Error>;
@@ -212,22 +212,35 @@ impl InstructionParser for ast::ApplyImports {
     }
 }
 
-// impl InstructionParser for ast::ApplyTemplates {
-//     fn parse(element: &Element) -> Result<Self> {
-//         let names = &element.state.names;
-//         let parse = content_parse(many(instructions([names.xsl_with_param, names.xsl_sort])));
+impl InstructionParser for ast::ApplyTemplates {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let parse = content_parse(many(by_element(|element| {
+            let name = element.element.name();
+            if name == names.xsl_with_param {
+                Ok(ast::ApplyTemplatesContent::WithParam(
+                    ast::WithParam::parse_and_validate(&element)?,
+                ))
+            } else if name == names.xsl_sort {
+                Ok(ast::ApplyTemplatesContent::Sort(
+                    ast::Sort::parse_and_validate(&element)?,
+                ))
+            } else {
+                Err(Error::Unexpected { span: element.span })
+            }
+        })));
 
-//         Ok(ast::ApplyTemplates {
-//             select: element.optional(names.select, element.xpath())?,
-//             mode: element.optional(names.mode, element.token())?,
+        Ok(ast::ApplyTemplates {
+            select: element.optional(names.select, element.xpath())?,
+            mode: element.optional(names.mode, element.token())?,
 
-//             standard: element.standard()?,
-//             span: element.span,
+            standard: element.standard()?,
+            span: element.span,
 
-//             content: element.sequence_constructor()?,
-//         })
-//     }
-// }
+            content: parse(element)?,
+        })
+    }
+}
 
 impl InstructionParser for ast::Assert {
     fn parse(element: &Element) -> Result<Self> {
@@ -642,6 +655,13 @@ mod tests {
     fn test_should_be_empty_not_empty() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:copy-of xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()">Illegal content</xsl:copy-of>"#
+        ))
+    }
+
+    #[test]
+    fn test_apply_templates_with_mixed_content() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:apply-templates xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:sort>Sort</xsl:sort><xsl:with-param name="a">With param</xsl:with-param></xsl:apply-templates>"#
         ))
     }
 }

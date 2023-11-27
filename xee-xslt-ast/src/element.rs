@@ -107,7 +107,7 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-pub(crate) fn element<V>(
+pub(crate) fn by_element<V>(
     f: impl Fn(Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     move |node, state, context| {
@@ -120,11 +120,11 @@ pub(crate) fn element<V>(
     }
 }
 
-pub(crate) fn element_name<V>(
+pub(crate) fn by_element_name<V>(
     name: NameId,
     f: impl Fn(Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    element(move |element| {
+    by_element(move |element| {
         if element.element.name() == name {
             f(element)
         } else {
@@ -136,8 +136,12 @@ pub(crate) fn element_name<V>(
 pub(crate) fn instruction<T: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Node, &State, &Context) -> Result<T, ElementError> {
-    element_name(name, move |element| T::parse_and_validate(&element))
+    by_element_name(name, move |element| T::parse_and_validate(&element))
 }
+
+// pub(crate) fn instructions() where T: Into<T> {
+
+// }
 
 pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
 where

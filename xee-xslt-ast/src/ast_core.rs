@@ -283,6 +283,12 @@ pub enum ApplyTemplatesContent {
     WithParam(WithParam),
 }
 
+impl From<ApplyTemplates> for SequenceConstructorItem {
+    fn from(i: ApplyTemplates) -> Self {
+        SequenceConstructorInstruction::ApplyTemplates(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Assert {

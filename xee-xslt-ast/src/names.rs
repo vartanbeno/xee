@@ -21,6 +21,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::AnalyzeString => {
                 ast::AnalyzeString::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::ApplyTemplates => {
+                ast::ApplyTemplates::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::CopyOf => {
                 ast::CopyOf::parse_sequence_constructor_item(element)
@@ -81,6 +84,7 @@ pub(crate) struct Names {
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
     pub(crate) xsl_non_matching_substring: xot::NameId,
+    pub(crate) xsl_sort: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
     pub(crate) xsl_with_param: xot::NameId,
 
@@ -180,6 +184,7 @@ impl Names {
             xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
             xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
             xsl_non_matching_substring: xot.add_name_ns("non-matching-substring", xsl_ns),
+            xsl_sort: xot.add_name_ns("sort", xsl_ns),
             xsl_transform: xot.add_name_ns("transform", xsl_ns),
             xsl_with_param: xot.add_name_ns("with-param", xsl_ns),
 
