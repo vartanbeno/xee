@@ -268,18 +268,6 @@ impl<TA, TB, PA: ChildrenParser<TA>, PB: ChildrenParser<TB>> ChildrenParser<TA>
         Ok((a, node))
     }
 }
-// * we need to be able to declare that an instruction has absolutely no content, so
-// if it finds content that's an error. Example xsl:accept
-
-// * we need to be able to declare that an instruction contains contains only elements,
-// so any text node is an error
-
-// * for sequence constructors, text nodes are allowed it's a mixture of zero
-// or more instruction elements, mixed with literal elements and literal text
-// nodes
-
-// * we need to have some kind of 'we reached the end' check in the parser,
-// any nodes following can't be parsed, and are thus an error
 
 #[cfg(test)]
 mod tests {
