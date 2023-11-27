@@ -120,6 +120,19 @@ pub(crate) struct Element<'a> {
     pub(crate) state: &'a State,
 }
 
+pub(crate) fn element_parse<V>(
+    f: impl Fn(Element) -> Result<V, ElementError>,
+) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
+    move |node, state, context| {
+        let element = state.xot.element(node).ok_or(ElementError::Unexpected {
+            span: state.span(node).ok_or(ElementError::Internal)?,
+        })?;
+        let element_context = context.element(element);
+        let element = Element::new(node, element, element_context, state)?;
+        f(element)
+    }
+}
+
 impl<'a> Element<'a> {
     pub(crate) fn new(
         node: Node,
