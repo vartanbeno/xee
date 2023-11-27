@@ -5,7 +5,7 @@ use strum::VariantNames;
 use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core::{self as ast, DeclarationName, SequenceConstructorName};
-use crate::children_parser::ElementError;
+use crate::combinator::ElementError;
 use crate::instruction::{DeclarationParser, SequenceConstructorParser};
 use crate::parse::Element;
 

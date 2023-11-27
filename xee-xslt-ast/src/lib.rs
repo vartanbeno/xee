@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 mod ast_core;
-mod children_parser;
+mod combinator;
 mod context;
 mod instruction;
 mod name;
