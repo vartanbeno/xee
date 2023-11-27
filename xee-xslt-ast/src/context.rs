@@ -19,6 +19,13 @@ impl<'a> Context<'a> {
         }
     }
 
+    pub(crate) fn empty() -> Self {
+        Self {
+            prefixes: xot::Prefixes::new(),
+            next: None,
+        }
+    }
+
     pub(crate) fn element(&'a self, element: &'a xot::Element) -> Self {
         Self {
             prefixes: element.prefixes().clone(),

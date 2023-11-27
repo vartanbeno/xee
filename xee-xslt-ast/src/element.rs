@@ -3,7 +3,9 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{children, end, many, optional, ElementError, NodeParser, OptionalParser};
+use crate::combinator::{
+    children, end, many, optional, top, ElementError, NodeParser, OptionalParser,
+};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -100,16 +102,8 @@ impl<'a> XsltParser<'a> {
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
-        let element = self
-            .state
-            .xot
-            .element(node)
-            .ok_or(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            })?;
-        let context = Context::new(element);
-        let element = Element::new(node, element, context, self.state)?;
-        element.parse_transform(node)
+        let parser = top(instruction(self.state.names.xsl_transform));
+        parser.parse(Some(node), self.state, &Context::empty())
     }
 }
 
@@ -137,6 +131,12 @@ pub(crate) fn element_name<V>(
             Err(ElementError::Unexpected { span: element.span })
         }
     })
+}
+
+pub(crate) fn instruction<T: InstructionParser>(
+    name: NameId,
+) -> impl Fn(Node, &State, &Context) -> Result<T, ElementError> {
+    element_name(name, move |element| T::parse(&element))
 }
 
 pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
@@ -233,10 +233,6 @@ impl<'a> Element<'a> {
         element_parsers
             .declarations_parser
             .parse(Some(self.node), self.state, &self.context)
-    }
-
-    pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
-        self.parse_element(node, self.state.names.xsl_transform)
     }
 
     fn parse_element<T: InstructionParser>(
