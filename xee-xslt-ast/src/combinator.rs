@@ -66,14 +66,14 @@ pub(crate) trait NodeParser<T> {
     }
 }
 
-pub(crate) struct OptionalChildParser<V, P>
+pub(crate) struct OptionalParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
-impl<V, P> OptionalChildParser<V, P>
+impl<V, P> OptionalParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -82,7 +82,7 @@ where
     }
 }
 
-impl<V, P> NodeParser<Option<V>> for OptionalChildParser<V, P>
+impl<V, P> NodeParser<Option<V>> for OptionalParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -130,14 +130,14 @@ impl NodeParser<()> for EndParser {
     }
 }
 
-pub(crate) struct ManyChildrenParser<V, P>
+pub(crate) struct ManyParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
-impl<V, P> ManyChildrenParser<V, P>
+impl<V, P> ManyParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -146,7 +146,7 @@ where
     }
 }
 
-impl<V, P> NodeParser<Vec<V>> for ManyChildrenParser<V, P>
+impl<V, P> NodeParser<Vec<V>> for ManyParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -156,7 +156,7 @@ where
         state: &State,
         context: &Context,
     ) -> Result<(Vec<V>, Option<Node>)> {
-        let optional_parser = OptionalChildParser {
+        let optional_parser = OptionalParser {
             parse_value: &self.parse_value,
         };
         let mut result = Vec::new();
@@ -179,14 +179,14 @@ where
     }
 }
 
-pub(crate) struct AtLeastOneParser<V, P>
+pub(crate) struct OneOrMoreParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
     parse_value: P,
 }
 
-impl<V, P> AtLeastOneParser<V, P>
+impl<V, P> OneOrMoreParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -195,7 +195,7 @@ where
     }
 }
 
-impl<V, P> NodeParser<Vec<V>> for AtLeastOneParser<V, P>
+impl<V, P> NodeParser<Vec<V>> for OneOrMoreParser<V, P>
 where
     P: Fn(Node, &State, &Context) -> Result<V>,
 {
@@ -205,7 +205,7 @@ where
         state: &State,
         context: &Context,
     ) -> Result<(Vec<V>, Option<Node>)> {
-        let many_parser = ManyChildrenParser {
+        let many_parser = ManyParser {
             parse_value: &self.parse_value,
         };
         let (items, next) = many_parser.parse(node, state, context)?;
@@ -294,7 +294,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node, _, _| Ok(Value));
+        let optional_parser = OptionalParser::new(|_node, _, _| Ok(Value));
 
         let (item, next) = optional_parser.parse(next, &state, &context).unwrap();
 
@@ -309,7 +309,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node, _, _| {
+        let optional_parser = OptionalParser::new(|_node, _, _| {
             Err(AttributeError::Invalid {
                 value: "".to_string(),
                 span: Span::new(0, 0),
@@ -337,7 +337,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node, state, _| {
+        let optional_parser = OptionalParser::new(|node, state, _| {
             Err(ElementError::Unexpected {
                 span: state.span(node).ok_or(ElementError::Internal)?,
             })
@@ -356,7 +356,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|_node, _, _| Ok(Value));
+        let optional_parser = OptionalParser::new(|_node, _, _| Ok(Value));
 
         let (item, next) = optional_parser.parse(next, &state, &context).unwrap();
         assert_eq!(item, None);
@@ -417,7 +417,7 @@ mod tests {
         names: &TestNames,
         next: Option<Node>,
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
-        let optional_parser_a = OptionalChildParser::new(|node, _, _| {
+        let optional_parser_a = OptionalParser::new(|node, _, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -429,7 +429,7 @@ mod tests {
         });
         let (item_a, next) = optional_parser_a.parse(next, state, context).unwrap();
 
-        let optional_parser_b = OptionalChildParser::new(|node, _, _| {
+        let optional_parser_b = OptionalParser::new(|node, _, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -508,7 +508,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|_node, _, _| Ok(Value));
+        let many_parser = ManyParser::new(|_node, _, _| Ok(Value));
 
         let (items, next) = many_parser.parse(next, &state, &context).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
@@ -522,7 +522,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|_node, _, _| Ok(Value));
+        let many_parser = ManyParser::new(|_node, _, _| Ok(Value));
 
         let (items, next) = many_parser.parse(next, &state, &context).unwrap();
 
@@ -539,7 +539,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node, state, _| {
+        let optional_parser = OptionalParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -550,7 +550,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|node, state, _| {
+        let many_parser = ManyParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -578,7 +578,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node, state, _| {
+        let optional_parser = OptionalParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -589,7 +589,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|node, state, _| {
+        let many_parser = ManyParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -618,7 +618,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = OptionalChildParser::new(|node, state, _| {
+        let optional_parser = OptionalParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -629,7 +629,7 @@ mod tests {
             })
         });
 
-        let many_parser = ManyChildrenParser::new(|node, state, _| {
+        let many_parser = ManyParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -661,7 +661,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = ManyChildrenParser::new(|node, state, _| {
+        let many_parser = ManyParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -693,7 +693,7 @@ mod tests {
             foo: String,
         }
 
-        let parser = OptionalChildParser::new(|node, state, _| {
+        let parser = OptionalParser::new(|node, state, _| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     let value = element.get_attribute(names.foo).unwrap();

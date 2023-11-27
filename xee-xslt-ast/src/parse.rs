@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{ElementError, EndParser, ManyChildrenParser, NodeParser};
+use crate::combinator::{ElementError, EndParser, ManyParser, NodeParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -51,7 +51,7 @@ struct ElementParsers {
 impl ElementParsers {
     fn new() -> Self {
         let sequence_constructor_parser =
-            ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
+            ManyParser::new(|node, state, context| match state.xot.value(node) {
                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                     text.get().to_string(),
                 )),
@@ -68,7 +68,7 @@ impl ElementParsers {
             .then_ignore(EndParser::new());
 
         let declarations_parser =
-            ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
+            ManyParser::new(|node, state, context| match state.xot.value(node) {
                 Value::Element(element) => {
                     let new_context = context.element(element);
                     let element = Element::new(node, element, new_context, state)?;
