@@ -13,17 +13,32 @@ pub(crate) trait InstructionParser: Sized {
         Ok(())
     }
 
+    fn should_be_empty() -> bool {
+        false
+    }
+
     fn parse(element: &Element) -> Result<Self>;
+
+    fn parse_and_validate(element: &Element) -> Result<Self> {
+        let item = Self::parse(element)?;
+        if Self::should_be_empty() {
+            if let Some(child) = element.state.xot.first_child(element.node) {
+                return Err(Error::Unexpected {
+                    span: element.state.span(child).ok_or(Error::Internal)?,
+                });
+            }
+        }
+        item.validate(element)?;
+        Ok(item)
+    }
 }
 
 pub(crate) trait SequenceConstructorParser:
     InstructionParser + Into<ast::SequenceConstructorItem>
 {
     fn parse_sequence_constructor_item(element: &Element) -> Result<ast::SequenceConstructorItem> {
-        let ast = Self::parse(element)?;
-        // TODO: the instruction parser should validate
-        ast.validate(element)?;
-        Ok(ast.into())
+        let item = Self::parse_and_validate(element)?;
+        Ok(item.into())
     }
 }
 
@@ -34,10 +49,8 @@ impl<T> SequenceConstructorParser for T where
 
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
     fn parse_declaration(element: &Element) -> Result<ast::Declaration> {
-        let ast = Self::parse(element)?;
-        // TODO: the instruction parser should validate
-        ast.validate(element)?;
-        Ok(ast.into())
+        let item = Self::parse_and_validate(element)?;
+        Ok(item.into())
     }
 }
 
@@ -97,6 +110,10 @@ fn to_name(xot: &Xot, name: NameId) -> ast::Name {
 }
 
 impl InstructionParser for ast::Accept {
+    fn should_be_empty() -> bool {
+        true
+    }
+
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Accept {
@@ -146,23 +163,6 @@ impl InstructionParser for ast::AccumulatorRule {
     }
 }
 
-impl InstructionParser for ast::Assert {
-    fn parse(element: &Element) -> Result<Self> {
-        let names = &element.state.names;
-        Ok(ast::Assert {
-            test: element.required(names.test, element.xpath())?,
-            select: element.optional(names.select, element.xpath())?,
-            error_code: element
-                .optional(names.error_code, element.value_template(element.eqname()))?,
-
-            standard: element.standard()?,
-            span: element.span,
-
-            content: element.sequence_constructor()?,
-        })
-    }
-}
-
 impl InstructionParser for ast::AnalyzeString {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -196,6 +196,23 @@ impl InstructionParser for ast::AnalyzeString {
     }
 }
 
+impl InstructionParser for ast::Assert {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Assert {
+            test: element.required(names.test, element.xpath())?,
+            select: element.optional(names.select, element.xpath())?,
+            error_code: element
+                .optional(names.error_code, element.value_template(element.eqname()))?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -204,7 +221,7 @@ impl InstructionParser for ast::Copy {
             copy_namespaces: element.boolean_with_default(names.copy_namespaces, true)?,
             inherit_namespaces: element.boolean_with_default(names.inherit_namespaces, true)?,
             use_attribute_sets: element.optional(names.use_attribute_sets, element.eqnames())?,
-            type_: element.optional(names.as_, element.eqname())?,
+            type_: element.optional(names.type_, element.eqname())?,
             validation: element
                 .optional(names.validation, element.validation())?
                 // TODO: should depend on global validation attribute
@@ -214,6 +231,27 @@ impl InstructionParser for ast::Copy {
             span: element.span,
 
             content: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::CopyOf {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        Ok(ast::CopyOf {
+            select: element.required(names.select, element.xpath())?,
+            copy_accumulators: element.boolean_with_default(names.copy_accumulators, false)?,
+            copy_namespaces: element.boolean_with_default(names.copy_namespaces, true)?,
+            type_: element.optional(names.type_, element.eqname())?,
+            validation: element.optional(names.validation, element.validation())?,
+
+            standard: element.standard()?,
+            span: element.span,
         })
     }
 }
@@ -524,5 +562,12 @@ mod tests {
         assert_ron_snapshot!(parse_transform(
             r#"<xsl:transform version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator name="foo" initial-value="1"><xsl:accumulator-rule match="foo"/></xsl:accumulator></xsl:transform>"#
         ));
+    }
+
+    #[test]
+    fn test_should_be_empty_not_empty() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:copy-of xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()">Illegal content</xsl:copy-of>"#
+        ))
     }
 }

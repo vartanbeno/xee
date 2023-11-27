@@ -136,7 +136,7 @@ pub(crate) fn element_name<V>(
 pub(crate) fn instruction<T: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Node, &State, &Context) -> Result<T, ElementError> {
-    element_name(name, move |element| T::parse(&element))
+    element_name(name, move |element| T::parse_and_validate(&element))
 }
 
 pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>

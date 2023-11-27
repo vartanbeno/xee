@@ -22,6 +22,9 @@ impl SequenceConstructorName {
                 ast::AnalyzeString::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
+            SequenceConstructorName::CopyOf => {
+                ast::CopyOf::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
@@ -83,6 +86,7 @@ pub(crate) struct Names {
     // attributes on XSLT elements
     pub(crate) as_: xot::NameId,
     pub(crate) component: xot::NameId,
+    pub(crate) copy_accumulators: xot::NameId,
     pub(crate) copy_namespaces: xot::NameId,
     pub(crate) error_code: xot::NameId,
     pub(crate) extension_element_prefixes: xot::NameId,
@@ -100,6 +104,7 @@ pub(crate) struct Names {
     pub(crate) static_: xot::NameId,
     pub(crate) streamable: xot::NameId,
     pub(crate) test: xot::NameId,
+    pub(crate) type_: xot::NameId,
     pub(crate) use_attribute_sets: xot::NameId,
     pub(crate) validation: xot::NameId,
     pub(crate) visibility: xot::NameId,
@@ -170,6 +175,7 @@ impl Names {
 
             as_: xot.add_name("as"),
             component: xot.add_name("component"),
+            copy_accumulators: xot.add_name("copy-accumulators"),
             copy_namespaces: xot.add_name("copy-namespaces"),
             error_code: xot.add_name("error-code"),
             extension_element_prefixes: xot.add_name("extension-element-prefixes"),
@@ -187,6 +193,7 @@ impl Names {
             static_: xot.add_name("static"),
             streamable: xot.add_name("streamable"),
             test: xot.add_name("test"),
+            type_: xot.add_name("type"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             validation: xot.add_name("validation"),
             visibility: xot.add_name("visibility"),

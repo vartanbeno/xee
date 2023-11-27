@@ -429,13 +429,19 @@ impl From<Copy> for SequenceConstructorItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CopyOf {
     pub select: Expression,
-    pub copy_accumulators: Option<bool>,
-    pub copy_namespaces: Option<bool>,
+    pub copy_accumulators: bool,
+    pub copy_namespaces: bool,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<CopyOf> for SequenceConstructorItem {
+    fn from(i: CopyOf) -> Self {
+        SequenceConstructorInstruction::CopyOf(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
