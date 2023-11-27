@@ -113,15 +113,6 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-pub(crate) struct Element<'a> {
-    pub(crate) node: Node,
-    pub(crate) element: &'a xot::Element,
-    pub(crate) span: Span,
-    pub(crate) context: Context<'a>,
-
-    pub(crate) state: &'a State,
-}
-
 pub(crate) fn element_parse<V>(
     f: impl Fn(Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
@@ -133,6 +124,28 @@ pub(crate) fn element_parse<V>(
         let element = Element::new(node, element, element_context, state)?;
         f(element)
     }
+}
+
+pub(crate) fn element_name_parse<V>(
+    name: NameId,
+    f: impl Fn(Element) -> Result<V, ElementError>,
+) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
+    element_parse(move |element| {
+        if element.element.name() == name {
+            f(element)
+        } else {
+            Err(ElementError::Unexpected { span: element.span })
+        }
+    })
+}
+
+pub(crate) struct Element<'a> {
+    pub(crate) node: Node,
+    pub(crate) element: &'a xot::Element,
+    pub(crate) span: Span,
+    pub(crate) context: Context<'a>,
+
+    pub(crate) state: &'a State,
 }
 
 impl<'a> Element<'a> {
