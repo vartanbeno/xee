@@ -116,7 +116,7 @@ impl ChildrenParser<()> for EndParser {
         &self,
         node: Option<Node>,
         state: &State,
-        context: &Context,
+        _context: &Context,
     ) -> Result<((), Option<Node>)> {
         if let Some(node) = node {
             Err(ElementError::Unexpected {

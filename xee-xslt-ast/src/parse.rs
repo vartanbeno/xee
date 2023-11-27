@@ -43,59 +43,42 @@ impl From<value_template::Error> for AttributeError {
     }
 }
 
-// struct ElementParsers {
-//     sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
-// }
+struct ElementParsers {
+    sequence_constructor_parser: Box<dyn ChildrenParser<Vec<ast::SequenceConstructorItem>>>,
+}
 
-// impl ElementParsers {
-//     fn new() -> Self {
-//         let sequence_constructor_parser =
-//             ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
-//                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-//                     text.get().to_string(),
-//                 )),
-//                 Value::Element(element) => {
-//                     let new_context = context.element(element);
-//                     let element = Element::new(node, element, new_context, state)?;
-//                     ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
-//                 }
-//                 _ => Err(ElementError::Unexpected {
-//                     // TODO: get span right
-//                     span: Span::new(0, 0),
-//                 }),
-//             })
-//             .then_ignore(EndParser::new());
+impl ElementParsers {
+    fn new() -> Self {
+        let sequence_constructor_parser =
+            ManyChildrenParser::new(|node, state, context| match state.xot.value(node) {
+                Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                    text.get().to_string(),
+                )),
+                Value::Element(element) => {
+                    let new_context = context.element(element);
+                    let element = Element::new(node, element, new_context, state)?;
+                    ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+                }
+                _ => Err(ElementError::Unexpected {
+                    // TODO: get span right
+                    span: Span::new(0, 0),
+                }),
+            })
+            .then_ignore(EndParser::new());
 
-//         Self {
-//             sequence_constructor_parser: Box::new(sequence_constructor_parser),
-//         }
-//     }
-// }
+        Self {
+            sequence_constructor_parser: Box::new(sequence_constructor_parser),
+        }
+    }
+}
+
 pub(crate) struct XsltParser<'a> {
     state: &'a State,
 }
 
 impl<'a> XsltParser<'a> {
     pub(crate) fn new(state: &'a State) -> Self {
-        Self {
-            state, // sequence_constructor_parser: Box::new(sequence_constructor_parser),
-        }
-    }
-
-    pub(crate) fn parse_sequence_constructor_item(
-        &self,
-        node: Node,
-    ) -> Result<ast::SequenceConstructorItem, ElementError> {
-        let element = self
-            .state
-            .xot
-            .element(node)
-            .ok_or(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            })?;
-        let context = Context::new(element);
-        let element = Element::new(node, element, context, self.state)?;
-        element.sequence_constructor_item(node)
+        Self { state }
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
@@ -122,7 +105,7 @@ pub(crate) struct Element<'a> {
 }
 
 impl<'a> Element<'a> {
-    fn new(
+    pub(crate) fn new(
         node: Node,
         element: &'a xot::Element,
         context: Context<'a>,
@@ -135,7 +118,6 @@ impl<'a> Element<'a> {
             element,
             span,
             context,
-
             state,
         })
     }
@@ -173,30 +155,13 @@ impl<'a> Element<'a> {
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
-        let mut result = Vec::new();
-        for node in self.state.xot.children(self.node) {
-            let item = self.sequence_constructor_item(node)?;
-            result.push(item);
-        }
-        Ok(result)
-    }
-
-    fn sequence_constructor_item(
-        &self,
-        node: Node,
-    ) -> Result<ast::SequenceConstructorItem, ElementError> {
-        match self.state.xot.value(node) {
-            Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-                text.get().to_string(),
-            )),
-            Value::Element(element) => {
-                let element = self.sub_element(node, element)?;
-                ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
-            }
-            _ => Err(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            }),
-        }
+        let element_parsers = ElementParsers::new();
+        let (sequence_constructor, _next) = element_parsers.sequence_constructor_parser.parse(
+            self.state.xot.first_child(self.node),
+            self.state,
+            &self.context,
+        )?;
+        Ok(sequence_constructor)
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
@@ -317,21 +282,6 @@ impl<'a> Element<'a> {
         T: InstructionParser,
     {
         self.parse_optional_element(self.node, name)
-    }
-
-    pub(crate) fn parse_sequence_constructor_item(
-        &self,
-        node: Node,
-    ) -> Result<ast::SequenceConstructorItem, ElementError> {
-        let element = self
-            .state
-            .xot
-            .element(node)
-            .ok_or(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            })?;
-        let element = self.sub_element(node, element)?;
-        element.sequence_constructor_item(node)
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {

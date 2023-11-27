@@ -306,6 +306,8 @@ impl InstructionParser for ast::Variable {
 #[cfg(test)]
 mod tests {
 
+    use crate::context::Context;
+    use crate::parse::Element;
     use crate::{names::Names, parse::XsltParser, state::State};
 
     use super::*;
@@ -314,12 +316,17 @@ mod tests {
     fn parse_sequence_constructor_item(s: &str) -> Result<ast::SequenceConstructorItem> {
         let mut xot = Xot::new();
         let names = Names::new(&mut xot);
-
         let (node, span_info) = xot.parse_with_span_info(s).unwrap();
-        let node = xot.document_element(node).unwrap();
-        let context = State::new(xot, span_info, names);
-        let parser = XsltParser::new(&context);
-        parser.parse_sequence_constructor_item(node)
+        let state = State::new(xot, span_info, names);
+        let node = state.xot.document_element(node).unwrap();
+
+        if let Some(element) = state.xot.element(node) {
+            let context = Context::new(element);
+            let element = Element::new(node, element, context, &state)?;
+            ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+        } else {
+            Err(Error::Internal)
+        }
     }
 
     fn parse_transform(s: &str) -> Result<ast::Transform> {
