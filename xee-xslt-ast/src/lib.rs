@@ -3,8 +3,8 @@
 mod ast_core;
 mod children_parser;
 mod context;
-mod error;
 mod instruction;
+mod name;
 mod names;
 mod parse;
 mod state;
