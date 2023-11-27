@@ -144,11 +144,17 @@ where
     P: NodeParser<V>,
 {
     move |element| {
-        parser.parse(
+        let (item, next) = parser.parse_next(
             element.state.xot.first_child(element.node),
             element.state,
             &element.context,
-        )
+        )?;
+        // handle end of content check here
+        if next.is_some() {
+            Err(ElementError::Unexpected { span: element.span })
+        } else {
+            Ok(item)
+        }
     }
 }
 
