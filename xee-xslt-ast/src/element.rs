@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{children, end, many, ElementError, NodeParser};
+use crate::combinator::{children, end, many, optional, ElementError, NodeParser, OptionalParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -113,7 +113,7 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-pub(crate) fn element_parse<V>(
+pub(crate) fn element<V>(
     f: impl Fn(Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     move |node, state, context| {
@@ -126,11 +126,11 @@ pub(crate) fn element_parse<V>(
     }
 }
 
-pub(crate) fn element_name_parse<V>(
+pub(crate) fn element_name<V>(
     name: NameId,
     f: impl Fn(Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    element_parse(move |element| {
+    element(move |element| {
         if element.element.name() == name {
             f(element)
         } else {
