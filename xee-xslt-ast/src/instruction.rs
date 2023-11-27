@@ -4,7 +4,7 @@ use crate::ast_core as ast;
 use crate::combinator::{
     children, end, many, optional, ElementError as Error, EndParser, NodeParser, OneOrMoreParser,
 };
-use crate::parse::{element_parse, Element};
+use crate::element::{element_parse, Element};
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -321,8 +321,8 @@ impl InstructionParser for ast::Variable {
 mod tests {
 
     use crate::context::Context;
-    use crate::parse::Element;
-    use crate::{names::Names, parse::XsltParser, state::State};
+    use crate::element::Element;
+    use crate::{element::XsltParser, names::Names, state::State};
 
     use super::*;
     use insta::assert_ron_snapshot;

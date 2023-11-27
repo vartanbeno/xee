@@ -3,10 +3,10 @@
 mod ast_core;
 mod combinator;
 mod context;
+mod element;
 mod instruction;
 mod name;
 mod names;
-mod parse;
 mod state;
 mod tokenize;
 mod value_template;

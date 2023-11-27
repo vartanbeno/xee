@@ -3,7 +3,7 @@ use xot::Node;
 use crate::ast_core::Span;
 use crate::context::Context;
 // use crate::error::Error as AttributeError;
-use crate::parse::AttributeError;
+use crate::element::AttributeError;
 use crate::state::State;
 
 #[derive(Debug, PartialEq)]
