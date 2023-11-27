@@ -235,25 +235,6 @@ impl<'a> Element<'a> {
             .parse(Some(self.node), self.state, &self.context)
     }
 
-    fn parse_element<T: InstructionParser>(
-        &self,
-        node: Node,
-        name: NameId,
-    ) -> Result<T, ElementError> {
-        let element = self
-            .state
-            .xot
-            .element(node)
-            .ok_or(ElementError::Unexpected {
-                span: self.state.span(node).ok_or(ElementError::Internal)?,
-            })?;
-        let element = self.sub_element(node, element)?;
-        if element.element.name() != name {
-            return Err(ElementError::Unexpected { span: element.span });
-        }
-        T::parse(&element)
-    }
-
     pub(crate) fn optional<T>(
         &self,
         name: NameId,
