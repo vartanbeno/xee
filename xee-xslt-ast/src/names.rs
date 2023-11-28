@@ -77,6 +77,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::NextIteration => {
                 ast::NextIteration::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::NextMatch => {
+                ast::NextMatch::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }

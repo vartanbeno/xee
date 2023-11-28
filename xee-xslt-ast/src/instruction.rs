@@ -1010,6 +1010,33 @@ impl InstructionParser for ast::NextIteration {
     }
 }
 
+impl InstructionParser for ast::NextMatch {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let parse = content_parse(many(by_element(|element| {
+            let name = element.element.name();
+            if name == names.xsl_with_param {
+                Ok(ast::NextMatchContent::WithParam(
+                    ast::WithParam::parse_and_validate(&element)?,
+                ))
+            } else if name == names.xsl_fallback {
+                Ok(ast::NextMatchContent::Fallback(
+                    ast::Fallback::parse_and_validate(&element)?,
+                ))
+            } else {
+                Err(Error::Unexpected { span: element.span })
+            }
+        })));
+
+        Ok(ast::NextMatch {
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {

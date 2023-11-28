@@ -1015,6 +1015,12 @@ pub struct NextMatch {
     pub span: Span,
 }
 
+impl From<NextMatch> for SequenceConstructorItem {
+    fn from(i: NextMatch) -> Self {
+        SequenceConstructorInstruction::NextMatch(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum NextMatchContent {
