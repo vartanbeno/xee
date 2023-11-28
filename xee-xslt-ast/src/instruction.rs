@@ -512,6 +512,44 @@ impl InstructionParser for ast::Element {
     }
 }
 
+impl InstructionParser for ast::Evaluate {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let parse = content_parse(many(by_element(|element| {
+            let name = element.element.name();
+            if name == names.xsl_with_param {
+                Ok(ast::EvaluateContent::WithParam(
+                    ast::WithParam::parse_and_validate(&element)?,
+                ))
+            } else if name == names.xsl_fallback {
+                Ok(ast::EvaluateContent::Fallback(
+                    ast::Fallback::parse_and_validate(&element)?,
+                ))
+            } else {
+                Err(Error::Unexpected { span: element.span })
+            }
+        })));
+
+        Ok(ast::Evaluate {
+            xpath: element.required(names.xpath, element.xpath())?,
+            as_: element.optional(names.as_, element.sequence_type())?,
+            base_uri: element.optional(names.base_uri, element.value_template(element.uri()))?,
+            with_params: element.optional(names.with_params, element.xpath())?,
+            context_item: element.optional(names.context_item, element.xpath())?,
+            namespace_context: element.optional(names.namespace_context, element.xpath())?,
+            schema_aware: element.optional(
+                names.schema_aware,
+                element.value_template(element.boolean()),
+            )?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {

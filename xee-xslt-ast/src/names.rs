@@ -116,9 +116,11 @@ pub(crate) struct Names {
 
     // attributes on XSLT elements
     pub(crate) as_: xot::NameId,
+    pub(crate) base_uri: xot::NameId,
     pub(crate) case_order: xot::NameId,
     pub(crate) character: xot::NameId,
     pub(crate) component: xot::NameId,
+    pub(crate) context_item: xot::NameId,
     pub(crate) collation: xot::NameId,
     pub(crate) copy_accumulators: xot::NameId,
     pub(crate) copy_namespaces: xot::NameId,
@@ -143,6 +145,7 @@ pub(crate) struct Names {
     pub(crate) name: xot::NameId,
     pub(crate) names: xot::NameId,
     pub(crate) namespace: xot::NameId,
+    pub(crate) namespace_context: xot::NameId,
     pub(crate) nan: xot::NameId,
     pub(crate) order: xot::NameId,
     pub(crate) pattern_separator: xot::NameId,
@@ -150,6 +153,7 @@ pub(crate) struct Names {
     pub(crate) percent: xot::NameId,
     pub(crate) per_mille: xot::NameId,
     pub(crate) regex: xot::NameId,
+    pub(crate) schema_aware: xot::NameId,
     pub(crate) select: xot::NameId,
     pub(crate) separator: xot::NameId,
     pub(crate) stable: xot::NameId,
@@ -164,6 +168,8 @@ pub(crate) struct Names {
     pub(crate) use_character_maps: xot::NameId,
     pub(crate) validation: xot::NameId,
     pub(crate) visibility: xot::NameId,
+    pub(crate) with_params: xot::NameId,
+    pub(crate) xpath: xot::NameId,
     pub(crate) zero_digit: xot::NameId,
 
     // standard attributes on XSLT elements
@@ -237,10 +243,12 @@ impl Names {
             xsl_with_param: xot.add_name_ns("with-param", xsl_ns),
 
             as_: xot.add_name("as"),
+            base_uri: xot.add_name("base-uri"),
             case_order: xot.add_name("case-order"),
             character: xot.add_name("character"),
             collation: xot.add_name("collation"),
             component: xot.add_name("component"),
+            context_item: xot.add_name("context-item"),
             copy_accumulators: xot.add_name("copy-accumulators"),
             copy_namespaces: xot.add_name("copy-namespaces"),
             data_type: xot.add_name("data-type"),
@@ -265,12 +273,14 @@ impl Names {
             names: xot.add_name("names"),
             nan: xot.add_name("NaN"),
             namespace: xot.add_name("namespace"),
+            namespace_context: xot.add_name("namespace-context"),
             order: xot.add_name("order"),
             pattern_separator: xot.add_name("pattern-separator"),
             phase: xot.add_name("phase"),
             percent: xot.add_name("percent"),
             per_mille: xot.add_name("per-mille"),
             regex: xot.add_name("regex"),
+            schema_aware: xot.add_name("schema-aware"),
             select: xot.add_name("select"),
             separator: xot.add_name("separator"),
             stable: xot.add_name("stable"),
@@ -285,6 +295,8 @@ impl Names {
             use_character_maps: xot.add_name("use-character-maps"),
             validation: xot.add_name("validation"),
             visibility: xot.add_name("visibility"),
+            with_params: xot.add_name("with-params"),
+            xpath: xot.add_name("xpath"),
             zero_digit: xot.add_name("zero-digit"),
 
             // standard attributes
