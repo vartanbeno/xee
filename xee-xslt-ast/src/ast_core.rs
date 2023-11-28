@@ -517,6 +517,12 @@ pub struct Document {
     pub span: Span,
 }
 
+impl From<Document> for SequenceConstructorItem {
+    fn from(i: Document) -> Self {
+        SequenceConstructorInstruction::Document(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Element {

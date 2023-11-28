@@ -44,6 +44,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::CopyOf => {
                 ast::CopyOf::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Document => {
+                ast::Document::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)

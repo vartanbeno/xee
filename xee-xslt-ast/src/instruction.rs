@@ -478,6 +478,21 @@ impl InstructionParser for ast::DecimalFormat {
     }
 }
 
+impl InstructionParser for ast::Document {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Document {
+            validation: element.optional(names.validation, element.validation())?,
+            type_: element.optional(names.type_, element.eqname())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
