@@ -806,6 +806,17 @@ impl InstructionParser for ast::Key {
     }
 }
 
+impl InstructionParser for ast::Map {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::Map {
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {

@@ -63,6 +63,7 @@ impl SequenceConstructorName {
                 ast::ForEachGroup::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
+            SequenceConstructorName::Map => ast::Map::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }

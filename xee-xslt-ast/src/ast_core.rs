@@ -799,6 +799,12 @@ pub struct Map {
     pub sequence_constructor: SequenceConstructor,
 }
 
+impl From<Map> for SequenceConstructorItem {
+    fn from(i: Map) -> Self {
+        SequenceConstructorInstruction::Map(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MapEntry {
