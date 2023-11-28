@@ -279,6 +279,26 @@ impl InstructionParser for ast::Attribute {
     }
 }
 
+impl InstructionParser for ast::AttributeSet {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        let parse = content_parse(many(instruction(names.xsl_attribute)));
+
+        Ok(ast::AttributeSet {
+            name: element.required(names.name, element.eqname())?,
+            use_attribute_sets: element.optional(names.use_attribute_sets, element.eqnames())?,
+            visibility: element.optional(names.visibility, element.visibility_with_abstract())?,
+            streamable: element.boolean_with_default(names.streamable, false)?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;

@@ -336,7 +336,7 @@ pub struct AttributeSet {
     pub name: EqName,
     pub use_attribute_sets: Option<Vec<EqName>>,
     pub visibility: Option<VisibilityWithAbstract>,
-    pub streamable: Option<bool>,
+    pub streamable: bool,
 
     pub content: Vec<Attribute>,
 

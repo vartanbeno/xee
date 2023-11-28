@@ -87,6 +87,7 @@ pub(crate) struct Names {
 
     // XSL elements
     pub(crate) xsl_accumulator_rule: xot::NameId,
+    pub(crate) xsl_attribute: xot::NameId,
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
     pub(crate) xsl_non_matching_substring: xot::NameId,
@@ -189,6 +190,7 @@ impl Names {
             declaration_names: DeclarationName::names(xot, xsl_ns),
 
             xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
+            xsl_attribute: xot.add_name_ns("attribute", xsl_ns),
             xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
             xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
             xsl_non_matching_substring: xot.add_name_ns("non-matching-substring", xsl_ns),
