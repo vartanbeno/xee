@@ -4,10 +4,10 @@ use std::str::FromStr;
 use strum::VariantNames;
 use xot::{NameId, NamespaceId, Xot};
 
-use crate::ast_core::{self as ast, DeclarationName, SequenceConstructorName};
+use crate::ast_core::{self as ast, DeclarationName, OverrideContentName, SequenceConstructorName};
 use crate::combinator::ElementError;
 use crate::element::Element;
-use crate::instruction::{DeclarationParser, SequenceConstructorParser};
+use crate::instruction::{DeclarationParser, OverrideContentParser, SequenceConstructorParser};
 
 impl SequenceConstructorName {
     pub(crate) fn parse(
@@ -131,6 +131,30 @@ impl DeclarationName {
     }
 }
 
+impl OverrideContentName {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::OverrideContent, ElementError> {
+        use ast::OverrideContentName::*;
+
+        match self {
+            Template => ast::Template::parse_override_content(element),
+            Function => ast::Function::parse_override_content(element),
+            Variable => ast::Variable::parse_override_content(element),
+            Param => ast::Param::parse_override_content(element),
+            AttributeSet => ast::AttributeSet::parse_override_content(element),
+        }
+    }
+
+    fn names(xot: &mut Xot, xsl_ns: xot::NamespaceId) -> BTreeMap<NameId, OverrideContentName> {
+        let mut override_content_names = BTreeMap::new();
+        for variant_name in Self::VARIANTS {
+            let name = xot.add_name_ns(variant_name, xsl_ns);
+            let constructor = OverrideContentName::from_str(variant_name).unwrap();
+            override_content_names.insert(name, constructor);
+        }
+        override_content_names
+    }
+}
+
 pub(crate) struct Names {
     pub(crate) xsl_ns: NamespaceId,
 
@@ -216,6 +240,7 @@ pub(crate) struct Names {
     pub(crate) phase: xot::NameId,
     pub(crate) percent: xot::NameId,
     pub(crate) per_mille: xot::NameId,
+    pub(crate) priority: xot::NameId,
     pub(crate) regex: xot::NameId,
     pub(crate) required: xot::NameId,
     pub(crate) result_prefix: xot::NameId,
@@ -384,6 +409,7 @@ impl Names {
             phase: xot.add_name("phase"),
             percent: xot.add_name("percent"),
             per_mille: xot.add_name("per-mille"),
+            priority: xot.add_name("priority"),
             regex: xot.add_name("regex"),
             required: xot.add_name("required"),
             result_prefix: xot.add_name("result-prefix"),

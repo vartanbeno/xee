@@ -344,6 +344,12 @@ pub struct AttributeSet {
     pub span: Span,
 }
 
+impl From<AttributeSet> for OverrideContent {
+    fn from(i: AttributeSet) -> Self {
+        OverrideContent::AttributeSet(Box::new(i))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Break {
@@ -683,6 +689,12 @@ pub struct Function {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Function> for OverrideContent {
+    fn from(i: Function) -> Self {
+        OverrideContent::Function(Box::new(i))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1223,14 +1235,17 @@ pub struct Override {
     pub span: Span,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(strum(serialize_all = "kebab-case"))]
+#[strum_discriminants(name(OverrideContentName))]
 pub enum OverrideContent {
-    Template(Template),
-    Function(Function),
-    Variable(Variable),
-    Param(Param),
-    AttributeSet(AttributeSet),
+    Template(Box<Template>),
+    Function(Box<Function>),
+    Variable(Box<Variable>),
+    Param(Box<Param>),
+    AttributeSet(Box<AttributeSet>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1300,6 +1315,12 @@ pub struct Param {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Param> for OverrideContent {
+    fn from(i: Param) -> Self {
+        OverrideContent::Param(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1436,10 +1457,16 @@ pub struct Template {
 
     pub context_item: Option<ContextItem>,
     pub params: Vec<Param>,
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Template> for OverrideContent {
+    fn from(t: Template) -> Self {
+        OverrideContent::Template(Box::new(t))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1544,6 +1571,12 @@ pub struct Variable {
 impl From<Variable> for SequenceConstructorItem {
     fn from(v: Variable) -> Self {
         SequenceConstructorInstruction::Variable(Box::new(v)).into()
+    }
+}
+
+impl From<Variable> for OverrideContent {
+    fn from(v: Variable) -> Self {
+        OverrideContent::Variable(Box::new(v))
     }
 }
 

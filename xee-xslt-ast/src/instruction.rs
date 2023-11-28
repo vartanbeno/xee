@@ -1,6 +1,6 @@
 use xot::{NameId, Xot};
 
-use crate::ast_core as ast;
+use crate::ast_core::{self as ast, Visibility};
 use crate::combinator::{many, one, one_or_more, optional, ElementError as Error, NodeParser};
 use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
 
@@ -53,6 +53,17 @@ pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
 }
 
 impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declaration> {}
+
+pub(crate) trait OverrideContentParser:
+    InstructionParser + Into<ast::OverrideContent>
+{
+    fn parse_override_content(element: &Element) -> Result<ast::OverrideContent> {
+        let item = Self::parse_and_validate(element)?;
+        Ok(item.into())
+    }
+}
+
+impl<T> OverrideContentParser for T where T: InstructionParser + Into<ast::OverrideContent> {}
 
 impl InstructionParser for ast::SequenceConstructorItem {
     fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
@@ -1212,7 +1223,43 @@ impl InstructionParser for ast::Sort {
 
 // TODO: xsl:strip-space
 
-// TODO: xsl:template
+impl InstructionParser for ast::Template {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        let match_ = element.optional(names.match_, element.pattern())?;
+        let name = element.optional(names.name, element.eqname())?;
+        let priority = element.optional(names.priority, element.decimal())?;
+        let mode = element.optional(names.mode, element.tokens())?;
+        let as_ = element.optional(names.as_, element.sequence_type())?;
+        let visibility = element.optional(names.visibility, element.visibility_with_abstract())?;
+
+        let standard = element.standard()?;
+
+        let parse = content_parse(
+            optional(instruction(names.context_item))
+                .then(many(instruction(names.xsl_param)))
+                .then(sequence_constructor()),
+        );
+        let ((context_item, params), sequence_constructor) = parse(element)?;
+
+        Ok(ast::Template {
+            match_,
+            name,
+            priority,
+            mode,
+            as_,
+            visibility,
+
+            standard,
+            span: element.span,
+
+            context_item,
+            params,
+            sequence_constructor,
+        })
+    }
+}
 
 // TOD: xsl:text
 

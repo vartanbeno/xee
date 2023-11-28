@@ -253,7 +253,7 @@ impl<'a> Element<'a> {
             extension_element_prefixes: self
                 .optional(names.extension_element_prefixes, self.prefixes())?,
             use_when: self.optional(names.use_when, self.xpath())?,
-            version: self.optional(names.version, Self::decimal)?,
+            version: self.optional(names.version, Self::_decimal)?,
             xpath_default_namespace: self.optional(names.xpath_default_namespace, self.uri())?,
         })
     }
@@ -663,9 +663,15 @@ impl<'a> Element<'a> {
         Self::_prefixes
     }
 
-    fn decimal(s: &str, _span: Span) -> Result<ast::Decimal, AttributeError> {
+    fn _decimal(s: &str, _span: Span) -> Result<ast::Decimal, AttributeError> {
         // TODO
         Ok(s.to_string())
+    }
+
+    pub(crate) fn decimal(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Decimal, AttributeError> + '_ {
+        Self::_decimal
     }
 
     fn _exclude_result_prefixes(
