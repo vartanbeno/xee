@@ -646,16 +646,22 @@ impl From<ForEachGroup> for SequenceConstructorItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Fork {
+    pub fallbacks: Vec<Fallback>,
     pub content: ForkContent,
 
     pub standard: Standard,
     pub span: Span,
 }
 
+impl From<Fork> for SequenceConstructorItem {
+    fn from(i: Fork) -> Self {
+        SequenceConstructorInstruction::Fork(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ForkContent {
-    Fallback(Vec<Fallback>),
     SequenceFallbacks(Vec<(Sequence, Vec<Fallback>)>),
     ForEachGroup((ForEachGroup, Vec<Fallback>)),
 }

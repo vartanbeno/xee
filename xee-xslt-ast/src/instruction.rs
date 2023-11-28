@@ -631,6 +631,20 @@ impl InstructionParser for ast::ForEachGroup {
     }
 }
 
+// impl InstructionParser for ast::Fork {
+//     fn parse(element: &Element) -> Result<Self> {
+//         let names = &element.state.names;
+//         let parse = content_parse(many(instruction(names.xsl_fallback)));
+
+//         Ok(ast::Fork {
+//             standard: element.standard()?,
+//             span: element.span,
+
+//             content: parse(element)?,
+//         })
+//     }
+// }
+
 impl InstructionParser for ast::Function {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
