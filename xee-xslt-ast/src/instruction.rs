@@ -998,6 +998,18 @@ impl InstructionParser for ast::NamespaceAlias {
     }
 }
 
+impl InstructionParser for ast::NextIteration {
+    fn parse(element: &Element) -> Result<Self> {
+        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+        Ok(ast::NextIteration {
+            standard: element.standard()?,
+            span: element.span,
+
+            with_params: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {

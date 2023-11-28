@@ -994,10 +994,16 @@ pub enum PrefixOrDefault {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NextIteration {
-    pub params: Vec<Param>,
-
     pub standard: Standard,
     pub span: Span,
+
+    pub with_params: Vec<WithParam>,
+}
+
+impl From<NextIteration> for SequenceConstructorItem {
+    fn from(i: NextIteration) -> Self {
+        SequenceConstructorInstruction::NextIteration(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

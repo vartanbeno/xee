@@ -74,6 +74,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Namespace => {
                 ast::Namespace::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::NextIteration => {
+                ast::NextIteration::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
