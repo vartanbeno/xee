@@ -311,6 +311,22 @@ impl InstructionParser for ast::Break {
     }
 }
 
+impl InstructionParser for ast::CallTemplate {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+
+        Ok(ast::CallTemplate {
+            name: element.required(names.name, element.eqname())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
