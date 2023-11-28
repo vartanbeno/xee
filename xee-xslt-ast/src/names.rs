@@ -71,6 +71,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Message => {
                 ast::Message::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Namespace => {
+                ast::Namespace::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }

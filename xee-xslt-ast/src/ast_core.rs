@@ -959,13 +959,19 @@ pub enum Typed {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Namespace {
-    pub name: Option<ValueTemplate<NcName>>,
+    pub name: ValueTemplate<NcName>,
     pub select: Option<Expression>,
 
     pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Namespace> for SequenceConstructorItem {
+    fn from(i: Namespace) -> Self {
+        SequenceConstructorInstruction::Namespace(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -965,6 +965,21 @@ impl InstructionParser for ast::Mode {
     }
 }
 
+impl InstructionParser for ast::Namespace {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Namespace {
+            name: element.required(names.name, element.value_template(element.ncname()))?,
+            select: element.optional(names.select, element.xpath())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
