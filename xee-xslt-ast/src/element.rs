@@ -392,6 +392,16 @@ impl<'a> Element<'a> {
         Self::_qname
     }
 
+    fn _ncname(s: &str, _span: Span) -> Result<ast::NcName, AttributeError> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn ncname(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::NcName, AttributeError> + '_ {
+        Self::_ncname
+    }
+
     fn _id(s: &str, _span: Span) -> Result<ast::Id, AttributeError> {
         Ok(s.to_string())
     }

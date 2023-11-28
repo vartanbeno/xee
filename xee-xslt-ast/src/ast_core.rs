@@ -835,12 +835,18 @@ pub struct MatchingSubstring {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Merge {
-    pub merge_source: Vec<MergeSource>,
-    pub merge_action: MergeAction,
-    pub fallback: Vec<Fallback>,
-
     pub standard: Standard,
     pub span: Span,
+
+    pub merge_sources: Vec<MergeSource>,
+    pub merge_action: MergeAction,
+    pub fallbacks: Vec<Fallback>,
+}
+
+impl From<Merge> for SequenceConstructorItem {
+    fn from(i: Merge) -> Self {
+        SequenceConstructorInstruction::Merge(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -872,19 +878,19 @@ pub struct MergeKey {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MergeSource {
     pub name: Option<NcName>,
-    pub for_each_time: Option<Expression>,
+    pub for_each_item: Option<Expression>,
     pub for_each_source: Option<Expression>,
     pub select: Expression,
-    pub streamable: Option<bool>,
-    pub use_accumlators: Option<Vec<Token>>,
-    pub sort_before_merge: Option<bool>,
+    pub streamable: bool,
+    pub use_accumulators: Option<Vec<Token>>,
+    pub sort_before_merge: bool,
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
 
-    pub content: Vec<MergeKey>,
-
     pub standard: Standard,
     pub span: Span,
+
+    pub merge_keys: Vec<MergeKey>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

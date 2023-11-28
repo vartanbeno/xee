@@ -119,6 +119,51 @@ where
     }
 }
 
+pub(crate) struct OneParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<V>,
+{
+    parse_value: P,
+}
+
+impl<V, P> OneParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<V>,
+{
+    pub(crate) fn new(parse_value: P) -> Self {
+        Self { parse_value }
+    }
+}
+
+pub(crate) fn one<V, P>(parse_value: P) -> OneParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<V>,
+{
+    OneParser::new(parse_value)
+}
+
+impl<V, P> NodeParser<V> for OneParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<V>,
+{
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(V, Option<Node>)> {
+        if let Some(node) = node {
+            let item = (self.parse_value)(node, state, context);
+            match item {
+                Ok(item) => Ok((item, state.next(node))),
+                Err(e) => Err(e),
+            }
+        } else {
+            Err(ElementError::UnexpectedEnd)
+        }
+    }
+}
+
 pub(crate) struct EndParser;
 
 impl EndParser {

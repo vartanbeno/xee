@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::combinator::{many, one_or_more, optional, ElementError as Error, NodeParser};
+use crate::combinator::{many, one, one_or_more, optional, ElementError as Error, NodeParser};
 use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
 
 type Result<V> = std::result::Result<V, Error>;
@@ -839,6 +839,86 @@ impl InstructionParser for ast::MatchingSubstring {
             span: element.span,
 
             sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::Merge {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let standard = element.standard()?;
+        let parse = content_parse(one_or_more(instruction(names.xsl_merge_source)).then(
+            one(instruction(names.xsl_merge_action)).then(many(instruction(names.xsl_fallback))),
+        ));
+        let (merge_sources, (merge_action, fallbacks)) = parse(element)?;
+
+        Ok(ast::Merge {
+            standard,
+            span: element.span,
+
+            merge_sources,
+            merge_action,
+            fallbacks,
+        })
+    }
+}
+
+impl InstructionParser for ast::MergeAction {
+    fn parse(element: &Element) -> Result<Self> {
+        let standard = element.standard()?;
+        Ok(ast::MergeAction {
+            standard,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::MergeKey {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::MergeKey {
+            select: element.optional(names.select, element.xpath())?,
+            lang: element.optional(names.lang, element.value_template(element.language()))?,
+            order: element.optional(names.order, element.value_template(element.order()))?,
+            collation: element.optional(names.collation, element.value_template(element.uri()))?,
+            case_order: element.optional(
+                names.case_order,
+                element.value_template(element.case_order()),
+            )?,
+            data_type: element
+                .optional(names.data_type, element.value_template(element.data_type()))?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::MergeSource {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        let parse = content_parse(one_or_more(instruction(names.xsl_merge_key)));
+
+        Ok(ast::MergeSource {
+            name: element.optional(names.name, element.ncname())?,
+            for_each_item: element.optional(names.for_each_item, element.xpath())?,
+            for_each_source: element.optional(names.for_each_source, element.xpath())?,
+            select: element.required(names.select, element.xpath())?,
+            streamable: element.boolean_with_default(names.streamable, false)?,
+            use_accumulators: element.optional(names.use_accumulators, element.tokens())?,
+            sort_before_merge: element.boolean_with_default(names.sort_before_merge, false)?,
+            validation: element.optional(names.validation, element.validation())?,
+            type_: element.optional(names.type_, element.eqname())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            merge_keys: parse(element)?,
         })
     }
 }

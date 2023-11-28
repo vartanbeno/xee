@@ -67,6 +67,7 @@ impl SequenceConstructorName {
             SequenceConstructorName::MapEntry => {
                 ast::MapEntry::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Merge => ast::Merge::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
@@ -120,6 +121,9 @@ pub(crate) struct Names {
     pub(crate) xsl_attribute: xot::NameId,
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
+    pub(crate) xsl_merge_action: xot::NameId,
+    pub(crate) xsl_merge_key: xot::NameId,
+    pub(crate) xsl_merge_source: xot::NameId,
     pub(crate) xsl_non_matching_substring: xot::NameId,
     pub(crate) xsl_on_completion: xot::NameId,
     pub(crate) xsl_otherwise: xot::NameId,
@@ -151,6 +155,8 @@ pub(crate) struct Names {
     pub(crate) exponent_separator: xot::NameId,
     pub(crate) extension_element_prefixes: xot::NameId,
     pub(crate) flags: xot::NameId,
+    pub(crate) for_each_item: xot::NameId,
+    pub(crate) for_each_source: xot::NameId,
     pub(crate) group_adjacent: xot::NameId,
     pub(crate) group_by: xot::NameId,
     pub(crate) group_ending_with: xot::NameId,
@@ -186,6 +192,7 @@ pub(crate) struct Names {
     pub(crate) schema_location: xot::NameId,
     pub(crate) select: xot::NameId,
     pub(crate) separator: xot::NameId,
+    pub(crate) sort_before_merge: xot::NameId,
     pub(crate) stable: xot::NameId,
     pub(crate) static_: xot::NameId,
     pub(crate) streamable: xot::NameId,
@@ -195,6 +202,7 @@ pub(crate) struct Names {
     pub(crate) tunnel: xot::NameId,
     pub(crate) type_: xot::NameId,
     pub(crate) use_: xot::NameId,
+    pub(crate) use_accumulators: xot::NameId,
     pub(crate) use_attribute_sets: xot::NameId,
     pub(crate) use_character_maps: xot::NameId,
     pub(crate) validation: xot::NameId,
@@ -265,6 +273,9 @@ impl Names {
             xsl_attribute: xot.add_name_ns("attribute", xsl_ns),
             xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
             xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
+            xsl_merge_action: xot.add_name_ns("merge-action", xsl_ns),
+            xsl_merge_key: xot.add_name_ns("merge-key", xsl_ns),
+            xsl_merge_source: xot.add_name_ns("merge-source", xsl_ns),
             xsl_non_matching_substring: xot.add_name_ns("non-matching-substring", xsl_ns),
             xsl_on_completion: xot.add_name_ns("on-completion", xsl_ns),
             xsl_otherwise: xot.add_name_ns("otherwise", xsl_ns),
@@ -295,6 +306,8 @@ impl Names {
             exponent_separator: xot.add_name("exponent-separator"),
             extension_element_prefixes: xot.add_name("extension-element-prefixes"),
             flags: xot.add_name("flags"),
+            for_each_item: xot.add_name("for-each-item"),
+            for_each_source: xot.add_name("for-each-source"),
             group_adjacent: xot.add_name("group-adjacent"),
             group_by: xot.add_name("group-by"),
             group_ending_with: xot.add_name("group-ending-with"),
@@ -330,6 +343,7 @@ impl Names {
             schema_location: xot.add_name("schema-location"),
             select: xot.add_name("select"),
             separator: xot.add_name("separator"),
+            sort_before_merge: xot.add_name("sort-before-merge"),
             stable: xot.add_name("stable"),
             static_: xot.add_name("static"),
             streamability: xot.add_name("streamability"),
@@ -339,6 +353,7 @@ impl Names {
             tunnel: xot.add_name("tunnel"),
             type_: xot.add_name("type"),
             use_: xot.add_name("use"),
+            use_accumulators: xot.add_name("use-accumulators"),
             use_attribute_sets: xot.add_name("use-attribute-sets"),
             use_character_maps: xot.add_name("use-character-maps"),
             validation: xot.add_name("validation"),
