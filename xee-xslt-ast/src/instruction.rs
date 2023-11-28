@@ -631,6 +631,43 @@ impl InstructionParser for ast::ForEachGroup {
     }
 }
 
+impl InstructionParser for ast::Function {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let name = element.required(names.name, element.eqname())?;
+        let as_ = element.optional(names.as_, element.sequence_type())?;
+        let visibility = element.optional(names.visibility, element.visibility_with_abstract())?;
+        let streamability = element.optional(names.streamability, element.streamability())?;
+        let override_extension_function =
+            element.boolean_with_default(names.override_extension_function, false)?;
+        // deprecated
+        let override_ = element.boolean_with_default(names.override_, false)?;
+        let new_each_time = element.optional(names.new_each_time, element.new_each_time())?;
+        let cache = element.boolean_with_default(names.cache, false)?;
+        let standard = element.standard()?;
+
+        let parse = content_parse(many(instruction(names.xsl_param)).then(sequence_constructor()));
+        let (params, sequence_constructor) = parse(element)?;
+
+        Ok(ast::Function {
+            name,
+            as_,
+            visibility,
+            streamability,
+            override_extension_function,
+            override_,
+            new_each_time,
+            cache,
+
+            standard,
+            span: element.span,
+
+            params,
+            sequence_constructor,
+        })
+    }
+}
+
 impl InstructionParser for ast::If {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -690,6 +727,25 @@ impl InstructionParser for ast::OutputCharacter {
 
             standard: element.standard()?,
             span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::Param {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Param {
+            name: element.required(names.name, element.eqname())?,
+            select: element.optional(names.select, element.xpath())?,
+            as_: element.optional(names.as_, element.sequence_type())?,
+            required: element.boolean_with_default(names.required, false)?,
+            tunnel: element.boolean_with_default(names.tunnel, false)?,
+            static_: element.boolean_with_default(names.static_, false)?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
         })
     }
 }

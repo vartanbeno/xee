@@ -854,6 +854,47 @@ impl<'a> Element<'a> {
         Self::_use
     }
 
+    fn _streamability(&self, s: &str, span: Span) -> Result<ast::Streamability, AttributeError> {
+        use ast::Streamability::*;
+
+        match s {
+            "unclassified" => Ok(Unclassified),
+            "absorbing" => Ok(Absorbing),
+            "inspection" => Ok(Inspection),
+            "filter" => Ok(Filter),
+            "shallow-descent" => Ok(ShallowDescent),
+            "deep-descent" => Ok(DeepDescent),
+            "ascent" => Ok(Ascent),
+            _ => Ok(EqName(self._eqname(s, span)?)),
+        }
+    }
+
+    pub(crate) fn streamability(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Streamability, AttributeError> + '_ {
+        |s, span| self._streamability(s, span)
+    }
+
+    fn _new_each_time(s: &str, span: Span) -> Result<ast::NewEachTime, AttributeError> {
+        use ast::NewEachTime::*;
+
+        match s {
+            "yes" | "1" | "true" => Ok(Yes),
+            "no" | "0" | "false" => Ok(No),
+            "maybe" => Ok(Maybe),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn new_each_time(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::NewEachTime, AttributeError> + '_ {
+        Self::_new_each_time
+    }
+
     // TODO: message ignored
     pub(crate) fn attribute_unexpected(&self, name: NameId, _message: &str) -> AttributeError {
         let (local, namespace) = self.state.xot.name_ns_str(name);

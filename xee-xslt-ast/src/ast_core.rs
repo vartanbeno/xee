@@ -667,12 +667,13 @@ pub struct Function {
     pub as_: Option<SequenceType>,
     pub visibility: Option<VisibilityWithAbstract>,
     pub streamability: Option<Streamability>,
-    pub override_extension_function: Option<bool>,
+    pub override_extension_function: bool,
+    pub override_: bool,
     pub new_each_time: Option<NewEachTime>,
-    pub cache: Option<bool>,
+    pub cache: bool,
 
     pub params: Vec<Param>,
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1225,9 +1226,9 @@ pub struct Param {
     pub name: EqName,
     pub select: Option<Expression>,
     pub as_: Option<SequenceType>,
-    pub required: Option<bool>,
-    pub tunnel: Option<bool>,
-    pub static_: Option<bool>,
+    pub required: bool,
+    pub tunnel: bool,
+    pub static_: bool,
 
     pub content: SequenceConstructor,
 
