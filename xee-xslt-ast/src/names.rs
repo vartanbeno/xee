@@ -95,9 +95,11 @@ pub(crate) struct Names {
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
     pub(crate) xsl_non_matching_substring: xot::NameId,
+    pub(crate) xsl_otherwise: xot::NameId,
     pub(crate) xsl_output_character: xot::NameId,
     pub(crate) xsl_sort: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
+    pub(crate) xsl_when: xot::NameId,
     pub(crate) xsl_with_param: xot::NameId,
 
     // attributes on XSLT elements
@@ -203,9 +205,11 @@ impl Names {
             xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
             xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
             xsl_non_matching_substring: xot.add_name_ns("non-matching-substring", xsl_ns),
+            xsl_otherwise: xot.add_name_ns("otherwise", xsl_ns),
             xsl_output_character: xot.add_name_ns("output-character", xsl_ns),
             xsl_sort: xot.add_name_ns("sort", xsl_ns),
             xsl_transform: xot.add_name_ns("transform", xsl_ns),
+            xsl_when: xot.add_name_ns("when", xsl_ns),
             xsl_with_param: xot.add_name_ns("with-param", xsl_ns),
 
             as_: xot.add_name("as"),

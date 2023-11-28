@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
-use crate::combinator::{many, optional, ElementError as Error, NodeParser};
+use crate::combinator::{many, one_or_more, optional, ElementError as Error, NodeParser};
 use crate::element::{by_element, content_parse, instruction, Element};
 
 type Result<V> = std::result::Result<V, Error>;
@@ -359,6 +359,26 @@ impl InstructionParser for ast::CharacterMap {
     }
 }
 
+impl InstructionParser for ast::Choose {
+    fn parse(element: &Element) -> Result<Self> {
+        let standard = element.standard()?;
+
+        let parse = content_parse(
+            one_or_more(instruction(element.state.names.xsl_when))
+                .then(optional(instruction(element.state.names.xsl_otherwise))),
+        );
+
+        let (when, otherwise) = parse(element)?;
+        Ok(ast::Choose {
+            standard,
+            span: element.span,
+
+            when,
+            otherwise,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -440,6 +460,17 @@ impl InstructionParser for ast::MatchingSubstring {
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::Otherwise {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::Otherwise {
             standard: element.standard()?,
             span: element.span,
 
@@ -545,6 +576,19 @@ impl InstructionParser for ast::Variable {
                 .into());
         }
         Ok(())
+    }
+}
+
+impl InstructionParser for ast::When {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::When {
+            test: element.required(names.test, element.xpath())?,
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
     }
 }
 
