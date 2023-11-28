@@ -744,13 +744,13 @@ pub struct Import {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ImportSchema {
-    namespace: Option<Uri>,
-    schema_location: Option<Uri>,
-
-    content: Option<Schema>,
+    pub namespace: Option<Uri>,
+    pub schema_location: Option<Uri>,
 
     pub standard: Standard,
     pub span: Span,
+
+    pub schema: Option<Schema>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

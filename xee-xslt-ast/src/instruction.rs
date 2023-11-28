@@ -728,6 +728,23 @@ impl InstructionParser for ast::Import {
     }
 }
 
+impl InstructionParser for ast::ImportSchema {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        Ok(ast::ImportSchema {
+            namespace: element.optional(names.namespace, element.uri())?,
+            schema_location: element.optional(names.schema_location, element.uri())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            // TODO
+            schema: None,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {
