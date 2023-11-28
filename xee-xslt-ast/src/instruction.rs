@@ -379,6 +379,18 @@ impl InstructionParser for ast::Choose {
     }
 }
 
+impl InstructionParser for ast::Comment {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::Comment {
+            select: element.optional(element.state.names.select, element.xpath())?,
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;

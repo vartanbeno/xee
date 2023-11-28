@@ -34,6 +34,12 @@ impl SequenceConstructorName {
             SequenceConstructorName::CallTemplate => {
                 ast::CallTemplate::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Choose => {
+                ast::Choose::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::Comment => {
+                ast::Comment::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::CopyOf => {
                 ast::CopyOf::parse_sequence_constructor_item(element)

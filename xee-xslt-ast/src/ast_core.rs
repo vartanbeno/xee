@@ -429,6 +429,12 @@ pub struct Comment {
     pub span: Span,
 }
 
+impl From<Comment> for SequenceConstructorItem {
+    fn from(i: Comment) -> Self {
+        SequenceConstructorInstruction::Comment(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ContextItem {
