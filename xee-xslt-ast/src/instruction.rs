@@ -1048,6 +1048,43 @@ impl InstructionParser for ast::NonMatchingSubstring {
     }
 }
 
+impl InstructionParser for ast::Number {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        Ok(ast::Number {
+            value: element.optional(names.value, element.xpath())?,
+            select: element.optional(names.select, element.xpath())?,
+            level: element.optional(names.level, element.level())?,
+            count: element.optional(names.count, element.pattern())?,
+            from: element.optional(names.from, element.pattern())?,
+            format: element.optional(names.format, element.value_template(element.string()))?,
+            lang: element.optional(names.lang, element.value_template(element.language()))?,
+            letter_value: element.optional(
+                names.letter_value,
+                element.value_template(element.letter_value()),
+            )?,
+            ordinal: element.optional(names.ordinal, element.value_template(element.string()))?,
+            start_at: element.optional(names.start_at, element.value_template(element.string()))?,
+            grouping_separator: element.optional(
+                names.grouping_separator,
+                element.value_template(element.char()),
+            )?,
+            grouping_size: element.optional(
+                names.grouping_size,
+                element.value_template(element.integer()),
+            )?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::OnCompletion {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::OnCompletion {

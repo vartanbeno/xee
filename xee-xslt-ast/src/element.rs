@@ -564,19 +564,33 @@ impl<'a> Element<'a> {
         |s, span| self._item_type(s, span)
     }
 
-    fn _boolean(s: &str, _span: Span) -> Result<bool, AttributeError> {
+    fn _boolean(s: &str, span: Span) -> Result<bool, AttributeError> {
         match s {
             "yes" | "true" | "1" => Ok(true),
             "no" | "false" | "0" => Ok(false),
             _ => Err(AttributeError::Invalid {
                 value: s.to_string(),
-                span: _span,
+                span,
             }),
         }
     }
 
     pub(crate) fn boolean(&self) -> impl Fn(&'a str, Span) -> Result<bool, AttributeError> + '_ {
         Self::_boolean
+    }
+
+    fn _integer(s: &str, span: Span) -> Result<usize, AttributeError> {
+        match s.parse() {
+            Ok(i) => Ok(i),
+            Err(_) => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn integer(&self) -> impl Fn(&'a str, Span) -> Result<usize, AttributeError> + '_ {
+        Self::_integer
     }
 
     fn _default_mode(&self, s: &str, span: Span) -> Result<ast::DefaultMode, AttributeError> {
@@ -859,6 +873,45 @@ impl<'a> Element<'a> {
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::Typed, AttributeError> + '_ {
         Self::_typed
+    }
+
+    fn _level(s: &str, span: Span) -> Result<ast::NumberLevel, AttributeError> {
+        use ast::NumberLevel::*;
+
+        match s {
+            "single" => Ok(Single),
+            "multiple" => Ok(Multiple),
+            "any" => Ok(Any),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn level(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::NumberLevel, AttributeError> + '_ {
+        Self::_level
+    }
+
+    fn _letter_value(s: &str, span: Span) -> Result<ast::LetterValue, AttributeError> {
+        use ast::LetterValue::*;
+
+        match s {
+            "alphabetic" => Ok(Alphabetic),
+            "traditional" => Ok(Traditional),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn letter_value(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::LetterValue, AttributeError> + '_ {
+        Self::_letter_value
     }
 
     fn _language(s: &str, _span: Span) -> Result<ast::Language, AttributeError> {
