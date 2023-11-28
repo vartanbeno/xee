@@ -493,6 +493,25 @@ impl InstructionParser for ast::Document {
     }
 }
 
+impl InstructionParser for ast::Element {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Element {
+            name: element.required(names.name, element.value_template(element.qname()))?,
+            namespace: element.optional(names.namespace, element.value_template(element.uri()))?,
+            inherit_namespaces: element.boolean_with_default(names.inherit_namespaces, false)?,
+            use_attribute_sets: element.optional(names.use_attribute_sets, element.eqnames())?,
+            type_: element.optional(names.type_, element.eqname())?,
+            validation: element.optional(names.validation, element.validation())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {

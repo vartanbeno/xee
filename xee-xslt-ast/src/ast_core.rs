@@ -526,9 +526,9 @@ impl From<Document> for SequenceConstructorItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Element {
-    pub name: ValueTemplate<EqName>,
+    pub name: ValueTemplate<QName>,
     pub namespace: Option<ValueTemplate<Uri>>,
-    pub inherit_namespaces: Option<bool>,
+    pub inherit_namespaces: bool,
     pub use_attribute_sets: Option<Vec<EqName>>,
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
@@ -537,6 +537,12 @@ pub struct Element {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Element> for SequenceConstructorItem {
+    fn from(i: Element) -> Self {
+        SequenceConstructorInstruction::Element(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
