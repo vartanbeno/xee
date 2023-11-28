@@ -214,7 +214,7 @@ pub struct AccumulatorRule {
     pub match_: Pattern,
     pub phase: Option<AccumulatorPhase>,
     pub select: Option<Expression>,
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -296,7 +296,7 @@ pub struct Assert {
     pub select: Option<Expression>,
     pub error_code: Option<ValueTemplate<EqName>>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -318,7 +318,7 @@ pub struct Attribute {
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -338,7 +338,7 @@ pub struct AttributeSet {
     pub visibility: Option<VisibilityWithAbstract>,
     pub streamable: bool,
 
-    pub content: Vec<Attribute>,
+    pub attributes: Vec<Attribute>,
 
     pub standard: Standard,
     pub span: Span,
@@ -349,7 +349,7 @@ pub struct AttributeSet {
 pub struct Break {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -366,7 +366,7 @@ impl From<Break> for SequenceConstructorItem {
 pub struct CallTemplate {
     pub name: EqName,
 
-    pub content: Vec<WithParam>,
+    pub with_params: Vec<WithParam>,
 
     pub standard: Standard,
     pub span: Span,
@@ -384,7 +384,7 @@ pub struct Catch {
     pub errors: Option<Vec<Token>>,
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -396,7 +396,7 @@ pub struct CharacterMap {
     pub name: EqName,
     pub use_character_maps: Option<Vec<EqName>>,
 
-    pub content: Vec<OutputCharacter>,
+    pub output_characters: Vec<OutputCharacter>,
 
     pub standard: Standard,
     pub span: Span,
@@ -423,7 +423,7 @@ impl From<Choose> for SequenceConstructorItem {
 pub struct Comment {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -455,7 +455,7 @@ pub struct Copy {
     pub type_: Option<EqName>,
     pub validation: Validation,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -511,7 +511,7 @@ pub struct DecimalFormat {
 pub struct Document {
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -533,7 +533,7 @@ pub struct Element {
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -589,7 +589,7 @@ pub struct Expose {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Fallback {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -720,7 +720,7 @@ pub struct GlobalContextItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct If {
     pub test: Expression,
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -781,22 +781,22 @@ pub struct Key {
     pub name: EqName,
     pub match_: Pattern,
     pub use_: Option<Expression>,
-    pub composite: Option<bool>,
+    pub composite: bool,
     pub collation: Option<Uri>,
-
-    pub content: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+
+    pub sequence_constructor: SequenceConstructor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Map {
-    pub content: SequenceConstructor,
-
     pub standard: Standard,
     pub span: Span,
+
+    pub sequence_constructor: SequenceConstructor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -805,7 +805,7 @@ pub struct MapEntry {
     pub key: Expression,
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -814,7 +814,7 @@ pub struct MapEntry {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MatchingSubstring {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -834,7 +834,7 @@ pub struct Merge {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MergeAction {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -850,7 +850,7 @@ pub struct MergeKey {
     pub case_order: Option<ValueTemplate<CaseOrder>>,
     pub data_type: Option<ValueTemplate<DataType>>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -882,7 +882,7 @@ pub struct Message {
     pub terminate: Option<ValueTemplate<bool>>,
     pub error_code: Option<ValueTemplate<EqName>>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -938,7 +938,7 @@ pub struct Namespace {
     pub name: Option<ValueTemplate<NcName>>,
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -989,7 +989,7 @@ pub enum NextMatchContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NonMatchingSubstring {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1035,7 +1035,7 @@ pub enum LetterValue {
 pub struct OnCompletion {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1046,7 +1046,7 @@ pub struct OnCompletion {
 pub struct OnEmpty {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1057,7 +1057,7 @@ pub struct OnEmpty {
 pub struct OnNonEmpty {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1066,7 +1066,7 @@ pub struct OnNonEmpty {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Otherwise {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1236,7 +1236,7 @@ pub struct Param {
     pub tunnel: bool,
     pub static_: bool,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1269,7 +1269,7 @@ pub struct ProcessingInstruction {
     pub name: ValueTemplate<NcName>,
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1306,7 +1306,7 @@ pub struct ResultDocument {
     pub use_character_maps: Option<Vec<EqName>>,
     pub version: Option<ValueTemplate<NmToken>>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1317,7 +1317,7 @@ pub struct ResultDocument {
 pub struct Sequence {
     pub select: Option<Expression>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1334,7 +1334,7 @@ pub struct Sort {
     pub case_order: Option<ValueTemplate<CaseOrder>>,
     pub data_type: Option<ValueTemplate<DataType>>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1349,7 +1349,7 @@ pub struct SourceDocument {
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1460,7 +1460,7 @@ pub struct ValueOf {
     // DEPRECATED
     pub disable_output_escaping: Option<bool>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1475,7 +1475,7 @@ pub struct Variable {
     pub static_: bool,
     pub visibility: Option<VisibilityWithAbstract>,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1492,7 +1492,7 @@ impl From<Variable> for SequenceConstructorItem {
 pub struct When {
     pub test: Expression,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1501,7 +1501,7 @@ pub struct When {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct WherePopulated {
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1515,7 +1515,7 @@ pub struct WithParam {
     pub as_: Option<SequenceType>,
     pub tunnel: bool,
 
-    pub content: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1591,7 +1591,7 @@ pub type SequenceConstructor = Vec<SequenceConstructorItem>;
 pub struct ElementNode {
     pub name: Name,
     // pub attributes: HashMap<Name, Templ<String>>,
-    // pub content: SequenceConstructor,
+    // pub sequence_constructor: SequenceConstructor,
     pub standard: Standard,
     pub span: Span,
 }

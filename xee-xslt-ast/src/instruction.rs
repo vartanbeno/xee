@@ -162,7 +162,7 @@ impl InstructionParser for ast::AccumulatorRule {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -254,7 +254,7 @@ impl InstructionParser for ast::Assert {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -274,7 +274,7 @@ impl InstructionParser for ast::Attribute {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -294,7 +294,7 @@ impl InstructionParser for ast::AttributeSet {
             standard: element.standard()?,
             span: element.span,
 
-            content: parse(element)?,
+            attributes: parse(element)?,
         })
     }
 }
@@ -306,7 +306,7 @@ impl InstructionParser for ast::Break {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -322,7 +322,7 @@ impl InstructionParser for ast::CallTemplate {
             standard: element.standard()?,
             span: element.span,
 
-            content: parse(element)?,
+            with_params: parse(element)?,
         })
     }
 }
@@ -337,7 +337,7 @@ impl InstructionParser for ast::Catch {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -354,7 +354,7 @@ impl InstructionParser for ast::CharacterMap {
             standard: element.standard()?,
             span: element.span,
 
-            content: parse(element)?,
+            output_characters: parse(element)?,
         })
     }
 }
@@ -386,7 +386,7 @@ impl InstructionParser for ast::Comment {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -425,7 +425,7 @@ impl InstructionParser for ast::Copy {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -488,7 +488,7 @@ impl InstructionParser for ast::Document {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -507,7 +507,7 @@ impl InstructionParser for ast::Element {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -571,10 +571,10 @@ impl InstructionParser for ast::Expose {
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
-            content: element.sequence_constructor()?,
-
             standard: element.standard()?,
             span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -707,7 +707,7 @@ impl InstructionParser for ast::If {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -787,13 +787,32 @@ impl InstructionParser for ast::Iterate {
     }
 }
 
+impl InstructionParser for ast::Key {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        Ok(ast::Key {
+            name: element.required(names.name, element.eqname())?,
+            match_: element.required(names.match_, element.pattern())?,
+            use_: element.optional(names.use_, element.xpath())?,
+            composite: element.boolean_with_default(names.composite, false)?,
+            collation: element.optional(names.collation, element.uri())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -804,7 +823,7 @@ impl InstructionParser for ast::NonMatchingSubstring {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -816,7 +835,7 @@ impl InstructionParser for ast::OnCompletion {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -827,7 +846,7 @@ impl InstructionParser for ast::Otherwise {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -863,7 +882,7 @@ impl InstructionParser for ast::Param {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -887,7 +906,7 @@ impl InstructionParser for ast::Sort {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -934,7 +953,7 @@ impl InstructionParser for ast::Variable {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 
@@ -959,7 +978,7 @@ impl InstructionParser for ast::When {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }
@@ -976,7 +995,7 @@ impl InstructionParser for ast::WithParam {
             standard: element.standard()?,
             span: element.span,
 
-            content: element.sequence_constructor()?,
+            sequence_constructor: element.sequence_constructor()?,
         })
     }
 }

@@ -23,7 +23,7 @@ Ok(Instruction(If(If(
       end: 69,
     ),
   ),
-  content: [
+  sequence_constructor: [
     TextNode("Hello"),
   ],
   standard: Standard(

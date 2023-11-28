@@ -32,7 +32,7 @@ Ok(Instruction(ForEach(ForEach(
       stable: None,
       case_order: None,
       data_type: None,
-      content: [
+      sequence_constructor: [
         TextNode("Sort 1"),
       ],
       standard: Standard(
@@ -59,7 +59,7 @@ Ok(Instruction(ForEach(ForEach(
       stable: None,
       case_order: None,
       data_type: None,
-      content: [
+      sequence_constructor: [
         TextNode("Sort 2"),
       ],
       standard: Standard(

@@ -37,7 +37,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   ),
   flags: None,
   matching_substring: Some(MatchingSubstring(
-    content: [
+    sequence_constructor: [
       TextNode("Matching"),
     ],
     standard: Standard(
@@ -57,7 +57,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
     ),
   )),
   non_matching_substring: Some(NonMatchingSubstring(
-    content: [
+    sequence_constructor: [
       TextNode("Nonmatching"),
     ],
     standard: Standard(
@@ -78,7 +78,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   )),
   fallbacks: [
     Fallback(
-      content: [
+      sequence_constructor: [
         TextNode("Fallback 1"),
       ],
       standard: Standard(
@@ -98,7 +98,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
       ),
     ),
     Fallback(
-      content: [
+      sequence_constructor: [
         TextNode("Fallback 2"),
       ],
       standard: Standard(

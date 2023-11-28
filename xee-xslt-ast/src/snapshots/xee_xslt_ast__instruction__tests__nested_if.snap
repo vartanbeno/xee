@@ -23,7 +23,7 @@ Ok(Instruction(If(If(
       end: 69,
     ),
   ),
-  content: [
+  sequence_constructor: [
     Instruction(If(If(
       test: Expression(
         xpath: XPath(Expr([
@@ -45,7 +45,7 @@ Ok(Instruction(If(If(
           end: 91,
         ),
       ),
-      content: [
+      sequence_constructor: [
         TextNode("Hello"),
       ],
       standard: Standard(

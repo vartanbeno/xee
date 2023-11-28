@@ -12,7 +12,7 @@ Ok(Instruction(Variable(Variable(
   as_: None,
   static_: false,
   visibility: Some(Public),
-  content: [
+  sequence_constructor: [
     TextNode("Hello"),
   ],
   standard: Standard(

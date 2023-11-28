@@ -14,7 +14,7 @@ Ok(Instruction(ApplyTemplates(ApplyTemplates(
       stable: None,
       case_order: None,
       data_type: None,
-      content: [
+      sequence_constructor: [
         TextNode("Sort"),
       ],
       standard: Standard(
@@ -42,7 +42,7 @@ Ok(Instruction(ApplyTemplates(ApplyTemplates(
       select: None,
       as_: None,
       tunnel: false,
-      content: [
+      sequence_constructor: [
         TextNode("With param"),
       ],
       standard: Standard(

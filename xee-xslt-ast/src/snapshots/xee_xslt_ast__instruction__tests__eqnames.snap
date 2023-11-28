@@ -25,7 +25,7 @@ Ok(Instruction(Copy(Copy(
   ]),
   type_: None,
   validation: Strip,
-  content: [
+  sequence_constructor: [
     TextNode("Hello"),
   ],
   standard: Standard(

@@ -34,7 +34,7 @@ Ok(Instruction(Variable(Variable(
   ))),
   static_: false,
   visibility: None,
-  content: [
+  sequence_constructor: [
     TextNode("Hello"),
   ],
   standard: Standard(
