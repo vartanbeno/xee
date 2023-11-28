@@ -767,12 +767,12 @@ pub struct Include {
 pub struct Iterate {
     pub select: Expression,
 
-    pub params: Vec<Param>,
-    pub on_completion: Option<OnCompletion>,
-    pub constructor: SequenceConstructor,
-
     pub standard: Standard,
     pub span: Span,
+
+    pub params: Vec<Param>,
+    pub on_completion: Option<OnCompletion>,
+    pub sequence_constructor: SequenceConstructor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -745,6 +745,48 @@ impl InstructionParser for ast::ImportSchema {
     }
 }
 
+impl InstructionParser for ast::Include {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Include {
+            href: element.required(names.href, element.uri())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
+impl InstructionParser for ast::Iterate {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let select = element.required(names.select, element.xpath())?;
+        let standard = element.standard()?;
+
+        let parse = content_parse(
+            many(instruction(names.xsl_param))
+                .then(optional(instruction(names.xsl_on_completion)))
+                .then(sequence_constructor()),
+        );
+        let ((params, on_completion), sequence_constructor) = parse(element)?;
+
+        Ok(ast::Iterate {
+            select,
+
+            standard,
+            span: element.span,
+
+            params,
+            on_completion,
+            sequence_constructor,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {
@@ -759,6 +801,18 @@ impl InstructionParser for ast::MatchingSubstring {
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::OnCompletion {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::OnCompletion {
+            select: element.optional(element.state.names.select, element.xpath())?,
             standard: element.standard()?,
             span: element.span,
 
