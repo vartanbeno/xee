@@ -1109,6 +1109,18 @@ impl InstructionParser for ast::OnEmpty {
     }
 }
 
+impl InstructionParser for ast::OnNonEmpty {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::OnNonEmpty {
+            select: element.optional(element.state.names.select, element.xpath())?,
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Otherwise {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Otherwise {
