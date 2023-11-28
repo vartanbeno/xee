@@ -550,6 +550,24 @@ impl InstructionParser for ast::Evaluate {
     }
 }
 
+impl InstructionParser for ast::Expose {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Expose {
+            component: element.required(names.component, element.component())?,
+            names: element.required(names.names, element.tokens())?,
+            visibility: element.required(names.visibility, element.visibility_with_abstract())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {

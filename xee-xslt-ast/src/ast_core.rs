@@ -562,6 +562,12 @@ pub struct Evaluate {
     pub span: Span,
 }
 
+impl From<Evaluate> for SequenceConstructorItem {
+    fn from(i: Evaluate) -> Self {
+        SequenceConstructorInstruction::Evaluate(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum EvaluateContent {
