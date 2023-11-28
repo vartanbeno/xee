@@ -355,6 +355,12 @@ pub struct Break {
     pub span: Span,
 }
 
+impl From<Break> for SequenceConstructorItem {
+    fn from(i: Break) -> Self {
+        SequenceConstructorInstruction::Break(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CallTemplate {

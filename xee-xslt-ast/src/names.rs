@@ -30,6 +30,7 @@ impl SequenceConstructorName {
             SequenceConstructorName::Attribute => {
                 ast::Attribute::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Break => ast::Break::parse_sequence_constructor_item(element),
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::CopyOf => {
                 ast::CopyOf::parse_sequence_constructor_item(element)
