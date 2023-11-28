@@ -342,6 +342,23 @@ impl InstructionParser for ast::Catch {
     }
 }
 
+impl InstructionParser for ast::CharacterMap {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        let parse = content_parse(many(instruction(names.xsl_output_character)));
+        Ok(ast::CharacterMap {
+            name: element.required(names.name, element.eqname())?,
+            use_character_maps: element.optional(names.use_character_maps, element.eqnames())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -427,6 +444,23 @@ impl InstructionParser for ast::NonMatchingSubstring {
             span: element.span,
 
             content: element.sequence_constructor()?,
+        })
+    }
+}
+
+impl InstructionParser for ast::OutputCharacter {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::OutputCharacter {
+            character: element.required(names.character, element.char())?,
+            string: element.required(names.string, element.string())?,
+
+            standard: element.standard()?,
+            span: element.span,
         })
     }
 }

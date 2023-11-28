@@ -772,6 +772,23 @@ impl<'a> Element<'a> {
         |s, span| self._data_type(s, span)
     }
 
+    fn _char(s: &str, span: Span) -> Result<char, AttributeError> {
+        let mut chars = s.chars();
+        if let Some(char) = chars.next() {
+            if chars.next().is_none() {
+                return Ok(char);
+            }
+        }
+        Err(AttributeError::Invalid {
+            value: s.to_string(),
+            span,
+        })
+    }
+
+    pub(crate) fn char(&self) -> impl Fn(&'a str, Span) -> Result<char, AttributeError> {
+        Self::_char
+    }
+
     // TODO: message ignored
     pub(crate) fn attribute_unexpected(&self, name: NameId, _message: &str) -> AttributeError {
         let (local, namespace) = self.state.xot.name_ns_str(name);
