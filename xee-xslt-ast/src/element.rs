@@ -3,9 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{
-    children, end, many, optional, top, ElementError, NodeParser, OptionalParser,
-};
+use crate::combinator::{children, end, many, top, ElementError, NodeParser};
 use crate::context::Context;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
@@ -765,7 +763,7 @@ impl<'a> Element<'a> {
     }
 
     // TODO: message ignored
-    pub(crate) fn attribute_unexpected(&self, name: NameId, message: &str) -> AttributeError {
+    pub(crate) fn attribute_unexpected(&self, name: NameId, _message: &str) -> AttributeError {
         let (local, namespace) = self.state.xot.name_ns_str(name);
         let span = self.name_span(name);
         match span {

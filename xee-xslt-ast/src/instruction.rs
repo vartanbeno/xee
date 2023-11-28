@@ -1,8 +1,8 @@
 use xot::{NameId, Xot};
 
+use crate::ast_core as ast;
 use crate::combinator::{many, optional, ElementError as Error, NodeParser};
 use crate::element::{by_element, content_parse, instruction, Element};
-use crate::{ast_core as ast, element};
 
 type Result<V> = std::result::Result<V, Error>;
 
