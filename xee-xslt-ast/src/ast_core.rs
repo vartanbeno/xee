@@ -1057,6 +1057,12 @@ pub struct Number {
     pub span: Span,
 }
 
+impl From<Number> for SequenceConstructorItem {
+    fn from(i: Number) -> Self {
+        SequenceConstructorInstruction::Number(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum NumberLevel {
@@ -1092,6 +1098,12 @@ pub struct OnEmpty {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<OnEmpty> for SequenceConstructorItem {
+    fn from(i: OnEmpty) -> Self {
+        SequenceConstructorInstruction::OnEmpty(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
