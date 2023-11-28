@@ -53,13 +53,17 @@ impl SequenceConstructorName {
             SequenceConstructorName::Evaluate => {
                 ast::Evaluate::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Fallback => {
+                ast::Fallback::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::ForEach => {
+                ast::ForEach::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
-            SequenceConstructorName::Fallback => {
-                ast::Fallback::parse_sequence_constructor_item(element)
-            }
+
             _ => {
                 unimplemented!()
             }

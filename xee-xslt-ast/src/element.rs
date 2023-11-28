@@ -44,14 +44,15 @@ impl From<value_template::Error> for AttributeError {
 }
 
 struct ElementParsers {
+    sequence_constructor_sibling_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
     sequence_constructor_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
     declarations_parser: Box<dyn NodeParser<Vec<ast::Declaration>>>,
 }
 
 impl ElementParsers {
     fn new() -> Self {
-        let sequence_constructor_parser = children(
-            many(|node, state, context| match state.xot.value(node) {
+        let sequence_constructor_sibling_parser = many(|node, state, context| {
+            match state.xot.value(node) {
                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                     text.get().to_string(),
                 )),
@@ -64,6 +65,25 @@ impl ElementParsers {
                     // TODO: get span right
                     span: Span::new(0, 0),
                 }),
+            }
+        });
+
+        let sequence_constructor_parser = children(
+            many(|node, state, context| {
+                match state.xot.value(node) {
+                    Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                        text.get().to_string(),
+                    )),
+                    Value::Element(element) => {
+                        let new_context = context.element(element);
+                        let element = Element::new(node, element, new_context, state)?;
+                        ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+                    }
+                    _ => Err(ElementError::Unexpected {
+                        // TODO: get span right
+                        span: Span::new(0, 0),
+                    }),
+                }
             })
             .then_ignore(end()),
         );
@@ -84,6 +104,7 @@ impl ElementParsers {
         );
 
         Self {
+            sequence_constructor_sibling_parser: Box::new(sequence_constructor_sibling_parser),
             sequence_constructor_parser: Box::new(sequence_constructor_parser),
             declarations_parser: Box::new(declarations_parser),
         }
@@ -137,9 +158,25 @@ pub(crate) fn instruction<T: InstructionParser>(
     by_element_name(name, move |element| T::parse_and_validate(&element))
 }
 
-// pub(crate) fn instructions() where T: Into<T> {
+pub(crate) struct SequenceConstructorNodeParser;
 
-// }
+impl NodeParser<ast::SequenceConstructor> for SequenceConstructorNodeParser {
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(ast::SequenceConstructor, Option<Node>), ElementError> {
+        let element_parsers = ElementParsers::new();
+        element_parsers
+            .sequence_constructor_sibling_parser
+            .parse_next(node, state, context)
+    }
+}
+
+pub(crate) fn sequence_constructor() -> SequenceConstructorNodeParser {
+    SequenceConstructorNodeParser
+}
 
 pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
 where

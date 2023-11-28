@@ -2,7 +2,7 @@ use xot::{NameId, Xot};
 
 use crate::ast_core as ast;
 use crate::combinator::{many, one_or_more, optional, ElementError as Error, NodeParser};
-use crate::element::{by_element, content_parse, instruction, Element};
+use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -579,6 +579,25 @@ impl InstructionParser for ast::Fallback {
     }
 }
 
+impl InstructionParser for ast::ForEach {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let select = element.required(names.select, element.xpath())?;
+        let parse = content_parse(many(instruction(names.xsl_sort)).then(sequence_constructor()));
+        let (sort, sequence_constructor) = parse(element)?;
+
+        Ok(ast::ForEach {
+            select,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sort,
+            sequence_constructor,
+        })
+    }
+}
+
 impl InstructionParser for ast::If {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -969,6 +988,13 @@ mod tests {
     fn test_apply_templates_with_mixed_content() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:apply-templates xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:sort>Sort</xsl:sort><xsl:with-param name="a">With param</xsl:with-param></xsl:apply-templates>"#
+        ))
+    }
+
+    #[test]
+    fn test_for_each() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()"><xsl:sort>Sort 1</xsl:sort><xsl:sort>Sort 2</xsl:sort>Sequence constructor</xsl:for-each>"#
         ))
     }
 }

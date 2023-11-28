@@ -607,10 +607,16 @@ pub struct ForEach {
     pub select: Expression,
 
     pub sort: Vec<Sort>,
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<ForEach> for SequenceConstructorItem {
+    fn from(i: ForEach) -> Self {
+        SequenceConstructorInstruction::ForEach(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
