@@ -451,6 +451,33 @@ impl InstructionParser for ast::CopyOf {
     }
 }
 
+impl InstructionParser for ast::DecimalFormat {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::DecimalFormat {
+            name: element.optional(names.name, element.eqname())?,
+            decimal_separator: element.optional(names.decimal_separator, element.char())?,
+            grouping_separator: element.optional(names.grouping_separator, element.char())?,
+            infinity: element.optional(names.infinity, element.string())?,
+            minus_sign: element.optional(names.minus_sign, element.char())?,
+            exponent_separator: element.optional(names.exponent_separator, element.char())?,
+            nan: element.optional(names.nan, element.string())?,
+            percent: element.optional(names.percent, element.char())?,
+            per_mille: element.optional(names.per_mille, element.char())?,
+            zero_digit: element.optional(names.zero_digit, element.char())?,
+            digit: element.optional(names.digit, element.char())?,
+            pattern_separator: element.optional(names.pattern_separator, element.char())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::Fallback {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
