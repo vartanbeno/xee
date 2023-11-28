@@ -923,6 +923,23 @@ impl InstructionParser for ast::MergeSource {
     }
 }
 
+impl InstructionParser for ast::Message {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Message {
+            select: element.optional(names.select, element.xpath())?,
+            terminate: element
+                .optional(names.terminate, element.value_template(element.boolean()))?,
+            error_code: element
+                .optional(names.error_code, element.value_template(element.eqname()))?,
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {

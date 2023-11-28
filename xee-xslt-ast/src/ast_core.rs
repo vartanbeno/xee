@@ -906,6 +906,12 @@ pub struct Message {
     pub span: Span,
 }
 
+impl From<Message> for SequenceConstructorItem {
+    fn from(i: Message) -> Self {
+        SequenceConstructorInstruction::Message(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Mode {

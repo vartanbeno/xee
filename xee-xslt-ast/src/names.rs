@@ -68,6 +68,9 @@ impl SequenceConstructorName {
                 ast::MapEntry::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::Merge => ast::Merge::parse_sequence_constructor_item(element),
+            SequenceConstructorName::Message => {
+                ast::Message::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
@@ -198,6 +201,7 @@ pub(crate) struct Names {
     pub(crate) streamable: xot::NameId,
     pub(crate) streamability: xot::NameId,
     pub(crate) string: xot::NameId,
+    pub(crate) terminate: xot::NameId,
     pub(crate) test: xot::NameId,
     pub(crate) tunnel: xot::NameId,
     pub(crate) type_: xot::NameId,
@@ -349,6 +353,7 @@ impl Names {
             streamability: xot.add_name("streamability"),
             streamable: xot.add_name("streamable"),
             string: xot.add_name("string"),
+            terminate: xot.add_name("terminate"),
             test: xot.add_name("test"),
             tunnel: xot.add_name("tunnel"),
             type_: xot.add_name("type"),
