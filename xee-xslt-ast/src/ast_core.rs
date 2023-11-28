@@ -384,7 +384,7 @@ pub struct Catch {
     pub errors: Option<Vec<Token>>,
     pub select: Option<Expression>,
 
-    pub content: Vec<SequenceConstructor>,
+    pub content: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,

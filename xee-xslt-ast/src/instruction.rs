@@ -327,6 +327,21 @@ impl InstructionParser for ast::CallTemplate {
     }
 }
 
+impl InstructionParser for ast::Catch {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Catch {
+            errors: element.optional(names.errors, element.tokens())?,
+            select: element.optional(names.select, element.xpath())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
