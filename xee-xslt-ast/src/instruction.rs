@@ -682,6 +682,23 @@ impl InstructionParser for ast::Function {
     }
 }
 
+impl InstructionParser for ast::GlobalContextItem {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::GlobalContextItem {
+            as_: element.optional(names.as_, element.item_type())?,
+            use_: element.optional(names.use_, element.use_())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::If {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
