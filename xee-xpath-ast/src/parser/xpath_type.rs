@@ -14,6 +14,7 @@ where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
     pub(crate) sequence_type: BoxedParser<'a, I, ast::SequenceType>,
+    pub(crate) item_type: BoxedParser<'a, I, ast::ItemType>,
     pub(crate) single_type: BoxedParser<'a, I, ast::SingleType>,
 }
 
@@ -62,6 +63,9 @@ where
         )
         .to(ast::FunctionTest::AnyFunctionTest)
         .boxed();
+
+    // TODO: ugly way to get item type out of recursive
+    let mut item_type_ = None;
 
     let sequence_type = recursive(|sequence_type| {
         let typed_map_test_entry = (eqname
@@ -158,6 +162,8 @@ where
         })
         .boxed();
 
+        item_type_ = Some(item_type.clone());
+
         let occurrence = one_of([Token::QuestionMark, Token::Asterisk, Token::Plus])
             .map(|c| match c {
                 Token::QuestionMark => ast::Occurrence::Option,
@@ -185,6 +191,7 @@ where
     ParserTypeOutput {
         sequence_type,
         single_type,
+        item_type: item_type_.unwrap(),
     }
 }
 

@@ -24,6 +24,7 @@ where
     pub(crate) name: BoxedParser<'a, I, ast::NameS>,
     pub(crate) expr_single: BoxedParser<'a, I, ast::ExprSingleS>,
     pub(crate) signature: BoxedParser<'a, I, ast::Signature>,
+    pub(crate) item_type: BoxedParser<'a, I, ast::ItemType>,
     pub(crate) sequence_type: BoxedParser<'a, I, ast::SequenceType>,
     pub(crate) kind_test: BoxedParser<'a, I, ast::KindTest>,
     pub(crate) xpath: BoxedParser<'a, I, ast::XPath>,
@@ -61,6 +62,7 @@ where
 
     let ParserTypeOutput {
         sequence_type,
+        item_type,
         single_type,
     } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
 
@@ -76,7 +78,7 @@ where
         param_list,
     } = parser_signature(eqname.clone(), sequence_type.clone());
 
-    // ugly way to get expr out of recursive
+    // TODO: ugly way to get expr out of recursive
     let mut expr_ = None;
 
     let expr_single = recursive(|expr_single| {
@@ -854,6 +856,7 @@ where
         .boxed();
     let signature = signature.then_ignore(end()).boxed();
     let sequence_type = sequence_type.then_ignore(end()).boxed();
+    let item_type = item_type.then_ignore(end()).boxed();
     let kind_test = kind_test.then_ignore(end()).boxed();
 
     ParserOutput {
@@ -863,6 +866,7 @@ where
         xpath_right_brace,
         signature,
         sequence_type,
+        item_type,
         kind_test,
     }
 }

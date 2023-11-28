@@ -114,6 +114,12 @@ impl ast::SequenceType {
     }
 }
 
+impl ast::ItemType {
+    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
+        parse(parser().item_type, tokens(input), Cow::Borrowed(namespaces))
+    }
+}
+
 impl ast::Name {
     pub fn parse<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<ast::NameS, ParserError> {
         parse(parser().name, tokens(src), Cow::Borrowed(namespaces))

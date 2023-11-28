@@ -391,6 +391,23 @@ impl InstructionParser for ast::Comment {
     }
 }
 
+impl InstructionParser for ast::ContextItem {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::ContextItem {
+            as_: element.optional(names.as_, element.item_type())?,
+            use_: element.optional(names.use_, element.use_())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;

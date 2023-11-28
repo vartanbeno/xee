@@ -507,6 +507,16 @@ impl<'a> Element<'a> {
         |s, span| self._sequence_type(s, span)
     }
 
+    fn _item_type(&self, s: &str, _span: Span) -> Result<xpath_ast::ItemType, AttributeError> {
+        Ok(xpath_ast::ItemType::parse(s, &self.namespaces())?)
+    }
+
+    pub(crate) fn item_type(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<xpath_ast::ItemType, AttributeError> + '_ {
+        |s, span| self._item_type(s, span)
+    }
+
     fn _boolean(s: &str, _span: Span) -> Result<bool, AttributeError> {
         match s {
             "yes" | "true" | "1" => Ok(true),
@@ -787,6 +797,24 @@ impl<'a> Element<'a> {
 
     pub(crate) fn char(&self) -> impl Fn(&'a str, Span) -> Result<char, AttributeError> {
         Self::_char
+    }
+
+    fn _use(s: &str, span: Span) -> Result<ast::Use, AttributeError> {
+        use ast::Use::*;
+
+        match s {
+            "optional" => Ok(Optional),
+            "required" => Ok(Required),
+            "absent" => Ok(Absent),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn use_(&self) -> impl Fn(&'a str, Span) -> Result<ast::Use, AttributeError> {
+        Self::_use
     }
 
     // TODO: message ignored
