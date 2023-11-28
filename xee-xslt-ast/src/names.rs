@@ -15,14 +15,17 @@ impl SequenceConstructorName {
         element: &Element,
     ) -> Result<ast::SequenceConstructorItem, ElementError> {
         match self {
-            SequenceConstructorName::Assert => {
-                ast::Assert::parse_sequence_constructor_item(element)
+            SequenceConstructorName::ApplyImports => {
+                ast::ApplyImports::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::AnalyzeString => {
                 ast::AnalyzeString::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::ApplyTemplates => {
                 ast::ApplyTemplates::parse_sequence_constructor_item(element)
+            }
+            SequenceConstructorName::Assert => {
+                ast::Assert::parse_sequence_constructor_item(element)
             }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::CopyOf => {
