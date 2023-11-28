@@ -817,6 +817,12 @@ pub struct MapEntry {
     pub span: Span,
 }
 
+impl From<MapEntry> for SequenceConstructorItem {
+    fn from(i: MapEntry) -> Self {
+        SequenceConstructorInstruction::MapEntry(Box::new(i)).into()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MatchingSubstring {

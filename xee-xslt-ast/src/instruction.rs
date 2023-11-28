@@ -817,6 +817,21 @@ impl InstructionParser for ast::Map {
     }
 }
 
+impl InstructionParser for ast::MapEntry {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::MapEntry {
+            key: element.required(names.key, element.xpath())?,
+            select: element.optional(names.select, element.xpath())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {

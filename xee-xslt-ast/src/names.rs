@@ -64,6 +64,9 @@ impl SequenceConstructorName {
             }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Map => ast::Map::parse_sequence_constructor_item(element),
+            SequenceConstructorName::MapEntry => {
+                ast::MapEntry::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
@@ -159,6 +162,7 @@ pub(crate) struct Names {
     pub(crate) inherit_namespaces: xot::NameId,
     pub(crate) initial_value: xot::NameId,
     pub(crate) input_type_annotations: xot::NameId,
+    pub(crate) key: xot::NameId,
     pub(crate) lang: xot::NameId,
     pub(crate) match_: xot::NameId,
     pub(crate) minus_sign: xot::NameId,
@@ -303,6 +307,7 @@ impl Names {
             initial_value: xot.add_name("initial-value"),
             input_type_annotations: xot.add_name("input-type-annotations"),
             lang: xot.add_name("language"),
+            key: xot.add_name("key"),
             match_: xot.add_name("match"),
             minus_sign: xot.add_name("minus-sign"),
             mode: xot.add_name("mode"),
