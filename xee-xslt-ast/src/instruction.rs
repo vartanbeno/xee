@@ -980,6 +980,24 @@ impl InstructionParser for ast::Namespace {
     }
 }
 
+impl InstructionParser for ast::NamespaceAlias {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::NamespaceAlias {
+            stylesheet_prefix: element
+                .required(names.stylesheet_prefix, element.prefix_or_default())?,
+            result_prefix: element.required(names.result_prefix, element.prefix_or_default())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {

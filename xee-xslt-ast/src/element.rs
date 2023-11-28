@@ -621,6 +621,20 @@ impl<'a> Element<'a> {
         Self::_prefix
     }
 
+    fn _prefix_or_default(s: &str, span: Span) -> Result<ast::PrefixOrDefault, AttributeError> {
+        if s == "#default" {
+            Ok(ast::PrefixOrDefault::Default)
+        } else {
+            Ok(ast::PrefixOrDefault::Prefix(Self::_prefix(s, span)?))
+        }
+    }
+
+    pub(crate) fn prefix_or_default(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::PrefixOrDefault, AttributeError> + '_ {
+        Self::_prefix_or_default
+    }
+
     fn _prefixes(s: &str, span: Span) -> Result<Vec<ast::Prefix>, AttributeError> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
