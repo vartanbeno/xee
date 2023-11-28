@@ -940,6 +940,31 @@ impl InstructionParser for ast::Message {
     }
 }
 
+impl InstructionParser for ast::Mode {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Mode {
+            name: element.optional(names.name, element.eqname())?,
+            streamable: element.boolean_with_default(names.streamable, false)?,
+            use_accumulators: element.optional(names.use_accumulators, element.tokens())?,
+            on_no_match: element.optional(names.on_no_match, element.on_no_match())?,
+            on_multiple_match: element
+                .optional(names.on_multiple_match, element.on_multiple_match())?,
+            warning_on_no_match: element.boolean_with_default(names.warning_on_no_match, false)?,
+            warning_on_multiple_match: element
+                .boolean_with_default(names.warning_on_multiple_match, false)?,
+            typed: element.optional(names.typed, element.typed())?,
+            visibility: element.optional(names.visibility, element.visibility())?,
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::NonMatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {

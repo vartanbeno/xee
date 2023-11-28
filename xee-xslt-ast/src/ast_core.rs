@@ -916,12 +916,12 @@ impl From<Message> for SequenceConstructorItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Mode {
     pub name: Option<EqName>,
-    pub streamable: Option<bool>,
+    pub streamable: bool,
     pub use_accumulators: Option<Vec<Token>>,
     pub on_no_match: Option<OnNoMatch>,
     pub on_multiple_match: Option<OnMultipleMatch>,
-    pub warning_on_no_match: Option<bool>,
-    pub warning_on_multiple_match: Option<bool>,
+    pub warning_on_no_match: bool,
+    pub warning_on_multiple_match: bool,
     pub typed: Option<Typed>,
     pub visibility: Option<Visibility>,
 

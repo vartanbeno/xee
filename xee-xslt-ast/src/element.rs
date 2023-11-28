@@ -695,6 +695,26 @@ impl<'a> Element<'a> {
         Self::_component
     }
 
+    fn _visibility(s: &str, span: Span) -> Result<ast::Visibility, AttributeError> {
+        use ast::Visibility::*;
+
+        match s {
+            "public" => Ok(Public),
+            "private" => Ok(Private),
+            "final" => Ok(Final),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn visibility(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Visibility, AttributeError> + '_ {
+        Self::_visibility
+    }
+
     fn _visibility_with_abstract(
         s: &str,
         span: Span,
@@ -762,6 +782,69 @@ impl<'a> Element<'a> {
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::Validation, AttributeError> + '_ {
         Self::_validation
+    }
+
+    fn _on_no_match(s: &str, span: Span) -> Result<ast::OnNoMatch, AttributeError> {
+        use ast::OnNoMatch::*;
+
+        match s {
+            "deep-copy" => Ok(DeepCopy),
+            "shallow-copy" => Ok(ShallowCopy),
+            "deep-skip" => Ok(DeepSkip),
+            "shallow-skip" => Ok(ShallowSkip),
+            "text-only-copy" => Ok(TextOnlyCopy),
+            "fail" => Ok(Fail),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn on_no_match(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::OnNoMatch, AttributeError> + '_ {
+        Self::_on_no_match
+    }
+
+    fn _on_multiple_match(s: &str, span: Span) -> Result<ast::OnMultipleMatch, AttributeError> {
+        use ast::OnMultipleMatch::*;
+
+        match s {
+            "use-last" => Ok(UseLast),
+            "fail" => Ok(Fail),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn on_multiple_match(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::OnMultipleMatch, AttributeError> + '_ {
+        Self::_on_multiple_match
+    }
+
+    fn _typed(s: &str, span: Span) -> Result<ast::Typed, AttributeError> {
+        use ast::Typed::*;
+
+        match s {
+            "boolean" => Ok(Boolean),
+            "strict" => Ok(Strict),
+            "lax" => Ok(Lax),
+            "unspecified" => Ok(Unspecified),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span,
+            }),
+        }
+    }
+
+    pub(crate) fn typed(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Typed, AttributeError> + '_ {
+        Self::_typed
     }
 
     fn _language(s: &str, _span: Span) -> Result<ast::Language, AttributeError> {
