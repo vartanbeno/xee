@@ -27,6 +27,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Assert => {
                 ast::Assert::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Attribute => {
+                ast::Attribute::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Copy => ast::Copy::parse_sequence_constructor_item(element),
             SequenceConstructorName::CopyOf => {
                 ast::CopyOf::parse_sequence_constructor_item(element)
@@ -111,10 +114,12 @@ pub(crate) struct Names {
     pub(crate) mode: xot::NameId,
     pub(crate) name: xot::NameId,
     pub(crate) names: xot::NameId,
+    pub(crate) namespace: xot::NameId,
     pub(crate) order: xot::NameId,
     pub(crate) phase: xot::NameId,
     pub(crate) regex: xot::NameId,
     pub(crate) select: xot::NameId,
+    pub(crate) separator: xot::NameId,
     pub(crate) stable: xot::NameId,
     pub(crate) static_: xot::NameId,
     pub(crate) streamable: xot::NameId,
@@ -210,10 +215,12 @@ impl Names {
             mode: xot.add_name("mode"),
             name: xot.add_name("name"),
             names: xot.add_name("names"),
+            namespace: xot.add_name("namespace"),
             order: xot.add_name("order"),
             phase: xot.add_name("phase"),
             regex: xot.add_name("regex"),
             select: xot.add_name("select"),
+            separator: xot.add_name("separator"),
             stable: xot.add_name("stable"),
             static_: xot.add_name("static"),
             streamable: xot.add_name("streamable"),

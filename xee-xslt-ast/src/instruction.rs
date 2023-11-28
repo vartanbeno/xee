@@ -259,6 +259,26 @@ impl InstructionParser for ast::Assert {
     }
 }
 
+impl InstructionParser for ast::Attribute {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Attribute {
+            name: element.required(names.name, element.value_template(element.qname()))?,
+            namespace: element.optional(names.namespace, element.value_template(element.uri()))?,
+            select: element.optional(names.select, element.xpath())?,
+            separator: element
+                .optional(names.separator, element.value_template(element.string()))?,
+            type_: element.optional(names.type_, element.eqname())?,
+            validation: element.optional(names.validation, element.validation())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element.sequence_constructor()?,
+        })
+    }
+}
+
 impl InstructionParser for ast::Copy {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;

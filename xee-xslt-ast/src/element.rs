@@ -345,6 +345,16 @@ impl<'a> Element<'a> {
         |s, span| self._eqname(s, span)
     }
 
+    fn _qname(s: &str, _span: Span) -> Result<ast::QName, AttributeError> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn qname(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::QName, AttributeError> + '_ {
+        Self::_qname
+    }
+
     fn _id(s: &str, _span: Span) -> Result<ast::Id, AttributeError> {
         Ok(s.to_string())
     }
