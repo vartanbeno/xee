@@ -712,6 +712,22 @@ impl InstructionParser for ast::If {
     }
 }
 
+impl InstructionParser for ast::Import {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Import {
+            href: element.required(names.href, element.uri())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 impl InstructionParser for ast::MatchingSubstring {
     fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {

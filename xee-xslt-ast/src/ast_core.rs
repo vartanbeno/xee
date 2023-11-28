@@ -735,7 +735,7 @@ impl From<If> for SequenceConstructorItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Import {
-    href: Uri,
+    pub href: Uri,
 
     pub standard: Standard,
     pub span: Span,
