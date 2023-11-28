@@ -627,14 +627,20 @@ pub struct ForEachGroup {
     pub group_adjacent: Option<Expression>,
     pub group_starting_with: Option<Pattern>,
     pub group_ending_with: Option<Pattern>,
-    pub composite: Option<bool>,
+    pub composite: bool,
     pub collation: Option<ValueTemplate<Uri>>,
 
     pub sort: Vec<Sort>,
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<ForEachGroup> for SequenceConstructorItem {
+    fn from(i: ForEachGroup) -> Self {
+        SequenceConstructorInstruction::ForEachGroup(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

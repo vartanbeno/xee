@@ -59,6 +59,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::ForEach => {
                 ast::ForEach::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::ForEachGroup => {
+                ast::ForEachGroup::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
@@ -127,6 +130,7 @@ pub(crate) struct Names {
     pub(crate) case_order: xot::NameId,
     pub(crate) character: xot::NameId,
     pub(crate) component: xot::NameId,
+    pub(crate) composite: xot::NameId,
     pub(crate) context_item: xot::NameId,
     pub(crate) collation: xot::NameId,
     pub(crate) copy_accumulators: xot::NameId,
@@ -139,6 +143,10 @@ pub(crate) struct Names {
     pub(crate) exponent_separator: xot::NameId,
     pub(crate) extension_element_prefixes: xot::NameId,
     pub(crate) flags: xot::NameId,
+    pub(crate) group_adjacent: xot::NameId,
+    pub(crate) group_by: xot::NameId,
+    pub(crate) group_ending_with: xot::NameId,
+    pub(crate) group_starting_with: xot::NameId,
     pub(crate) grouping_separator: xot::NameId,
     pub(crate) id: xot::NameId,
     pub(crate) infinity: xot::NameId,
@@ -255,6 +263,7 @@ impl Names {
             character: xot.add_name("character"),
             collation: xot.add_name("collation"),
             component: xot.add_name("component"),
+            composite: xot.add_name("composite"),
             context_item: xot.add_name("context-item"),
             copy_accumulators: xot.add_name("copy-accumulators"),
             copy_namespaces: xot.add_name("copy-namespaces"),
@@ -266,6 +275,10 @@ impl Names {
             exponent_separator: xot.add_name("exponent-separator"),
             extension_element_prefixes: xot.add_name("extension-element-prefixes"),
             flags: xot.add_name("flags"),
+            group_adjacent: xot.add_name("group-adjacent"),
+            group_by: xot.add_name("group-by"),
+            group_ending_with: xot.add_name("group-ending-with"),
+            group_starting_with: xot.add_name("group-starting-with"),
             grouping_separator: xot.add_name("grouping-separator"),
             id: xot.add_name("id"),
             infinity: xot.add_name("infinity"),

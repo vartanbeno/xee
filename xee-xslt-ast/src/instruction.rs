@@ -598,6 +598,39 @@ impl InstructionParser for ast::ForEach {
     }
 }
 
+impl InstructionParser for ast::ForEachGroup {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        let select = element.required(names.select, element.xpath())?;
+        let group_by = element.optional(names.group_by, element.xpath())?;
+        let group_adjacent = element.optional(names.group_adjacent, element.xpath())?;
+        let group_starting_with = element.optional(names.group_starting_with, element.pattern())?;
+        let group_ending_with = element.optional(names.group_ending_with, element.pattern())?;
+        let composite = element.boolean_with_default(names.composite, false)?;
+        let collation = element.optional(names.collation, element.value_template(element.uri()))?;
+        let standard = element.standard()?;
+
+        let parse = content_parse(many(instruction(names.xsl_sort)).then(sequence_constructor()));
+        let (sort, sequence_constructor) = parse(element)?;
+
+        Ok(ast::ForEachGroup {
+            select,
+            group_by,
+            group_adjacent,
+            group_starting_with,
+            group_ending_with,
+            composite,
+            collation,
+
+            standard,
+            span: element.span,
+
+            sort,
+            sequence_constructor,
+        })
+    }
+}
+
 impl InstructionParser for ast::If {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
