@@ -1132,6 +1132,8 @@ impl InstructionParser for ast::Otherwise {
     }
 }
 
+// TODO: xsl:output
+
 impl InstructionParser for ast::OutputCharacter {
     fn should_be_empty() -> bool {
         true
@@ -1148,6 +1150,10 @@ impl InstructionParser for ast::OutputCharacter {
         })
     }
 }
+
+// TODO: xsl:override
+
+// TODO: xsl:package
 
 impl InstructionParser for ast::Param {
     fn parse(element: &Element) -> Result<Self> {
@@ -1167,6 +1173,16 @@ impl InstructionParser for ast::Param {
         })
     }
 }
+
+// TODO: xsl:perform-sort
+
+// TODO: xsl:preserve-space
+
+// TODO: xsl:processing-instruction
+
+// TODO: xsl:result-document
+
+// TODO: xsl:sequence
 
 impl InstructionParser for ast::Sort {
     fn parse(element: &Element) -> Result<Self> {
@@ -1192,6 +1208,14 @@ impl InstructionParser for ast::Sort {
     }
 }
 
+// TODO: xsl:source-document
+
+// TODO: xsl:strip-space
+
+// TODO: xsl:template
+
+// TOD: xsl:text
+
 impl InstructionParser for ast::Transform {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
@@ -1211,6 +1235,12 @@ impl InstructionParser for ast::Transform {
         })
     }
 }
+
+// TODO: xsl:try
+
+// TODO: xsl:use-package
+
+// TODO: xsl:value-of
 
 impl InstructionParser for ast::Variable {
     fn parse(element: &Element) -> Result<Self> {
@@ -1263,6 +1293,8 @@ impl InstructionParser for ast::When {
         })
     }
 }
+
+// TODO: xsl:where-populated
 
 impl InstructionParser for ast::WithParam {
     fn parse(element: &Element) -> Result<Self> {
