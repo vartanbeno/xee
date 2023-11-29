@@ -906,4 +906,46 @@ mod tests {
         assert_eq!(item, Value);
         assert_eq!(next, None);
     }
+
+    #[test]
+    fn test_one_no_node() {
+        let (state, context, next) = parse_next("<outer></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let parser = one(|_node, _, _| Ok(Value));
+
+        let r = parser.parse_next(next, &state, &context);
+        assert_eq!(r, Err(ElementError::UnexpectedEnd));
+    }
+
+    #[test]
+    fn test_one_wrong_node() {
+        let (mut state, context, next) = parse_next("<outer><b/></outer>");
+
+        let names = TestNames::new(&mut state.xot);
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let parser = one(|node, _, _| {
+            if let Some(element) = state.xot.element(node) {
+                if element.name() == names.name_a {
+                    return Ok(Value);
+                }
+            }
+            Err(ElementError::Unexpected {
+                span: state.span(node).ok_or(ElementError::Internal)?,
+            })
+        });
+
+        let r = parser.parse_next(next, &state, &context);
+        assert_eq!(
+            r,
+            Err(ElementError::Unexpected {
+                span: Span::new(8, 9)
+            })
+        );
+    }
 }
