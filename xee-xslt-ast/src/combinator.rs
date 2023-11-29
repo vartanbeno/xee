@@ -71,6 +71,17 @@ pub(crate) trait NodeParser<T> {
             tb: std::marker::PhantomData,
         }
     }
+
+    fn or<O: NodeParser<T>>(self, other: O) -> OrParser<T, Self, O>
+    where
+        Self: Sized,
+    {
+        OrParser {
+            first: self,
+            second: other,
+            t: std::marker::PhantomData,
+        }
+    }
 }
 
 pub(crate) struct OptionalParser<V, P>
@@ -339,6 +350,30 @@ impl<TA, TB, PA: NodeParser<TA>, PB: NodeParser<TB>> NodeParser<TA>
         let (a, node) = self.first.parse_next(node, state, context)?;
         let (_b, node) = self.second.parse_next(node, state, context)?;
         Ok((a, node))
+    }
+}
+
+pub(crate) struct OrParser<T, PA: NodeParser<T>, PB: NodeParser<T>> {
+    first: PA,
+    second: PB,
+    t: std::marker::PhantomData<T>,
+}
+
+impl<T, PA: NodeParser<T>, PB: NodeParser<T>> NodeParser<T> for OrParser<T, PA, PB> {
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(T, Option<Node>)> {
+        // try the first parser, if that works, return result
+        // if it isn't working, try the other parser
+        let r = self.first.parse_next(node, state, context);
+        if let Ok((a, next)) = r {
+            Ok((a, next))
+        } else {
+            self.second.parse_next(node, state, context)
+        }
     }
 }
 
@@ -948,4 +983,46 @@ mod tests {
             })
         );
     }
+
+    // #[test]
+    // fn test_or() {
+    //     let (mut state, context, next) = parse_next("<outer><a/><b/></outer>");
+    //     let names = TestNames::new(&mut state.xot);
+
+    //     #[derive(Debug, PartialEq)]
+    //     enum AnyValue {
+    //         A(ValueA),
+    //         B(ValueB),
+    //     }
+
+    //     let parser_a = one(|node, _, _| {
+    //         if let Some(element) = state.xot.element(node) {
+    //             if element.name() == names.name_a {
+    //                 return Ok(AnyValue::A(ValueA));
+    //             }
+    //         }
+    //         Err(ElementError::Unexpected {
+    //             span: state.span(node).ok_or(ElementError::Internal)?,
+    //         })
+    //     });
+
+    //     let parser_b = one(|node, _, _| {
+    //         if let Some(element) = state.xot.element(node) {
+    //             if element.name() == names.name_b {
+    //                 return Ok(AnyValue::B(ValueB));
+    //             }
+    //         }
+    //         Err(ElementError::Unexpected {
+    //             span: state.span(node).ok_or(ElementError::Internal)?,
+    //         })
+    //     });
+
+    //     let parser = many(parser_a.or(parser_b));
+
+    //     let (items, next) = parser.parse_next(next, &state, &context).unwrap();
+    //     assert_eq!(items.len(), 2);
+    //     assert_eq!(items[0], AnyValue::A(ValueA));
+    //     assert_eq!(items[1], AnyValue::B(ValueB));
+    //     assert_eq!(next, None);
+    // }
 }
