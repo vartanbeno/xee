@@ -95,6 +95,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Sequence => {
                 ast::Sequence::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::SourceDocument => {
+                ast::SourceDocument::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }

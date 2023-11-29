@@ -1331,7 +1331,24 @@ impl InstructionParser for ast::Sort {
     }
 }
 
-// TODO: xsl:source-document
+impl InstructionParser for ast::SourceDocument {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+
+        Ok(ast::SourceDocument {
+            href: element.required(names.href, element.value_template(element.uri()))?,
+            streamable: element.boolean_with_default(names.streamable, false)?,
+            use_accumulators: element.optional(names.use_accumulators, element.tokens())?,
+            validation: element.optional(names.validation, element.validation())?,
+            type_: element.optional(names.type_, element.eqname())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
 
 // TODO: xsl:strip-space
 

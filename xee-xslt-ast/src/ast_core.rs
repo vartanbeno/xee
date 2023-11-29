@@ -1438,7 +1438,7 @@ pub struct Sort {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SourceDocument {
     pub href: ValueTemplate<Uri>,
-    pub streamable: Option<bool>,
+    pub streamable: bool,
     pub use_accumulators: Option<Vec<Token>>,
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
@@ -1447,6 +1447,12 @@ pub struct SourceDocument {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<SourceDocument> for SequenceConstructorItem {
+    fn from(i: SourceDocument) -> Self {
+        SequenceConstructorInstruction::SourceDocument(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
