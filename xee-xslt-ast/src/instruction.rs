@@ -1445,7 +1445,22 @@ impl InstructionParser for ast::Transform {
 
 // TODO: xsl:use-package
 
-// TODO: xsl:value-of
+impl InstructionParser for ast::ValueOf {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::ValueOf {
+            select: element.optional(names.select, element.xpath())?,
+            separator: element
+                .optional(names.separator, element.value_template(element.string()))?,
+            disable_output_escaping: element
+                .boolean_with_default(names.disable_output_escaping, false)?,
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
 
 impl InstructionParser for ast::Variable {
     fn parse(element: &Element) -> Result<Self> {

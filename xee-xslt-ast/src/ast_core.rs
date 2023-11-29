@@ -1570,12 +1570,18 @@ pub struct ValueOf {
     pub select: Option<Expression>,
     pub separator: Option<ValueTemplate<String>>,
     // DEPRECATED
-    pub disable_output_escaping: Option<bool>,
+    pub disable_output_escaping: bool,
 
     pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<ValueOf> for SequenceConstructorItem {
+    fn from(i: ValueOf) -> Self {
+        SequenceConstructorInstruction::ValueOf(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
