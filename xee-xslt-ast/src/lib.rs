@@ -2,6 +2,7 @@
 
 mod ast_core;
 mod combinator;
+mod combinator2;
 mod context;
 mod element;
 mod instruction;
