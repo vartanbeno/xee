@@ -1262,6 +1262,21 @@ impl InstructionParser for ast::Param {
 
 // TODO: xsl:preserve-space
 
+impl InstructionParser for ast::PreserveSpace {
+    fn should_be_empty() -> bool {
+        true
+    }
+
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::PreserveSpace {
+            elements: element.required(names.elements, element.tokens())?,
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
+
 // TODO: xsl:processing-instruction
 
 // TODO: xsl:result-document
