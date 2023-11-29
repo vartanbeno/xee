@@ -1350,7 +1350,19 @@ impl InstructionParser for ast::SourceDocument {
     }
 }
 
-// TODO: xsl:strip-space
+impl InstructionParser for ast::StripSpace {
+    fn should_be_empty() -> bool {
+        true
+    }
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::StripSpace {
+            elements: element.required(names.elements, element.tokens())?,
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
 
 impl InstructionParser for ast::Template {
     fn parse(element: &Element) -> Result<Self> {
