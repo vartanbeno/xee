@@ -420,9 +420,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::net;
+
     use xot::NameId;
     use xot::Xot;
 
+    use crate::ast_core::NextIteration;
     use crate::ast_core::Span;
     use crate::names::Names;
 
@@ -887,6 +890,20 @@ mod tests {
 
         let (items, next) = parser.parse_next(Some(outer), &state, &context).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_one() {
+        let (state, context, next) = parse_next("<outer><a /></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value;
+
+        let parser = one(|_node, _, _| Ok(Value));
+
+        let (item, next) = parser.parse_next(next, &state, &context).unwrap();
+        assert_eq!(item, Value);
         assert_eq!(next, None);
     }
 }
