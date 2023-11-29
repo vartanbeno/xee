@@ -1,30 +1,8 @@
 use xot::Node;
 
-use crate::ast_core::Span;
 use crate::context::Context;
-// use crate::error::Error as AttributeError;
-use crate::element::AttributeError;
+use crate::error::ElementError;
 use crate::state::State;
-
-#[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) enum ElementError {
-    // Did not expect this node
-    Unexpected { span: Span },
-    // Did not expect end TODO: how to get span info?
-    UnexpectedEnd,
-    // An attribute of the element was invalid
-    Attribute(AttributeError),
-
-    // internal error, should not happen
-    Internal,
-}
-
-impl From<AttributeError> for ElementError {
-    fn from(error: AttributeError) -> Self {
-        Self::Attribute(error)
-    }
-}
 
 type Result<T> = std::result::Result<T, ElementError>;
 
@@ -462,6 +440,7 @@ mod tests {
 
     use crate::ast_core::NextIteration;
     use crate::ast_core::Span;
+    use crate::error::AttributeError;
     use crate::names::Names;
 
     use super::*;

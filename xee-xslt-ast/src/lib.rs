@@ -5,6 +5,7 @@ mod combinator;
 mod combinator2;
 mod context;
 mod element;
+mod error;
 mod instruction;
 mod name;
 mod names;

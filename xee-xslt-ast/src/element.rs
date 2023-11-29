@@ -3,45 +3,15 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator::{children, end, many, top, ElementError, NodeParser};
+use crate::combinator2::{end, one, NodeParser, OneParser};
 use crate::context::Context;
+use crate::error::{AttributeError, ElementError};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::name::XmlName;
 use crate::names::StandardNames;
 use crate::state::State;
 use crate::tokenize::split_whitespace_with_spans;
-use crate::value_template::{self, ValueTemplateTokenizer};
-
-#[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum AttributeError {
-    // Expected attribute of name, not found (element span)
-    NotFound { name: XmlName, span: Span },
-    // Did not expect attribute of name (attribute span)
-    Unexpected { name: XmlName, span: Span },
-    // The value of an attribute was invalid
-    Invalid { value: String, span: Span },
-    // An eqname was invalid
-    InvalidEqName { value: String, span: Span },
-    // XPath parser error
-    XPath(xee_xpath_ast::ParserError),
-    // A value templatecould not be parsed
-    ValueTemplateError(value_template::Error),
-    // Internal error; should not happen
-    Internal,
-}
-
-impl From<xee_xpath_ast::ParserError> for AttributeError {
-    fn from(e: xee_xpath_ast::ParserError) -> Self {
-        AttributeError::XPath(e)
-    }
-}
-
-impl From<value_template::Error> for AttributeError {
-    fn from(e: value_template::Error) -> Self {
-        AttributeError::ValueTemplateError(e)
-    }
-}
+use crate::value_template::ValueTemplateTokenizer;
 
 struct ElementParsers {
     sequence_constructor_sibling_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
@@ -51,7 +21,7 @@ struct ElementParsers {
 
 impl ElementParsers {
     fn new() -> Self {
-        let sequence_constructor_sibling_parser = many(|node, state, context| {
+        let sequence_constructor_sibling_parser = one(|node, state, context| {
             match state.xot.value(node) {
                 Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
                     text.get().to_string(),
@@ -66,42 +36,28 @@ impl ElementParsers {
                     span: Span::new(0, 0),
                 }),
             }
-        });
+        })
+        .many();
 
-        let sequence_constructor_parser = children(
-            many(|node, state, context| {
-                match state.xot.value(node) {
-                    Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
-                        text.get().to_string(),
-                    )),
-                    Value::Element(element) => {
-                        let new_context = context.element(element);
-                        let element = Element::new(node, element, new_context, state)?;
-                        ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
-                    }
-                    _ => Err(ElementError::Unexpected {
-                        // TODO: get span right
-                        span: Span::new(0, 0),
-                    }),
-                }
-            })
-            .then_ignore(end()),
-        );
+        let sequence_constructor_parser = sequence_constructor_sibling_parser
+            .clone()
+            .then_ignore(end())
+            .contains();
 
-        let declarations_parser = children(
-            many(|node, state, context| match state.xot.value(node) {
-                Value::Element(element) => {
-                    let new_context = context.element(element);
-                    let element = Element::new(node, element, new_context, state)?;
-                    ast::Declaration::parse_declaration(&element)
-                }
-                _ => Err(ElementError::Unexpected {
-                    // TODO: get span right
-                    span: Span::new(0, 0),
-                }),
-            })
-            .then_ignore(end()),
-        );
+        let declarations_parser = one(|node, state, context| match state.xot.value(node) {
+            Value::Element(element) => {
+                let new_context = context.element(element);
+                let element = Element::new(node, element, new_context, state)?;
+                ast::Declaration::parse_declaration(&element)
+            }
+            _ => Err(ElementError::Unexpected {
+                // TODO: get span right
+                span: Span::new(0, 0),
+            }),
+        })
+        .many()
+        .then_ignore(end())
+        .contains();
 
         Self {
             sequence_constructor_sibling_parser: Box::new(sequence_constructor_sibling_parser),
@@ -121,7 +77,7 @@ impl<'a> XsltParser<'a> {
     }
 
     pub(crate) fn parse_transform(&self, node: Node) -> Result<ast::Transform, ElementError> {
-        let parser = top(instruction(self.state.names.xsl_transform));
+        let parser = instruction(self.state.names.xsl_transform);
         parser.parse(Some(node), self.state, &Context::empty())
     }
 }
@@ -152,10 +108,16 @@ pub(crate) fn by_element_name<V>(
     })
 }
 
-pub(crate) fn instruction<T: InstructionParser>(
+pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
-) -> impl Fn(Node, &State, &Context) -> Result<T, ElementError> {
-    by_element_name(name, move |element| T::parse_and_validate(&element))
+) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
+    by_element_name(name, move |element| V::parse_and_validate(&element))
+}
+
+pub(crate) fn instruction<V: InstructionParser>(
+    name: NameId,
+) -> OneParser<V, impl Fn(Node, &State, &Context) -> Result<V, ElementError>> {
+    one(by_instruction(name))
 }
 
 pub(crate) struct SequenceConstructorNodeParser;

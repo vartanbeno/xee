@@ -1,8 +1,9 @@
 use xot::{NameId, Xot};
 
-use crate::ast_core::{self as ast, Visibility};
-use crate::combinator::{many, one, one_or_more, optional, ElementError as Error, NodeParser};
+use crate::ast_core::{self as ast};
+use crate::combinator2::{one, NodeParser};
 use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
+use crate::error::ElementError as Error;
 
 type Result<V> = std::result::Result<V, Error>;
 
@@ -146,7 +147,7 @@ impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse_rules = content_parse(many(instruction(names.xsl_accumulator_rule)));
+        let parse_rules = content_parse(instruction(names.xsl_accumulator_rule).many());
 
         Ok(ast::Accumulator {
             name: element.required(names.name, element.eqname())?,
@@ -189,9 +190,10 @@ impl InstructionParser for ast::AnalyzeString {
         let standard = element.standard()?;
 
         let parse = content_parse(
-            optional(instruction(names.xsl_matching_substring))
-                .then(optional(instruction(names.xsl_non_matching_substring)))
-                .then(many(instruction(names.xsl_fallback))),
+            instruction(names.xsl_matching_substring)
+                .option()
+                .then(instruction(names.xsl_non_matching_substring).option())
+                .then(instruction(names.xsl_fallback).many()),
         );
 
         let ((matching_substring, non_matching_substring), fallbacks) = parse(element)?;
@@ -213,7 +215,7 @@ impl InstructionParser for ast::AnalyzeString {
 
 impl InstructionParser for ast::ApplyImports {
     fn parse(element: &Element) -> Result<Self> {
-        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
         Ok(ast::ApplyImports {
             standard: element.standard()?,
             span: element.span,
@@ -226,20 +228,23 @@ impl InstructionParser for ast::ApplyImports {
 impl InstructionParser for ast::ApplyTemplates {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(many(by_element(|element| {
-            let name = element.element.name();
-            if name == names.xsl_with_param {
-                Ok(ast::ApplyTemplatesContent::WithParam(
-                    ast::WithParam::parse_and_validate(&element)?,
-                ))
-            } else if name == names.xsl_sort {
-                Ok(ast::ApplyTemplatesContent::Sort(
-                    ast::Sort::parse_and_validate(&element)?,
-                ))
-            } else {
-                Err(Error::Unexpected { span: element.span })
-            }
-        })));
+        let parse = content_parse(
+            one(by_element(|element| {
+                let name = element.element.name();
+                if name == names.xsl_with_param {
+                    Ok(ast::ApplyTemplatesContent::WithParam(
+                        ast::WithParam::parse_and_validate(&element)?,
+                    ))
+                } else if name == names.xsl_sort {
+                    Ok(ast::ApplyTemplatesContent::Sort(
+                        ast::Sort::parse_and_validate(&element)?,
+                    ))
+                } else {
+                    Err(Error::Unexpected { span: element.span })
+                }
+            }))
+            .many(),
+        );
 
         Ok(ast::ApplyTemplates {
             select: element.optional(names.select, element.xpath())?,
@@ -294,7 +299,7 @@ impl InstructionParser for ast::AttributeSet {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(many(instruction(names.xsl_attribute)));
+        let parse = content_parse(instruction(names.xsl_attribute).many());
 
         Ok(ast::AttributeSet {
             name: element.required(names.name, element.eqname())?,
@@ -325,7 +330,7 @@ impl InstructionParser for ast::Break {
 impl InstructionParser for ast::CallTemplate {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
 
         Ok(ast::CallTemplate {
             name: element.required(names.name, element.eqname())?,
@@ -357,7 +362,7 @@ impl InstructionParser for ast::CharacterMap {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(many(instruction(names.xsl_output_character)));
+        let parse = content_parse(instruction(names.xsl_output_character).many());
         Ok(ast::CharacterMap {
             name: element.required(names.name, element.eqname())?,
             use_character_maps: element.optional(names.use_character_maps, element.eqnames())?,
@@ -375,8 +380,9 @@ impl InstructionParser for ast::Choose {
         let standard = element.standard()?;
 
         let parse = content_parse(
-            one_or_more(instruction(element.state.names.xsl_when))
-                .then(optional(instruction(element.state.names.xsl_otherwise))),
+            instruction(element.state.names.xsl_when)
+                .one_or_more()
+                .then(instruction(element.state.names.xsl_otherwise).option()),
         );
 
         let (when, otherwise) = parse(element)?;
@@ -526,20 +532,23 @@ impl InstructionParser for ast::Element {
 impl InstructionParser for ast::Evaluate {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(many(by_element(|element| {
-            let name = element.element.name();
-            if name == names.xsl_with_param {
-                Ok(ast::EvaluateContent::WithParam(
-                    ast::WithParam::parse_and_validate(&element)?,
-                ))
-            } else if name == names.xsl_fallback {
-                Ok(ast::EvaluateContent::Fallback(
-                    ast::Fallback::parse_and_validate(&element)?,
-                ))
-            } else {
-                Err(Error::Unexpected { span: element.span })
-            }
-        })));
+        let parse = content_parse(
+            one(by_element(|element| {
+                let name = element.element.name();
+                if name == names.xsl_with_param {
+                    Ok(ast::EvaluateContent::WithParam(
+                        ast::WithParam::parse_and_validate(&element)?,
+                    ))
+                } else if name == names.xsl_fallback {
+                    Ok(ast::EvaluateContent::Fallback(
+                        ast::Fallback::parse_and_validate(&element)?,
+                    ))
+                } else {
+                    Err(Error::Unexpected { span: element.span })
+                }
+            }))
+            .many(),
+        );
 
         Ok(ast::Evaluate {
             xpath: element.required(names.xpath, element.xpath())?,
@@ -594,7 +603,11 @@ impl InstructionParser for ast::ForEach {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let select = element.required(names.select, element.xpath())?;
-        let parse = content_parse(many(instruction(names.xsl_sort)).then(sequence_constructor()));
+        let parse = content_parse(
+            instruction(names.xsl_sort)
+                .many()
+                .then(sequence_constructor()),
+        );
         let (sort, sequence_constructor) = parse(element)?;
 
         Ok(ast::ForEach {
@@ -621,7 +634,11 @@ impl InstructionParser for ast::ForEachGroup {
         let collation = element.optional(names.collation, element.value_template(element.uri()))?;
         let standard = element.standard()?;
 
-        let parse = content_parse(many(instruction(names.xsl_sort)).then(sequence_constructor()));
+        let parse = content_parse(
+            instruction(names.xsl_sort)
+                .many()
+                .then(sequence_constructor()),
+        );
         let (sort, sequence_constructor) = parse(element)?;
 
         Ok(ast::ForEachGroup {
@@ -673,7 +690,11 @@ impl InstructionParser for ast::Function {
         let cache = element.boolean_with_default(names.cache, false)?;
         let standard = element.standard()?;
 
-        let parse = content_parse(many(instruction(names.xsl_param)).then(sequence_constructor()));
+        let parse = content_parse(
+            instruction(names.xsl_param)
+                .many()
+                .then(sequence_constructor()),
+        );
         let (params, sequence_constructor) = parse(element)?;
 
         Ok(ast::Function {
@@ -781,8 +802,9 @@ impl InstructionParser for ast::Iterate {
         let standard = element.standard()?;
 
         let parse = content_parse(
-            many(instruction(names.xsl_param))
-                .then(optional(instruction(names.xsl_on_completion)))
+            instruction(names.xsl_param)
+                .many()
+                .then(instruction(names.xsl_on_completion).option())
                 .then(sequence_constructor()),
         );
         let ((params, on_completion), sequence_constructor) = parse(element)?;
@@ -860,9 +882,10 @@ impl InstructionParser for ast::Merge {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let standard = element.standard()?;
-        let parse = content_parse(one_or_more(instruction(names.xsl_merge_source)).then(
-            one(instruction(names.xsl_merge_action)).then(many(instruction(names.xsl_fallback))),
+        let parse = content_parse(instruction(names.xsl_merge_source).one_or_more().then(
+            instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
         ));
+
         let (merge_sources, (merge_action, fallbacks)) = parse(element)?;
 
         Ok(ast::Merge {
@@ -915,7 +938,7 @@ impl InstructionParser for ast::MergeSource {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(one_or_more(instruction(names.xsl_merge_key)));
+        let parse = content_parse(instruction(names.xsl_merge_key).one_or_more());
 
         Ok(ast::MergeSource {
             name: element.optional(names.name, element.ncname())?,
@@ -1013,7 +1036,7 @@ impl InstructionParser for ast::NamespaceAlias {
 
 impl InstructionParser for ast::NextIteration {
     fn parse(element: &Element) -> Result<Self> {
-        let parse = content_parse(many(instruction(element.state.names.xsl_with_param)));
+        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
         Ok(ast::NextIteration {
             standard: element.standard()?,
             span: element.span,
@@ -1026,20 +1049,23 @@ impl InstructionParser for ast::NextIteration {
 impl InstructionParser for ast::NextMatch {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(many(by_element(|element| {
-            let name = element.element.name();
-            if name == names.xsl_with_param {
-                Ok(ast::NextMatchContent::WithParam(
-                    ast::WithParam::parse_and_validate(&element)?,
-                ))
-            } else if name == names.xsl_fallback {
-                Ok(ast::NextMatchContent::Fallback(
-                    ast::Fallback::parse_and_validate(&element)?,
-                ))
-            } else {
-                Err(Error::Unexpected { span: element.span })
-            }
-        })));
+        let parse = content_parse(
+            one(by_element(|element| {
+                let name = element.element.name();
+                if name == names.xsl_with_param {
+                    Ok(ast::NextMatchContent::WithParam(
+                        ast::WithParam::parse_and_validate(&element)?,
+                    ))
+                } else if name == names.xsl_fallback {
+                    Ok(ast::NextMatchContent::Fallback(
+                        ast::Fallback::parse_and_validate(&element)?,
+                    ))
+                } else {
+                    Err(Error::Unexpected { span: element.span })
+                }
+            }))
+            .many(),
+        );
 
         Ok(ast::NextMatch {
             standard: element.standard()?,
@@ -1224,9 +1250,12 @@ impl InstructionParser for ast::OverrideContent {
 
 impl InstructionParser for ast::Override {
     fn parse(element: &Element) -> Result<Self> {
-        let parse = content_parse(many(by_element(|element| {
-            ast::OverrideContent::parse_override_content(&element)
-        })));
+        let parse = content_parse(
+            one(by_element(|element| {
+                ast::OverrideContent::parse_override_content(&element)
+            }))
+            .many(),
+        );
 
         Ok(ast::Override {
             standard: element.standard()?,
@@ -1378,8 +1407,9 @@ impl InstructionParser for ast::Template {
         let standard = element.standard()?;
 
         let parse = content_parse(
-            optional(instruction(names.context_item))
-                .then(many(instruction(names.xsl_param)))
+            instruction(names.context_item)
+                .option()
+                .then(instruction(names.xsl_param).many())
                 .then(sequence_constructor()),
         );
         let ((context_item, params), sequence_constructor) = parse(element)?;

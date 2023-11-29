@@ -1,32 +1,10 @@
 use xot::Node;
 
-use crate::ast_core::Span;
 use crate::context::Context;
-// use crate::error::Error as AttributeError;
-use crate::element::AttributeError;
+use crate::error::ElementError;
 use crate::state::State;
 
-#[derive(Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) enum ElementError {
-    // Did not expect this node
-    Unexpected { span: Span },
-    // Did not expect end TODO: how to get span info?
-    UnexpectedEnd,
-    // An attribute of the element was invalid
-    Attribute(AttributeError),
-
-    // internal error, should not happen
-    Internal,
-}
-
-impl From<AttributeError> for ElementError {
-    fn from(error: AttributeError) -> Self {
-        Self::Attribute(error)
-    }
-}
-
-type Result<T> = std::result::Result<T, ElementError>;
+type Result<V> = std::result::Result<V, ElementError>;
 
 pub(crate) trait NodeParser<V> {
     fn parse(&self, node: Option<Node>, state: &State, context: &Context) -> Result<V> {
@@ -73,8 +51,10 @@ pub(crate) trait NodeParser<V> {
         Self: Sized,
     {
         OneOrMoreParser {
-            parser: self,
-            v: std::marker::PhantomData,
+            parser: ManyParser {
+                parser: self,
+                v: std::marker::PhantomData,
+            },
         }
     }
 
@@ -232,13 +212,12 @@ pub(crate) struct OneOrMoreParser<V, P>
 where
     P: NodeParser<V>,
 {
-    parser: P,
-    v: std::marker::PhantomData<V>,
+    parser: ManyParser<V, P>,
 }
 
 impl<V, P> NodeParser<Vec<V>> for OneOrMoreParser<V, P>
 where
-    P: NodeParser<V> + Copy,
+    P: NodeParser<V>,
 {
     fn parse_next(
         &self,
@@ -246,11 +225,7 @@ where
         state: &State,
         context: &Context,
     ) -> Result<(Vec<V>, Option<Node>)> {
-        let many_parser = ManyParser {
-            parser: self.parser,
-            v: std::marker::PhantomData,
-        };
-        let (items, next) = many_parser.parse_next(node, state, context)?;
+        let (items, next) = self.parser.parse_next(node, state, context)?;
         if !items.is_empty() {
             Ok((items, next))
         } else if let Some(node) = node {
@@ -423,6 +398,7 @@ mod tests {
     use xot::Xot;
 
     use crate::ast_core::Span;
+    use crate::error::AttributeError;
     use crate::names::Names;
 
     use super::*;

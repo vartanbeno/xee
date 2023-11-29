@@ -5,8 +5,8 @@ use strum::VariantNames;
 use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core::{self as ast, DeclarationName, OverrideContentName, SequenceConstructorName};
-use crate::combinator::ElementError;
 use crate::element::Element;
+use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, OverrideContentParser, SequenceConstructorParser};
 
 impl SequenceConstructorName {
