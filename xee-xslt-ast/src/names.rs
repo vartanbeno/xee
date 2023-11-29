@@ -160,6 +160,7 @@ pub(crate) struct Names {
 
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
+    pub(crate) override_content_names: BTreeMap<NameId, OverrideContentName>,
 
     // XSL elements
     pub(crate) xsl_accumulator_rule: xot::NameId,
@@ -353,6 +354,7 @@ impl Names {
 
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
             declaration_names: DeclarationName::names(xot, xsl_ns),
+            override_content_names: OverrideContentName::names(xot, xsl_ns),
 
             xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
             xsl_attribute: xot.add_name_ns("attribute", xsl_ns),
@@ -503,5 +505,9 @@ impl Names {
 
     pub(crate) fn declaration_name(&self, name: NameId) -> Option<DeclarationName> {
         self.declaration_names.get(&name).copied()
+    }
+
+    pub(crate) fn override_content_name(&self, name: NameId) -> Option<OverrideContentName> {
+        self.override_content_names.get(&name).copied()
     }
 }

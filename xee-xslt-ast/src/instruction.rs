@@ -1207,7 +1207,35 @@ impl InstructionParser for ast::OutputCharacter {
     }
 }
 
-// TODO: xsl:override
+impl InstructionParser for ast::OverrideContent {
+    fn parse(element: &Element) -> Result<ast::OverrideContent> {
+        let name = element
+            .state
+            .names
+            .override_content_name(element.element.name());
+
+        if let Some(name) = name {
+            name.parse(element)
+        } else {
+            Err(Error::Unexpected { span: element.span })
+        }
+    }
+}
+
+impl InstructionParser for ast::Override {
+    fn parse(element: &Element) -> Result<Self> {
+        let parse = content_parse(many(by_element(|element| {
+            ast::OverrideContent::parse_override_content(&element)
+        })));
+
+        Ok(ast::Override {
+            standard: element.standard()?,
+            span: element.span,
+
+            content: parse(element)?,
+        })
+    }
+}
 
 // TODO: xsl:package
 
