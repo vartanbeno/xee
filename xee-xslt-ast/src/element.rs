@@ -449,6 +449,16 @@ impl<'a> Element<'a> {
         Self::_token
     }
 
+    fn _nmtoken(s: &str, _span: Span) -> Result<ast::NmToken, AttributeError> {
+        Ok(s.to_string())
+    }
+
+    pub(crate) fn nmtoken(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::NmToken, AttributeError> + '_ {
+        Self::_nmtoken
+    }
+
     fn _tokens(s: &str, span: Span) -> Result<Vec<ast::Token>, AttributeError> {
         let mut result = Vec::new();
         for s in s.split_whitespace() {
@@ -918,6 +928,88 @@ impl<'a> Element<'a> {
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::LetterValue, AttributeError> + '_ {
         Self::_letter_value
+    }
+
+    fn _method(&self, s: &str, span: Span) -> Result<ast::OutputMethod, AttributeError> {
+        use ast::OutputMethod::*;
+
+        match s {
+            "xml" => Ok(Xml),
+            "html" => Ok(Html),
+            "xhtml" => Ok(Xhtml),
+            "text" => Ok(Text),
+            "json" => Ok(Json),
+            "adaptive" => Ok(Adaptive),
+            _ => Ok(EqName(self._eqname(s, span)?)),
+        }
+    }
+
+    pub(crate) fn method(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::OutputMethod, AttributeError> + '_ {
+        |s, span| self._method(s, span)
+    }
+
+    fn _json_node_output_method(
+        &self,
+        s: &str,
+        span: Span,
+    ) -> Result<ast::JsonNodeOutputMethod, AttributeError> {
+        use ast::JsonNodeOutputMethod::*;
+
+        match s {
+            "xml" => Ok(Xml),
+            "html" => Ok(Html),
+            "xhtml" => Ok(Xhtml),
+            "text" => Ok(Text),
+            _ => Ok(EqName(self._eqname(s, span)?)),
+        }
+    }
+
+    pub(crate) fn json_node_output_method(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::JsonNodeOutputMethod, AttributeError> + '_ {
+        |s, span| self._json_node_output_method(s, span)
+    }
+
+    fn _normalization_form(
+        &self,
+        s: &str,
+        span: Span,
+    ) -> Result<ast::NormalizationForm, AttributeError> {
+        use ast::NormalizationForm::*;
+
+        match s {
+            "NFC" => Ok(Nfc),
+            "NFD" => Ok(Nfd),
+            "NFKC" => Ok(Nfkc),
+            "NFKD" => Ok(Nfkd),
+            _ => Ok(NmToken(Self::_nmtoken(s, span)?)),
+        }
+    }
+
+    pub(crate) fn normalization_form(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::NormalizationForm, AttributeError> + '_ {
+        |s, span| self._normalization_form(s, span)
+    }
+
+    fn _standalone(s: &str, _span: Span) -> Result<ast::Standalone, AttributeError> {
+        match s {
+            "yes" | "1" | "true" => Ok(ast::Standalone::Bool(true)),
+            "no" | "0" | "false" => Ok(ast::Standalone::Bool(false)),
+            "omit" => Ok(ast::Standalone::Omit),
+            _ => Err(AttributeError::Invalid {
+                value: s.to_string(),
+                span: _span,
+            }),
+        }
+    }
+
+    pub(crate) fn standalone(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::Standalone, AttributeError> + '_ {
+        Self::_standalone
     }
 
     fn _language(s: &str, _span: Span) -> Result<ast::Language, AttributeError> {

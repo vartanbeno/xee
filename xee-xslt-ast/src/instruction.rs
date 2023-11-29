@@ -1145,48 +1145,50 @@ impl InstructionParser for ast::Otherwise {
     }
 }
 
-// TODO
-// impl InstructionParser for ast::Output {
-//     fn parse(element: &Element) -> Result<Self> {
-//         let names = &element.state.names;
-//         Ok(ast::Output {
-//             name: element.optional(names.name, element.eqname())?,
-//             method: element.optional(names.method, element.method())?,
-//             allow_duplicate_names: element
-//                 .boolean_with_default(names.allow_duplicate_names, false)?,
-//             build_tree: element.boolean_with_default(names.build_tree, false)?,
-//             byte_order_mark: element.boolean_with_default(names.byte_order_mark, false)?,
-//             cdata_section_elements: element
-//                 .optional(names.cdata_section_elements, element.eqnames())?,
-//             doctype_public: element.optional(names.doctype_public, element.string())?,
-//             doctype_system: element.optional(names.doctype_system, element.string())?,
-//             encoding: element.optional(names.encoding, element.string())?,
-//             escape_uri_attributes: element
-//                 .boolean_with_default(names.escape_uri_attributes, false)?,
-//             html_version: element.optional(names.html_version, element.decimal())?,
-//             include_content_type: element
-//                 .boolean_with_default(names.include_content_type, false)?,
-//             indent: element.boolean_with_default(names.indent, false)?,
-//             item_separator: element.optional(names.item_separator, element.string())?,
-//             json_node_output_method: element.optional(
-//                 names.json_node_output_method,
-//                 element.json_node_output_method(),
-//             )?,
-//             media_type: element.optional(names.media_type, element.string())?,
-//             normalization_form: element
-//                 .optional(names.normalization_form, element.normalization_form())?,
-//             omit_xml_declaration: element
-//                 .boolean_with_default(names.omit_xml_declaration, false)?,
-//             parameter_document: element.optional(names.parameter_document, element.uri())?,
-//             standalone: element.optional(names.standalone, element.standalone())?,
-//             suppress_indentation: element
-//                 .optional(names.suppress_indentation, element.eqnames())?,
-//             undeclare_prefixes: element.boolean_with_default(names.undeclare_prefixes, false)?,
-//             use_character_maps: element.optional(names.use_character_maps, element.eqnames())?,
-//             version: element.optional(names.version, element.nmtoken())?,
-//         })
-//     }
-// }
+impl InstructionParser for ast::Output {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Output {
+            name: element.optional(names.name, element.eqname())?,
+            method: element.optional(names.method, element.method())?,
+            allow_duplicate_names: element
+                .boolean_with_default(names.allow_duplicate_names, false)?,
+            build_tree: element.boolean_with_default(names.build_tree, false)?,
+            byte_order_mark: element.boolean_with_default(names.byte_order_mark, false)?,
+            cdata_section_elements: element
+                .optional(names.cdata_section_elements, element.eqnames())?,
+            doctype_public: element.optional(names.doctype_public, element.string())?,
+            doctype_system: element.optional(names.doctype_system, element.string())?,
+            encoding: element.optional(names.encoding, element.string())?,
+            escape_uri_attributes: element
+                .boolean_with_default(names.escape_uri_attributes, true)?,
+            html_version: element.optional(names.html_version, element.decimal())?,
+            include_content_type: element.boolean_with_default(names.include_content_type, true)?,
+            // TODO default value is informed by the method
+            indent: element.boolean_with_default(names.indent, false)?,
+            item_separator: element.optional(names.item_separator, element.string())?,
+            json_node_output_method: element.optional(
+                names.json_node_output_method,
+                element.json_node_output_method(),
+            )?,
+            media_type: element.optional(names.media_type, element.string())?,
+            normalization_form: element
+                .optional(names.normalization_form, element.normalization_form())?,
+            omit_xml_declaration: element
+                .boolean_with_default(names.omit_xml_declaration, false)?,
+            parameter_document: element.optional(names.parameter_document, element.uri())?,
+            standalone: element.optional(names.standalone, element.standalone())?,
+            suppress_indentation: element
+                .optional(names.suppress_indentation, element.eqnames())?,
+            undeclare_prefixes: element.boolean_with_default(names.undeclare_prefixes, false)?,
+            use_character_maps: element.optional(names.use_character_maps, element.eqnames())?,
+            version: element.optional(names.version, element.nmtoken())?,
+
+            standard: element.standard()?,
+            span: element.span,
+        })
+    }
+}
 
 impl InstructionParser for ast::OutputCharacter {
     fn should_be_empty() -> bool {
