@@ -229,20 +229,9 @@ impl InstructionParser for ast::ApplyTemplates {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(
-            one(by_element(|element| {
-                let name = element.element.name();
-                if name == names.xsl_with_param {
-                    Ok(ast::ApplyTemplatesContent::WithParam(
-                        ast::WithParam::parse_and_validate(&element)?,
-                    ))
-                } else if name == names.xsl_sort {
-                    Ok(ast::ApplyTemplatesContent::Sort(
-                        ast::Sort::parse_and_validate(&element)?,
-                    ))
-                } else {
-                    Err(Error::Unexpected { span: element.span })
-                }
-            }))
+            (instruction(names.xsl_with_param)
+                .map(ast::ApplyTemplatesContent::WithParam)
+                .or(instruction(names.xsl_sort).map(ast::ApplyTemplatesContent::Sort)))
             .many(),
         );
 
