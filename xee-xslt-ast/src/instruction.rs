@@ -522,21 +522,10 @@ impl InstructionParser for ast::Evaluate {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(
-            one(by_element(|element| {
-                let name = element.element.name();
-                if name == names.xsl_with_param {
-                    Ok(ast::EvaluateContent::WithParam(
-                        ast::WithParam::parse_and_validate(&element)?,
-                    ))
-                } else if name == names.xsl_fallback {
-                    Ok(ast::EvaluateContent::Fallback(
-                        ast::Fallback::parse_and_validate(&element)?,
-                    ))
-                } else {
-                    Err(Error::Unexpected { span: element.span })
-                }
-            }))
-            .many(),
+            instruction(names.xsl_with_param)
+                .map(ast::EvaluateContent::WithParam)
+                .or(instruction(names.xsl_fallback).map(ast::EvaluateContent::Fallback))
+                .many(),
         );
 
         Ok(ast::Evaluate {
@@ -1038,21 +1027,11 @@ impl InstructionParser for ast::NextIteration {
 impl InstructionParser for ast::NextMatch {
     fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
+
         let parse = content_parse(
-            one(by_element(|element| {
-                let name = element.element.name();
-                if name == names.xsl_with_param {
-                    Ok(ast::NextMatchContent::WithParam(
-                        ast::WithParam::parse_and_validate(&element)?,
-                    ))
-                } else if name == names.xsl_fallback {
-                    Ok(ast::NextMatchContent::Fallback(
-                        ast::Fallback::parse_and_validate(&element)?,
-                    ))
-                } else {
-                    Err(Error::Unexpected { span: element.span })
-                }
-            }))
+            (instruction(names.xsl_with_param)
+                .map(ast::NextMatchContent::WithParam)
+                .or(instruction(names.xsl_fallback).map(ast::NextMatchContent::Fallback)))
             .many(),
         );
 
