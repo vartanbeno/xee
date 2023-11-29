@@ -1320,7 +1320,7 @@ pub struct Param {
 
 impl From<Param> for OverrideContent {
     fn from(i: Param) -> Self {
-        OverrideContent::Param(Box::new(i)).into()
+        OverrideContent::Param(Box::new(i))
     }
 }
 
@@ -1355,6 +1355,12 @@ pub struct ProcessingInstruction {
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<ProcessingInstruction> for SequenceConstructorItem {
+    fn from(i: ProcessingInstruction) -> Self {
+        SequenceConstructorInstruction::ProcessingInstruction(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

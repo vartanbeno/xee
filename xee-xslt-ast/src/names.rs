@@ -89,6 +89,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::OnNonEmpty => {
                 ast::OnNonEmpty::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::ProcessingInstruction => {
+                ast::ProcessingInstruction::parse_sequence_constructor_item(element)
+            }
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }

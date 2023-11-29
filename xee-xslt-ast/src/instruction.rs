@@ -1277,7 +1277,19 @@ impl InstructionParser for ast::PreserveSpace {
     }
 }
 
-// TODO: xsl:processing-instruction
+impl InstructionParser for ast::ProcessingInstruction {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::ProcessingInstruction {
+            name: element.required(names.name, element.value_template(element.ncname()))?,
+            select: element.optional(names.select, element.xpath())?,
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
 
 // TODO: xsl:result-document
 
