@@ -1,7 +1,7 @@
 use xot::{NameId, Xot};
 
 use crate::ast_core::{self as ast};
-use crate::combinator2::{one, NodeParser};
+use crate::combinator::{one, NodeParser};
 use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
 use crate::error::ElementError as Error;
 

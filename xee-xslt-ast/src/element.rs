@@ -3,7 +3,7 @@ use xot::{NameId, Node, SpanInfoKey, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::combinator2::{end, one, NodeParser, OneParser};
+use crate::combinator::{end, one, NodeParser, OneParser};
 use crate::context::Context;
 use crate::error::{AttributeError, ElementError};
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
