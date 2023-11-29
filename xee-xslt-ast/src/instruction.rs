@@ -1293,7 +1293,19 @@ impl InstructionParser for ast::ProcessingInstruction {
 
 // TODO: xsl:result-document
 
-// TODO: xsl:sequence
+impl InstructionParser for ast::Sequence {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Sequence {
+            select: element.optional(names.select, element.xpath())?,
+
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
 
 impl InstructionParser for ast::Sort {
     fn parse(element: &Element) -> Result<Self> {
