@@ -1514,7 +1514,16 @@ impl InstructionParser for ast::When {
     }
 }
 
-// TODO: xsl:where-populated
+impl InstructionParser for ast::WherePopulated {
+    fn parse(element: &Element) -> Result<Self> {
+        Ok(ast::WherePopulated {
+            standard: element.standard()?,
+            span: element.span,
+
+            sequence_constructor: element.sequence_constructor()?,
+        })
+    }
+}
 
 impl InstructionParser for ast::WithParam {
     fn parse(element: &Element) -> Result<Self> {

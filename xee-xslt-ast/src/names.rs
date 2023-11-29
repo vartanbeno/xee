@@ -105,6 +105,9 @@ impl SequenceConstructorName {
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::WherePopulated => {
+                ast::WherePopulated::parse_sequence_constructor_item(element)
+            }
 
             _ => {
                 unimplemented!()
