@@ -98,6 +98,7 @@ impl SequenceConstructorName {
             SequenceConstructorName::SourceDocument => {
                 ast::SourceDocument::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Text => ast::Text::parse_sequence_constructor_item(element),
             SequenceConstructorName::Variable => {
                 ast::Variable::parse_sequence_constructor_item(element)
             }
@@ -210,6 +211,7 @@ pub(crate) struct Names {
     pub(crate) data_type: xot::NameId,
     pub(crate) decimal_separator: xot::NameId,
     pub(crate) digit: xot::NameId,
+    pub(crate) disable_output_escaping: xot::NameId,
     pub(crate) doctype_public: xot::NameId,
     pub(crate) doctype_system: xot::NameId,
     pub(crate) elements: xot::NameId,
@@ -403,6 +405,7 @@ impl Names {
             data_type: xot.add_name("data-type"),
             decimal_separator: xot.add_name("decimal-separator"),
             digit: xot.add_name("digit"),
+            disable_output_escaping: xot.add_name("disable-output-escaping"),
             doctype_public: xot.add_name("doctype-public"),
             doctype_system: xot.add_name("doctype-system"),
             elements: xot.add_name("elements"),

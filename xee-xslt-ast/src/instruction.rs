@@ -1402,7 +1402,24 @@ impl InstructionParser for ast::Template {
     }
 }
 
-// TOD: xsl:text
+impl InstructionParser for ast::Text {
+    fn parse(element: &Element) -> Result<Self> {
+        let names = &element.state.names;
+        Ok(ast::Text {
+            disable_output_escaping: element
+                .boolean_with_default(names.disable_output_escaping, false)?,
+            standard: element.standard()?,
+            span: element.span,
+
+            content: element
+                .state
+                .xot
+                .text_str(element.node)
+                .unwrap_or("")
+                .to_string(),
+        })
+    }
+}
 
 impl InstructionParser for ast::Transform {
     fn parse(element: &Element) -> Result<Self> {

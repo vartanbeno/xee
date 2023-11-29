@@ -1492,11 +1492,17 @@ impl From<Template> for OverrideContent {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Text {
     // DEPRECATED
-    pub disable_output_escaping: Option<bool>,
+    pub disable_output_escaping: bool,
     pub content: PcData,
 
     pub standard: Standard,
     pub span: Span,
+}
+
+impl From<Text> for SequenceConstructorItem {
+    fn from(i: Text) -> Self {
+        SequenceConstructorInstruction::Text(Box::new(i)).into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
