@@ -26,6 +26,19 @@ pub(crate) trait NodeParser<V> {
         context: &Context,
     ) -> Result<(V, Option<Node>)>;
 
+    fn map<O, M>(self, map_func: M) -> MapParser<V, O, Self, M>
+    where
+        Self: Sized,
+        M: Fn(V) -> O,
+    {
+        MapParser {
+            parser: self,
+            map_func,
+            v: std::marker::PhantomData,
+            o: std::marker::PhantomData,
+        }
+    }
+
     fn option(self) -> OptionParser<V, Self>
     where
         Self: Sized,
@@ -135,6 +148,34 @@ where
         } else {
             Err(ElementError::UnexpectedEnd)
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct MapParser<V, O, P, M>
+where
+    P: NodeParser<V>,
+    M: Fn(V) -> O,
+{
+    parser: P,
+    map_func: M,
+    v: std::marker::PhantomData<V>,
+    o: std::marker::PhantomData<O>,
+}
+
+impl<V, O, P, M> NodeParser<O> for MapParser<V, O, P, M>
+where
+    P: NodeParser<V>,
+    M: Fn(V) -> O,
+{
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(O, Option<Node>)> {
+        let (item, next) = self.parser.parse_next(node, state, context)?;
+        Ok(((self.map_func)(item), next))
     }
 }
 
@@ -944,6 +985,23 @@ mod tests {
         assert_eq!(items.len(), 2);
         assert_eq!(items[0], AnyValue::A(ValueA));
         assert_eq!(items[1], AnyValue::B(ValueB));
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_map() {
+        let (state, context, next) = parse_next("<outer><a /></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value(usize);
+
+        #[derive(Debug, PartialEq)]
+        struct Value2(usize);
+
+        let parser = one(|_node, _, _| Ok(Value(1))).map(|item| Value2(item.0 + 1));
+
+        let (item, next) = parser.parse_next(next, &state, &context).unwrap();
+        assert_eq!(item, Value2(2));
         assert_eq!(next, None);
     }
 }
