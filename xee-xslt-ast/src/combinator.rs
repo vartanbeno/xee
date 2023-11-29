@@ -362,36 +362,6 @@ where
     }
 }
 
-// pub(crate) struct TopParser<V, P>
-// where
-//     P: Fn(Node, &State, &Context) -> Result<V>,
-// {
-//     parse_value: P,
-// }
-
-// impl<T, P> NodeParser<T> for TopParser<T, P>
-// where
-//     P: Fn(Node, &State, &Context) -> Result<T>,
-// {
-//     fn parse_next(
-//         &self,
-//         node: Option<Node>,
-//         state: &State,
-//         context: &Context,
-//     ) -> Result<(T, Option<Node>)> {
-//         let node = node.ok_or(ElementError::UnexpectedEnd)?;
-
-//         (self.parse_value)(node, state, context).map(|item| (item, None))
-//     }
-// }
-
-// pub(crate) fn top<V, P>(parse_value: P) -> TopParser<V, P>
-// where
-//     P: Fn(Node, &State, &Context) -> Result<V>,
-// {
-//     TopParser { parse_value }
-// }
-
 #[cfg(test)]
 mod tests {
     use xot::NameId;
