@@ -62,6 +62,7 @@ impl SequenceConstructorName {
             SequenceConstructorName::ForEachGroup => {
                 ast::ForEachGroup::parse_sequence_constructor_item(element)
             }
+            SequenceConstructorName::Fork => ast::Fork::parse_sequence_constructor_item(element),
             SequenceConstructorName::If => ast::If::parse_sequence_constructor_item(element),
             SequenceConstructorName::Map => ast::Map::parse_sequence_constructor_item(element),
             SequenceConstructorName::MapEntry => {
@@ -183,6 +184,7 @@ pub(crate) struct Names {
     pub(crate) xsl_attribute: xot::NameId,
     pub(crate) xsl_fallback: xot::NameId,
     pub(crate) xsl_for_each: xot::NameId,
+    pub(crate) xsl_for_each_group: xot::NameId,
     pub(crate) xsl_matching_substring: xot::NameId,
     pub(crate) xsl_merge_action: xot::NameId,
     pub(crate) xsl_merge_key: xot::NameId,
@@ -380,6 +382,7 @@ impl Names {
             xsl_attribute: xot.add_name_ns("attribute", xsl_ns),
             xsl_fallback: xot.add_name_ns("fallback", xsl_ns),
             xsl_for_each: xot.add_name_ns("for-each", xsl_ns),
+            xsl_for_each_group: xot.add_name_ns("for-each-group", xsl_ns),
             xsl_matching_substring: xot.add_name_ns("matching-substring", xsl_ns),
             xsl_merge_action: xot.add_name_ns("merge-action", xsl_ns),
             xsl_merge_key: xot.add_name_ns("merge-key", xsl_ns),

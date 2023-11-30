@@ -645,14 +645,14 @@ impl InstructionParser for ast::Fork {
 
         let sequence_fallbacks =
             (instruction(names.xsl_sequence).then(instruction(names.xsl_fallback).many())).many();
-        let for_each_fallbacks =
-            instruction(names.xsl_for_each).then(instruction(names.xsl_fallback).many());
+        let for_each_group_fallbacks =
+            instruction(names.xsl_for_each_group).then(instruction(names.xsl_fallback).many());
 
         let parse = content_parse(
             instruction(names.xsl_fallback).many().then(
-                sequence_fallbacks
-                    .map(ast::ForkContent::SequenceFallbacks)
-                    .or(for_each_fallbacks.map(ast::ForkContent::ForEachGroup)),
+                for_each_group_fallbacks
+                    .map(ast::ForkContent::ForEachGroup)
+                    .or(sequence_fallbacks.map(ast::ForkContent::SequenceFallbacks)),
             ),
         );
         let (fallbacks, content) = parse(element)?;
@@ -1775,6 +1775,20 @@ mod tests {
     fn test_for_each() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="true()"><xsl:sort>Sort 1</xsl:sort><xsl:sort>Sort 2</xsl:sort>Sequence constructor</xsl:for-each>"#
+        ))
+    }
+
+    #[test]
+    fn test_fork1() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:fork xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:sequence>Sequence 1</xsl:sequence><xsl:sequence>Sequence 2</xsl:sequence></xsl:fork>"#
+        ))
+    }
+
+    #[test]
+    fn test_fork2() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:fork xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:for-each-group select="true()">Content</xsl:for-each-group></xsl:fork>"#
         ))
     }
 }

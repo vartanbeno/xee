@@ -1,0 +1,69 @@
+---
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse_sequence_constructor_item(r#\"<xsl:fork xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:for-each-group select=\"true()\">Content</xsl:for-each-group></xsl:fork>\"#)"
+---
+Ok(Instruction(Fork(Fork(
+  fallbacks: [],
+  content: ForEachGroup((ForEachGroup(
+    select: Expression(
+      xpath: XPath(Expr([
+        Path(PathExpr(
+          steps: [
+            PrimaryExpr(FunctionCall(FunctionCall(
+              name: Name(
+                name: "true",
+                prefix: None,
+                namespace: Some("http://www.w3.org/2005/xpath-functions"),
+              ),
+              arguments: [],
+            ))),
+          ],
+        )),
+      ])),
+      span: Span(
+        start: 87,
+        end: 93,
+      ),
+    ),
+    group_by: None,
+    group_adjacent: None,
+    group_starting_with: None,
+    group_ending_with: None,
+    composite: false,
+    collation: None,
+    sort: [],
+    sequence_constructor: [
+      TextNode("Content"),
+    ],
+    standard: Standard(
+      default_collation: None,
+      default_mode: None,
+      default_validation: None,
+      exclude_result_prefixes: None,
+      expand_text: None,
+      extension_element_prefixes: None,
+      use_when: None,
+      version: None,
+      xpath_default_namespace: None,
+    ),
+    span: Span(
+      start: 60,
+      end: 78,
+    ),
+  ), [])),
+  standard: Standard(
+    default_collation: None,
+    default_mode: None,
+    default_validation: None,
+    exclude_result_prefixes: None,
+    expand_text: None,
+    extension_element_prefixes: None,
+    use_when: None,
+    version: None,
+    xpath_default_namespace: None,
+  ),
+  span: Span(
+    start: 1,
+    end: 9,
+  ),
+))))
