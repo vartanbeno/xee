@@ -1,3 +1,4 @@
+use ahash::{HashSet, HashSetExt};
 use xee_xpath_ast::{ast as xpath_ast, Namespaces};
 use xot::{NameId, Node, SpanInfoKey, Value};
 
@@ -166,7 +167,7 @@ pub(crate) struct Element<'a> {
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
     pub(crate) context: Context<'a>,
-
+    seen: std::cell::RefCell<HashSet<NameId>>,
     pub(crate) state: &'a State,
 }
 
@@ -185,6 +186,8 @@ impl<'a> Element<'a> {
             span,
             context,
             state,
+
+            seen: std::cell::RefCell::new(HashSet::new()),
         })
     }
 
@@ -241,6 +244,8 @@ impl<'a> Element<'a> {
         name: NameId,
         parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError>,
     ) -> Result<Option<T>, AttributeError> {
+        self.seen.borrow_mut().insert(name);
+
         if let Some(value) = self.element.get_attribute(name) {
             let span = self.value_span(name)?;
             let value = parse_value(value, span).map_err(|e| {
@@ -280,6 +285,17 @@ impl<'a> Element<'a> {
     ) -> Result<bool, AttributeError> {
         self.optional(name, Self::_boolean)
             .map(|v| v.unwrap_or(default))
+    }
+
+    pub(crate) fn unseen_attributes(&self) -> Vec<NameId> {
+        let mut result = Vec::new();
+        let seen = self.seen.borrow();
+        for name in self.element.attributes().keys() {
+            if !seen.contains(name) {
+                result.push(*name);
+            }
+        }
+        result
     }
 
     fn namespaces(&'a self) -> Namespaces<'a> {

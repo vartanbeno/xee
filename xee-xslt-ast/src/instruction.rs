@@ -19,7 +19,6 @@ pub(crate) trait InstructionParser: Sized {
     fn parse(element: &Element) -> Result<Self>;
 
     fn parse_and_validate(element: &Element) -> Result<Self> {
-        let item = Self::parse(element)?;
         if Self::should_be_empty() {
             if let Some(child) = element.state.xot.first_child(element.node) {
                 return Err(Error::Unexpected {
@@ -27,7 +26,14 @@ pub(crate) trait InstructionParser: Sized {
                 });
             }
         }
+        let item = Self::parse(element)?;
         item.validate(element)?;
+        let unseen_attributes = element.unseen_attributes();
+        if !unseen_attributes.is_empty() {
+            return Err(element
+                .attribute_unexpected(unseen_attributes[0], "unexpected attribute")
+                .into());
+        }
         Ok(item)
     }
 }
@@ -1793,5 +1799,12 @@ mod tests {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:fork xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:for-each-group select="true()">Content</xsl:for-each-group></xsl:fork>"#
         ))
+    }
+
+    #[test]
+    fn test_unsupported_attribute() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" unsupported="Unsupported">Hello</xsl:if>"#
+        ));
     }
 }
