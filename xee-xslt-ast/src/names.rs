@@ -179,7 +179,9 @@ pub(crate) struct Names {
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
     pub(crate) override_content_names: BTreeMap<NameId, OverrideContentName>,
-    pub(crate) ignore_xml_space: HashSet<NameId>,
+    pub(crate) ignore_xml_space_parents: HashSet<NameId>,
+    pub(crate) ignore_xml_space_next_siblings: HashSet<NameId>,
+    pub(crate) ignore_xml_space_previous_siblings: HashSet<NameId>,
 
     // XSL elements
     pub(crate) xsl_accumulator_rule: xot::NameId,
@@ -374,7 +376,7 @@ impl Names {
     pub(crate) fn new(xot: &mut Xot) -> Self {
         let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
 
-        let ignore_xml_space = [
+        let ignore_xml_space_parents = [
             xot.add_name_ns("accumulator", xsl_ns),
             xot.add_name_ns("analyze-string", xsl_ns),
             xot.add_name_ns("apply-imports", xsl_ns),
@@ -400,13 +402,28 @@ impl Names {
         .copied()
         .collect();
 
+        let ignore_xml_space_next_siblings = [
+            xot.add_name_ns("param", xsl_ns),
+            xot.add_name_ns("sort", xsl_ns),
+            xot.add_name_ns("context-item", xsl_ns),
+            xot.add_name_ns("on-completion", xsl_ns),
+        ]
+        .iter()
+        .copied()
+        .collect();
+
+        let ignore_xml_space_previous_siblings =
+            [xot.add_name_ns("catch", xsl_ns)].iter().copied().collect();
+
         Self {
             xsl_ns,
 
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
             declaration_names: DeclarationName::names(xot, xsl_ns),
             override_content_names: OverrideContentName::names(xot, xsl_ns),
-            ignore_xml_space,
+            ignore_xml_space_parents,
+            ignore_xml_space_next_siblings,
+            ignore_xml_space_previous_siblings,
 
             xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
             xsl_attribute: xot.add_name_ns("attribute", xsl_ns),

@@ -5,18 +5,15 @@ use crate::names::Names;
 pub(crate) fn strip_whitespace(xot: &mut Xot, names: &Names, node: Node) {
     // all comments and processing instructions are removed
     // any text nodes that are now adjacent to each other are merged
+    // we need to do this before anything else, otherwise we miss out on
+    // some whitespace text nodes in the next/previous sibling rules
+    strip_comment_pi(xot, node);
+
     let mut to_remove = vec![];
     let mut xml_space_preserve = vec![];
     for edge in xot.traverse(node) {
         match edge {
             NodeEdge::Start(node) => match xot.value(node) {
-                Value::Root => {}
-                Value::Comment(..) => {
-                    to_remove.push(node);
-                }
-                Value::ProcessingInstruction(..) => {
-                    to_remove.push(node);
-                }
                 Value::Text(text) => {
                     if is_xml_whitespace(text.get())
                         && !is_xml_space_preserve(xot, names, node, &xml_space_preserve)
@@ -33,6 +30,7 @@ pub(crate) fn strip_whitespace(xot: &mut Xot, names: &Names, node: Node) {
                         }
                     }
                 }
+                _ => {}
             },
             NodeEdge::End(node) => {
                 if let Some(element) = xot.element(node) {
@@ -41,6 +39,26 @@ pub(crate) fn strip_whitespace(xot: &mut Xot, names: &Names, node: Node) {
                     }
                 }
             }
+        }
+    }
+
+    for node in to_remove {
+        let _ = xot.remove(node);
+    }
+}
+
+fn strip_comment_pi(xot: &mut Xot, node: Node) {
+    let mut to_remove = vec![];
+
+    for node in xot.descendants(node) {
+        match xot.value(node) {
+            Value::Comment(..) => {
+                to_remove.push(node);
+            }
+            Value::ProcessingInstruction(..) => {
+                to_remove.push(node);
+            }
+            _ => {}
         }
     }
 
@@ -74,11 +92,23 @@ fn is_xml_space_preserve(
                 return true;
             }
             // we never preserve space if the parent is in the ignore list
-            if names.ignore_xml_space.contains(&element.name()) {
+            if names.ignore_xml_space_parents.contains(&element.name()) {
                 return false;
             }
         }
     }
+
+    if let Some(next) = xot.next_sibling(node) {
+        if let Some(element) = xot.element(next) {
+            if names
+                .ignore_xml_space_next_siblings
+                .contains(&element.name())
+            {
+                return false;
+            }
+        }
+    }
+
     // otherwise we look into the state of xml:space
     if let Some(last) = xml_space_preserve.last() {
         *last
@@ -207,6 +237,35 @@ mod tests {
         assert_eq!(
             xot.to_string(root).unwrap(),
             r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator xml:space="preserve"/></doc>"#
+        );
+    }
+
+    #[test]
+    fn test_xml_space_preserve_ignored_before_special_instructions() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let root = xot
+            .parse(r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve">   <xsl:param/></doc>"#)
+            .unwrap();
+        strip_whitespace(&mut xot, &names, root);
+        assert_eq!(
+            xot.to_string(root).unwrap(),
+            r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:param/></doc>"#
+        );
+    }
+
+    #[test]
+    fn test_xml_space_preserve_ignored_before_special_instructions_comment_breaking_up_whitespace()
+    {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let root = xot
+            .parse(r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve">   <!--comment-->   <xsl:param/></doc>"#)
+            .unwrap();
+        strip_whitespace(&mut xot, &names, root);
+        assert_eq!(
+            xot.to_string(root).unwrap(),
+            r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:param/></doc>"#
         );
     }
 }
