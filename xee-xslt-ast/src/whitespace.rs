@@ -19,8 +19,7 @@ pub(crate) fn strip_whitespace(xot: &mut Xot, names: &Names, node: Node) {
                 }
                 Value::Text(text) => {
                     if is_xml_whitespace(text.get())
-                        && !is_parent_xsl_text(xot, names, node)
-                        && !is_xml_space_preserve(&xml_space_preserve)
+                        && !is_xml_space_preserve(xot, names, node, &xml_space_preserve)
                     {
                         to_remove.push(node);
                     }
@@ -61,7 +60,26 @@ fn is_parent_xsl_text(xot: &Xot, names: &Names, node: Node) -> bool {
     false
 }
 
-fn is_xml_space_preserve(xml_space_preserve: &[bool]) -> bool {
+fn is_xml_space_preserve(
+    xot: &Xot,
+    names: &Names,
+    node: Node,
+    xml_space_preserve: &[bool],
+) -> bool {
+    // if the parent is in the ignore list, we never preserve whitespace
+    if let Some(parent) = xot.parent(node) {
+        if let Some(element) = xot.element(parent) {
+            // we always preserve space if the parent is xsl:text
+            if element.name() == names.xsl_text {
+                return true;
+            }
+            // we never preserve space if the parent is in the ignore list
+            if names.ignore_xml_space.contains(&element.name()) {
+                return false;
+            }
+        }
+    }
+    // otherwise we look into the state of xml:space
     if let Some(last) = xml_space_preserve.last() {
         *last
     } else {
@@ -175,6 +193,20 @@ mod tests {
         assert_eq!(
             xot.to_string(root).unwrap(),
             r#"<doc><p xml:space="preserve"><span xml:space="default"/><span>   </span></p></doc>"#
+        );
+    }
+
+    #[test]
+    fn test_xml_space_preserve_ignored_in_special_instructions() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let root = xot
+            .parse(r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator xml:space="preserve">   </xsl:accumulator></doc>"#)
+            .unwrap();
+        strip_whitespace(&mut xot, &names, root);
+        assert_eq!(
+            xot.to_string(root).unwrap(),
+            r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:accumulator xml:space="preserve"/></doc>"#
         );
     }
 }

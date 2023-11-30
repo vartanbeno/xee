@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
+use ahash::HashSet;
 use strum::VariantNames;
 use xot::{NameId, NamespaceId, Xot};
 
@@ -178,6 +179,7 @@ pub(crate) struct Names {
     pub(crate) sequence_constructor_names: BTreeMap<NameId, SequenceConstructorName>,
     pub(crate) declaration_names: BTreeMap<NameId, DeclarationName>,
     pub(crate) override_content_names: BTreeMap<NameId, OverrideContentName>,
+    pub(crate) ignore_xml_space: HashSet<NameId>,
 
     // XSL elements
     pub(crate) xsl_accumulator_rule: xot::NameId,
@@ -372,12 +374,39 @@ impl Names {
     pub(crate) fn new(xot: &mut Xot) -> Self {
         let xsl_ns = xot.add_namespace("http://www.w3.org/1999/XSL/Transform");
 
+        let ignore_xml_space = [
+            xot.add_name_ns("accumulator", xsl_ns),
+            xot.add_name_ns("analyze-string", xsl_ns),
+            xot.add_name_ns("apply-imports", xsl_ns),
+            xot.add_name_ns("apply-templates", xsl_ns),
+            xot.add_name_ns("attribute-set", xsl_ns),
+            xot.add_name_ns("call-template", xsl_ns),
+            xot.add_name_ns("character-map", xsl_ns),
+            xot.add_name_ns("choose", xsl_ns),
+            xot.add_name_ns("evaluate", xsl_ns),
+            xot.add_name_ns("fork", xsl_ns),
+            xot.add_name_ns("merge", xsl_ns),
+            xot.add_name_ns("merge-source", xsl_ns),
+            xot.add_name_ns("mode", xsl_ns),
+            xot.add_name_ns("next-iteration", xsl_ns),
+            xot.add_name_ns("next-match", xsl_ns),
+            xot.add_name_ns("override", xsl_ns),
+            xot.add_name_ns("package", xsl_ns),
+            xot.add_name_ns("stylesheet", xsl_ns),
+            xot.add_name_ns("transform", xsl_ns),
+            xot.add_name_ns("use-package", xsl_ns),
+        ]
+        .iter()
+        .copied()
+        .collect();
+
         Self {
             xsl_ns,
 
             sequence_constructor_names: SequenceConstructorName::names(xot, xsl_ns),
             declaration_names: DeclarationName::names(xot, xsl_ns),
             override_content_names: OverrideContentName::names(xot, xsl_ns),
+            ignore_xml_space,
 
             xsl_accumulator_rule: xot.add_name_ns("accumulator-rule", xsl_ns),
             xsl_attribute: xot.add_name_ns("attribute", xsl_ns),
