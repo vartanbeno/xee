@@ -67,17 +67,6 @@ fn strip_comment_pi(xot: &mut Xot, node: Node) {
     }
 }
 
-fn is_parent_xsl_text(xot: &Xot, names: &Names, node: Node) -> bool {
-    if let Some(parent) = xot.parent(node) {
-        if let Some(element) = xot.element(parent) {
-            if element.name() == names.xsl_text {
-                return true;
-            }
-        }
-    }
-    false
-}
-
 fn is_xml_space_preserve(
     xot: &Xot,
     names: &Names,

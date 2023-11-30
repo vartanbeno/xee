@@ -1654,8 +1654,9 @@ pub struct WithParam {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
-    // TODO: should support text value template
     TextNode(String),
+    ValueNode(xpath_ast::XPath),
+
     ElementNode(Box<ElementNode>),
     Instruction(SequenceConstructorInstruction),
 }

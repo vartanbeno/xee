@@ -1807,4 +1807,36 @@ mod tests {
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" unsupported="Unsupported">Hello</xsl:if>"#
         ));
     }
+
+    #[test]
+    #[ignore]
+    fn test_no_expand_text_should_not_expand_text() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()">Hello {world}!</xsl:if>"#
+        ));
+    }
+
+    #[test]
+    #[ignore]
+    fn test_expand_text_should_expand_text() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes">Hello {world}!</xsl:if>"#
+        ));
+    }
+
+    #[test]
+    #[ignore]
+    fn test_xsl_expand_text_should_expand_text() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><p xsl:expand-text="yes">Hello {world}!</p></xsl:if>"#
+        ));
+    }
+
+    #[test]
+    #[ignore]
+    fn test_expand_text_disabled_should_not_expand_text() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes"><p xsl:expand-text="no">Hello {world}!</p></xsl:if>"#
+        ));
+    }
 }

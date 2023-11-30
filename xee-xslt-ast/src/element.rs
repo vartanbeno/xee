@@ -191,11 +191,6 @@ impl<'a> Element<'a> {
         })
     }
 
-    fn sub_element(&'a self, node: Node, element: &'a xot::Element) -> Result<Self, ElementError> {
-        let context = self.context.element(element);
-        Self::new(node, element, context, self.state)
-    }
-
     pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
         self._standard(&self.state.names.standard)
     }
