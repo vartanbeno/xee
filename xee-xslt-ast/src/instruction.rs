@@ -648,6 +648,9 @@ impl InstructionParser for ast::Fork {
         let for_each_group_fallbacks =
             instruction(names.xsl_for_each_group).then(instruction(names.xsl_fallback).many());
 
+        // look for for-each-group first, and only if that fails,
+        // look for sequence fallbacks (which can be the empty list and thus
+        // would greedily conclude the parse if it was done first)
         let parse = content_parse(
             instruction(names.xsl_fallback).many().then(
                 for_each_group_fallbacks
