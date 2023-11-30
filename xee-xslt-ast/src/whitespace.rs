@@ -109,6 +109,17 @@ fn is_xml_space_preserve(
         }
     }
 
+    if let Some(previous) = xot.previous_sibling(node) {
+        if let Some(element) = xot.element(previous) {
+            if names
+                .ignore_xml_space_previous_siblings
+                .contains(&element.name())
+            {
+                return false;
+            }
+        }
+    }
+
     // otherwise we look into the state of xml:space
     if let Some(last) = xml_space_preserve.last() {
         *last
@@ -266,6 +277,34 @@ mod tests {
         assert_eq!(
             xot.to_string(root).unwrap(),
             r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:param/></doc>"#
+        );
+    }
+
+    #[test]
+    fn test_xml_space_preserve_ignored_after_special_instructions() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let root = xot
+            .parse(r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:catch/>   </doc>"#)
+            .unwrap();
+        strip_whitespace(&mut xot, &names, root);
+        assert_eq!(
+            xot.to_string(root).unwrap(),
+            r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:catch/></doc>"#
+        );
+    }
+
+    #[test]
+    fn test_xml_space_preserve_ignored_after_special_instructions_comment_breaking_up_whitespace() {
+        let mut xot = Xot::new();
+        let names = Names::new(&mut xot);
+        let root = xot
+            .parse(r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:catch/>   <!--comment-->   </doc>"#)
+            .unwrap();
+        strip_whitespace(&mut xot, &names, root);
+        assert_eq!(
+            xot.to_string(root).unwrap(),
+            r#"<doc xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xml:space="preserve"><xsl:catch/></doc>"#
         );
     }
 }
