@@ -25,6 +25,7 @@ xot = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 strum = "0.25"
 strum_macros = "0.25"
+blanket = { workspace = true }
 
 [dev-dependencies]
 xee-xslt-ast = { path = ".", features = ["serde"] }

@@ -11,4 +11,5 @@ mod names;
 mod state;
 mod tokenize;
 mod value_template;
+mod visitor;
 mod whitespace;
