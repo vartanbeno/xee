@@ -28,8 +28,7 @@ impl ElementParsers {
                     text.get().to_string(),
                 )),
                 Value::Element(element) => {
-                    let new_context = context.element(element);
-                    let element = Element::new(node, element, new_context, state)?;
+                    let element = Element::new(node, element, context, state)?;
                     ast::SequenceConstructorItem::parse_sequence_constructor_item(element)
                 }
                 _ => Err(ElementError::Unexpected {
@@ -47,8 +46,7 @@ impl ElementParsers {
 
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
-                let new_context = context.element(element);
-                let element = Element::new(node, element, new_context, state)?;
+                let element = Element::new(node, element, context, state)?;
                 ast::Declaration::parse_declaration(element)
             }
             _ => Err(ElementError::Unexpected {
@@ -90,8 +88,7 @@ pub(crate) fn by_element<V>(
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
-        let element_context = context.element(element);
-        let element = Element::new(node, element, element_context, state)?;
+        let element = Element::new(node, element, context, state)?;
         f(element)
     }
 }
@@ -176,11 +173,11 @@ impl<'a> Element<'a> {
     pub(crate) fn new(
         node: Node,
         element: &'a xot::Element,
-        context: Context<'a>,
+        context: &'a Context<'a>,
         state: &'a State,
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;
-
+        let context = context.element(element);
         Ok(Self {
             node,
             element,

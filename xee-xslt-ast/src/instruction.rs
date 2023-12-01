@@ -9,7 +9,7 @@ use crate::state::State;
 type Result<V> = std::result::Result<V, Error>;
 
 pub(crate) trait InstructionParser: Sized {
-    fn validate(&self, node: Node, state: &State) -> Result<()> {
+    fn validate(&self, _node: Node, _state: &State) -> Result<()> {
         Ok(())
     }
 
@@ -1520,7 +1520,7 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element);
-            let element = Element::new(node, element, context, &state)?;
+            let element = Element::new(node, element, &context, &state)?;
             ast::SequenceConstructorItem::parse_sequence_constructor_item(element)
         } else {
             Err(Error::Internal)
