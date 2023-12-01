@@ -1332,7 +1332,7 @@ pub struct PerformSort {
     pub select: Option<Expression>,
 
     pub sorts: Vec<Sort>,
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
     pub span: Span,
@@ -1530,11 +1530,11 @@ pub struct Try {
     pub select: Option<Expression>,
     pub rollback_output: Option<bool>,
 
-    pub constructor: SequenceConstructor,
+    pub sequence_constructor: SequenceConstructor,
     // TODO: at least one catch needs to be there, so could fold it into
     // the catches block
     pub catch: Catch,
-    pub catches: Vec<TryCatchOrFinally>,
+    pub catches: Vec<TryCatchOrFallback>,
 
     pub standard: Standard,
     pub span: Span,
@@ -1542,7 +1542,7 @@ pub struct Try {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum TryCatchOrFinally {
+pub enum TryCatchOrFallback {
     Catch(Catch),
     Fallback(Fallback),
 }

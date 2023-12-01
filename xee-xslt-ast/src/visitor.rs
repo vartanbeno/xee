@@ -89,6 +89,7 @@ pub(crate) trait AstVisitor {
     fn visit_merge_action(&mut self, merge_action: &mut ast::MergeAction);
     fn visit_merge_key(&mut self, merge_key: &mut ast::MergeKey);
     fn visit_merge_source(&mut self, merge_source: &mut ast::MergeSource);
+    fn visit_catch(&mut self, catch: &mut ast::Catch);
 }
 
 pub(crate) mod visit {
@@ -627,93 +628,114 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_message<V: AstVisitor + ?Sized>(v: &mut V, message: &mut ast::Message) {
-        // TODO
+        v.visit_sequence_constructor(&mut message.sequence_constructor)
     }
 
     pub(crate) fn visit_namespace<V: AstVisitor + ?Sized>(
         v: &mut V,
         namespace: &mut ast::Namespace,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut namespace.sequence_constructor)
     }
 
     pub(crate) fn visit_next_iteration<V: AstVisitor + ?Sized>(
         v: &mut V,
         next_iteration: &mut ast::NextIteration,
     ) {
-        // TODO
+        for with_param in next_iteration.with_params.iter_mut() {
+            v.visit_with_param(with_param)
+        }
     }
 
     pub(crate) fn visit_next_match<V: AstVisitor + ?Sized>(
         v: &mut V,
         next_match: &mut ast::NextMatch,
     ) {
-        // TODO
+        for item in next_match.content.iter_mut() {
+            match item {
+                ast::NextMatchContent::WithParam(with_param) => v.visit_with_param(with_param),
+                ast::NextMatchContent::Fallback(fallback) => v.visit_fallback(fallback),
+            }
+        }
     }
 
-    pub(crate) fn visit_number<V: AstVisitor + ?Sized>(v: &mut V, number: &mut ast::Number) {
-        // TODO
+    pub(crate) fn visit_number<V: AstVisitor + ?Sized>(_v: &mut V, _number: &mut ast::Number) {
+        // no children
     }
 
     pub(crate) fn visit_on_empty<V: AstVisitor + ?Sized>(v: &mut V, on_empty: &mut ast::OnEmpty) {
-        // TODO
+        v.visit_sequence_constructor(&mut on_empty.sequence_constructor)
     }
 
     pub(crate) fn visit_on_non_empty<V: AstVisitor + ?Sized>(
         v: &mut V,
         on_non_empty: &mut ast::OnNonEmpty,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut on_non_empty.sequence_constructor)
     }
 
     pub(crate) fn visit_perform_sort<V: AstVisitor + ?Sized>(
         v: &mut V,
         perform_sort: &mut ast::PerformSort,
     ) {
-        // TODO
+        for sort in perform_sort.sorts.iter_mut() {
+            v.visit_sort(sort)
+        }
+        v.visit_sequence_constructor(&mut perform_sort.sequence_constructor)
     }
 
     pub(crate) fn visit_processing_instruction<V: AstVisitor + ?Sized>(
         v: &mut V,
         processing_instruction: &mut ast::ProcessingInstruction,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut processing_instruction.sequence_constructor)
     }
 
     pub(crate) fn visit_result_document<V: AstVisitor + ?Sized>(
         v: &mut V,
         result_document: &mut ast::ResultDocument,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut result_document.sequence_constructor)
     }
 
     pub(crate) fn visit_sequence<V: AstVisitor + ?Sized>(v: &mut V, sequence: &mut ast::Sequence) {
-        // TODO
+        v.visit_sequence_constructor(&mut sequence.sequence_constructor)
     }
 
     pub(crate) fn visit_source_document<V: AstVisitor + ?Sized>(
         v: &mut V,
         source_document: &mut ast::SourceDocument,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut source_document.sequence_constructor)
     }
 
-    pub(crate) fn visit_text<V: AstVisitor + ?Sized>(v: &mut V, text: &mut ast::Text) {
-        // TODO
+    pub(crate) fn visit_text<V: AstVisitor + ?Sized>(_v: &mut V, _text: &mut ast::Text) {
+        // no children
     }
 
     pub(crate) fn visit_try<V: AstVisitor + ?Sized>(v: &mut V, try_: &mut ast::Try) {
-        // TODO
+        v.visit_sequence_constructor(&mut try_.sequence_constructor);
+        v.visit_catch(&mut try_.catch);
+        for catch in try_.catches.iter_mut() {
+            match catch {
+                ast::TryCatchOrFallback::Catch(catch) => v.visit_catch(catch),
+                ast::TryCatchOrFallback::Fallback(fallback) => v.visit_fallback(fallback),
+            }
+        }
+    }
+
+    pub(crate) fn visit_catch<V: AstVisitor + ?Sized>(v: &mut V, catch: &mut ast::Catch) {
+        v.visit_sequence_constructor(&mut catch.sequence_constructor)
     }
 
     pub(crate) fn visit_value_of<V: AstVisitor + ?Sized>(v: &mut V, value_of: &mut ast::ValueOf) {
-        // TODO
+        v.visit_sequence_constructor(&mut value_of.sequence_constructor)
     }
 
     pub(crate) fn visit_where_populated<V: AstVisitor + ?Sized>(
         v: &mut V,
         where_populated: &mut ast::WherePopulated,
     ) {
-        // TODO
+        v.visit_sequence_constructor(&mut where_populated.sequence_constructor)
     }
 }
