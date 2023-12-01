@@ -40,17 +40,6 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
     sequence_constructor: [
       TextNode("Matching"),
     ],
-    standard: Standard(
-      default_collation: None,
-      default_mode: None,
-      default_validation: None,
-      exclude_result_prefixes: None,
-      expand_text: None,
-      extension_element_prefixes: None,
-      use_when: None,
-      version: None,
-      xpath_default_namespace: None,
-    ),
     span: Span(
       start: 98,
       end: 120,
@@ -62,17 +51,6 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
       sequence_constructor: [
         TextNode("Fallback 1"),
       ],
-      standard: Standard(
-        default_collation: None,
-        default_mode: None,
-        default_validation: None,
-        exclude_result_prefixes: None,
-        expand_text: None,
-        extension_element_prefixes: None,
-        use_when: None,
-        version: None,
-        xpath_default_namespace: None,
-      ),
       span: Span(
         start: 155,
         end: 167,
@@ -82,34 +60,12 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
       sequence_constructor: [
         TextNode("Fallback 2"),
       ],
-      standard: Standard(
-        default_collation: None,
-        default_mode: None,
-        default_validation: None,
-        exclude_result_prefixes: None,
-        expand_text: None,
-        extension_element_prefixes: None,
-        use_when: None,
-        version: None,
-        xpath_default_namespace: None,
-      ),
       span: Span(
         start: 194,
         end: 206,
       ),
     ),
   ],
-  standard: Standard(
-    default_collation: None,
-    default_mode: None,
-    default_validation: None,
-    exclude_result_prefixes: None,
-    expand_text: None,
-    extension_element_prefixes: None,
-    use_when: None,
-    version: None,
-    xpath_default_namespace: None,
-  ),
   span: Span(
     start: 1,
     end: 19,

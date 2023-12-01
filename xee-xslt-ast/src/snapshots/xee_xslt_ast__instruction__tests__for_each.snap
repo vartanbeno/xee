@@ -35,17 +35,6 @@ Ok(Instruction(ForEach(ForEach(
       sequence_constructor: [
         TextNode("Sort 1"),
       ],
-      standard: Standard(
-        default_collation: None,
-        default_mode: None,
-        default_validation: None,
-        exclude_result_prefixes: None,
-        expand_text: None,
-        extension_element_prefixes: None,
-        use_when: None,
-        version: None,
-        xpath_default_namespace: None,
-      ),
       span: Span(
         start: 80,
         end: 88,
@@ -62,17 +51,6 @@ Ok(Instruction(ForEach(ForEach(
       sequence_constructor: [
         TextNode("Sort 2"),
       ],
-      standard: Standard(
-        default_collation: None,
-        default_mode: None,
-        default_validation: None,
-        exclude_result_prefixes: None,
-        expand_text: None,
-        extension_element_prefixes: None,
-        use_when: None,
-        version: None,
-        xpath_default_namespace: None,
-      ),
       span: Span(
         start: 107,
         end: 115,
@@ -82,17 +60,6 @@ Ok(Instruction(ForEach(ForEach(
   sequence_constructor: [
     TextNode("Sequence constructor"),
   ],
-  standard: Standard(
-    default_collation: None,
-    default_mode: None,
-    default_validation: None,
-    exclude_result_prefixes: None,
-    expand_text: None,
-    extension_element_prefixes: None,
-    use_when: None,
-    version: None,
-    xpath_default_namespace: None,
-  ),
   span: Span(
     start: 1,
     end: 13,

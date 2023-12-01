@@ -1,22 +1,11 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse(r#\"<foo/>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<foo/>\"#)"
 ---
 Ok(ElementNode(ElementNode(
   name: Name(
     namespace: "",
     local: "foo",
-  ),
-  standard: Standard(
-    default_collation: None,
-    default_mode: None,
-    default_validation: None,
-    exclude_result_prefixes: None,
-    expand_text: None,
-    extension_element_prefixes: None,
-    use_when: None,
-    version: None,
-    xpath_default_namespace: None,
   ),
   span: Span(
     start: 1,

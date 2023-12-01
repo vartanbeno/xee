@@ -184,7 +184,6 @@ pub struct Accept {
     pub names: Vec<Token>,
     pub visibility: VisibilityWithHidden,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -198,7 +197,6 @@ pub struct Accumulator {
 
     pub rules: Vec<AccumulatorRule>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -216,7 +214,6 @@ pub struct AccumulatorRule {
     pub select: Option<Expression>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -238,8 +235,6 @@ pub struct AnalyzeString {
     pub non_matching_substring: Option<NonMatchingSubstring>,
     pub fallbacks: Vec<Fallback>,
 
-    pub standard: Standard,
-
     pub span: Span,
 }
 
@@ -254,7 +249,6 @@ impl From<AnalyzeString> for SequenceConstructorItem {
 pub struct ApplyImports {
     pub with_params: Vec<WithParam>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -272,7 +266,6 @@ pub struct ApplyTemplates {
 
     pub content: Vec<ApplyTemplatesContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -298,7 +291,6 @@ pub struct Assert {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -320,7 +312,6 @@ pub struct Attribute {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -340,7 +331,6 @@ pub struct AttributeSet {
 
     pub attributes: Vec<Attribute>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -357,7 +347,6 @@ pub struct Break {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -374,7 +363,6 @@ pub struct CallTemplate {
 
     pub with_params: Vec<WithParam>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -392,7 +380,6 @@ pub struct Catch {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -404,7 +391,6 @@ pub struct CharacterMap {
 
     pub output_characters: Vec<OutputCharacter>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -414,7 +400,6 @@ pub struct Choose {
     pub when: Vec<When>,
     pub otherwise: Option<Otherwise>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -431,7 +416,6 @@ pub struct Comment {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -447,7 +431,6 @@ pub struct ContextItem {
     pub as_: Option<ItemType>,
     pub use_: Option<Use>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -463,7 +446,6 @@ pub struct Copy {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -482,7 +464,6 @@ pub struct CopyOf {
     pub type_: Option<EqName>,
     pub validation: Option<Validation>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -508,7 +489,6 @@ pub struct DecimalFormat {
     pub digit: Option<char>,
     pub pattern_separator: Option<char>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -520,7 +500,6 @@ pub struct Document {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -542,7 +521,6 @@ pub struct Element {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -565,7 +543,6 @@ pub struct Evaluate {
 
     pub content: Vec<EvaluateContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -589,7 +566,6 @@ pub struct Expose {
     pub names: Vec<Token>,
     pub visibility: VisibilityWithAbstract,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -598,7 +574,6 @@ pub struct Expose {
 pub struct Fallback {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -616,7 +591,6 @@ pub struct ForEach {
     pub sort: Vec<Sort>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -640,7 +614,6 @@ pub struct ForEachGroup {
     pub sort: Vec<Sort>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -656,7 +629,6 @@ pub struct Fork {
     pub fallbacks: Vec<Fallback>,
     pub content: ForkContent,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -688,7 +660,6 @@ pub struct Function {
     pub params: Vec<Param>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -725,7 +696,6 @@ pub struct GlobalContextItem {
     pub as_: Option<ItemType>,
     pub use_: Option<Use>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -736,7 +706,6 @@ pub struct If {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -751,7 +720,6 @@ impl From<If> for SequenceConstructorItem {
 pub struct Import {
     pub href: Uri,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -761,7 +729,6 @@ pub struct ImportSchema {
     pub namespace: Option<Uri>,
     pub schema_location: Option<Uri>,
 
-    pub standard: Standard,
     pub span: Span,
 
     pub schema: Option<Schema>,
@@ -772,7 +739,6 @@ pub struct ImportSchema {
 pub struct Include {
     pub href: Uri,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -781,7 +747,6 @@ pub struct Include {
 pub struct Iterate {
     pub select: Expression,
 
-    pub standard: Standard,
     pub span: Span,
 
     pub params: Vec<Param>,
@@ -798,7 +763,6 @@ pub struct Key {
     pub composite: bool,
     pub collation: Option<Uri>,
 
-    pub standard: Standard,
     pub span: Span,
 
     pub sequence_constructor: SequenceConstructor,
@@ -807,7 +771,6 @@ pub struct Key {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Map {
-    pub standard: Standard,
     pub span: Span,
 
     pub sequence_constructor: SequenceConstructor,
@@ -827,7 +790,6 @@ pub struct MapEntry {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -842,14 +804,12 @@ impl From<MapEntry> for SequenceConstructorItem {
 pub struct MatchingSubstring {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Merge {
-    pub standard: Standard,
     pub span: Span,
 
     pub merge_sources: Vec<MergeSource>,
@@ -868,7 +828,6 @@ impl From<Merge> for SequenceConstructorItem {
 pub struct MergeAction {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -884,7 +843,6 @@ pub struct MergeKey {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -901,7 +859,6 @@ pub struct MergeSource {
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
 
-    pub standard: Standard,
     pub span: Span,
 
     pub merge_keys: Vec<MergeKey>,
@@ -916,7 +873,6 @@ pub struct Message {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -939,7 +895,6 @@ pub struct Mode {
     pub typed: Option<Typed>,
     pub visibility: Option<Visibility>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -978,7 +933,6 @@ pub struct Namespace {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -994,7 +948,6 @@ pub struct NamespaceAlias {
     pub stylesheet_prefix: PrefixOrDefault,
     pub result_prefix: PrefixOrDefault,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1008,7 +961,6 @@ pub enum PrefixOrDefault {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct NextIteration {
-    pub standard: Standard,
     pub span: Span,
 
     pub with_params: Vec<WithParam>,
@@ -1025,7 +977,6 @@ impl From<NextIteration> for SequenceConstructorItem {
 pub struct NextMatch {
     pub content: Vec<NextMatchContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1047,7 +998,6 @@ pub enum NextMatchContent {
 pub struct NonMatchingSubstring {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1067,7 +1017,6 @@ pub struct Number {
     pub grouping_separator: Option<ValueTemplate<char>>,
     pub grouping_size: Option<ValueTemplate<usize>>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1099,7 +1048,6 @@ pub struct OnCompletion {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1110,7 +1058,6 @@ pub struct OnEmpty {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1127,7 +1074,6 @@ pub struct OnNonEmpty {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1142,7 +1088,6 @@ impl From<OnNonEmpty> for SequenceConstructorItem {
 pub struct Otherwise {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1174,7 +1119,6 @@ pub struct Output {
     pub use_character_maps: Option<Vec<EqName>>,
     pub version: Option<NmToken>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1225,7 +1169,6 @@ pub struct OutputCharacter {
     pub character: char,
     pub string: String,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1234,7 +1177,6 @@ pub struct OutputCharacter {
 pub struct Override {
     pub content: Vec<OverrideContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1271,7 +1213,6 @@ pub struct Package {
 
     pub content: Vec<PackageContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1316,7 +1257,6 @@ pub struct Param {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1334,7 +1274,6 @@ pub struct PerformSort {
     pub sorts: Vec<Sort>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1343,7 +1282,6 @@ pub struct PerformSort {
 pub struct PreserveSpace {
     pub elements: Vec<Token>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1355,7 +1293,6 @@ pub struct ProcessingInstruction {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1398,7 +1335,6 @@ pub struct ResultDocument {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1409,7 +1345,6 @@ pub struct Sequence {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1432,7 +1367,6 @@ pub struct Sort {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1447,7 +1381,6 @@ pub struct SourceDocument {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1462,7 +1395,6 @@ impl From<SourceDocument> for SequenceConstructorItem {
 pub struct StripSpace {
     pub elements: Vec<Token>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1480,7 +1412,6 @@ pub struct Template {
     pub params: Vec<Param>,
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1497,7 +1428,6 @@ pub struct Text {
     pub disable_output_escaping: bool,
     pub content: PcData,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1518,7 +1448,6 @@ pub struct Transform {
     // they're all standard attributes
     pub declarations: Declarations,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1536,7 +1465,6 @@ pub struct Try {
     pub catch: Catch,
     pub catches: Vec<TryCatchOrFallback>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1555,7 +1483,6 @@ pub struct UsePackage {
 
     pub content: Vec<UsePackageContent>,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1576,7 +1503,6 @@ pub struct ValueOf {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1597,7 +1523,6 @@ pub struct Variable {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1620,7 +1545,6 @@ pub struct When {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1629,7 +1553,6 @@ pub struct When {
 pub struct WherePopulated {
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1649,7 +1572,6 @@ pub struct WithParam {
 
     pub sequence_constructor: SequenceConstructor,
 
-    pub standard: Standard,
     pub span: Span,
 }
 
@@ -1724,7 +1646,6 @@ pub struct ElementNode {
     pub name: Name,
     // pub attributes: HashMap<Name, Templ<String>>,
     // pub sequence_constructor: SequenceConstructor,
-    pub standard: Standard,
     pub span: Span,
 }
 

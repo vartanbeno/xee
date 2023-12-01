@@ -26,17 +26,6 @@ Ok(Instruction(If(If(
   sequence_constructor: [
     TextNode("Hello"),
   ],
-  standard: Standard(
-    default_collation: None,
-    default_mode: None,
-    default_validation: None,
-    exclude_result_prefixes: None,
-    expand_text: None,
-    extension_element_prefixes: None,
-    use_when: None,
-    version: None,
-    xpath_default_namespace: None,
-  ),
   span: Span(
     start: 1,
     end: 7,
