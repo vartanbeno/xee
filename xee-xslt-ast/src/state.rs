@@ -1,6 +1,6 @@
-use xot::{Node, SpanInfo, SpanInfoKey, Xot};
+use xot::{NameId, Node, SpanInfo, SpanInfoKey, Xot};
 
-use crate::{ast_core::Span, names::Names};
+use crate::{ast_core::Span, error::AttributeError, name::XmlName, names::Names};
 
 /// Parser state affects the parsing output but does not change during parsing.
 pub(crate) struct State {
@@ -33,5 +33,37 @@ impl State {
             Root => unreachable!(),
         }
         .map(|span| span.into())
+    }
+
+    pub(crate) fn attribute_name_span(
+        &self,
+        node: Node,
+        name: NameId,
+    ) -> Result<Span, AttributeError> {
+        let span = self
+            .span_info
+            .get(SpanInfoKey::AttributeName(node, name))
+            .ok_or(AttributeError::Internal)?;
+        Ok(span.into())
+    }
+
+    pub(crate) fn attribute_unexpected(
+        &self,
+        node: Node,
+        name: NameId,
+        _message: &str,
+    ) -> AttributeError {
+        let (local, namespace) = self.xot.name_ns_str(name);
+        let span = self.attribute_name_span(node, name);
+        match span {
+            Ok(span) => AttributeError::Unexpected {
+                name: XmlName {
+                    namespace: namespace.to_string(),
+                    local: local.to_string(),
+                },
+                span,
+            },
+            Err(e) => e,
+        }
     }
 }

@@ -5,6 +5,8 @@ use crate::state::State;
 
 /// Parser context is passed around. You can create new contexts as
 /// for particular sub-trees.
+
+#[derive(Debug, Clone)]
 pub(crate) struct Context<'a> {
     prefixes: xot::Prefixes,
 

@@ -30,7 +30,7 @@ impl ElementParsers {
                 Value::Element(element) => {
                     let new_context = context.element(element);
                     let element = Element::new(node, element, new_context, state)?;
-                    ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+                    ast::SequenceConstructorItem::parse_sequence_constructor_item(element)
                 }
                 _ => Err(ElementError::Unexpected {
                     // TODO: get span right
@@ -49,7 +49,7 @@ impl ElementParsers {
             Value::Element(element) => {
                 let new_context = context.element(element);
                 let element = Element::new(node, element, new_context, state)?;
-                ast::Declaration::parse_declaration(&element)
+                ast::Declaration::parse_declaration(element)
             }
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
@@ -112,7 +112,7 @@ pub(crate) fn by_element_name<V>(
 pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    by_element_name(name, move |element| V::parse_and_validate(&element))
+    by_element_name(name, move |element| V::parse_and_validate(element))
 }
 
 pub(crate) fn instruction<V: InstructionParser>(
@@ -141,7 +141,7 @@ pub(crate) fn sequence_constructor() -> SequenceConstructorNodeParser {
     SequenceConstructorNodeParser
 }
 
-pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
+pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(Element) -> Result<V, ElementError>
 where
     P: NodeParser<V>,
 {
@@ -162,6 +162,7 @@ where
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct Element<'a> {
     pub(crate) node: Node,
     pub(crate) element: &'a xot::Element,
@@ -295,15 +296,6 @@ impl<'a> Element<'a> {
 
     fn namespaces(&'a self) -> Namespaces<'a> {
         self.context.namespaces(self.state)
-    }
-
-    fn name_span(&self, name: NameId) -> Result<Span, AttributeError> {
-        let span = self
-            .state
-            .span_info
-            .get(SpanInfoKey::AttributeName(self.node, name))
-            .ok_or(AttributeError::Internal)?;
-        Ok(span.into())
     }
 
     fn value_span(&self, name: NameId) -> Result<Span, AttributeError> {
@@ -1124,21 +1116,5 @@ impl<'a> Element<'a> {
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::NewEachTime, AttributeError> + '_ {
         Self::_new_each_time
-    }
-
-    // TODO: message ignored
-    pub(crate) fn attribute_unexpected(&self, name: NameId, _message: &str) -> AttributeError {
-        let (local, namespace) = self.state.xot.name_ns_str(name);
-        let span = self.name_span(name);
-        match span {
-            Ok(span) => AttributeError::Unexpected {
-                name: XmlName {
-                    namespace: namespace.to_string(),
-                    local: local.to_string(),
-                },
-                span,
-            },
-            Err(e) => e,
-        }
     }
 }
