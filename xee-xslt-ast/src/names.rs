@@ -13,7 +13,7 @@ use crate::instruction::{DeclarationParser, OverrideContentParser, SequenceConst
 impl SequenceConstructorName {
     pub(crate) fn parse(
         &self,
-        element: Element,
+        element: &Element,
     ) -> Result<ast::SequenceConstructorItem, ElementError> {
         match self {
             SequenceConstructorName::ApplyImports => {
@@ -129,7 +129,7 @@ impl SequenceConstructorName {
 }
 
 impl DeclarationName {
-    pub(crate) fn parse(&self, element: Element) -> Result<ast::Declaration, ElementError> {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::Declaration, ElementError> {
         match self {
             DeclarationName::Accumulator => ast::Accumulator::parse_declaration(element),
             _ => {
@@ -150,7 +150,7 @@ impl DeclarationName {
 }
 
 impl OverrideContentName {
-    pub(crate) fn parse(&self, element: Element) -> Result<ast::OverrideContent, ElementError> {
+    pub(crate) fn parse(&self, element: &Element) -> Result<ast::OverrideContent, ElementError> {
         use ast::OverrideContentName::*;
 
         match self {

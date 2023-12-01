@@ -17,9 +17,9 @@ pub(crate) trait InstructionParser: Sized {
         false
     }
 
-    fn parse(element: Element) -> Result<Self>;
+    fn parse(element: &Element) -> Result<Self>;
 
-    fn parse_and_validate(element: Element) -> Result<Self> {
+    fn parse_and_validate(element: &Element) -> Result<Self> {
         if Self::should_be_empty() {
             if let Some(child) = element.state.xot.first_child(element.node) {
                 return Err(Error::Unexpected {
@@ -44,7 +44,7 @@ pub(crate) trait InstructionParser: Sized {
 pub(crate) trait SequenceConstructorParser:
     InstructionParser + Into<ast::SequenceConstructorItem>
 {
-    fn parse_sequence_constructor_item(element: Element) -> Result<ast::SequenceConstructorItem> {
+    fn parse_sequence_constructor_item(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let item = Self::parse_and_validate(element)?;
         Ok(item.into())
     }
@@ -56,7 +56,7 @@ impl<T> SequenceConstructorParser for T where
 }
 
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
-    fn parse_declaration(element: Element) -> Result<ast::Declaration> {
+    fn parse_declaration(element: &Element) -> Result<ast::Declaration> {
         let item = Self::parse_and_validate(element)?;
         Ok(item.into())
     }
@@ -67,7 +67,7 @@ impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declarati
 pub(crate) trait OverrideContentParser:
     InstructionParser + Into<ast::OverrideContent>
 {
-    fn parse_override_content(element: Element) -> Result<ast::OverrideContent> {
+    fn parse_override_content(element: &Element) -> Result<ast::OverrideContent> {
         let item = Self::parse_and_validate(element)?;
         Ok(item.into())
     }
@@ -76,7 +76,7 @@ pub(crate) trait OverrideContentParser:
 impl<T> OverrideContentParser for T where T: InstructionParser + Into<ast::OverrideContent> {}
 
 impl InstructionParser for ast::SequenceConstructorItem {
-    fn parse(element: Element) -> Result<ast::SequenceConstructorItem> {
+    fn parse(element: &Element) -> Result<ast::SequenceConstructorItem> {
         let context = element.state;
         let name = context
             .names
@@ -98,7 +98,7 @@ impl InstructionParser for ast::SequenceConstructorItem {
 }
 
 impl InstructionParser for ast::Declaration {
-    fn parse(element: Element) -> Result<ast::Declaration> {
+    fn parse(element: &Element) -> Result<ast::Declaration> {
         let name = element.state.names.declaration_name(element.element.name());
 
         if let Some(name) = name {
@@ -110,7 +110,7 @@ impl InstructionParser for ast::Declaration {
 }
 
 impl InstructionParser for ast::ElementNode {
-    fn parse(element: Element) -> Result<ast::ElementNode> {
+    fn parse(element: &Element) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
             name: to_name(&element.state.xot, element.element.name()),
 
@@ -132,7 +132,7 @@ impl InstructionParser for ast::Accept {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Accept {
             component: element.required(names.component, element.component())?,
@@ -145,7 +145,7 @@ impl InstructionParser for ast::Accept {
 }
 
 impl InstructionParser for ast::Accumulator {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let parse_rules = content_parse(instruction(names.xsl_accumulator_rule).many());
@@ -164,7 +164,7 @@ impl InstructionParser for ast::Accumulator {
 }
 
 impl InstructionParser for ast::AccumulatorRule {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::AccumulatorRule {
             match_: element.required(names.match_, element.pattern())?,
@@ -179,7 +179,7 @@ impl InstructionParser for ast::AccumulatorRule {
 }
 
 impl InstructionParser for ast::AnalyzeString {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let span = element.span;
 
@@ -211,7 +211,7 @@ impl InstructionParser for ast::AnalyzeString {
 }
 
 impl InstructionParser for ast::ApplyImports {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
         Ok(ast::ApplyImports {
             span: element.span,
@@ -222,7 +222,7 @@ impl InstructionParser for ast::ApplyImports {
 }
 
 impl InstructionParser for ast::ApplyTemplates {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(
             (instruction(names.xsl_with_param)
@@ -243,7 +243,7 @@ impl InstructionParser for ast::ApplyTemplates {
 }
 
 impl InstructionParser for ast::Assert {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Assert {
             test: element.required(names.test, element.xpath())?,
@@ -259,7 +259,7 @@ impl InstructionParser for ast::Assert {
 }
 
 impl InstructionParser for ast::Attribute {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Attribute {
             name: element.required(names.name, element.value_template(element.qname()))?,
@@ -278,7 +278,7 @@ impl InstructionParser for ast::Attribute {
 }
 
 impl InstructionParser for ast::AttributeSet {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = content_parse(instruction(names.xsl_attribute).many());
@@ -297,7 +297,7 @@ impl InstructionParser for ast::AttributeSet {
 }
 
 impl InstructionParser for ast::Break {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Break {
             select: element.optional(element.state.names.select, element.xpath())?,
 
@@ -309,7 +309,7 @@ impl InstructionParser for ast::Break {
 }
 
 impl InstructionParser for ast::CallTemplate {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
 
@@ -324,7 +324,7 @@ impl InstructionParser for ast::CallTemplate {
 }
 
 impl InstructionParser for ast::Catch {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Catch {
             errors: element.optional(names.errors, element.tokens())?,
@@ -338,7 +338,7 @@ impl InstructionParser for ast::Catch {
 }
 
 impl InstructionParser for ast::CharacterMap {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = content_parse(instruction(names.xsl_output_character).many());
@@ -354,7 +354,7 @@ impl InstructionParser for ast::CharacterMap {
 }
 
 impl InstructionParser for ast::Choose {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let span = element.span;
 
         let parse = content_parse(
@@ -374,7 +374,7 @@ impl InstructionParser for ast::Choose {
 }
 
 impl InstructionParser for ast::Comment {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Comment {
             select: element.optional(element.state.names.select, element.xpath())?,
 
@@ -390,7 +390,7 @@ impl InstructionParser for ast::ContextItem {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::ContextItem {
             as_: element.optional(names.as_, element.item_type())?,
@@ -402,7 +402,7 @@ impl InstructionParser for ast::ContextItem {
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Copy {
             select: element.optional(names.select, element.xpath())?,
@@ -427,7 +427,7 @@ impl InstructionParser for ast::CopyOf {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         Ok(ast::CopyOf {
@@ -447,7 +447,7 @@ impl InstructionParser for ast::DecimalFormat {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::DecimalFormat {
             name: element.optional(names.name, element.eqname())?,
@@ -469,7 +469,7 @@ impl InstructionParser for ast::DecimalFormat {
 }
 
 impl InstructionParser for ast::Document {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Document {
             validation: element.optional(names.validation, element.validation())?,
@@ -483,7 +483,7 @@ impl InstructionParser for ast::Document {
 }
 
 impl InstructionParser for ast::Element {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Element {
             name: element.required(names.name, element.value_template(element.qname()))?,
@@ -501,7 +501,7 @@ impl InstructionParser for ast::Element {
 }
 
 impl InstructionParser for ast::Evaluate {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(
             instruction(names.xsl_with_param)
@@ -534,7 +534,7 @@ impl InstructionParser for ast::Expose {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Expose {
             component: element.required(names.component, element.component())?,
@@ -547,7 +547,7 @@ impl InstructionParser for ast::Expose {
 }
 
 impl InstructionParser for ast::Fallback {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Fallback {
             span: element.span,
 
@@ -557,7 +557,7 @@ impl InstructionParser for ast::Fallback {
 }
 
 impl InstructionParser for ast::ForEach {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let select = element.required(names.select, element.xpath())?;
         let span = element.span;
@@ -581,7 +581,7 @@ impl InstructionParser for ast::ForEach {
 }
 
 impl InstructionParser for ast::ForEachGroup {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let select = element.required(names.select, element.xpath())?;
         let group_by = element.optional(names.group_by, element.xpath())?;
@@ -617,7 +617,7 @@ impl InstructionParser for ast::ForEachGroup {
 }
 
 impl InstructionParser for ast::Fork {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let span = element.span;
 
@@ -648,7 +648,7 @@ impl InstructionParser for ast::Fork {
 }
 
 impl InstructionParser for ast::Function {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let name = element.required(names.name, element.eqname())?;
         let as_ = element.optional(names.as_, element.sequence_type())?;
@@ -693,7 +693,7 @@ impl InstructionParser for ast::GlobalContextItem {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::GlobalContextItem {
             as_: element.optional(names.as_, element.item_type())?,
@@ -705,7 +705,7 @@ impl InstructionParser for ast::GlobalContextItem {
 }
 
 impl InstructionParser for ast::If {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::If {
             test: element.required(names.test, element.xpath())?,
@@ -722,7 +722,7 @@ impl InstructionParser for ast::Import {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Import {
             href: element.required(names.href, element.uri())?,
@@ -733,7 +733,7 @@ impl InstructionParser for ast::Import {
 }
 
 impl InstructionParser for ast::ImportSchema {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         Ok(ast::ImportSchema {
@@ -753,7 +753,7 @@ impl InstructionParser for ast::Include {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Include {
             href: element.required(names.href, element.uri())?,
@@ -764,7 +764,7 @@ impl InstructionParser for ast::Include {
 }
 
 impl InstructionParser for ast::Iterate {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let select = element.required(names.select, element.xpath())?;
 
@@ -791,7 +791,7 @@ impl InstructionParser for ast::Iterate {
 }
 
 impl InstructionParser for ast::Key {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         Ok(ast::Key {
@@ -809,7 +809,7 @@ impl InstructionParser for ast::Key {
 }
 
 impl InstructionParser for ast::Map {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Map {
             span: element.span,
 
@@ -819,7 +819,7 @@ impl InstructionParser for ast::Map {
 }
 
 impl InstructionParser for ast::MapEntry {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::MapEntry {
             key: element.required(names.key, element.xpath())?,
@@ -833,7 +833,7 @@ impl InstructionParser for ast::MapEntry {
 }
 
 impl InstructionParser for ast::MatchingSubstring {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MatchingSubstring {
             span: element.span,
 
@@ -843,7 +843,7 @@ impl InstructionParser for ast::MatchingSubstring {
 }
 
 impl InstructionParser for ast::Merge {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(instruction(names.xsl_merge_source).one_or_more().then(
             instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
@@ -862,7 +862,7 @@ impl InstructionParser for ast::Merge {
 }
 
 impl InstructionParser for ast::MergeAction {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::MergeAction {
             span: element.span,
 
@@ -872,7 +872,7 @@ impl InstructionParser for ast::MergeAction {
 }
 
 impl InstructionParser for ast::MergeKey {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::MergeKey {
             select: element.optional(names.select, element.xpath())?,
@@ -894,7 +894,7 @@ impl InstructionParser for ast::MergeKey {
 }
 
 impl InstructionParser for ast::MergeSource {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = content_parse(instruction(names.xsl_merge_key).one_or_more());
@@ -918,7 +918,7 @@ impl InstructionParser for ast::MergeSource {
 }
 
 impl InstructionParser for ast::Message {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Message {
             select: element.optional(names.select, element.xpath())?,
@@ -939,7 +939,7 @@ impl InstructionParser for ast::Mode {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Mode {
             name: element.optional(names.name, element.eqname())?,
@@ -960,7 +960,7 @@ impl InstructionParser for ast::Mode {
 }
 
 impl InstructionParser for ast::Namespace {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Namespace {
             name: element.required(names.name, element.value_template(element.ncname()))?,
@@ -978,7 +978,7 @@ impl InstructionParser for ast::NamespaceAlias {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::NamespaceAlias {
             stylesheet_prefix: element
@@ -991,7 +991,7 @@ impl InstructionParser for ast::NamespaceAlias {
 }
 
 impl InstructionParser for ast::NextIteration {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
         Ok(ast::NextIteration {
             span: element.span,
@@ -1002,7 +1002,7 @@ impl InstructionParser for ast::NextIteration {
 }
 
 impl InstructionParser for ast::NextMatch {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = content_parse(
@@ -1021,7 +1021,7 @@ impl InstructionParser for ast::NextMatch {
 }
 
 impl InstructionParser for ast::NonMatchingSubstring {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
             span: element.span,
 
@@ -1035,7 +1035,7 @@ impl InstructionParser for ast::Number {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         Ok(ast::Number {
@@ -1067,7 +1067,7 @@ impl InstructionParser for ast::Number {
 }
 
 impl InstructionParser for ast::OnCompletion {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::OnCompletion {
             select: element.optional(element.state.names.select, element.xpath())?,
 
@@ -1079,7 +1079,7 @@ impl InstructionParser for ast::OnCompletion {
 }
 
 impl InstructionParser for ast::OnEmpty {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::OnEmpty {
             select: element.optional(element.state.names.select, element.xpath())?,
 
@@ -1091,7 +1091,7 @@ impl InstructionParser for ast::OnEmpty {
 }
 
 impl InstructionParser for ast::OnNonEmpty {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::OnNonEmpty {
             select: element.optional(element.state.names.select, element.xpath())?,
 
@@ -1103,7 +1103,7 @@ impl InstructionParser for ast::OnNonEmpty {
 }
 
 impl InstructionParser for ast::Otherwise {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::Otherwise {
             span: element.span,
 
@@ -1113,7 +1113,7 @@ impl InstructionParser for ast::Otherwise {
 }
 
 impl InstructionParser for ast::Output {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Output {
             name: element.optional(names.name, element.eqname())?,
@@ -1161,7 +1161,7 @@ impl InstructionParser for ast::OutputCharacter {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::OutputCharacter {
             character: element.required(names.character, element.char())?,
@@ -1173,7 +1173,7 @@ impl InstructionParser for ast::OutputCharacter {
 }
 
 impl InstructionParser for ast::OverrideContent {
-    fn parse(element: Element) -> Result<ast::OverrideContent> {
+    fn parse(element: &Element) -> Result<ast::OverrideContent> {
         let name = element
             .state
             .names
@@ -1188,7 +1188,7 @@ impl InstructionParser for ast::OverrideContent {
 }
 
 impl InstructionParser for ast::Override {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let parse = content_parse(
             one(by_element(|element| {
                 ast::OverrideContent::parse_override_content(element)
@@ -1207,7 +1207,7 @@ impl InstructionParser for ast::Override {
 // TODO: xsl:package
 
 impl InstructionParser for ast::Param {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Param {
             name: element.required(names.name, element.eqname())?,
@@ -1233,7 +1233,7 @@ impl InstructionParser for ast::PreserveSpace {
         true
     }
 
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::PreserveSpace {
             elements: element.required(names.elements, element.tokens())?,
@@ -1244,7 +1244,7 @@ impl InstructionParser for ast::PreserveSpace {
 }
 
 impl InstructionParser for ast::ProcessingInstruction {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::ProcessingInstruction {
             name: element.required(names.name, element.value_template(element.ncname()))?,
@@ -1260,7 +1260,7 @@ impl InstructionParser for ast::ProcessingInstruction {
 // TODO: xsl:result-document
 
 impl InstructionParser for ast::Sequence {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Sequence {
             select: element.optional(names.select, element.xpath())?,
@@ -1273,7 +1273,7 @@ impl InstructionParser for ast::Sequence {
 }
 
 impl InstructionParser for ast::Sort {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Sort {
             select: element.optional(names.select, element.xpath())?,
@@ -1296,7 +1296,7 @@ impl InstructionParser for ast::Sort {
 }
 
 impl InstructionParser for ast::SourceDocument {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         Ok(ast::SourceDocument {
@@ -1317,7 +1317,7 @@ impl InstructionParser for ast::StripSpace {
     fn should_be_empty() -> bool {
         true
     }
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::StripSpace {
             elements: element.required(names.elements, element.tokens())?,
@@ -1328,7 +1328,7 @@ impl InstructionParser for ast::StripSpace {
 }
 
 impl InstructionParser for ast::Template {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         let match_ = element.optional(names.match_, element.pattern())?;
@@ -1365,7 +1365,7 @@ impl InstructionParser for ast::Template {
 }
 
 impl InstructionParser for ast::Text {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Text {
             disable_output_escaping: element
@@ -1384,7 +1384,7 @@ impl InstructionParser for ast::Text {
 }
 
 impl InstructionParser for ast::Transform {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Transform {
             id: element.optional(names.id, element.id())?,
@@ -1407,7 +1407,7 @@ impl InstructionParser for ast::Transform {
 // TODO: xsl:use-package
 
 impl InstructionParser for ast::ValueOf {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::ValueOf {
             select: element.optional(names.select, element.xpath())?,
@@ -1424,7 +1424,7 @@ impl InstructionParser for ast::ValueOf {
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
@@ -1463,7 +1463,7 @@ impl InstructionParser for ast::Variable {
 }
 
 impl InstructionParser for ast::When {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::When {
             test: element.required(names.test, element.xpath())?,
@@ -1476,7 +1476,7 @@ impl InstructionParser for ast::When {
 }
 
 impl InstructionParser for ast::WherePopulated {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         Ok(ast::WherePopulated {
             span: element.span,
 
@@ -1486,7 +1486,7 @@ impl InstructionParser for ast::WherePopulated {
 }
 
 impl InstructionParser for ast::WithParam {
-    fn parse(element: Element) -> Result<Self> {
+    fn parse(element: &Element) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::WithParam {
             name: element.required(names.name, element.eqname())?,
@@ -1521,7 +1521,7 @@ mod tests {
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element);
             let element = Element::new(node, element, &context, &state)?;
-            ast::SequenceConstructorItem::parse_sequence_constructor_item(element)
+            ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
         } else {
             Err(Error::Internal)
         }

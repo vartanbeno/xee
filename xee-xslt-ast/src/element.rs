@@ -29,7 +29,7 @@ impl ElementParsers {
                 )),
                 Value::Element(element) => {
                     let element = Element::new(node, element, context, state)?;
-                    ast::SequenceConstructorItem::parse_sequence_constructor_item(element)
+                    ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
                 }
                 _ => Err(ElementError::Unexpected {
                     // TODO: get span right
@@ -47,7 +47,7 @@ impl ElementParsers {
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
                 let element = Element::new(node, element, context, state)?;
-                ast::Declaration::parse_declaration(element)
+                ast::Declaration::parse_declaration(&element)
             }
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
@@ -82,24 +82,24 @@ impl<'a> XsltParser<'a> {
 }
 
 pub(crate) fn by_element<V>(
-    f: impl Fn(Element) -> Result<V, ElementError>,
+    f: impl Fn(&Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     move |node, state, context| {
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
         let element = Element::new(node, element, context, state)?;
-        f(element)
+        f(&element)
     }
 }
 
 pub(crate) fn by_element_name<V>(
     name: NameId,
-    f: impl Fn(Element) -> Result<V, ElementError>,
+    f: impl Fn(&Element) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     by_element(move |element| {
         if element.element.name() == name {
-            f(element)
+            f(&element)
         } else {
             Err(ElementError::Unexpected { span: element.span })
         }
@@ -138,7 +138,7 @@ pub(crate) fn sequence_constructor() -> SequenceConstructorNodeParser {
     SequenceConstructorNodeParser
 }
 
-pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(Element) -> Result<V, ElementError>
+pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
 where
     P: NodeParser<V>,
 {
