@@ -517,6 +517,7 @@ pub struct DecimalFormat {
 pub struct Document {
     pub validation: Option<Validation>,
     pub type_: Option<EqName>,
+
     pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
@@ -732,6 +733,7 @@ pub struct GlobalContextItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct If {
     pub test: Expression,
+
     pub sequence_constructor: SequenceConstructor,
 
     pub standard: Standard,
@@ -1655,8 +1657,7 @@ pub struct WithParam {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
     TextNode(String),
-    ValueNode(xpath_ast::XPath),
-
+    ValueNode(Box<xpath_ast::XPath>),
     ElementNode(Box<ElementNode>),
     Instruction(SequenceConstructorInstruction),
 }
