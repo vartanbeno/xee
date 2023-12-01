@@ -27,16 +27,21 @@ pub(crate) trait InstructionParser: Sized {
                 });
             }
         }
+        // TODO: this should only happen for real instructions. Right now
+        // the instruction parser is also in use for ElementNode, which
+        // makes this incorrect
+        let _standard = element.standard()?;
+
         let node = element.node;
         let state = element.state;
         let item = Self::parse(element)?;
         item.validate(node, state)?;
-        // let unseen_attributes = element.unseen_attributes();
-        // if !unseen_attributes.is_empty() {
-        //     return Err(state
-        //         .attribute_unexpected(node, unseen_attributes[0], "unexpected attribute")
-        //         .into());
-        // }
+        let unseen_attributes = element.unseen_attributes();
+        if !unseen_attributes.is_empty() {
+            return Err(state
+                .attribute_unexpected(node, unseen_attributes[0], "unexpected attribute")
+                .into());
+        }
         Ok(item)
     }
 }
@@ -111,6 +116,8 @@ impl InstructionParser for ast::Declaration {
 
 impl InstructionParser for ast::ElementNode {
     fn parse(element: &Element) -> Result<ast::ElementNode> {
+        let _standard = element.xsl_standard()?;
+
         Ok(ast::ElementNode {
             name: to_name(&element.state.xot, element.element.name()),
 
