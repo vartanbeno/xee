@@ -117,12 +117,6 @@ impl InstructionParser for ast::ElementNode {
     }
 }
 
-// impl InstructionParser for ast::ApplyTemplatesContent {
-//     fn parse(element: &Element) -> Result<Self> {
-
-//     }
-// }
-
 fn to_name(xot: &Xot, name: NameId) -> ast::Name {
     let (local, namespace) = xot.name_ns_str(name);
     ast::Name {
