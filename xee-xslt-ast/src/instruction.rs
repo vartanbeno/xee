@@ -1805,7 +1805,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_unsupported_attribute() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" unsupported="Unsupported">Hello</xsl:if>"#
