@@ -19,9 +19,9 @@ impl ElementParsers {
     fn new() -> Self {
         let sequence_constructor_sibling_parser = one(|node, state, context| {
             match state.xot.value(node) {
-                Value::Text(text) => Ok(ast::SequenceConstructorItem::TextNode(
+                Value::Text(text) => Ok(ast::SequenceConstructorItem::Content(ast::Content::Text(
                     text.get().to_string(),
-                )),
+                ))),
                 Value::Element(element) => {
                     let attributes = Attributes::new(node, element, state, context.clone())?;
                     let context = context.sub(element.prefixes(), attributes.standard()?);

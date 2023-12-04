@@ -15,7 +15,7 @@ Ok(Instruction(ApplyTemplates(ApplyTemplates(
       case_order: None,
       data_type: None,
       sequence_constructor: [
-        TextNode("Sort"),
+        Content(Text("Sort")),
       ],
       span: Span(
         start: 71,
@@ -32,7 +32,7 @@ Ok(Instruction(ApplyTemplates(ApplyTemplates(
       as_: None,
       tunnel: false,
       sequence_constructor: [
-        TextNode("With param"),
+        Content(Text("With param")),
       ],
       span: Span(
         start: 96,

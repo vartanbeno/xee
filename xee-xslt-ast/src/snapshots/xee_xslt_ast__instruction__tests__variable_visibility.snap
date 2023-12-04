@@ -13,7 +13,7 @@ Ok(Instruction(Variable(Variable(
   static_: false,
   visibility: Some(Public),
   sequence_constructor: [
-    TextNode("Hello"),
+    Content(Text("Hello")),
   ],
   span: Span(
     start: 1,

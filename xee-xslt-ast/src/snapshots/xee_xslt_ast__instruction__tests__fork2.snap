@@ -33,7 +33,7 @@ Ok(Instruction(Fork(Fork(
     collation: None,
     sort: [],
     sequence_constructor: [
-      TextNode("Content"),
+      Content(Text("Content")),
     ],
     span: Span(
       start: 60,

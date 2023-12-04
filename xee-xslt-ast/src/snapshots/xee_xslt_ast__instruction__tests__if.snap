@@ -24,7 +24,7 @@ Ok(Instruction(If(If(
     ),
   ),
   sequence_constructor: [
-    TextNode("Hello"),
+    Content(Text("Hello")),
   ],
   span: Span(
     start: 1,

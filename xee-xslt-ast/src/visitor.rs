@@ -322,10 +322,7 @@ pub(crate) mod visit {
         use ast::SequenceConstructorItem::*;
 
         match sequence_constructor_item {
-            TextNode(_) => {
-                // no children
-            }
-            ValueNode(_) => {
+            Content(_) => {
                 // no children
             }
             ElementNode(element_node) => v.visit_element_node(element_node),

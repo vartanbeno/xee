@@ -1,8 +1,8 @@
 ---
 source: xee-xslt-ast/src/instruction.rs
-expression: "parse_sequence_constructor_item(r#\"<xsl:assert xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\" error-code=\"foo\">Hello</xsl:assert>\"#)"
+expression: "parse_sequence_constructor_item(r#\"<xsl:if xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" test=\"true()\">Hello {world}!</xsl:if>\"#)"
 ---
-Ok(Instruction(Assert(Assert(
+Ok(Instruction(If(If(
   test: Expression(
     xpath: XPath(Expr([
       Path(PathExpr(
@@ -19,28 +19,15 @@ Ok(Instruction(Assert(Assert(
       )),
     ])),
     span: Span(
-      start: 67,
-      end: 73,
+      start: 63,
+      end: 69,
     ),
   ),
-  select: None,
-  error_code: Some(ValueTemplate(
-    template: [
-      String(
-        text: "foo",
-        span: Span(
-          start: 87,
-          end: 90,
-        ),
-      ),
-    ],
-    phantom: PhantomData,
-  )),
   sequence_constructor: [
-    Content(Text("Hello")),
+    Content(Text("Hello {world}!")),
   ],
   span: Span(
     start: 1,
-    end: 11,
+    end: 7,
   ),
 ))))

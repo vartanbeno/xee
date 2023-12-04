@@ -39,7 +39,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   matching_substring: None,
   non_matching_substring: Some(NonMatchingSubstring(
     sequence_constructor: [
-      TextNode("Nonmatching"),
+      Content(Text("Nonmatching")),
     ],
     span: Span(
       start: 98,
@@ -49,7 +49,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   fallbacks: [
     Fallback(
       sequence_constructor: [
-        TextNode("Fallback 1"),
+        Content(Text("Fallback 1")),
       ],
       span: Span(
         start: 166,
@@ -58,7 +58,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
     ),
     Fallback(
       sequence_constructor: [
-        TextNode("Fallback 2"),
+        Content(Text("Fallback 2")),
       ],
       span: Span(
         start: 205,

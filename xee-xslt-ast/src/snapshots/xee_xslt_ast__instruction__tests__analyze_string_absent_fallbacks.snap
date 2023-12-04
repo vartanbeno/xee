@@ -38,7 +38,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   flags: None,
   matching_substring: Some(MatchingSubstring(
     sequence_constructor: [
-      TextNode("Matching"),
+      Content(Text("Matching")),
     ],
     span: Span(
       start: 98,
@@ -47,7 +47,7 @@ Ok(Instruction(AnalyzeString(AnalyzeString(
   )),
   non_matching_substring: Some(NonMatchingSubstring(
     sequence_constructor: [
-      TextNode("Nonmatching"),
+      Content(Text("Nonmatching")),
     ],
     span: Span(
       start: 155,

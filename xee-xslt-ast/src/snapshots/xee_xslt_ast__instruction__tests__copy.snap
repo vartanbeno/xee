@@ -29,7 +29,7 @@ Ok(Instruction(Copy(Copy(
   type_: None,
   validation: Strict,
   sequence_constructor: [
-    TextNode("Hello"),
+    Content(Text("Hello")),
   ],
   span: Span(
     start: 1,

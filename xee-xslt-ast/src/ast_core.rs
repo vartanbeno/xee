@@ -1597,10 +1597,16 @@ pub struct WithParam {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
-    TextNode(String),
-    ValueNode(Box<xpath_ast::XPath>),
+    Content(Content),
     ElementNode(Box<ElementNode>),
     Instruction(SequenceConstructorInstruction),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Content {
+    Text(String),
+    Value(Box<xpath_ast::XPath>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]

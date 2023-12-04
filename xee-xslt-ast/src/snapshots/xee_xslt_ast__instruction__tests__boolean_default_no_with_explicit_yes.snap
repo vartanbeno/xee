@@ -32,7 +32,7 @@ Ok(Instruction(Variable(Variable(
   static_: true,
   visibility: None,
   sequence_constructor: [
-    TextNode("Hello"),
+    Content(Text("Hello")),
   ],
   span: Span(
     start: 1,

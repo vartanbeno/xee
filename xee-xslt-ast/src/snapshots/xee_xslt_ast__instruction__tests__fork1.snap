@@ -8,7 +8,7 @@ Ok(Instruction(Fork(Fork(
     (Sequence(
       select: None,
       sequence_constructor: [
-        TextNode("Sequence 1"),
+        Content(Text("Sequence 1")),
       ],
       span: Span(
         start: 60,
@@ -18,7 +18,7 @@ Ok(Instruction(Fork(Fork(
     (Sequence(
       select: None,
       sequence_constructor: [
-        TextNode("Sequence 2"),
+        Content(Text("Sequence 2")),
       ],
       span: Span(
         start: 99,

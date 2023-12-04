@@ -33,7 +33,7 @@ Ok(Instruction(ForEach(ForEach(
       case_order: None,
       data_type: None,
       sequence_constructor: [
-        TextNode("Sort 1"),
+        Content(Text("Sort 1")),
       ],
       span: Span(
         start: 80,
@@ -49,7 +49,7 @@ Ok(Instruction(ForEach(ForEach(
       case_order: None,
       data_type: None,
       sequence_constructor: [
-        TextNode("Sort 2"),
+        Content(Text("Sort 2")),
       ],
       span: Span(
         start: 107,
@@ -58,7 +58,7 @@ Ok(Instruction(ForEach(ForEach(
     ),
   ],
   sequence_constructor: [
-    TextNode("Sequence constructor"),
+    Content(Text("Sequence constructor")),
   ],
   span: Span(
     start: 1,
