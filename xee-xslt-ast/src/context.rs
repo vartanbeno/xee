@@ -1,7 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
-use crate::state::State;
+use crate::{ast_core as ast, state::State};
 
 /// Parser context is passed around. You can create new contexts as
 /// for particular sub-trees.
@@ -10,20 +10,39 @@ use crate::state::State;
 pub(crate) struct Context<'a> {
     prefixes: xot::Prefixes,
 
+    default_collation: Vec<ast::Uri>,
+    default_mode: ast::DefaultMode,
+    default_validation: ast::DefaultValidation,
+    expand_text: bool,
+    version: ast::Decimal,
+    xpath_default_namespace: ast::Uri,
+    // cumulative
+    exclude_result_prefixes: ast::ExcludeResultPrefixes,
+    extension_element_prefixes: Vec<ast::Prefix>,
+
     next: Option<&'a Context<'a>>,
 }
 
 impl<'a> Context<'a> {
     pub(crate) fn new(element: &xot::Element) -> Self {
-        Self {
-            prefixes: element.prefixes().clone(),
-            next: None,
-        }
+        let mut r = Self::empty();
+        r.prefixes = element.prefixes().clone();
+        r
     }
 
     pub(crate) fn empty() -> Self {
         Self {
             prefixes: xot::Prefixes::new(),
+            default_collation: vec![
+                "http://www.w3.org/2005/xpath-functions/collation/codepoint".to_string()
+            ],
+            default_mode: ast::DefaultMode::Unnamed,
+            default_validation: ast::DefaultValidation::Strip,
+            expand_text: false,
+            version: "3.0".to_string(),
+            xpath_default_namespace: "".to_string(),
+            exclude_result_prefixes: ast::ExcludeResultPrefixes::Prefixes(vec![]),
+            extension_element_prefixes: vec![],
             next: None,
         }
     }
@@ -31,6 +50,78 @@ impl<'a> Context<'a> {
     pub(crate) fn element(&'a self, element: &'a xot::Element) -> Self {
         Self {
             prefixes: element.prefixes().clone(),
+            default_collation: self.default_collation.clone(),
+            default_mode: self.default_mode.clone(),
+            default_validation: self.default_validation.clone(),
+            expand_text: self.expand_text,
+            version: self.version.clone(),
+            xpath_default_namespace: self.xpath_default_namespace.clone(),
+            exclude_result_prefixes: self.exclude_result_prefixes.clone(),
+            extension_element_prefixes: self.extension_element_prefixes.clone(),
+            next: Some(self),
+        }
+    }
+
+    pub(crate) fn standard(&'a self, standard: ast::Standard) -> Self {
+        let default_collation = if let Some(default_collation) = standard.default_collation {
+            default_collation
+        } else {
+            self.default_collation.clone()
+        };
+        let default_mode = if let Some(default_mode) = standard.default_mode {
+            default_mode
+        } else {
+            self.default_mode.clone()
+        };
+        let default_validation = if let Some(default_validation) = standard.default_validation {
+            default_validation
+        } else {
+            self.default_validation.clone()
+        };
+        let expand_text = if let Some(expand_text) = standard.expand_text {
+            expand_text
+        } else {
+            self.expand_text
+        };
+        let version = if let Some(version) = standard.version {
+            version
+        } else {
+            self.version.clone()
+        };
+        let xpath_default_namespace =
+            if let Some(xpath_default_namespace) = standard.xpath_default_namespace {
+                xpath_default_namespace
+            } else {
+                self.xpath_default_namespace.clone()
+            };
+        let exclude_result_prefixes =
+            if let Some(exclude_result_prefixes) = standard.exclude_result_prefixes {
+                self.exclude_result_prefixes
+                    .combine(exclude_result_prefixes)
+            } else {
+                self.exclude_result_prefixes.clone()
+            };
+        let extension_element_prefixes =
+            if let Some(extension_element_prefixes) = standard.extension_element_prefixes {
+                // TODO for now just add all prefixes. This isn't right.
+                self.extension_element_prefixes
+                    .iter()
+                    .chain(extension_element_prefixes.iter())
+                    .cloned()
+                    .collect()
+            } else {
+                self.extension_element_prefixes.clone()
+            };
+        Self {
+            prefixes: self.prefixes.clone(),
+            default_collation,
+            default_mode,
+            default_validation,
+            expand_text,
+            version,
+            xpath_default_namespace,
+            exclude_result_prefixes,
+            extension_element_prefixes,
             next: Some(self),
         }
     }

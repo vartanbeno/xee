@@ -93,6 +93,25 @@ pub enum ExcludeResultPrefixes {
     Prefixes(Vec<ExcludeResultPrefix>),
 }
 
+impl ExcludeResultPrefixes {
+    // TODO: This combine isn't good enough; it should take existing prefixes
+    // into account, which we do have on context
+    pub(crate) fn combine(&self, other: ExcludeResultPrefixes) -> Self {
+        match (self, other) {
+            (ExcludeResultPrefixes::All, _) => ExcludeResultPrefixes::All,
+            (_, ExcludeResultPrefixes::All) => ExcludeResultPrefixes::All,
+            (
+                ExcludeResultPrefixes::Prefixes(prefixes),
+                ExcludeResultPrefixes::Prefixes(other_prefixes),
+            ) => {
+                let mut prefixes = prefixes.clone();
+                prefixes.extend(other_prefixes);
+                ExcludeResultPrefixes::Prefixes(prefixes)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ExcludeResultPrefix {
