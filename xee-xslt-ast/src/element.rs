@@ -30,7 +30,10 @@ impl ElementParsers {
                 )),
                 Value::Element(element) => {
                     let element = Element::new(node, element, context, state)?;
-                    ast::SequenceConstructorItem::parse_sequence_constructor_item(&element)
+                    ast::SequenceConstructorItem::parse_sequence_constructor_item(
+                        &element,
+                        &element.attributes,
+                    )
                 }
                 _ => Err(ElementError::Unexpected {
                     // TODO: get span right
@@ -48,7 +51,7 @@ impl ElementParsers {
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
                 let element = Element::new(node, element, context, state)?;
-                ast::Declaration::parse_declaration(&element)
+                ast::Declaration::parse_declaration(&element, &element.attributes)
             }
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
@@ -110,7 +113,9 @@ pub(crate) fn by_element_name<V>(
 pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    by_element_name(name, move |element| V::parse_and_validate(element))
+    by_element_name(name, move |element| {
+        V::parse_and_validate(element, &element.attributes)
+    })
 }
 
 pub(crate) fn instruction<V: InstructionParser>(
@@ -166,7 +171,7 @@ pub(crate) struct Element<'a> {
     pub(crate) span: Span,
     pub(crate) context: Context<'a>,
     pub(crate) state: &'a State,
-    attributes: Attributes<'a>,
+    pub(crate) attributes: Attributes<'a>,
 }
 
 impl<'a> Element<'a> {
