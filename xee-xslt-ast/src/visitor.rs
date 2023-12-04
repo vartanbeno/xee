@@ -131,7 +131,6 @@ pub(crate) mod visit {
             Template(template) => v.visit_template(template),
             UsePackage(use_package) => v.visit_use_package(use_package),
             Variable(variable) => v.visit_variable(variable),
-            _ => {}
         }
     }
 
@@ -335,8 +334,8 @@ pub(crate) mod visit {
     }
 
     pub(crate) fn visit_element_node<V: AstVisitor + ?Sized>(
-        v: &mut V,
-        element_node: &mut ast::ElementNode,
+        _v: &mut V,
+        _element_node: &mut ast::ElementNode,
     ) {
         // TODO
     }

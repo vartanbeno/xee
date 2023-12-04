@@ -259,7 +259,7 @@ impl InstructionParser for ast::Assert {
         Ok(ast::Assert {
             test: attributes.required(names.test, attributes.xpath())?,
             select: attributes.optional(names.select, attributes.xpath())?,
-            error_code: element.optional(
+            error_code: attributes.optional(
                 names.error_code,
                 attributes.value_template(attributes.eqname()),
             )?,
@@ -279,7 +279,7 @@ impl InstructionParser for ast::Attribute {
             namespace: attributes
                 .optional(names.namespace, attributes.value_template(attributes.uri()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
-            separator: element.optional(
+            separator: attributes.optional(
                 names.separator,
                 attributes.value_template(attributes.string()),
             )?,
@@ -430,7 +430,7 @@ impl InstructionParser for ast::Copy {
             use_attribute_sets: attributes
                 .optional(names.use_attribute_sets, attributes.eqnames())?,
             type_: attributes.optional(names.type_, attributes.eqname())?,
-            validation: element
+            validation: attributes
                 .optional(names.validation, attributes.validation())?
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
@@ -542,7 +542,7 @@ impl InstructionParser for ast::Evaluate {
             namespace_context: attributes.optional(names.namespace_context, attributes.xpath())?,
             schema_aware: attributes.optional(
                 names.schema_aware,
-                element.value_template(attributes.boolean()),
+                attributes.value_template(attributes.boolean()),
             )?,
 
             span: element.span,
@@ -571,7 +571,7 @@ impl InstructionParser for ast::Expose {
 }
 
 impl InstructionParser for ast::Fallback {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Fallback {
             span: element.span,
 
@@ -644,7 +644,7 @@ impl InstructionParser for ast::ForEachGroup {
 }
 
 impl InstructionParser for ast::Fork {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         let span = element.span;
 
@@ -837,7 +837,7 @@ impl InstructionParser for ast::Key {
 }
 
 impl InstructionParser for ast::Map {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Map {
             span: element.span,
 
@@ -861,7 +861,7 @@ impl InstructionParser for ast::MapEntry {
 }
 
 impl InstructionParser for ast::MatchingSubstring {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::MatchingSubstring {
             span: element.span,
 
@@ -871,7 +871,7 @@ impl InstructionParser for ast::MatchingSubstring {
 }
 
 impl InstructionParser for ast::Merge {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         let parse = content_parse(instruction(names.xsl_merge_source).one_or_more().then(
             instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
@@ -890,7 +890,7 @@ impl InstructionParser for ast::Merge {
 }
 
 impl InstructionParser for ast::MergeAction {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::MergeAction {
             span: element.span,
 
@@ -912,9 +912,9 @@ impl InstructionParser for ast::MergeKey {
                 .optional(names.collation, attributes.value_template(attributes.uri()))?,
             case_order: attributes.optional(
                 names.case_order,
-                element.value_template(attributes.case_order()),
+                attributes.value_template(attributes.case_order()),
             )?,
-            data_type: element.optional(
+            data_type: attributes.optional(
                 names.data_type,
                 attributes.value_template(attributes.data_type()),
             )?,
@@ -955,11 +955,11 @@ impl InstructionParser for ast::Message {
         let names = &element.state.names;
         Ok(ast::Message {
             select: attributes.optional(names.select, attributes.xpath())?,
-            terminate: element.optional(
+            terminate: attributes.optional(
                 names.terminate,
                 attributes.value_template(attributes.boolean()),
             )?,
-            error_code: element.optional(
+            error_code: attributes.optional(
                 names.error_code,
                 attributes.value_template(attributes.eqname()),
             )?,
@@ -983,11 +983,11 @@ impl InstructionParser for ast::Mode {
             streamable: attributes.boolean_with_default(names.streamable, false)?,
             use_accumulators: attributes.optional(names.use_accumulators, attributes.tokens())?,
             on_no_match: attributes.optional(names.on_no_match, attributes.on_no_match())?,
-            on_multiple_match: element
+            on_multiple_match: attributes
                 .optional(names.on_multiple_match, attributes.on_multiple_match())?,
             warning_on_no_match: attributes
                 .boolean_with_default(names.warning_on_no_match, false)?,
-            warning_on_multiple_match: element
+            warning_on_multiple_match: attributes
                 .boolean_with_default(names.warning_on_multiple_match, false)?,
             typed: attributes.optional(names.typed, attributes.typed())?,
             visibility: attributes.optional(names.visibility, attributes.visibility())?,
@@ -1020,7 +1020,7 @@ impl InstructionParser for ast::NamespaceAlias {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::NamespaceAlias {
-            stylesheet_prefix: element
+            stylesheet_prefix: attributes
                 .required(names.stylesheet_prefix, attributes.prefix_or_default())?,
             result_prefix: attributes
                 .required(names.result_prefix, attributes.prefix_or_default())?,
@@ -1031,7 +1031,7 @@ impl InstructionParser for ast::NamespaceAlias {
 }
 
 impl InstructionParser for ast::NextIteration {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
         Ok(ast::NextIteration {
             span: element.span,
@@ -1042,7 +1042,7 @@ impl InstructionParser for ast::NextIteration {
 }
 
 impl InstructionParser for ast::NextMatch {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = content_parse(
@@ -1061,7 +1061,7 @@ impl InstructionParser for ast::NextMatch {
 }
 
 impl InstructionParser for ast::NonMatchingSubstring {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
             span: element.span,
 
@@ -1090,7 +1090,7 @@ impl InstructionParser for ast::Number {
                 .optional(names.lang, attributes.value_template(attributes.language()))?,
             letter_value: attributes.optional(
                 names.letter_value,
-                element.value_template(attributes.letter_value()),
+                attributes.value_template(attributes.letter_value()),
             )?,
             ordinal: attributes.optional(
                 names.ordinal,
@@ -1102,11 +1102,11 @@ impl InstructionParser for ast::Number {
             )?,
             grouping_separator: attributes.optional(
                 names.grouping_separator,
-                element.value_template(attributes.char()),
+                attributes.value_template(attributes.char()),
             )?,
             grouping_size: attributes.optional(
                 names.grouping_size,
-                element.value_template(attributes.integer()),
+                attributes.value_template(attributes.integer()),
             )?,
 
             span: element.span,
@@ -1151,7 +1151,7 @@ impl InstructionParser for ast::OnNonEmpty {
 }
 
 impl InstructionParser for ast::Otherwise {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Otherwise {
             span: element.span,
 
@@ -1166,16 +1166,16 @@ impl InstructionParser for ast::Output {
         Ok(ast::Output {
             name: attributes.optional(names.name, attributes.eqname())?,
             method: attributes.optional(names.method, attributes.method())?,
-            allow_duplicate_names: element
+            allow_duplicate_names: attributes
                 .boolean_with_default(names.allow_duplicate_names, false)?,
             build_tree: attributes.boolean_with_default(names.build_tree, false)?,
             byte_order_mark: attributes.boolean_with_default(names.byte_order_mark, false)?,
-            cdata_section_elements: element
+            cdata_section_elements: attributes
                 .optional(names.cdata_section_elements, attributes.eqnames())?,
             doctype_public: attributes.optional(names.doctype_public, attributes.string())?,
             doctype_system: attributes.optional(names.doctype_system, attributes.string())?,
             encoding: attributes.optional(names.encoding, attributes.string())?,
-            escape_uri_attributes: element
+            escape_uri_attributes: attributes
                 .boolean_with_default(names.escape_uri_attributes, true)?,
             html_version: attributes.optional(names.html_version, attributes.decimal())?,
             include_content_type: attributes
@@ -1185,16 +1185,16 @@ impl InstructionParser for ast::Output {
             item_separator: attributes.optional(names.item_separator, attributes.string())?,
             json_node_output_method: attributes.optional(
                 names.json_node_output_method,
-                element.json_node_output_method(),
+                attributes.json_node_output_method(),
             )?,
             media_type: attributes.optional(names.media_type, attributes.string())?,
-            normalization_form: element
+            normalization_form: attributes
                 .optional(names.normalization_form, attributes.normalization_form())?,
-            omit_xml_declaration: element
+            omit_xml_declaration: attributes
                 .boolean_with_default(names.omit_xml_declaration, false)?,
             parameter_document: attributes.optional(names.parameter_document, attributes.uri())?,
             standalone: attributes.optional(names.standalone, attributes.standalone())?,
-            suppress_indentation: element
+            suppress_indentation: attributes
                 .optional(names.suppress_indentation, attributes.eqnames())?,
             undeclare_prefixes: attributes.boolean_with_default(names.undeclare_prefixes, false)?,
             use_character_maps: attributes
@@ -1340,9 +1340,9 @@ impl InstructionParser for ast::Sort {
             )?,
             case_order: attributes.optional(
                 names.case_order,
-                element.value_template(attributes.case_order()),
+                attributes.value_template(attributes.case_order()),
             )?,
-            data_type: element.optional(
+            data_type: attributes.optional(
                 names.data_type,
                 attributes.value_template(attributes.data_type()),
             )?,
@@ -1428,7 +1428,7 @@ impl InstructionParser for ast::Text {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Text {
-            disable_output_escaping: element
+            disable_output_escaping: attributes
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
             span: element.span,
@@ -1450,9 +1450,9 @@ impl InstructionParser for ast::Transform {
             id: attributes.optional(names.id, attributes.id())?,
             input_type_annotations: attributes.optional(
                 names.input_type_annotations,
-                element.input_type_annotations(),
+                attributes.input_type_annotations(),
             )?,
-            extension_element_prefixes: element
+            extension_element_prefixes: attributes
                 .optional(names.extension_element_prefixes, attributes.prefixes())?,
 
             span: element.span,
@@ -1471,11 +1471,11 @@ impl InstructionParser for ast::ValueOf {
         let names = &element.state.names;
         Ok(ast::ValueOf {
             select: attributes.optional(names.select, attributes.xpath())?,
-            separator: element.optional(
+            separator: attributes.optional(
                 names.separator,
                 attributes.value_template(attributes.string()),
             )?,
-            disable_output_escaping: element
+            disable_output_escaping: attributes
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
             span: element.span,
@@ -1539,7 +1539,7 @@ impl InstructionParser for ast::When {
 }
 
 impl InstructionParser for ast::WherePopulated {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::WherePopulated {
             span: element.span,
 
