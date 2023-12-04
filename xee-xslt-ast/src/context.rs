@@ -24,9 +24,9 @@ pub(crate) struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    pub(crate) fn new(element: &xot::Element) -> Self {
+    pub(crate) fn new(prefixes: xot::Prefixes) -> Self {
         let mut r = Self::empty();
-        r.prefixes = element.prefixes().clone();
+        r.prefixes = prefixes;
         r
     }
 
@@ -47,7 +47,7 @@ impl<'a> Context<'a> {
         }
     }
 
-    pub(crate) fn sub(&'a self, element: &xot::Element, standard: ast::Standard) -> Self {
+    pub(crate) fn sub(&'a self, prefixes: xot::Prefixes, standard: ast::Standard) -> Self {
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
         } else {
@@ -98,7 +98,7 @@ impl<'a> Context<'a> {
                 self.extension_element_prefixes.clone()
             };
         Self {
-            prefixes: element.prefixes().clone(),
+            prefixes,
             default_collation,
             default_mode,
             default_validation,

@@ -421,7 +421,7 @@ mod tests {
         let outer = xot.document_element(doc).unwrap();
         let state = State::new(xot, span_info, names);
         let element = state.xot.element(outer).unwrap();
-        let context = Context::new(element);
+        let context = Context::new(element.prefixes().clone());
         (state, context, outer)
     }
 
