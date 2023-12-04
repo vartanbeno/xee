@@ -3,7 +3,7 @@ use xot::{NameId, Node, Value};
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
-use crate::combinator::{end, one, NodeParser, OneParser};
+use crate::combinator::{end, multi, one, NodeParser, OneParser};
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
@@ -17,19 +17,21 @@ struct ElementParsers {
 
 impl ElementParsers {
     fn new() -> Self {
-        let sequence_constructor_sibling_parser = one(|node, state, context| {
+        let sequence_constructor_sibling_parser = multi(|node, state, context| {
             match state.xot.value(node) {
-                Value::Text(text) => Ok(ast::SequenceConstructorItem::Content(ast::Content::Text(
-                    text.get().to_string(),
-                ))),
+                Value::Text(text) => Ok(vec![ast::SequenceConstructorItem::Content(
+                    ast::Content::Text(text.get().to_string()),
+                )]),
                 Value::Element(element) => {
                     let attributes = Attributes::new(node, element, state, context.clone())?;
                     let context = context.sub(element.prefixes(), attributes.standard()?);
                     let element = Element::new(node, element, context, state)?;
-                    ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                        &element,
-                        &attributes,
-                    )
+                    Ok(vec![
+                        ast::SequenceConstructorItem::parse_sequence_constructor_item(
+                            &element,
+                            &attributes,
+                        )?,
+                    ])
                 }
                 _ => Err(ElementError::Unexpected {
                     // TODO: get span right
@@ -37,7 +39,7 @@ impl ElementParsers {
                 }),
             }
         })
-        .many();
+        .flatten();
 
         let sequence_constructor_parser = sequence_constructor_sibling_parser
             .clone()
