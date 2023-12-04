@@ -194,9 +194,9 @@ impl InstructionParser for ast::AnalyzeString {
 
         let select = attributes.required(names.select, attributes.xpath())?;
         let regex =
-            attributes.required(names.regex, attributes.value_template(element.string()))?;
+            attributes.required(names.regex, attributes.value_template(attributes.string()))?;
         let flags =
-            attributes.optional(names.flags, attributes.value_template(element.string()))?;
+            attributes.optional(names.flags, attributes.value_template(attributes.string()))?;
 
         let parse = content_parse(
             instruction(names.xsl_matching_substring)
@@ -261,7 +261,7 @@ impl InstructionParser for ast::Assert {
             select: attributes.optional(names.select, attributes.xpath())?,
             error_code: element.optional(
                 names.error_code,
-                attributes.value_template(element.eqname()),
+                attributes.value_template(attributes.eqname()),
             )?,
 
             span: element.span,
@@ -275,12 +275,14 @@ impl InstructionParser for ast::Attribute {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Attribute {
-            name: attributes.required(names.name, attributes.value_template(element.qname()))?,
+            name: attributes.required(names.name, attributes.value_template(attributes.qname()))?,
             namespace: attributes
-                .optional(names.namespace, attributes.value_template(element.uri()))?,
+                .optional(names.namespace, attributes.value_template(attributes.uri()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
-            separator: element
-                .optional(names.separator, attributes.value_template(element.string()))?,
+            separator: element.optional(
+                names.separator,
+                attributes.value_template(attributes.string()),
+            )?,
             type_: attributes.optional(names.type_, attributes.eqname())?,
             validation: attributes.optional(names.validation, attributes.validation())?,
 
@@ -504,9 +506,9 @@ impl InstructionParser for ast::Element {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Element {
-            name: attributes.required(names.name, attributes.value_template(element.qname()))?,
+            name: attributes.required(names.name, attributes.value_template(attributes.qname()))?,
             namespace: attributes
-                .optional(names.namespace, attributes.value_template(element.uri()))?,
+                .optional(names.namespace, attributes.value_template(attributes.uri()))?,
             inherit_namespaces: attributes.boolean_with_default(names.inherit_namespaces, false)?,
             use_attribute_sets: attributes
                 .optional(names.use_attribute_sets, attributes.eqnames())?,
@@ -534,13 +536,13 @@ impl InstructionParser for ast::Evaluate {
             xpath: attributes.required(names.xpath, attributes.xpath())?,
             as_: attributes.optional(names.as_, attributes.sequence_type())?,
             base_uri: attributes
-                .optional(names.base_uri, attributes.value_template(element.uri()))?,
+                .optional(names.base_uri, attributes.value_template(attributes.uri()))?,
             with_params: attributes.optional(names.with_params, attributes.xpath())?,
             context_item: attributes.optional(names.context_item, attributes.xpath())?,
             namespace_context: attributes.optional(names.namespace_context, attributes.xpath())?,
             schema_aware: attributes.optional(
                 names.schema_aware,
-                element.value_template(element.boolean()),
+                element.value_template(attributes.boolean()),
             )?,
 
             span: element.span,
@@ -614,7 +616,7 @@ impl InstructionParser for ast::ForEachGroup {
             attributes.optional(names.group_ending_with, attributes.pattern())?;
         let composite = attributes.boolean_with_default(names.composite, false)?;
         let collation =
-            attributes.optional(names.collation, attributes.value_template(element.uri()))?;
+            attributes.optional(names.collation, attributes.value_template(attributes.uri()))?;
         let span = element.span;
 
         let parse = content_parse(
@@ -902,17 +904,19 @@ impl InstructionParser for ast::MergeKey {
         let names = &element.state.names;
         Ok(ast::MergeKey {
             select: attributes.optional(names.select, attributes.xpath())?,
-            lang: attributes.optional(names.lang, attributes.value_template(element.language()))?,
-            order: attributes.optional(names.order, attributes.value_template(element.order()))?,
+            lang: attributes
+                .optional(names.lang, attributes.value_template(attributes.language()))?,
+            order: attributes
+                .optional(names.order, attributes.value_template(attributes.order()))?,
             collation: attributes
-                .optional(names.collation, attributes.value_template(element.uri()))?,
+                .optional(names.collation, attributes.value_template(attributes.uri()))?,
             case_order: attributes.optional(
                 names.case_order,
-                element.value_template(element.case_order()),
+                element.value_template(attributes.case_order()),
             )?,
             data_type: element.optional(
                 names.data_type,
-                attributes.value_template(element.data_type()),
+                attributes.value_template(attributes.data_type()),
             )?,
 
             span: element.span,
@@ -953,11 +957,11 @@ impl InstructionParser for ast::Message {
             select: attributes.optional(names.select, attributes.xpath())?,
             terminate: element.optional(
                 names.terminate,
-                attributes.value_template(element.boolean()),
+                attributes.value_template(attributes.boolean()),
             )?,
             error_code: element.optional(
                 names.error_code,
-                attributes.value_template(element.eqname()),
+                attributes.value_template(attributes.eqname()),
             )?,
 
             span: element.span,
@@ -997,7 +1001,8 @@ impl InstructionParser for ast::Namespace {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Namespace {
-            name: attributes.required(names.name, attributes.value_template(element.ncname()))?,
+            name: attributes
+                .required(names.name, attributes.value_template(attributes.ncname()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
             span: element.span,
@@ -1080,23 +1085,28 @@ impl InstructionParser for ast::Number {
             count: attributes.optional(names.count, attributes.pattern())?,
             from: attributes.optional(names.from, attributes.pattern())?,
             format: attributes
-                .optional(names.format, attributes.value_template(element.string()))?,
-            lang: attributes.optional(names.lang, attributes.value_template(element.language()))?,
+                .optional(names.format, attributes.value_template(attributes.string()))?,
+            lang: attributes
+                .optional(names.lang, attributes.value_template(attributes.language()))?,
             letter_value: attributes.optional(
                 names.letter_value,
-                element.value_template(element.letter_value()),
+                element.value_template(attributes.letter_value()),
             )?,
-            ordinal: attributes
-                .optional(names.ordinal, attributes.value_template(element.string()))?,
-            start_at: attributes
-                .optional(names.start_at, attributes.value_template(element.string()))?,
+            ordinal: attributes.optional(
+                names.ordinal,
+                attributes.value_template(attributes.string()),
+            )?,
+            start_at: attributes.optional(
+                names.start_at,
+                attributes.value_template(attributes.string()),
+            )?,
             grouping_separator: attributes.optional(
                 names.grouping_separator,
-                element.value_template(element.char()),
+                element.value_template(attributes.char()),
             )?,
             grouping_size: attributes.optional(
                 names.grouping_size,
-                element.value_template(element.integer()),
+                element.value_template(attributes.integer()),
             )?,
 
             span: element.span,
@@ -1287,7 +1297,8 @@ impl InstructionParser for ast::ProcessingInstruction {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::ProcessingInstruction {
-            name: attributes.required(names.name, attributes.value_template(element.ncname()))?,
+            name: attributes
+                .required(names.name, attributes.value_template(attributes.ncname()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
             span: element.span,
@@ -1317,19 +1328,23 @@ impl InstructionParser for ast::Sort {
         let names = &element.state.names;
         Ok(ast::Sort {
             select: attributes.optional(names.select, attributes.xpath())?,
-            lang: attributes.optional(names.lang, attributes.value_template(element.language()))?,
-            order: attributes.optional(names.order, attributes.value_template(element.order()))?,
+            lang: attributes
+                .optional(names.lang, attributes.value_template(attributes.language()))?,
+            order: attributes
+                .optional(names.order, attributes.value_template(attributes.order()))?,
             collation: attributes
-                .optional(names.collation, attributes.value_template(element.uri()))?,
-            stable: attributes
-                .optional(names.stable, attributes.value_template(element.boolean()))?,
+                .optional(names.collation, attributes.value_template(attributes.uri()))?,
+            stable: attributes.optional(
+                names.stable,
+                attributes.value_template(attributes.boolean()),
+            )?,
             case_order: attributes.optional(
                 names.case_order,
-                element.value_template(element.case_order()),
+                element.value_template(attributes.case_order()),
             )?,
             data_type: element.optional(
                 names.data_type,
-                attributes.value_template(element.data_type()),
+                attributes.value_template(attributes.data_type()),
             )?,
 
             span: element.span,
@@ -1344,7 +1359,7 @@ impl InstructionParser for ast::SourceDocument {
         let names = &element.state.names;
 
         Ok(ast::SourceDocument {
-            href: attributes.required(names.href, attributes.value_template(element.uri()))?,
+            href: attributes.required(names.href, attributes.value_template(attributes.uri()))?,
             streamable: attributes.boolean_with_default(names.streamable, false)?,
             use_accumulators: attributes.optional(names.use_accumulators, attributes.tokens())?,
             validation: attributes.optional(names.validation, attributes.validation())?,
@@ -1456,8 +1471,10 @@ impl InstructionParser for ast::ValueOf {
         let names = &element.state.names;
         Ok(ast::ValueOf {
             select: attributes.optional(names.select, attributes.xpath())?,
-            separator: element
-                .optional(names.separator, attributes.value_template(element.string()))?,
+            separator: element.optional(
+                names.separator,
+                attributes.value_template(attributes.string()),
+            )?,
             disable_output_escaping: element
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
