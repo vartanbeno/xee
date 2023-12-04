@@ -1,4 +1,3 @@
-use xee_xpath_ast::Namespaces;
 use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
@@ -206,9 +205,5 @@ impl<'a> Element<'a> {
         element_parsers
             .declarations_parser
             .parse(Some(self.node), self.state, &self.context)
-    }
-
-    fn namespaces(&'a self) -> Namespaces<'a> {
-        self.context.namespaces(self.state)
     }
 }
