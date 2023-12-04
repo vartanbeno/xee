@@ -1584,7 +1584,7 @@ mod tests {
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element.prefixes().clone());
             let attributes = Attributes::new(node, element, &state, context.clone())?;
-            let context = context.sub(element.prefixes().clone(), attributes.standard()?);
+            let context = context.sub(element.prefixes(), attributes.standard()?);
             let element = Element::new(node, element, context, &state)?;
             ast::SequenceConstructorItem::parse_sequence_constructor_item(&element, &attributes)
         } else {

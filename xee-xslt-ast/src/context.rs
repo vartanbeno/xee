@@ -47,7 +47,7 @@ impl<'a> Context<'a> {
         }
     }
 
-    pub(crate) fn sub(&'a self, prefixes: xot::Prefixes, standard: ast::Standard) -> Self {
+    pub(crate) fn sub(&'a self, prefixes: &xot::Prefixes, standard: ast::Standard) -> Self {
         let mut expanded_prefixes = self.prefixes.clone();
         expanded_prefixes.extend(prefixes);
         let default_collation = if let Some(default_collation) = standard.default_collation {

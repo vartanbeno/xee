@@ -25,7 +25,7 @@ impl ElementParsers {
                 )),
                 Value::Element(element) => {
                     let attributes = Attributes::new(node, element, state, context.clone())?;
-                    let context = context.sub(element.prefixes().clone(), attributes.standard()?);
+                    let context = context.sub(element.prefixes(), attributes.standard()?);
                     let element = Element::new(node, element, context, state)?;
                     ast::SequenceConstructorItem::parse_sequence_constructor_item(
                         &element,
@@ -48,7 +48,7 @@ impl ElementParsers {
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
                 let attributes = Attributes::new(node, element, state, context.clone())?;
-                let context = context.sub(element.prefixes().clone(), attributes.standard()?);
+                let context = context.sub(element.prefixes(), attributes.standard()?);
                 let element = Element::new(node, element, context, state)?;
                 ast::Declaration::parse_declaration(&element, &attributes)
             }
@@ -92,7 +92,7 @@ pub(crate) fn by_element<V>(
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
         let attributes = Attributes::new(node, element, state, context.clone())?;
-        let context = context.sub(element.prefixes().clone(), attributes.standard()?);
+        let context = context.sub(element.prefixes(), attributes.standard()?);
         let element = Element::new(node, element, context, state)?;
         f(&element, &attributes)
     }
