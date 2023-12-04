@@ -1238,9 +1238,9 @@ impl InstructionParser for ast::OverrideContent {
 }
 
 impl InstructionParser for ast::Override {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let parse = content_parse(
-            one(by_element(|element| {
+            one(by_element(|element, attributes| {
                 ast::OverrideContent::parse_override_content(element, attributes)
             }))
             .many(),
@@ -1583,11 +1583,10 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element);
-            let element = Element::new(node, element, &context, &state)?;
-            ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                &element,
-                &element.attributes,
-            )
+            let attributes = Attributes::new(node, element, &state, context.clone())?;
+            let context = context.sub(element, attributes.standard()?);
+            let element = Element::new(node, element, context, &state)?;
+            ast::SequenceConstructorItem::parse_sequence_constructor_item(&element, &attributes)
         } else {
             Err(Error::Internal)
         }

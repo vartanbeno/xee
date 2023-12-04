@@ -24,10 +24,12 @@ impl ElementParsers {
                     text.get().to_string(),
                 )),
                 Value::Element(element) => {
+                    let attributes = Attributes::new(node, element, state, context.clone())?;
+                    let context = context.sub(element, attributes.standard()?);
                     let element = Element::new(node, element, context, state)?;
                     ast::SequenceConstructorItem::parse_sequence_constructor_item(
                         &element,
-                        &element.attributes,
+                        &attributes,
                     )
                 }
                 _ => Err(ElementError::Unexpected {
@@ -45,8 +47,10 @@ impl ElementParsers {
 
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
+                let attributes = Attributes::new(node, element, state, context.clone())?;
+                let context = context.sub(element, attributes.standard()?);
                 let element = Element::new(node, element, context, state)?;
-                ast::Declaration::parse_declaration(&element, &element.attributes)
+                ast::Declaration::parse_declaration(&element, &attributes)
             }
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
@@ -81,24 +85,26 @@ impl<'a> XsltParser<'a> {
 }
 
 pub(crate) fn by_element<V>(
-    f: impl Fn(&Element) -> Result<V, ElementError>,
+    f: impl Fn(&Element, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     move |node, state, context| {
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
+        let attributes = Attributes::new(node, element, state, context.clone())?;
+        let context = context.sub(element, attributes.standard()?);
         let element = Element::new(node, element, context, state)?;
-        f(&element)
+        f(&element, &attributes)
     }
 }
 
 pub(crate) fn by_element_name<V>(
     name: NameId,
-    f: impl Fn(&Element) -> Result<V, ElementError>,
+    f: impl Fn(&Element, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    by_element(move |element| {
+    by_element(move |element, attributes| {
         if element.element.name() == name {
-            f(element)
+            f(element, attributes)
         } else {
             Err(ElementError::Unexpected { span: element.span })
         }
@@ -108,8 +114,8 @@ pub(crate) fn by_element_name<V>(
 pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    by_element_name(name, move |element| {
-        V::parse_and_validate(element, &element.attributes)
+    by_element_name(name, move |element, attributes| {
+        V::parse_and_validate(element, attributes)
     })
 }
 
@@ -166,19 +172,16 @@ pub(crate) struct Element<'a> {
     pub(crate) span: Span,
     pub(crate) context: Context<'a>,
     pub(crate) state: &'a State,
-    pub(crate) attributes: Attributes<'a>,
 }
 
 impl<'a> Element<'a> {
     pub(crate) fn new(
         node: Node,
         element: &'a xot::Element,
-        context: &'a Context<'a>,
+        context: Context<'a>,
         state: &'a State,
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;
-        let attributes = Attributes::new(node, element, state, context.clone())?;
-        let context = context.sub(element, attributes.standard()?);
 
         Ok(Self {
             node,
@@ -186,7 +189,6 @@ impl<'a> Element<'a> {
             span,
             context,
             state,
-            attributes,
         })
     }
 
