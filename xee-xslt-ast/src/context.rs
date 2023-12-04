@@ -13,7 +13,7 @@ pub(crate) struct Context<'a> {
     default_collation: Vec<ast::Uri>,
     default_mode: ast::DefaultMode,
     default_validation: ast::DefaultValidation,
-    expand_text: bool,
+    pub(crate) expand_text: bool,
     version: ast::Decimal,
     xpath_default_namespace: ast::Uri,
     // cumulative

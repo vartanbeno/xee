@@ -1819,7 +1819,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_expand_text_should_expand_text() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes">Hello {world}!</xsl:if>"#

@@ -1,3 +1,4 @@
+use xee_xpath_ast::Namespaces;
 use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
@@ -8,6 +9,7 @@ use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::state::State;
+use crate::value_template::{ValueTemplateItem, ValueTemplateTokenizer};
 
 struct ElementParsers {
     sequence_constructor_sibling_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
@@ -19,9 +21,17 @@ impl ElementParsers {
     fn new() -> Self {
         let sequence_constructor_sibling_parser = multi(|node, state, context| {
             match state.xot.value(node) {
-                Value::Text(text) => Ok(vec![ast::SequenceConstructorItem::Content(
-                    ast::Content::Text(text.get().to_string()),
-                )]),
+                Value::Text(text) => {
+                    let span = state.span(node).ok_or(ElementError::Internal)?;
+                    let namespaces = context.namespaces(state);
+                    if context.expand_text {
+                        text_value_template(text.get(), span, &namespaces)
+                    } else {
+                        Ok(vec![ast::SequenceConstructorItem::Content(
+                            ast::Content::Text(text.get().to_string()),
+                        )])
+                    }
+                }
                 Value::Element(element) => {
                     let attributes = Attributes::new(node, element, state, context.clone())?;
                     let context = context.sub(element.prefixes(), attributes.standard()?);
@@ -68,6 +78,25 @@ impl ElementParsers {
             declarations_parser: Box::new(declarations_parser),
         }
     }
+}
+
+fn text_value_template(
+    s: &str,
+    span: Span,
+    namespaces: &Namespaces,
+) -> Result<Vec<ast::SequenceConstructorItem>, ElementError> {
+    let mut items = Vec::new();
+    for token in ValueTemplateTokenizer::new(s, span, namespaces, &[]) {
+        let token = token?;
+        let content = match token {
+            ValueTemplateItem::String { text, span: _ } => ast::Content::Text(text.to_string()),
+            ValueTemplateItem::Curly { c } => ast::Content::Text(c.to_string()),
+            ValueTemplateItem::Value { xpath, span: _ } => ast::Content::Value(Box::new(xpath)),
+        };
+        let item = ast::SequenceConstructorItem::Content(content);
+        items.push(item);
+    }
+    Ok(items)
 }
 
 pub(crate) struct XsltParser<'a> {
