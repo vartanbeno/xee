@@ -165,7 +165,6 @@ pub(crate) struct Element<'a> {
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
     pub(crate) context: Context<'a>,
-    seen: std::cell::RefCell<HashSet<NameId>>,
     pub(crate) state: &'a State,
     attributes: Attributes<'a>,
 }
@@ -178,8 +177,9 @@ impl<'a> Element<'a> {
         state: &'a State,
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;
-        let context = context.element(element);
         let attributes = Attributes::new(node, element, state, context.clone())?;
+        let context = context.sub(element, attributes.standard()?);
+
         Ok(Self {
             node,
             element,
@@ -187,17 +187,7 @@ impl<'a> Element<'a> {
             context,
             state,
             attributes,
-
-            seen: std::cell::RefCell::new(HashSet::new()),
         })
-    }
-
-    pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
-        self.attributes.standard()
-    }
-
-    pub(crate) fn xsl_standard(&self) -> Result<ast::Standard, AttributeError> {
-        self.attributes.xsl_standard()
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {

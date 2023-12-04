@@ -27,10 +27,6 @@ pub(crate) trait InstructionParser: Sized {
                 });
             }
         }
-        // TODO: this should only happen for real instructions. Right now
-        // the instruction parser is also in use for ElementNode, which
-        // makes this incorrect
-        let _standard = element.standard()?;
 
         let node = element.node;
         let state = element.state;
@@ -116,8 +112,6 @@ impl InstructionParser for ast::Declaration {
 
 impl InstructionParser for ast::ElementNode {
     fn parse(element: &Element) -> Result<ast::ElementNode> {
-        let _standard = element.xsl_standard()?;
-
         Ok(ast::ElementNode {
             name: to_name(&element.state.xot, element.element.name()),
 

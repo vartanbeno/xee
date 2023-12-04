@@ -144,12 +144,16 @@ impl<'a> Attributes<'a> {
         Ok(span.into())
     }
 
-    pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
-        self._standard(&self.state.names.standard)
+    pub(crate) fn in_xsl_namespace(&self) -> bool {
+        self.state.xot.namespace_for_name(self.element.name()) == self.state.names.xsl_ns
     }
 
-    pub(crate) fn xsl_standard(&self) -> Result<ast::Standard, AttributeError> {
-        self._standard(&self.state.names.xsl_standard)
+    pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
+        if self.in_xsl_namespace() {
+            self._standard(&self.state.names.standard)
+        } else {
+            self._standard(&self.state.names.xsl_standard)
+        }
     }
 
     fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, AttributeError> {

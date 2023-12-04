@@ -47,22 +47,7 @@ impl<'a> Context<'a> {
         }
     }
 
-    pub(crate) fn element(&'a self, element: &'a xot::Element) -> Self {
-        Self {
-            prefixes: element.prefixes().clone(),
-            default_collation: self.default_collation.clone(),
-            default_mode: self.default_mode.clone(),
-            default_validation: self.default_validation.clone(),
-            expand_text: self.expand_text,
-            version: self.version.clone(),
-            xpath_default_namespace: self.xpath_default_namespace.clone(),
-            exclude_result_prefixes: self.exclude_result_prefixes.clone(),
-            extension_element_prefixes: self.extension_element_prefixes.clone(),
-            next: Some(self),
-        }
-    }
-
-    pub(crate) fn standard(&'a self, standard: ast::Standard) -> Self {
+    pub(crate) fn sub(&'a self, element: &xot::Element, standard: ast::Standard) -> Self {
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
         } else {
@@ -113,7 +98,7 @@ impl<'a> Context<'a> {
                 self.extension_element_prefixes.clone()
             };
         Self {
-            prefixes: self.prefixes.clone(),
+            prefixes: element.prefixes().clone(),
             default_collation,
             default_mode,
             default_validation,
