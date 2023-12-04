@@ -48,6 +48,8 @@ impl<'a> Context<'a> {
     }
 
     pub(crate) fn sub(&'a self, prefixes: xot::Prefixes, standard: ast::Standard) -> Self {
+        let mut expanded_prefixes = self.prefixes.clone();
+        expanded_prefixes.extend(prefixes);
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
         } else {
@@ -98,7 +100,7 @@ impl<'a> Context<'a> {
                 self.extension_element_prefixes.clone()
             };
         Self {
-            prefixes,
+            prefixes: expanded_prefixes,
             default_collation,
             default_mode,
             default_validation,
@@ -111,24 +113,11 @@ impl<'a> Context<'a> {
         }
     }
 
-    fn prefixes(&self) -> xot::Prefixes {
-        if let Some(next) = &self.next {
-            let mut combined_prefixes = xot::Prefixes::new();
-            let prefixes = next.prefixes();
-            for (prefix, uri) in prefixes.iter() {
-                combined_prefixes.insert(*prefix, *uri);
-            }
-            combined_prefixes
-        } else {
-            self.prefixes.clone()
-        }
-    }
-
     pub(crate) fn namespaces(&self, state: &'a State) -> Namespaces {
         let mut namespaces = HashMap::new();
-        for (prefix, ns) in self.prefixes() {
-            let prefix = state.xot.prefix_str(prefix);
-            let uri = state.xot.namespace_str(ns);
+        for (prefix, ns) in &self.prefixes {
+            let prefix = state.xot.prefix_str(*prefix);
+            let uri = state.xot.namespace_str(*ns);
             namespaces.insert(prefix, uri);
         }
         Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
