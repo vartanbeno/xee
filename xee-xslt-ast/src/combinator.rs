@@ -71,6 +71,19 @@ pub(crate) trait NodeParser<V> {
         }
     }
 
+    fn flatten<T>(self) -> FlattenParser<T, Self>
+    where
+        Self: Sized + NodeParser<Vec<T>>,
+    {
+        FlattenParser {
+            parser: ManyParser {
+                parser: self,
+
+                v: std::marker::PhantomData,
+            },
+        }
+    }
+
     fn contains(self) -> ContainsParser<V, Self>
     where
         Self: Sized,
@@ -145,6 +158,40 @@ where
         if let Some(node) = node {
             let item = (self.parse_value)(node, state, context)?;
             Ok((item, state.next(node)))
+        } else {
+            Err(ElementError::UnexpectedEnd)
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct MultiParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+{
+    parse_value: P,
+}
+
+pub(crate) fn multi<V, P>(parse_value: P) -> MultiParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+{
+    MultiParser { parse_value }
+}
+
+impl<V, P> NodeParser<Vec<V>> for MultiParser<V, P>
+where
+    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+{
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(Vec<V>, Option<Node>)> {
+        if let Some(node) = node {
+            let items = (self.parse_value)(node, state, context)?;
+            Ok((items, state.next(node)))
         } else {
             Err(ElementError::UnexpectedEnd)
         }
@@ -276,6 +323,30 @@ where
         } else {
             Err(ElementError::UnexpectedEnd)
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct FlattenParser<V, P>
+where
+    P: NodeParser<Vec<V>>,
+{
+    parser: ManyParser<Vec<V>, P>,
+}
+
+impl<V, P> NodeParser<Vec<V>> for FlattenParser<V, P>
+where
+    P: NodeParser<Vec<V>>,
+{
+    fn parse_next(
+        &self,
+        node: Option<Node>,
+        state: &State,
+        context: &Context,
+    ) -> Result<(Vec<V>, Option<Node>)> {
+        let (items, next) = self.parser.parse_next(node, state, context)?;
+        let items = items.into_iter().flatten().collect();
+        Ok((items, next))
     }
 }
 
@@ -1002,6 +1073,48 @@ mod tests {
 
         let (item, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(item, Value2(2));
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_multi() {
+        let (state, context, next) = parse_next("<outer><a /></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value(usize);
+
+        let parser = multi(|_node, _, _| Ok(vec![Value(1), Value(2)]));
+
+        let (item, next) = parser.parse_next(next, &state, &context).unwrap();
+        assert_eq!(item, vec![Value(1), Value(2)]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_many_flatten() {
+        let (state, context, next) = parse_next("<outer><a/><a/></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value(usize);
+
+        let parser = one(|_node, _, _| Ok(vec![Value(1)])).flatten();
+
+        let (items, next) = parser.parse_next(next, &state, &context).unwrap();
+        assert_eq!(items, vec![Value(1), Value(1)]);
+        assert_eq!(next, None);
+    }
+
+    #[test]
+    fn test_multi_flatten() {
+        let (state, context, next) = parse_next("<outer><a/><a/></outer>");
+
+        #[derive(Debug, PartialEq)]
+        struct Value(usize);
+
+        let parser = multi(|_node, _, _| Ok(vec![Value(1), Value(2)])).flatten();
+
+        let (items, next) = parser.parse_next(next, &state, &context).unwrap();
+        assert_eq!(items, vec![Value(1), Value(2), Value(1), Value(2)]);
         assert_eq!(next, None);
     }
 }
