@@ -148,6 +148,14 @@ impl<'a> Attributes<'a> {
         self.state.xot.namespace_for_name(self.element.name()) == self.state.names.xsl_ns
     }
 
+    pub(crate) fn use_when(&self) -> Result<Option<ast::Expression>, AttributeError> {
+        if self.in_xsl_namespace() {
+            self.optional(self.state.names.standard.use_when, self.xpath())
+        } else {
+            self.optional(self.state.names.xsl_standard.use_when, self.xpath())
+        }
+    }
+
     pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
         if self.in_xsl_namespace() {
             self._standard(&self.state.names.standard)
