@@ -53,8 +53,7 @@ impl ElementParsers {
                     |element, attributes| {
                         Ok(vec![
                             ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                                &element,
-                                &attributes,
+                                element, attributes,
                             )?,
                         ])
                     },
@@ -75,7 +74,7 @@ impl ElementParsers {
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
                 parse_element_attributes(node, element, state, context, |element, attributes| {
-                    ast::Declaration::parse_declaration(&element, &attributes)
+                    ast::Declaration::parse_declaration(element, attributes)
                 })
             }
             _ => Err(ElementError::Unexpected {
