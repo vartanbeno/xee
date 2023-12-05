@@ -1,13 +1,21 @@
+use std::sync::OnceLock;
+
 use xot::{NameId, Node, Xot};
 
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
 use crate::combinator::{one, NodeParser};
-use crate::element::{by_element, content_parse, instruction, sequence_constructor, Element};
+use crate::element::{
+    by_element, content, content_parse, instruction, sequence_constructor,
+    sequence_constructor_content, Element,
+};
 use crate::error::ElementError as Error;
 use crate::state::State;
 
 type Result<V> = std::result::Result<V, Error>;
+// We use OnceLock to declare content parser once, and then reuse them
+type ContentParseLock<V> =
+    OnceLock<Box<dyn Fn(&Element) -> Result<V> + std::marker::Sync + std::marker::Send>>;
 
 pub(crate) trait InstructionParser: Sized {
     fn validate(&self, _node: Node, _state: &State) -> Result<()> {
@@ -153,11 +161,16 @@ impl InstructionParser for ast::Accept {
     }
 }
 
+static SEQUENCE_CONSTRUCTOR: ContentParseLock<ast::SequenceConstructor> = OnceLock::new();
+
+static ACCUMULATOR_CONTENT: ContentParseLock<Vec<ast::AccumulatorRule>> = OnceLock::new();
+
 impl InstructionParser for ast::Accumulator {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse_rules = content_parse(instruction(names.xsl_accumulator_rule).many());
+        let parse = ACCUMULATOR_CONTENT
+            .get_or_init(|| content(instruction(names.xsl_accumulator_rule).many()));
 
         Ok(ast::Accumulator {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -167,7 +180,7 @@ impl InstructionParser for ast::Accumulator {
 
             span: element.span,
 
-            rules: parse_rules(element)?,
+            rules: parse(element)?,
         })
     }
 }
@@ -175,6 +188,8 @@ impl InstructionParser for ast::Accumulator {
 impl InstructionParser for ast::AccumulatorRule {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
+        let parse = SEQUENCE_CONSTRUCTOR.get_or_init(sequence_constructor_content);
+
         Ok(ast::AccumulatorRule {
             match_: attributes.required(names.match_, attributes.pattern())?,
             phase: attributes.optional(names.phase, attributes.phase())?,
@@ -182,10 +197,20 @@ impl InstructionParser for ast::AccumulatorRule {
 
             span: element.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: parse(element)?,
         })
     }
 }
+
+type AnalyzeStringContent = (
+    (
+        Option<ast::MatchingSubstring>,
+        Option<ast::NonMatchingSubstring>,
+    ),
+    Vec<ast::Fallback>,
+);
+
+static ANALYZE_STRING: ContentParseLock<AnalyzeStringContent> = OnceLock::new();
 
 impl InstructionParser for ast::AnalyzeString {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
@@ -198,12 +223,14 @@ impl InstructionParser for ast::AnalyzeString {
         let flags =
             attributes.optional(names.flags, attributes.value_template(attributes.string()))?;
 
-        let parse = content_parse(
-            instruction(names.xsl_matching_substring)
-                .option()
-                .then(instruction(names.xsl_non_matching_substring).option())
-                .then(instruction(names.xsl_fallback).many()),
-        );
+        let parse = ANALYZE_STRING.get_or_init(|| {
+            content(
+                instruction(names.xsl_matching_substring)
+                    .option()
+                    .then(instruction(names.xsl_non_matching_substring).option())
+                    .then(instruction(names.xsl_fallback).many()),
+            )
+        });
 
         let ((matching_substring, non_matching_substring), fallbacks) = parse(element)?;
 

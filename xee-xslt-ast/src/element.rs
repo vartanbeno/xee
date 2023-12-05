@@ -94,6 +94,40 @@ impl ElementParsers {
     }
 }
 
+pub(crate) fn sequence_constructor_content() -> ContentParse<ast::SequenceConstructor> {
+    let sequence_constructor_sibling_parser = multi(|node, state, context| {
+        match state.xot.value(node) {
+            Value::Text(text) => {
+                let span = state.span(node).ok_or(ElementError::Internal)?;
+                let namespaces = context.namespaces(state);
+                if context.expand_text {
+                    text_value_template(text.get(), span, &namespaces)
+                } else {
+                    Ok(vec![ast::SequenceConstructorItem::Content(
+                        ast::Content::Text(text.get().to_string()),
+                    )])
+                }
+            }
+            Value::Element(element) => {
+                parse_element_attributes(node, element, state, context, |element, attributes| {
+                    Ok(vec![
+                        ast::SequenceConstructorItem::parse_sequence_constructor_item(
+                            element, attributes,
+                        )?,
+                    ])
+                })
+            }
+            _ => Err(ElementError::Unexpected {
+                // TODO: get span right
+                span: Span::new(0, 0),
+            }),
+        }
+    })
+    .flatten();
+
+    content(sequence_constructor_sibling_parser)
+}
+
 fn text_value_template(
     s: &str,
     span: Span,
@@ -205,6 +239,17 @@ where
             Ok(item)
         }
     }
+}
+
+type ContentParse<V> =
+    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>;
+
+pub(crate) fn content<V, P>(parser: P) -> ContentParse<V>
+where
+    P: NodeParser<V> + std::marker::Sync + std::marker::Send + 'static,
+    V: std::marker::Sync + std::marker::Send + 'static,
+{
+    Box::new(content_parse(parser))
 }
 
 pub(crate) struct Element<'a> {
