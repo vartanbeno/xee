@@ -1583,8 +1583,9 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element.prefixes().clone());
-            let (element, attributes) = parse_element_attributes(node, element, &state, &context)?;
-            ast::SequenceConstructorItem::parse_sequence_constructor_item(&element, &attributes)
+            parse_element_attributes(node, element, &state, &context, |element, attributes| {
+                ast::SequenceConstructorItem::parse_sequence_constructor_item(&element, &attributes)
+            })
         } else {
             Err(Error::Internal)
         }

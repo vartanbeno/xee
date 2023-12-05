@@ -11,16 +11,17 @@ use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstruct
 use crate::state::State;
 use crate::value_template::{ValueTemplateItem, ValueTemplateTokenizer};
 
-pub(crate) fn parse_element_attributes<'a>(
+pub(crate) fn parse_element_attributes<'a, V>(
     node: Node,
     element: &'a xot::Element,
     state: &'a State,
     context: &Context,
-) -> Result<(Element<'a>, Attributes<'a>), ElementError> {
+    f: impl FnOnce(&Element<'a>, &Attributes<'a>) -> Result<V, ElementError>,
+) -> Result<V, ElementError> {
     let attributes = Attributes::new(node, element, state, context.clone())?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
     let element = Element::new(node, element, context, state)?;
-    Ok((element, attributes))
+    f(&element, &attributes)
 }
 
 struct ElementParsers {
@@ -44,16 +45,20 @@ impl ElementParsers {
                         )])
                     }
                 }
-                Value::Element(element) => {
-                    let (element, attributes) =
-                        parse_element_attributes(node, element, state, context)?;
-                    Ok(vec![
-                        ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                            &element,
-                            &attributes,
-                        )?,
-                    ])
-                }
+                Value::Element(element) => parse_element_attributes(
+                    node,
+                    element,
+                    state,
+                    context,
+                    |element, attributes| {
+                        Ok(vec![
+                            ast::SequenceConstructorItem::parse_sequence_constructor_item(
+                                &element,
+                                &attributes,
+                            )?,
+                        ])
+                    },
+                ),
                 _ => Err(ElementError::Unexpected {
                     // TODO: get span right
                     span: Span::new(0, 0),
@@ -69,9 +74,9 @@ impl ElementParsers {
 
         let declarations_parser = one(|node, state, context| match state.xot.value(node) {
             Value::Element(element) => {
-                let (element, attributes) =
-                    parse_element_attributes(node, element, state, context)?;
-                ast::Declaration::parse_declaration(&element, &attributes)
+                parse_element_attributes(node, element, state, context, |element, attributes| {
+                    ast::Declaration::parse_declaration(&element, &attributes)
+                })
             }
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
@@ -131,8 +136,7 @@ pub(crate) fn by_element<V>(
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
-        let (element, attributes) = parse_element_attributes(node, element, state, context)?;
-        f(&element, &attributes)
+        parse_element_attributes(node, element, state, context, &f)
     }
 }
 
