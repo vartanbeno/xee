@@ -1,15 +1,29 @@
+use std::sync::OnceLock;
+
 use xee_xpath_ast::Namespaces;
 use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
-use crate::combinator::{end, multi, one, NodeParser, OneParser};
+use crate::combinator::{multi, one, NodeParser, OneParser};
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
 use crate::state::State;
 use crate::value_template::{ValueTemplateItem, ValueTemplateTokenizer};
+
+pub(crate) type NodeParserLock<V> =
+    OnceLock<Box<dyn NodeParser<V> + std::marker::Sync + std::marker::Send>>;
+
+// We use OnceLock to declare content parser once, and then reuse them
+pub(crate) type ContentParseLock<V> = OnceLock<
+    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>,
+>;
+
+static SEQUENCE_CONSTRUCTOR: NodeParserLock<ast::SequenceConstructor> = OnceLock::new();
+static SEQUENCE_CONSTRUCTOR_CONTENT: ContentParseLock<ast::SequenceConstructor> = OnceLock::new();
+static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new();
 
 pub(crate) fn parse_element_attributes<'a, V>(
     node: Node,
@@ -24,78 +38,8 @@ pub(crate) fn parse_element_attributes<'a, V>(
     f(&element, &attributes)
 }
 
-struct ElementParsers {
-    sequence_constructor_sibling_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
-    sequence_constructor_parser: Box<dyn NodeParser<Vec<ast::SequenceConstructorItem>>>,
-    declarations_parser: Box<dyn NodeParser<Vec<ast::Declaration>>>,
-}
-
-impl ElementParsers {
-    fn new() -> Self {
-        let sequence_constructor_sibling_parser = multi(|node, state, context| {
-            match state.xot.value(node) {
-                Value::Text(text) => {
-                    let span = state.span(node).ok_or(ElementError::Internal)?;
-                    let namespaces = context.namespaces(state);
-                    if context.expand_text {
-                        text_value_template(text.get(), span, &namespaces)
-                    } else {
-                        Ok(vec![ast::SequenceConstructorItem::Content(
-                            ast::Content::Text(text.get().to_string()),
-                        )])
-                    }
-                }
-                Value::Element(element) => parse_element_attributes(
-                    node,
-                    element,
-                    state,
-                    context,
-                    |element, attributes| {
-                        Ok(vec![
-                            ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                                element, attributes,
-                            )?,
-                        ])
-                    },
-                ),
-                _ => Err(ElementError::Unexpected {
-                    // TODO: get span right
-                    span: Span::new(0, 0),
-                }),
-            }
-        })
-        .flatten();
-
-        let sequence_constructor_parser = sequence_constructor_sibling_parser
-            .clone()
-            .then_ignore(end())
-            .contains();
-
-        let declarations_parser = one(|node, state, context| match state.xot.value(node) {
-            Value::Element(element) => {
-                parse_element_attributes(node, element, state, context, |element, attributes| {
-                    ast::Declaration::parse_declaration(element, attributes)
-                })
-            }
-            _ => Err(ElementError::Unexpected {
-                // TODO: get span right
-                span: Span::new(0, 0),
-            }),
-        })
-        .many()
-        .then_ignore(end())
-        .contains();
-
-        Self {
-            sequence_constructor_sibling_parser: Box::new(sequence_constructor_sibling_parser),
-            sequence_constructor_parser: Box::new(sequence_constructor_parser),
-            declarations_parser: Box::new(declarations_parser),
-        }
-    }
-}
-
-pub(crate) fn sequence_constructor_content() -> ContentParse<ast::SequenceConstructor> {
-    let sequence_constructor_sibling_parser = multi(|node, state, context| {
+fn sequence_constructor_parser() -> impl NodeParser<ast::SequenceConstructor> {
+    multi(|node, state, context| {
         match state.xot.value(node) {
             Value::Text(text) => {
                 let span = state.span(node).ok_or(ElementError::Internal)?;
@@ -123,9 +67,22 @@ pub(crate) fn sequence_constructor_content() -> ContentParse<ast::SequenceConstr
             }),
         }
     })
-    .flatten();
+    .flatten()
+}
 
-    content(sequence_constructor_sibling_parser)
+fn declarations_parser() -> impl NodeParser<ast::Declarations> {
+    one(|node, state, context| match state.xot.value(node) {
+        Value::Element(element) => {
+            parse_element_attributes(node, element, state, context, |element, attributes| {
+                ast::Declaration::parse_declaration(element, attributes)
+            })
+        }
+        _ => Err(ElementError::Unexpected {
+            // TODO: get span right
+            span: Span::new(0, 0),
+        }),
+    })
+    .many()
 }
 
 fn text_value_template(
@@ -209,10 +166,7 @@ impl NodeParser<ast::SequenceConstructor> for SequenceConstructorNodeParser {
         state: &State,
         context: &Context,
     ) -> Result<(ast::SequenceConstructor, Option<Node>), ElementError> {
-        let element_parsers = ElementParsers::new();
-        element_parsers
-            .sequence_constructor_sibling_parser
-            .parse_next(node, state, context)
+        sequence_constructor_parser().parse_next(node, state, context)
     }
 }
 
@@ -279,18 +233,10 @@ impl<'a> Element<'a> {
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
-        let element_parsers = ElementParsers::new();
-        element_parsers.sequence_constructor_parser.parse(
-            Some(self.node),
-            self.state,
-            &self.context,
-        )
+        SEQUENCE_CONSTRUCTOR_CONTENT.get_or_init(|| content(sequence_constructor_parser()))(self)
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
-        let element_parsers = ElementParsers::new();
-        element_parsers
-            .declarations_parser
-            .parse(Some(self.node), self.state, &self.context)
+        DECLARATIONS_CONTENT.get_or_init(|| content(declarations_parser()))(self)
     }
 }
