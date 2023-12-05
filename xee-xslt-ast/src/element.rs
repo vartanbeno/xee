@@ -18,7 +18,7 @@ pub(crate) type NodeParserLock<V> =
 
 // We use OnceLock to declare content parser once, and then reuse them
 pub(crate) type ContentParseLock<V> = OnceLock<
-    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>,
+    Box<dyn Fn(&Content) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>,
 >;
 
 static SEQUENCE_CONSTRUCTOR: NodeParserLock<ast::SequenceConstructor> = OnceLock::new();
@@ -30,11 +30,11 @@ pub(crate) fn parse_element_attributes<'a, V>(
     element: &'a xot::Element,
     state: &'a State,
     context: &Context,
-    f: impl FnOnce(&Element<'a>, &Attributes<'a>) -> Result<V, ElementError>,
+    f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
     let attributes = Attributes::new(node, element, state, context.clone())?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
-    let element = Element::new(node, context, state)?;
+    let element = Content::new(node, context, state)?;
     f(&element, &attributes)
 }
 
@@ -53,14 +53,14 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-pub(crate) struct Element<'a> {
+pub(crate) struct Content<'a> {
     pub(crate) node: Node,
     pub(crate) span: Span,
     pub(crate) context: Context,
     pub(crate) state: &'a State,
 }
 
-impl<'a> Element<'a> {
+impl<'a> Content<'a> {
     pub(crate) fn new(
         node: Node,
         context: Context,
@@ -77,11 +77,11 @@ impl<'a> Element<'a> {
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
-        SEQUENCE_CONSTRUCTOR_CONTENT.get_or_init(|| content(sequence_constructor()))(self)
+        SEQUENCE_CONSTRUCTOR_CONTENT.get_or_init(|| children(sequence_constructor()))(self)
     }
 
     pub(crate) fn declarations(&self) -> Result<ast::Declarations, ElementError> {
-        DECLARATIONS_CONTENT.get_or_init(|| content(declarations()))(self)
+        DECLARATIONS_CONTENT.get_or_init(|| children(declarations()))(self)
     }
 }
 
@@ -152,9 +152,9 @@ fn text_value_template(
 }
 
 type ContentParse<V> =
-    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>;
+    Box<dyn Fn(&Content) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>;
 
-pub(crate) fn content<V, P>(parser: P) -> ContentParse<V>
+pub(crate) fn children<V, P>(parser: P) -> ContentParse<V>
 where
     P: NodeParser<V> + std::marker::Sync + std::marker::Send + 'static,
     V: std::marker::Sync + std::marker::Send + 'static,
@@ -177,7 +177,7 @@ where
 }
 
 pub(crate) fn by_element<V>(
-    f: impl Fn(&Element, &Attributes) -> Result<V, ElementError>,
+    f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     move |node, state, context| {
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
@@ -189,13 +189,13 @@ pub(crate) fn by_element<V>(
 
 pub(crate) fn by_element_name<V>(
     name: NameId,
-    f: impl Fn(&Element, &Attributes) -> Result<V, ElementError>,
+    f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    by_element(move |element, attributes| {
+    by_element(move |content, attributes| {
         if attributes.element.name() == name {
-            f(element, attributes)
+            f(content, attributes)
         } else {
-            Err(ElementError::Unexpected { span: element.span })
+            Err(ElementError::Unexpected { span: content.span })
         }
     })
 }

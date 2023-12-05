@@ -6,7 +6,7 @@ use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
 use crate::combinator::{one, NodeParser};
 use crate::element::{
-    by_element, content, instruction, sequence_constructor, ContentParseLock, Element,
+    by_element, children, instruction, sequence_constructor, Content, ContentParseLock,
 };
 use crate::error::ElementError as Error;
 use crate::state::State;
@@ -22,20 +22,20 @@ pub(crate) trait InstructionParser: Sized {
         false
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self>;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self>;
 
-    fn parse_and_validate(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse_and_validate(content: &Content, attributes: &Attributes) -> Result<Self> {
         if Self::should_be_empty() {
-            if let Some(child) = element.state.xot.first_child(element.node) {
+            if let Some(child) = content.state.xot.first_child(content.node) {
                 return Err(Error::Unexpected {
-                    span: element.state.span(child).ok_or(Error::Internal)?,
+                    span: content.state.span(child).ok_or(Error::Internal)?,
                 });
             }
         }
 
-        let node = element.node;
-        let state = element.state;
-        let item = Self::parse(element, attributes)?;
+        let node = content.node;
+        let state = content.state;
+        let item = Self::parse(content, attributes)?;
         item.validate(node, state)?;
         let unseen_attributes = attributes.unseen_attributes();
         if !unseen_attributes.is_empty() {
@@ -51,7 +51,7 @@ pub(crate) trait SequenceConstructorParser:
     InstructionParser + Into<ast::SequenceConstructorItem>
 {
     fn parse_sequence_constructor_item(
-        element: &Element,
+        element: &Content,
         attributes: &Attributes,
     ) -> Result<ast::SequenceConstructorItem> {
         let item = Self::parse_and_validate(element, attributes)?;
@@ -65,8 +65,8 @@ impl<T> SequenceConstructorParser for T where
 }
 
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
-    fn parse_declaration(element: &Element, attributes: &Attributes) -> Result<ast::Declaration> {
-        let item = Self::parse_and_validate(element, attributes)?;
+    fn parse_declaration(content: &Content, attributes: &Attributes) -> Result<ast::Declaration> {
+        let item = Self::parse_and_validate(content, attributes)?;
         Ok(item.into())
     }
 }
@@ -77,7 +77,7 @@ pub(crate) trait OverrideContentParser:
     InstructionParser + Into<ast::OverrideContent>
 {
     fn parse_override_content(
-        element: &Element,
+        element: &Content,
         attributes: &Attributes,
     ) -> Result<ast::OverrideContent> {
         let item = Self::parse_and_validate(element, attributes)?;
@@ -88,48 +88,48 @@ pub(crate) trait OverrideContentParser:
 impl<T> OverrideContentParser for T where T: InstructionParser + Into<ast::OverrideContent> {}
 
 impl InstructionParser for ast::SequenceConstructorItem {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<ast::SequenceConstructorItem> {
-        let context = element.state;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<ast::SequenceConstructorItem> {
+        let context = content.state;
         let name = context
             .names
             .sequence_constructor_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(element, attributes)
+            name.parse(content, attributes)
         } else {
             let ns = context.xot.namespace_for_name(attributes.element.name());
             if ns == context.names.xsl_ns {
                 // we have an unknown xsl instruction, fail with error
-                Err(Error::Unexpected { span: element.span })
+                Err(Error::Unexpected { span: content.span })
             } else {
                 // we parse the literal element
-                ast::ElementNode::parse_sequence_constructor_item(element, attributes)
+                ast::ElementNode::parse_sequence_constructor_item(content, attributes)
             }
         }
     }
 }
 
 impl InstructionParser for ast::Declaration {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<ast::Declaration> {
-        let name = element
+    fn parse(content: &Content, attributes: &Attributes) -> Result<ast::Declaration> {
+        let name = content
             .state
             .names
             .declaration_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(element, attributes)
+            name.parse(content, attributes)
         } else {
-            Err(Error::Unexpected { span: element.span })
+            Err(Error::Unexpected { span: content.span })
         }
     }
 }
 
 impl InstructionParser for ast::ElementNode {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<ast::ElementNode> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
-            name: to_name(&element.state.xot, attributes.element.name()),
+            name: to_name(&content.state.xot, attributes.element.name()),
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -147,15 +147,15 @@ impl InstructionParser for ast::Accept {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Accept {
             component: attributes.required(names.component, attributes.component())?,
             names: attributes.required(names.names, attributes.tokens())?,
             visibility: attributes
                 .required(names.visibility, attributes.visibility_with_hidden())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -163,11 +163,11 @@ impl InstructionParser for ast::Accept {
 static ACCUMULATOR_CONTENT: ContentParseLock<Vec<ast::AccumulatorRule>> = OnceLock::new();
 
 impl InstructionParser for ast::Accumulator {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Content, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
         let parse = ACCUMULATOR_CONTENT
-            .get_or_init(|| content(instruction(names.xsl_accumulator_rule).many()));
+            .get_or_init(|| children(instruction(names.xsl_accumulator_rule).many()));
 
         Ok(ast::Accumulator {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -183,17 +183,17 @@ impl InstructionParser for ast::Accumulator {
 }
 
 impl InstructionParser for ast::AccumulatorRule {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::AccumulatorRule {
             match_: attributes.required(names.match_, attributes.pattern())?,
             phase: attributes.optional(names.phase, attributes.phase())?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -209,9 +209,9 @@ type AnalyzeStringContent = (
 static ANALYZE_STRING: ContentParseLock<AnalyzeStringContent> = OnceLock::new();
 
 impl InstructionParser for ast::AnalyzeString {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
-        let span = element.span;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
+        let span = content.span;
 
         let select = attributes.required(names.select, attributes.xpath())?;
         let regex =
@@ -220,7 +220,7 @@ impl InstructionParser for ast::AnalyzeString {
             attributes.optional(names.flags, attributes.value_template(attributes.string()))?;
 
         let parse = ANALYZE_STRING.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_matching_substring)
                     .option()
                     .then(instruction(names.xsl_non_matching_substring).option())
@@ -228,7 +228,7 @@ impl InstructionParser for ast::AnalyzeString {
             )
         });
 
-        let ((matching_substring, non_matching_substring), fallbacks) = parse(element)?;
+        let ((matching_substring, non_matching_substring), fallbacks) = parse(content)?;
 
         Ok(ast::AnalyzeString {
             select,
@@ -247,13 +247,13 @@ impl InstructionParser for ast::AnalyzeString {
 static APPLY_IMPORTS_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
 
 impl InstructionParser for ast::ApplyImports {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         let parse = APPLY_IMPORTS_CONTENT
-            .get_or_init(|| content(instruction(element.state.names.xsl_with_param).many()));
+            .get_or_init(|| children(instruction(content.state.names.xsl_with_param).many()));
         Ok(ast::ApplyImports {
-            span: element.span,
+            span: content.span,
 
-            with_params: parse(element)?,
+            with_params: parse(content)?,
         })
     }
 }
@@ -261,11 +261,11 @@ impl InstructionParser for ast::ApplyImports {
 static APPLY_TEMPLATES_CONTENT: ContentParseLock<Vec<ast::ApplyTemplatesContent>> = OnceLock::new();
 
 impl InstructionParser for ast::ApplyTemplates {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = APPLY_TEMPLATES_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_with_param)
                     .map(ast::ApplyTemplatesContent::WithParam)
                     .or(instruction(names.xsl_sort).map(ast::ApplyTemplatesContent::Sort))
@@ -277,16 +277,16 @@ impl InstructionParser for ast::ApplyTemplates {
             select: attributes.optional(names.select, attributes.xpath())?,
             mode: attributes.optional(names.mode, attributes.token())?,
 
-            span: element.span,
+            span: content.span,
 
-            content: parse(element)?,
+            content: parse(content)?,
         })
     }
 }
 
 impl InstructionParser for ast::Assert {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Assert {
             test: attributes.required(names.test, attributes.xpath())?,
             select: attributes.optional(names.select, attributes.xpath())?,
@@ -295,16 +295,16 @@ impl InstructionParser for ast::Assert {
                 attributes.value_template(attributes.eqname()),
             )?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Attribute {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Attribute {
             name: attributes.required(names.name, attributes.value_template(attributes.qname()))?,
             namespace: attributes
@@ -317,9 +317,9 @@ impl InstructionParser for ast::Attribute {
             type_: attributes.optional(names.type_, attributes.eqname())?,
             validation: attributes.optional(names.validation, attributes.validation())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -327,11 +327,11 @@ impl InstructionParser for ast::Attribute {
 static ATTRIBUTE_SET_CONTENT: ContentParseLock<Vec<ast::Attribute>> = OnceLock::new();
 
 impl InstructionParser for ast::AttributeSet {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse =
-            ATTRIBUTE_SET_CONTENT.get_or_init(|| content(instruction(names.xsl_attribute).many()));
+            ATTRIBUTE_SET_CONTENT.get_or_init(|| children(instruction(names.xsl_attribute).many()));
 
         Ok(ast::AttributeSet {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -341,21 +341,21 @@ impl InstructionParser for ast::AttributeSet {
                 .optional(names.visibility, attributes.visibility_with_abstract())?,
             streamable: attributes.boolean_with_default(names.streamable, false)?,
 
-            span: element.span,
+            span: content.span,
 
-            attributes: parse(element)?,
+            attributes: parse(content)?,
         })
     }
 }
 
 impl InstructionParser for ast::Break {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         Ok(ast::Break {
-            select: attributes.optional(element.state.names.select, attributes.xpath())?,
+            select: attributes.optional(content.state.names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -363,31 +363,31 @@ impl InstructionParser for ast::Break {
 static CALL_TEMPLATE_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
 
 impl InstructionParser for ast::CallTemplate {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
-        let parse =
-            CALL_TEMPLATE_CONTENT.get_or_init(|| content(instruction(names.xsl_with_param).many()));
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
+        let parse = CALL_TEMPLATE_CONTENT
+            .get_or_init(|| children(instruction(names.xsl_with_param).many()));
 
         Ok(ast::CallTemplate {
             name: attributes.required(names.name, attributes.eqname())?,
 
-            span: element.span,
+            span: content.span,
 
-            with_params: parse(element)?,
+            with_params: parse(content)?,
         })
     }
 }
 
 impl InstructionParser for ast::Catch {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Catch {
             errors: attributes.optional(names.errors, attributes.tokens())?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -395,20 +395,20 @@ impl InstructionParser for ast::Catch {
 static CHARACTER_MAP_CONTENT: ContentParseLock<Vec<ast::OutputCharacter>> = OnceLock::new();
 
 impl InstructionParser for ast::CharacterMap {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = CHARACTER_MAP_CONTENT
-            .get_or_init(|| content(instruction(names.xsl_output_character).many()));
+            .get_or_init(|| children(instruction(names.xsl_output_character).many()));
 
         Ok(ast::CharacterMap {
             name: attributes.required(names.name, attributes.eqname())?,
             use_character_maps: attributes
                 .optional(names.use_character_maps, attributes.eqnames())?,
 
-            span: element.span,
+            span: content.span,
 
-            output_characters: parse(element)?,
+            output_characters: parse(content)?,
         })
     }
 }
@@ -416,19 +416,19 @@ impl InstructionParser for ast::CharacterMap {
 static CHOOSE_CONTENT: ContentParseLock<(Vec<ast::When>, Option<ast::Otherwise>)> = OnceLock::new();
 
 impl InstructionParser for ast::Choose {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let span = element.span;
-        let names = &element.state.names;
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
+        let span = content.span;
+        let names = &content.state.names;
 
         let parse = CHOOSE_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_when)
                     .one_or_more()
                     .then(instruction(names.xsl_otherwise).option()),
             )
         });
 
-        let (when, otherwise) = parse(element)?;
+        let (when, otherwise) = parse(content)?;
         Ok(ast::Choose {
             span,
 
@@ -439,13 +439,13 @@ impl InstructionParser for ast::Choose {
 }
 
 impl InstructionParser for ast::Comment {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         Ok(ast::Comment {
-            select: attributes.optional(element.state.names.select, attributes.xpath())?,
+            select: attributes.optional(content.state.names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -455,20 +455,20 @@ impl InstructionParser for ast::ContextItem {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::ContextItem {
             as_: attributes.optional(names.as_, attributes.item_type())?,
             use_: attributes.optional(names.use_, attributes.use_())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::Copy {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Copy {
             select: attributes.optional(names.select, attributes.xpath())?,
             copy_namespaces: attributes.boolean_with_default(names.copy_namespaces, true)?,
@@ -481,9 +481,9 @@ impl InstructionParser for ast::Copy {
                 // TODO: should depend on global validation attribute
                 .unwrap_or(ast::Validation::Strip),
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -493,8 +493,8 @@ impl InstructionParser for ast::CopyOf {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::CopyOf {
             select: attributes.required(names.select, attributes.xpath())?,
@@ -503,7 +503,7 @@ impl InstructionParser for ast::CopyOf {
             type_: attributes.optional(names.type_, attributes.eqname())?,
             validation: attributes.optional(names.validation, attributes.validation())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -513,8 +513,8 @@ impl InstructionParser for ast::DecimalFormat {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::DecimalFormat {
             name: attributes.optional(names.name, attributes.eqname())?,
             decimal_separator: attributes.optional(names.decimal_separator, attributes.char())?,
@@ -529,28 +529,28 @@ impl InstructionParser for ast::DecimalFormat {
             digit: attributes.optional(names.digit, attributes.char())?,
             pattern_separator: attributes.optional(names.pattern_separator, attributes.char())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::Document {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Document {
             validation: attributes.optional(names.validation, attributes.validation())?,
             type_: attributes.optional(names.type_, attributes.eqname())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Element {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Element {
             name: attributes.required(names.name, attributes.value_template(attributes.qname()))?,
             namespace: attributes
@@ -561,9 +561,9 @@ impl InstructionParser for ast::Element {
             type_: attributes.optional(names.type_, attributes.eqname())?,
             validation: attributes.optional(names.validation, attributes.validation())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -571,10 +571,10 @@ impl InstructionParser for ast::Element {
 static EVALUATE_CONTENT: ContentParseLock<Vec<ast::EvaluateContent>> = OnceLock::new();
 
 impl InstructionParser for ast::Evaluate {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         let parse = EVALUATE_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_with_param)
                     .map(ast::EvaluateContent::WithParam)
                     .or(instruction(names.xsl_fallback).map(ast::EvaluateContent::Fallback))
@@ -595,9 +595,9 @@ impl InstructionParser for ast::Evaluate {
                 attributes.value_template(attributes.boolean()),
             )?,
 
-            span: element.span,
+            span: content.span,
 
-            content: parse(element)?,
+            content: parse(content)?,
         })
     }
 }
@@ -607,25 +607,25 @@ impl InstructionParser for ast::Expose {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Expose {
             component: attributes.required(names.component, attributes.component())?,
             names: attributes.required(names.names, attributes.tokens())?,
             visibility: attributes
                 .required(names.visibility, attributes.visibility_with_abstract())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::Fallback {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Fallback {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -634,13 +634,13 @@ static FOR_EACH_CONTENT: ContentParseLock<(Vec<ast::Sort>, ast::SequenceConstruc
     OnceLock::new();
 
 impl InstructionParser for ast::ForEach {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(element: &Content, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         let select = attributes.required(names.select, attributes.xpath())?;
         let span = element.span;
 
         let parse = FOR_EACH_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_sort)
                     .many()
                     .then(sequence_constructor()),
@@ -664,8 +664,8 @@ static FOR_EACH_GROUP_CONTENT: ContentParseLock<(Vec<ast::Sort>, ast::SequenceCo
     OnceLock::new();
 
 impl InstructionParser for ast::ForEachGroup {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         let select = attributes.required(names.select, attributes.xpath())?;
         let group_by = attributes.optional(names.group_by, attributes.xpath())?;
         let group_adjacent = attributes.optional(names.group_adjacent, attributes.xpath())?;
@@ -676,17 +676,17 @@ impl InstructionParser for ast::ForEachGroup {
         let composite = attributes.boolean_with_default(names.composite, false)?;
         let collation =
             attributes.optional(names.collation, attributes.value_template(attributes.uri()))?;
-        let span = element.span;
+        let span = content.span;
 
         let parse = FOR_EACH_GROUP_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_sort)
                     .many()
                     .then(sequence_constructor()),
             )
         });
 
-        let (sort, sequence_constructor) = parse(element)?;
+        let (sort, sequence_constructor) = parse(content)?;
 
         Ok(ast::ForEachGroup {
             select,
@@ -708,9 +708,9 @@ impl InstructionParser for ast::ForEachGroup {
 static FORK_CONTENT: ContentParseLock<(Vec<ast::Fallback>, ast::ForkContent)> = OnceLock::new();
 
 impl InstructionParser for ast::Fork {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
-        let span = element.span;
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
+        let span = content.span;
 
         let parse = FORK_CONTENT.get_or_init(|| {
             let sequence_fallbacks = (instruction(names.xsl_sequence)
@@ -722,7 +722,7 @@ impl InstructionParser for ast::Fork {
             // look for for-each-group first, and only if that fails,
             // look for sequence fallbacks (which can be the empty list and thus
             // would greedily conclude the parse if it was done first)
-            content(
+            children(
                 instruction(names.xsl_fallback).many().then(
                     for_each_group_fallbacks
                         .map(ast::ForkContent::ForEachGroup)
@@ -731,7 +731,7 @@ impl InstructionParser for ast::Fork {
             )
         });
 
-        let (fallbacks, content) = parse(element)?;
+        let (fallbacks, content) = parse(content)?;
 
         Ok(ast::Fork {
             span,
@@ -746,8 +746,8 @@ static FUNCTION_CONTENT: ContentParseLock<(Vec<ast::Param>, ast::SequenceConstru
     OnceLock::new();
 
 impl InstructionParser for ast::Function {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         let name = attributes.required(names.name, attributes.eqname())?;
         let as_ = attributes.optional(names.as_, attributes.sequence_type())?;
         let visibility =
@@ -760,17 +760,17 @@ impl InstructionParser for ast::Function {
         let new_each_time = attributes.optional(names.new_each_time, attributes.new_each_time())?;
         let cache = attributes.boolean_with_default(names.cache, false)?;
 
-        let span = element.span;
+        let span = content.span;
 
         let parse = FUNCTION_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_param)
                     .many()
                     .then(sequence_constructor()),
             )
         });
 
-        let (params, sequence_constructor) = parse(element)?;
+        let (params, sequence_constructor) = parse(content)?;
 
         Ok(ast::Function {
             name,
@@ -795,26 +795,26 @@ impl InstructionParser for ast::GlobalContextItem {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::GlobalContextItem {
             as_: attributes.optional(names.as_, attributes.item_type())?,
             use_: attributes.optional(names.use_, attributes.use_())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::If {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::If {
             test: attributes.required(names.test, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -824,25 +824,25 @@ impl InstructionParser for ast::Import {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Import {
             href: attributes.required(names.href, attributes.uri())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::ImportSchema {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::ImportSchema {
             namespace: attributes.optional(names.namespace, attributes.uri())?,
             schema_location: attributes.optional(names.schema_location, attributes.uri())?,
 
-            span: element.span,
+            span: content.span,
 
             // TODO
             schema: None,
@@ -855,12 +855,12 @@ impl InstructionParser for ast::Include {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Include {
             href: attributes.required(names.href, attributes.uri())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -873,14 +873,14 @@ type IterateContent = (
 static ITERATE_CONTENT: ContentParseLock<IterateContent> = OnceLock::new();
 
 impl InstructionParser for ast::Iterate {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         let select = attributes.required(names.select, attributes.xpath())?;
 
-        let span = element.span;
+        let span = content.span;
 
         let parse = ITERATE_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_param)
                     .many()
                     .then(instruction(names.xsl_on_completion).option())
@@ -888,7 +888,7 @@ impl InstructionParser for ast::Iterate {
             )
         });
 
-        let ((params, on_completion), sequence_constructor) = parse(element)?;
+        let ((params, on_completion), sequence_constructor) = parse(content)?;
 
         Ok(ast::Iterate {
             select,
@@ -903,8 +903,8 @@ impl InstructionParser for ast::Iterate {
 }
 
 impl InstructionParser for ast::Key {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::Key {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -913,43 +913,43 @@ impl InstructionParser for ast::Key {
             composite: attributes.boolean_with_default(names.composite, false)?,
             collation: attributes.optional(names.collation, attributes.uri())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Map {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Map {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::MapEntry {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::MapEntry {
             key: attributes.required(names.key, attributes.xpath())?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::MatchingSubstring {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::MatchingSubstring {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -962,19 +962,19 @@ type MergeContent = (
 static MERGE_CONTENT: ContentParseLock<MergeContent> = OnceLock::new();
 
 impl InstructionParser for ast::Merge {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = MERGE_CONTENT.get_or_init(|| {
-            content(instruction(names.xsl_merge_source).one_or_more().then(
+            children(instruction(names.xsl_merge_source).one_or_more().then(
                 instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
             ))
         });
 
-        let (merge_sources, (merge_action, fallbacks)) = parse(element)?;
+        let (merge_sources, (merge_action, fallbacks)) = parse(content)?;
 
         Ok(ast::Merge {
-            span: element.span,
+            span: content.span,
 
             merge_sources,
             merge_action,
@@ -984,18 +984,18 @@ impl InstructionParser for ast::Merge {
 }
 
 impl InstructionParser for ast::MergeAction {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::MergeAction {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::MergeKey {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::MergeKey {
             select: attributes.optional(names.select, attributes.xpath())?,
             lang: attributes
@@ -1013,9 +1013,9 @@ impl InstructionParser for ast::MergeKey {
                 attributes.value_template(attributes.data_type()),
             )?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1023,11 +1023,11 @@ impl InstructionParser for ast::MergeKey {
 static MERGE_SOURCE_CONTENT: ContentParseLock<Vec<ast::MergeKey>> = OnceLock::new();
 
 impl InstructionParser for ast::MergeSource {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = MERGE_SOURCE_CONTENT
-            .get_or_init(|| content(instruction(names.xsl_merge_key).one_or_more()));
+            .get_or_init(|| children(instruction(names.xsl_merge_key).one_or_more()));
 
         Ok(ast::MergeSource {
             name: attributes.optional(names.name, attributes.ncname())?,
@@ -1040,16 +1040,16 @@ impl InstructionParser for ast::MergeSource {
             validation: attributes.optional(names.validation, attributes.validation())?,
             type_: attributes.optional(names.type_, attributes.eqname())?,
 
-            span: element.span,
+            span: content.span,
 
-            merge_keys: parse(element)?,
+            merge_keys: parse(content)?,
         })
     }
 }
 
 impl InstructionParser for ast::Message {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Message {
             select: attributes.optional(names.select, attributes.xpath())?,
             terminate: attributes.optional(
@@ -1061,9 +1061,9 @@ impl InstructionParser for ast::Message {
                 attributes.value_template(attributes.eqname()),
             )?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1073,8 +1073,8 @@ impl InstructionParser for ast::Mode {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Mode {
             name: attributes.optional(names.name, attributes.eqname())?,
             streamable: attributes.boolean_with_default(names.streamable, false)?,
@@ -1089,22 +1089,22 @@ impl InstructionParser for ast::Mode {
             typed: attributes.optional(names.typed, attributes.typed())?,
             visibility: attributes.optional(names.visibility, attributes.visibility())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::Namespace {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Namespace {
             name: attributes
                 .required(names.name, attributes.value_template(attributes.ncname()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1114,15 +1114,15 @@ impl InstructionParser for ast::NamespaceAlias {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::NamespaceAlias {
             stylesheet_prefix: attributes
                 .required(names.stylesheet_prefix, attributes.prefix_or_default())?,
             result_prefix: attributes
                 .required(names.result_prefix, attributes.prefix_or_default())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -1130,14 +1130,14 @@ impl InstructionParser for ast::NamespaceAlias {
 static NEXT_ITERATION_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
 
 impl InstructionParser for ast::NextIteration {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         let parse = NEXT_ITERATION_CONTENT
-            .get_or_init(|| content(instruction(element.state.names.xsl_with_param).many()));
+            .get_or_init(|| children(instruction(content.state.names.xsl_with_param).many()));
 
         Ok(ast::NextIteration {
-            span: element.span,
+            span: content.span,
 
-            with_params: parse(element)?,
+            with_params: parse(content)?,
         })
     }
 }
@@ -1145,11 +1145,11 @@ impl InstructionParser for ast::NextIteration {
 static NEXT_MATCH_CONTENT: ContentParseLock<Vec<ast::NextMatchContent>> = OnceLock::new();
 
 impl InstructionParser for ast::NextMatch {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = NEXT_MATCH_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.xsl_with_param)
                     .map(ast::NextMatchContent::WithParam)
                     .or(instruction(names.xsl_fallback).map(ast::NextMatchContent::Fallback))
@@ -1158,19 +1158,19 @@ impl InstructionParser for ast::NextMatch {
         });
 
         Ok(ast::NextMatch {
-            span: element.span,
+            span: content.span,
 
-            content: parse(element)?,
+            content: parse(content)?,
         })
     }
 }
 
 impl InstructionParser for ast::NonMatchingSubstring {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::NonMatchingSubstring {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1180,8 +1180,8 @@ impl InstructionParser for ast::Number {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::Number {
             value: attributes.optional(names.value, attributes.xpath())?,
@@ -1214,53 +1214,53 @@ impl InstructionParser for ast::Number {
                 attributes.value_template(attributes.integer()),
             )?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::OnCompletion {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         Ok(ast::OnCompletion {
-            select: attributes.optional(element.state.names.select, attributes.xpath())?,
+            select: attributes.optional(content.state.names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::OnEmpty {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         Ok(ast::OnEmpty {
-            select: attributes.optional(element.state.names.select, attributes.xpath())?,
+            select: attributes.optional(content.state.names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::OnNonEmpty {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         Ok(ast::OnNonEmpty {
-            select: attributes.optional(element.state.names.select, attributes.xpath())?,
+            select: attributes.optional(content.state.names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Otherwise {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::Otherwise {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1270,8 +1270,8 @@ impl InstructionParser for ast::Output {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Output {
             name: attributes.optional(names.name, attributes.eqname())?,
             method: attributes.optional(names.method, attributes.method())?,
@@ -1310,7 +1310,7 @@ impl InstructionParser for ast::Output {
                 .optional(names.use_character_maps, attributes.eqnames())?,
             version: attributes.optional(names.version, attributes.nmtoken())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -1320,28 +1320,28 @@ impl InstructionParser for ast::OutputCharacter {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::OutputCharacter {
             character: attributes.required(names.character, attributes.char())?,
             string: attributes.required(names.string, attributes.string())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::OverrideContent {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<ast::OverrideContent> {
-        let name = element
+    fn parse(content: &Content, attributes: &Attributes) -> Result<ast::OverrideContent> {
+        let name = content
             .state
             .names
             .override_content_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(element, attributes)
+            name.parse(content, attributes)
         } else {
-            Err(Error::Unexpected { span: element.span })
+            Err(Error::Unexpected { span: content.span })
         }
     }
 }
@@ -1349,15 +1349,15 @@ impl InstructionParser for ast::OverrideContent {
 static OVERRIDE_CONTENT: ContentParseLock<Vec<ast::OverrideContent>> = OnceLock::new();
 
 impl InstructionParser for ast::Override {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         let parse = OVERRIDE_CONTENT.get_or_init(|| {
-            content(one(by_element(ast::OverrideContent::parse_override_content)).many())
+            children(one(by_element(ast::OverrideContent::parse_override_content)).many())
         });
 
         Ok(ast::Override {
-            span: element.span,
+            span: content.span,
 
-            content: parse(element)?,
+            content: parse(content)?,
         })
     }
 }
@@ -1365,8 +1365,8 @@ impl InstructionParser for ast::Override {
 // TODO: xsl:package
 
 impl InstructionParser for ast::Param {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Param {
             name: attributes.required(names.name, attributes.eqname())?,
             select: attributes.optional(names.select, attributes.xpath())?,
@@ -1375,9 +1375,9 @@ impl InstructionParser for ast::Param {
             tunnel: attributes.boolean_with_default(names.tunnel, false)?,
             static_: attributes.boolean_with_default(names.static_, false)?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1391,27 +1391,27 @@ impl InstructionParser for ast::PreserveSpace {
         true
     }
 
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::PreserveSpace {
             elements: attributes.required(names.elements, attributes.tokens())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
 
 impl InstructionParser for ast::ProcessingInstruction {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::ProcessingInstruction {
             name: attributes
                 .required(names.name, attributes.value_template(attributes.ncname()))?,
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1419,21 +1419,21 @@ impl InstructionParser for ast::ProcessingInstruction {
 // TODO: xsl:result-document
 
 impl InstructionParser for ast::Sequence {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Sequence {
             select: attributes.optional(names.select, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Sort {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Sort {
             select: attributes.optional(names.select, attributes.xpath())?,
             lang: attributes
@@ -1455,16 +1455,16 @@ impl InstructionParser for ast::Sort {
                 attributes.value_template(attributes.data_type()),
             )?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::SourceDocument {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         Ok(ast::SourceDocument {
             href: attributes.required(names.href, attributes.value_template(attributes.uri()))?,
@@ -1473,9 +1473,9 @@ impl InstructionParser for ast::SourceDocument {
             validation: attributes.optional(names.validation, attributes.validation())?,
             type_: attributes.optional(names.type_, attributes.eqname())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1484,12 +1484,12 @@ impl InstructionParser for ast::StripSpace {
     fn should_be_empty() -> bool {
         true
     }
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::StripSpace {
             elements: attributes.required(names.elements, attributes.tokens())?,
 
-            span: element.span,
+            span: content.span,
         })
     }
 }
@@ -1502,8 +1502,8 @@ type TemplateContent = (
 static TEMPLATE_CONTENT: ContentParseLock<TemplateContent> = OnceLock::new();
 
 impl InstructionParser for ast::Template {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let match_ = attributes.optional(names.match_, attributes.pattern())?;
         let name = attributes.optional(names.name, attributes.eqname())?;
@@ -1514,7 +1514,7 @@ impl InstructionParser for ast::Template {
             attributes.optional(names.visibility, attributes.visibility_with_abstract())?;
 
         let parse = TEMPLATE_CONTENT.get_or_init(|| {
-            content(
+            children(
                 instruction(names.context_item)
                     .option()
                     .then(instruction(names.xsl_param).many())
@@ -1522,8 +1522,8 @@ impl InstructionParser for ast::Template {
             )
         });
 
-        let span = element.span;
-        let ((context_item, params), sequence_constructor) = parse(element)?;
+        let span = content.span;
+        let ((context_item, params), sequence_constructor) = parse(content)?;
 
         Ok(ast::Template {
             match_,
@@ -1543,18 +1543,18 @@ impl InstructionParser for ast::Template {
 }
 
 impl InstructionParser for ast::Text {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Text {
             disable_output_escaping: attributes
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
-            span: element.span,
+            span: content.span,
 
-            content: element
+            content: content
                 .state
                 .xot
-                .text_str(element.node)
+                .text_str(content.node)
                 .unwrap_or("")
                 .to_string(),
         })
@@ -1562,8 +1562,8 @@ impl InstructionParser for ast::Text {
 }
 
 impl InstructionParser for ast::Transform {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::Transform {
             id: attributes.optional(names.id, attributes.id())?,
             input_type_annotations: attributes.optional(
@@ -1573,9 +1573,9 @@ impl InstructionParser for ast::Transform {
             extension_element_prefixes: attributes
                 .optional(names.extension_element_prefixes, attributes.prefixes())?,
 
-            span: element.span,
+            span: content.span,
 
-            declarations: element.declarations()?,
+            declarations: content.declarations()?,
         })
     }
 }
@@ -1585,8 +1585,8 @@ impl InstructionParser for ast::Transform {
 // TODO: xsl:use-package
 
 impl InstructionParser for ast::ValueOf {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::ValueOf {
             select: attributes.optional(names.select, attributes.xpath())?,
             separator: attributes.optional(
@@ -1596,16 +1596,16 @@ impl InstructionParser for ast::ValueOf {
             disable_output_escaping: attributes
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::Variable {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         // This is a rule somewhere, but not sure whether it's correct;
         // can visibility be absent or is there a default visibility?
@@ -1623,9 +1623,9 @@ impl InstructionParser for ast::Variable {
             visibility: attributes
                 .optional(names.visibility, attributes.visibility_with_abstract())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 
@@ -1644,40 +1644,40 @@ impl InstructionParser for ast::Variable {
 }
 
 impl InstructionParser for ast::When {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::When {
             test: attributes.required(names.test, attributes.xpath())?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::WherePopulated {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
+    fn parse(content: &Content, _attributes: &Attributes) -> Result<Self> {
         Ok(ast::WherePopulated {
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
 
 impl InstructionParser for ast::WithParam {
-    fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
         Ok(ast::WithParam {
             name: attributes.required(names.name, attributes.eqname())?,
             select: attributes.optional(names.select, attributes.xpath())?,
             as_: attributes.optional(names.as_, attributes.sequence_type())?,
             tunnel: attributes.boolean_with_default(names.tunnel, false)?,
 
-            span: element.span,
+            span: content.span,
 
-            sequence_constructor: element.sequence_constructor()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }

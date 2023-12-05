@@ -7,124 +7,124 @@ use xot::{NameId, NamespaceId, Xot};
 
 use crate::ast_core::{self as ast, DeclarationName, OverrideContentName, SequenceConstructorName};
 use crate::attributes::Attributes;
-use crate::element::Element;
+use crate::element::Content;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, OverrideContentParser, SequenceConstructorParser};
 
 impl SequenceConstructorName {
     pub(crate) fn parse(
         &self,
-        element: &Element,
+        content: &Content,
         attributes: &Attributes,
     ) -> Result<ast::SequenceConstructorItem, ElementError> {
         match self {
             SequenceConstructorName::ApplyImports => {
-                ast::ApplyImports::parse_sequence_constructor_item(element, attributes)
+                ast::ApplyImports::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::AnalyzeString => {
-                ast::AnalyzeString::parse_sequence_constructor_item(element, attributes)
+                ast::AnalyzeString::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::ApplyTemplates => {
-                ast::ApplyTemplates::parse_sequence_constructor_item(element, attributes)
+                ast::ApplyTemplates::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Assert => {
-                ast::Assert::parse_sequence_constructor_item(element, attributes)
+                ast::Assert::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Attribute => {
-                ast::Attribute::parse_sequence_constructor_item(element, attributes)
+                ast::Attribute::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Break => {
-                ast::Break::parse_sequence_constructor_item(element, attributes)
+                ast::Break::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::CallTemplate => {
-                ast::CallTemplate::parse_sequence_constructor_item(element, attributes)
+                ast::CallTemplate::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Choose => {
-                ast::Choose::parse_sequence_constructor_item(element, attributes)
+                ast::Choose::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Comment => {
-                ast::Comment::parse_sequence_constructor_item(element, attributes)
+                ast::Comment::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Copy => {
-                ast::Copy::parse_sequence_constructor_item(element, attributes)
+                ast::Copy::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::CopyOf => {
-                ast::CopyOf::parse_sequence_constructor_item(element, attributes)
+                ast::CopyOf::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Document => {
-                ast::Document::parse_sequence_constructor_item(element, attributes)
+                ast::Document::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Element => {
-                ast::Element::parse_sequence_constructor_item(element, attributes)
+                ast::Element::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Evaluate => {
-                ast::Evaluate::parse_sequence_constructor_item(element, attributes)
+                ast::Evaluate::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Fallback => {
-                ast::Fallback::parse_sequence_constructor_item(element, attributes)
+                ast::Fallback::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::ForEach => {
-                ast::ForEach::parse_sequence_constructor_item(element, attributes)
+                ast::ForEach::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::ForEachGroup => {
-                ast::ForEachGroup::parse_sequence_constructor_item(element, attributes)
+                ast::ForEachGroup::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Fork => {
-                ast::Fork::parse_sequence_constructor_item(element, attributes)
+                ast::Fork::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::If => {
-                ast::If::parse_sequence_constructor_item(element, attributes)
+                ast::If::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Map => {
-                ast::Map::parse_sequence_constructor_item(element, attributes)
+                ast::Map::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::MapEntry => {
-                ast::MapEntry::parse_sequence_constructor_item(element, attributes)
+                ast::MapEntry::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Merge => {
-                ast::Merge::parse_sequence_constructor_item(element, attributes)
+                ast::Merge::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Message => {
-                ast::Message::parse_sequence_constructor_item(element, attributes)
+                ast::Message::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Namespace => {
-                ast::Namespace::parse_sequence_constructor_item(element, attributes)
+                ast::Namespace::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::NextIteration => {
-                ast::NextIteration::parse_sequence_constructor_item(element, attributes)
+                ast::NextIteration::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::NextMatch => {
-                ast::NextMatch::parse_sequence_constructor_item(element, attributes)
+                ast::NextMatch::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Number => {
-                ast::Number::parse_sequence_constructor_item(element, attributes)
+                ast::Number::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::OnEmpty => {
-                ast::OnEmpty::parse_sequence_constructor_item(element, attributes)
+                ast::OnEmpty::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::OnNonEmpty => {
-                ast::OnNonEmpty::parse_sequence_constructor_item(element, attributes)
+                ast::OnNonEmpty::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::ProcessingInstruction => {
-                ast::ProcessingInstruction::parse_sequence_constructor_item(element, attributes)
+                ast::ProcessingInstruction::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Sequence => {
-                ast::Sequence::parse_sequence_constructor_item(element, attributes)
+                ast::Sequence::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::SourceDocument => {
-                ast::SourceDocument::parse_sequence_constructor_item(element, attributes)
+                ast::SourceDocument::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Text => {
-                ast::Text::parse_sequence_constructor_item(element, attributes)
+                ast::Text::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::ValueOf => {
-                ast::ValueOf::parse_sequence_constructor_item(element, attributes)
+                ast::ValueOf::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::Variable => {
-                ast::Variable::parse_sequence_constructor_item(element, attributes)
+                ast::Variable::parse_sequence_constructor_item(content, attributes)
             }
             SequenceConstructorName::WherePopulated => {
-                ast::WherePopulated::parse_sequence_constructor_item(element, attributes)
+                ast::WherePopulated::parse_sequence_constructor_item(content, attributes)
             }
 
             _ => {
@@ -147,12 +147,12 @@ impl SequenceConstructorName {
 impl DeclarationName {
     pub(crate) fn parse(
         &self,
-        element: &Element,
+        content: &Content,
         attributes: &Attributes,
     ) -> Result<ast::Declaration, ElementError> {
         match self {
             DeclarationName::Accumulator => {
-                ast::Accumulator::parse_declaration(element, attributes)
+                ast::Accumulator::parse_declaration(content, attributes)
             }
             _ => {
                 unimplemented!()
@@ -174,17 +174,17 @@ impl DeclarationName {
 impl OverrideContentName {
     pub(crate) fn parse(
         &self,
-        element: &Element,
+        content: &Content,
         attributes: &Attributes,
     ) -> Result<ast::OverrideContent, ElementError> {
         use ast::OverrideContentName::*;
 
         match self {
-            Template => ast::Template::parse_override_content(element, attributes),
-            Function => ast::Function::parse_override_content(element, attributes),
-            Variable => ast::Variable::parse_override_content(element, attributes),
-            Param => ast::Param::parse_override_content(element, attributes),
-            AttributeSet => ast::AttributeSet::parse_override_content(element, attributes),
+            Template => ast::Template::parse_override_content(content, attributes),
+            Function => ast::Function::parse_override_content(content, attributes),
+            Variable => ast::Variable::parse_override_content(content, attributes),
+            Param => ast::Param::parse_override_content(content, attributes),
+            AttributeSet => ast::AttributeSet::parse_override_content(content, attributes),
         }
     }
 
