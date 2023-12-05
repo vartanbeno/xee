@@ -154,11 +154,15 @@ fn text_value_template(
     Ok(items)
 }
 
-pub(crate) fn content_parse<V, P>(parser: P) -> impl Fn(&Element) -> Result<V, ElementError>
+type ContentParse<V> =
+    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>;
+
+pub(crate) fn content<V, P>(parser: P) -> ContentParse<V>
 where
-    P: NodeParser<V>,
+    P: NodeParser<V> + std::marker::Sync + std::marker::Send + 'static,
+    V: std::marker::Sync + std::marker::Send + 'static,
 {
-    move |element| {
+    Box::new(move |element| {
         let (item, next) = parser.parse_next(
             element.state.xot.first_child(element.node),
             element.state,
@@ -172,18 +176,7 @@ where
         } else {
             Ok(item)
         }
-    }
-}
-
-type ContentParse<V> =
-    Box<dyn Fn(&Element) -> Result<V, ElementError> + std::marker::Sync + std::marker::Send>;
-
-pub(crate) fn content<V, P>(parser: P) -> ContentParse<V>
-where
-    P: NodeParser<V> + std::marker::Sync + std::marker::Send + 'static,
-    V: std::marker::Sync + std::marker::Send + 'static,
-{
-    Box::new(content_parse(parser))
+    })
 }
 
 pub(crate) fn by_element<V>(

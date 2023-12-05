@@ -6,8 +6,7 @@ use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
 use crate::combinator::{one, NodeParser};
 use crate::element::{
-    by_element, content, content_parse, instruction, sequence_constructor, ContentParseLock,
-    Element,
+    by_element, content, instruction, sequence_constructor, ContentParseLock, Element,
 };
 use crate::error::ElementError as Error;
 use crate::state::State;
@@ -628,17 +627,23 @@ impl InstructionParser for ast::Fallback {
     }
 }
 
+static FOR_EACH_CONTENT: ContentParseLock<(Vec<ast::Sort>, ast::SequenceConstructor)> =
+    OnceLock::new();
+
 impl InstructionParser for ast::ForEach {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         let select = attributes.required(names.select, attributes.xpath())?;
         let span = element.span;
 
-        let parse = content_parse(
-            instruction(names.xsl_sort)
-                .many()
-                .then(sequence_constructor()),
-        );
+        let parse = FOR_EACH_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_sort)
+                    .many()
+                    .then(sequence_constructor()),
+            )
+        });
+
         let (sort, sequence_constructor) = parse(element)?;
 
         Ok(ast::ForEach {
@@ -651,6 +656,9 @@ impl InstructionParser for ast::ForEach {
         })
     }
 }
+
+static FOR_EACH_GROUP_CONTENT: ContentParseLock<(Vec<ast::Sort>, ast::SequenceConstructor)> =
+    OnceLock::new();
 
 impl InstructionParser for ast::ForEachGroup {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
@@ -667,11 +675,14 @@ impl InstructionParser for ast::ForEachGroup {
             attributes.optional(names.collation, attributes.value_template(attributes.uri()))?;
         let span = element.span;
 
-        let parse = content_parse(
-            instruction(names.xsl_sort)
-                .many()
-                .then(sequence_constructor()),
-        );
+        let parse = FOR_EACH_GROUP_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_sort)
+                    .many()
+                    .then(sequence_constructor()),
+            )
+        });
+
         let (sort, sequence_constructor) = parse(element)?;
 
         Ok(ast::ForEachGroup {
@@ -691,26 +702,32 @@ impl InstructionParser for ast::ForEachGroup {
     }
 }
 
+static FORK_CONTENT: ContentParseLock<(Vec<ast::Fallback>, ast::ForkContent)> = OnceLock::new();
+
 impl InstructionParser for ast::Fork {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         let span = element.span;
 
-        let sequence_fallbacks =
-            (instruction(names.xsl_sequence).then(instruction(names.xsl_fallback).many())).many();
-        let for_each_group_fallbacks =
-            instruction(names.xsl_for_each_group).then(instruction(names.xsl_fallback).many());
+        let parse = FORK_CONTENT.get_or_init(|| {
+            let sequence_fallbacks = (instruction(names.xsl_sequence)
+                .then(instruction(names.xsl_fallback).many()))
+            .many();
+            let for_each_group_fallbacks =
+                instruction(names.xsl_for_each_group).then(instruction(names.xsl_fallback).many());
 
-        // look for for-each-group first, and only if that fails,
-        // look for sequence fallbacks (which can be the empty list and thus
-        // would greedily conclude the parse if it was done first)
-        let parse = content_parse(
-            instruction(names.xsl_fallback).many().then(
-                for_each_group_fallbacks
-                    .map(ast::ForkContent::ForEachGroup)
-                    .or(sequence_fallbacks.map(ast::ForkContent::SequenceFallbacks)),
-            ),
-        );
+            // look for for-each-group first, and only if that fails,
+            // look for sequence fallbacks (which can be the empty list and thus
+            // would greedily conclude the parse if it was done first)
+            content(
+                instruction(names.xsl_fallback).many().then(
+                    for_each_group_fallbacks
+                        .map(ast::ForkContent::ForEachGroup)
+                        .or(sequence_fallbacks.map(ast::ForkContent::SequenceFallbacks)),
+                ),
+            )
+        });
+
         let (fallbacks, content) = parse(element)?;
 
         Ok(ast::Fork {
@@ -721,6 +738,9 @@ impl InstructionParser for ast::Fork {
         })
     }
 }
+
+static FUNCTION_CONTENT: ContentParseLock<(Vec<ast::Param>, ast::SequenceConstructor)> =
+    OnceLock::new();
 
 impl InstructionParser for ast::Function {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
@@ -739,11 +759,14 @@ impl InstructionParser for ast::Function {
 
         let span = element.span;
 
-        let parse = content_parse(
-            instruction(names.xsl_param)
-                .many()
-                .then(sequence_constructor()),
-        );
+        let parse = FUNCTION_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_param)
+                    .many()
+                    .then(sequence_constructor()),
+            )
+        });
+
         let (params, sequence_constructor) = parse(element)?;
 
         Ok(ast::Function {
@@ -839,6 +862,13 @@ impl InstructionParser for ast::Include {
     }
 }
 
+type IterateContent = (
+    (Vec<ast::Param>, Option<ast::OnCompletion>),
+    ast::SequenceConstructor,
+);
+
+static ITERATE_CONTENT: ContentParseLock<IterateContent> = OnceLock::new();
+
 impl InstructionParser for ast::Iterate {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
@@ -846,12 +876,15 @@ impl InstructionParser for ast::Iterate {
 
         let span = element.span;
 
-        let parse = content_parse(
-            instruction(names.xsl_param)
-                .many()
-                .then(instruction(names.xsl_on_completion).option())
-                .then(sequence_constructor()),
-        );
+        let parse = ITERATE_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_param)
+                    .many()
+                    .then(instruction(names.xsl_on_completion).option())
+                    .then(sequence_constructor()),
+            )
+        });
+
         let ((params, on_completion), sequence_constructor) = parse(element)?;
 
         Ok(ast::Iterate {
@@ -918,17 +951,27 @@ impl InstructionParser for ast::MatchingSubstring {
     }
 }
 
+type MergeContent = (
+    Vec<ast::MergeSource>,
+    (ast::MergeAction, Vec<ast::Fallback>),
+);
+
+static MERGE_CONTENT: ContentParseLock<MergeContent> = OnceLock::new();
+
 impl InstructionParser for ast::Merge {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(instruction(names.xsl_merge_source).one_or_more().then(
-            instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
-        ));
-        let span = element.span;
+
+        let parse = MERGE_CONTENT.get_or_init(|| {
+            content(instruction(names.xsl_merge_source).one_or_more().then(
+                instruction(names.xsl_merge_action).then(instruction(names.xsl_fallback).many()),
+            ))
+        });
+
         let (merge_sources, (merge_action, fallbacks)) = parse(element)?;
 
         Ok(ast::Merge {
-            span,
+            span: element.span,
 
             merge_sources,
             merge_action,
@@ -974,11 +1017,14 @@ impl InstructionParser for ast::MergeKey {
     }
 }
 
+static MERGE_SOURCE_CONTENT: ContentParseLock<Vec<ast::MergeKey>> = OnceLock::new();
+
 impl InstructionParser for ast::MergeSource {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(instruction(names.xsl_merge_key).one_or_more());
+        let parse = MERGE_SOURCE_CONTENT
+            .get_or_init(|| content(instruction(names.xsl_merge_key).one_or_more()));
 
         Ok(ast::MergeSource {
             name: attributes.optional(names.name, attributes.ncname())?,
@@ -1078,9 +1124,13 @@ impl InstructionParser for ast::NamespaceAlias {
     }
 }
 
+static NEXT_ITERATION_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
+
 impl InstructionParser for ast::NextIteration {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
+        let parse = NEXT_ITERATION_CONTENT
+            .get_or_init(|| content(instruction(element.state.names.xsl_with_param).many()));
+
         Ok(ast::NextIteration {
             span: element.span,
 
@@ -1089,16 +1139,20 @@ impl InstructionParser for ast::NextIteration {
     }
 }
 
+static NEXT_MATCH_CONTENT: ContentParseLock<Vec<ast::NextMatchContent>> = OnceLock::new();
+
 impl InstructionParser for ast::NextMatch {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(
-            (instruction(names.xsl_with_param)
-                .map(ast::NextMatchContent::WithParam)
-                .or(instruction(names.xsl_fallback).map(ast::NextMatchContent::Fallback)))
-            .many(),
-        );
+        let parse = NEXT_MATCH_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_with_param)
+                    .map(ast::NextMatchContent::WithParam)
+                    .or(instruction(names.xsl_fallback).map(ast::NextMatchContent::Fallback))
+                    .many(),
+            )
+        });
 
         Ok(ast::NextMatch {
             span: element.span,
@@ -1209,6 +1263,10 @@ impl InstructionParser for ast::Otherwise {
 }
 
 impl InstructionParser for ast::Output {
+    fn should_be_empty() -> bool {
+        true
+    }
+
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
         Ok(ast::Output {
@@ -1285,14 +1343,18 @@ impl InstructionParser for ast::OverrideContent {
     }
 }
 
+static OVERRIDE_CONTENT: ContentParseLock<Vec<ast::OverrideContent>> = OnceLock::new();
+
 impl InstructionParser for ast::Override {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let parse = content_parse(
-            one(by_element(|element, attributes| {
-                ast::OverrideContent::parse_override_content(element, attributes)
-            }))
-            .many(),
-        );
+        let parse = OVERRIDE_CONTENT.get_or_init(|| {
+            content(
+                one(by_element(|element, attributes| {
+                    ast::OverrideContent::parse_override_content(element, attributes)
+                }))
+                .many(),
+            )
+        });
 
         Ok(ast::Override {
             span: element.span,
@@ -1434,6 +1496,13 @@ impl InstructionParser for ast::StripSpace {
     }
 }
 
+type TemplateContent = (
+    (Option<ast::ContextItem>, Vec<ast::Param>),
+    ast::SequenceConstructor,
+);
+
+static TEMPLATE_CONTENT: ContentParseLock<TemplateContent> = OnceLock::new();
+
 impl InstructionParser for ast::Template {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
@@ -1446,12 +1515,15 @@ impl InstructionParser for ast::Template {
         let visibility =
             attributes.optional(names.visibility, attributes.visibility_with_abstract())?;
 
-        let parse = content_parse(
-            instruction(names.context_item)
-                .option()
-                .then(instruction(names.xsl_param).many())
-                .then(sequence_constructor()),
-        );
+        let parse = TEMPLATE_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.context_item)
+                    .option()
+                    .then(instruction(names.xsl_param).many())
+                    .then(sequence_constructor()),
+            )
+        });
+
         let span = element.span;
         let ((context_item, params), sequence_constructor) = parse(element)?;
 
