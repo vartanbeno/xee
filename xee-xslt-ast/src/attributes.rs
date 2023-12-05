@@ -13,7 +13,7 @@ use xot::{NameId, Node, SpanInfoKey};
 
 pub(crate) struct Attributes<'a> {
     node: Node,
-    element: &'a xot::Element,
+    pub(crate) element: &'a xot::Element,
     state: &'a State,
     context: Context,
     seen: std::cell::RefCell<HashSet<NameId>>,

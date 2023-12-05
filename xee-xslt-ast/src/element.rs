@@ -34,7 +34,7 @@ pub(crate) fn parse_element_attributes<'a, V>(
 ) -> Result<V, ElementError> {
     let attributes = Attributes::new(node, element, state, context.clone())?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
-    let element = Element::new(node, element, context, state)?;
+    let element = Element::new(node, context, state)?;
     f(&element, &attributes)
 }
 
@@ -55,7 +55,6 @@ impl<'a> XsltParser<'a> {
 
 pub(crate) struct Element<'a> {
     pub(crate) node: Node,
-    pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
     pub(crate) context: Context,
     pub(crate) state: &'a State,
@@ -64,7 +63,6 @@ pub(crate) struct Element<'a> {
 impl<'a> Element<'a> {
     pub(crate) fn new(
         node: Node,
-        element: &'a xot::Element,
         context: Context,
         state: &'a State,
     ) -> Result<Self, ElementError> {
@@ -72,7 +70,6 @@ impl<'a> Element<'a> {
 
         Ok(Self {
             node,
-            element,
             span,
             context,
             state,
@@ -195,7 +192,7 @@ pub(crate) fn by_element_name<V>(
     f: impl Fn(&Element, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
     by_element(move |element, attributes| {
-        if element.element.name() == name {
+        if attributes.element.name() == name {
             f(element, attributes)
         } else {
             Err(ElementError::Unexpected { span: element.span })

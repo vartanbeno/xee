@@ -92,12 +92,12 @@ impl InstructionParser for ast::SequenceConstructorItem {
         let context = element.state;
         let name = context
             .names
-            .sequence_constructor_name(element.element.name());
+            .sequence_constructor_name(attributes.element.name());
 
         if let Some(name) = name {
             name.parse(element, attributes)
         } else {
-            let ns = context.xot.namespace_for_name(element.element.name());
+            let ns = context.xot.namespace_for_name(attributes.element.name());
             if ns == context.names.xsl_ns {
                 // we have an unknown xsl instruction, fail with error
                 Err(Error::Unexpected { span: element.span })
@@ -111,7 +111,10 @@ impl InstructionParser for ast::SequenceConstructorItem {
 
 impl InstructionParser for ast::Declaration {
     fn parse(element: &Element, attributes: &Attributes) -> Result<ast::Declaration> {
-        let name = element.state.names.declaration_name(element.element.name());
+        let name = element
+            .state
+            .names
+            .declaration_name(attributes.element.name());
 
         if let Some(name) = name {
             name.parse(element, attributes)
@@ -122,9 +125,9 @@ impl InstructionParser for ast::Declaration {
 }
 
 impl InstructionParser for ast::ElementNode {
-    fn parse(element: &Element, _attributes: &Attributes) -> Result<ast::ElementNode> {
+    fn parse(element: &Element, attributes: &Attributes) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
-            name: to_name(&element.state.xot, element.element.name()),
+            name: to_name(&element.state.xot, attributes.element.name()),
 
             span: element.span,
         })
@@ -1333,7 +1336,7 @@ impl InstructionParser for ast::OverrideContent {
         let name = element
             .state
             .names
-            .override_content_name(element.element.name());
+            .override_content_name(attributes.element.name());
 
         if let Some(name) = name {
             name.parse(element, attributes)
