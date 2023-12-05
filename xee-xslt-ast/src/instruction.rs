@@ -1348,12 +1348,7 @@ static OVERRIDE_CONTENT: ContentParseLock<Vec<ast::OverrideContent>> = OnceLock:
 impl InstructionParser for ast::Override {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let parse = OVERRIDE_CONTENT.get_or_init(|| {
-            content(
-                one(by_element(|element, attributes| {
-                    ast::OverrideContent::parse_override_content(element, attributes)
-                }))
-                .many(),
-            )
+            content(one(by_element(ast::OverrideContent::parse_override_content)).many())
         });
 
         Ok(ast::Override {
@@ -1703,9 +1698,13 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element.prefixes().clone());
-            parse_element_attributes(node, element, &state, &context, |element, attributes| {
-                ast::SequenceConstructorItem::parse_sequence_constructor_item(&element, &attributes)
-            })
+            parse_element_attributes(
+                node,
+                element,
+                &state,
+                &context,
+                ast::SequenceConstructorItem::parse_sequence_constructor_item,
+            )
         } else {
             Err(Error::Internal)
         }
