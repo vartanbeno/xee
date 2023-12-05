@@ -242,9 +242,12 @@ impl InstructionParser for ast::AnalyzeString {
     }
 }
 
+static APPLY_IMPORTS_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
+
 impl InstructionParser for ast::ApplyImports {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
-        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
+        let parse = APPLY_IMPORTS_CONTENT
+            .get_or_init(|| content(instruction(element.state.names.xsl_with_param).many()));
         Ok(ast::ApplyImports {
             span: element.span,
 
@@ -253,15 +256,20 @@ impl InstructionParser for ast::ApplyImports {
     }
 }
 
+static APPLY_TEMPLATES_CONTENT: ContentParseLock<Vec<ast::ApplyTemplatesContent>> = OnceLock::new();
+
 impl InstructionParser for ast::ApplyTemplates {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(
-            (instruction(names.xsl_with_param)
-                .map(ast::ApplyTemplatesContent::WithParam)
-                .or(instruction(names.xsl_sort).map(ast::ApplyTemplatesContent::Sort)))
-            .many(),
-        );
+
+        let parse = APPLY_TEMPLATES_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_with_param)
+                    .map(ast::ApplyTemplatesContent::WithParam)
+                    .or(instruction(names.xsl_sort).map(ast::ApplyTemplatesContent::Sort))
+                    .many(),
+            )
+        });
 
         Ok(ast::ApplyTemplates {
             select: attributes.optional(names.select, attributes.xpath())?,
@@ -314,11 +322,14 @@ impl InstructionParser for ast::Attribute {
     }
 }
 
+static ATTRIBUTE_SET_CONTENT: ContentParseLock<Vec<ast::Attribute>> = OnceLock::new();
+
 impl InstructionParser for ast::AttributeSet {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(instruction(names.xsl_attribute).many());
+        let parse =
+            ATTRIBUTE_SET_CONTENT.get_or_init(|| content(instruction(names.xsl_attribute).many()));
 
         Ok(ast::AttributeSet {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -347,10 +358,13 @@ impl InstructionParser for ast::Break {
     }
 }
 
+static CALL_TEMPLATE_CONTENT: ContentParseLock<Vec<ast::WithParam>> = OnceLock::new();
+
 impl InstructionParser for ast::CallTemplate {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(instruction(element.state.names.xsl_with_param).many());
+        let parse =
+            CALL_TEMPLATE_CONTENT.get_or_init(|| content(instruction(names.xsl_with_param).many()));
 
         Ok(ast::CallTemplate {
             name: attributes.required(names.name, attributes.eqname())?,
@@ -376,11 +390,15 @@ impl InstructionParser for ast::Catch {
     }
 }
 
+static CHARACTER_MAP_CONTENT: ContentParseLock<Vec<ast::OutputCharacter>> = OnceLock::new();
+
 impl InstructionParser for ast::CharacterMap {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
 
-        let parse = content_parse(instruction(names.xsl_output_character).many());
+        let parse = CHARACTER_MAP_CONTENT
+            .get_or_init(|| content(instruction(names.xsl_output_character).many()));
+
         Ok(ast::CharacterMap {
             name: attributes.required(names.name, attributes.eqname())?,
             use_character_maps: attributes
@@ -393,15 +411,20 @@ impl InstructionParser for ast::CharacterMap {
     }
 }
 
+static CHOOSE_CONTENT: ContentParseLock<(Vec<ast::When>, Option<ast::Otherwise>)> = OnceLock::new();
+
 impl InstructionParser for ast::Choose {
     fn parse(element: &Element, _attributes: &Attributes) -> Result<Self> {
         let span = element.span;
+        let names = &element.state.names;
 
-        let parse = content_parse(
-            instruction(element.state.names.xsl_when)
-                .one_or_more()
-                .then(instruction(element.state.names.xsl_otherwise).option()),
-        );
+        let parse = CHOOSE_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_when)
+                    .one_or_more()
+                    .then(instruction(names.xsl_otherwise).option()),
+            )
+        });
 
         let (when, otherwise) = parse(element)?;
         Ok(ast::Choose {
@@ -543,15 +566,19 @@ impl InstructionParser for ast::Element {
     }
 }
 
+static EVALUATE_CONTENT: ContentParseLock<Vec<ast::EvaluateContent>> = OnceLock::new();
+
 impl InstructionParser for ast::Evaluate {
     fn parse(element: &Element, attributes: &Attributes) -> Result<Self> {
         let names = &element.state.names;
-        let parse = content_parse(
-            instruction(names.xsl_with_param)
-                .map(ast::EvaluateContent::WithParam)
-                .or(instruction(names.xsl_fallback).map(ast::EvaluateContent::Fallback))
-                .many(),
-        );
+        let parse = EVALUATE_CONTENT.get_or_init(|| {
+            content(
+                instruction(names.xsl_with_param)
+                    .map(ast::EvaluateContent::WithParam)
+                    .or(instruction(names.xsl_fallback).map(ast::EvaluateContent::Fallback))
+                    .many(),
+            )
+        });
 
         Ok(ast::Evaluate {
             xpath: attributes.required(names.xpath, attributes.xpath())?,
