@@ -159,16 +159,16 @@ where
     P: NodeParser<V> + std::marker::Sync + std::marker::Send + 'static,
     V: std::marker::Sync + std::marker::Send + 'static,
 {
-    Box::new(move |element| {
+    Box::new(move |content| {
         let (item, next) = parser.parse_next(
-            element.state.xot.first_child(element.node),
-            element.state,
-            &element.context,
+            content.state.xot.first_child(content.node),
+            content.state,
+            &content.context,
         )?;
         // handle end of content check here
         if let Some(next) = next {
             Err(ElementError::Unexpected {
-                span: element.state.span(next).ok_or(ElementError::Internal)?,
+                span: content.state.span(next).ok_or(ElementError::Internal)?,
             })
         } else {
             Ok(item)
