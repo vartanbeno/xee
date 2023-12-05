@@ -25,7 +25,7 @@ static SEQUENCE_CONSTRUCTOR: NodeParserLock<ast::SequenceConstructor> = OnceLock
 static SEQUENCE_CONSTRUCTOR_CONTENT: ContentParseLock<ast::SequenceConstructor> = OnceLock::new();
 static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new();
 
-pub(crate) fn parse_element_attributes<'a, V>(
+pub(crate) fn parse_content_attributes<'a, V>(
     node: Node,
     element: &'a xot::Element,
     state: &'a State,
@@ -34,8 +34,8 @@ pub(crate) fn parse_element_attributes<'a, V>(
 ) -> Result<V, ElementError> {
     let attributes = Attributes::new(node, element, state, context.clone())?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
-    let element = Content::new(node, context, state)?;
-    f(&element, &attributes)
+    let content = Content::new(node, context, state)?;
+    f(&content, &attributes)
 }
 
 pub(crate) struct XsltParser<'a> {
@@ -100,7 +100,7 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
                 }
             }
             Value::Element(element) => {
-                parse_element_attributes(node, element, state, context, |element, attributes| {
+                parse_content_attributes(node, element, state, context, |element, attributes| {
                     Ok(vec![
                         ast::SequenceConstructorItem::parse_sequence_constructor_item(
                             element, attributes,
@@ -120,7 +120,7 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 fn declarations() -> impl NodeParser<ast::Declarations> {
     one(|node, state, context| match state.xot.value(node) {
         Value::Element(element) => {
-            parse_element_attributes(node, element, state, context, |element, attributes| {
+            parse_content_attributes(node, element, state, context, |element, attributes| {
                 ast::Declaration::parse_declaration(element, attributes)
             })
         }
@@ -183,7 +183,7 @@ pub(crate) fn by_element<V>(
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
-        parse_element_attributes(node, element, state, context, &f)
+        parse_content_attributes(node, element, state, context, &f)
     }
 }
 

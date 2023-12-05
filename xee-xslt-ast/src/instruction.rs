@@ -1686,7 +1686,7 @@ impl InstructionParser for ast::WithParam {
 mod tests {
 
     use crate::context::Context;
-    use crate::element::parse_element_attributes;
+    use crate::element::parse_content_attributes;
     use crate::{element::XsltParser, names::Names, state::State};
 
     use super::*;
@@ -1701,7 +1701,7 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element.prefixes().clone());
-            parse_element_attributes(
+            parse_content_attributes(
                 node,
                 element,
                 &state,
