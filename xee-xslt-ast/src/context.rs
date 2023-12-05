@@ -7,7 +7,7 @@ use crate::{ast_core as ast, state::State};
 /// for particular sub-trees.
 
 #[derive(Debug, Clone)]
-pub(crate) struct Context<'a> {
+pub(crate) struct Context {
     prefixes: xot::Prefixes,
 
     default_collation: Vec<ast::Uri>,
@@ -19,11 +19,9 @@ pub(crate) struct Context<'a> {
     // cumulative
     exclude_result_prefixes: ast::ExcludeResultPrefixes,
     extension_element_prefixes: Vec<ast::Prefix>,
-
-    next: Option<&'a Context<'a>>,
 }
 
-impl<'a> Context<'a> {
+impl Context {
     pub(crate) fn new(prefixes: xot::Prefixes) -> Self {
         let mut r = Self::empty();
         r.prefixes = prefixes;
@@ -43,11 +41,10 @@ impl<'a> Context<'a> {
             xpath_default_namespace: "".to_string(),
             exclude_result_prefixes: ast::ExcludeResultPrefixes::Prefixes(vec![]),
             extension_element_prefixes: vec![],
-            next: None,
         }
     }
 
-    pub(crate) fn sub(&'a self, prefixes: &xot::Prefixes, standard: ast::Standard) -> Self {
+    pub(crate) fn sub(&self, prefixes: &xot::Prefixes, standard: ast::Standard) -> Self {
         let mut expanded_prefixes = self.prefixes.clone();
         expanded_prefixes.extend(prefixes);
         let default_collation = if let Some(default_collation) = standard.default_collation {
@@ -109,11 +106,10 @@ impl<'a> Context<'a> {
             xpath_default_namespace,
             exclude_result_prefixes,
             extension_element_prefixes,
-            next: Some(self),
         }
     }
 
-    pub(crate) fn namespaces(&self, state: &'a State) -> Namespaces {
+    pub(crate) fn namespaces<'a>(&'a self, state: &'a State) -> Namespaces {
         let mut namespaces = HashMap::new();
         for (prefix, ns) in &self.prefixes {
             let prefix = state.xot.prefix_str(*prefix);

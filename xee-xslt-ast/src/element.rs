@@ -200,7 +200,7 @@ pub(crate) struct Element<'a> {
     pub(crate) node: Node,
     pub(crate) element: &'a xot::Element,
     pub(crate) span: Span,
-    pub(crate) context: Context<'a>,
+    pub(crate) context: Context,
     pub(crate) state: &'a State,
 }
 
@@ -208,7 +208,7 @@ impl<'a> Element<'a> {
     pub(crate) fn new(
         node: Node,
         element: &'a xot::Element,
-        context: Context<'a>,
+        context: Context,
         state: &'a State,
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;

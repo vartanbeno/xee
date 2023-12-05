@@ -15,7 +15,7 @@ pub(crate) struct Attributes<'a> {
     node: Node,
     element: &'a xot::Element,
     state: &'a State,
-    context: Context<'a>,
+    context: Context,
     seen: std::cell::RefCell<HashSet<NameId>>,
     span: Span,
 }
@@ -25,7 +25,7 @@ impl<'a> Attributes<'a> {
         node: Node,
         element: &'a xot::Element,
         state: &'a State,
-        context: Context<'a>,
+        context: Context,
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;
         Ok(Self {
