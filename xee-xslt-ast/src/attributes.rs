@@ -3,7 +3,7 @@ use xee_xpath_ast::{ast as xpath_ast, Namespaces};
 
 use crate::ast_core as ast;
 use crate::combinator::Content;
-use crate::error::{AttributeError, ElementError};
+use crate::error::AttributeError;
 use crate::name::XmlName;
 use crate::names::StandardNames;
 use crate::tokenize::split_whitespace_with_spans;
@@ -15,24 +15,15 @@ pub(crate) struct Attributes<'a> {
     pub(crate) content: Content<'a>,
     pub(crate) element: &'a xot::Element,
     seen: std::cell::RefCell<HashSet<NameId>>,
-    span: Span,
 }
 
 impl<'a> Attributes<'a> {
-    pub(crate) fn new(
-        content: Content<'a>,
-        element: &'a xot::Element,
-    ) -> Result<Self, ElementError> {
-        let span = content
-            .state
-            .span(content.node)
-            .ok_or(ElementError::Internal)?;
-        Ok(Self {
+    pub(crate) fn new(content: Content<'a>, element: &'a xot::Element) -> Self {
+        Self {
             content,
             element,
-            span,
             seen: std::cell::RefCell::new(HashSet::new()),
-        })
+        }
     }
 
     pub(crate) fn with_content(&self, content: Content<'a>) -> Self {
@@ -71,14 +62,25 @@ impl<'a> Attributes<'a> {
     ) -> Result<T, AttributeError> {
         self.optional(name, parse_value)?.ok_or_else(|| {
             let (local, namespace) = self.content.state.xot.name_ns_str(name);
+            let span = match self.span() {
+                Ok(span) => span,
+                Err(e) => return e,
+            };
             AttributeError::NotFound {
                 name: XmlName {
                     namespace: namespace.to_string(),
                     local: local.to_string(),
                 },
-                span: self.span,
+                span,
             }
         })
+    }
+
+    pub(crate) fn span(&self) -> Result<Span, AttributeError> {
+        self.content
+            .state
+            .span(self.content.node)
+            .ok_or(AttributeError::Internal)
     }
 
     pub(crate) fn boolean_with_default(

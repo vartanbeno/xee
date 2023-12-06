@@ -49,7 +49,7 @@ impl<'a> Content<'a> {
         // first we want to be aware of the ns prefixes of the new element
         let content = self.with_context(self.context.with_prefixes(element.prefixes()));
         // we create an attributes object to obtain the standard attributes
-        let attributes = Attributes::new(content.clone(), element)?;
+        let attributes = Attributes::new(content.clone(), element);
         // after this, we construct a new content based on the standard attributes
         let content = content.with_context(content.context.with_standard(attributes.standard()?));
         // we create a new attributes object with the new content
