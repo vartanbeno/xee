@@ -27,10 +27,7 @@ static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new
 
 pub(crate) fn parse_content_attributes<'a, V>(
     content: Content<'a>,
-    // node: Node,
     element: &'a xot::Element,
-    // state: &'a State,
-    // context: &Context,
     f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
     let attributes = Attributes::new(content.clone(), element)?;
@@ -88,10 +85,10 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
                 }
             }
             Value::Element(element) => {
-                parse_content_attributes(content, element, |element, attributes| {
+                parse_content_attributes(content, element, |content, attributes| {
                     Ok(vec![
                         ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                            element, attributes,
+                            content, attributes,
                         )?,
                     ])
                 })
@@ -109,8 +106,8 @@ fn declarations() -> impl NodeParser<ast::Declarations> {
     one(|content| {
         match content.state.xot.value(content.node) {
             Value::Element(element) => {
-                parse_content_attributes(content, element, |element, attributes| {
-                    ast::Declaration::parse_declaration(element, attributes)
+                parse_content_attributes(content, element, |content, attributes| {
+                    ast::Declaration::parse_declaration(content, attributes)
                 })
             }
             _ => Err(ElementError::Unexpected {
