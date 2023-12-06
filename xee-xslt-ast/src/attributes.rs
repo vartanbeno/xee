@@ -2,30 +2,13 @@ use ahash::{HashSet, HashSetExt};
 use xee_xpath_ast::{ast as xpath_ast, Namespaces};
 
 use crate::ast_core as ast;
-use crate::context::Context;
+use crate::combinator::Content;
 use crate::error::{AttributeError, ElementError};
 use crate::name::XmlName;
 use crate::names::StandardNames;
-use crate::state::State;
 use crate::tokenize::split_whitespace_with_spans;
 use crate::{ast_core::Span, value_template::ValueTemplateTokenizer};
-use xot::{NameId, Node, SpanInfoKey};
-
-pub(crate) struct Content<'a> {
-    pub(crate) node: Node,
-    pub(crate) state: &'a State,
-    pub(crate) context: Context,
-}
-
-impl<'a> Content<'a> {
-    pub(crate) fn new(node: Node, state: &'a State, context: Context) -> Self {
-        Self {
-            node,
-            state,
-            context,
-        }
-    }
-}
+use xot::{NameId, SpanInfoKey};
 
 pub(crate) struct Attributes<'a> {
     info: Content<'a>,

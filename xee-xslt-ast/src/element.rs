@@ -5,8 +5,8 @@ use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::attributes::{Attributes, Content};
-use crate::combinator::{multi, one, NodeParser, OneParser};
+use crate::attributes::Attributes;
+use crate::combinator::{multi, one, Content, NodeParser, OneParser};
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};

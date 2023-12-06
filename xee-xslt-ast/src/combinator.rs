@@ -6,6 +6,22 @@ use crate::state::State;
 
 type Result<V> = std::result::Result<V, ElementError>;
 
+pub(crate) struct Content<'a> {
+    pub(crate) node: Node,
+    pub(crate) state: &'a State,
+    pub(crate) context: Context,
+}
+
+impl<'a> Content<'a> {
+    pub(crate) fn new(node: Node, state: &'a State, context: Context) -> Self {
+        Self {
+            node,
+            state,
+            context,
+        }
+    }
+}
+
 pub(crate) trait NodeParser<V> {
     fn parse(&self, node: Option<Node>, state: &State, context: &Context) -> Result<V> {
         let (item, next) = self.parse_next(node, state, context)?;
