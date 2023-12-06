@@ -11,11 +11,15 @@ use crate::tokenize::split_whitespace_with_spans;
 use crate::{ast_core::Span, value_template::ValueTemplateTokenizer};
 use xot::{NameId, Node, SpanInfoKey};
 
-pub(crate) struct Attributes<'a> {
+pub(crate) struct ParseInfo<'a> {
     node: Node,
-    pub(crate) element: &'a xot::Element,
     state: &'a State,
     context: Context,
+}
+
+pub(crate) struct Attributes<'a> {
+    info: ParseInfo<'a>,
+    pub(crate) element: &'a xot::Element,
     seen: std::cell::RefCell<HashSet<NameId>>,
     span: Span,
 }
@@ -29,11 +33,13 @@ impl<'a> Attributes<'a> {
     ) -> Result<Self, ElementError> {
         let span = state.span(node).ok_or(ElementError::Internal)?;
         Ok(Self {
-            node,
+            info: ParseInfo {
+                node,
+                state,
+                context,
+            },
             element,
             span,
-            state,
-            context,
             seen: std::cell::RefCell::new(HashSet::new()),
         })
     }
@@ -66,7 +72,7 @@ impl<'a> Attributes<'a> {
         parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError>,
     ) -> Result<T, AttributeError> {
         self.optional(name, parse_value)?.ok_or_else(|| {
-            let (local, namespace) = self.state.xot.name_ns_str(name);
+            let (local, namespace) = self.info.state.xot.name_ns_str(name);
             AttributeError::NotFound {
                 name: XmlName {
                     namespace: namespace.to_string(),
@@ -137,30 +143,31 @@ impl<'a> Attributes<'a> {
 
     fn value_span(&self, name: NameId) -> Result<Span, AttributeError> {
         let span = self
+            .info
             .state
             .span_info
-            .get(SpanInfoKey::AttributeValue(self.node, name))
+            .get(SpanInfoKey::AttributeValue(self.info.node, name))
             .ok_or(AttributeError::Internal)?;
         Ok(span.into())
     }
 
     pub(crate) fn in_xsl_namespace(&self) -> bool {
-        self.state.xot.namespace_for_name(self.element.name()) == self.state.names.xsl_ns
+        self.info.state.xot.namespace_for_name(self.element.name()) == self.info.state.names.xsl_ns
     }
 
     pub(crate) fn use_when(&self) -> Result<Option<ast::Expression>, AttributeError> {
         if self.in_xsl_namespace() {
-            self.optional(self.state.names.standard.use_when, self.xpath())
+            self.optional(self.info.state.names.standard.use_when, self.xpath())
         } else {
-            self.optional(self.state.names.xsl_standard.use_when, self.xpath())
+            self.optional(self.info.state.names.xsl_standard.use_when, self.xpath())
         }
     }
 
     pub(crate) fn standard(&self) -> Result<ast::Standard, AttributeError> {
         if self.in_xsl_namespace() {
-            self._standard(&self.state.names.standard)
+            self._standard(&self.info.state.names.standard)
         } else {
-            self._standard(&self.state.names.xsl_standard)
+            self._standard(&self.info.state.names.xsl_standard)
         }
     }
 
@@ -184,7 +191,7 @@ impl<'a> Attributes<'a> {
     }
 
     fn namespaces(&self) -> Namespaces {
-        self.context.namespaces(self.state)
+        self.info.context.namespaces(self.info.state)
     }
 
     fn _qname(s: &str, _span: Span) -> Result<ast::QName, AttributeError> {
