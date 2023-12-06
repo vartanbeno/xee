@@ -9,6 +9,7 @@ mod error;
 mod instruction;
 mod name;
 mod names;
+mod preprocess;
 mod state;
 mod tokenize;
 mod value_template;
