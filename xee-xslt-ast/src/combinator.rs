@@ -1,6 +1,5 @@
 use xot::Node;
 
-use crate::ast_core as ast;
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::state::State;
@@ -23,29 +22,10 @@ impl<'a> Content<'a> {
         }
     }
 
-    // pub(crate) fn with_context(self, context: Context) -> Self {
-    //     Self {
-    //         node: self.node,
-    //         state: self.state,
-    //         context,
-    //     }
-    // }
-
-    pub(crate) fn with_prefixes(self, prefixes: &xot::Prefixes) -> Self {
-        let context = self.context.with_prefixes(prefixes);
+    pub(crate) fn with_context(&self, context: Context) -> Self {
         Self {
-            node: self.node,
-            state: self.state,
             context,
-        }
-    }
-
-    pub(crate) fn with_standard(self, standard: ast::Standard) -> Self {
-        let context = self.context.with_standard(standard);
-        Self {
-            node: self.node,
-            state: self.state,
-            context,
+            ..self.clone()
         }
     }
 }

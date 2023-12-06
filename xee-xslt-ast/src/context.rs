@@ -44,14 +44,16 @@ impl Context {
         }
     }
 
-    pub(crate) fn with_prefixes(mut self, prefixes: &xot::Prefixes) -> Self {
+    pub(crate) fn with_prefixes(&self, prefixes: &xot::Prefixes) -> Self {
         let mut expanded_prefixes = self.prefixes.clone();
         expanded_prefixes.extend(prefixes);
-        self.prefixes = expanded_prefixes;
-        self
+        Self {
+            prefixes: expanded_prefixes,
+            ..self.clone()
+        }
     }
 
-    pub(crate) fn with_standard(mut self, standard: ast::Standard) -> Self {
+    pub(crate) fn with_standard(&self, standard: ast::Standard) -> Self {
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
         } else {
@@ -101,15 +103,18 @@ impl Context {
             } else {
                 self.extension_element_prefixes.clone()
             };
-        self.default_collation = default_collation;
-        self.default_mode = default_mode;
-        self.default_validation = default_validation;
-        self.expand_text = expand_text;
-        self.version = version;
-        self.xpath_default_namespace = xpath_default_namespace;
-        self.exclude_result_prefixes = exclude_result_prefixes;
-        self.extension_element_prefixes = extension_element_prefixes;
-        self
+
+        Self {
+            default_collation,
+            default_mode,
+            default_validation,
+            expand_text,
+            version,
+            xpath_default_namespace,
+            exclude_result_prefixes,
+            extension_element_prefixes,
+            ..self.clone()
+        }
     }
 
     pub(crate) fn namespaces<'a>(&'a self, state: &'a State) -> Namespaces {
