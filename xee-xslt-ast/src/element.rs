@@ -104,22 +104,27 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 }
 
 fn declarations() -> impl NodeParser<ast::Declarations> {
-    one(|content| {
-        let node = content.node;
-        let state = &content.state;
-        let context = &content.context;
-        match state.xot.value(node) {
-            Value::Element(element) => {
-                parse_content_attributes(node, element, state, context, |element, attributes| {
-                    ast::Declaration::parse_declaration(element, attributes)
-                })
+    one(
+        |Content {
+             node,
+             state,
+             context,
+         }| {
+            match state.xot.value(node) {
+                Value::Element(element) => parse_content_attributes(
+                    node,
+                    element,
+                    state,
+                    &context,
+                    |element, attributes| ast::Declaration::parse_declaration(element, attributes),
+                ),
+                _ => Err(ElementError::Unexpected {
+                    // TODO: get span right
+                    span: Span::new(0, 0),
+                }),
             }
-            _ => Err(ElementError::Unexpected {
-                // TODO: get span right
-                span: Span::new(0, 0),
-            }),
-        }
-    })
+        },
+    )
     .many()
 }
 
@@ -170,14 +175,15 @@ where
 pub(crate) fn by_element<V>(
     f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Content) -> Result<V, ElementError> {
-    move |content| {
-        let node = content.node;
-        let state = &content.state;
-        let context = &content.context;
+    move |Content {
+              node,
+              state,
+              context,
+          }| {
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
-        parse_content_attributes(node, element, state, context, &f)
+        parse_content_attributes(node, element, state, &context, &f)
     }
 }
 
