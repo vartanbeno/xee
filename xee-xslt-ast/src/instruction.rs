@@ -22,7 +22,8 @@ pub(crate) trait InstructionParser: Sized {
 
     fn parse(content: &Content, attributes: &Attributes) -> Result<Self>;
 
-    fn parse_and_validate(content: &Content, attributes: &Attributes) -> Result<Self> {
+    fn parse_and_validate(attributes: &Attributes) -> Result<Self> {
+        let content = &attributes.content;
         if Self::should_be_empty() {
             if let Some(child) = content.state.xot.first_child(content.node) {
                 return Err(Error::Unexpected {
@@ -33,7 +34,7 @@ pub(crate) trait InstructionParser: Sized {
 
         let node = content.node;
         let state = content.state;
-        let item = Self::parse(content, attributes)?;
+        let item = Self::parse(&attributes.content, attributes)?;
         item.validate(node, state)?;
         let unseen_attributes = attributes.unseen_attributes();
         if !unseen_attributes.is_empty() {
@@ -49,10 +50,9 @@ pub(crate) trait SequenceConstructorParser:
     InstructionParser + Into<ast::SequenceConstructorItem>
 {
     fn parse_sequence_constructor_item(
-        element: &Content,
         attributes: &Attributes,
     ) -> Result<ast::SequenceConstructorItem> {
-        let item = Self::parse_and_validate(element, attributes)?;
+        let item = Self::parse_and_validate(attributes)?;
         Ok(item.into())
     }
 }
@@ -63,8 +63,8 @@ impl<T> SequenceConstructorParser for T where
 }
 
 pub(crate) trait DeclarationParser: InstructionParser + Into<ast::Declaration> {
-    fn parse_declaration(content: &Content, attributes: &Attributes) -> Result<ast::Declaration> {
-        let item = Self::parse_and_validate(content, attributes)?;
+    fn parse_declaration(attributes: &Attributes) -> Result<ast::Declaration> {
+        let item = Self::parse_and_validate(attributes)?;
         Ok(item.into())
     }
 }
@@ -74,11 +74,8 @@ impl<T> DeclarationParser for T where T: InstructionParser + Into<ast::Declarati
 pub(crate) trait OverrideContentParser:
     InstructionParser + Into<ast::OverrideContent>
 {
-    fn parse_override_content(
-        element: &Content,
-        attributes: &Attributes,
-    ) -> Result<ast::OverrideContent> {
-        let item = Self::parse_and_validate(element, attributes)?;
+    fn parse_override_content(attributes: &Attributes) -> Result<ast::OverrideContent> {
+        let item = Self::parse_and_validate(attributes)?;
         Ok(item.into())
     }
 }
@@ -87,23 +84,23 @@ impl<T> OverrideContentParser for T where T: InstructionParser + Into<ast::Overr
 
 impl InstructionParser for ast::SequenceConstructorItem {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::SequenceConstructorItem> {
-        let context = content.state;
-        let name = context
+        let state = content.state;
+        let name = state
             .names
             .sequence_constructor_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(content, attributes)
+            name.parse(attributes)
         } else {
-            let ns = context.xot.namespace_for_name(attributes.element.name());
-            if ns == context.names.xsl_ns {
+            let ns = state.xot.namespace_for_name(attributes.element.name());
+            if ns == state.names.xsl_ns {
                 // we have an unknown xsl instruction, fail with error
                 Err(Error::Unexpected {
-                    span: content.span()?,
+                    span: attributes.content.span()?,
                 })
             } else {
                 // we parse the literal element
-                ast::ElementNode::parse_sequence_constructor_item(content, attributes)
+                ast::ElementNode::parse_sequence_constructor_item(attributes)
             }
         }
     }
@@ -117,7 +114,7 @@ impl InstructionParser for ast::Declaration {
             .declaration_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(content, attributes)
+            name.parse(attributes)
         } else {
             Err(Error::Unexpected {
                 span: content.span()?,
@@ -165,8 +162,8 @@ impl InstructionParser for ast::Accept {
 static ACCUMULATOR_CONTENT: ContentParseLock<Vec<ast::AccumulatorRule>> = OnceLock::new();
 
 impl InstructionParser for ast::Accumulator {
-    fn parse(element: &Content, attributes: &Attributes) -> Result<Self> {
-        let names = &element.state.names;
+    fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
+        let names = &content.state.names;
 
         let parse = ACCUMULATOR_CONTENT
             .get_or_init(|| children(instruction(names.xsl_accumulator_rule).many()));
@@ -177,9 +174,9 @@ impl InstructionParser for ast::Accumulator {
             as_: attributes.optional(names.as_, attributes.sequence_type())?,
             streamable: attributes.boolean_with_default(names.streamable, false)?,
 
-            span: element.span()?,
+            span: content.span()?,
 
-            rules: parse(element)?,
+            rules: parse(content)?,
         })
     }
 }
@@ -1341,7 +1338,7 @@ impl InstructionParser for ast::OverrideContent {
             .override_content_name(attributes.element.name());
 
         if let Some(name) = name {
-            name.parse(content, attributes)
+            name.parse(attributes)
         } else {
             Err(Error::Unexpected {
                 span: content.span()?,

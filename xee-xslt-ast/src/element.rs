@@ -28,7 +28,7 @@ static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new
 pub(crate) fn parse_content_attributes<'a, V>(
     content: Content<'a>,
     element: &'a xot::Element,
-    f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
+    f: impl FnOnce(&Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
     // first we want to be aware of the ns prefixes of the new element
     let content = content.with_context(content.context.with_prefixes(element.prefixes()));
@@ -38,7 +38,7 @@ pub(crate) fn parse_content_attributes<'a, V>(
     let content = content.with_context(content.context.with_standard(attributes.standard()?));
     // we create a new attributes object with the new content
     let attributes = attributes.with_content(content.clone());
-    f(&content, &attributes)
+    f(&attributes)
 }
 
 pub(crate) struct XsltParser<'a> {
@@ -87,15 +87,11 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
                     )])
                 }
             }
-            Value::Element(element) => {
-                parse_content_attributes(content, element, |content, attributes| {
-                    Ok(vec![
-                        ast::SequenceConstructorItem::parse_sequence_constructor_item(
-                            content, attributes,
-                        )?,
-                    ])
-                })
-            }
+            Value::Element(element) => parse_content_attributes(content, element, |attributes| {
+                Ok(vec![
+                    ast::SequenceConstructorItem::parse_sequence_constructor_item(attributes)?,
+                ])
+            }),
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
                 span: Span::new(0, 0),
@@ -108,11 +104,9 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 fn declarations() -> impl NodeParser<ast::Declarations> {
     one(|content| {
         match content.state.xot.value(content.node) {
-            Value::Element(element) => {
-                parse_content_attributes(content, element, |content, attributes| {
-                    ast::Declaration::parse_declaration(content, attributes)
-                })
-            }
+            Value::Element(element) => parse_content_attributes(content, element, |attributes| {
+                ast::Declaration::parse_declaration(attributes)
+            }),
             _ => Err(ElementError::Unexpected {
                 // TODO: get span right
                 span: Span::new(0, 0),
@@ -167,7 +161,7 @@ where
 }
 
 pub(crate) fn by_element<V>(
-    f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
+    f: impl Fn(&Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Content) -> Result<V, ElementError> {
     move |content| {
         let element = content
@@ -186,14 +180,14 @@ pub(crate) fn by_element<V>(
 
 pub(crate) fn by_element_name<V>(
     name: NameId,
-    f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
+    f: impl Fn(&Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Content) -> Result<V, ElementError> {
-    by_element(move |content, attributes| {
+    by_element(move |attributes| {
         if attributes.element.name() == name {
-            f(content, attributes)
+            f(attributes)
         } else {
             Err(ElementError::Unexpected {
-                span: content.span()?,
+                span: attributes.content.span()?,
             })
         }
     })
@@ -202,9 +196,7 @@ pub(crate) fn by_element_name<V>(
 pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
 ) -> impl Fn(Content) -> Result<V, ElementError> {
-    by_element_name(name, move |element, attributes| {
-        V::parse_and_validate(element, attributes)
-    })
+    by_element_name(name, move |attributes| V::parse_and_validate(attributes))
 }
 
 pub(crate) fn instruction<V: InstructionParser>(

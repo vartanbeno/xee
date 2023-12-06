@@ -12,7 +12,7 @@ use xot::{NameId, SpanInfoKey};
 
 #[derive(Clone)]
 pub(crate) struct Attributes<'a> {
-    content: Content<'a>,
+    pub(crate) content: Content<'a>,
     pub(crate) element: &'a xot::Element,
     seen: std::cell::RefCell<HashSet<NameId>>,
     span: Span,
