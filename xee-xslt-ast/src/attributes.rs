@@ -12,9 +12,9 @@ use crate::{ast_core::Span, value_template::ValueTemplateTokenizer};
 use xot::{NameId, Node, SpanInfoKey};
 
 pub(crate) struct ParseInfo<'a> {
-    node: Node,
-    state: &'a State,
-    context: Context,
+    pub(crate) node: Node,
+    pub(crate) state: &'a State,
+    pub(crate) context: Context,
 }
 
 impl<'a> ParseInfo<'a> {

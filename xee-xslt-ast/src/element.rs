@@ -35,7 +35,7 @@ pub(crate) fn parse_content_attributes<'a, V>(
     let info = ParseInfo::new(node, state, context.clone());
     let attributes = Attributes::new(info, element)?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
-    let content = Content::new(node, context, state)?;
+    let content = Content::new(node, state, context);
     f(&content, &attributes)
 }
 
@@ -54,27 +54,33 @@ impl<'a> XsltParser<'a> {
     }
 }
 
-pub(crate) struct Content<'a> {
-    pub(crate) node: Node,
-    pub(crate) span: Span,
-    pub(crate) context: Context,
-    pub(crate) state: &'a State,
-}
+pub(crate) type Content<'a> = ParseInfo<'a>;
+
+// pub(crate) struct Content<'a> {
+//     pub(crate) node: Node,
+//     pub(crate) span: Span,
+//     pub(crate) context: Context,
+//     pub(crate) state: &'a State,
+// }
 
 impl<'a> Content<'a> {
-    pub(crate) fn new(
-        node: Node,
-        context: Context,
-        state: &'a State,
-    ) -> Result<Self, ElementError> {
-        let span = state.span(node).ok_or(ElementError::Internal)?;
+    // pub(crate) fn new(
+    //     node: Node,
+    //     context: Context,
+    //     state: &'a State,
+    // ) -> Result<Self, ElementError> {
+    //     let span = state.span(node).ok_or(ElementError::Internal)?;
 
-        Ok(Self {
-            node,
-            span,
-            context,
-            state,
-        })
+    //     Ok(Self {
+    //         node,
+    //         span,
+    //         context,
+    //         state,
+    //     })
+    // }
+
+    pub(crate) fn span(&self) -> Result<Span, ElementError> {
+        self.state.span(self.node).ok_or(ElementError::Internal)
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
@@ -196,7 +202,9 @@ pub(crate) fn by_element_name<V>(
         if attributes.element.name() == name {
             f(content, attributes)
         } else {
-            Err(ElementError::Unexpected { span: content.span })
+            Err(ElementError::Unexpected {
+                span: content.span()?,
+            })
         }
     })
 }
