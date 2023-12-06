@@ -56,29 +56,7 @@ impl<'a> XsltParser<'a> {
 
 pub(crate) type Content<'a> = ParseInfo<'a>;
 
-// pub(crate) struct Content<'a> {
-//     pub(crate) node: Node,
-//     pub(crate) span: Span,
-//     pub(crate) context: Context,
-//     pub(crate) state: &'a State,
-// }
-
 impl<'a> Content<'a> {
-    // pub(crate) fn new(
-    //     node: Node,
-    //     context: Context,
-    //     state: &'a State,
-    // ) -> Result<Self, ElementError> {
-    //     let span = state.span(node).ok_or(ElementError::Internal)?;
-
-    //     Ok(Self {
-    //         node,
-    //         span,
-    //         context,
-    //         state,
-    //     })
-    // }
-
     pub(crate) fn span(&self) -> Result<Span, ElementError> {
         self.state.span(self.node).ok_or(ElementError::Internal)
     }
