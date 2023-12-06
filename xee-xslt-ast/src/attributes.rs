@@ -17,6 +17,16 @@ pub(crate) struct ParseInfo<'a> {
     context: Context,
 }
 
+impl<'a> ParseInfo<'a> {
+    pub(crate) fn new(node: Node, state: &'a State, context: Context) -> Self {
+        Self {
+            node,
+            state,
+            context,
+        }
+    }
+}
+
 pub(crate) struct Attributes<'a> {
     info: ParseInfo<'a>,
     pub(crate) element: &'a xot::Element,
@@ -26,18 +36,12 @@ pub(crate) struct Attributes<'a> {
 
 impl<'a> Attributes<'a> {
     pub(crate) fn new(
-        node: Node,
+        info: ParseInfo<'a>,
         element: &'a xot::Element,
-        state: &'a State,
-        context: Context,
     ) -> Result<Self, ElementError> {
-        let span = state.span(node).ok_or(ElementError::Internal)?;
+        let span = info.state.span(info.node).ok_or(ElementError::Internal)?;
         Ok(Self {
-            info: ParseInfo {
-                node,
-                state,
-                context,
-            },
+            info,
             element,
             span,
             seen: std::cell::RefCell::new(HashSet::new()),
