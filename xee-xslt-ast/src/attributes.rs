@@ -10,6 +10,7 @@ use crate::tokenize::split_whitespace_with_spans;
 use crate::{ast_core::Span, value_template::ValueTemplateTokenizer};
 use xot::{NameId, SpanInfoKey};
 
+#[derive(Clone)]
 pub(crate) struct Attributes<'a> {
     content: Content<'a>,
     pub(crate) element: &'a xot::Element,
@@ -32,6 +33,13 @@ impl<'a> Attributes<'a> {
             span,
             seen: std::cell::RefCell::new(HashSet::new()),
         })
+    }
+
+    pub(crate) fn with_content(&self, content: Content<'a>) -> Self {
+        Self {
+            content,
+            ..self.clone()
+        }
     }
 
     pub(crate) fn optional<T>(
