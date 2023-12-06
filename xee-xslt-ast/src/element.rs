@@ -30,11 +30,12 @@ pub(crate) fn parse_content_attributes<'a, V>(
     element: &'a xot::Element,
     f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
+    // first we want to be aware of the ns prefixes of the new element
+    let content = content.with_prefixes(element.prefixes());
+    // we create an attributes object to obtain the standard attributes
     let attributes = Attributes::new(content.clone(), element)?;
-    let context = content
-        .context
-        .sub(element.prefixes(), attributes.standard()?);
-    let content = content.with_context(context);
+    // after this, we construct a new content based on the standard attributes
+    let content = content.with_standard(attributes.standard()?);
     f(&content, &attributes)
 }
 
