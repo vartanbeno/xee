@@ -1705,11 +1705,10 @@ mod tests {
 
         if let Some(element) = state.xot.element(node) {
             let context = Context::new(element.prefixes().clone());
+            let content = Content::new(node, &state, context);
             parse_content_attributes(
-                node,
+                content,
                 element,
-                &state,
-                &context,
                 ast::SequenceConstructorItem::parse_sequence_constructor_item,
             )
         } else {

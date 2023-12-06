@@ -6,6 +6,7 @@ use crate::state::State;
 
 type Result<V> = std::result::Result<V, ElementError>;
 
+#[derive(Clone)]
 pub(crate) struct Content<'a> {
     pub(crate) node: Node,
     pub(crate) state: &'a State,
@@ -17,6 +18,14 @@ impl<'a> Content<'a> {
         Self {
             node,
             state,
+            context,
+        }
+    }
+
+    pub(crate) fn with_context(self, context: Context) -> Self {
+        Self {
+            node: self.node,
+            state: self.state,
             context,
         }
     }

@@ -26,16 +26,18 @@ static SEQUENCE_CONSTRUCTOR_CONTENT: ContentParseLock<ast::SequenceConstructor> 
 static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new();
 
 pub(crate) fn parse_content_attributes<'a, V>(
-    node: Node,
+    content: Content<'a>,
+    // node: Node,
     element: &'a xot::Element,
-    state: &'a State,
-    context: &Context,
+    // state: &'a State,
+    // context: &Context,
     f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
-    let info = Content::new(node, state, context.clone());
-    let attributes = Attributes::new(info, element)?;
-    let context = context.sub(element.prefixes(), attributes.standard()?);
-    let content = Content::new(node, state, context);
+    let attributes = Attributes::new(content.clone(), element)?;
+    let context = content
+        .context
+        .sub(element.prefixes(), attributes.standard()?);
+    let content = content.with_context(context);
     f(&content, &attributes)
 }
 
@@ -86,7 +88,7 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
                 }
             }
             Value::Element(element) => {
-                parse_content_attributes(node, element, state, context, |element, attributes| {
+                parse_content_attributes(content, element, |element, attributes| {
                     Ok(vec![
                         ast::SequenceConstructorItem::parse_sequence_constructor_item(
                             element, attributes,
@@ -104,27 +106,19 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 }
 
 fn declarations() -> impl NodeParser<ast::Declarations> {
-    one(
-        |Content {
-             node,
-             state,
-             context,
-         }| {
-            match state.xot.value(node) {
-                Value::Element(element) => parse_content_attributes(
-                    node,
-                    element,
-                    state,
-                    &context,
-                    |element, attributes| ast::Declaration::parse_declaration(element, attributes),
-                ),
-                _ => Err(ElementError::Unexpected {
-                    // TODO: get span right
-                    span: Span::new(0, 0),
-                }),
+    one(|content| {
+        match content.state.xot.value(content.node) {
+            Value::Element(element) => {
+                parse_content_attributes(content, element, |element, attributes| {
+                    ast::Declaration::parse_declaration(element, attributes)
+                })
             }
-        },
-    )
+            _ => Err(ElementError::Unexpected {
+                // TODO: get span right
+                span: Span::new(0, 0),
+            }),
+        }
+    })
     .many()
 }
 
@@ -175,15 +169,18 @@ where
 pub(crate) fn by_element<V>(
     f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
 ) -> impl Fn(Content) -> Result<V, ElementError> {
-    move |Content {
-              node,
-              state,
-              context,
-          }| {
-        let element = state.xot.element(node).ok_or(ElementError::Unexpected {
-            span: state.span(node).ok_or(ElementError::Internal)?,
-        })?;
-        parse_content_attributes(node, element, state, &context, &f)
+    move |content| {
+        let element = content
+            .state
+            .xot
+            .element(content.node)
+            .ok_or(ElementError::Unexpected {
+                span: content
+                    .state
+                    .span(content.node)
+                    .ok_or(ElementError::Internal)?,
+            })?;
+        parse_content_attributes(content, element, &f)
     }
 }
 
