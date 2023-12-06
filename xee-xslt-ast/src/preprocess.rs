@@ -3,6 +3,7 @@ use xot::{Element, Node, NodeEdge, Xot};
 #[derive(Debug)]
 enum Error {
     Xot(xot::Error),
+    Internal,
 }
 
 impl From<xot::Error> for Error {
@@ -24,6 +25,8 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
 
     let mut to_remove = Vec::new();
     let mut to_remove_attribute = Vec::new();
+    let mut non_shadow_names = Vec::new();
+    let mut shadow_attributes = Vec::new();
 
     let mut stack = Vec::new();
 
@@ -38,6 +41,16 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
                     }
                 }
                 if let Some(element) = xot.element(node) {
+                    // record all shadow attributes to process
+                    for key in element.attributes().keys() {
+                        let (name, ns) = xot.name_ns_str(*key);
+                        if ns.is_empty() && name.starts_with('_') {
+                            let non_shadow_name = name[1..].to_string();
+                            non_shadow_names.push(non_shadow_name);
+                            shadow_attributes.push((node, *key));
+                        }
+                    }
+                    // TODO: use-when itself can be a shadow attribute
                     let use_when = if in_xsl_ns(element) {
                         instruction_use_when
                     } else {
@@ -63,14 +76,31 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
         }
     }
 
+    for non_shadow_name in non_shadow_names {
+        xot.add_name(&non_shadow_name);
+    }
+
+    for (node, shadow_name) in shadow_attributes {
+        let (name, _) = xot.name_ns_str(shadow_name);
+        let non_shadow_name = &name[1..];
+        let non_shadow_name = xot.name(non_shadow_name).ok_or(Error::Internal)?;
+        let element = xot.element_mut(node).ok_or(Error::Internal)?;
+        let value = element
+            .get_attribute(shadow_name)
+            .ok_or(Error::Internal)?
+            .to_string();
+        // TODO execute xpath
+        element.set_attribute(non_shadow_name, value);
+        element.remove_attribute(shadow_name);
+    }
+
     for node in to_remove {
         xot.remove(node)?;
     }
 
     for (node, name) in to_remove_attribute {
-        if let Some(element) = xot.element_mut(node) {
-            element.remove_attribute(name);
-        }
+        let element = xot.element_mut(node).ok_or(Error::Internal)?;
+        element.remove_attribute(name);
     }
 
     Ok(())
@@ -154,6 +184,17 @@ mod tests {
         assert_eq!(
             xot.to_string(doc).unwrap(),
             r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:if/></xsl:transform>"#
+        );
+    }
+
+    #[test]
+    fn test_shadow_attribute_no_operation() {
+        let mut xot = Xot::new();
+        let doc = xot.parse(r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:if _test="false()"></xsl:if></xsl:transform>"#).unwrap();
+        preprocess(&mut xot, doc).unwrap();
+        assert_eq!(
+            xot.to_string(doc).unwrap(),
+            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:if test="false()"/></xsl:transform>"#
         );
     }
 }
