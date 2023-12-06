@@ -3,11 +3,9 @@ use std::sync::OnceLock;
 use xot::{NameId, Node, Xot};
 
 use crate::ast_core::{self as ast};
-use crate::attributes::Attributes;
+use crate::attributes::{Attributes, Content};
 use crate::combinator::{one, NodeParser};
-use crate::element::{
-    by_element, children, instruction, sequence_constructor, Content, ContentParseLock,
-};
+use crate::element::{by_element, children, instruction, sequence_constructor, ContentParseLock};
 use crate::error::ElementError as Error;
 use crate::state::State;
 

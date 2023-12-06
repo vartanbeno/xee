@@ -11,13 +11,13 @@ use crate::tokenize::split_whitespace_with_spans;
 use crate::{ast_core::Span, value_template::ValueTemplateTokenizer};
 use xot::{NameId, Node, SpanInfoKey};
 
-pub(crate) struct ParseInfo<'a> {
+pub(crate) struct Content<'a> {
     pub(crate) node: Node,
     pub(crate) state: &'a State,
     pub(crate) context: Context,
 }
 
-impl<'a> ParseInfo<'a> {
+impl<'a> Content<'a> {
     pub(crate) fn new(node: Node, state: &'a State, context: Context) -> Self {
         Self {
             node,
@@ -28,17 +28,14 @@ impl<'a> ParseInfo<'a> {
 }
 
 pub(crate) struct Attributes<'a> {
-    info: ParseInfo<'a>,
+    info: Content<'a>,
     pub(crate) element: &'a xot::Element,
     seen: std::cell::RefCell<HashSet<NameId>>,
     span: Span,
 }
 
 impl<'a> Attributes<'a> {
-    pub(crate) fn new(
-        info: ParseInfo<'a>,
-        element: &'a xot::Element,
-    ) -> Result<Self, ElementError> {
+    pub(crate) fn new(info: Content<'a>, element: &'a xot::Element) -> Result<Self, ElementError> {
         let span = info.state.span(info.node).ok_or(ElementError::Internal)?;
         Ok(Self {
             info,

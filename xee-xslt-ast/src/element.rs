@@ -5,7 +5,7 @@ use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
-use crate::attributes::{Attributes, ParseInfo};
+use crate::attributes::{Attributes, Content};
 use crate::combinator::{multi, one, NodeParser, OneParser};
 use crate::context::Context;
 use crate::error::ElementError;
@@ -32,7 +32,7 @@ pub(crate) fn parse_content_attributes<'a, V>(
     context: &Context,
     f: impl FnOnce(&Content<'a>, &Attributes<'a>) -> Result<V, ElementError>,
 ) -> Result<V, ElementError> {
-    let info = ParseInfo::new(node, state, context.clone());
+    let info = Content::new(node, state, context.clone());
     let attributes = Attributes::new(info, element)?;
     let context = context.sub(element.prefixes(), attributes.standard()?);
     let content = Content::new(node, state, context);
@@ -53,8 +53,6 @@ impl<'a> XsltParser<'a> {
         parser.parse(Some(node), self.state, &Context::empty())
     }
 }
-
-pub(crate) type Content<'a> = ParseInfo<'a>;
 
 impl<'a> Content<'a> {
     pub(crate) fn span(&self) -> Result<Span, ElementError> {
