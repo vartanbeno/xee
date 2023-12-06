@@ -25,22 +25,6 @@ static SEQUENCE_CONSTRUCTOR: NodeParserLock<ast::SequenceConstructor> = OnceLock
 static SEQUENCE_CONSTRUCTOR_CONTENT: ContentParseLock<ast::SequenceConstructor> = OnceLock::new();
 static DECLARATIONS_CONTENT: ContentParseLock<ast::Declarations> = OnceLock::new();
 
-pub(crate) fn parse_content_attributes<'a, V>(
-    content: Content<'a>,
-    element: &'a xot::Element,
-    f: impl FnOnce(&Attributes<'a>) -> Result<V, ElementError>,
-) -> Result<V, ElementError> {
-    // first we want to be aware of the ns prefixes of the new element
-    let content = content.with_context(content.context.with_prefixes(element.prefixes()));
-    // we create an attributes object to obtain the standard attributes
-    let attributes = Attributes::new(content.clone(), element)?;
-    // after this, we construct a new content based on the standard attributes
-    let content = content.with_context(content.context.with_standard(attributes.standard()?));
-    // we create a new attributes object with the new content
-    let attributes = attributes.with_content(content);
-    f(&attributes)
-}
-
 pub(crate) struct XsltParser<'a> {
     state: &'a State,
 }
@@ -57,6 +41,22 @@ impl<'a> XsltParser<'a> {
 }
 
 impl<'a> Content<'a> {
+    pub(crate) fn parse_element<V>(
+        self,
+        element: &'a xot::Element,
+        f: impl FnOnce(&Attributes<'a>) -> Result<V, ElementError>,
+    ) -> Result<V, ElementError> {
+        // first we want to be aware of the ns prefixes of the new element
+        let content = self.with_context(self.context.with_prefixes(element.prefixes()));
+        // we create an attributes object to obtain the standard attributes
+        let attributes = Attributes::new(content.clone(), element)?;
+        // after this, we construct a new content based on the standard attributes
+        let content = content.with_context(content.context.with_standard(attributes.standard()?));
+        // we create a new attributes object with the new content
+        let attributes = attributes.with_content(content);
+        f(&attributes)
+    }
+
     pub(crate) fn span(&self) -> Result<Span, ElementError> {
         self.state.span(self.node).ok_or(ElementError::Internal)
     }
@@ -87,7 +87,7 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
                     )])
                 }
             }
-            Value::Element(element) => parse_content_attributes(content, element, |attributes| {
+            Value::Element(element) => content.parse_element(element, |attributes| {
                 Ok(vec![
                     ast::SequenceConstructorItem::parse_sequence_constructor_item(attributes)?,
                 ])
@@ -104,7 +104,7 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 fn declarations() -> impl NodeParser<ast::Declarations> {
     one(|content| {
         match content.state.xot.value(content.node) {
-            Value::Element(element) => parse_content_attributes(content, element, |attributes| {
+            Value::Element(element) => content.parse_element(element, |attributes| {
                 ast::Declaration::parse_declaration(attributes)
             }),
             _ => Err(ElementError::Unexpected {
@@ -174,7 +174,7 @@ pub(crate) fn by_element<V>(
                     .span(content.node)
                     .ok_or(ElementError::Internal)?,
             })?;
-        parse_content_attributes(content, element, &f)
+        content.parse_element(element, &f)
     }
 }
 
