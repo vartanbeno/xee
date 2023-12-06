@@ -69,7 +69,10 @@ impl<'a> Content<'a> {
 }
 
 pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor> {
-    multi(|node, state, context| {
+    multi(|content| {
+        let node = content.node;
+        let state = &content.state;
+        let context = &content.context;
         match state.xot.value(node) {
             Value::Text(text) => {
                 let span = state.span(node).ok_or(ElementError::Internal)?;
@@ -101,16 +104,21 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
 }
 
 fn declarations() -> impl NodeParser<ast::Declarations> {
-    one(|node, state, context| match state.xot.value(node) {
-        Value::Element(element) => {
-            parse_content_attributes(node, element, state, context, |element, attributes| {
-                ast::Declaration::parse_declaration(element, attributes)
-            })
+    one(|content| {
+        let node = content.node;
+        let state = &content.state;
+        let context = &content.context;
+        match state.xot.value(node) {
+            Value::Element(element) => {
+                parse_content_attributes(node, element, state, context, |element, attributes| {
+                    ast::Declaration::parse_declaration(element, attributes)
+                })
+            }
+            _ => Err(ElementError::Unexpected {
+                // TODO: get span right
+                span: Span::new(0, 0),
+            }),
         }
-        _ => Err(ElementError::Unexpected {
-            // TODO: get span right
-            span: Span::new(0, 0),
-        }),
     })
     .many()
 }
@@ -161,8 +169,11 @@ where
 
 pub(crate) fn by_element<V>(
     f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
-) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
-    move |node, state, context| {
+) -> impl Fn(Content) -> Result<V, ElementError> {
+    move |content| {
+        let node = content.node;
+        let state = &content.state;
+        let context = &content.context;
         let element = state.xot.element(node).ok_or(ElementError::Unexpected {
             span: state.span(node).ok_or(ElementError::Internal)?,
         })?;
@@ -173,7 +184,7 @@ pub(crate) fn by_element<V>(
 pub(crate) fn by_element_name<V>(
     name: NameId,
     f: impl Fn(&Content, &Attributes) -> Result<V, ElementError>,
-) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
+) -> impl Fn(Content) -> Result<V, ElementError> {
     by_element(move |content, attributes| {
         if attributes.element.name() == name {
             f(content, attributes)
@@ -187,7 +198,7 @@ pub(crate) fn by_element_name<V>(
 
 pub(crate) fn by_instruction<V: InstructionParser>(
     name: NameId,
-) -> impl Fn(Node, &State, &Context) -> Result<V, ElementError> {
+) -> impl Fn(Content) -> Result<V, ElementError> {
     by_element_name(name, move |element, attributes| {
         V::parse_and_validate(element, attributes)
     })
@@ -195,6 +206,6 @@ pub(crate) fn by_instruction<V: InstructionParser>(
 
 pub(crate) fn instruction<V: InstructionParser>(
     name: NameId,
-) -> OneParser<V, impl Fn(Node, &State, &Context) -> Result<V, ElementError>> {
+) -> OneParser<V, impl Fn(Content) -> Result<V, ElementError>> {
     one(by_instruction(name))
 }

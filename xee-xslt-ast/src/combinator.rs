@@ -149,21 +149,21 @@ pub(crate) trait NodeParser<V> {
 #[derive(Debug, Clone)]
 pub(crate) struct OneParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<V>,
+    P: Fn(Content) -> Result<V>,
 {
     parse_value: P,
 }
 
 pub(crate) fn one<V, P>(parse_value: P) -> OneParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<V>,
+    P: Fn(Content) -> Result<V>,
 {
     OneParser { parse_value }
 }
 
 impl<V, P> NodeParser<V> for OneParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<V>,
+    P: Fn(Content) -> Result<V>,
 {
     fn parse_next(
         &self,
@@ -172,7 +172,8 @@ where
         context: &Context,
     ) -> Result<(V, Option<Node>)> {
         if let Some(node) = node {
-            let item = (self.parse_value)(node, state, context)?;
+            let content = Content::new(node, state, context.clone());
+            let item = (self.parse_value)(content)?;
             Ok((item, state.next(node)))
         } else {
             Err(ElementError::UnexpectedEnd)
@@ -183,21 +184,21 @@ where
 #[derive(Debug, Clone)]
 pub(crate) struct MultiParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+    P: Fn(Content) -> Result<Vec<V>>,
 {
     parse_value: P,
 }
 
 pub(crate) fn multi<V, P>(parse_value: P) -> MultiParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+    P: Fn(Content) -> Result<Vec<V>>,
 {
     MultiParser { parse_value }
 }
 
 impl<V, P> NodeParser<Vec<V>> for MultiParser<V, P>
 where
-    P: Fn(Node, &State, &Context) -> Result<Vec<V>>,
+    P: Fn(Content) -> Result<Vec<V>>,
 {
     fn parse_next(
         &self,
@@ -206,7 +207,8 @@ where
         context: &Context,
     ) -> Result<(Vec<V>, Option<Node>)> {
         if let Some(node) = node {
-            let items = (self.parse_value)(node, state, context)?;
+            let content = Content::new(node, state, context.clone());
+            let items = (self.parse_value)(content)?;
             Ok((items, state.next(node)))
         } else {
             Err(ElementError::UnexpectedEnd)
@@ -525,7 +527,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let parser = one(|_node, _, _| Ok(Value));
+        let parser = one(|_content| Ok(Value));
 
         let (item, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(item, Value);
@@ -539,7 +541,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let parser = one(|_node, _, _| Ok(Value));
+        let parser = one(|_content| Ok(Value));
 
         let r = parser.parse_next(next, &state, &context);
         assert_eq!(r, Err(ElementError::UnexpectedEnd));
@@ -554,14 +556,14 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let parser = one(|node, _, _| {
-            if let Some(element) = state.xot.element(node) {
+        let parser = one(|content| {
+            if let Some(element) = state.xot.element(content.node) {
                 if element.name() == names.name_a {
                     return Ok(Value);
                 }
             }
             Err(ElementError::Unexpected {
-                span: state.span(node).ok_or(ElementError::Internal)?,
+                span: state.span(content.node).ok_or(ElementError::Internal)?,
             })
         });
 
@@ -581,7 +583,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let option_parser = one(|_node, _, _| Ok(Value)).option();
+        let option_parser = one(|_content| Ok(Value)).option();
 
         let (item, next) = option_parser.parse_next(next, &state, &context).unwrap();
 
@@ -596,7 +598,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let option_parser = one(|_node, _, _| {
+        let option_parser = one(|_content| {
             Err(AttributeError::Invalid {
                 value: "".to_string(),
                 span: Span::new(0, 0),
@@ -625,7 +627,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = one(|node, state, _| {
+        let optional_parser = one(|Content { node, state, .. }| {
             Err(ElementError::Unexpected {
                 span: state.span(node).ok_or(ElementError::Internal)?,
             })
@@ -645,7 +647,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let optional_parser = one(|_node, _, _| Ok(Value)).option();
+        let optional_parser = one(|_content| Ok(Value)).option();
 
         let (item, next) = optional_parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(item, None);
@@ -679,7 +681,7 @@ mod tests {
         names: &TestNames,
         next: Option<Node>,
     ) -> Result<(Option<ValueA>, Option<ValueB>)> {
-        let optional_parser_a = one(|node, _, _| {
+        let optional_parser_a = one(|Content { node, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -693,7 +695,7 @@ mod tests {
 
         let (item_a, next) = optional_parser_a.parse_next(next, state, context).unwrap();
 
-        let optional_parser_b = one(|node, _, _| {
+        let optional_parser_b = one(|Content { node, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -801,7 +803,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = one(|_node, _, _| Ok(Value)).many();
+        let many_parser = one(|_content| Ok(Value)).many();
 
         let (items, next) = many_parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
@@ -815,7 +817,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = one(|_node, _, _| Ok(Value)).many();
+        let many_parser = one(|_content| Ok(Value)).many();
 
         let (items, next) = many_parser.parse_next(next, &state, &context).unwrap();
 
@@ -832,7 +834,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let option_parser = one(|node, state, _| {
+        let option_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -844,7 +846,7 @@ mod tests {
         })
         .option();
 
-        let many_parser = one(|node, state, _| {
+        let many_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -873,7 +875,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let option_parser = one(|node, state, _| {
+        let option_parser = one(|Content { node, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -885,7 +887,7 @@ mod tests {
         })
         .option();
 
-        let many_parser = one(|node, state, _| {
+        let many_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -916,7 +918,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let option_parser = one(|node, state, _| {
+        let option_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(ValueA);
@@ -928,7 +930,7 @@ mod tests {
         })
         .option();
 
-        let many_parser = one(|node, state, _| {
+        let many_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -961,7 +963,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let many_parser = one(|node, state, _| {
+        let many_parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(ValueB);
@@ -994,7 +996,7 @@ mod tests {
             foo: String,
         }
 
-        let parser = one(|node, state, _| {
+        let parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     let value = element.get_attribute(names.foo).unwrap();
@@ -1026,7 +1028,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value;
 
-        let parser = one(|_node, _, _| Ok(Value)).many().contains();
+        let parser = one(|_content| Ok(Value)).many().contains();
 
         let (items, next) = parser.parse_next(Some(outer), &state, &context).unwrap();
         assert_eq!(items, vec![Value, Value, Value]);
@@ -1044,7 +1046,7 @@ mod tests {
             B(ValueB),
         }
 
-        let parser_a = one(|node, _, _| {
+        let parser_a = one(|Content { node, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_a {
                     return Ok(AnyValue::A(ValueA));
@@ -1055,7 +1057,7 @@ mod tests {
             })
         });
 
-        let parser_b = one(|node, _, _| {
+        let parser_b = one(|Content { node, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
                     return Ok(AnyValue::B(ValueB));
@@ -1085,7 +1087,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value2(usize);
 
-        let parser = one(|_node, _, _| Ok(Value(1))).map(|item| Value2(item.0 + 1));
+        let parser = one(|_content| Ok(Value(1))).map(|item| Value2(item.0 + 1));
 
         let (item, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(item, Value2(2));
@@ -1099,7 +1101,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value(usize);
 
-        let parser = multi(|_node, _, _| Ok(vec![Value(1), Value(2)]));
+        let parser = multi(|_content| Ok(vec![Value(1), Value(2)]));
 
         let (item, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(item, vec![Value(1), Value(2)]);
@@ -1113,7 +1115,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value(usize);
 
-        let parser = one(|_node, _, _| Ok(vec![Value(1)])).flatten();
+        let parser = one(|_content| Ok(vec![Value(1)])).flatten();
 
         let (items, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(items, vec![Value(1), Value(1)]);
@@ -1127,7 +1129,7 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct Value(usize);
 
-        let parser = multi(|_node, _, _| Ok(vec![Value(1), Value(2)])).flatten();
+        let parser = multi(|_content| Ok(vec![Value(1), Value(2)])).flatten();
 
         let (items, next) = parser.parse_next(next, &state, &context).unwrap();
         assert_eq!(items, vec![Value(1), Value(2), Value(1), Value(2)]);
