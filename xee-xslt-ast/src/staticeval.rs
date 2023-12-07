@@ -1,7 +1,7 @@
 use ahash::HashMap;
 use xot::Node;
 
-use xee_xpath::{evaluate_without_focus_with_variables, Item, Sequence};
+use xee_xpath::{evaluate_without_focus_with_variables, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
 
 use crate::ast_core as ast;
@@ -42,21 +42,18 @@ impl StaticEvaluator {
     // TODO: either evaluate_without_focus_with_variables should
     // accept sequence values (instead of Vec items) or we should devise
     // a try_into in xee_xpath to convert them
-    fn static_global_variables(
-        &self,
-    ) -> Result<Vec<(xpath_ast::Name, Vec<Item>)>, xee_xpath::Error> {
-        let mut variables = Vec::with_capacity(self.static_global_variables.len());
+    fn static_global_variables(&self) -> Variables {
+        let mut variables = Variables::with_capacity(self.static_global_variables.len());
         for (key, value) in self.static_global_variables.iter() {
-            let value: Result<Vec<Item>, xee_xpath::Error> = value.items().collect();
-            variables.push((key.clone(), value?));
+            variables.insert(key.clone(), value.clone());
         }
-        Ok(variables)
+        variables
     }
 
     fn evaluate_static_xpath(&self, xpath: &str) -> Result<Sequence, xee_xpath::SpannedError> {
         // TODO: unwrap here ignores any possible errors when obtaining global variables
-        let static_global_variables = self.static_global_variables().unwrap();
-        evaluate_without_focus_with_variables(xpath, &static_global_variables)
+        let static_global_variables = self.static_global_variables();
+        evaluate_without_focus_with_variables(xpath, static_global_variables)
     }
 
     fn static_param_instruction(&self, node: Node, context: Context) -> Option<ast::Param> {

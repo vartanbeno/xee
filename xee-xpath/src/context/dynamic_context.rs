@@ -1,4 +1,4 @@
-use ahash::{HashMap, HashMapExt};
+use ahash::AHashMap;
 use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use xot::Xot;
@@ -11,11 +11,13 @@ use crate::xml;
 
 use super::static_context::StaticContext;
 
+pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
+
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
-    pub(crate) variables: HashMap<ast::Name, Vec<sequence::Item>>,
+    pub(crate) variables: Variables,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
@@ -33,23 +35,25 @@ impl<'a> DynamicContext<'a> {
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
         documents: Cow<'a, xml::Documents>,
-        variables: &[(ast::Name, Vec<sequence::Item>)],
+        variables: Variables,
     ) -> Self {
         Self {
             xot,
             static_context,
             documents,
-            variables: variables
-                .iter()
-                .map(|(name, items)| (name.clone(), items.clone()))
-                .collect(),
+            variables,
             current_datetime: Self::create_current_datetime(),
         }
     }
 
     pub fn empty(xot: &'a Xot, static_context: &'a StaticContext<'a>) -> Self {
         let documents = xml::Documents::new();
-        Self::new(xot, static_context, Cow::Owned(documents), &[])
+        Self::new(
+            xot,
+            static_context,
+            Cow::Owned(documents),
+            Variables::default(),
+        )
     }
 
     pub fn from_documents(
@@ -61,7 +65,7 @@ impl<'a> DynamicContext<'a> {
             xot,
             static_context,
             documents: Cow::Borrowed(documents),
-            variables: HashMap::new(),
+            variables: AHashMap::new(),
             current_datetime: Self::create_current_datetime(),
         }
     }
@@ -69,16 +73,13 @@ impl<'a> DynamicContext<'a> {
     pub fn from_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: &[(ast::Name, Vec<sequence::Item>)],
+        variables: Variables,
     ) -> Self {
         Self {
             xot,
             static_context,
             documents: Cow::Owned(xml::Documents::new()),
-            variables: variables
-                .iter()
-                .map(|(name, items)| (name.clone(), items.clone()))
-                .collect(),
+            variables,
             current_datetime: Self::create_current_datetime(),
         }
     }
@@ -87,7 +88,7 @@ impl<'a> DynamicContext<'a> {
         chrono::offset::Local::now().into()
     }
 
-    pub(crate) fn arguments(&self) -> Result<Vec<Vec<sequence::Item>>, Error> {
+    pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.parser_context.variable_names {
             let items = self.variables.get(variable_name).ok_or(Error::XPDY0002)?;

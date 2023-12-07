@@ -1,10 +1,10 @@
 use xot::Xot;
 
-use xee_xpath_ast::{ast, Namespaces, FN_NAMESPACE};
+use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::context::{DynamicContext, StaticContext};
-use crate::error;
 use crate::xml;
+use crate::{error, Variables};
 use crate::{interpreter, sequence};
 
 /// A high level function that evaluates an xpath expression on an xml document.
@@ -54,11 +54,11 @@ pub fn evaluate_without_focus(s: &str) -> error::SpannedResult<sequence::Sequenc
 
 pub fn evaluate_without_focus_with_variables(
     s: &str,
-    variables: &[(ast::Name, Vec<sequence::Item>)],
+    variables: Variables,
 ) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let namespaces = Namespaces::default();
-    let variable_names = variables.iter().map(|(key, _)| key).cloned().collect();
+    let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
     let context = DynamicContext::from_variables(&xot, &static_context, variables);
     let program = interpreter::Program::parse(context.static_context, s)?;

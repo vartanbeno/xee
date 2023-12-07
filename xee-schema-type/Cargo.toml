@@ -12,7 +12,7 @@ documentation = "https://docs.rs/xee-xpath-types"
 homepage = "https://github.com/Paligo/xee-xpath"
 
 [dependencies]
-ahash = "0.8.3"
+ahash = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]

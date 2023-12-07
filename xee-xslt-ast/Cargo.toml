@@ -18,7 +18,7 @@ homepage = "https://github.com/Paligo/xee-xslt"
 serde = ["dep:serde", "xee-xpath-ast/serde"]
 
 [dependencies]
-ahash = "0.8.3"
+ahash = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-xpath = { path = "../xee-xpath" }
 thiserror = "1.0.40"

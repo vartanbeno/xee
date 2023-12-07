@@ -1,7 +1,7 @@
 use derive_builder::Builder;
 use std::borrow::Cow;
 use std::path::Path;
-use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, Program, StaticContext};
+use xee_xpath::{Documents, DynamicContext, Item, Namespaces, Program, StaticContext, Variables};
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
@@ -221,7 +221,7 @@ impl qt::TestCase {
             &run_context.xot,
             &static_context,
             Cow::Borrowed(&run_context.documents),
-            &variables,
+            variables,
         );
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref());
@@ -261,15 +261,11 @@ impl qt::TestCase {
         Ok(None)
     }
 
-    fn variables(
-        &self,
-        run_context: &mut RunContext,
-        test_set: &qt::TestSet,
-    ) -> Result<Vec<(Name, Vec<Item>)>> {
+    fn variables(&self, run_context: &mut RunContext, test_set: &qt::TestSet) -> Result<Variables> {
         let environment_specs = self
             .environment_specs(&run_context.catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
-        let mut variables = Vec::new();
+        let mut variables = Variables::new();
         let xot = &mut run_context.xot;
         let source_cache = &mut run_context.documents;
         for environment_spec in environment_specs {

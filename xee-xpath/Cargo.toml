@@ -12,7 +12,7 @@ documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee-xpath"
 
 [dependencies]
-ahash = "0.8.3"
+ahash = { workspace = true }
 arrayvec = "0.7.2"
 chumsky = { workspace = true }
 next-gen = "0.1.1"

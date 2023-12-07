@@ -1,3 +1,4 @@
+use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
@@ -785,12 +786,12 @@ fn run_xpath_with_result(
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
     let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
-    let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
+    let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         runnable.xot(),
         &static_context,
         Cow::Borrowed(runnable.dynamic_context().documents()),
-        &variables,
+        variables,
     );
     let runnable = program.runnable(&dynamic_context);
     runnable.many(None).map_err(|e| e.error)

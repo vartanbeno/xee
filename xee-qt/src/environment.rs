@@ -1,9 +1,9 @@
-use fxhash::FxHashMap;
+use ahash::AHashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
-    Documents, DynamicContext, Item, Name, Node, Program, Result as XPathResult, StaticContext, Uri,
+    Documents, DynamicContext, Item, Name, Node, Program, StaticContext, Uri, Variables,
 };
 use xot::Xot;
 
@@ -28,17 +28,13 @@ impl EnvironmentSpec {
         Ok(None)
     }
 
-    pub(crate) fn variables(
-        &self,
-        xot: &mut Xot,
-        documents: &mut Documents,
-    ) -> Result<Vec<(Name, Vec<Item>)>> {
-        let mut variables = Vec::new();
+    pub(crate) fn variables(&self, xot: &mut Xot, documents: &mut Documents) -> Result<Variables> {
+        let mut variables = Variables::new();
         for source in &self.sources {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, documents)?;
-                variables.push((Name::unprefixed(name), vec![Item::from(node)]));
+                variables.insert(Name::unprefixed(name), Item::from(node).into());
             }
         }
         for param in &self.params {
@@ -53,8 +49,7 @@ impl EnvironmentSpec {
             let dynamic_context = DynamicContext::empty(xot, &static_context);
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(None).map_err(|e| e.error)?;
-            let result = result.items().collect::<XPathResult<Vec<Item>>>().unwrap();
-            variables.push((param.name.clone(), result));
+            variables.insert(param.name.clone(), result);
         }
         Ok(variables)
     }
@@ -127,13 +122,13 @@ impl<'a> Iterator for EnvironmentSpecIterator<'a> {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct SourceCache {
-    nodes: FxHashMap<PathBuf, Node>,
+    nodes: AHashMap<PathBuf, Node>,
 }
 
 impl SourceCache {
     pub(crate) fn new() -> Self {
         Self {
-            nodes: FxHashMap::default(),
+            nodes: AHashMap::default(),
         }
     }
 

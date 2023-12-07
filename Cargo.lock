@@ -21,14 +21,15 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.8.3"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
+checksum = "91429305e9f0a25f6205c5b8e0d2db09e0708a7a6df0f42212bb56c32c8ac97a"
 dependencies = [
  "cfg-if",
  "getrandom",
  "once_cell",
  "version_check",
+ "zerocopy",
 ]
 
 [[package]]
@@ -1390,7 +1391,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
 ]
 
 [[package]]
@@ -1399,7 +1400,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "allocator-api2",
 ]
 
@@ -1812,7 +1813,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e98c1d0ad70fc91b8b9654b1f33db55e59579d3b3de2bffdced0fdb810570cb8"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "hashbrown 0.12.3",
 ]
 
@@ -3435,6 +3436,7 @@ dependencies = [
 name = "xee-qt"
 version = "0.1.0"
 dependencies = [
+ "ahash 0.8.6",
  "chrono",
  "clap",
  "crossterm",
@@ -3454,7 +3456,7 @@ dependencies = [
 name = "xee-schema-type"
 version = "0.1.0"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "insta",
  "serde",
 ]
@@ -3463,7 +3465,7 @@ dependencies = [
 name = "xee-xpath"
 version = "0.1.0"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "arrayvec",
  "base64 0.21.4",
  "chrono",
@@ -3503,7 +3505,7 @@ dependencies = [
 name = "xee-xpath-ast"
 version = "0.1.0"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "blanket",
  "chumsky",
  "ibig",
@@ -3536,7 +3538,7 @@ dependencies = [
 name = "xee-xslt-ast"
 version = "0.1.0"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "blanket",
  "insta",
  "ron 0.8.1",
@@ -3568,7 +3570,7 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acb95456f1c4e8fa386874f7364de27d77b9435408e64e9af4ef8bd516102014"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.6",
  "encoding_rs",
  "indextree",
  "next-gen",
@@ -3614,6 +3616,26 @@ dependencies = [
  "quote 1.0.33",
  "syn 1.0.109",
  "synstructure",
+]
+
+[[package]]
+name = "zerocopy"
+version = "0.7.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d075cf85bbb114e933343e087b92f2146bac0d55b534cbb8188becf0039948e"
+dependencies = [
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.7.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86cd5ca076997b97ef09d3ad65efe811fa68c9e874cb636ccb211223a813b0c2"
+dependencies = [
+ "proc-macro2 1.0.67",
+ "quote 1.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]

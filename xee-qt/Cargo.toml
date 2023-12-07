@@ -12,6 +12,7 @@ documentation = "https://docs.rs/xee-qt"
 homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
+ahash = { workspace = true }
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }

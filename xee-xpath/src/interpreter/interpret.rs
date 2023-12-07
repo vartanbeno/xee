@@ -49,7 +49,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn start(
         &mut self,
         context_item: Option<&sequence::Item>,
-        arguments: Vec<Vec<sequence::Item>>,
+        arguments: Vec<sequence::Sequence>,
     ) {
         self.state
             .push_start_frame(self.runnable.program().main_id());

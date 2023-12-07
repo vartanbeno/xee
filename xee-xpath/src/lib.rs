@@ -28,7 +28,7 @@ pub use crate::atomic::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,
     NaiveDateWithOffset, NaiveTimeWithOffset, YearMonthDuration,
 };
-pub use crate::context::{DynamicContext, StaticContext};
+pub use crate::context::{DynamicContext, StaticContext, Variables};
 pub use crate::error::{Error, Result, SpannedError, SpannedResult};
 pub use crate::interpreter::{Program, Runnable};
 pub use crate::occurrence::Occurrence;

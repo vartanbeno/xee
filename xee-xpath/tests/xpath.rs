@@ -5,6 +5,7 @@ use xot::Xot;
 use xee_xpath::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, Atomic, Document,
     Documents, DynamicContext, Item, Node, Program, Sequence, SpannedResult, StaticContext, Uri,
+    Variables,
 };
 
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
@@ -19,7 +20,7 @@ fn run(s: &str) -> SpannedResult<Sequence> {
     evaluate_without_focus(s)
 }
 
-fn run_with_variables(s: &str, variables: &[(ast::Name, Vec<Item>)]) -> SpannedResult<Sequence> {
+fn run_with_variables(s: &str, variables: Variables) -> SpannedResult<Sequence> {
     evaluate_without_focus_with_variables(s, variables)
 }
 
@@ -759,10 +760,10 @@ fn test_attribute_predicate() -> SpannedResult<()> {
 fn test_external_variable() {
     assert_debug_snapshot!(run_with_variables(
         "$foo",
-        &[(
+        Variables::from([(
             ast::Name::unprefixed("foo"),
-            vec![Item::from(Atomic::from("FOO"))]
-        )],
+            Item::from(Atomic::from("FOO")).into()
+        )]),
     ))
 }
 
@@ -770,16 +771,16 @@ fn test_external_variable() {
 fn test_external_variables() {
     assert_debug_snapshot!(run_with_variables(
         "$foo + $bar",
-        &[
+        Variables::from([
             (
                 ast::Name::unprefixed("foo"),
-                vec![Item::from(Atomic::from(1i64))]
+                Item::from(Atomic::from(1i64)).into()
             ),
             (
                 ast::Name::unprefixed("bar"),
-                vec![Item::from(Atomic::from(2i64))]
+                Item::from(Atomic::from(2i64)).into()
             )
-        ]
+        ])
     ))
 }
 
