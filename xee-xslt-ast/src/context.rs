@@ -1,4 +1,5 @@
-use ahash::{HashMap, HashMapExt};
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use xee_xpath_ast::ast as xpath_ast;
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::{ast_core as ast, state::State};
@@ -9,6 +10,8 @@ use crate::{ast_core as ast, state::State};
 #[derive(Debug, Clone)]
 pub(crate) struct Context {
     prefixes: xot::Prefixes,
+    // known variable names
+    variable_names: HashSet<xpath_ast::Name>,
 
     default_collation: Vec<ast::Uri>,
     default_mode: ast::DefaultMode,
@@ -31,6 +34,7 @@ impl Context {
     pub(crate) fn empty() -> Self {
         Self {
             prefixes: xot::Prefixes::new(),
+            variable_names: HashSet::new(),
             default_collation: vec![
                 "http://www.w3.org/2005/xpath-functions/collation/codepoint".to_string()
             ],
@@ -49,6 +53,15 @@ impl Context {
         expanded_prefixes.extend(prefixes);
         Self {
             prefixes: expanded_prefixes,
+            ..self.clone()
+        }
+    }
+
+    pub(crate) fn with_variable_name(&self, name: &xpath_ast::Name) -> Self {
+        let mut variable_names = self.variable_names.clone();
+        variable_names.insert(name.clone());
+        Self {
+            variable_names,
             ..self.clone()
         }
     }
@@ -125,5 +138,9 @@ impl Context {
             namespaces.insert(prefix, uri);
         }
         Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
+    }
+
+    pub(crate) fn variable_names(&self) -> Vec<xpath_ast::Name> {
+        self.variable_names.iter().cloned().collect()
     }
 }

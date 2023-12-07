@@ -198,6 +198,10 @@ impl<'a> Attributes<'a> {
         self.content.context.namespaces(self.content.state)
     }
 
+    fn variable_names(&self) -> Vec<xee_xpath::Name> {
+        self.content.context.variable_names()
+    }
+
     fn _qname(s: &str, _span: Span) -> Result<ast::QName, AttributeError> {
         Ok(s.to_string())
     }
@@ -457,7 +461,7 @@ impl<'a> Attributes<'a> {
 
     fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, AttributeError> {
         Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), &[])?,
+            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), &self.variable_names())?,
             span,
         })
     }

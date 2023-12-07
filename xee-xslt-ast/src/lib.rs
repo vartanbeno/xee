@@ -11,6 +11,7 @@ mod name;
 mod names;
 mod preprocess;
 mod state;
+mod staticeval;
 mod tokenize;
 mod value_template;
 mod visitor;
