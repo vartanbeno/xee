@@ -782,7 +782,7 @@ fn run_xpath_with_result(
     let namespaces = Namespaces::default();
     let name = Name::unprefixed("result");
     let names = VariableNames::from_iter([name.clone()]);
-    let static_context = StaticContext::with_variable_names(namespaces, names);
+    let static_context = StaticContext::new(namespaces, names);
     let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_documents_and_variables(

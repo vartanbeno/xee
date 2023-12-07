@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use ahash::HashSetExt;
 use icu_provider_blob::BlobDataProvider;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
@@ -23,25 +22,12 @@ pub struct StaticContext<'a> {
 
 impl<'a> Default for StaticContext<'a> {
     fn default() -> Self {
-        Self::new(Namespaces::default())
+        Self::new(Namespaces::default(), ast::VariableNames::default())
     }
 }
 
 impl<'a> StaticContext<'a> {
-    pub fn new(namespaces: Namespaces<'a>) -> Self {
-        Self {
-            namespaces,
-            variable_names: ast::VariableNames::new(),
-            functions: StaticFunctions::new(),
-            collations: RefCell::new(Collations::new()),
-            provider: provider(),
-        }
-    }
-
-    pub fn with_variable_names(
-        namespaces: Namespaces<'a>,
-        variable_names: ast::VariableNames,
-    ) -> Self {
+    pub fn new(namespaces: Namespaces<'a>, variable_names: ast::VariableNames) -> Self {
         Self {
             namespaces,
             variable_names,
@@ -49,6 +35,10 @@ impl<'a> StaticContext<'a> {
             collations: RefCell::new(Collations::new()),
             provider: provider(),
         }
+    }
+
+    pub fn from_namespaces(namespaces: Namespaces<'a>) -> Self {
+        Self::new(namespaces, ast::VariableNames::default())
     }
 
     pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
@@ -70,6 +60,10 @@ impl<'a> StaticContext<'a> {
         &self.provider
     }
 
+    /// Given an XPath string, parse into an XPath AST
+    ///
+    /// This uses the namespaces and variable names with which
+    /// this static context has been initialized.
     pub fn parse_xpath(&self, s: &str) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
         ast::XPath::parse(s, &self.namespaces, &self.variable_names)
     }

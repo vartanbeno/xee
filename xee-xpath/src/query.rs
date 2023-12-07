@@ -309,8 +309,6 @@ mod tests {
 
     use super::*;
 
-    use xee_xpath_ast::Namespaces;
-
     use crate::error::Result;
     use crate::xml;
 

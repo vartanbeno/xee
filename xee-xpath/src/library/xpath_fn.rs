@@ -6,7 +6,7 @@ mod test {
     use crate::atomic;
     use crate::interpreter;
     use crate::sequence;
-    use crate::{DynamicContext, Namespaces, StaticContext};
+    use crate::{DynamicContext, StaticContext};
 
     #[xpath_fn("fn:foo() as xs:string")]
     fn foo() -> String {
