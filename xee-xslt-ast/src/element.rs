@@ -1,5 +1,6 @@
 use std::sync::OnceLock;
 
+use xee_xpath_ast::ast as xpath_ast;
 use xee_xpath_ast::Namespaces;
 use xot::{NameId, Node, Value};
 
@@ -79,8 +80,9 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
             Value::Text(text) => {
                 let span = state.span(node).ok_or(ElementError::Internal)?;
                 let namespaces = context.namespaces(state);
+                let variable_names = context.variable_names();
                 if context.expand_text {
-                    text_value_template(text.get(), span, &namespaces)
+                    text_value_template(text.get(), span, &namespaces, variable_names)
                 } else {
                     Ok(vec![ast::SequenceConstructorItem::Content(
                         ast::Content::Text(text.get().to_string()),
@@ -120,9 +122,10 @@ fn text_value_template(
     s: &str,
     span: Span,
     namespaces: &Namespaces,
+    variable_names: &xpath_ast::VariableNames,
 ) -> Result<Vec<ast::SequenceConstructorItem>, ElementError> {
     let mut items = Vec::new();
-    for token in ValueTemplateTokenizer::new(s, span, namespaces, &[]) {
+    for token in ValueTemplateTokenizer::new(s, span, namespaces, variable_names) {
         let token = token?;
         let content = match token {
             ValueTemplateItem::String { text, span: _ } => ast::Content::Text(text.to_string()),

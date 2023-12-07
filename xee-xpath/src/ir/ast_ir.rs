@@ -1,3 +1,4 @@
+use ahash::HashSetExt;
 use ahash::{HashMap, HashMapExt};
 
 use xee_schema_type::Xs;
@@ -227,7 +228,7 @@ impl<'a> IrConverter<'a> {
         let context_names = self.push_context();
         // define any external variable names
         let mut ir_names = Vec::new();
-        for name in &self.static_context.variables {
+        for name in &self.static_context.variable_names {
             ir_names.push(self.new_var_name(name));
         }
         let exprs_bindings = self.expr(&ast.0)?;
@@ -960,7 +961,7 @@ fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
 
 pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
     let namespaces = Namespaces::default();
-    let ast = ast::XPath::parse(s, &namespaces, &[])?;
+    let ast = ast::XPath::parse(s, &namespaces, &ast::VariableNames::new())?;
     let static_context = StaticContext::new(&namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)

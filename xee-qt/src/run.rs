@@ -200,11 +200,8 @@ impl qt::TestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let variable_names = variables
-            .iter()
-            .map(|(name, _)| name.clone())
-            .collect::<Vec<_>>();
-        let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
+        let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
+        let static_context = StaticContext::with_variable_names(&namespaces, variable_names);
         let program = Program::new(&static_context, &self.test);
         let program = match program {
             Ok(xpath) => xpath,

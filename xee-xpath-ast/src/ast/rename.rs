@@ -122,12 +122,14 @@ impl AstVisitor for Renamer {
     }
 }
 
-pub(crate) fn unique_names(expr: &mut ast::XPath, variables: &[ast::Name]) {
+pub type VariableNames = HashSet<ast::Name>;
+
+pub(crate) fn unique_names(expr: &mut ast::XPath, variable_names: &VariableNames) {
     let mut renamer = Renamer::new();
     // ensure we know of the outer variable names too;
     // these are never going to be changed as there isn't
     // any other shadowing yet at this point
-    for name in variables {
+    for name in variable_names {
         renamer.push_name(name);
     }
     renamer.visit_xpath(expr);

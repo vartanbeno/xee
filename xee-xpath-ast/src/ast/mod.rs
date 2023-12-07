@@ -4,3 +4,4 @@ mod visitor;
 
 pub use ast_core::*;
 pub(crate) use rename::unique_names;
+pub use rename::VariableNames;

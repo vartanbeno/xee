@@ -11,9 +11,9 @@ use chumsky::input::Stream;
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 
-use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
+use crate::ast::{self, VariableNames};
 use crate::error::ParserError;
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
@@ -52,11 +52,11 @@ impl ast::XPath {
     pub fn parse<'a>(
         input: &'a str,
         namespaces: &'a Namespaces,
-        variables: &'a [ast::Name],
+        variable_names: &'a VariableNames,
     ) -> Result<Self, ParserError> {
         let mut xpath = parse(parser().xpath, tokens(input), Cow::Borrowed(namespaces))?;
         // rename all variables to unique names
-        unique_names(&mut xpath, variables);
+        unique_names(&mut xpath, variable_names);
         Ok(xpath)
     }
 
@@ -65,7 +65,7 @@ impl ast::XPath {
     pub fn parse_value_template<'a>(
         input: &'a str,
         namespaces: &'a Namespaces,
-        variables: &'a [ast::Name],
+        variable_names: &'a VariableNames,
     ) -> Result<Self, ParserError> {
         let mut state = State {
             namespaces: Cow::Borrowed(namespaces),
@@ -76,7 +76,7 @@ impl ast::XPath {
         let (output, errors) = r.into_output_errors();
         if let Some(mut xpath) = output {
             // rename all variables to unique names
-            unique_names(&mut xpath, variables);
+            unique_names(&mut xpath, variable_names);
             Ok(xpath)
         } else {
             Err(errors.into_iter().next().unwrap())
@@ -131,6 +131,7 @@ mod tests {
 
     use super::*;
 
+    use ahash::HashSetExt;
     use insta::assert_ron_snapshot;
 
     fn parse_xpath_simple(src: &str) -> Result<ast::XPath, ParserError> {
@@ -837,7 +838,8 @@ mod tests {
     #[test]
     fn test_xpath_parse_value_template() {
         let namespaces = Namespaces::default();
-        let xpath = ast::XPath::parse_value_template("1 + 2}", &namespaces, &[]).unwrap();
+        let xpath =
+            ast::XPath::parse_value_template("1 + 2}", &namespaces, &VariableNames::new()).unwrap();
         assert_eq!(xpath.0.span, Span::new(0, 5));
         assert_ron_snapshot!(xpath);
     }
@@ -845,7 +847,9 @@ mod tests {
     #[test]
     fn test_xpath_parse_value_template_with_leftover() {
         let namespaces = Namespaces::default();
-        let xpath = ast::XPath::parse_value_template("1 + 2}foo", &namespaces, &[]).unwrap();
+        let xpath =
+            ast::XPath::parse_value_template("1 + 2}foo", &namespaces, &VariableNames::new())
+                .unwrap();
         assert_eq!(xpath.0.span, Span::new(0, 5));
         assert_ron_snapshot!(xpath);
     }
@@ -853,7 +857,8 @@ mod tests {
     #[test]
     fn test_xpath_parse_value_template_a_with_leftover() {
         let namespaces = Namespaces::default();
-        let xpath = ast::XPath::parse_value_template("a}foo", &namespaces, &[]).unwrap();
+        let xpath =
+            ast::XPath::parse_value_template("a}foo", &namespaces, &VariableNames::new()).unwrap();
         assert_eq!(xpath.0.span, Span::new(0, 1));
         assert_ron_snapshot!(xpath);
     }
@@ -861,7 +866,9 @@ mod tests {
     #[test]
     fn test_xpath_parse_value_template_with_second_value_following() {
         let namespaces = Namespaces::default();
-        let xpath = ast::XPath::parse_value_template("a}foo{b}!", &namespaces, &[]).unwrap();
+        let xpath =
+            ast::XPath::parse_value_template("a}foo{b}!", &namespaces, &VariableNames::new())
+                .unwrap();
         assert_eq!(xpath.0.span, Span::new(0, 1));
         assert_ron_snapshot!(xpath);
     }

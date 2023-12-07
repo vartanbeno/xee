@@ -140,7 +140,7 @@ impl Context {
         Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
     }
 
-    pub(crate) fn variable_names(&self) -> Vec<xpath_ast::Name> {
-        self.variable_names.iter().cloned().collect()
+    pub(crate) fn variable_names(&self) -> &xpath_ast::VariableNames {
+        &self.variable_names
     }
 }

@@ -47,7 +47,7 @@ pub(crate) struct ValueTemplateTokenizer<'a> {
     mode: Mode,
     start: usize,
     namespaces: &'a Namespaces<'a>,
-    variables: &'a [xpath_ast::Name],
+    variable_names: &'a xpath_ast::VariableNames,
     done: bool,
 }
 
@@ -63,7 +63,7 @@ impl<'a> ValueTemplateTokenizer<'a> {
         s: &'a str,
         span: Span,
         namespaces: &'a Namespaces<'a>,
-        variables: &'a [xpath_ast::Name],
+        variable_names: &'a xpath_ast::VariableNames,
     ) -> Self {
         Self {
             s,
@@ -72,7 +72,7 @@ impl<'a> ValueTemplateTokenizer<'a> {
             mode: Mode::String,
             start: 0,
             namespaces,
-            variables,
+            variable_names,
             done: false,
         }
     }
@@ -161,7 +161,7 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
                 let xpath = xpath_ast::XPath::parse_value_template(
                     &self.s[self.start..],
                     self.namespaces,
-                    self.variables,
+                    self.variable_names,
                 );
                 match xpath {
                     Ok(xpath) => {
@@ -241,103 +241,117 @@ mod tests {
         s: &'a str,
         span: Span,
         namespaces: &'a Namespaces<'a>,
+        variable_names: &'a xpath_ast::VariableNames,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
-        let tokenizer = ValueTemplateTokenizer::new(s, span, namespaces, &[]);
+        let tokenizer = ValueTemplateTokenizer::new(s, span, namespaces, variable_names);
         tokenizer.collect()
     }
 
     fn parse<'a>(
         s: &'a str,
         namespaces: &'a Namespaces<'a>,
+        variable_names: &'a xpath_ast::VariableNames,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
         let span = Span {
             start: 0,
             end: s.len(),
         };
-        parse_with_span(s, span, namespaces)
+        parse_with_span(s, span, namespaces, variable_names)
     }
 
     #[test]
     fn test_string_without_curly() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello world", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello world", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_start_curly_escaped() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello{{world", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello{{world", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_end_curly_escaped() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello}}world", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello}}world", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_with_value() {
+        let variable_names = xpath_ast::VariableNames::default();
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello {world}!", &namespaces));
+        assert_ron_snapshot!(parse("hello {world}!", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_with_value_in_span() {
         let namespaces = Namespaces::default();
+        let variable_names = xpath_ast::VariableNames::default();
 
         let s = "hello {world}!";
         let span = Span {
             start: 10,
             end: s.len() + 10,
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &namespaces));
+        assert_ron_snapshot!(parse_with_span(s, span, &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_with_empty_value() {
         let namespaces = Namespaces::default();
+        let variable_names = xpath_ast::VariableNames::default();
 
-        assert_ron_snapshot!(parse("hello {}!", &namespaces));
+        assert_ron_snapshot!(parse("hello {}!", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_with_multiple_values() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello {a} and {b}!", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello {a} and {b}!", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_with_multiple_adjacent_values() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello {a}{b}!", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello {a}{b}!", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello{world", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello{world", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly_with_span() {
         let namespaces = Namespaces::default();
+        let variable_names = xpath_ast::VariableNames::default();
         let s = "hello{world";
         let span = Span {
             start: 10,
             end: 10 + s.len(),
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &namespaces));
+        assert_ron_snapshot!(parse_with_span(s, span, &namespaces, &variable_names));
     }
 
     #[test]
     fn test_string_unescaped_end_curly() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello}world", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello}world", &namespaces, &variable_names));
     }
 
     #[test]
     fn test_broken_xpath() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello {a +}!", &namespaces));
+        let variable_names = xpath_ast::VariableNames::default();
+        assert_ron_snapshot!(parse("hello {a +}!", &namespaces, &variable_names));
     }
 }

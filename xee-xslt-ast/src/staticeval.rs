@@ -1,6 +1,5 @@
 use ahash::HashMap;
 use xot::Node;
-use xot::Xot;
 
 use xee_xpath::{evaluate_without_focus_with_variables, Item, Sequence};
 use xee_xpath_ast::ast as xpath_ast;

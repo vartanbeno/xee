@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use ahash::HashSetExt;
 use icu_provider_blob::BlobDataProvider;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
@@ -15,7 +16,7 @@ use crate::string::{Collation, Collations};
 pub struct StaticContext<'a> {
     pub(crate) namespaces: &'a Namespaces<'a>,
     // XXX need to add in type later
-    pub(crate) variables: Vec<ast::Name>,
+    pub(crate) variable_names: ast::VariableNames,
     pub(crate) functions: StaticFunctions,
     provider: BlobDataProvider,
     pub(crate) collations: RefCell<Collations>,
@@ -25,17 +26,20 @@ impl<'a> StaticContext<'a> {
     pub fn new(namespaces: &'a Namespaces<'a>) -> Self {
         Self {
             namespaces,
-            variables: Vec::new(),
+            variable_names: ast::VariableNames::new(),
             functions: StaticFunctions::new(),
             collations: RefCell::new(Collations::new()),
             provider: provider(),
         }
     }
 
-    pub fn with_variable_names(namespaces: &'a Namespaces<'a>, variables: &[ast::Name]) -> Self {
+    pub fn with_variable_names(
+        namespaces: &'a Namespaces<'a>,
+        variable_names: ast::VariableNames,
+    ) -> Self {
         Self {
             namespaces,
-            variables: variables.to_vec(),
+            variable_names,
             functions: StaticFunctions::new(),
             collations: RefCell::new(Collations::new()),
             provider: provider(),
@@ -59,5 +63,9 @@ impl<'a> StaticContext<'a> {
 
     pub(crate) fn icu_provider(&self) -> &BlobDataProvider {
         &self.provider
+    }
+
+    pub fn parse_xpath(&self, s: &str) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
+        ast::XPath::parse(s, self.namespaces, &self.variable_names)
     }
 }

@@ -59,11 +59,8 @@ pub fn evaluate_without_focus_with_variables(
 ) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let namespaces = Namespaces::default();
-    let variable_names = variables
-        .iter()
-        .map(|(name, _)| name.clone())
-        .collect::<Vec<_>>();
-    let static_context = StaticContext::with_variable_names(&namespaces, &variable_names);
+    let variable_names = variables.iter().map(|(key, _)| key).cloned().collect();
+    let static_context = StaticContext::with_variable_names(&namespaces, variable_names);
     let context = DynamicContext::with_variables(&xot, &static_context, variables);
     let program = interpreter::Program::new(context.static_context, s)?;
     let runnable = program.runnable(&context);

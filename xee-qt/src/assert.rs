@@ -2,7 +2,7 @@ use chrono::Offset;
 use std::fmt;
 use xee_xpath::{
     Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result, Runnable,
-    Sequence, StaticContext,
+    Sequence, StaticContext, VariableNames,
 };
 use xot::Xot;
 
@@ -782,8 +782,8 @@ fn run_xpath_with_result(
 ) -> Result<Sequence> {
     let namespaces = Namespaces::default();
     let name = Name::unprefixed("result");
-    let names = vec![name.clone()];
-    let static_context = StaticContext::with_variable_names(&namespaces, &names);
+    let names = VariableNames::from_iter([name.clone()]);
+    let static_context = StaticContext::with_variable_names(&namespaces, names);
     let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_documents_and_variables(

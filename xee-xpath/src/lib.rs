@@ -20,7 +20,7 @@ mod stack;
 mod string;
 mod xml;
 
-pub use xee_xpath_ast::ast::Name;
+pub use xee_xpath_ast::ast::{Name, VariableNames};
 pub use xee_xpath_ast::Namespaces;
 
 pub use crate::atomic::Atomic;

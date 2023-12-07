@@ -126,8 +126,9 @@ impl<'a> Attributes<'a> {
         T: Clone + PartialEq + Eq,
     {
         let namespaces = self.namespaces();
+        let variable_names = self.variable_names();
         move |s, span| {
-            let iter = ValueTemplateTokenizer::new(s, span, &namespaces, &[]);
+            let iter = ValueTemplateTokenizer::new(s, span, &namespaces, variable_names);
             let mut tokens = Vec::new();
             for t in iter {
                 let t = t?;
@@ -198,7 +199,7 @@ impl<'a> Attributes<'a> {
         self.content.context.namespaces(self.content.state)
     }
 
-    fn variable_names(&self) -> Vec<xee_xpath::Name> {
+    fn variable_names(&self) -> &xpath_ast::VariableNames {
         self.content.context.variable_names()
     }
 
@@ -461,7 +462,7 @@ impl<'a> Attributes<'a> {
 
     fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, AttributeError> {
         Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), &self.variable_names())?,
+            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), self.variable_names())?,
             span,
         })
     }
