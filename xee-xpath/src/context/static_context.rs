@@ -15,11 +15,16 @@ use crate::string::{Collation, Collations};
 #[derive(Debug)]
 pub struct StaticContext<'a> {
     pub(crate) namespaces: Namespaces<'a>,
-    // XXX need to add in type later
     pub(crate) variable_names: ast::VariableNames,
     pub(crate) functions: StaticFunctions,
     provider: BlobDataProvider,
     pub(crate) collations: RefCell<Collations>,
+}
+
+impl<'a> Default for StaticContext<'a> {
+    fn default() -> Self {
+        Self::new(Namespaces::default())
+    }
 }
 
 impl<'a> StaticContext<'a> {

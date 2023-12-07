@@ -44,8 +44,7 @@ pub fn evaluate_root(
 
 pub fn evaluate_without_focus(s: &str) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
-    let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(namespaces);
+    let static_context = StaticContext::default();
     let context = DynamicContext::new(&xot, &static_context);
 
     let program = interpreter::Program::new(context.static_context, s)?;

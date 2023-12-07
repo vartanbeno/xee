@@ -21,8 +21,7 @@ mod test {
     #[test]
     fn test_simple() {
         let xot = Xot::new();
-        let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(namespaces);
+        let static_context = StaticContext::default();
         let context = DynamicContext::new(&xot, &static_context);
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
@@ -35,8 +34,7 @@ mod test {
     #[test]
     fn test_arg() {
         let xot = Xot::new();
-        let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(namespaces);
+        let static_context = StaticContext::default();
         let context = DynamicContext::new(&xot, &static_context);
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);

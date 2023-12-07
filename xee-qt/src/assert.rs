@@ -763,8 +763,7 @@ impl fmt::Display for Failure {
 }
 
 fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
-    let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(namespaces);
+    let static_context = StaticContext::default();
     let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
     let dynamic_context = DynamicContext::with_documents(
         runnable.xot(),
