@@ -29,29 +29,16 @@ impl<'a> Debug for DynamicContext<'a> {
 }
 
 impl<'a> DynamicContext<'a> {
-    // TODO: these constructor functions are ripe for refactoring.
-
-    pub fn new(xot: &'a Xot, static_context: &'a StaticContext<'a>) -> Self {
-        let documents = xml::Documents::new();
-        Self {
-            xot,
-            static_context,
-            documents: Cow::Owned(documents),
-            variables: HashMap::new(),
-            current_datetime: Self::create_current_datetime(),
-        }
-    }
-
-    pub fn with_documents_and_variables(
+    pub fn new(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        documents: &'a xml::Documents,
+        documents: Cow<'a, xml::Documents>,
         variables: &[(ast::Name, Vec<sequence::Item>)],
     ) -> Self {
         Self {
             xot,
             static_context,
-            documents: Cow::Borrowed(documents),
+            documents,
             variables: variables
                 .iter()
                 .map(|(name, items)| (name.clone(), items.clone()))
@@ -60,7 +47,12 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub fn with_documents(
+    pub fn empty(xot: &'a Xot, static_context: &'a StaticContext<'a>) -> Self {
+        let documents = xml::Documents::new();
+        Self::new(xot, static_context, Cow::Owned(documents), &[])
+    }
+
+    pub fn from_documents(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
         documents: &'a xml::Documents,
@@ -74,7 +66,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub fn with_variables(
+    pub fn from_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
         variables: &[(ast::Name, Vec<sequence::Item>)],

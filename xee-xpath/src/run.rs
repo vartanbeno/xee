@@ -34,7 +34,7 @@ pub fn evaluate_root(
     let uri = xml::Uri("http://example.com".to_string());
     let mut documents = xml::Documents::new();
     documents.add_root(xot, &uri, root);
-    let context = DynamicContext::with_documents(xot, &static_context, &documents);
+    let context = DynamicContext::from_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
     let program = interpreter::Program::parse(context.static_context, xpath)?;
@@ -45,7 +45,7 @@ pub fn evaluate_root(
 pub fn evaluate_without_focus(s: &str) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let static_context = StaticContext::default();
-    let context = DynamicContext::new(&xot, &static_context);
+    let context = DynamicContext::empty(&xot, &static_context);
 
     let program = interpreter::Program::parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
@@ -60,7 +60,7 @@ pub fn evaluate_without_focus_with_variables(
     let namespaces = Namespaces::default();
     let variable_names = variables.iter().map(|(key, _)| key).cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
-    let context = DynamicContext::with_variables(&xot, &static_context, variables);
+    let context = DynamicContext::from_variables(&xot, &static_context, variables);
     let program = interpreter::Program::parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None)

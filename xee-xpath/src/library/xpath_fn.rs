@@ -22,7 +22,7 @@ mod test {
     fn test_simple() {
         let xot = Xot::new();
         let static_context = StaticContext::default();
-        let context = DynamicContext::new(&xot, &static_context);
+        let context = DynamicContext::empty(&xot, &static_context);
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
         let program = interpreter::Program::parse(context.static_context, ".").unwrap();
@@ -35,7 +35,7 @@ mod test {
     fn test_arg() {
         let xot = Xot::new();
         let static_context = StaticContext::default();
-        let context = DynamicContext::new(&xot, &static_context);
+        let context = DynamicContext::empty(&xot, &static_context);
         let expected =
             sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
         let program = interpreter::Program::parse(context.static_context, ".").unwrap();

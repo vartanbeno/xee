@@ -1,4 +1,5 @@
 use derive_builder::Builder;
+use std::borrow::Cow;
 use std::path::Path;
 use xee_xpath::{Documents, DynamicContext, Item, Name, Namespaces, Program, StaticContext};
 use xot::Xot;
@@ -216,10 +217,10 @@ impl qt::TestCase {
             }
         };
 
-        let dynamic_context = DynamicContext::with_documents_and_variables(
+        let dynamic_context = DynamicContext::new(
             &run_context.xot,
             &static_context,
-            &run_context.documents,
+            Cow::Borrowed(&run_context.documents),
             &variables,
         );
         let runnable = program.runnable(&dynamic_context);

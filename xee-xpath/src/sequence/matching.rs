@@ -626,7 +626,7 @@ mod tests {
 
         let xot = Xot::new();
         let static_context = context::StaticContext::default();
-        let dynamic_context = context::DynamicContext::new(&xot, &static_context);
+        let dynamic_context = context::DynamicContext::empty(&xot, &static_context);
 
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,
@@ -660,7 +660,7 @@ mod tests {
         let right_sequence = Sequence::from(vec![Item::from(a), Item::from(b)]);
 
         let static_context = context::StaticContext::default();
-        let dynamic_context = context::DynamicContext::new(&xot, &static_context);
+        let dynamic_context = context::DynamicContext::empty(&xot, &static_context);
 
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,

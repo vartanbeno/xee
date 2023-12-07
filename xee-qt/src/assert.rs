@@ -1,4 +1,5 @@
 use chrono::Offset;
+use std::borrow::Cow;
 use std::fmt;
 use xee_xpath::{
     Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result, Runnable,
@@ -765,7 +766,7 @@ impl fmt::Display for Failure {
 fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
     let static_context = StaticContext::default();
     let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
-    let dynamic_context = DynamicContext::with_documents(
+    let dynamic_context = DynamicContext::from_documents(
         runnable.xot(),
         &static_context,
         runnable.dynamic_context().documents(),
@@ -785,10 +786,10 @@ fn run_xpath_with_result(
     let static_context = StaticContext::new(namespaces, names);
     let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
-    let dynamic_context = DynamicContext::with_documents_and_variables(
+    let dynamic_context = DynamicContext::new(
         runnable.xot(),
         &static_context,
-        runnable.dynamic_context().documents(),
+        Cow::Borrowed(runnable.dynamic_context().documents()),
         &variables,
     );
     let runnable = program.runnable(&dynamic_context);
