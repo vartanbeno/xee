@@ -201,7 +201,7 @@ impl qt::TestCase {
         };
 
         let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
-        let static_context = StaticContext::with_variable_names(&namespaces, variable_names);
+        let static_context = StaticContext::with_variable_names(namespaces, variable_names);
         let program = Program::new(&static_context, &self.test);
         let program = match program {
             Ok(xpath) => xpath,

@@ -317,7 +317,7 @@ mod tests {
     #[test]
     fn test_one_query() {
         let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(&namespaces);
+        let static_context = StaticContext::new(namespaces);
         let mut queries = Queries::new(&static_context);
         let q = queries
             .one("1 + 2", |_, item| {
@@ -336,7 +336,7 @@ mod tests {
     #[test]
     fn test_one_query_recurse() -> error::Result<()> {
         let namespaces = Namespaces::default();
-        let static_context = StaticContext::new(&namespaces);
+        let static_context = StaticContext::new(namespaces);
         let mut queries = Queries::new(&static_context);
         #[derive(Debug, PartialEq, Eq)]
         enum Expr {

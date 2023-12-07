@@ -14,7 +14,7 @@ use crate::string::{Collation, Collations};
 
 #[derive(Debug)]
 pub struct StaticContext<'a> {
-    pub(crate) namespaces: &'a Namespaces<'a>,
+    pub(crate) namespaces: Namespaces<'a>,
     // XXX need to add in type later
     pub(crate) variable_names: ast::VariableNames,
     pub(crate) functions: StaticFunctions,
@@ -23,7 +23,7 @@ pub struct StaticContext<'a> {
 }
 
 impl<'a> StaticContext<'a> {
-    pub fn new(namespaces: &'a Namespaces<'a>) -> Self {
+    pub fn new(namespaces: Namespaces<'a>) -> Self {
         Self {
             namespaces,
             variable_names: ast::VariableNames::new(),
@@ -34,7 +34,7 @@ impl<'a> StaticContext<'a> {
     }
 
     pub fn with_variable_names(
-        namespaces: &'a Namespaces<'a>,
+        namespaces: Namespaces<'a>,
         variable_names: ast::VariableNames,
     ) -> Self {
         Self {
@@ -66,6 +66,6 @@ impl<'a> StaticContext<'a> {
     }
 
     pub fn parse_xpath(&self, s: &str) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
-        ast::XPath::parse(s, self.namespaces, &self.variable_names)
+        ast::XPath::parse(s, &self.namespaces, &self.variable_names)
     }
 }

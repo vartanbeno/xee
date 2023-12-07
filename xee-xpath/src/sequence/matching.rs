@@ -626,7 +626,7 @@ mod tests {
 
         let xot = Xot::new();
         let namespaces = Namespaces::default();
-        let static_context = context::StaticContext::new(&namespaces);
+        let static_context = context::StaticContext::new(namespaces);
         let dynamic_context = context::DynamicContext::new(&xot, &static_context);
 
         let right_result = right_sequence.sequence_type_matching_function_conversion(
@@ -661,7 +661,7 @@ mod tests {
         let right_sequence = Sequence::from(vec![Item::from(a), Item::from(b)]);
 
         let namespaces = Namespaces::default();
-        let static_context = context::StaticContext::new(&namespaces);
+        let static_context = context::StaticContext::new(namespaces);
         let dynamic_context = context::DynamicContext::new(&xot, &static_context);
 
         let right_result = right_sequence.sequence_type_matching_function_conversion(

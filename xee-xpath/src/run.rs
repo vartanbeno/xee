@@ -33,7 +33,7 @@ pub fn evaluate_root(
         default_element_namespace,
         Some(FN_NAMESPACE),
     );
-    let static_context = StaticContext::new(&namespaces);
+    let static_context = StaticContext::new(namespaces);
     let context = DynamicContext::with_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
@@ -45,7 +45,7 @@ pub fn evaluate_root(
 pub fn evaluate_without_focus(s: &str) -> error::SpannedResult<sequence::Sequence> {
     let xot = Xot::new();
     let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(&namespaces);
+    let static_context = StaticContext::new(namespaces);
     let context = DynamicContext::new(&xot, &static_context);
 
     let program = interpreter::Program::new(context.static_context, s)?;
@@ -60,7 +60,7 @@ pub fn evaluate_without_focus_with_variables(
     let xot = Xot::new();
     let namespaces = Namespaces::default();
     let variable_names = variables.iter().map(|(key, _)| key).cloned().collect();
-    let static_context = StaticContext::with_variable_names(&namespaces, variable_names);
+    let static_context = StaticContext::with_variable_names(namespaces, variable_names);
     let context = DynamicContext::with_variables(&xot, &static_context, variables);
     let program = interpreter::Program::new(context.static_context, s)?;
     let runnable = program.runnable(&context);

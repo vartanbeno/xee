@@ -34,7 +34,7 @@ impl qt::TestSet {
             Some(Namespaces::FN_NAMESPACE),
         );
 
-        let static_context = StaticContext::new(&namespaces);
+        let static_context = StaticContext::new(namespaces);
         let r = {
             let queries = Queries::new(&static_context);
 
@@ -70,7 +70,7 @@ impl qt::Catalog {
             Some(Namespaces::FN_NAMESPACE),
         );
 
-        let static_context = StaticContext::new(&namespaces);
+        let static_context = StaticContext::new(namespaces);
 
         let r = {
             let queries = Queries::new(&static_context);

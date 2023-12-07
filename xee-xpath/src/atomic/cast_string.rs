@@ -144,7 +144,7 @@ impl atomic::Atomic {
             atomic::Atomic::QName(_) => Ok(self.clone()),
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 // https://www.w3.org/TR/xpath-functions-31/#constructor-qname-notation
-                let namespaces = dynamic_context.static_context.namespaces;
+                let namespaces = &dynamic_context.static_context.namespaces;
                 let name = ast::Name::parse(&s, namespaces);
                 match name {
                     Ok(name) => {

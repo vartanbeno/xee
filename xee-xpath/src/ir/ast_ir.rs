@@ -953,14 +953,14 @@ impl<'a> IrConverter<'a> {
 fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
     let ast = ast::ExprSingle::parse(s)?;
     let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(&namespaces);
+    let static_context = StaticContext::new(namespaces);
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_expr_single(&ast)
 }
 
 pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
     let namespaces = Namespaces::default();
-    let static_context = StaticContext::new(&namespaces);
+    let static_context = StaticContext::new(namespaces);
     let ast = static_context.parse_xpath(s)?;
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)

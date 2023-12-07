@@ -44,7 +44,7 @@ impl EnvironmentSpec {
         }
         for param in &self.params {
             let namespaces = Namespaces::default();
-            let static_context = StaticContext::new(&namespaces);
+            let static_context = StaticContext::new(namespaces);
             let select = (param.select.as_ref()).expect("param: missing select not supported");
             let program = Program::new(&static_context, select);
             if program.is_err() {
