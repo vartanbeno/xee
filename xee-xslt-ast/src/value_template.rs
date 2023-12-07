@@ -1,4 +1,5 @@
-use xee_xpath_ast::{ast as xpath_ast, Namespaces, ParserError};
+use xee_xpath::StaticContext;
+use xee_xpath_ast::{ast as xpath_ast, ParserError};
 
 use crate::ast_core as ast;
 use crate::ast_core::Span;
@@ -46,8 +47,7 @@ pub(crate) struct ValueTemplateTokenizer<'a> {
     span: Span,
     mode: Mode,
     start: usize,
-    namespaces: &'a Namespaces<'a>,
-    variable_names: &'a xpath_ast::VariableNames,
+    static_context: &'a StaticContext<'a>,
     done: bool,
 }
 
@@ -59,20 +59,14 @@ enum Mode {
 }
 
 impl<'a> ValueTemplateTokenizer<'a> {
-    pub(crate) fn new(
-        s: &'a str,
-        span: Span,
-        namespaces: &'a Namespaces<'a>,
-        variable_names: &'a xpath_ast::VariableNames,
-    ) -> Self {
+    pub(crate) fn new(s: &'a str, span: Span, static_context: &'a StaticContext<'a>) -> Self {
         Self {
             s,
             char_indices: s.char_indices().peekable(),
             span,
             mode: Mode::String,
             start: 0,
-            namespaces,
-            variable_names,
+            static_context,
             done: false,
         }
     }
@@ -158,11 +152,9 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
                         return self.next();
                     }
                 }
-                let xpath = xpath_ast::XPath::parse_value_template(
-                    &self.s[self.start..],
-                    self.namespaces,
-                    self.variable_names,
-                );
+                let xpath = self
+                    .static_context
+                    .parse_value_template_xpath(&self.s[self.start..]);
                 match xpath {
                     Ok(xpath) => {
                         let span = xpath.0.span;
@@ -240,118 +232,104 @@ mod tests {
     fn parse_with_span<'a>(
         s: &'a str,
         span: Span,
-        namespaces: &'a Namespaces<'a>,
-        variable_names: &'a xpath_ast::VariableNames,
+        static_context: &'a StaticContext<'a>,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
-        let tokenizer = ValueTemplateTokenizer::new(s, span, namespaces, variable_names);
+        let tokenizer = ValueTemplateTokenizer::new(s, span, static_context);
         tokenizer.collect()
     }
 
     fn parse<'a>(
         s: &'a str,
-        namespaces: &'a Namespaces<'a>,
-        variable_names: &'a xpath_ast::VariableNames,
+        static_context: &'a StaticContext<'a>,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
         let span = Span {
             start: 0,
             end: s.len(),
         };
-        parse_with_span(s, span, namespaces, variable_names)
+        parse_with_span(s, span, static_context)
     }
 
     #[test]
     fn test_string_without_curly() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello world", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello world", &static_context));
     }
 
     #[test]
     fn test_string_start_curly_escaped() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello{{world", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello{{world", &static_context));
     }
 
     #[test]
     fn test_string_end_curly_escaped() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello}}world", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello}}world", &static_context));
     }
 
     #[test]
     fn test_string_with_value() {
-        let variable_names = xpath_ast::VariableNames::default();
-        let namespaces = Namespaces::default();
-        assert_ron_snapshot!(parse("hello {world}!", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello {world}!", &static_context));
     }
 
     #[test]
     fn test_string_with_value_in_span() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
+        let static_context = StaticContext::default();
 
         let s = "hello {world}!";
         let span = Span {
             start: 10,
             end: s.len() + 10,
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &namespaces, &variable_names));
+        assert_ron_snapshot!(parse_with_span(s, span, &static_context));
     }
 
     #[test]
     fn test_string_with_empty_value() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
+        let static_context = StaticContext::default();
 
-        assert_ron_snapshot!(parse("hello {}!", &namespaces, &variable_names));
+        assert_ron_snapshot!(parse("hello {}!", &static_context));
     }
 
     #[test]
     fn test_string_with_multiple_values() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello {a} and {b}!", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello {a} and {b}!", &static_context));
     }
 
     #[test]
     fn test_string_with_multiple_adjacent_values() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello {a}{b}!", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello {a}{b}!", &static_context));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello{world", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello{world", &static_context));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly_with_span() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
+        let static_context = StaticContext::default();
         let s = "hello{world";
         let span = Span {
             start: 10,
             end: 10 + s.len(),
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &namespaces, &variable_names));
+        assert_ron_snapshot!(parse_with_span(s, span, &static_context));
     }
 
     #[test]
     fn test_string_unescaped_end_curly() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello}world", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello}world", &static_context));
     }
 
     #[test]
     fn test_broken_xpath() {
-        let namespaces = Namespaces::default();
-        let variable_names = xpath_ast::VariableNames::default();
-        assert_ron_snapshot!(parse("hello {a +}!", &namespaces, &variable_names));
+        let static_context = StaticContext::default();
+        assert_ron_snapshot!(parse("hello {a +}!", &static_context));
     }
 }

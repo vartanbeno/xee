@@ -1,7 +1,6 @@
 use std::sync::OnceLock;
 
-use xee_xpath_ast::ast as xpath_ast;
-use xee_xpath_ast::Namespaces;
+use xee_xpath::StaticContext;
 use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
@@ -62,6 +61,12 @@ impl<'a> Content<'a> {
         self.state.span(self.node).ok_or(ElementError::Internal)
     }
 
+    pub(crate) fn static_context(&self) -> StaticContext {
+        let namespaces = self.context.namespaces(self.state);
+        let variable_names = self.context.variable_names();
+        StaticContext::new(namespaces, variable_names.clone())
+    }
+
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
         SEQUENCE_CONSTRUCTOR_CONTENT.get_or_init(|| children(sequence_constructor()))(self)
     }
@@ -79,10 +84,9 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
         match state.xot.value(node) {
             Value::Text(text) => {
                 let span = state.span(node).ok_or(ElementError::Internal)?;
-                let namespaces = context.namespaces(state);
-                let variable_names = context.variable_names();
+                let static_context = content.static_context();
                 if context.expand_text {
-                    text_value_template(text.get(), span, &namespaces, variable_names)
+                    text_value_template(text.get(), span, &static_context)
                 } else {
                     Ok(vec![ast::SequenceConstructorItem::Content(
                         ast::Content::Text(text.get().to_string()),
@@ -121,11 +125,10 @@ fn declarations() -> impl NodeParser<ast::Declarations> {
 fn text_value_template(
     s: &str,
     span: Span,
-    namespaces: &Namespaces,
-    variable_names: &xpath_ast::VariableNames,
+    static_context: &StaticContext,
 ) -> Result<Vec<ast::SequenceConstructorItem>, ElementError> {
     let mut items = Vec::new();
-    for token in ValueTemplateTokenizer::new(s, span, namespaces, variable_names) {
+    for token in ValueTemplateTokenizer::new(s, span, static_context) {
         let token = token?;
         let content = match token {
             ValueTemplateItem::String { text, span: _ } => ast::Content::Text(text.to_string()),

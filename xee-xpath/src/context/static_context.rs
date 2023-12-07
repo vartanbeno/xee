@@ -41,6 +41,10 @@ impl<'a> StaticContext<'a> {
         Self::new(namespaces, ast::VariableNames::default())
     }
 
+    pub fn namespaces(&self) -> &Namespaces {
+        &self.namespaces
+    }
+
     pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
         self.collation(self.default_collation_uri())
     }
@@ -66,5 +70,14 @@ impl<'a> StaticContext<'a> {
     /// this static context has been initialized.
     pub fn parse_xpath(&self, s: &str) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
         ast::XPath::parse(s, &self.namespaces, &self.variable_names)
+    }
+
+    /// Parse an XPath string as it would appear in an XSLT value template.
+    /// This means it should have a closing `}` following the xpath expression.
+    pub fn parse_value_template_xpath(
+        &self,
+        s: &str,
+    ) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
+        ast::XPath::parse_value_template(s, &self.namespaces, &self.variable_names)
     }
 }

@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use xee_xpath_ast::{ast as xpath_ast, Namespaces};
+use xee_xpath_ast::ast as xpath_ast;
 
 use crate::ast_core as ast;
 use crate::combinator::Content;
@@ -125,10 +125,9 @@ impl<'a> Attributes<'a> {
     where
         T: Clone + PartialEq + Eq,
     {
-        let namespaces = self.namespaces();
-        let variable_names = self.variable_names();
+        let static_context = self.content.static_context();
         move |s, span| {
-            let iter = ValueTemplateTokenizer::new(s, span, &namespaces, variable_names);
+            let iter = ValueTemplateTokenizer::new(s, span, &static_context);
             let mut tokens = Vec::new();
             for t in iter {
                 let t = t?;
@@ -195,14 +194,6 @@ impl<'a> Attributes<'a> {
         })
     }
 
-    fn namespaces(&self) -> Namespaces {
-        self.content.context.namespaces(self.content.state)
-    }
-
-    fn variable_names(&self) -> &xpath_ast::VariableNames {
-        self.content.context.variable_names()
-    }
-
     fn _qname(s: &str, _span: Span) -> Result<ast::QName, AttributeError> {
         Ok(s.to_string())
     }
@@ -257,7 +248,9 @@ impl<'a> Attributes<'a> {
     }
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, AttributeError> {
-        if let Ok(name) = xpath_ast::Name::parse(s, &self.namespaces()).map(|n| n.value) {
+        if let Ok(name) =
+            xpath_ast::Name::parse(s, self.content.static_context().namespaces()).map(|n| n.value)
+        {
             Ok(name)
         } else {
             Err(AttributeError::InvalidEqName {
@@ -462,7 +455,7 @@ impl<'a> Attributes<'a> {
 
     fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, AttributeError> {
         Ok(ast::Expression {
-            xpath: xpath_ast::XPath::parse(s, &self.namespaces(), self.variable_names())?,
+            xpath: self.content.static_context().parse_xpath(s)?,
             span,
         })
     }
@@ -488,7 +481,10 @@ impl<'a> Attributes<'a> {
         s: &str,
         _span: Span,
     ) -> Result<xpath_ast::SequenceType, AttributeError> {
-        Ok(xpath_ast::SequenceType::parse(s, &self.namespaces())?)
+        Ok(xpath_ast::SequenceType::parse(
+            s,
+            self.content.static_context().namespaces(),
+        )?)
     }
 
     pub(crate) fn sequence_type(
@@ -498,7 +494,10 @@ impl<'a> Attributes<'a> {
     }
 
     fn _item_type(&self, s: &str, _span: Span) -> Result<xpath_ast::ItemType, AttributeError> {
-        Ok(xpath_ast::ItemType::parse(s, &self.namespaces())?)
+        Ok(xpath_ast::ItemType::parse(
+            s,
+            self.content.static_context().namespaces(),
+        )?)
     }
 
     pub(crate) fn item_type(
