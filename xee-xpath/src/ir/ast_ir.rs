@@ -1,4 +1,3 @@
-use ahash::HashSetExt;
 use ahash::{HashMap, HashMapExt};
 
 use xee_schema_type::Xs;
@@ -961,8 +960,8 @@ fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
 
 pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
     let namespaces = Namespaces::default();
-    let ast = ast::XPath::parse(s, &namespaces, &ast::VariableNames::new())?;
     let static_context = StaticContext::new(&namespaces);
+    let ast = static_context.parse_xpath(s)?;
     let mut converter = IrConverter::new(s, &static_context);
     converter.convert_xpath(&ast)
 }
