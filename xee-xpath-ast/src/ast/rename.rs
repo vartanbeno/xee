@@ -1,6 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 
-use crate::{ast, span::WithSpan};
+use crate::{ast, span::WithSpan, VariableNames};
 
 use super::visitor::AstVisitor;
 
@@ -121,8 +121,6 @@ impl AstVisitor for Renamer {
         *name = new_name;
     }
 }
-
-pub type VariableNames = HashSet<ast::Name>;
 
 pub(crate) fn unique_names(expr: &mut ast::XPath, variable_names: &VariableNames) {
     let mut renamer = Renamer::new();

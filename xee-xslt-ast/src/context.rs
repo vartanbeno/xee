@@ -1,5 +1,5 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_ast::{ast as xpath_ast, VariableNames};
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::{ast_core as ast, state::State};
@@ -140,7 +140,7 @@ impl Context {
         Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
     }
 
-    pub(crate) fn variable_names(&self) -> &xpath_ast::VariableNames {
+    pub(crate) fn variable_names(&self) -> &VariableNames {
         &self.variable_names
     }
 }

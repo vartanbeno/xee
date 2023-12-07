@@ -5,6 +5,8 @@ use std::rc::Rc;
 use icu_provider_blob::BlobDataProvider;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
+use xee_xpath_ast::VariableNames;
+use xee_xpath_ast::XPathParserContext;
 
 use crate::error;
 use crate::function::StaticFunctions;
@@ -13,8 +15,7 @@ use crate::string::{Collation, Collations};
 
 #[derive(Debug)]
 pub struct StaticContext<'a> {
-    pub(crate) namespaces: Namespaces<'a>,
-    pub(crate) variable_names: ast::VariableNames,
+    pub(crate) parser_context: XPathParserContext<'a>,
     pub(crate) functions: StaticFunctions,
     provider: BlobDataProvider,
     pub(crate) collations: RefCell<Collations>,
@@ -22,15 +23,14 @@ pub struct StaticContext<'a> {
 
 impl<'a> Default for StaticContext<'a> {
     fn default() -> Self {
-        Self::new(Namespaces::default(), ast::VariableNames::default())
+        Self::new(Namespaces::default(), VariableNames::default())
     }
 }
 
 impl<'a> StaticContext<'a> {
-    pub fn new(namespaces: Namespaces<'a>, variable_names: ast::VariableNames) -> Self {
+    pub fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
         Self {
-            namespaces,
-            variable_names,
+            parser_context: XPathParserContext::new(namespaces, variable_names),
             functions: StaticFunctions::new(),
             collations: RefCell::new(Collations::new()),
             provider: provider(),
@@ -38,11 +38,15 @@ impl<'a> StaticContext<'a> {
     }
 
     pub fn from_namespaces(namespaces: Namespaces<'a>) -> Self {
-        Self::new(namespaces, ast::VariableNames::default())
+        Self::new(namespaces, VariableNames::default())
     }
 
     pub fn namespaces(&self) -> &Namespaces {
-        &self.namespaces
+        &self.parser_context.namespaces
+    }
+
+    pub fn variable_names(&self) -> &VariableNames {
+        &self.parser_context.variable_names
     }
 
     pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
@@ -69,7 +73,7 @@ impl<'a> StaticContext<'a> {
     /// This uses the namespaces and variable names with which
     /// this static context has been initialized.
     pub fn parse_xpath(&self, s: &str) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
-        ast::XPath::parse(s, &self.namespaces, &self.variable_names)
+        self.parser_context.parse_xpath(s)
     }
 
     /// Parse an XPath string as it would appear in an XSLT value template.
@@ -78,6 +82,6 @@ impl<'a> StaticContext<'a> {
         &self,
         s: &str,
     ) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
-        ast::XPath::parse_value_template(s, &self.namespaces, &self.variable_names)
+        self.parser_context.parse_value_template_xpath(s)
     }
 }

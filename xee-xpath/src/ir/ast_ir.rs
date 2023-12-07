@@ -227,7 +227,7 @@ impl<'a> IrConverter<'a> {
         let context_names = self.push_context();
         // define any external variable names
         let mut ir_names = Vec::new();
-        for name in &self.static_context.variable_names {
+        for name in self.static_context.variable_names() {
             ir_names.push(self.new_var_name(name));
         }
         let exprs_bindings = self.expr(&ast.0)?;

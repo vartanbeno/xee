@@ -11,9 +11,10 @@ use chumsky::input::Stream;
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 
+use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
-use crate::ast::{self, VariableNames};
+use crate::context::VariableNames;
 use crate::error::ParserError;
 use crate::lexer::{lexer, Token};
 use crate::namespaces::Namespaces;
