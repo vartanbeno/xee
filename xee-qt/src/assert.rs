@@ -764,7 +764,7 @@ impl fmt::Display for Failure {
 
 fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
     let static_context = StaticContext::default();
-    let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
+    let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
     let dynamic_context = DynamicContext::with_documents(
         runnable.xot(),
         &static_context,
@@ -783,7 +783,7 @@ fn run_xpath_with_result(
     let name = Name::unprefixed("result");
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
-    let program = Program::new(&static_context, &expr.0).map_err(|e| e.error)?;
+    let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = vec![(name, sequence.items().collect::<Result<Vec<_>>>()?)];
     let dynamic_context = DynamicContext::with_documents_and_variables(
         runnable.xot(),

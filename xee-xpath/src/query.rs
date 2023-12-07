@@ -49,7 +49,7 @@ impl<'s> Queries<'s> {
     }
 
     fn register(&mut self, s: &str) -> error::Result<usize> {
-        let program = interpreter::Program::new(self.static_context, s).map_err(|e| e.error)?;
+        let program = interpreter::Program::parse(self.static_context, s).map_err(|e| e.error)?;
         let id = self.queries.len();
         self.queries.push(program);
         Ok(id)

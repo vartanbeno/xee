@@ -202,7 +202,7 @@ impl qt::TestCase {
 
         let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
         let static_context = StaticContext::new(namespaces, variable_names);
-        let program = Program::new(&static_context, &self.test);
+        let program = Program::parse(&static_context, &self.test);
         let program = match program {
             Ok(xpath) => xpath,
             Err(error) => {

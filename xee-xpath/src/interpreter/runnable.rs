@@ -6,7 +6,6 @@ use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
 use crate::sequence;
-use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
 use crate::Occurrence;
@@ -63,7 +62,7 @@ impl<'a> Runnable<'a> {
         match value {
             stack::Value::Absent => Err(SpannedError {
                 error: error::Error::XPDY0002,
-                span: SourceSpan::entire(&self.program.src),
+                span: self.program.span().into(),
             }),
             _ => Ok(value),
         }
@@ -85,7 +84,7 @@ impl<'a> Runnable<'a> {
         let sequence: sequence::Sequence = value.into();
         sequence.items().one().map_err(|error| SpannedError {
             error,
-            span: SourceSpan::entire(&self.program.src),
+            span: self.program.span().into(),
         })
     }
 
@@ -97,7 +96,7 @@ impl<'a> Runnable<'a> {
         let sequence: sequence::Sequence = value.into();
         sequence.items().option().map_err(|error| SpannedError {
             error,
-            span: SourceSpan::entire(&self.program.src),
+            span: self.program.span().into(),
         })
     }
 

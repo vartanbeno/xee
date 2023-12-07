@@ -1,3 +1,6 @@
+use xee_xpath_ast::ast;
+use xee_xpath_ast::ast::Span;
+
 use crate::context;
 use crate::error;
 use crate::function;
@@ -9,18 +12,24 @@ use super::Runnable;
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    pub(crate) src: String,
+    xpath: ast::XPath,
     pub(crate) functions: Vec<function::InlineFunction>,
 }
 
 impl Program {
-    pub fn new(static_context: &context::StaticContext, xpath: &str) -> error::SpannedResult<Self> {
-        let ast = static_context.parse_xpath(xpath)?;
-        let mut ir_converter = ir::IrConverter::new(xpath, static_context);
-        let expr = ir_converter.convert_xpath(&ast)?;
+    /// Construct a program from an XPath AST.
+    pub fn new(
+        static_context: &context::StaticContext,
+        xpath: ast::XPath,
+    ) -> error::SpannedResult<Self> {
+        let mut ir_converter = ir::IrConverter::new(static_context);
+        let expr = ir_converter.convert_xpath(&xpath)?;
         // this expression contains a function definition, we're getting it
         // in the end
-        let mut program = Program::empty(xpath.to_string());
+        let mut program = Program {
+            xpath,
+            functions: Vec::new(),
+        };
         let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
         let builder = FunctionBuilder::new(&mut program);
         let mut compiler = InterpreterCompiler {
@@ -33,11 +42,17 @@ impl Program {
         Ok(program)
     }
 
-    pub(crate) fn empty(src: String) -> Self {
-        Program {
-            src,
-            functions: Vec::new(),
-        }
+    /// Parse an XPath string into a program.
+    pub fn parse(
+        static_context: &context::StaticContext,
+        xpath: &str,
+    ) -> error::SpannedResult<Self> {
+        let xpath = static_context.parse_xpath(xpath)?;
+        Self::new(static_context, xpath)
+    }
+
+    pub(crate) fn span(&self) -> Span {
+        self.xpath.0.span
     }
 
     pub fn runnable<'a>(&'a self, dynamic_context: &'a context::DynamicContext) -> Runnable<'a> {

@@ -55,7 +55,7 @@ where
     let document = documents.get(&uri).unwrap();
     let nodes = get_nodes(&xot, document);
 
-    let xpath = Program::new(context.static_context, xpath)?;
+    let xpath = Program::parse(context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(document.root)?;
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())

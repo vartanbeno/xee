@@ -44,7 +44,7 @@ impl EnvironmentSpec {
         for param in &self.params {
             let static_context = StaticContext::default();
             let select = (param.select.as_ref()).expect("param: missing select not supported");
-            let program = Program::new(&static_context, select);
+            let program = Program::parse(&static_context, select);
             if program.is_err() {
                 println!("param: select xpath parse failed: {}", select);
                 continue;
