@@ -68,32 +68,34 @@ impl<'a> Runnable<'a> {
         }
     }
 
+    /// Run the program against a xot Node.
     pub fn many_xot_node(&self, node: xot::Node) -> error::SpannedResult<sequence::Sequence> {
         let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
         self.many(Some(&item))
     }
 
+    /// Run the program against a sequence item.
     pub fn many(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Sequence> {
         let value = self.run_value(item)?;
         Ok(value.into())
     }
 
+    /// Run the program, expect a single item as the result.
     pub fn one(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Item> {
-        let value = self.run_value(item)?;
-        let sequence: sequence::Sequence = value.into();
+        let sequence = self.many(item)?;
         sequence.items().one().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),
         })
     }
 
+    /// Run the program, expect an optional single item as the result.
     pub fn option(
         &self,
         item: Option<&sequence::Item>,
     ) -> error::SpannedResult<Option<sequence::Item>> {
-        let value = self.run_value(item)?;
-        let sequence: sequence::Sequence = value.into();
+        let sequence = self.many(item)?;
         sequence.items().option().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),

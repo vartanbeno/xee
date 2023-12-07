@@ -55,6 +55,7 @@ impl Program {
         self.xpath.0.span
     }
 
+    /// Obtain a runnable version of this program, with a particular dynamic context.
     pub fn runnable<'a>(&'a self, dynamic_context: &'a context::DynamicContext) -> Runnable<'a> {
         Runnable::new(self, dynamic_context)
     }
