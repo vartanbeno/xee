@@ -25,15 +25,15 @@ pub fn evaluate_root(
     xpath: &str,
     default_element_namespace: Option<&str>,
 ) -> error::SpannedResult<sequence::Sequence> {
-    let uri = xml::Uri("http://example.com".to_string());
-    let mut documents = xml::Documents::new();
-    documents.add_root(xot, &uri, root);
     let namespaces = Namespaces::new(
         Namespaces::default_namespaces(),
         default_element_namespace,
         Some(FN_NAMESPACE),
     );
     let static_context = StaticContext::from_namespaces(namespaces);
+    let uri = xml::Uri("http://example.com".to_string());
+    let mut documents = xml::Documents::new();
+    documents.add_root(xot, &uri, root);
     let context = DynamicContext::with_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
