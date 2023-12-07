@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 
-use xee_xpath::StaticContext;
+use xee_xpath_ast::XPathParserContext;
 use xot::{NameId, Node, Value};
 
 use crate::ast_core::Span;
@@ -61,10 +61,8 @@ impl<'a> Content<'a> {
         self.state.span(self.node).ok_or(ElementError::Internal)
     }
 
-    pub(crate) fn static_context(&self) -> StaticContext {
-        let namespaces = self.context.namespaces(self.state);
-        let variable_names = self.context.variable_names();
-        StaticContext::new(namespaces, variable_names.clone())
+    pub(crate) fn parser_context(&self) -> XPathParserContext {
+        self.context.parser_context(self.state)
     }
 
     pub(crate) fn sequence_constructor(&self) -> Result<ast::SequenceConstructor, ElementError> {
@@ -84,9 +82,9 @@ pub(crate) fn sequence_constructor() -> impl NodeParser<ast::SequenceConstructor
         match state.xot.value(node) {
             Value::Text(text) => {
                 let span = state.span(node).ok_or(ElementError::Internal)?;
-                let static_context = content.static_context();
+                let parser_context = content.parser_context();
                 if context.expand_text {
-                    text_value_template(text.get(), span, &static_context)
+                    text_value_template(text.get(), span, &parser_context)
                 } else {
                     Ok(vec![ast::SequenceConstructorItem::Content(
                         ast::Content::Text(text.get().to_string()),
@@ -125,10 +123,10 @@ fn declarations() -> impl NodeParser<ast::Declarations> {
 fn text_value_template(
     s: &str,
     span: Span,
-    static_context: &StaticContext,
+    parser_context: &XPathParserContext,
 ) -> Result<Vec<ast::SequenceConstructorItem>, ElementError> {
     let mut items = Vec::new();
-    for token in ValueTemplateTokenizer::new(s, span, static_context) {
+    for token in ValueTemplateTokenizer::new(s, span, parser_context) {
         let token = token?;
         let content = match token {
             ValueTemplateItem::String { text, span: _ } => ast::Content::Text(text.to_string()),

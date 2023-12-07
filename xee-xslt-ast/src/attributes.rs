@@ -125,9 +125,9 @@ impl<'a> Attributes<'a> {
     where
         T: Clone + PartialEq + Eq,
     {
-        let static_context = self.content.static_context();
+        let parser_context = self.content.parser_context();
         move |s, span| {
-            let iter = ValueTemplateTokenizer::new(s, span, &static_context);
+            let iter = ValueTemplateTokenizer::new(s, span, &parser_context);
             let mut tokens = Vec::new();
             for t in iter {
                 let t = t?;
@@ -249,7 +249,7 @@ impl<'a> Attributes<'a> {
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, AttributeError> {
         if let Ok(name) =
-            xpath_ast::Name::parse(s, self.content.static_context().namespaces()).map(|n| n.value)
+            xpath_ast::Name::parse(s, &self.content.parser_context().namespaces).map(|n| n.value)
         {
             Ok(name)
         } else {
@@ -455,7 +455,7 @@ impl<'a> Attributes<'a> {
 
     fn _xpath(&self, s: &str, span: Span) -> Result<ast::Expression, AttributeError> {
         Ok(ast::Expression {
-            xpath: self.content.static_context().parse_xpath(s)?,
+            xpath: self.content.parser_context().parse_xpath(s)?,
             span,
         })
     }
@@ -483,7 +483,7 @@ impl<'a> Attributes<'a> {
     ) -> Result<xpath_ast::SequenceType, AttributeError> {
         Ok(xpath_ast::SequenceType::parse(
             s,
-            self.content.static_context().namespaces(),
+            &self.content.parser_context().namespaces,
         )?)
     }
 
@@ -496,7 +496,7 @@ impl<'a> Attributes<'a> {
     fn _item_type(&self, s: &str, _span: Span) -> Result<xpath_ast::ItemType, AttributeError> {
         Ok(xpath_ast::ItemType::parse(
             s,
-            self.content.static_context().namespaces(),
+            &self.content.parser_context().namespaces,
         )?)
     }
 

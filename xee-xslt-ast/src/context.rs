@@ -1,5 +1,5 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use xee_xpath_ast::{ast as xpath_ast, VariableNames};
+use xee_xpath_ast::{ast as xpath_ast, VariableNames, XPathParserContext};
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
 use crate::{ast_core as ast, state::State};
@@ -142,5 +142,10 @@ impl Context {
 
     pub(crate) fn variable_names(&self) -> &VariableNames {
         &self.variable_names
+    }
+
+    pub(crate) fn parser_context<'a>(&'a self, state: &'a State) -> XPathParserContext<'a> {
+        let namespaces = self.namespaces(state);
+        XPathParserContext::new(namespaces, self.variable_names.clone())
     }
 }

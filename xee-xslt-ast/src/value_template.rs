@@ -1,5 +1,4 @@
-use xee_xpath::StaticContext;
-use xee_xpath_ast::{ast as xpath_ast, ParserError};
+use xee_xpath_ast::{ast as xpath_ast, ParserError, XPathParserContext};
 
 use crate::ast_core as ast;
 use crate::ast_core::Span;
@@ -47,7 +46,7 @@ pub(crate) struct ValueTemplateTokenizer<'a> {
     span: Span,
     mode: Mode,
     start: usize,
-    static_context: &'a StaticContext<'a>,
+    parser_context: &'a XPathParserContext<'a>,
     done: bool,
 }
 
@@ -59,14 +58,14 @@ enum Mode {
 }
 
 impl<'a> ValueTemplateTokenizer<'a> {
-    pub(crate) fn new(s: &'a str, span: Span, static_context: &'a StaticContext<'a>) -> Self {
+    pub(crate) fn new(s: &'a str, span: Span, parser_context: &'a XPathParserContext<'a>) -> Self {
         Self {
             s,
             char_indices: s.char_indices().peekable(),
             span,
             mode: Mode::String,
             start: 0,
-            static_context,
+            parser_context,
             done: false,
         }
     }
@@ -153,7 +152,7 @@ impl<'a> Iterator for ValueTemplateTokenizer<'a> {
                     }
                 }
                 let xpath = self
-                    .static_context
+                    .parser_context
                     .parse_value_template_xpath(&self.s[self.start..]);
                 match xpath {
                     Ok(xpath) => {
@@ -232,104 +231,104 @@ mod tests {
     fn parse_with_span<'a>(
         s: &'a str,
         span: Span,
-        static_context: &'a StaticContext<'a>,
+        parser_context: &'a XPathParserContext<'a>,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
-        let tokenizer = ValueTemplateTokenizer::new(s, span, static_context);
+        let tokenizer = ValueTemplateTokenizer::new(s, span, parser_context);
         tokenizer.collect()
     }
 
     fn parse<'a>(
         s: &'a str,
-        static_context: &'a StaticContext<'a>,
+        parser_context: &'a XPathParserContext<'a>,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
         let span = Span {
             start: 0,
             end: s.len(),
         };
-        parse_with_span(s, span, static_context)
+        parse_with_span(s, span, parser_context)
     }
 
     #[test]
     fn test_string_without_curly() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello world", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello world", &parser_context));
     }
 
     #[test]
     fn test_string_start_curly_escaped() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello{{world", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello{{world", &parser_context));
     }
 
     #[test]
     fn test_string_end_curly_escaped() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello}}world", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello}}world", &parser_context));
     }
 
     #[test]
     fn test_string_with_value() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello {world}!", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello {world}!", &parser_context));
     }
 
     #[test]
     fn test_string_with_value_in_span() {
-        let static_context = StaticContext::default();
+        let parser_context = XPathParserContext::default();
 
         let s = "hello {world}!";
         let span = Span {
             start: 10,
             end: s.len() + 10,
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &static_context));
+        assert_ron_snapshot!(parse_with_span(s, span, &parser_context));
     }
 
     #[test]
     fn test_string_with_empty_value() {
-        let static_context = StaticContext::default();
+        let parser_context = XPathParserContext::default();
 
-        assert_ron_snapshot!(parse("hello {}!", &static_context));
+        assert_ron_snapshot!(parse("hello {}!", &parser_context));
     }
 
     #[test]
     fn test_string_with_multiple_values() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello {a} and {b}!", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello {a} and {b}!", &parser_context));
     }
 
     #[test]
     fn test_string_with_multiple_adjacent_values() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello {a}{b}!", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello {a}{b}!", &parser_context));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello{world", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello{world", &parser_context));
     }
 
     #[test]
     fn test_string_unescaped_unclosed_start_curly_with_span() {
-        let static_context = StaticContext::default();
+        let parser_context = XPathParserContext::default();
         let s = "hello{world";
         let span = Span {
             start: 10,
             end: 10 + s.len(),
         };
-        assert_ron_snapshot!(parse_with_span(s, span, &static_context));
+        assert_ron_snapshot!(parse_with_span(s, span, &parser_context));
     }
 
     #[test]
     fn test_string_unescaped_end_curly() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello}world", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello}world", &parser_context));
     }
 
     #[test]
     fn test_broken_xpath() {
-        let static_context = StaticContext::default();
-        assert_ron_snapshot!(parse("hello {a +}!", &static_context));
+        let parser_context = XPathParserContext::default();
+        assert_ron_snapshot!(parse("hello {a +}!", &parser_context));
     }
 }
