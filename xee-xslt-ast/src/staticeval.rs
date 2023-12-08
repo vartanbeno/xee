@@ -64,6 +64,11 @@ impl StaticEvaluator {
                     span: content.span()?,
                 })?;
             let attributes = Attributes::new(content, element);
+            // TODO: the problem here is that if use-when is false, we should
+            // skip even nodes that contain illegal values, but we can't
+            // evaluate use-when yet during the parse.
+            // so this implies we should do the parse later, and here
+            // just establish what kind of node we have
             let variable = ast::Variable::parse_and_validate(&attributes)?;
             if variable.static_ {
                 Ok(StaticNode {
@@ -92,14 +97,22 @@ impl StaticEvaluator {
         for static_node in static_nodes {
             let node = static_node.node;
             let current_content = static_content.with_node(node);
+            // if use-when says not to do anything, we skip it
+
             match static_node.instruction {
                 StaticInstruction::Variable(variable) => {
+                    // TODO we should actually only try to parse the variable
+                    // here, after we evaluate its use-when
                     let name = variable.name.clone();
                     let value = self.static_variable_value(variable, current_content)?;
                     self.static_global_variables.insert(name, value);
                 }
                 StaticInstruction::Param(param) => {}
-                StaticInstruction::Other => {}
+                StaticInstruction::Other => {
+                    // TODO: here we should evaluate use-when and if
+                    // true, shadow-attributes, and then recursively down
+                    // into children
+                }
             }
         }
 
