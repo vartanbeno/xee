@@ -103,6 +103,18 @@ impl<'a> Attributes<'a> {
         result
     }
 
+    pub(crate) fn validate_unseen(&self) -> Result<(), AttributeError> {
+        let unseen_attributes = self.unseen_attributes();
+        if !unseen_attributes.is_empty() {
+            return Err(self.content.state.attribute_unexpected(
+                self.content.node,
+                unseen_attributes[0],
+                "unexpected attribute",
+            ));
+        }
+        Ok(())
+    }
+
     fn _boolean(s: &str, span: Span) -> Result<bool, AttributeError> {
         match s {
             "yes" | "true" | "1" => Ok(true),

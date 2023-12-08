@@ -36,12 +36,7 @@ pub(crate) trait InstructionParser: Sized {
         let state = content.state;
         let item = Self::parse(&attributes.content, attributes)?;
         item.validate(node, state)?;
-        let unseen_attributes = attributes.unseen_attributes();
-        if !unseen_attributes.is_empty() {
-            return Err(state
-                .attribute_unexpected(node, unseen_attributes[0], "unexpected attribute")
-                .into());
-        }
+        attributes.validate_unseen()?;
         Ok(item)
     }
 }

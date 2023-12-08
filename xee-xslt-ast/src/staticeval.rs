@@ -61,7 +61,8 @@ impl StaticEvaluator {
         let content = Content::new(node, &self.state, context);
         let attributes = Attributes::new(content, element);
         // TODO: we don't handle standard attributes, so unseen attributes
-        // will complain if we use one
+        // will complain if we use one. We can have another entry point
+        // that simply doesn't do this check as it'll happen anyway later
         if let Ok(param) = ast::Param::parse_and_validate(&attributes) {
             if param.static_ {
                 return Some(param);
