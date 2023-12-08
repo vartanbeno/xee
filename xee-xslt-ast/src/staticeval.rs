@@ -66,18 +66,8 @@ impl StaticEvaluator {
             let element = xot.element(current);
             if let Some(element) = element {
                 if element.name() == names.xsl_variable {
-                    let current_content = Content::new(current, content.state, current_context);
-                    let attributes = Attributes::new(current_content, element);
-                    if attributes.boolean_with_default(names.static_, false)? {
-                        let name = attributes.required(names.name, attributes.eqname())?;
-                        let select = attributes.required(names.select, attributes.xpath())?;
-                        let value =
-                            self.evaluate_static_xpath(select.xpath, &attributes.content)?;
-                        current_context = attributes.content.context.with_variable_name(&name);
-                        self.static_global_variables.insert(name, value);
-                    } else {
-                        current_context = attributes.content.context.clone();
-                    }
+                    current_context =
+                        self.evaluate_variable(current, element, content.state, current_context)?;
                 } else if element.name() == names.xsl_param {
                     let current_content = Content::new(current, content.state, current_context);
                     let attributes = Attributes::new(current_content, element);
@@ -117,6 +107,28 @@ impl StaticEvaluator {
             node = xot.next_sibling(current);
         }
         Ok(())
+    }
+
+    fn evaluate_variable(
+        &mut self,
+        current: Node,
+        element: &xot::Element,
+        state: &State,
+        current_context: Context,
+    ) -> Result<Context, ElementError> {
+        let current_content = Content::new(current, state, current_context);
+        let attributes = Attributes::new(current_content, element);
+        let names = &state.names;
+        if attributes.boolean_with_default(names.static_, false)? {
+            let name = attributes.required(names.name, attributes.eqname())?;
+            let select = attributes.required(names.select, attributes.xpath())?;
+            let value = self.evaluate_static_xpath(select.xpath, &attributes.content)?;
+            let current_context = attributes.content.context.with_variable_name(&name);
+            self.static_global_variables.insert(name, value);
+            Ok(current_context)
+        } else {
+            Ok(attributes.content.context.clone())
+        }
     }
 
     fn evaluate_static_xpath(
