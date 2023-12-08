@@ -20,13 +20,11 @@ use xot::Node;
 
 use xee_xpath::{DynamicContext, Program, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
-use xot::Xot;
 
 use crate::attributes::Attributes;
 use crate::combinator::Content;
 use crate::context::Context;
 use crate::error::ElementError;
-use crate::names::Names;
 use crate::state::State;
 use crate::whitespace::strip_whitespace;
 
@@ -138,17 +136,14 @@ impl StaticEvaluator {
 }
 
 fn static_evaluate(
-    mut xot: Xot,
-    span_info: xot::SpanInfo,
-    names: Names,
+    mut state: State,
     node: Node,
     static_parameters: Variables,
 ) -> Result<Variables, ElementError> {
-    strip_whitespace(&mut xot, &names, node);
+    strip_whitespace(&mut state.xot, &state.names, node);
 
     let mut evaluator = StaticEvaluator::new(static_parameters);
 
-    let state = State::new(xot, span_info, names);
     let context = Context::new(xot::Prefixes::new());
     let content = Content::new(node, &state, context);
     evaluator.evaluate_top_level(content)?;
@@ -172,8 +167,8 @@ mod tests {
         let names = Names::new(&mut xot);
         let document_element = xot.document_element(root).unwrap();
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, Variables::new()).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 1);
         let name = xpath_ast::Name::new("x".to_string(), None, None);
         assert_eq!(
@@ -195,8 +190,8 @@ mod tests {
         let names = Names::new(&mut xot);
         let document_element = xot.document_element(root).unwrap();
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, Variables::new()).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 2);
         let name = xpath_ast::Name::new("y".to_string(), None, None);
         assert_eq!(
@@ -221,8 +216,8 @@ mod tests {
         let static_parameters =
             Variables::from([(name.clone(), xee_xpath::Item::from("bar").into())]);
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
         assert_eq!(
@@ -246,8 +241,8 @@ mod tests {
         let name = xpath_ast::Name::new("x".to_string(), None, None);
         let static_parameters = Variables::new();
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
         assert_eq!(
@@ -271,8 +266,8 @@ mod tests {
         let name = xpath_ast::Name::new("x".to_string(), None, None);
         let static_parameters = Variables::new();
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
         assert_eq!(
@@ -296,10 +291,29 @@ mod tests {
         let name = xpath_ast::Name::new("x".to_string(), None, None);
         let static_parameters = Variables::new();
 
-        let variables =
-            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        let state = State::new(xot, span_info, names);
+        let variables = static_evaluate(state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
         assert_eq!(variables.get(&name), Some(&Sequence::empty()));
     }
+
+    // #[test]
+    // fn test_xsl_use_when_false_on_top_level() {
+    //     let xml = r#"
+    //     <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+    //         <foo xsl:use-when="false()">
+    //     </xsl:stylesheet>
+    //     "#;
+    //     let mut xot = xot::Xot::new();
+    //     let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+    //     let names = Names::new(&mut xot);
+    //     let document_element = xot.document_element(root).unwrap();
+
+    //     static_evaluate(xot, span_info, names, document_element, Variables::new()).unwrap();
+    //     assert_eq!(
+    //         xot.to_string(document_element).unwrap(),
+    //         "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"/>"
+    //     );
+    // }
 }
