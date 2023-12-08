@@ -1,11 +1,3 @@
-use xot::Node;
-
-use xee_xpath::{DynamicContext, Program, Sequence, Variables};
-use xee_xpath_ast::ast as xpath_ast;
-use xot::Xot;
-
-use crate::ast_core as ast;
-use crate::attributes::Attributes;
 // Static evaluation of an XSLT stylesheet
 // This handles:
 // - Whitespace cleanup
@@ -24,10 +16,16 @@ use crate::attributes::Attributes;
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
+use xot::Node;
+
+use xee_xpath::{DynamicContext, Program, Sequence, Variables};
+use xee_xpath_ast::ast as xpath_ast;
+use xot::Xot;
+
+use crate::attributes::Attributes;
 use crate::combinator::Content;
 use crate::context::Context;
 use crate::error::ElementError;
-use crate::instruction::InstructionParser;
 use crate::names::Names;
 use crate::state::State;
 use crate::whitespace::strip_whitespace;
@@ -137,69 +135,6 @@ impl StaticEvaluator {
         let runnable = program.runnable(&dynamic_context);
         runnable.many(None)
     }
-
-    fn static_param_instruction(&self, node: Node, content: Content) -> Option<ast::Param> {
-        let element = content.state.xot.element(node)?;
-        let attributes = Attributes::new(content, element);
-        // TODO: we don't handle standard attributes, so unseen attributes
-        // will complain if we use one. We can have another entry point
-        // that simply doesn't do this check as it'll happen anyway later
-        if let Ok(param) = ast::Param::parse_and_validate(&attributes) {
-            if param.static_ {
-                return Some(param);
-            }
-        }
-        None
-    }
-
-    fn static_param_value(&self, param: ast::Param) -> Result<Sequence, xee_xpath::SpannedError> {
-        // if it's available in the static parameters, return it
-        if let Some(value) = self.static_parameters.get(&param.name) {
-            return Ok(value.clone());
-        }
-        if param.required {
-            // we don't have a value, so error
-        }
-
-        // if it's not required, we fall back on select, if it's availab
-        // if let Some(select) = param.select {
-        //     // TODO: select will have to be created with the right
-        //     // variables in the context
-        //     return self.evaluate_static_xpath(&select);
-        // }
-
-        // without select, we default to the empty sequence if there's
-        // an 'as' attribute and otherwise the empty string
-        if param.as_.is_some() {
-            Ok(Sequence::empty())
-        } else {
-            Ok(Sequence::from(""))
-        }
-    }
-
-    fn static_variable_instruction(&self, node: Node, content: Content) -> Option<ast::Variable> {
-        let element = content.state.xot.element(node)?;
-        let attributes = Attributes::new(content, element);
-        if let Ok(variable) = ast::Variable::parse_and_validate(&attributes) {
-            if variable.static_ {
-                return Some(variable);
-            }
-        }
-        None
-    }
-
-    // fn static_variable_value(
-    //     &self,
-    //     variable: ast::Variable,
-    //     content: Content,
-    // ) -> Result<Sequence, xee_xpath::SpannedError> {
-    //     if let Some(select) = variable.select {
-    //         self.evaluate_static_xpath(select.xpath, content)
-    //     } else {
-    //         // This is an error
-    //         todo!()
-    //     }
-    // }
 }
 
 fn static_evaluate(
