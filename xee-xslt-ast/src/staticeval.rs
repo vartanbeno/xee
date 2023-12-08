@@ -6,6 +6,24 @@ use xot::Xot;
 
 use crate::ast_core as ast;
 use crate::attributes::Attributes;
+// Static evaluation of an XSLT stylesheet
+// This handles:
+// - Whitespace cleanup
+// - Static parameters and variables
+// - use-when
+// - shadow attributes
+
+// The end result is the static global variables, and modified XML tree
+// that has any element with use-when that evaluates to false removed,
+// as well as any shadow attributes resolved to normal attributes.
+// Any attribute on an XSLT element prefixed by _ is taken as a shadow
+// attribute - if the attribute later on turns on not to exist, then
+// we get a parse error then.
+
+// The procedure is quite tricky: in order to parse xpath expressions
+// statically we need to pass in the names of any known global variables that
+// we've encountered before.
+
 use crate::combinator::Content;
 use crate::context::Context;
 use crate::error::ElementError;
