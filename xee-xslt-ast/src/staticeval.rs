@@ -51,10 +51,10 @@ enum StaticInstruction {
 }
 
 impl StaticEvaluator {
-    fn new() -> Self {
+    fn new(static_parameters: Variables) -> Self {
         Self {
             static_global_variables: Variables::new(),
-            static_parameters: Variables::new(),
+            static_parameters,
             to_remove: Vec::new(),
             structure_stack: Vec::new(),
         }
@@ -79,6 +79,38 @@ impl StaticEvaluator {
                             self.evaluate_static_xpath(select.xpath, &attributes.content)?;
                         current_context = attributes.content.context.with_variable_name(&name);
                         self.static_global_variables.insert(name, value);
+                    } else {
+                        current_context = attributes.content.context.clone();
+                    }
+                } else if element.name() == names.xsl_param {
+                    let current_content = Content::new(current, content.state, current_context);
+                    let attributes = Attributes::new(current_content, element);
+                    if attributes.boolean_with_default(names.static_, false)? {
+                        let name = attributes.required(names.name, attributes.eqname())?;
+                        let required = attributes.boolean_with_default(names.required, false)?;
+                        current_context = attributes.content.context.with_variable_name(&name);
+                        let value = self.static_parameters.get(&name);
+                        let insert_value = if let Some(value) = value {
+                            value.clone()
+                        } else if required {
+                            // a required value is mandatory, should return proper error
+                            todo!()
+                        } else {
+                            let select = attributes.optional(names.select, attributes.xpath())?;
+                            if let Some(select) = select {
+                                self.evaluate_static_xpath(select.xpath, &attributes.content)?
+                            } else {
+                                // we interpret 'as' as a string here, as we really only want to
+                                // check for its existence
+                                let as_ = attributes.optional(names.as_, attributes.string())?;
+                                if as_.is_some() {
+                                    Sequence::empty()
+                                } else {
+                                    Sequence::from("")
+                                }
+                            }
+                        };
+                        self.static_global_variables.insert(name, insert_value);
                     } else {
                         current_context = attributes.content.context.clone();
                     }
@@ -175,10 +207,11 @@ fn static_evaluate(
     span_info: xot::SpanInfo,
     names: Names,
     node: Node,
+    static_parameters: Variables,
 ) -> Result<Variables, ElementError> {
     strip_whitespace(&mut xot, &names, node);
 
-    let mut evaluator = StaticEvaluator::new();
+    let mut evaluator = StaticEvaluator::new(static_parameters);
 
     let state = State::new(xot, span_info, names);
     let context = Context::new(xot::Prefixes::new());
@@ -204,7 +237,8 @@ mod tests {
         let names = Names::new(&mut xot);
         let document_element = xot.document_element(root).unwrap();
 
-        let variables = static_evaluate(xot, span_info, names, document_element).unwrap();
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 1);
         let name = xpath_ast::Name::new("x".to_string(), None, None);
         assert_eq!(
@@ -226,12 +260,111 @@ mod tests {
         let names = Names::new(&mut xot);
         let document_element = xot.document_element(root).unwrap();
 
-        let variables = static_evaluate(xot, span_info, names, document_element).unwrap();
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 2);
         let name = xpath_ast::Name::new("y".to_string(), None, None);
         assert_eq!(
             variables.get(&name),
             Some(&xee_xpath::Item::from("foo!").into())
         );
+    }
+
+    #[test]
+    fn test_one_parameter_present() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:param name="x" static="yes" select="'foo'"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let name = xpath_ast::Name::new("x".to_string(), None, None);
+        let static_parameters =
+            Variables::from([(name.clone(), xee_xpath::Item::from("bar").into())]);
+
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        assert_eq!(variables.len(), 1);
+
+        assert_eq!(
+            variables.get(&name),
+            Some(&xee_xpath::Item::from("bar").into())
+        );
+    }
+
+    #[test]
+    fn test_one_parameter_absent_not_required_with_select() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:param name="x" static="yes" select="'foo'"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let name = xpath_ast::Name::new("x".to_string(), None, None);
+        let static_parameters = Variables::new();
+
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        assert_eq!(variables.len(), 1);
+
+        assert_eq!(
+            variables.get(&name),
+            Some(&xee_xpath::Item::from("foo").into())
+        );
+    }
+
+    #[test]
+    fn test_one_parameter_absent_no_select_without_as() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:param name="x" static="yes" />
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let name = xpath_ast::Name::new("x".to_string(), None, None);
+        let static_parameters = Variables::new();
+
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        assert_eq!(variables.len(), 1);
+
+        assert_eq!(
+            variables.get(&name),
+            Some(&xee_xpath::Item::from("").into())
+        );
+    }
+
+    #[test]
+    fn test_one_parameter_absent_no_select_with_as() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:param name="x" static="yes" as="xs:integer" />
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let name = xpath_ast::Name::new("x".to_string(), None, None);
+        let static_parameters = Variables::new();
+
+        let variables =
+            static_evaluate(xot, span_info, names, document_element, static_parameters).unwrap();
+        assert_eq!(variables.len(), 1);
+
+        assert_eq!(variables.get(&name), Some(&Sequence::empty()));
     }
 }
