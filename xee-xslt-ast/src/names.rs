@@ -210,6 +210,7 @@ pub(crate) struct Names {
     pub(crate) xsl_sort: xot::NameId,
     pub(crate) xsl_text: xot::NameId,
     pub(crate) xsl_transform: xot::NameId,
+    pub(crate) xsl_variable: xot::NameId,
     pub(crate) xsl_when: xot::NameId,
     pub(crate) xsl_with_param: xot::NameId,
 
@@ -451,6 +452,7 @@ impl Names {
             xsl_sort: xot.add_name_ns("sort", xsl_ns),
             xsl_text: xot.add_name_ns("text", xsl_ns),
             xsl_transform: xot.add_name_ns("transform", xsl_ns),
+            xsl_variable: xot.add_name_ns("variable", xsl_ns),
             xsl_when: xot.add_name_ns("when", xsl_ns),
             xsl_with_param: xot.add_name_ns("with-param", xsl_ns),
 

@@ -6,34 +6,13 @@ use xot::Xot;
 
 use crate::ast_core as ast;
 use crate::attributes::Attributes;
-use crate::combinator::one;
 use crate::combinator::Content;
-use crate::combinator::NodeParser;
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::InstructionParser;
 use crate::names::Names;
 use crate::state::State;
 use crate::whitespace::strip_whitespace;
-
-// fn algorithm() {
-//     let use_when_result = evaluate_use_when(entry, global_variables);
-//     if use_when_result == true {
-//         let xsl_param = get_xsl_param(entry);
-//         if let Some(xsl_param) = xsl_param {
-//             let variable = get_static_param(xsl_param, global_variables);
-//             global_variables.insert(xsl_param.name, variable);
-//             return;
-//         }
-//         let xsl_variable = get_xsl_variable(entry);
-//         if let Some(xsl_variable) = xsl_variable {
-//             let variable = get_static_variable(xsl_variable, global_variables);
-//             global_variables.insert(xsl_variable.name, variable);
-//         }
-//     } else {
-//         to_remove.push(entry);
-//     }
-// }
 
 struct StaticEvaluator {
     static_global_variables: Variables,
@@ -48,8 +27,8 @@ struct StaticNode {
 }
 
 enum StaticInstruction {
-    Variable(ast::Variable),
-    Param(ast::Param),
+    Variable,
+    Param,
     Other,
 }
 
@@ -64,79 +43,38 @@ impl StaticEvaluator {
     }
 
     fn evaluate_top_level(&mut self, content: Content) -> Result<(), ElementError> {
-        // we have a parser that parses variable and param children and
-        // other children. It doesn't execute anything, just records them
-        // Then we go through the children, update global variables accordingly
-        // and evaluate use when using it.
-        let variable_instruction = one(|content| {
-            let node = content.node;
-            let element = content
-                .state
-                .xot
-                .element(node)
-                .ok_or(ElementError::Unexpected {
-                    span: content.span()?,
-                })?;
-            let attributes = Attributes::new(content, element);
-            // TODO: the problem here is that if use-when is false, we should
-            // skip even nodes that contain illegal values, but we can't
-            // evaluate use-when yet during the parse.
-            // so this implies we should do the parse later, and here
-            // just establish what kind of node we have
-            let variable = ast::Variable::parse_and_validate(&attributes)?;
-            if variable.static_ {
-                Ok(StaticNode {
-                    node,
-                    instruction: StaticInstruction::Variable(variable),
-                })
-            } else {
-                Err(ElementError::Unexpected {
-                    span: attributes.content.span()?,
-                })
-            }
-        });
-        let other_instruction = one(|content| {
-            Ok(StaticNode {
-                node: content.node,
-                instruction: StaticInstruction::Other,
-            })
-        });
-        let parser = (variable_instruction.or(other_instruction))
-            .many()
-            .contains();
-        let static_content = content.clone();
-        let static_nodes = parser.parse_content(content)?;
-
-        // now we can execute static nodes
-        for static_node in static_nodes {
-            let node = static_node.node;
-            let current_content = static_content.with_node(node);
-            // if use-when says not to do anything, we skip it
-
-            match static_node.instruction {
-                StaticInstruction::Variable(variable) => {
-                    // TODO we should actually only try to parse the variable
-                    // here, after we evaluate its use-when
-                    let name = variable.name.clone();
-                    let value = self.static_variable_value(variable, current_content)?;
-                    self.static_global_variables.insert(name, value);
-                }
-                StaticInstruction::Param(param) => {}
-                StaticInstruction::Other => {
-                    // TODO: here we should evaluate use-when and if
-                    // true, shadow-attributes, and then recursively down
-                    // into children
+        let xot = &content.state.xot;
+        let names = &content.state.names;
+        let mut node = xot.first_child(content.node);
+        // TODO: we should initialize context with the right prefixes
+        let mut current_context = Context::empty();
+        while let Some(current) = node {
+            let element = xot.element(current);
+            if let Some(element) = element {
+                if element.name() == names.xsl_variable {
+                    let current_content = Content::new(current, content.state, current_context);
+                    let attributes = Attributes::new(current_content, element);
+                    if attributes.boolean_with_default(names.static_, false)? {
+                        let name = attributes.required(names.name, attributes.eqname())?;
+                        let select = attributes.required(names.select, attributes.xpath())?;
+                        let value =
+                            self.evaluate_static_xpath(select.xpath, &attributes.content)?;
+                        current_context = attributes.content.context.with_variable_name(&name);
+                        self.static_global_variables.insert(name, value);
+                    } else {
+                        current_context = attributes.content.context.clone();
+                    }
                 }
             }
+            node = xot.next_sibling(current);
         }
-
         Ok(())
     }
 
     fn evaluate_static_xpath(
         &self,
         xpath: xpath_ast::XPath,
-        content: Content,
+        content: &Content,
     ) -> Result<Sequence, xee_xpath::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
@@ -200,18 +138,18 @@ impl StaticEvaluator {
         None
     }
 
-    fn static_variable_value(
-        &self,
-        variable: ast::Variable,
-        content: Content,
-    ) -> Result<Sequence, xee_xpath::SpannedError> {
-        if let Some(select) = variable.select {
-            self.evaluate_static_xpath(select.xpath, content)
-        } else {
-            // This is an error
-            todo!()
-        }
-    }
+    // fn static_variable_value(
+    //     &self,
+    //     variable: ast::Variable,
+    //     content: Content,
+    // ) -> Result<Sequence, xee_xpath::SpannedError> {
+    //     if let Some(select) = variable.select {
+    //         self.evaluate_static_xpath(select.xpath, content)
+    //     } else {
+    //         // This is an error
+    //         todo!()
+    //     }
+    // }
 }
 
 fn static_evaluate(
@@ -254,6 +192,28 @@ mod tests {
         assert_eq!(
             variables.get(&name),
             Some(&xee_xpath::Item::from("foo").into())
+        );
+    }
+
+    #[test]
+    fn test_static_variable_depends_on_another() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:variable name="x" static="yes" select="'foo'"/>
+            <xsl:variable name="y" static="yes" select="concat($x, '!')"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let variables = static_evaluate(xot, span_info, names, document_element).unwrap();
+        assert_eq!(variables.len(), 2);
+        let name = xpath_ast::Name::new("y".to_string(), None, None);
+        assert_eq!(
+            variables.get(&name),
+            Some(&xee_xpath::Item::from("foo!").into())
         );
     }
 }
