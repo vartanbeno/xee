@@ -54,6 +54,15 @@ enum StaticInstruction {
 }
 
 impl StaticEvaluator {
+    fn new() -> Self {
+        Self {
+            static_global_variables: Variables::new(),
+            static_parameters: Variables::new(),
+            to_remove: Vec::new(),
+            structure_stack: Vec::new(),
+        }
+    }
+
     fn evaluate_top_level(&mut self, content: Content) -> Result<(), ElementError> {
         // we have a parser that parses variable and param children and
         // other children. It doesn't execute anything, just records them
@@ -213,12 +222,7 @@ fn static_evaluate(
 ) -> Result<Variables, ElementError> {
     strip_whitespace(&mut xot, &names, node);
 
-    let mut evaluator = StaticEvaluator {
-        static_global_variables: Variables::new(),
-        static_parameters: Variables::new(),
-        to_remove: Vec::new(),
-        structure_stack: Vec::new(),
-    };
+    let mut evaluator = StaticEvaluator::new();
 
     let state = State::new(xot, span_info, names);
     let context = Context::new(xot::Prefixes::new());
