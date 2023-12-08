@@ -2,14 +2,19 @@ use xot::Node;
 
 use xee_xpath::{DynamicContext, Program, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
+use xot::Xot;
 
 use crate::ast_core as ast;
 use crate::attributes::Attributes;
 use crate::combinator::one;
 use crate::combinator::Content;
 use crate::combinator::NodeParser;
+use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::InstructionParser;
+use crate::names::Names;
+use crate::state::State;
+use crate::whitespace::strip_whitespace;
 
 // fn algorithm() {
 //     let use_when_result = evaluate_use_when(entry, global_variables);
@@ -197,5 +202,54 @@ impl StaticEvaluator {
             // This is an error
             todo!()
         }
+    }
+}
+
+fn static_evaluate(
+    mut xot: Xot,
+    span_info: xot::SpanInfo,
+    names: Names,
+    node: Node,
+) -> Result<Variables, ElementError> {
+    strip_whitespace(&mut xot, &names, node);
+
+    let mut evaluator = StaticEvaluator {
+        static_global_variables: Variables::new(),
+        static_parameters: Variables::new(),
+        to_remove: Vec::new(),
+        structure_stack: Vec::new(),
+    };
+
+    let state = State::new(xot, span_info, names);
+    let context = Context::new(xot::Prefixes::new());
+    let content = Content::new(node, &state, context);
+    evaluator.evaluate_top_level(content)?;
+    Ok(evaluator.static_global_variables)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::names::Names;
+
+    #[test]
+    fn test_one_static_variable() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:variable name="x" static="yes" select="'foo'"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let variables = static_evaluate(xot, span_info, names, document_element).unwrap();
+        assert_eq!(variables.len(), 1);
+        let name = xpath_ast::Name::new("x".to_string(), None, None);
+        assert_eq!(
+            variables.get(&name),
+            Some(&xee_xpath::Item::from("foo").into())
+        );
     }
 }
