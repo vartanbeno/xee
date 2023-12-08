@@ -72,8 +72,7 @@ impl StaticEvaluator {
                 } else if element.name() == names.xsl_param {
                     context = self.evaluate_param(attributes)?;
                 } else {
-                    context = attributes.content.context.clone();
-                    // process use-when, possibly in xsl element
+                    context = self.evaluate_other(attributes)?;
                 }
             }
             node = xot.next_sibling(current);
@@ -127,6 +126,17 @@ impl StaticEvaluator {
         } else {
             Ok(attributes.content.context.clone())
         }
+    }
+
+    fn evaluate_other(&self, attributes: Attributes) -> Result<Context, ElementError> {
+        // process use-when, possibly in xsl element
+        let names = &attributes.content.state.names;
+        let use_when = if attributes.in_xsl_namespace() {
+            attributes.optional(names.standard.use_when, attributes.xpath())?
+        } else {
+            attributes.optional(names.xsl_standard.use_when, attributes.xpath())?
+        };
+        Ok(attributes.content.context.clone())
     }
 
     fn evaluate_static_xpath(
