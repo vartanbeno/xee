@@ -86,9 +86,9 @@ impl StaticEvaluator {
             let name = attributes.required(names.name, attributes.eqname())?;
             let select = attributes.required(names.select, attributes.xpath())?;
             let value = self.evaluate_static_xpath(select.xpath, &attributes.content)?;
-            let current_context = attributes.content.context.with_variable_name(&name);
+            let context = attributes.content.context.with_variable_name(&name);
             self.static_global_variables.insert(name, value);
-            Ok(current_context)
+            Ok(context)
         } else {
             Ok(attributes.content.context.clone())
         }
@@ -99,7 +99,7 @@ impl StaticEvaluator {
         if attributes.boolean_with_default(names.static_, false)? {
             let name = attributes.required(names.name, attributes.eqname())?;
             let required = attributes.boolean_with_default(names.required, false)?;
-            let current_context = attributes.content.context.with_variable_name(&name);
+            let context = attributes.content.context.with_variable_name(&name);
             let value = self.static_parameters.get(&name);
             let insert_value = if let Some(value) = value {
                 value.clone()
@@ -122,7 +122,7 @@ impl StaticEvaluator {
                 }
             };
             self.static_global_variables.insert(name, insert_value);
-            Ok(current_context)
+            Ok(context)
         } else {
             Ok(attributes.content.context.clone())
         }
