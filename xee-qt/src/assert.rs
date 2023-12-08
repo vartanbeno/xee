@@ -791,7 +791,7 @@ fn run_xpath_with_result(
         runnable.xot(),
         &static_context,
         Cow::Borrowed(runnable.dynamic_context().documents()),
-        variables,
+        Cow::Owned(variables),
     );
     let runnable = program.runnable(&dynamic_context);
     runnable.many(None).map_err(|e| e.error)

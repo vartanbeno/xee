@@ -17,7 +17,7 @@ pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub static_context: &'a StaticContext<'a>,
     pub(crate) documents: Cow<'a, xml::Documents>,
-    pub(crate) variables: Variables,
+    pub(crate) variables: Cow<'a, Variables>,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
@@ -35,13 +35,13 @@ impl<'a> DynamicContext<'a> {
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
         documents: Cow<'a, xml::Documents>,
-        variables: Variables,
+        variables: Cow<'a, Variables>,
     ) -> Self {
         Self {
             xot,
             static_context,
             documents,
-            variables,
+            variables: variables.into(),
             current_datetime: Self::create_current_datetime(),
         }
     }
@@ -52,7 +52,7 @@ impl<'a> DynamicContext<'a> {
             xot,
             static_context,
             Cow::Owned(documents),
-            Variables::default(),
+            Cow::Owned(Variables::default()),
         )
     }
 
@@ -61,27 +61,25 @@ impl<'a> DynamicContext<'a> {
         static_context: &'a StaticContext<'a>,
         documents: &'a xml::Documents,
     ) -> Self {
-        Self {
+        Self::new(
             xot,
             static_context,
-            documents: Cow::Borrowed(documents),
-            variables: AHashMap::new(),
-            current_datetime: Self::create_current_datetime(),
-        }
+            Cow::Borrowed(documents),
+            Cow::Owned(Variables::default()),
+        )
     }
 
     pub fn from_variables(
         xot: &'a Xot,
         static_context: &'a StaticContext<'a>,
-        variables: Variables,
+        variables: &'a Variables,
     ) -> Self {
-        Self {
+        Self::new(
             xot,
             static_context,
-            documents: Cow::Owned(xml::Documents::new()),
-            variables,
-            current_datetime: Self::create_current_datetime(),
-        }
+            Cow::Owned(xml::Documents::new()),
+            Cow::Borrowed(variables),
+        )
     }
 
     fn create_current_datetime() -> chrono::DateTime<chrono::offset::FixedOffset> {

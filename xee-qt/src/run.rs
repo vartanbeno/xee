@@ -221,7 +221,7 @@ impl qt::TestCase {
             &run_context.xot,
             &static_context,
             Cow::Borrowed(&run_context.documents),
-            variables,
+            Cow::Borrowed(&variables),
         );
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref());

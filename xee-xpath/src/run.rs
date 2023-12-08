@@ -60,7 +60,7 @@ pub fn evaluate_without_focus_with_variables(
     let namespaces = Namespaces::default();
     let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
-    let context = DynamicContext::from_variables(&xot, &static_context, variables);
+    let context = DynamicContext::from_variables(&xot, &static_context, &variables);
     let program = interpreter::Program::parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None)

@@ -47,7 +47,7 @@ impl StaticEvaluator {
         let dynamic_context = DynamicContext::from_variables(
             &content.state.xot,
             &static_context,
-            self.static_global_variables.clone(),
+            &self.static_global_variables,
         );
         let runnable = program.runnable(&dynamic_context);
         runnable.many(None)
