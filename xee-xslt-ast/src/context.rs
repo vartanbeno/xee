@@ -137,6 +137,7 @@ impl Context {
             let uri = state.xot.namespace_str(*ns);
             namespaces.insert(prefix, uri);
         }
+        // TODO: needs to use the default element namespace
         Namespaces::new(namespaces, None, Some(FN_NAMESPACE))
     }
 

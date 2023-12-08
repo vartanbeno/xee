@@ -1,15 +1,13 @@
 use ahash::HashMap;
 use xot::Node;
 
-use xee_xpath::{evaluate_without_focus_with_variables, Sequence, Variables};
+use xee_xpath::{DynamicContext, Program, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
 
 use crate::ast_core as ast;
 use crate::attributes::Attributes;
 use crate::combinator::Content;
-use crate::context::Context;
 use crate::instruction::InstructionParser;
-use crate::state::State;
 
 // fn algorithm() {
 //     let use_when_result = evaluate_use_when(entry, global_variables);
@@ -31,34 +29,32 @@ use crate::state::State;
 // }
 
 struct StaticEvaluator {
-    state: State,
-    static_global_variables: HashMap<xpath_ast::Name, Sequence>,
+    static_global_variables: Variables,
     static_parameters: HashMap<xpath_ast::Name, Sequence>,
     to_remove: Vec<Node>,
     structure_stack: Vec<bool>,
 }
 
 impl StaticEvaluator {
-    // TODO: either evaluate_without_focus_with_variables should
-    // accept sequence values (instead of Vec items) or we should devise
-    // a try_into in xee_xpath to convert them
-    fn static_global_variables(&self) -> Variables {
-        let mut variables = Variables::with_capacity(self.static_global_variables.len());
-        for (key, value) in self.static_global_variables.iter() {
-            variables.insert(key.clone(), value.clone());
-        }
-        variables
+    fn evaluate_static_xpath(
+        &self,
+        xpath: xpath_ast::XPath,
+        content: Content,
+    ) -> Result<Sequence, xee_xpath::SpannedError> {
+        let parser_context = content.parser_context();
+        let static_context = parser_context.into();
+        let program = Program::new(&static_context, xpath)?;
+        let dynamic_context = DynamicContext::from_variables(
+            &content.state.xot,
+            &static_context,
+            self.static_global_variables.clone(),
+        );
+        let runnable = program.runnable(&dynamic_context);
+        runnable.many(None)
     }
 
-    fn evaluate_static_xpath(&self, xpath: &str) -> Result<Sequence, xee_xpath::SpannedError> {
-        // TODO: unwrap here ignores any possible errors when obtaining global variables
-        let static_global_variables = self.static_global_variables();
-        evaluate_without_focus_with_variables(xpath, static_global_variables)
-    }
-
-    fn static_param_instruction(&self, node: Node, context: Context) -> Option<ast::Param> {
-        let element = self.state.xot.element(node)?;
-        let content = Content::new(node, &self.state, context);
+    fn static_param_instruction(&self, node: Node, content: Content) -> Option<ast::Param> {
+        let element = content.state.xot.element(node)?;
         let attributes = Attributes::new(content, element);
         // TODO: we don't handle standard attributes, so unseen attributes
         // will complain if we use one. We can have another entry point
@@ -96,9 +92,8 @@ impl StaticEvaluator {
         }
     }
 
-    fn static_variable_instruction(&self, node: Node, context: Context) -> Option<ast::Variable> {
-        let element = self.state.xot.element(node)?;
-        let content = Content::new(node, &self.state, context);
+    fn static_variable_instruction(&self, node: Node, content: Content) -> Option<ast::Variable> {
+        let element = content.state.xot.element(node)?;
         let attributes = Attributes::new(content, element);
         if let Ok(variable) = ast::Variable::parse_and_validate(&attributes) {
             if variable.static_ {
@@ -106,5 +101,18 @@ impl StaticEvaluator {
             }
         }
         None
+    }
+
+    fn static_variable_value(
+        &self,
+        variable: ast::Variable,
+        content: Content,
+    ) -> Result<Sequence, xee_xpath::SpannedError> {
+        if let Some(select) = variable.select {
+            self.evaluate_static_xpath(select.xpath, content)
+        } else {
+            // This is an error
+            todo!()
+        }
     }
 }

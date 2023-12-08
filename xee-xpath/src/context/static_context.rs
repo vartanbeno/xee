@@ -27,6 +27,17 @@ impl<'a> Default for StaticContext<'a> {
     }
 }
 
+impl<'a> From<XPathParserContext<'a>> for StaticContext<'a> {
+    fn from(parser_context: XPathParserContext<'a>) -> Self {
+        Self {
+            parser_context,
+            functions: StaticFunctions::new(),
+            collations: RefCell::new(Collations::new()),
+            provider: provider(),
+        }
+    }
+}
+
 impl<'a> StaticContext<'a> {
     pub fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
         Self {
