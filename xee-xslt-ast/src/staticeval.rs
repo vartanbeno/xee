@@ -61,17 +61,18 @@ impl StaticEvaluator {
         let names = &content.state.names;
         let mut node = xot.first_child(content.node);
         // TODO: we should initialize context with the right prefixes
-        let mut current_context = Context::empty();
+        let mut context = content.context.clone();
         while let Some(current) = node {
             let element = xot.element(current);
             if let Some(element) = element {
+                let current_content = Content::new(current, content.state, context);
+                let attributes = Attributes::new(current_content, element);
                 if element.name() == names.xsl_variable {
-                    current_context =
-                        self.evaluate_variable(current, element, content.state, current_context)?;
+                    context = self.evaluate_variable(attributes)?;
                 } else if element.name() == names.xsl_param {
-                    current_context =
-                        self.evaluate_param(current, element, content.state, current_context)?;
+                    context = self.evaluate_param(attributes)?;
                 } else {
+                    context = attributes.content.context.clone();
                     // process use-when, possibly in xsl element
                 }
             }
@@ -80,16 +81,8 @@ impl StaticEvaluator {
         Ok(())
     }
 
-    fn evaluate_variable(
-        &mut self,
-        current: Node,
-        element: &xot::Element,
-        state: &State,
-        current_context: Context,
-    ) -> Result<Context, ElementError> {
-        let current_content = Content::new(current, state, current_context);
-        let attributes = Attributes::new(current_content, element);
-        let names = &state.names;
+    fn evaluate_variable(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
+        let names = &attributes.content.state.names;
         if attributes.boolean_with_default(names.static_, false)? {
             let name = attributes.required(names.name, attributes.eqname())?;
             let select = attributes.required(names.select, attributes.xpath())?;
@@ -102,16 +95,8 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_param(
-        &mut self,
-        current: Node,
-        element: &xot::Element,
-        state: &State,
-        current_context: Context,
-    ) -> Result<Context, ElementError> {
-        let current_content = Content::new(current, state, current_context);
-        let attributes = Attributes::new(current_content, element);
-        let names = &state.names;
+    fn evaluate_param(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
+        let names = &attributes.content.state.names;
         if attributes.boolean_with_default(names.static_, false)? {
             let name = attributes.required(names.name, attributes.eqname())?;
             let required = attributes.boolean_with_default(names.required, false)?;
