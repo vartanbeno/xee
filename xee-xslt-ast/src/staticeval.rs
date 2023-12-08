@@ -69,37 +69,8 @@ impl StaticEvaluator {
                     current_context =
                         self.evaluate_variable(current, element, content.state, current_context)?;
                 } else if element.name() == names.xsl_param {
-                    let current_content = Content::new(current, content.state, current_context);
-                    let attributes = Attributes::new(current_content, element);
-                    if attributes.boolean_with_default(names.static_, false)? {
-                        let name = attributes.required(names.name, attributes.eqname())?;
-                        let required = attributes.boolean_with_default(names.required, false)?;
-                        current_context = attributes.content.context.with_variable_name(&name);
-                        let value = self.static_parameters.get(&name);
-                        let insert_value = if let Some(value) = value {
-                            value.clone()
-                        } else if required {
-                            // a required value is mandatory, should return proper error
-                            todo!()
-                        } else {
-                            let select = attributes.optional(names.select, attributes.xpath())?;
-                            if let Some(select) = select {
-                                self.evaluate_static_xpath(select.xpath, &attributes.content)?
-                            } else {
-                                // we interpret 'as' as a string here, as we really only want to
-                                // check for its existence
-                                let as_ = attributes.optional(names.as_, attributes.string())?;
-                                if as_.is_some() {
-                                    Sequence::empty()
-                                } else {
-                                    Sequence::from("")
-                                }
-                            }
-                        };
-                        self.static_global_variables.insert(name, insert_value);
-                    } else {
-                        current_context = attributes.content.context.clone();
-                    }
+                    current_context =
+                        self.evaluate_param(current, element, content.state, current_context)?;
                 } else {
                     // process use-when, possibly in xsl element
                 }
@@ -125,6 +96,48 @@ impl StaticEvaluator {
             let value = self.evaluate_static_xpath(select.xpath, &attributes.content)?;
             let current_context = attributes.content.context.with_variable_name(&name);
             self.static_global_variables.insert(name, value);
+            Ok(current_context)
+        } else {
+            Ok(attributes.content.context.clone())
+        }
+    }
+
+    fn evaluate_param(
+        &mut self,
+        current: Node,
+        element: &xot::Element,
+        state: &State,
+        current_context: Context,
+    ) -> Result<Context, ElementError> {
+        let current_content = Content::new(current, state, current_context);
+        let attributes = Attributes::new(current_content, element);
+        let names = &state.names;
+        if attributes.boolean_with_default(names.static_, false)? {
+            let name = attributes.required(names.name, attributes.eqname())?;
+            let required = attributes.boolean_with_default(names.required, false)?;
+            let current_context = attributes.content.context.with_variable_name(&name);
+            let value = self.static_parameters.get(&name);
+            let insert_value = if let Some(value) = value {
+                value.clone()
+            } else if required {
+                // a required value is mandatory, should return proper error
+                todo!()
+            } else {
+                let select = attributes.optional(names.select, attributes.xpath())?;
+                if let Some(select) = select {
+                    self.evaluate_static_xpath(select.xpath, &attributes.content)?
+                } else {
+                    // we interpret 'as' as a string here, as we really only want to
+                    // check for its existence
+                    let as_ = attributes.optional(names.as_, attributes.string())?;
+                    if as_.is_some() {
+                        Sequence::empty()
+                    } else {
+                        Sequence::from("")
+                    }
+                }
+            };
+            self.static_global_variables.insert(name, insert_value);
             Ok(current_context)
         } else {
             Ok(attributes.content.context.clone())
