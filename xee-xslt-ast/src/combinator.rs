@@ -28,6 +28,13 @@ impl<'a> Content<'a> {
             ..self.clone()
         }
     }
+
+    pub(crate) fn with_node(&self, node: Node) -> Self {
+        Self {
+            node,
+            ..self.clone()
+        }
+    }
 }
 
 pub(crate) trait NodeParser<V> {
@@ -41,6 +48,10 @@ pub(crate) trait NodeParser<V> {
         } else {
             Ok(item)
         }
+    }
+
+    fn parse_content(&self, content: Content) -> Result<V> {
+        self.parse(Some(content.node), content.state, &content.context)
     }
 
     fn parse_next(

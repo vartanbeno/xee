@@ -1,4 +1,3 @@
-use ahash::HashMap;
 use xot::Node;
 
 use xee_xpath::{DynamicContext, Program, Sequence, Variables};
@@ -6,7 +5,10 @@ use xee_xpath_ast::ast as xpath_ast;
 
 use crate::ast_core as ast;
 use crate::attributes::Attributes;
+use crate::combinator::one;
 use crate::combinator::Content;
+use crate::combinator::NodeParser;
+use crate::error::ElementError;
 use crate::instruction::InstructionParser;
 
 // fn algorithm() {
@@ -30,12 +32,80 @@ use crate::instruction::InstructionParser;
 
 struct StaticEvaluator {
     static_global_variables: Variables,
-    static_parameters: HashMap<xpath_ast::Name, Sequence>,
+    static_parameters: Variables,
     to_remove: Vec<Node>,
     structure_stack: Vec<bool>,
 }
 
+struct StaticNode {
+    node: Node,
+    instruction: StaticInstruction,
+}
+
+enum StaticInstruction {
+    Variable(ast::Variable),
+    Param(ast::Param),
+    Other,
+}
+
 impl StaticEvaluator {
+    fn evaluate_top_level(&mut self, content: Content) -> Result<(), ElementError> {
+        // we have a parser that parses variable and param children and
+        // other children. It doesn't execute anything, just records them
+        // Then we go through the children, update global variables accordingly
+        // and evaluate use when using it.
+        let variable_instruction = one(|content| {
+            let node = content.node;
+            let element = content
+                .state
+                .xot
+                .element(node)
+                .ok_or(ElementError::Unexpected {
+                    span: content.span()?,
+                })?;
+            let attributes = Attributes::new(content, element);
+            let variable = ast::Variable::parse_and_validate(&attributes)?;
+            if variable.static_ {
+                Ok(StaticNode {
+                    node,
+                    instruction: StaticInstruction::Variable(variable),
+                })
+            } else {
+                Err(ElementError::Unexpected {
+                    span: attributes.content.span()?,
+                })
+            }
+        });
+        let other_instruction = one(|content| {
+            Ok(StaticNode {
+                node: content.node,
+                instruction: StaticInstruction::Other,
+            })
+        });
+        let parser = (variable_instruction.or(other_instruction))
+            .many()
+            .contains();
+        let static_content = content.clone();
+        let static_nodes = parser.parse_content(content)?;
+
+        // now we can execute static nodes
+        for static_node in static_nodes {
+            let node = static_node.node;
+            let current_content = static_content.with_node(node);
+            match static_node.instruction {
+                StaticInstruction::Variable(variable) => {
+                    let name = variable.name.clone();
+                    let value = self.static_variable_value(variable, current_content)?;
+                    self.static_global_variables.insert(name, value);
+                }
+                StaticInstruction::Param(param) => {}
+                StaticInstruction::Other => {}
+            }
+        }
+
+        Ok(())
+    }
+
     fn evaluate_static_xpath(
         &self,
         xpath: xpath_ast::XPath,

@@ -12,7 +12,7 @@ pub enum AttributeError {
     // An eqname was invalid
     InvalidEqName { value: String, span: Span },
     // XPath parser error
-    XPath(xee_xpath_ast::ParserError),
+    XPathParser(xee_xpath_ast::ParserError),
     // A value template could not be parsed
     ValueTemplate(value_template::Error),
     // Internal error; should not happen
@@ -21,7 +21,7 @@ pub enum AttributeError {
 
 impl From<xee_xpath_ast::ParserError> for AttributeError {
     fn from(e: xee_xpath_ast::ParserError) -> Self {
-        AttributeError::XPath(e)
+        AttributeError::XPathParser(e)
     }
 }
 
@@ -41,6 +41,8 @@ pub(crate) enum ElementError {
     // An attribute of the element was invalid
     Attribute(AttributeError),
     ValueTemplate(value_template::Error),
+    // XPath runtime error
+    XPathRunTime(xee_xpath::SpannedError),
     // internal error, should not happen
     Internal,
 }
@@ -48,6 +50,12 @@ pub(crate) enum ElementError {
 impl From<AttributeError> for ElementError {
     fn from(error: AttributeError) -> Self {
         Self::Attribute(error)
+    }
+}
+
+impl From<xee_xpath::SpannedError> for ElementError {
+    fn from(e: xee_xpath::SpannedError) -> Self {
+        ElementError::XPathRunTime(e)
     }
 }
 

@@ -11,6 +11,16 @@ readme = "README.md"
 documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee-xpath"
 
+[features]
+serde = [
+    "dep:serde",
+    "ibig/serde",
+    "ordered-float/serde",
+    "xee-schema-type/serde",
+    "xee-xpath-ast/serde",
+    "chumsky/serde",
+]
+
 [dependencies]
 ahash = { workspace = true }
 arrayvec = "0.7.2"
@@ -39,7 +49,7 @@ icu = { workspace = true, features = ["serde"] }
 icu_provider_adapters = { version = "1.2.0", features = ["serde"] }
 icu_provider_blob = "1.2"
 serde-querystring = "0.2.1"
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"], optional = true }
 url = "2.4.1"
 fancy-regex = "0.11.0"
 

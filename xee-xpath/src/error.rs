@@ -5,13 +5,15 @@ use xee_xpath_ast::ParserError;
 
 use crate::span::SourceSpan;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SpannedError {
     pub error: Error,
     pub span: SourceSpan,
 }
 
 #[derive(Debug, Clone, PartialEq, Display, EnumMessage)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Error {
     /// Stack overflow.
     ///

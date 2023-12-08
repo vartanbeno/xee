@@ -1,6 +1,7 @@
 use xee_xpath_ast::ast;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SourceSpan(usize, usize);
 
 impl SourceSpan {

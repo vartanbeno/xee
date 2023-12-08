@@ -43,8 +43,8 @@ impl<'a> Attributes<'a> {
         if let Some(value) = self.element.get_attribute(name) {
             let span = self.value_span(name)?;
             let value = parse_value(value, span).map_err(|e| {
-                if let AttributeError::XPath(e) = e {
-                    AttributeError::XPath(e.adjust(span.start))
+                if let AttributeError::XPathParser(e) = e {
+                    AttributeError::XPathParser(e.adjust(span.start))
                 } else {
                     e
                 }

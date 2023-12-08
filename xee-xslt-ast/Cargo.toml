@@ -15,7 +15,7 @@ documentation = "https://docs.rs/xee-xslt"
 homepage = "https://github.com/Paligo/xee-xslt"
 
 [features]
-serde = ["dep:serde", "xee-xpath-ast/serde"]
+serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath/serde"]
 
 [dependencies]
 ahash = { workspace = true }
@@ -29,6 +29,7 @@ strum_macros = "0.25"
 blanket = { workspace = true }
 
 [dev-dependencies]
+# we want to depend on serde feature during tests
 xee-xslt-ast = { path = ".", features = ["serde"] }
 insta = { version = "1.29.0", features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
