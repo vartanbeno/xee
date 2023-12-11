@@ -366,6 +366,26 @@ mod tests {
     }
 
     #[test]
+    fn test_use_when_true_on_top_level() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:if use-when="true()"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:if use-when="true()"/></xsl:stylesheet>"#
+        );
+    }
+
+    #[test]
     fn test_xsl_use_when_false_on_top_level() {
         let xml = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
