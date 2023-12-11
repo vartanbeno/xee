@@ -32,7 +32,6 @@ struct StaticEvaluator {
     static_global_variables: Variables,
     static_parameters: Variables,
     to_remove: Vec<Node>,
-    structure_stack: Vec<bool>,
 }
 
 struct StaticNode {
@@ -52,7 +51,6 @@ impl StaticEvaluator {
             static_global_variables: Variables::new(),
             static_parameters,
             to_remove: Vec::new(),
-            structure_stack: Vec::new(),
         }
     }
 
@@ -76,6 +74,16 @@ impl StaticEvaluator {
                 }
             }
             node = xot.next_sibling(current);
+        }
+        Ok(())
+    }
+
+    fn update_tree(&self, state: &mut State) -> Result<(), ElementError> {
+        for node in &self.to_remove {
+            state
+                .xot
+                .remove(*node)
+                .map_err(|_| ElementError::Internal)?;
         }
         Ok(())
     }
@@ -128,7 +136,7 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_other(&self, attributes: Attributes) -> Result<Context, ElementError> {
+    fn evaluate_other(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
         // process use-when, possibly in xsl element
         let names = &attributes.content.state.names;
         let use_when = if attributes.in_xsl_namespace() {
@@ -136,6 +144,18 @@ impl StaticEvaluator {
         } else {
             attributes.optional(names.xsl_standard.use_when, attributes.xpath())?
         };
+
+        if let Some(use_when) = use_when {
+            let value = self.evaluate_static_xpath(use_when.xpath, &attributes.content)?;
+            if !value
+                .effective_boolean_value()
+                // TODO: the way the span is added is ugly, but it ought
+                // to at least describe the span of the use-when attribute
+                .map_err(|e| e.with_span((use_when.span.start..use_when.span.end).into()))?
+            {
+                self.to_remove.push(attributes.content.node);
+            }
+        }
         Ok(attributes.content.context.clone())
     }
 
@@ -169,6 +189,7 @@ fn static_evaluate(
     let context = Context::new(xot::Prefixes::new());
     let content = Content::new(node, state, context);
     evaluator.evaluate_top_level(content)?;
+    evaluator.update_tree(state)?;
     Ok(evaluator.static_global_variables)
 }
 
@@ -321,7 +342,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_use_when_false_on_top_level() {
         let xml = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
@@ -342,7 +362,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_xsl_use_when_false_on_top_level() {
         let xml = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
