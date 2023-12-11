@@ -98,7 +98,7 @@ impl StaticEvaluator {
             self.static_global_variables.insert(name, value);
             Ok(context)
         } else {
-            Ok(attributes.content.context.clone())
+            Ok(attributes.content.context)
         }
     }
 
@@ -132,12 +132,16 @@ impl StaticEvaluator {
             self.static_global_variables.insert(name, insert_value);
             Ok(context)
         } else {
-            Ok(attributes.content.context.clone())
+            Ok(attributes.content.context)
         }
     }
 
     fn evaluate_other(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
-        // process use-when, possibly in xsl element
+        self.evaluate_use_when(&attributes)?;
+        Ok(attributes.content.context)
+    }
+
+    fn evaluate_use_when(&mut self, attributes: &Attributes) -> Result<(), ElementError> {
         let names = &attributes.content.state.names;
         let use_when = if attributes.in_xsl_namespace() {
             attributes.optional(names.standard.use_when, attributes.xpath())?
@@ -156,7 +160,7 @@ impl StaticEvaluator {
                 self.to_remove.push(attributes.content.node);
             }
         }
-        Ok(attributes.content.context.clone())
+        Ok(())
     }
 
     fn evaluate_static_xpath(
