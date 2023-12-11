@@ -4,7 +4,8 @@ use xot::{NameId, Node, Xot};
 
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
-use crate::combinator::{one, Content, NodeParser};
+use crate::combinator::{one, NodeParser};
+use crate::content::Content;
 use crate::element::{by_element, children, instruction, sequence_constructor, ContentParseLock};
 use crate::error::ElementError as Error;
 use crate::state::State;

@@ -1,41 +1,11 @@
 use xot::Node;
 
+use crate::content::Content;
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::state::State;
 
 type Result<V> = std::result::Result<V, ElementError>;
-
-#[derive(Clone)]
-pub(crate) struct Content<'a> {
-    pub(crate) node: Node,
-    pub(crate) state: &'a State,
-    pub(crate) context: Context,
-}
-
-impl<'a> Content<'a> {
-    pub(crate) fn new(node: Node, state: &'a State, context: Context) -> Self {
-        Self {
-            node,
-            state,
-            context,
-        }
-    }
-
-    pub(crate) fn with_context(&self, context: Context) -> Self {
-        Self {
-            context,
-            ..self.clone()
-        }
-    }
-
-    pub(crate) fn with_node(&self, node: Node) -> Self {
-        Self {
-            node,
-            ..self.clone()
-        }
-    }
-}
 
 pub(crate) trait NodeParser<V> {
     fn parse(&self, node: Option<Node>, state: &State, context: &Context) -> Result<V> {

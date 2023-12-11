@@ -2,7 +2,7 @@ use ahash::{HashSet, HashSetExt};
 use xee_xpath_ast::ast as xpath_ast;
 
 use crate::ast_core as ast;
-use crate::combinator::Content;
+use crate::content::Content;
 use crate::error::AttributeError;
 use crate::name::XmlName;
 use crate::names::StandardNames;
@@ -26,11 +26,13 @@ impl<'a> Attributes<'a> {
         }
     }
 
-    pub(crate) fn with_content(&self, content: Content<'a>) -> Self {
-        Self {
-            content,
-            ..self.clone()
-        }
+    pub(crate) fn with_standard(self) -> Result<Self, AttributeError> {
+        // create a new content has a context including standard attributes
+        let content = self
+            .content
+            .with_context(self.content.context.with_standard(self.standard()?));
+        // we now create a new attributes object that has the new content
+        Ok(Self { content, ..self })
     }
 
     pub(crate) fn optional<T>(

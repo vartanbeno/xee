@@ -3,6 +3,7 @@
 mod ast_core;
 mod attributes;
 mod combinator;
+mod content;
 mod context;
 mod element;
 mod error;

@@ -6,7 +6,8 @@ use xot::{NameId, Node, Value};
 use crate::ast_core::Span;
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
-use crate::combinator::{multi, one, Content, NodeParser, OneParser};
+use crate::combinator::{multi, one, NodeParser, OneParser};
+use crate::content::Content;
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::instruction::{DeclarationParser, InstructionParser, SequenceConstructorParser};
@@ -49,11 +50,8 @@ impl<'a> Content<'a> {
         // first we want to be aware of the ns prefixes of the new element
         let content = self.with_context(self.context.with_prefixes(element.prefixes()));
         // we create an attributes object to obtain the standard attributes
-        let attributes = Attributes::new(content.clone(), element);
-        // after this, we construct a new content based on the standard attributes
-        let content = content.with_context(content.context.with_standard(attributes.standard()?));
-        // we create a new attributes object with the new content
-        let attributes = attributes.with_content(content);
+        let attributes = content.attributes(element);
+        let attributes = attributes.with_standard()?;
         f(&attributes)
     }
 

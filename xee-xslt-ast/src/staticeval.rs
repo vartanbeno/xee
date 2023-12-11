@@ -22,7 +22,7 @@ use xee_xpath::{DynamicContext, Program, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
 
 use crate::attributes::Attributes;
-use crate::combinator::Content;
+use crate::content::Content;
 use crate::context::Context;
 use crate::error::ElementError;
 use crate::state::State;
@@ -66,7 +66,7 @@ impl StaticEvaluator {
             let element = xot.element(current);
             if let Some(element) = element {
                 let current_content = Content::new(current, content.state, context);
-                let attributes = Attributes::new(current_content, element);
+                let attributes = current_content.attributes(element);
                 if element.name() == names.xsl_variable {
                     context = self.evaluate_variable(attributes)?;
                 } else if element.name() == names.xsl_param {
