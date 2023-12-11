@@ -60,8 +60,7 @@ impl StaticEvaluator {
         let mut context = top_attributes.content.context.clone();
 
         while let Some(current) = node {
-            let element = state.xot.element(current);
-            if let Some(element) = element {
+            if let Some(element) = state.xot.element(current) {
                 let current_content = Content::new(current, state, context);
                 let attributes = current_content.attributes(element);
                 let attributes = attributes.with_static_standard()?;
