@@ -41,7 +41,7 @@ impl<'a> DynamicContext<'a> {
             xot,
             static_context,
             documents,
-            variables: variables.into(),
+            variables,
             current_datetime: Self::create_current_datetime(),
         }
     }

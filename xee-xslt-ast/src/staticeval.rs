@@ -45,16 +45,24 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_top_level(&mut self, top_attributes: Attributes) -> Result<(), ElementError> {
-        let xot = &top_attributes.content.state.xot;
-        let names = &top_attributes.content.state.names;
-        let mut node = xot.first_child(top_attributes.content.node);
+    fn evaluate_top_level(
+        &mut self,
+        top_node: Node,
+        state: &mut State,
+        top_context: Context,
+    ) -> Result<(), ElementError> {
+        let names = &state.names;
+        let mut node = state.xot.first_child(top_node);
+
+        let top_content = Content::new(top_node, state, top_context);
+        let top_attributes = top_content.attributes(state.xot.element(top_node).unwrap());
+        let top_attributes = top_attributes.with_static_standard()?;
         let mut context = top_attributes.content.context.clone();
 
         while let Some(current) = node {
-            let element = xot.element(current);
+            let element = state.xot.element(current);
             if let Some(element) = element {
-                let current_content = Content::new(current, top_attributes.content.state, context);
+                let current_content = Content::new(current, state, context);
                 let attributes = current_content.attributes(element);
                 let attributes = attributes.with_static_standard()?;
                 if !self.evaluate_use_when(&top_attributes)?
@@ -70,7 +78,7 @@ impl StaticEvaluator {
                     context = self.evaluate_other(attributes)?;
                 }
             }
-            node = xot.next_sibling(current);
+            node = state.xot.next_sibling(current);
         }
         Ok(())
     }
@@ -213,16 +221,9 @@ fn static_evaluate(
     strip_whitespace(&mut state.xot, &state.names, node);
     let mut evaluator = StaticEvaluator::new(static_parameters);
 
-    if let Some(element) = state.xot.element(node) {
-        // extract those standard attributes required for static evaluation
-        let content = Content::new(node, state, Context::empty());
-        let attributes = content.attributes(element);
-        let attributes = attributes.with_static_standard()?;
-        // now go through the top level elements for static evaluation
-        evaluator.evaluate_top_level(attributes)?;
-        // and update the tree accordingly
-        evaluator.update_tree(state)?;
-    }
+    evaluator.evaluate_top_level(node, state, Context::empty())?;
+    evaluator.update_tree(state)?;
+
     Ok(evaluator.static_global_variables)
 }
 
