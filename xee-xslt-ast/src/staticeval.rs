@@ -54,17 +54,20 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_top_level(&mut self, content: Content) -> Result<(), ElementError> {
-        let xot = &content.state.xot;
-        let names = &content.state.names;
-        let mut node = xot.first_child(content.node);
-        let mut context = content.context;
+    fn evaluate_top_level(&mut self, top_attributes: Attributes) -> Result<(), ElementError> {
+        let xot = &top_attributes.content.state.xot;
+        let names = &top_attributes.content.state.names;
+        let mut node = xot.first_child(top_attributes.content.node);
+        let mut context = top_attributes.content.context.clone();
         while let Some(current) = node {
             let element = xot.element(current);
             if let Some(element) = element {
-                let current_content = Content::new(current, content.state, context);
+                let current_content = Content::new(current, top_attributes.content.state, context);
                 let attributes = current_content.attributes(element);
-                if !self.evaluate_use_when(&attributes)? {
+                if !self.evaluate_use_when(&top_attributes)?
+                    || !self.evaluate_use_when(&attributes)?
+                {
+                    self.to_remove.push(current);
                     context = attributes.content.context;
                 } else if element.name() == names.xsl_variable {
                     context = self.evaluate_variable(attributes)?;
@@ -137,7 +140,7 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_other(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
+    fn evaluate_other(&self, attributes: Attributes) -> Result<Context, ElementError> {
         Ok(attributes.content.context)
     }
 
@@ -157,7 +160,6 @@ impl StaticEvaluator {
                 // to at least describe the span of the use-when attribute
                 .map_err(|e| e.with_span((use_when.span.start..use_when.span.end).into()))?
             {
-                self.to_remove.push(attributes.content.node);
                 return Ok(false);
             }
         }
@@ -204,9 +206,9 @@ fn static_evaluate(
         // construct a new context based on that, and a new content
         let context = context.with_xpath_default_namespace(xpath_default_namespace);
         let content = Content::new(node, state, context);
-
+        let attributes = content.attributes(element);
         // now go through the top level elements for static evaluation
-        evaluator.evaluate_top_level(content)?;
+        evaluator.evaluate_top_level(attributes)?;
         // and update the tree accordingly
         evaluator.update_tree(state)?;
     }
@@ -496,9 +498,28 @@ mod tests {
             Some(&xee_xpath::Item::from("foo").into())
         );
     }
+
+    #[test]
+    fn test_use_when_false_on_top_node() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0" use-when="false()">
+           <foo/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0" use-when="false()"/>"#
+        );
+    }
     // TODO:
-    // - top-level context
-    // - use-when for top-level element
+
     // - custom element namespace
     // - shadow attributes support
     // - shadow attributes for use-when in particular
