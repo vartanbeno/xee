@@ -35,6 +35,17 @@ impl<'a> Attributes<'a> {
         Ok(Self { content, ..self })
     }
 
+    pub(crate) fn with_static_standard(self) -> Result<Self, AttributeError> {
+        // create a new content has a context including standard attributes
+        let content = self.content.with_context(
+            self.content
+                .context
+                .with_static_standard(self.static_standard()?),
+        );
+        // we now create a new attributes object that has the new content
+        Ok(Self { content, ..self })
+    }
+
     pub(crate) fn optional<T>(
         &self,
         name: NameId,
@@ -189,6 +200,14 @@ impl<'a> Attributes<'a> {
         }
     }
 
+    pub(crate) fn static_standard(&self) -> Result<ast::StaticStandard, AttributeError> {
+        if self.in_xsl_namespace() {
+            self._static_standard(&self.content.state.names.standard)
+        } else {
+            self._static_standard(&self.content.state.names.xsl_standard)
+        }
+    }
+
     fn _standard(&self, names: &StandardNames) -> Result<ast::Standard, AttributeError> {
         Ok(ast::Standard {
             default_collation: self.optional(names.default_collation, self.uris())?,
@@ -204,6 +223,15 @@ impl<'a> Attributes<'a> {
                 .optional(names.extension_element_prefixes, self.prefixes())?,
             use_when: self.optional(names.use_when, self.xpath())?,
             version: self.optional(names.version, Self::_decimal)?,
+            xpath_default_namespace: self.optional(names.xpath_default_namespace, self.uri())?,
+        })
+    }
+
+    fn _static_standard(
+        &self,
+        names: &StandardNames,
+    ) -> Result<ast::StaticStandard, AttributeError> {
+        Ok(ast::StaticStandard {
             xpath_default_namespace: self.optional(names.xpath_default_namespace, self.uri())?,
         })
     }

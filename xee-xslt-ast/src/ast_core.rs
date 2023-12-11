@@ -88,6 +88,13 @@ pub struct Standard {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct StaticStandard {
+    // should default-collation be part of this too?
+    pub xpath_default_namespace: Option<Uri>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ExcludeResultPrefixes {
     All,
     Prefixes(Vec<ExcludeResultPrefix>),

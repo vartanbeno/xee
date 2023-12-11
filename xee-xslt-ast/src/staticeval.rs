@@ -64,6 +64,7 @@ impl StaticEvaluator {
             if let Some(element) = element {
                 let current_content = Content::new(current, top_attributes.content.state, context);
                 let attributes = current_content.attributes(element);
+                let attributes = attributes.with_static_standard()?;
                 if !self.evaluate_use_when(&top_attributes)?
                     || !self.evaluate_use_when(&attributes)?
                 {
@@ -195,18 +196,10 @@ fn static_evaluate(
     if let Some(element) = state.xot.element(node) {
         // construct a context with the prefixes of the top-level element
         let context = Context::new(element.prefixes().clone());
-        // use this to extract the xpath default namespace standard
-        // attribute, which is required to execute static xpath
+        // extract those standard attributes required for static evaluation
         let content = Content::new(node, state, context.clone());
         let attributes = content.attributes(element);
-        let xpath_default_namespace = attributes.optional(
-            state.names.standard.xpath_default_namespace,
-            attributes.uri(),
-        )?;
-        // construct a new context based on that, and a new content
-        let context = context.with_xpath_default_namespace(xpath_default_namespace);
-        let content = Content::new(node, state, context);
-        let attributes = content.attributes(element);
+        let attributes = attributes.with_static_standard()?;
         // now go through the top level elements for static evaluation
         evaluator.evaluate_top_level(attributes)?;
         // and update the tree accordingly
@@ -500,6 +493,43 @@ mod tests {
     }
 
     #[test]
+    fn test_xpath_default_namespace_on_declaration() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            xmlns="http://www.w3.org/1999/xhtml"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <xsl:variable name="y" xpath-default-namespace="http://www.w3.org/1999/xhtml" static="yes" select="$x/html/body/p/string()"/>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        let variables = static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(variables.len(), 2);
+        let y = xpath_ast::Name::new("y".to_string(), None, None);
+        assert_eq!(
+            variables.get(&y),
+            Some(&xee_xpath::Item::from("foo").into())
+        );
+    }
+
+    #[test]
     fn test_use_when_false_on_top_node() {
         let xml = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0" use-when="false()">
@@ -518,6 +548,7 @@ mod tests {
             r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0" use-when="false()"/>"#
         );
     }
+
     // TODO:
     // - shadow attributes support
     // - shadow attributes for use-when in particular
