@@ -16,7 +16,7 @@
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
-use xot::Node;
+use xot::{NameId, Node};
 
 use xee_xpath::{DynamicContext, Program, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
@@ -32,17 +32,7 @@ struct StaticEvaluator {
     static_global_variables: Variables,
     static_parameters: Variables,
     to_remove: Vec<Node>,
-}
-
-struct StaticNode {
-    node: Node,
-    instruction: StaticInstruction,
-}
-
-enum StaticInstruction {
-    Variable,
-    Param,
-    Other,
+    to_remove_attribute: Vec<(Node, NameId)>,
 }
 
 impl StaticEvaluator {
@@ -51,6 +41,7 @@ impl StaticEvaluator {
             static_global_variables: Variables::new(),
             static_parameters,
             to_remove: Vec::new(),
+            to_remove_attribute: Vec::new(),
         }
     }
 
