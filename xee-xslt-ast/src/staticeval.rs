@@ -214,10 +214,8 @@ fn static_evaluate(
     let mut evaluator = StaticEvaluator::new(static_parameters);
 
     if let Some(element) = state.xot.element(node) {
-        // construct a context with the prefixes of the top-level element
-        let context = Context::new(element.prefixes().clone());
         // extract those standard attributes required for static evaluation
-        let content = Content::new(node, state, context.clone());
+        let content = Content::new(node, state, Context::empty());
         let attributes = content.attributes(element);
         let attributes = attributes.with_static_standard()?;
         // now go through the top level elements for static evaluation
@@ -688,6 +686,40 @@ mod tests {
         assert_eq!(
             state.xot.to_string(document_element).unwrap(),
             r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:param name="x" static="yes"/><foo xsl:xpath-default-namespace="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/html/body/p/string() = &apos;foo&apos;"/></foo></xsl:stylesheet>"#
+        );
+    }
+
+    #[test]
+    fn test_use_when_with_namespace_prefix_defined_lower_down() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <foo xmlns:xhtml="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/xhtml:html/xhtml:body/xhtml:p/string() = 'foo'"/></foo>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:param name="x" static="yes"/><foo xmlns:xhtml="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/xhtml:html/xhtml:body/xhtml:p/string() = &apos;foo&apos;"/></foo></xsl:stylesheet>"#
         );
     }
 

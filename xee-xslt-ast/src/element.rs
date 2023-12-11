@@ -47,11 +47,7 @@ impl<'a> Content<'a> {
         element: &'a xot::Element,
         f: impl FnOnce(&Attributes<'a>) -> Result<V, ElementError>,
     ) -> Result<V, ElementError> {
-        // first we want to be aware of the ns prefixes of the new element
-        let content = self.with_context(self.context.with_prefixes(element.prefixes()));
-        // we create an attributes object to obtain the standard attributes
-        let attributes = content.attributes(element);
-        let attributes = attributes.with_standard()?;
+        let attributes = self.attributes(element).with_standard()?;
         f(&attributes)
     }
 
