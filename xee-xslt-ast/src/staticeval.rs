@@ -50,6 +50,7 @@ impl StaticEvaluator {
         let names = &top_attributes.content.state.names;
         let mut node = xot.first_child(top_attributes.content.node);
         let mut context = top_attributes.content.context.clone();
+
         while let Some(current) = node {
             let element = xot.element(current);
             if let Some(element) = element {
@@ -132,8 +133,36 @@ impl StaticEvaluator {
         }
     }
 
-    fn evaluate_other(&self, attributes: Attributes) -> Result<Context, ElementError> {
-        Ok(attributes.content.context)
+    fn evaluate_other(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
+        let context = attributes.content.context.clone();
+        self.evaluate_node(attributes)?;
+        Ok(context)
+    }
+
+    fn evaluate_node(&mut self, attributes: Attributes) -> Result<(), ElementError> {
+        let attributes = attributes.with_static_standard()?;
+        if self.evaluate_use_when(&attributes)? {
+            self.evaluate_children(attributes)?;
+        } else {
+            self.to_remove.push(attributes.content.node);
+        }
+        Ok(())
+    }
+
+    fn evaluate_children(&mut self, attributes: Attributes) -> Result<(), ElementError> {
+        for node in attributes
+            .content
+            .state
+            .xot
+            .children(attributes.content.node)
+        {
+            let content = attributes.content.with_node(node);
+            if let Some(element) = content.state.xot.element(node) {
+                let attributes = content.attributes(element);
+                self.evaluate_node(attributes)?;
+            }
+        }
+        Ok(())
     }
 
     fn evaluate_use_when(&mut self, attributes: &Attributes) -> Result<bool, ElementError> {
@@ -537,6 +566,62 @@ mod tests {
         assert_eq!(
             state.xot.to_string(document_element).unwrap(),
             r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0" use-when="false()"/>"#
+        );
+    }
+
+    #[test]
+    fn test_use_when_on_other_content() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+           <foo><xsl:if use-when="false()"/></foo>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><foo/></xsl:stylesheet>"#
+        );
+    }
+
+    #[test]
+    fn test_xsl_use_when_on_other_content() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+           <foo><bar xsl:use-when="false()"/></foo>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><foo/></xsl:stylesheet>"#
+        );
+    }
+
+    #[test]
+    fn test_nested_use_when() {
+        let xml = r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:if use-when="false()"><xsl:if use-when="false()"><p/></xsl:if></xsl:if></xsl:transform>"#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>"#
         );
     }
 
