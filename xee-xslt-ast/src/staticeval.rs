@@ -58,8 +58,7 @@ impl StaticEvaluator {
         let xot = &content.state.xot;
         let names = &content.state.names;
         let mut node = xot.first_child(content.node);
-        // TODO: we should initialize context with the right prefixes
-        let mut context = content.context.clone();
+        let mut context = content.context;
         while let Some(current) = node {
             let element = xot.element(current);
             if let Some(element) = element {
@@ -444,4 +443,11 @@ mod tests {
         let variables = static_evaluate(&mut state, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 0);
     }
+
+    // TODO:
+    // - top-level context
+    // - custom element namespace
+    // - shadow attributes support
+    // - shadow attributes for use-when in particular
+    // - handling non-toplevel elements
 }
