@@ -65,7 +65,9 @@ impl StaticEvaluator {
             if let Some(element) = element {
                 let current_content = Content::new(current, content.state, context);
                 let attributes = current_content.attributes(element);
-                if element.name() == names.xsl_variable {
+                if !self.evaluate_use_when(&attributes)? {
+                    context = attributes.content.context;
+                } else if element.name() == names.xsl_variable {
                     context = self.evaluate_variable(attributes)?;
                 } else if element.name() == names.xsl_param {
                     context = self.evaluate_param(attributes)?;
@@ -137,11 +139,10 @@ impl StaticEvaluator {
     }
 
     fn evaluate_other(&mut self, attributes: Attributes) -> Result<Context, ElementError> {
-        self.evaluate_use_when(&attributes)?;
         Ok(attributes.content.context)
     }
 
-    fn evaluate_use_when(&mut self, attributes: &Attributes) -> Result<(), ElementError> {
+    fn evaluate_use_when(&mut self, attributes: &Attributes) -> Result<bool, ElementError> {
         let names = &attributes.content.state.names;
         let use_when = if attributes.in_xsl_namespace() {
             attributes.optional(names.standard.use_when, attributes.xpath())?
@@ -158,9 +159,10 @@ impl StaticEvaluator {
                 .map_err(|e| e.with_span((use_when.span.start..use_when.span.end).into()))?
             {
                 self.to_remove.push(attributes.content.node);
+                return Ok(false);
             }
         }
-        Ok(())
+        Ok(true)
     }
 
     fn evaluate_static_xpath(
@@ -424,5 +426,22 @@ mod tests {
             state.xot.to_string(document_element).unwrap(),
             "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"/>"
         );
+    }
+
+    #[test]
+    fn test_use_when_false_for_xsl_param() {
+        let xml = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+            <xsl:param name="x" static="yes" select="'foo'" use-when="false()"/>
+        </xsl:stylesheet>
+        "#;
+        let mut xot = xot::Xot::new();
+        let (root, span_info) = xot.parse_with_span_info(xml).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(root).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let variables = static_evaluate(&mut state, document_element, Variables::new()).unwrap();
+        assert_eq!(variables.len(), 0);
     }
 }
