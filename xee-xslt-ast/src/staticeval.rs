@@ -459,8 +459,46 @@ mod tests {
         assert_eq!(variables.len(), 0);
     }
 
+    #[test]
+    fn test_xpath_default_namespace() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            xmlns="http://www.w3.org/1999/xhtml"
+            xpath-default-namespace="http://www.w3.org/1999/xhtml"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <xsl:variable name="y" static="yes" select="$x/html/body/p/string()"/>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        let variables = static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(variables.len(), 2);
+        let y = xpath_ast::Name::new("y".to_string(), None, None);
+        assert_eq!(
+            variables.get(&y),
+            Some(&xee_xpath::Item::from("foo").into())
+        );
+    }
     // TODO:
     // - top-level context
+    // - use-when for top-level element
     // - custom element namespace
     // - shadow attributes support
     // - shadow attributes for use-when in particular
