@@ -478,7 +478,6 @@ mod tests {
     fn test_xpath_default_namespace() {
         let xslt = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-            xmlns="http://www.w3.org/1999/xhtml"
             xpath-default-namespace="http://www.w3.org/1999/xhtml"
             version="3.0">
             <xsl:param name="x" static="yes"/>
@@ -516,7 +515,6 @@ mod tests {
     fn test_xpath_default_namespace_on_declaration() {
         let xslt = r#"
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-            xmlns="http://www.w3.org/1999/xhtml"
             version="3.0">
             <xsl:param name="x" static="yes"/>
             <xsl:variable name="y" xpath-default-namespace="http://www.w3.org/1999/xhtml" static="yes" select="$x/html/body/p/string()"/>
@@ -622,6 +620,74 @@ mod tests {
         assert_eq!(
             state.xot.to_string(document_element).unwrap(),
             r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>"#
+        );
+    }
+
+    #[test]
+    fn test_use_when_on_other_content_default_element_namespace() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <foo xsl:xpath-default-namespace="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/html/body/p/string() = 'bar'"/></foo>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:param name="x" static="yes"/><foo xsl:xpath-default-namespace="http://www.w3.org/1999/xhtml"/></xsl:stylesheet>"#
+        );
+    }
+
+    #[test]
+    fn test_use_when_on_other_content_default_element_namespace_included() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <foo xsl:xpath-default-namespace="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/html/body/p/string() = 'foo'"/></foo>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:param name="x" static="yes"/><foo xsl:xpath-default-namespace="http://www.w3.org/1999/xhtml"><bar xsl:use-when="$x/html/body/p/string() = &apos;foo&apos;"/></foo></xsl:stylesheet>"#
         );
     }
 
