@@ -31,8 +31,7 @@ impl<'a> Attributes<'a> {
         let content = self.content.with_context(
             self.content
                 .context
-                .with_prefixes(self.element.prefixes())
-                .with_standard(self.standard()?),
+                .with_standard(self.element.prefixes(), self.standard()?),
         );
         // we now create a new attributes object that has the new content
         Ok(Self { content, ..self })
@@ -43,8 +42,7 @@ impl<'a> Attributes<'a> {
         let content = self.content.with_context(
             self.content
                 .context
-                .with_prefixes(self.element.prefixes())
-                .with_static_standard(self.static_standard()?),
+                .with_static_standard(self.element.prefixes(), self.static_standard()?),
         );
         // we now create a new attributes object that has the new content
         Ok(Self { content, ..self })

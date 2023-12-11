@@ -66,7 +66,13 @@ impl Context {
         }
     }
 
-    pub(crate) fn with_static_standard(&self, static_standard: ast::StaticStandard) -> Self {
+    pub(crate) fn with_static_standard(
+        &self,
+        prefixes: &xot::Prefixes,
+        static_standard: ast::StaticStandard,
+    ) -> Self {
+        let mut expanded_prefixes = self.prefixes.clone();
+        expanded_prefixes.extend(prefixes);
         let xpath_default_namespace =
             if let Some(xpath_default_namespace) = static_standard.xpath_default_namespace {
                 xpath_default_namespace
@@ -74,12 +80,15 @@ impl Context {
                 self.xpath_default_namespace.clone()
             };
         Self {
+            prefixes: expanded_prefixes,
             xpath_default_namespace,
             ..self.clone()
         }
     }
 
-    pub(crate) fn with_standard(&self, standard: ast::Standard) -> Self {
+    pub(crate) fn with_standard(&self, prefixes: &xot::Prefixes, standard: ast::Standard) -> Self {
+        let mut expanded_prefixes = self.prefixes.clone();
+        expanded_prefixes.extend(prefixes);
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
         } else {
@@ -131,6 +140,7 @@ impl Context {
             };
 
         Self {
+            prefixes: expanded_prefixes,
             default_collation,
             default_mode,
             default_validation,

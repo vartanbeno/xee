@@ -723,8 +723,41 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_use_when_with_namespace_prefix_defined_element_itself() {
+        let xslt = r#"
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            version="3.0">
+            <xsl:param name="x" static="yes"/>
+            <foo ><bar xmlns:xhtml="http://www.w3.org/1999/xhtml" xsl:use-when="$x/xhtml:html/xhtml:body/xhtml:p/string() = 'foo'"/></foo>
+        </xsl:stylesheet>"#;
+
+        let xhtml = r#"
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <body>
+            <p>foo</p>
+          </body>
+        </html>"#;
+
+        let mut xot = xot::Xot::new();
+        let xhtml = xot.parse(xhtml).unwrap();
+        let (xslt, span_info) = xot.parse_with_span_info(xslt).unwrap();
+        let names = Names::new(&mut xot);
+        let document_element = xot.document_element(xslt).unwrap();
+
+        let mut state = State::new(xot, span_info, names);
+        let parameters = Variables::from([(
+            xpath_ast::Name::new("x".to_string(), None, None),
+            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+        )]);
+        static_evaluate(&mut state, document_element, parameters).unwrap();
+        assert_eq!(
+            state.xot.to_string(document_element).unwrap(),
+            r#"<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0"><xsl:param name="x" static="yes"/><foo><bar xmlns:xhtml="http://www.w3.org/1999/xhtml" xsl:use-when="$x/xhtml:html/xhtml:body/xhtml:p/string() = &apos;foo&apos;"/></foo></xsl:stylesheet>"#
+        );
+    }
+
     // TODO:
     // - shadow attributes support
     // - shadow attributes for use-when in particular
-    // - handling non-toplevel elements
 }
