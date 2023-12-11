@@ -188,13 +188,28 @@ fn static_evaluate(
     static_parameters: Variables,
 ) -> Result<Variables, ElementError> {
     strip_whitespace(&mut state.xot, &state.names, node);
-
     let mut evaluator = StaticEvaluator::new(static_parameters);
 
-    let context = Context::new(xot::Prefixes::new());
-    let content = Content::new(node, state, context);
-    evaluator.evaluate_top_level(content)?;
-    evaluator.update_tree(state)?;
+    if let Some(element) = state.xot.element(node) {
+        // construct a context with the prefixes of the top-level element
+        let context = Context::new(element.prefixes().clone());
+        // use this to extract the xpath default namespace standard
+        // attribute, which is required to execute static xpath
+        let content = Content::new(node, state, context.clone());
+        let attributes = content.attributes(element);
+        let xpath_default_namespace = attributes.optional(
+            state.names.standard.xpath_default_namespace,
+            attributes.uri(),
+        )?;
+        // construct a new context based on that, and a new content
+        let context = context.with_xpath_default_namespace(xpath_default_namespace);
+        let content = Content::new(node, state, context);
+
+        // now go through the top level elements for static evaluation
+        evaluator.evaluate_top_level(content)?;
+        // and update the tree accordingly
+        evaluator.update_tree(state)?;
+    }
     Ok(evaluator.static_global_variables)
 }
 

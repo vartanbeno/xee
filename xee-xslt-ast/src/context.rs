@@ -66,6 +66,22 @@ impl Context {
         }
     }
 
+    pub(crate) fn with_xpath_default_namespace(
+        &self,
+        xpath_default_namespace: Option<ast::Uri>,
+    ) -> Self {
+        let xpath_default_namespace = if let Some(xpath_default_namespace) = xpath_default_namespace
+        {
+            xpath_default_namespace
+        } else {
+            self.xpath_default_namespace.clone()
+        };
+        Self {
+            xpath_default_namespace,
+            ..self.clone()
+        }
+    }
+
     pub(crate) fn with_standard(&self, standard: ast::Standard) -> Self {
         let default_collation = if let Some(default_collation) = standard.default_collation {
             default_collation
