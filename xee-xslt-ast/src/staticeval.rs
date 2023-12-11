@@ -519,8 +519,6 @@ mod tests {
         );
     }
     // TODO:
-
-    // - custom element namespace
     // - shadow attributes support
     // - shadow attributes for use-when in particular
     // - handling non-toplevel elements
