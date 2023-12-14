@@ -2,6 +2,7 @@ mod axis_node_test;
 mod kind_test;
 mod name;
 mod parser_core;
+mod pattern;
 mod primary;
 mod signature;
 mod types;
