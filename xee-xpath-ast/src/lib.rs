@@ -5,6 +5,7 @@ mod lexer;
 mod namespaces;
 mod operator;
 mod parser;
+pub mod pattern;
 pub mod span;
 
 pub use context::{VariableNames, XPathParserContext};
