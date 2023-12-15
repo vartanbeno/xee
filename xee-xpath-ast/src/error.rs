@@ -13,6 +13,7 @@ pub enum ParserError {
     Reserved { span: Span, name: String },
     ArityOverflow { span: Span },
     UnknownType { span: Span, name: ast::Name },
+    IllegalFunctionInPattern { span: Span, name: ast::Name },
 }
 
 impl ParserError {
@@ -23,6 +24,7 @@ impl ParserError {
             Self::Reserved { span, .. } => *span,
             Self::ArityOverflow { span } => *span,
             Self::UnknownType { span, .. } => *span,
+            Self::IllegalFunctionInPattern { span, .. } => *span,
         }
     }
 
@@ -34,6 +36,7 @@ impl ParserError {
             Reserved { span, .. } => span,
             ArityOverflow { span } => span,
             UnknownType { span, .. } => span,
+            IllegalFunctionInPattern { span, .. } => span,
         };
         *span = Span::new(span.start + start, span.end + start);
         self

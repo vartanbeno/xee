@@ -11,6 +11,8 @@ pub(crate) struct ParserAxisNodeTestOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
+    pub(crate) node_test: BoxedParser<'a, I, ast::NodeTest>,
+    pub(crate) abbrev_forward_step: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
     pub(crate) axis_node_test: BoxedParser<'a, I, (ast::Axis, ast::NodeTest)>,
 }
 
@@ -166,9 +168,13 @@ where
         .or(forward_step_with_node_test_attribute_name)
         .boxed();
 
-    let abbrev_forward_step_attribute = just(Token::At)
-        .ignore_then(node_test_attribute_name.map(|node_test| (ast::Axis::Attribute, node_test)));
+    let abbrev_forward_step_attribute = just(Token::At).ignore_then(
+        node_test_attribute_name
+            .clone()
+            .map(|node_test| (ast::Axis::Attribute, node_test)),
+    );
     let abbrev_forward_step_element = node_test_element_name
+        .clone()
         .map(|node_test| {
             // https://www.w3.org/TR/xpath-31/#abbrev
             let axis = match &node_test {
@@ -189,9 +195,16 @@ where
         .or(abbrev_forward_step_element)
         .boxed();
 
-    let forward_step = forward_step_with_node_test.or(abbrev_forward_step).boxed();
+    let forward_step = forward_step_with_node_test
+        .or(abbrev_forward_step.clone())
+        .boxed();
 
     let axis_node_test = reverse_step.or(forward_step).boxed();
 
-    ParserAxisNodeTestOutput { axis_node_test }
+    let node_test = node_test_element_name.or(node_test_attribute_name).boxed();
+    ParserAxisNodeTestOutput {
+        node_test,
+        abbrev_forward_step,
+        axis_node_test,
+    }
 }

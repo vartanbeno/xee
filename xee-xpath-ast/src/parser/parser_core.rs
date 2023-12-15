@@ -67,7 +67,7 @@ where
         single_type,
     } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
 
-    let ParserAxisNodeTestOutput { axis_node_test } = parser_axis_node_test(
+    let ParserAxisNodeTestOutput { axis_node_test, .. } = parser_axis_node_test(
         eqname.clone(),
         ncname.clone(),
         braced_uri_literal.clone(),

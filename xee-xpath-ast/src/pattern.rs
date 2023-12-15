@@ -129,21 +129,15 @@ pub struct PostfixExpr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AxisStep {
-    pub forward: ForwardStep,
+    pub forward: ForwardAxis,
+    pub node_test: ast::NodeTest,
     pub predicates: Vec<ast::ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum ForwardStep {
-    Abbreviated(AbbreviatedForwardStep),
-    ForwardAxis(ForwardAxis),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct AbbreviatedForwardStep {
-    pub attribute: bool,
+pub struct ForwardAxisNodeTest {
+    pub axis: ForwardAxis,
     pub node_test: ast::NodeTest,
 }
 
