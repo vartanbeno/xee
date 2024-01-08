@@ -574,6 +574,8 @@ impl From<xee_xpath_ast::ParserError> for SpannedError {
             ParserError::Reserved { .. } => Error::XPST0003,
             ParserError::UnknownPrefix { .. } => Error::XPST0081,
             ParserError::UnknownType { .. } => Error::XPST0051,
+            // TODO: this this the right error code?
+            ParserError::IllegalFunctionInPattern { .. } => Error::XPST0003,
         };
         SpannedError {
             error,
