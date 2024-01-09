@@ -53,34 +53,12 @@ pub enum PathRoot {
     Relative,
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub enum Slash {
-//     Slash,
-//     DoubleSlash,
-// }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum RootExpr {
     VarRef(ast::Name),
     FunctionCall(FunctionCall),
 }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub struct RootedPath {
-//     pub start: RootedPathStart,
-//     pub predicates: Vec<ast::ExprS>,
-//     pub relative: Option<RootedPathRelative>,
-// }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub enum RootedPathRelative {
-//     Slash(RelativePathExpr),
-//     DoubleSlash(RelativePathExpr),
-// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -106,20 +84,6 @@ pub enum Argument {
     VarRef(ast::Name),
     Literal(ast::Literal),
 }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub struct RelativePathExpr {
-//     pub first_step: StepExpr,
-//     pub steps: Vec<RelativePathStep>,
-// }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub enum RelativePathStep {
-//     Slash(StepExpr),
-//     DoubleSlash(StepExpr),
-// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
