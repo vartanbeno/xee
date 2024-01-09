@@ -13,12 +13,6 @@ pub struct PredicatePattern {
     pub predicates: Vec<ast::ExprS>,
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub struct UnionExpr {
-//     pub intersect_exprs: Vec<IntersectExceptExpr>,
-// }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ExprPattern {
@@ -41,12 +35,6 @@ pub enum Operator {
     Intersect,
     Except,
 }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub struct IntersectExceptExpr {
-//     pub path_exprs: Vec<PathExpr>,
-// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
