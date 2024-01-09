@@ -116,8 +116,8 @@ where
 
     let slash_or_double_slash = just(Token::Slash).or(just(Token::DoubleSlash));
 
-    let union_expr = recursive(|union_expr| {
-        let parenthesized_expr = union_expr
+    let expr_pattern = recursive(|expr_pattern| {
+        let parenthesized_expr = expr_pattern
             .delimited_by(just(Token::LeftParen), just(Token::RightParen))
             .boxed();
 
@@ -226,51 +226,45 @@ where
             .or(relative_path)
             .boxed();
 
-        let intersect_except_expr = path_expr
+        let operator = just(Token::Intersect)
+            .or(just(Token::Except))
+            .or(just(Token::Union))
+            .or(just(Token::Pipe))
+            .map(|token| match token {
+                Token::Intersect => pattern::Operator::Intersect,
+                Token::Except => pattern::Operator::Except,
+                Token::Union => pattern::Operator::Union,
+                Token::Pipe => pattern::Operator::Union,
+                _ => unreachable!(),
+            });
+
+        let expr_pattern = path_expr
             .clone()
-            .then(
-                (just(Token::Intersect).or(just(Token::Except))).map(|token| match token {
-                    Token::Intersect => pattern::IntersectExceptOperator::Intersect,
-                    Token::Except => pattern::IntersectExceptOperator::Except,
-                    _ => unreachable!(),
-                }),
+            .map(pattern::ExprPattern::Path)
+            .foldl(
+                operator.then(path_expr.clone()).repeated(),
+                |left, (operator, right)| {
+                    pattern::ExprPattern::BinaryExpr(pattern::BinaryExpr {
+                        operator,
+                        left: Box::new(left),
+                        right: Box::new(pattern::ExprPattern::Path(right)),
+                    })
+                },
             )
-            .then(path_expr)
-            .map(|((left, operator), right)| pattern::IntersectExceptExpr {
-                operator,
-                left: Box::new(left),
-                right: Box::new(right),
-            })
             .boxed();
 
-        let union_expr = intersect_except_expr
-            .clone()
-            .then(
-                ((just(Token::Union).or(just(Token::Pipe))).ignore_then(intersect_except_expr))
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map(|(first_intersect_expr, rest_intersect_exprs)| {
-                let mut exprs = vec![first_intersect_expr];
-                exprs.extend(rest_intersect_exprs);
-                pattern::UnionExpr {
-                    intersect_exprs: exprs,
-                }
-            })
-            .boxed();
-
-        union_expr
+        expr_pattern
     })
     .boxed();
 
     let predicate_pattern = predicate_pattern
         .then_ignore(end())
-        .map(pattern::Pattern::PredicatePattern)
+        .map(pattern::Pattern::Predicate)
         .boxed();
 
-    let union_pattern = union_expr
+    let union_pattern = expr_pattern
         .then_ignore(end())
-        .map(pattern::Pattern::UnionExpr)
+        .map(pattern::Pattern::Expr)
         .boxed();
 
     let pattern = predicate_pattern.or(union_pattern).boxed();
@@ -314,4 +308,7 @@ mod tests {
             &variable_names
         ));
     }
+
+    // #[test]
+    // fn test_union_pattern_
 }

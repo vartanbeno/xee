@@ -2,6 +2,6 @@
 source: xee-xpath-ast/src/parser/pattern.rs
 expression: "pattern::Pattern::parse(\".\", &namespaces, &variable_names)"
 ---
-Ok(PredicatePattern(PredicatePattern(
+Ok(Predicate(PredicatePattern(
   predicates: [],
 )))

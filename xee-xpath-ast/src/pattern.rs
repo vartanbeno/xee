@@ -3,8 +3,8 @@ use crate::ast;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Pattern {
-    PredicatePattern(PredicatePattern),
-    UnionExpr(UnionExpr),
+    Predicate(PredicatePattern),
+    Expr(ExprPattern),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,26 +13,40 @@ pub struct PredicatePattern {
     pub predicates: Vec<ast::ExprS>,
 }
 
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+// pub struct UnionExpr {
+//     pub intersect_exprs: Vec<IntersectExceptExpr>,
+// }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct UnionExpr {
-    pub intersect_exprs: Vec<IntersectExceptExpr>,
+pub enum ExprPattern {
+    Path(PathExpr),
+    BinaryExpr(BinaryExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum IntersectExceptOperator {
+pub struct BinaryExpr {
+    pub operator: Operator,
+    pub left: Box<ExprPattern>,
+    pub right: Box<ExprPattern>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum Operator {
+    Union,
     Intersect,
     Except,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct IntersectExceptExpr {
-    pub operator: IntersectExceptOperator,
-    pub left: Box<PathExpr>,
-    pub right: Box<PathExpr>,
-}
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+// pub struct IntersectExceptExpr {
+//     pub path_exprs: Vec<PathExpr>,
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -95,7 +109,7 @@ pub enum StepExpr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct PostfixExpr {
-    pub expr: UnionExpr,
+    pub expr: ExprPattern,
     pub predicates: Vec<ast::ExprS>,
 }
 
