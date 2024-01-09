@@ -7,7 +7,7 @@ use crate::{ast, WithSpan, FN_NAMESPACE};
 use crate::{pattern, Namespaces, ParserError, VariableNames};
 
 use super::axis_node_test::parser_axis_node_test;
-use super::name::{parser_name, ParserNameOutput};
+use super::name::parser_name;
 use super::parser_core::parser as xpath_parser;
 use super::primary::parser_primary;
 use super::{parse, tokens};
@@ -34,7 +34,7 @@ where
     let literal = parser_primary_output.literal;
     let var_ref = parser_primary_output.var_ref;
     let parser_axis_node_test_output = parser_axis_node_test(
-        name,
+        name.clone(),
         name_output.ncname,
         name_output.braced_uri_literal,
         xpath_parser_output.kind_test,
@@ -57,166 +57,223 @@ where
         .boxed();
     let predicate_list = predicate.repeated().collect::<Vec<_>>().boxed();
 
-    let predicate_pattern = (just(Token::Dot).ignore_then(predicate_list))
+    let predicate_pattern = (just(Token::Dot).ignore_then(predicate_list.clone()))
         .map(|predicates| pattern::PredicatePattern { predicates })
         .boxed();
 
-    // let outer_function_name = name.try_map(|name, span| {
-    //     let name = name.value;
-    //     if name.namespace() == Some(FN_NAMESPACE) || name.namespace().is_none() {
-    //         {
-    //             match name.local_name() {
-    //                 "doc" => Ok(pattern::OuterFunctionName::Doc),
-    //                 "id" => Ok(pattern::OuterFunctionName::Id),
-    //                 "element-with-id" => Ok(pattern::OuterFunctionName::ElementWithId),
-    //                 "key" => Ok(pattern::OuterFunctionName::Key),
-    //                 "root" => Ok(pattern::OuterFunctionName::Root),
-    //                 _ => Err(ParserError::IllegalFunctionInPattern { name, span }),
-    //             }
-    //         }
-    //     } else {
-    //         Err(ParserError::IllegalFunctionInPattern { name, span })
-    //     }
-    // });
+    let outer_function_name = name.try_map(|name, span| {
+        let name = name.value;
+        if name.namespace() == Some(FN_NAMESPACE) || name.namespace().is_none() {
+            {
+                match name.local_name() {
+                    "doc" => Ok(pattern::OuterFunctionName::Doc),
+                    "id" => Ok(pattern::OuterFunctionName::Id),
+                    "element-with-id" => Ok(pattern::OuterFunctionName::ElementWithId),
+                    "key" => Ok(pattern::OuterFunctionName::Key),
+                    "root" => Ok(pattern::OuterFunctionName::Root),
+                    _ => Err(ParserError::IllegalFunctionInPattern { name, span }),
+                }
+            }
+        } else {
+            Err(ParserError::IllegalFunctionInPattern { name, span })
+        }
+    });
 
-    // let argument = var_ref
-    //     .map(|var_ref| {
-    //         if let ast::PrimaryExpr::VarRef(name) = var_ref.value {
-    //             pattern::Argument::VarRef(name)
-    //         } else {
-    //             unreachable!()
-    //         }
-    //     })
-    //     .or(literal.map(|literal| {
-    //         if let ast::PrimaryExpr::Literal(literal) = literal.value {
-    //             pattern::Argument::Literal(literal)
-    //         } else {
-    //             unreachable!()
-    //         }
-    //     }));
+    let argument = var_ref
+        .clone()
+        .map(|var_ref| {
+            if let ast::PrimaryExpr::VarRef(name) = var_ref.value {
+                pattern::Argument::VarRef(name)
+            } else {
+                unreachable!()
+            }
+        })
+        .or(literal.map(|literal| {
+            if let ast::PrimaryExpr::Literal(literal) = literal.value {
+                pattern::Argument::Literal(literal)
+            } else {
+                unreachable!()
+            }
+        }));
 
-    // let argument_list = (argument.separated_by(just(Token::Comma)))
-    //     .at_least(1)
-    //     .collect::<Vec<_>>()
-    //     .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-    //     .boxed();
+    let argument_list = (argument.separated_by(just(Token::Comma)))
+        .at_least(1)
+        .collect::<Vec<_>>()
+        .delimited_by(just(Token::LeftParen), just(Token::RightParen))
+        .boxed();
 
-    // let function_call = outer_function_name.then(argument_list).boxed();
+    let function_call = outer_function_name.then(argument_list).boxed();
 
-    // let rooted_path_start = (var_ref.map(|var_ref| {
-    //     if let ast::PrimaryExpr::VarRef(name) = var_ref.value {
-    //         pattern::RootedPathStart::VarRef(name)
-    //     } else {
-    //         unreachable!()
-    //     }
-    // }))
-    // .or(function_call.map(|(name, args)| {
-    //     pattern::RootedPathStart::FunctionCall(pattern::FunctionCall { name, args })
-    // }));
+    let rooted_path_start = (var_ref.map(|var_ref| {
+        if let ast::PrimaryExpr::VarRef(name) = var_ref.value {
+            pattern::RootExpr::VarRef(name)
+        } else {
+            unreachable!()
+        }
+    }))
+    .or(function_call
+        .map(|(name, args)| pattern::RootExpr::FunctionCall(pattern::FunctionCall { name, args })));
 
-    // let slash_or_double_slash = just(Token::Slash).or(just(Token::DoubleSlash));
+    let slash_or_double_slash = just(Token::Slash).or(just(Token::DoubleSlash));
 
-    // let union_expr = recursive(|union_expr| {
-    //     let parenthesized_expr =
-    //         union_expr.delimited_by(just(Token::LeftParen), just(Token::RightParen));
+    let union_expr = recursive(|union_expr| {
+        let parenthesized_expr = union_expr
+            .delimited_by(just(Token::LeftParen), just(Token::RightParen))
+            .boxed();
 
-    //     let postfix_expr = parenthesized_expr.then(predicate_list);
+        let postfix_expr = parenthesized_expr.then(predicate_list.clone()).boxed();
 
-    //     let forward_axis = (just(Token::Child)
-    //         .or(just(Token::Descendant))
-    //         .or(just(Token::Attribute))
-    //         .or(just(Token::Self_))
-    //         .or(just(Token::DescendantOrSelf))
-    //         .or(just(Token::Namespace)))
-    //     .then_ignore(just(Token::DoubleColon))
-    //     .map(|token| match token {
-    //         Token::Child => pattern::ForwardAxis::Child,
-    //         Token::Descendant => pattern::ForwardAxis::Descendant,
-    //         Token::Attribute => pattern::ForwardAxis::Attribute,
-    //         Token::Self_ => pattern::ForwardAxis::Self_,
-    //         Token::DescendantOrSelf => pattern::ForwardAxis::DescendantOrSelf,
-    //         Token::Namespace => pattern::ForwardAxis::Namespace,
-    //         _ => unreachable!(),
-    //     })
-    //     .boxed();
+        let forward_axis = (just(Token::Child)
+            .or(just(Token::Descendant))
+            .or(just(Token::Attribute))
+            .or(just(Token::Self_))
+            .or(just(Token::DescendantOrSelf))
+            .or(just(Token::Namespace)))
+        .then_ignore(just(Token::DoubleColon))
+        .map(|token| match token {
+            Token::Child => pattern::ForwardAxis::Child,
+            Token::Descendant => pattern::ForwardAxis::Descendant,
+            Token::Attribute => pattern::ForwardAxis::Attribute,
+            Token::Self_ => pattern::ForwardAxis::Self_,
+            Token::DescendantOrSelf => pattern::ForwardAxis::DescendantOrSelf,
+            Token::Namespace => pattern::ForwardAxis::Namespace,
+            _ => unreachable!(),
+        })
+        .boxed();
 
-    //     let forward_step = (forward_axis.then(node_test))
-    //         .map(|(forward_axis, node_test)| (forward_axis, node_test))
-    //         .or(abbrev_forward_step.map(|(axis, node_test)| {
-    //             let axis = match axis {
-    //                 ast::Axis::Attribute => pattern::ForwardAxis::Attribute,
-    //                 ast::Axis::Child => pattern::ForwardAxis::Child,
-    //                 _ => unreachable!(),
-    //             };
-    //             (axis, node_test)
-    //         }));
+        let forward_step_axis_node_test = forward_axis.then(node_test);
+        let forward_step_abbrev = abbrev_forward_step.map(|(axis, node_test)| {
+            let axis = match axis {
+                ast::Axis::Attribute => pattern::ForwardAxis::Attribute,
+                ast::Axis::Child => pattern::ForwardAxis::Child,
+                _ => unreachable!(),
+            };
+            (axis, node_test)
+        });
 
-    //     let axis_step = forward_step.then(predicate_list);
+        let forward_step = forward_step_axis_node_test.or(forward_step_abbrev);
 
-    //     let step_expr = postfix_expr.or(axis_step);
+        let axis_step = forward_step.then(predicate_list.clone());
 
-    //     let relative_path_expr = step_expr.then(
-    //         (slash_or_double_slash.then(step_expr))
-    //             .repeated()
-    //             .collect::<Vec<_>>(),
-    //     );
+        let step_expr = postfix_expr
+            .map(|(expr, predicates)| {
+                pattern::StepExpr::PostfixExprP(pattern::PostfixExpr { expr, predicates })
+            })
+            .or(axis_step.map(|((axis, node_test), predicates)| {
+                pattern::StepExpr::AxisStep(pattern::AxisStep {
+                    forward: axis,
+                    node_test,
+                    predicates,
+                })
+            }))
+            .boxed();
 
-    //     let rooted_path = rooted_path_start
-    //         .then(predicate_list)
-    //         .then((slash_or_double_slash).then(relative_path_expr).map(
-    //             |(token, expr)| match token {
-    //                 Token::Slash => pattern::RootedPathRelative::Slash(expr),
-    //                 Token::DoubleSlash => pattern::RootedPathRelative::DoubleSlash(expr),
-    //                 _ => unreachable!(),
-    //             },
-    //         ))
-    //         .or_not()
-    //         .map(
-    //             |((rooted_path_start, predicates), relative_path_expr)| pattern::RootedPath {
-    //                 start: rooted_path_start,
-    //                 predicates,
-    //                 relative: relative_path_expr,
-    //             },
-    //         );
+        let relative_path_expr = step_expr
+            .clone()
+            .then(
+                (slash_or_double_slash.then(step_expr))
+                    .repeated()
+                    .collect::<Vec<_>>(),
+            )
+            .map(|(first_step, rest_steps)| {
+                let mut steps = vec![first_step];
+                for (token, step) in rest_steps {
+                    match token {
+                        Token::Slash => {}
+                        Token::DoubleSlash => {
+                            let axis_step = pattern::AxisStep {
+                                forward: pattern::ForwardAxis::DescendantOrSelf,
+                                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                                predicates: vec![],
+                            };
+                            steps.push(pattern::StepExpr::AxisStep(axis_step));
+                        }
+                        _ => unreachable!(),
+                    }
+                    steps.push(step);
+                }
+                steps
+            })
+            .boxed();
 
-    //     let slash_path = just(Token::Slash).then(relative_path_expr.or_not());
-    //     let double_slash_path = just(Token::DoubleSlash).then(relative_path_expr);
+        let rooted_path = rooted_path_start
+            .then(predicate_list)
+            .then(relative_path_expr.clone().or_not())
+            .map(|((root, predicates), steps)| pattern::PathExpr {
+                root: pattern::PathRoot::Rooted { root, predicates },
+                steps: steps.unwrap_or_default(),
+            });
+        let absolute_slash_path = just(Token::Slash)
+            .ignore_then(relative_path_expr.clone().or_not())
+            .map(|steps| pattern::PathExpr {
+                root: pattern::PathRoot::AbsoluteSlash,
+                steps: steps.unwrap_or_default(),
+            });
+        let absolute_double_slash_path = just(Token::DoubleSlash)
+            .ignore_then(relative_path_expr.clone())
+            .map(|steps| pattern::PathExpr {
+                root: pattern::PathRoot::AbsoluteDoubleSlash,
+                steps,
+            });
+        let relative_path = relative_path_expr.map(|steps| pattern::PathExpr {
+            root: pattern::PathRoot::Relative,
+            steps,
+        });
 
-    //     let path_expr = rooted_path
-    //         .or(slash_path)
-    //         .or(double_slash_path)
-    //         .or(relative_path_expr)
-    //         .boxed();
+        let path_expr = rooted_path
+            .or(absolute_slash_path)
+            .or(absolute_double_slash_path)
+            .or(relative_path)
+            .boxed();
 
-    //     let intersect_except_expr = path_expr
-    //         .then(
-    //             (just(Token::Intersect).or(just(Token::Except))).map(|token| match token {
-    //                 Token::Intersect => pattern::IntersectExceptOperator::Intersect,
-    //                 Token::Except => pattern::IntersectExceptOperator::Except,
-    //                 _ => unreachable!(),
-    //             }),
-    //         )
-    //         .then(path_expr)
-    //         .map(|((left, operator), right)| pattern::IntersectExceptExpr {
-    //             operator,
-    //             left,
-    //             right,
-    //         })
-    //         .boxed();
+        let intersect_except_expr = path_expr
+            .clone()
+            .then(
+                (just(Token::Intersect).or(just(Token::Except))).map(|token| match token {
+                    Token::Intersect => pattern::IntersectExceptOperator::Intersect,
+                    Token::Except => pattern::IntersectExceptOperator::Except,
+                    _ => unreachable!(),
+                }),
+            )
+            .then(path_expr)
+            .map(|((left, operator), right)| pattern::IntersectExceptExpr {
+                operator,
+                left: Box::new(left),
+                right: Box::new(right),
+            })
+            .boxed();
 
-    //     let union_expr = intersect_except_expr
-    //         .then_ignore(just(Token::Union).or(just(Token::Pipe)))
-    //         .then(intersect_except_expr)
-    //         .map(|(left, right)| pattern::Pattern::UnionExpr(pattern::UnionExpr { left, right }))
-    //         .boxed();
+        let union_expr = intersect_except_expr
+            .clone()
+            .then(
+                ((just(Token::Union).or(just(Token::Pipe))).ignore_then(intersect_except_expr))
+                    .repeated()
+                    .collect::<Vec<_>>(),
+            )
+            .map(|(first_intersect_expr, rest_intersect_exprs)| {
+                let mut exprs = vec![first_intersect_expr];
+                exprs.extend(rest_intersect_exprs);
+                pattern::UnionExpr {
+                    intersect_exprs: exprs,
+                }
+            })
+            .boxed();
 
-    //     union_expr
-    // });
+        union_expr
+    })
+    .boxed();
 
-    let pattern = predicate_pattern
+    let predicate_pattern = predicate_pattern
         .then_ignore(end())
         .map(pattern::Pattern::PredicatePattern)
         .boxed();
+
+    let union_pattern = union_expr
+        .then_ignore(end())
+        .map(pattern::Pattern::UnionExpr)
+        .boxed();
+
+    let pattern = predicate_pattern.or(union_pattern).boxed();
 
     PatternParserOutput { pattern }
 }
