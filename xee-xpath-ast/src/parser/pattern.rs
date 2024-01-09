@@ -104,15 +104,18 @@ where
 
     let function_call = outer_function_name.then(argument_list).boxed();
 
-    let rooted_path_start = (var_ref.map(|var_ref| {
+    let rooted_var_ref = var_ref.map(|var_ref| {
         if let ast::PrimaryExpr::VarRef(name) = var_ref.value {
             pattern::RootExpr::VarRef(name)
         } else {
             unreachable!()
         }
-    }))
-    .or(function_call
-        .map(|(name, args)| pattern::RootExpr::FunctionCall(pattern::FunctionCall { name, args })));
+    });
+
+    let rooted_function_call = function_call
+        .map(|(name, args)| pattern::RootExpr::FunctionCall(pattern::FunctionCall { name, args }));
+
+    let rooted_path_start = rooted_function_call.or(rooted_var_ref).boxed();
 
     let slash_or_double_slash = just(Token::Slash).or(just(Token::DoubleSlash));
 
@@ -198,10 +201,35 @@ where
 
         let rooted_path = rooted_path_start
             .then(predicate_list)
-            .then(relative_path_expr.clone().or_not())
-            .map(|((root, predicates), steps)| pattern::PathExpr {
-                root: pattern::PathRoot::Rooted { root, predicates },
-                steps: steps.unwrap_or_default(),
+            .then(
+                (just(Token::Slash)
+                    .or(just(Token::DoubleSlash))
+                    .then(relative_path_expr.clone()))
+                .or_not(),
+            )
+            .map(|((root, predicates), token_relative_steps)| {
+                let steps = if let Some((token, relative_steps)) = token_relative_steps {
+                    match token {
+                        Token::Slash => relative_steps,
+                        Token::DoubleSlash => {
+                            let axis_step = pattern::AxisStep {
+                                forward: pattern::ForwardAxis::DescendantOrSelf,
+                                node_test: ast::NodeTest::KindTest(ast::KindTest::Any),
+                                predicates: vec![],
+                            };
+                            let mut steps = vec![pattern::StepExpr::AxisStep(axis_step)];
+                            steps.extend(relative_steps);
+                            steps
+                        }
+                        _ => unreachable!(),
+                    }
+                } else {
+                    vec![]
+                };
+                pattern::PathExpr {
+                    root: pattern::PathRoot::Rooted { root, predicates },
+                    steps,
+                }
             });
         let absolute_slash_path = just(Token::Slash)
             .ignore_then(relative_path_expr.clone().or_not())
@@ -220,10 +248,10 @@ where
             steps,
         });
 
-        let path_expr = rooted_path
-            .or(absolute_slash_path)
+        let path_expr = absolute_slash_path
             .or(absolute_double_slash_path)
             .or(relative_path)
+            .or(rooted_path)
             .boxed();
 
         let operator = just(Token::Intersect)
@@ -309,6 +337,54 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn test_union_pattern_
+    #[test]
+    fn test_expr_pattern() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "$a | $b",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_expr_pattern_rooted_path() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "$a/foo",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_expr_pattern_absolute_slash() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "/foo",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_expr_pattern_absolute_double_slash() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "//foo",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_expr_pattern_relative() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse("foo", &namespaces, &variable_names));
+    }
 }
