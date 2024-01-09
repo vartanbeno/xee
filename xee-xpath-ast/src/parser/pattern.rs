@@ -387,4 +387,15 @@ mod tests {
         let variable_names = VariableNames::new();
         assert_ron_snapshot!(pattern::Pattern::parse("foo", &namespaces, &variable_names));
     }
+
+    #[test]
+    fn test_postfix_expr() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo[1]",
+            &namespaces,
+            &variable_names
+        ));
+    }
 }
