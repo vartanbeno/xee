@@ -1,0 +1,15 @@
+---
+source: xee-xpath/tests/arithmetic.rs
+expression: "evaluate_without_focus(\"12 + 15.4\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Decimal(
+                    27.4,
+                ),
+            ),
+        ),
+    },
+)

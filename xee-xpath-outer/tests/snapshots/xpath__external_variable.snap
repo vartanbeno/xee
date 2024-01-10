@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run_with_variables(\"$foo\",\n    &[(ast::Name::unprefixed(\"foo\"),\n                    vec![Item :: from(Atomic :: from(\"FOO\"))])])"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "FOO",
+                ),
+            ),
+        ),
+    },
+)

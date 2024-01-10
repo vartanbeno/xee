@@ -18,38 +18,38 @@ mod test {
         x.to_string()
     }
 
-    #[test]
-    fn test_simple() {
-        let xot = Xot::new();
-        let static_context = StaticContext::default();
-        let context = DynamicContext::empty(&xot, &static_context);
-        let expected =
-            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
-        let program = interpreter::Program::parse(context.static_context, ".").unwrap();
-        let runnable = interpreter::Runnable::new(&program, &context);
-        let mut interpreter = interpreter::Interpreter::new(&runnable);
-        assert_eq!(foo::WRAPPER(&context, &mut interpreter, &[]), Ok(expected));
-    }
+    // #[test]
+    // fn test_simple() {
+    //     let xot = Xot::new();
+    //     let static_context = StaticContext::default();
+    //     let context = DynamicContext::empty(&xot, &static_context);
+    //     let expected =
+    //         sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("foo"))]);
+    //     let program = interpreter::Program::parse(context.static_context, ".").unwrap();
+    //     let runnable = interpreter::Runnable::new(&program, &context);
+    //     let mut interpreter = interpreter::Interpreter::new(&runnable);
+    //     assert_eq!(foo::WRAPPER(&context, &mut interpreter, &[]), Ok(expected));
+    // }
 
-    #[test]
-    fn test_arg() {
-        let xot = Xot::new();
-        let static_context = StaticContext::default();
-        let context = DynamicContext::empty(&xot, &static_context);
-        let expected =
-            sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
-        let program = interpreter::Program::parse(context.static_context, ".").unwrap();
-        let runnable = interpreter::Runnable::new(&program, &context);
-        let mut interpreter = interpreter::Interpreter::new(&runnable);
-        assert_eq!(
-            int_to_string::WRAPPER(
-                &context,
-                &mut interpreter,
-                &[sequence::Sequence::from(vec![sequence::Item::from(
-                    atomic::Atomic::from(42i64)
-                )])]
-            ),
-            Ok(expected)
-        );
-    }
+    // #[test]
+    // fn test_arg() {
+    //     let xot = Xot::new();
+    //     let static_context = StaticContext::default();
+    //     let context = DynamicContext::empty(&xot, &static_context);
+    //     let expected =
+    //         sequence::Sequence::from(vec![sequence::Item::from(atomic::Atomic::from("42"))]);
+    //     let program = interpreter::Program::parse(context.static_context, ".").unwrap();
+    //     let runnable = interpreter::Runnable::new(&program, &context);
+    //     let mut interpreter = interpreter::Interpreter::new(&runnable);
+    //     assert_eq!(
+    //         int_to_string::WRAPPER(
+    //             &context,
+    //             &mut interpreter,
+    //             &[sequence::Sequence::from(vec![sequence::Item::from(
+    //                 atomic::Atomic::from(42i64)
+    //             )])]
+    //         ),
+    //         Ok(expected)
+    //     );
+    // }
 }

@@ -2,6 +2,8 @@ use xee_xpath::Result;
 use xee_xpath::{DynamicContext, StaticContext};
 use xee_xpath::{Item, Program};
 
+use crate::interpreter;
+
 pub trait Convert<V>: Fn(&Session, &Item) -> Result<V> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> Result<V> {}
 
@@ -48,7 +50,7 @@ impl<'s> Queries<'s> {
     }
 
     fn register(&mut self, s: &str) -> Result<usize> {
-        let program = Program::parse(self.static_context, s).map_err(|e| e.error)?;
+        let program = interpreter::parse(self.static_context, s).map_err(|e| e.error)?;
         let id = self.queries.len();
         self.queries.push(program);
         Ok(id)

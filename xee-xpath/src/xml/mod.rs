@@ -4,7 +4,7 @@ mod kind_test;
 mod node;
 mod step;
 
-pub(crate) use annotation::Annotations;
+pub use annotation::Annotations;
 pub use document::Document;
 pub use document::{Documents, Uri};
 pub(crate) use kind_test::kind_test;

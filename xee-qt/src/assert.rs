@@ -3,9 +3,10 @@ use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
 use xee_xpath::{
-    Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Program, Result, Runnable,
-    Sequence, StaticContext, VariableNames,
+    Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Result, Runnable, Sequence,
+    StaticContext, VariableNames,
 };
+use xee_xpath_outer::parse;
 use xot::Xot;
 
 use crate::outcome::{TestOutcome, UnexpectedError};
@@ -766,7 +767,7 @@ impl fmt::Display for Failure {
 
 fn run_xpath(expr: &qt::XPathExpr, runnable: &Runnable<'_>) -> Result<Sequence> {
     let static_context = StaticContext::default();
-    let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
+    let program = parse(&static_context, &expr.0).map_err(|e| e.error)?;
     let dynamic_context = DynamicContext::from_documents(
         runnable.xot(),
         &static_context,
@@ -785,7 +786,7 @@ fn run_xpath_with_result(
     let name = Name::unprefixed("result");
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
-    let program = Program::parse(&static_context, &expr.0).map_err(|e| e.error)?;
+    let program = parse(&static_context, &expr.0).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         runnable.xot(),

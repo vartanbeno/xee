@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(r#\"fn:string-join((\"A\"),xs:string(\"A\"))\"#)"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "A",
+                ),
+            ),
+        ),
+    },
+)

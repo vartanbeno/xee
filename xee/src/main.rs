@@ -4,8 +4,8 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::SpannedError;
-use xee_xpath::{evaluate_root, Node};
-use xee_xpath::{Atomic, Item};
+use xee_xpath::{Atomic, Item, Node};
+use xee_xpath_outer::evaluate_root;
 use xot::Xot;
 
 #[derive(Parser)]

@@ -16,7 +16,7 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 pub struct DynamicContext<'a> {
     pub(crate) xot: &'a Xot,
     pub static_context: &'a StaticContext<'a>,
-    pub(crate) documents: Cow<'a, xml::Documents>,
+    pub documents: Cow<'a, xml::Documents>,
     pub(crate) variables: Cow<'a, Variables>,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
@@ -86,7 +86,7 @@ impl<'a> DynamicContext<'a> {
         chrono::offset::Local::now().into()
     }
 
-    pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
+    pub fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.static_context.parser_context.variable_names {
             let items = self.variables.get(variable_name).ok_or(Error::XPDY0002)?;

@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"('---01' cast as xs:gDay) cast as xs:string\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                String(
+                    String,
+                    "---01",
+                ),
+            ),
+        ),
+    },
+)

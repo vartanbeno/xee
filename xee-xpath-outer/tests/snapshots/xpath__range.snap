@@ -1,0 +1,42 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"1 to 5\")"
+---
+Ok(
+    Sequence {
+        stack_value: Many(
+            [
+                Atomic(
+                    Integer(
+                        Integer,
+                        1,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        Integer,
+                        2,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        Integer,
+                        3,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        Integer,
+                        4,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        Integer,
+                        5,
+                    ),
+                ),
+            ],
+        ),
+    },
+)

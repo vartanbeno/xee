@@ -18,40 +18,40 @@ pub struct Program {
 
 impl Program {
     /// Construct a program from an XPath AST.
-    pub fn new(
-        static_context: &context::StaticContext,
-        xpath: ast::XPath,
-    ) -> error::SpannedResult<Self> {
-        let mut ir_converter = ir::IrConverter::new(static_context);
-        let expr = ir_converter.convert_xpath(&xpath)?;
-        // this expression contains a function definition, we're getting it
-        // in the end
-        let mut program = Program {
-            xpath,
-            functions: Vec::new(),
-        };
-        let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
-        let builder = FunctionBuilder::new(&mut program);
-        let mut compiler = InterpreterCompiler {
-            builder,
-            scopes: &mut scopes,
-            static_context,
-        };
-        compiler.compile_expr(&expr)?;
+    // pub fn new(
+    //     static_context: &context::StaticContext,
+    //     xpath: ast::XPath,
+    // ) -> error::SpannedResult<Self> {
+    //     let mut ir_converter = ir::IrConverter::new(static_context);
+    //     let expr = ir_converter.convert_xpath(&xpath)?;
+    //     // this expression contains a function definition, we're getting it
+    //     // in the end
+    //     let mut program = Program {
+    //         xpath,
+    //         functions: Vec::new(),
+    //     };
+    //     let mut scopes = Scopes::new(ir::Name("dummy".to_string()));
+    //     let builder = FunctionBuilder::new(&mut program);
+    //     let mut compiler = InterpreterCompiler {
+    //         builder,
+    //         scopes: &mut scopes,
+    //         static_context,
+    //     };
+    //     compiler.compile_expr(&expr)?;
 
-        Ok(program)
-    }
+    //     Ok(program)
+    // }
 
     /// Parse an XPath string into a program.
-    pub fn parse(
-        static_context: &context::StaticContext,
-        xpath: &str,
-    ) -> error::SpannedResult<Self> {
-        let xpath = static_context.parse_xpath(xpath)?;
-        Self::new(static_context, xpath)
-    }
+    // pub fn parse(
+    //     static_context: &context::StaticContext,
+    //     xpath: &str,
+    // ) -> error::SpannedResult<Self> {
+    //     let xpath = static_context.parse_xpath(xpath)?;
+    //     Self::new(static_context, xpath)
+    // }
 
-    pub(crate) fn span(&self) -> Span {
+    pub fn span(&self) -> Span {
         self.xpath.0.span
     }
 

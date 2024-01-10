@@ -12,7 +12,7 @@ pub struct Signature {
 }
 
 impl Signature {
-    pub(crate) fn map_signature() -> Self {
+    pub fn map_signature() -> Self {
         let key = ast::SequenceType::Item(ast::Item {
             item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,
@@ -28,7 +28,7 @@ impl Signature {
         }
     }
 
-    pub(crate) fn array_signature() -> Self {
+    pub fn array_signature() -> Self {
         let position = ast::SequenceType::Item(ast::Item {
             item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,

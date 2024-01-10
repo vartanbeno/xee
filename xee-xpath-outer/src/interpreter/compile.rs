@@ -32,3 +32,12 @@ pub fn compile(
 
     Ok(program)
 }
+
+/// Parse an XPath string into a program.
+pub fn parse(
+    static_context: &context::StaticContext,
+    xpath: &str,
+) -> error::SpannedResult<Program> {
+    let xpath = static_context.parse_xpath(xpath)?;
+    compile(static_context, xpath)
+}

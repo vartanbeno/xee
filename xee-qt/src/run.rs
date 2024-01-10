@@ -1,7 +1,8 @@
 use derive_builder::Builder;
 use std::borrow::Cow;
 use std::path::Path;
-use xee_xpath::{Documents, DynamicContext, Item, Namespaces, Program, StaticContext, Variables};
+use xee_xpath::{Documents, DynamicContext, Item, Namespaces, StaticContext, Variables};
+use xee_xpath_outer::parse;
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
@@ -203,7 +204,7 @@ impl qt::TestCase {
 
         let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
         let static_context = StaticContext::new(namespaces, variable_names);
-        let program = Program::parse(&static_context, &self.test);
+        let program = parse(&static_context, &self.test);
         let program = match program {
             Ok(xpath) => xpath,
             Err(error) => {

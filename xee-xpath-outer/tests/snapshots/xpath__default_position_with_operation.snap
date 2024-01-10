@@ -1,0 +1,13 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"fn:position() + 1\")"
+---
+Err(
+    SpannedError {
+        error: XPDY0002,
+        span: SourceSpan(
+            0,
+            17,
+        ),
+    },
+)

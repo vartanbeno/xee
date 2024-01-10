@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"function() { let $x := 3 return function($y) { $x - $y } }()(1)\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Integer(
+                    Integer,
+                    2,
+                ),
+            ),
+        ),
+    },
+)

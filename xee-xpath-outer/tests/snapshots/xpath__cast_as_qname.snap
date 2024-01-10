@@ -1,0 +1,23 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'xs:bar' cast as xs:QName\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                QName(
+                    Name {
+                        name: "bar",
+                        prefix: Some(
+                            "xs",
+                        ),
+                        namespace: Some(
+                            "http://www.w3.org/2001/XMLSchema",
+                        ),
+                    },
+                ),
+            ),
+        ),
+    },
+)

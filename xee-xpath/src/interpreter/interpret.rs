@@ -25,20 +25,20 @@ use super::state::State;
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 #[derive(Debug, Clone)]
-pub(crate) struct Interpreter<'a> {
+pub struct Interpreter<'a> {
     runnable: &'a Runnable<'a>,
     state: State,
 }
 
 impl<'a> Interpreter<'a> {
-    pub(crate) fn new(runnable: &'a Runnable<'a>) -> Self {
+    pub fn new(runnable: &'a Runnable<'a>) -> Self {
         Interpreter {
             runnable,
             state: State::new(),
         }
     }
 
-    pub(crate) fn state(&self) -> &State {
+    pub fn state(&self) -> &State {
         &self.state
     }
 
@@ -46,7 +46,7 @@ impl<'a> Interpreter<'a> {
         self.runnable
     }
 
-    pub(crate) fn start(
+    pub fn start(
         &mut self,
         context_item: Option<&sequence::Item>,
         arguments: Vec<sequence::Sequence>,
@@ -72,7 +72,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn run(&mut self, start_base: usize) -> error::SpannedResult<()> {
+    pub fn run(&mut self, start_base: usize) -> error::SpannedResult<()> {
         // annotate run with detailed error information
         self.run_actual(start_base).map_err(|e| self.err(e))
     }

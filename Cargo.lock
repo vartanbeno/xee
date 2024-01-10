@@ -3435,6 +3435,7 @@ dependencies = [
  "ariadne",
  "clap",
  "xee-xpath",
+ "xee-xpath-outer",
  "xot",
 ]
 
@@ -3455,6 +3456,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "xee-xpath",
+ "xee-xpath-outer",
  "xot",
 ]
 
@@ -3590,6 +3592,7 @@ dependencies = [
  "thiserror",
  "xee-xpath",
  "xee-xpath-ast",
+ "xee-xpath-outer",
  "xee-xslt-ast",
  "xot",
 ]

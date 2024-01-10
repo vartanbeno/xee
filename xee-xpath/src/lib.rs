@@ -11,9 +11,9 @@ pub mod interpreter;
 pub mod ir;
 mod library;
 mod occurrence;
-mod query;
-mod run;
-mod sequence;
+// mod query;
+// mod run;
+pub mod sequence;
 pub mod span;
 pub mod stack;
 mod string;
@@ -31,12 +31,12 @@ pub use crate::context::{DynamicContext, StaticContext, Variables};
 pub use crate::error::{Error, Result, SpannedError, SpannedResult};
 pub use crate::interpreter::{Program, Runnable};
 pub use crate::occurrence::Occurrence;
-pub use crate::query::{
-    Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
-};
-pub use crate::run::{
-    evaluate, evaluate_root, evaluate_without_focus, evaluate_without_focus_with_variables,
-};
+// pub use crate::query::{
+//     Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,
+// };
+// pub use crate::run::{
+//     evaluate, evaluate_root, evaluate_without_focus, evaluate_without_focus_with_variables,
+// };
 pub use crate::sequence::{Item, Sequence};
 pub use crate::string::Collation;
 pub use crate::xml::{Document, Documents, Node, Uri};

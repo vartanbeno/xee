@@ -1,0 +1,24 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"1 ! (. , 0)\")"
+---
+Ok(
+    Sequence {
+        stack_value: Many(
+            [
+                Atomic(
+                    Integer(
+                        Integer,
+                        1,
+                    ),
+                ),
+                Atomic(
+                    Integer(
+                        Integer,
+                        0,
+                    ),
+                ),
+            ],
+        ),
+    },
+)

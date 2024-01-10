@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/arithmetic.rs
+expression: "evaluate_without_focus(\"12 idiv 5\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Integer(
+                    Integer,
+                    2,
+                ),
+            ),
+        ),
+    },
+)

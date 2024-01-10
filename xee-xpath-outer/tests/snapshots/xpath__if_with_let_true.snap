@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"if (1) then (let $x := 2 return $x) else (let $x := 3 return $x)\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Integer(
+                    Integer,
+                    2,
+                ),
+            ),
+        ),
+    },
+)

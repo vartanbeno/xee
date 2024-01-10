@@ -1,10 +1,11 @@
 use xot::Xot;
 
-use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
-
 use xee_xpath::{
     Documents, DynamicContext, Program, Sequence, SpannedResult, StaticContext, Uri, Variables,
 };
+use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
+
+use crate::interpreter;
 
 /// A high level function that evaluates an xpath expression on an xml document.
 pub fn evaluate(
@@ -36,7 +37,7 @@ pub fn evaluate_root(
     let context = DynamicContext::from_documents(xot, &static_context, &documents);
     let document = documents.get(&uri).unwrap();
 
-    let program = Program::parse(context.static_context, xpath)?;
+    let program = interpreter::parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
     runnable.many_xot_node(document.root)
 }
@@ -46,7 +47,7 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let static_context = StaticContext::default();
     let context = DynamicContext::empty(&xot, &static_context);
 
-    let program = Program::parse(context.static_context, s)?;
+    let program = interpreter::parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None)
 }
@@ -60,7 +61,7 @@ pub fn evaluate_without_focus_with_variables(
     let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
     let context = DynamicContext::from_variables(&xot, &static_context, &variables);
-    let program = Program::parse(context.static_context, s)?;
+    let program = interpreter::parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None)
 }

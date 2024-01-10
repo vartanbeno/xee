@@ -26,7 +26,7 @@ impl Frame {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct State {
+pub struct State {
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
@@ -178,7 +178,7 @@ impl State {
         self.stack.last().unwrap()
     }
 
-    pub(crate) fn stack(&self) -> &[stack::Value] {
+    pub fn stack(&self) -> &[stack::Value] {
         &self.stack
     }
 }

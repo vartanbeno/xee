@@ -1,0 +1,18 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"'ff' cast as xs:hexBinary\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Binary(
+                    Hex,
+                    [
+                        255,
+                    ],
+                ),
+            ),
+        ),
+    },
+)

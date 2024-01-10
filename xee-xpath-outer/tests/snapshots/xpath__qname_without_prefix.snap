@@ -1,0 +1,21 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"QName('http://example.com', 'foo')\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                QName(
+                    Name {
+                        name: "foo",
+                        prefix: None,
+                        namespace: Some(
+                            "http://example.com",
+                        ),
+                    },
+                ),
+            ),
+        ),
+    },
+)

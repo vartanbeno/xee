@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use xee_xpath::{
     Documents, DynamicContext, Item, Name, Node, Program, StaticContext, Uri, Variables,
 };
+use xee_xpath_outer::parse;
 use xot::Xot;
 
 use crate::collection::FxIndexMap;
@@ -40,7 +41,7 @@ impl EnvironmentSpec {
         for param in &self.params {
             let static_context = StaticContext::default();
             let select = (param.select.as_ref()).expect("param: missing select not supported");
-            let program = Program::parse(&static_context, select);
+            let program = parse(&static_context, select);
             if program.is_err() {
                 println!("param: select xpath parse failed: {}", select);
                 continue;

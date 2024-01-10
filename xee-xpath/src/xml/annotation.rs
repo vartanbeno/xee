@@ -25,7 +25,7 @@ impl Annotation {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Annotations {
+pub struct Annotations {
     // each document has a different id, so track this
     document_id: usize,
     map: HashMap<xml::Node, Annotation>,

@@ -18,8 +18,9 @@
 
 use xot::{NameId, Node};
 
-use xee_xpath::{DynamicContext, Program, Sequence, Variables};
+use xee_xpath::{DynamicContext, Sequence, Variables};
 use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_outer::compile;
 
 use crate::attributes::Attributes;
 use crate::content::Content;
@@ -201,7 +202,7 @@ impl StaticEvaluator {
     ) -> Result<Sequence, xee_xpath::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
-        let program = Program::new(&static_context, xpath)?;
+        let program = compile(&static_context, xpath)?;
         let dynamic_context = DynamicContext::from_variables(
             &content.state.xot,
             &static_context,

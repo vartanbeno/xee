@@ -9,6 +9,7 @@ mod run;
 pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::{Namespaces, VariableNames};
 
+pub use crate::interpreter::{compile, parse};
 pub use crate::occurrence::Occurrence;
 pub use crate::query::{
     Convert, ManyQuery, OneQuery, OptionQuery, Queries, Query, Recurse, Session,

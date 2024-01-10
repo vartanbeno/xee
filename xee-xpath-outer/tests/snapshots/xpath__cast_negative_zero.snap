@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run(\"xs:unsignedLong('-0')\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Integer(
+                    UnsignedLong,
+                    0,
+                ),
+            ),
+        ),
+    },
+)

@@ -7,6 +7,6 @@ mod runnable;
 mod scope;
 mod state;
 
-pub(crate) use interpret::Interpreter;
+pub use interpret::Interpreter;
 pub use program::Program;
 pub use runnable::Runnable;

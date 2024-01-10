@@ -1,0 +1,16 @@
+---
+source: xee-xpath/tests/xpath.rs
+expression: "run_xml(\"<doc/>\", \"fn:position()\")"
+---
+Ok(
+    Sequence {
+        stack_value: One(
+            Atomic(
+                Integer(
+                    Long,
+                    1,
+                ),
+            ),
+        ),
+    },
+)

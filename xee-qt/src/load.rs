@@ -4,9 +4,8 @@ use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::Name;
-use xee_xpath::Recurse;
-use xee_xpath::Session;
-use xee_xpath::{DynamicContext, Item, Namespaces, Node, Queries, Query, StaticContext};
+use xee_xpath::{DynamicContext, Item, Namespaces, Node, StaticContext};
+use xee_xpath_outer::{Queries, Query, Recurse, Session};
 use xot::Xot;
 
 use crate::assert;
