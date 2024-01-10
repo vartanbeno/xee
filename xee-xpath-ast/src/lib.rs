@@ -11,4 +11,5 @@ pub mod span;
 pub use context::{VariableNames, XPathParserContext};
 pub use error::ParserError;
 pub use namespaces::{NamespaceLookup, Namespaces, FN_NAMESPACE, XS_NAMESPACE};
+pub use pattern::Pattern;
 pub use span::WithSpan;

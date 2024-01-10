@@ -510,14 +510,17 @@ impl<'a> Attributes<'a> {
         |s, span| self._xpath(s, span)
     }
 
-    fn _pattern(s: &str, _span: Span) -> Result<ast::Pattern, AttributeError> {
-        Ok(s.to_string())
+    fn _pattern(&self, s: &str, span: Span) -> Result<ast::Pattern, AttributeError> {
+        Ok(ast::Pattern {
+            pattern: self.content.parser_context().parse_pattern(s)?,
+            span,
+        })
     }
 
     pub(crate) fn pattern(
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::Pattern, AttributeError> + '_ {
-        Self::_pattern
+        |s, span| self._pattern(s, span)
     }
 
     fn _sequence_type(

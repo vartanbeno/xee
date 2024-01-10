@@ -31,6 +31,11 @@ impl<'a> XPathParserContext<'a> {
         ast::XPath::parse(s, &self.namespaces, &self.variable_names)
     }
 
+    /// Given an XSLT pattern, parse into an AST
+    pub fn parse_pattern(&self, s: &str) -> Result<crate::Pattern, ParserError> {
+        crate::Pattern::parse(s, &self.namespaces, &self.variable_names)
+    }
+
     /// Parse an XPath string as it would appear in an XSLT value template.
     /// This means it should have a closing `}` following the xpath expression.
     pub fn parse_value_template_xpath(&self, s: &str) -> Result<ast::XPath, ParserError> {

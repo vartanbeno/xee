@@ -32,7 +32,26 @@ Ok(Transform(
       streamable: false,
       rules: [
         AccumulatorRule(
-          match_: "foo",
+          match_: Pattern(
+            pattern: Expr(Path(PathExpr(
+              root: Relative,
+              steps: [
+                AxisStep(AxisStep(
+                  forward: Child,
+                  node_test: NameTest(Name(Name(
+                    name: "foo",
+                    prefix: None,
+                    namespace: None,
+                  ))),
+                  predicates: [],
+                )),
+              ],
+            ))),
+            span: Span(
+              start: 153,
+              end: 156,
+            ),
+          ),
           phase: None,
           select: None,
           sequence_constructor: [],

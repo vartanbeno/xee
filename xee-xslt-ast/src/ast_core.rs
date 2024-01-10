@@ -33,7 +33,6 @@ pub type QName = String;
 pub type NcName = String;
 pub type SequenceType = xpath_ast::SequenceType;
 pub type ItemType = xpath_ast::ItemType;
-pub type Pattern = String;
 pub type Token = String;
 pub type Uri = String;
 pub type Language = String;
@@ -49,6 +48,13 @@ pub type PcData = String;
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Expression {
     pub xpath: xpath_ast::XPath,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct Pattern {
+    pub pattern: xee_xpath_ast::Pattern,
     pub span: Span,
 }
 
@@ -1676,6 +1682,7 @@ pub type SequenceConstructor = Vec<SequenceConstructorItem>;
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ElementNode {
     pub name: Name,
+
     // pub attributes: HashMap<Name, Templ<String>>,
     // pub sequence_constructor: SequenceConstructor,
     pub span: Span,
