@@ -1,4 +1,5 @@
 mod comparison;
 mod value;
 
-pub(crate) use value::{AtomizedIter, Value, ValueIter};
+pub use value::Value;
+pub(crate) use value::{AtomizedIter, ValueIter};

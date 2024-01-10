@@ -12,8 +12,8 @@ use super::Runnable;
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    xpath: ast::XPath,
-    pub(crate) functions: Vec<function::InlineFunction>,
+    pub xpath: ast::XPath,
+    pub functions: Vec<function::InlineFunction>,
 }
 
 impl Program {
@@ -60,7 +60,7 @@ impl Program {
         Runnable::new(self, dynamic_context)
     }
 
-    pub(crate) fn add_function(
+    pub fn add_function(
         &mut self,
         function: function::InlineFunction,
     ) -> function::InlineFunctionId {

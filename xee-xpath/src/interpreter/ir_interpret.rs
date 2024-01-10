@@ -88,11 +88,15 @@ impl<'a> InterpreterCompiler<'a> {
                 };
                 Ok(())
             }
-            ir::Atom::Variable(name) => self.compile_variable(name, span),
+            ir::Atom::Variable(name) => self.compile_variable(name.into(), span),
         }
     }
 
-    fn compile_variable(&mut self, name: &ir::Name, span: SourceSpan) -> error::SpannedResult<()> {
+    fn compile_variable(
+        &mut self,
+        name: &function::Name,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         if let Some(index) = self.scopes.get(name) {
             if index > u16::MAX as usize {
                 return Err(Error::XPDY0130.with_span(span));

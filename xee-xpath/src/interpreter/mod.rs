@@ -1,5 +1,5 @@
 mod builder;
-mod instruction;
+pub mod instruction;
 mod interpret;
 mod ir_interpret;
 mod program;

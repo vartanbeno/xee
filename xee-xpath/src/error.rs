@@ -527,7 +527,7 @@ impl Error {
     pub fn with_span(self, span: SourceSpan) -> SpannedError {
         SpannedError { error: self, span }
     }
-    pub(crate) fn with_ast_span(self, span: xee_xpath_ast::ast::Span) -> SpannedError {
+    pub fn with_ast_span(self, span: xee_xpath_ast::ast::Span) -> SpannedError {
         Self::with_span(self, span.into())
     }
 

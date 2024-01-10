@@ -2161,13 +2161,13 @@ dependencies = [
 
 [[package]]
 name = "num-derive"
-version = "0.3.3"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+checksum = "cfb77679af88f8b125209d354a202862602672222e7f2313fdd6dc349bad4712"
 dependencies = [
  "proc-macro2 1.0.67",
  "quote 1.0.33",
- "syn 1.0.109",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -2205,9 +2205,9 @@ dependencies = [
 
 [[package]]
 name = "num-traits"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
+checksum = "39e3200413f237f41ab11ad6d161bc7239c84dcb631773ccd7de3dfe4b5c267c"
 dependencies = [
  "autocfg",
  "libm",
@@ -3538,6 +3538,42 @@ dependencies = [
  "syn 2.0.37",
  "xee-schema-type",
  "xee-xpath-ast",
+]
+
+[[package]]
+name = "xee-xpath-outer"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "arrayvec",
+ "base64 0.21.4",
+ "chrono",
+ "fancy-regex",
+ "hex",
+ "ibig",
+ "icu",
+ "icu_provider_adapters",
+ "icu_provider_blob",
+ "insta",
+ "lexical",
+ "next-gen",
+ "nonempty",
+ "ordered-float",
+ "regex",
+ "rstest",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "serde-querystring",
+ "strum",
+ "strum_macros",
+ "test-generator",
+ "thiserror",
+ "url",
+ "xee-schema-type",
+ "xee-xpath",
+ "xee-xpath-ast",
+ "xee-xpath-macros",
+ "xot",
 ]
 
 [[package]]

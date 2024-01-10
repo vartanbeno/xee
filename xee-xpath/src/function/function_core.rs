@@ -7,7 +7,15 @@ use super::map::Map;
 pub struct InlineFunctionId(pub(crate) usize);
 
 impl InlineFunctionId {
-    pub(crate) fn as_u16(&self) -> u16 {
+    pub fn new(id: usize) -> Self {
+        InlineFunctionId(id)
+    }
+
+    pub fn get(&self) -> usize {
+        self.0
+    }
+
+    pub fn as_u16(&self) -> u16 {
         self.0 as u16
     }
 }
@@ -16,7 +24,7 @@ impl InlineFunctionId {
 pub struct StaticFunctionId(pub(crate) usize);
 
 impl StaticFunctionId {
-    pub(crate) fn as_u16(&self) -> u16 {
+    pub fn as_u16(&self) -> u16 {
         self.0 as u16
     }
 }

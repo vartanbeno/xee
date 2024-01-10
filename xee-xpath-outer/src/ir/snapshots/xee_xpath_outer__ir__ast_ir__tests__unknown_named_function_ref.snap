@@ -1,0 +1,13 @@
+---
+source: xee-xpath-outer/src/ir/ast_ir.rs
+expression: "convert_expr_single(\"unknown_function#2\")"
+---
+Err(
+    SpannedError {
+        error: XPST0017,
+        span: SourceSpan(
+            0,
+            18,
+        ),
+    },
+)

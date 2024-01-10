@@ -19,7 +19,7 @@ use crate::xml;
 use super::comparison;
 
 #[derive(Debug, Clone)]
-pub(crate) enum Value {
+pub enum Value {
     Empty,
     One(sequence::Item),
     Many(Rc<Vec<sequence::Item>>),

@@ -77,7 +77,7 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn to_string(&self) -> error::Result<String> {
+    pub fn to_string(&self) -> error::Result<String> {
         Ok(self.to_str()?.to_string())
     }
 

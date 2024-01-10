@@ -10,8 +10,8 @@ use super::kind_test::kind_test;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
-    pub(crate) axis: ast::Axis,
-    pub(crate) node_test: ast::NodeTest,
+    pub axis: ast::Axis,
+    pub node_test: ast::NodeTest,
 }
 
 pub(crate) fn resolve_step(step: &Step, node: xml::Node, xot: &Xot) -> stack::Value {

@@ -1,24 +1,23 @@
 #![allow(dead_code)]
 
-extern crate num;
 #[macro_use]
 extern crate num_derive;
 
 mod atomic;
-mod context;
-mod error;
-mod function;
-mod interpreter;
-mod ir;
+pub mod context;
+pub mod error;
+pub mod function;
+pub mod interpreter;
+pub mod ir;
 mod library;
 mod occurrence;
 mod query;
 mod run;
 mod sequence;
-mod span;
-mod stack;
+pub mod span;
+pub mod stack;
 mod string;
-mod xml;
+pub mod xml;
 
 pub use xee_xpath_ast::ast::Name;
 pub use xee_xpath_ast::{Namespaces, VariableNames};

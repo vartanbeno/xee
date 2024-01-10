@@ -1,7 +1,7 @@
 use num::{FromPrimitive, ToPrimitive};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Instruction {
+pub enum Instruction {
     // binary operators
     Add,
     Sub,
@@ -70,7 +70,7 @@ pub(crate) enum Instruction {
     PrintStack,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, ToPrimitive, FromPrimitive)]
+#[derive(Debug, ToPrimitive, FromPrimitive, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum EncodedInstruction {
     Add,
     Sub,
@@ -255,7 +255,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
     }
 }
 
-pub(crate) fn decode_instructions(bytes: &[u8]) -> Vec<Instruction> {
+pub fn decode_instructions(bytes: &[u8]) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     let mut ip = 0;
     while ip < bytes.len() {
@@ -266,7 +266,7 @@ pub(crate) fn decode_instructions(bytes: &[u8]) -> Vec<Instruction> {
     instructions
 }
 
-pub(crate) fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
+pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
     match instruction {
         Instruction::Add => bytes.push(EncodedInstruction::Add.to_u8().unwrap()),
         Instruction::Sub => bytes.push(EncodedInstruction::Sub.to_u8().unwrap()),
@@ -395,7 +395,7 @@ pub(crate) fn encode_instructions(instructions: Vec<Instruction>, bytes: &mut Ve
 }
 
 // size in bytes for an instruction
-pub(crate) fn instruction_size(instruction: &Instruction) -> usize {
+pub fn instruction_size(instruction: &Instruction) -> usize {
     match instruction {
         Instruction::Add
         | Instruction::Sub

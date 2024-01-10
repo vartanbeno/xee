@@ -864,7 +864,7 @@ where
     ParserOutput {
         name,
         expr_single,
-        expr_single_core: expr_single_core,
+        expr_single_core,
         xpath,
         xpath_right_brace,
         signature,

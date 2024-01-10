@@ -16,7 +16,7 @@ use crate::string::{Collation, Collations};
 #[derive(Debug)]
 pub struct StaticContext<'a> {
     pub(crate) parser_context: XPathParserContext<'a>,
-    pub(crate) functions: StaticFunctions,
+    pub functions: StaticFunctions,
     provider: BlobDataProvider,
     pub(crate) collations: RefCell<Collations>,
 }

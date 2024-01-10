@@ -7,8 +7,8 @@ use super::static_function::FunctionKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Signature {
-    pub(crate) parameter_types: Vec<Option<ast::SequenceType>>,
-    pub(crate) return_type: Option<ast::SequenceType>,
+    pub parameter_types: Vec<Option<ast::SequenceType>>,
+    pub return_type: Option<ast::SequenceType>,
 }
 
 impl Signature {

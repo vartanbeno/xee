@@ -118,7 +118,7 @@ impl StaticFunctionDescription {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub(crate) enum FunctionRule {
+pub enum FunctionRule {
     ItemFirst,
     ItemLast,
     ItemLastOptional,
@@ -140,11 +140,11 @@ impl From<FunctionKind> for FunctionRule {
     }
 }
 
-pub(crate) struct StaticFunction {
+pub struct StaticFunction {
     name: ast::Name,
     signature: function::Signature,
     arity: usize,
-    pub(crate) function_rule: Option<FunctionRule>,
+    pub function_rule: Option<FunctionRule>,
     func: StaticFunctionType,
 }
 
@@ -247,7 +247,7 @@ fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
 }
 
 #[derive(Debug)]
-pub(crate) struct StaticFunctions {
+pub struct StaticFunctions {
     by_name: HashMap<(ast::Name, u8), function::StaticFunctionId>,
     by_index: Vec<StaticFunction>,
 }
@@ -270,19 +270,12 @@ impl StaticFunctions {
         Self { by_name, by_index }
     }
 
-    pub(crate) fn get_by_name(
-        &self,
-        name: &ast::Name,
-        arity: u8,
-    ) -> Option<function::StaticFunctionId> {
+    pub fn get_by_name(&self, name: &ast::Name, arity: u8) -> Option<function::StaticFunctionId> {
         // TODO annoying clone
         self.by_name.get(&(name.clone(), arity)).copied()
     }
 
-    pub(crate) fn get_by_index(
-        &self,
-        static_function_id: function::StaticFunctionId,
-    ) -> &StaticFunction {
+    pub fn get_by_index(&self, static_function_id: function::StaticFunctionId) -> &StaticFunction {
         &self.by_index[static_function_id.0]
     }
 }

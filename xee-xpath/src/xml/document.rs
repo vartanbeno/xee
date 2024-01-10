@@ -59,7 +59,7 @@ impl Documents {
         Ok(())
     }
 
-    pub(crate) fn add_root(&mut self, xot: &Xot, uri: &Uri, root: xot::Node) {
+    pub fn add_root(&mut self, xot: &Xot, uri: &Uri, root: xot::Node) {
         let document = Document {
             uri: uri.clone(),
             root,

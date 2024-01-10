@@ -9,6 +9,7 @@ use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, SingleType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
+pub use crate::function::Name;
 use crate::function::{CastType, StaticFunctionId};
 use crate::xml;
 
@@ -56,9 +57,6 @@ pub(crate) enum Const {
     // XXX replace this with a sequence constant? useful once we have constant folding
     EmptySequence,
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Name(pub(crate) String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ContextNames {

@@ -1,7 +1,6 @@
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
-use crate::ir;
 use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
@@ -9,24 +8,33 @@ use crate::xml;
 use super::signature::Signature;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct CastType {
-    pub(crate) xs: Xs,
-    pub(crate) empty_sequence_allowed: bool,
+pub struct CastType {
+    pub xs: Xs,
+    pub empty_sequence_allowed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Name(pub(crate) String);
+
+impl Name {
+    pub fn new(name: String) -> Self {
+        Name(name)
+    }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct InlineFunction {
-    pub(crate) name: String,
-    pub(crate) signature: Signature,
+pub struct InlineFunction {
+    pub name: String,
+    pub signature: Signature,
     // things referenced by instructions (by index)
-    pub(crate) constants: Vec<stack::Value>,
-    pub(crate) steps: Vec<xml::Step>,
-    pub(crate) cast_types: Vec<CastType>,
-    pub(crate) sequence_types: Vec<ast::SequenceType>,
-    pub(crate) closure_names: Vec<ir::Name>,
+    pub constants: Vec<stack::Value>,
+    pub steps: Vec<xml::Step>,
+    pub cast_types: Vec<CastType>,
+    pub sequence_types: Vec<ast::SequenceType>,
+    pub closure_names: Vec<Name>,
     // the compiled code, and the spans of each instruction
-    pub(crate) chunk: Vec<u8>,
-    pub(crate) spans: Vec<SourceSpan>,
+    pub chunk: Vec<u8>,
+    pub spans: Vec<SourceSpan>,
 }
 
 impl InlineFunction {
