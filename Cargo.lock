@@ -3419,7 +3419,7 @@ dependencies = [
  "ariadne",
  "clap",
  "xee-interpreter",
- "xee-xpath-outer",
+ "xee-xpath",
  "xot",
 ]
 
@@ -3478,7 +3478,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "xee-interpreter",
- "xee-xpath-outer",
+ "xee-xpath",
  "xot",
 ]
 
@@ -3489,6 +3489,25 @@ dependencies = [
  "ahash 0.8.6",
  "insta",
  "serde",
+]
+
+[[package]]
+name = "xee-xpath"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "ibig",
+ "insta",
+ "ordered-float",
+ "rstest",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "test-generator",
+ "thiserror",
+ "xee-interpreter",
+ "xee-schema-type",
+ "xee-xpath-ast",
+ "xot",
 ]
 
 [[package]]
@@ -3525,25 +3544,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xee-xpath-outer"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.6",
- "ibig",
- "insta",
- "ordered-float",
- "rstest",
- "rust_decimal",
- "rust_decimal_macros",
- "test-generator",
- "thiserror",
- "xee-interpreter",
- "xee-schema-type",
- "xee-xpath-ast",
- "xot",
-]
-
-[[package]]
 name = "xee-xslt-ast"
 version = "0.1.0"
 dependencies = [
@@ -3556,8 +3556,8 @@ dependencies = [
  "strum_macros",
  "thiserror",
  "xee-interpreter",
+ "xee-xpath",
  "xee-xpath-ast",
- "xee-xpath-outer",
  "xee-xslt-ast",
  "xot",
 ]

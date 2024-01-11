@@ -1,31 +1,31 @@
 [package]
-name = "xee-qt"
+name = "xee-xpath"
 version = "0.1.0"
 edition = "2021"
 authors = ["Martijn Faassen <faassen@startifact.com>"]
-keywords = ["xml", "xpath", "testing"]
+keywords = ["xml", "xpath"]
 license = "Apache-2.0"
-description = "Conformance testing for xee-xpath"
+description = "XPath 3.1 library"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
-documentation = "https://docs.rs/xee-qt"
+documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee"
+
 
 [dependencies]
 ahash = { workspace = true }
+ordered-float = "3.6.0"
+rust_decimal = "1.30.0"
 thiserror = "1.0.40"
 xot = { workspace = true }
+xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-schema-type = { path = "../xee-schema-type" }
 xee-interpreter = { path = "../xee-interpreter" }
-xee-xpath = { path = "../xee-xpath" }
-fxhash = "0.2.1"
-indexmap = "1.9.3"
-clap = { workspace = true, features = ["derive"] }
-crossterm = "0.26.1"
-derive_builder = "0.12.0"
-globset = "0.4.10"
-chrono = { workspace = true }
-ibig = { workspace = true }
+ibig = "0.3.6"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
-tempfile = "3.5.0"
+rstest = "0.16.0"
+test-generator = "0.3.0"
+xot = { workspace = true, features = ["proptest"] }
+rust_decimal_macros = "1.29.1"

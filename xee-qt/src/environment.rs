@@ -6,7 +6,7 @@ use xee_interpreter::{
     context::DynamicContext, context::StaticContext, context::Variables, sequence::Item,
     xml::Documents, xml::Node, xml::Uri, Name,
 };
-use xee_xpath_outer::parse;
+use xee_xpath::parse;
 use xot::Xot;
 
 use crate::collection::FxIndexMap;

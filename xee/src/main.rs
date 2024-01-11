@@ -5,7 +5,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use xee_interpreter::error::SpannedError;
 use xee_interpreter::{atomic::Atomic, sequence::Item, xml::Node};
-use xee_xpath_outer::evaluate_root;
+use xee_xpath::evaluate_root;
 use xot::Xot;
 
 #[derive(Parser)]

@@ -19,8 +19,8 @@
 use xot::{NameId, Node};
 
 use xee_interpreter::{context::DynamicContext, context::Variables, sequence::Sequence};
+use xee_xpath::compile;
 use xee_xpath_ast::ast as xpath_ast;
-use xee_xpath_outer::compile;
 
 use crate::attributes::Attributes;
 use crate::content::Content;

@@ -7,7 +7,7 @@ use xee_interpreter::{
     interpreter::Runnable, occurrence::Occurrence, sequence::Sequence, string::Collation, Name,
     Namespaces, VariableNames,
 };
-use xee_xpath_outer::parse;
+use xee_xpath::parse;
 use xot::Xot;
 
 use crate::outcome::{TestOutcome, UnexpectedError};

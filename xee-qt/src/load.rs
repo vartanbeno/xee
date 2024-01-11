@@ -7,7 +7,7 @@ use xee_interpreter::Name;
 use xee_interpreter::{
     context::DynamicContext, context::StaticContext, sequence::Item, xml::Node, Namespaces,
 };
-use xee_xpath_outer::{Queries, Query, Recurse, Session};
+use xee_xpath::{Queries, Query, Recurse, Session};
 use xot::Xot;
 
 use crate::assert;
