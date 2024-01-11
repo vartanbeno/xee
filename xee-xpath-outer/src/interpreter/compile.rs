@@ -41,3 +41,12 @@ pub fn parse(
     let xpath = static_context.parse_xpath(xpath)?;
     compile(static_context, xpath)
 }
+
+pub fn convert_ir(
+    static_context: &context::StaticContext,
+    xpath: &str,
+) -> error::SpannedResult<ir::ExprS> {
+    let ast = static_context.parse_xpath(xpath)?;
+    let mut converter = ir::IrConverter::new(static_context);
+    converter.convert_xpath(&ast)
+}
