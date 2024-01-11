@@ -2120,12 +2120,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nonempty"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aeaf4ad7403de93e699c191202f017118df734d3850b01e13a3a8b2e6953d3c9"
-
-[[package]]
 name = "num"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2714,16 +2708,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9e0fcba69a370eed61bcf2b728575f726b50b55cba78064753d708ddc7549e"
 dependencies = [
  "serde_derive",
-]
-
-[[package]]
-name = "serde-querystring"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce88f8e75d0920545b35b78775e0927137337401f65b01326ce299734885fd21"
-dependencies = [
- "lexical",
- "serde",
 ]
 
 [[package]]
@@ -3545,34 +3529,17 @@ name = "xee-xpath-outer"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.6",
- "arrayvec",
- "base64 0.21.4",
- "chrono",
- "fancy-regex",
- "hex",
  "ibig",
- "icu",
- "icu_provider_adapters",
- "icu_provider_blob",
  "insta",
- "lexical",
- "next-gen",
- "nonempty",
  "ordered-float",
- "regex",
  "rstest",
  "rust_decimal",
  "rust_decimal_macros",
- "serde-querystring",
- "strum",
- "strum_macros",
  "test-generator",
  "thiserror",
- "url",
  "xee-schema-type",
  "xee-xpath",
  "xee-xpath-ast",
- "xee-xpath-macros",
  "xot",
 ]
 

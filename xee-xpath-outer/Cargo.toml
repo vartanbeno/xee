@@ -14,31 +14,14 @@ homepage = "https://github.com/Paligo/xee-xpath"
 
 [dependencies]
 ahash = { workspace = true }
-arrayvec = "0.7.2"
-next-gen = "0.1.1"
-strum = { workspace = true }
-strum_macros = { workspace = true }
-nonempty = "0.8.1"
 ordered-float = "3.6.0"
 rust_decimal = "1.30.0"
 thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-xpath-macros = { path = "../xee-xpath-macros" }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-xpath = { path = "../xee-xpath" }
-lexical = { version = "6.1.1", features = ["format"] }
 ibig = "0.3.6"
-regex = "1.9.3"
-hex = "0.4.3"
-base64 = "0.21.2"
-chrono = { workspace = true }
-icu = { workspace = true, features = ["serde"] }
-icu_provider_adapters = { version = "1.2.0", features = ["serde"] }
-icu_provider_blob = "1.2"
-serde-querystring = "0.2.1"
-url = "2.4.1"
-fancy-regex = "0.11.0"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
