@@ -11,6 +11,6 @@ pub use xee_name::{Name, NamespaceLookup, Namespaces, VariableNames, FN_NAMESPAC
 
 pub use context::XPathParserContext;
 pub use error::ParserError;
-pub use parser::parse_name;
+pub use parser::{parse_item_type, parse_kind_test, parse_name, parse_sequence_type};
 pub use pattern::Pattern;
 pub use span::WithSpan;

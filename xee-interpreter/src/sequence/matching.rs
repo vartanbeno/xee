@@ -4,6 +4,7 @@
 
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
+use xee_xpath_ast::parse_sequence_type;
 use xee_xpath_ast::Namespaces;
 use xot::Xot;
 
@@ -26,7 +27,7 @@ impl Sequence {
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<bool> {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse(s, &namespaces)?;
+        let sequence_type = parse_sequence_type(s, &namespaces)?;
         if self
             .clone()
             .sequence_type_matching(&sequence_type, xot, get_signature)
@@ -360,6 +361,7 @@ mod tests {
     use ibig::ibig;
 
     use xee_xpath_ast::ast;
+    use xee_xpath_ast::parse_sequence_type;
     use xee_xpath_ast::Namespaces;
 
     // use crate::stack;
@@ -370,7 +372,7 @@ mod tests {
     #[test]
     fn test_one_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:integer", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(ibig!(1))]);
         let wrong_amount_sequence =
@@ -396,7 +398,7 @@ mod tests {
     #[test]
     fn test_one_long_matches_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:integer", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:integer", &namespaces).unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(1i64)]);
         let wrong_amount_sequence = Sequence::from(vec![Item::from(1i64), Item::from(1i64)]);
@@ -420,7 +422,7 @@ mod tests {
     #[test]
     fn test_one_any_atomic() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:anyAtomicType", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:anyAtomicType", &namespaces).unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(1i64))]);
         let wrong_amount_sequence =
@@ -448,7 +450,7 @@ mod tests {
     #[test]
     fn test_one_item() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("item()", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("item()", &namespaces).unwrap();
         let mut xot = Xot::new();
         let root = xot.parse("<doc/>").unwrap();
         let node = xot.document_element(root).unwrap();
@@ -481,7 +483,7 @@ mod tests {
     #[test]
     fn test_option_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:integer?", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:integer?", &namespaces).unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(ibig!(1)))]);
         let wrong_amount_sequence =
@@ -509,7 +511,7 @@ mod tests {
     #[test]
     fn test_many_integer() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:integer*", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(ibig!(1)))]);
         let right_multi_sequence = Sequence::from(vec![Item::from(ibig!(1)), Item::from(ibig!(2))]);
@@ -541,7 +543,7 @@ mod tests {
     #[test]
     fn test_many_node() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("node()*", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("node()*", &namespaces).unwrap();
 
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<doc><a attr="Attr">A</a><b/></doc>"#).unwrap();
@@ -581,7 +583,7 @@ mod tests {
     #[test]
     fn test_many_element() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("element()*", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("element()*", &namespaces).unwrap();
 
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<doc><a attr="Attr">A</a><b/></doc>"#).unwrap();
@@ -619,7 +621,7 @@ mod tests {
     #[test]
     fn test_many_atomized_promote() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:double*", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:double*", &namespaces).unwrap();
 
         // integers count as decimals, so should be promoted to a double
         let right_sequence = Sequence::from(vec![Item::from(ibig!(1)), Item::from(ibig!(2))]);
@@ -646,7 +648,7 @@ mod tests {
     #[test]
     fn test_many_cast_untyped() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("xs:integer*", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("xs:integer*", &namespaces).unwrap();
 
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<doc><a>1</a><b>2</b></doc>"#).unwrap();
@@ -680,7 +682,7 @@ mod tests {
     #[test]
     fn test_any_function_test() {
         let namespaces = Namespaces::default();
-        let sequence_type = ast::SequenceType::parse("function(*)", &namespaces).unwrap();
+        let sequence_type = parse_sequence_type("function(*)", &namespaces).unwrap();
         let function = function::Function::Static {
             static_function_id: function::StaticFunctionId(1),
             closure_vars: vec![],
@@ -689,9 +691,9 @@ mod tests {
 
         let signature = function::Signature {
             parameter_types: vec![Some(
-                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+                parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
         };
 
         let xot = Xot::new();
@@ -707,7 +709,7 @@ mod tests {
     fn test_function_test_same_parameters() {
         let namespaces = Namespaces::default();
         let sequence_type =
-            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+            parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
         let function = function::Function::Static {
             static_function_id: function::StaticFunctionId(1),
             closure_vars: vec![],
@@ -716,9 +718,9 @@ mod tests {
 
         let signature = function::Signature {
             parameter_types: vec![Some(
-                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+                parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
         };
 
         let xot = Xot::new();
@@ -734,7 +736,7 @@ mod tests {
     fn test_function_test_derived_parameters() {
         let namespaces = Namespaces::default();
         let sequence_type =
-            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+            parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
         let function = function::Function::Static {
             static_function_id: function::StaticFunctionId(1),
             closure_vars: vec![],
@@ -743,9 +745,9 @@ mod tests {
 
         let signature = function::Signature {
             parameter_types: vec![Some(
-                ast::SequenceType::parse("xs:integer", &namespaces).unwrap(),
+                parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
         };
 
         let xot = Xot::new();
@@ -761,7 +763,7 @@ mod tests {
     fn test_function_test_wrong_arity() {
         let namespaces = Namespaces::default();
         let sequence_type =
-            ast::SequenceType::parse("function(xs:integer) as xs:integer", &namespaces).unwrap();
+            parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
         let function = function::Function::Static {
             static_function_id: function::StaticFunctionId(1),
             closure_vars: vec![],
@@ -770,10 +772,10 @@ mod tests {
 
         let signature = function::Signature {
             parameter_types: vec![
-                Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
-                Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+                Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
+                Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
             ],
-            return_type: Some(ast::SequenceType::parse("xs:integer", &namespaces).unwrap()),
+            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
         };
 
         let xot = Xot::new();

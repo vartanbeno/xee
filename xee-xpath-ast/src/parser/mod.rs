@@ -94,33 +94,33 @@ impl ast::ExprSingle {
     }
 }
 
-impl ast::KindTest {
-    pub fn parse(src: &str) -> Result<Self, ParserError> {
-        let namespaces = Namespaces::default();
-        parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
-    }
-}
-
 impl ast::Signature {
     pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
         parse(parser().signature, tokens(input), Cow::Borrowed(namespaces))
     }
 }
 
-impl ast::SequenceType {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
-        parse(
-            parser().sequence_type,
-            tokens(input),
-            Cow::Borrowed(namespaces),
-        )
-    }
+pub fn parse_kind_test(src: &str) -> Result<ast::KindTest, ParserError> {
+    let namespaces = Namespaces::default();
+    parse(parser().kind_test, tokens(src), Cow::Owned(namespaces))
 }
 
-impl ast::ItemType {
-    pub fn parse<'a>(input: &'a str, namespaces: &'a Namespaces) -> Result<Self, ParserError> {
-        parse(parser().item_type, tokens(input), Cow::Borrowed(namespaces))
-    }
+pub fn parse_sequence_type<'a>(
+    input: &'a str,
+    namespaces: &'a Namespaces,
+) -> Result<ast::SequenceType, ParserError> {
+    parse(
+        parser().sequence_type,
+        tokens(input),
+        Cow::Borrowed(namespaces),
+    )
+}
+
+pub fn parse_item_type<'a>(
+    input: &'a str,
+    namespaces: &'a Namespaces,
+) -> Result<ast::ItemType, ParserError> {
+    parse(parser().item_type, tokens(input), Cow::Borrowed(namespaces))
 }
 
 pub fn parse_name<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<ast::NameS, ParserError> {
@@ -754,13 +754,13 @@ mod tests {
     #[test]
     fn test_any_function_type() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(ast::SequenceType::parse("function(*)", &namespaces));
+        assert_ron_snapshot!(parse_sequence_type("function(*)", &namespaces));
     }
 
     #[test]
     fn test_typed_function_type() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(ast::SequenceType::parse(
+        assert_ron_snapshot!(parse_sequence_type(
             "function(xs:integer) as xs:integer",
             &namespaces
         ));

@@ -158,7 +158,7 @@ fn name_id_for_name(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
 
 #[cfg(test)]
 mod tests {
-    use xee_xpath_ast::ast;
+    use xee_xpath_ast::{ast, parse_kind_test};
 
     use super::*;
 
@@ -169,7 +169,7 @@ mod tests {
         let doc_el = xot.document_element(doc).unwrap();
         let a = xot.first_child(doc_el).unwrap();
 
-        let kt = ast::KindTest::parse("node()").unwrap();
+        let kt = parse_kind_test("node()").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -183,7 +183,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let a_text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("text()").unwrap();
+        let kt = parse_kind_test("text()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -197,7 +197,7 @@ mod tests {
         let doc_el = xot.document_element(doc).unwrap();
         let comment = xot.first_child(doc_el).unwrap();
 
-        let kt = ast::KindTest::parse("comment()").unwrap();
+        let kt = parse_kind_test("comment()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(comment)));
@@ -208,7 +208,7 @@ mod tests {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<root></root>"#).unwrap();
         let doc_el = xot.document_element(doc).unwrap();
-        let kt = ast::KindTest::parse("document-node()").unwrap();
+        let kt = parse_kind_test("document-node()").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
     }
@@ -221,7 +221,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("element()").unwrap();
+        let kt = parse_kind_test("element()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -236,7 +236,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("element(*)").unwrap();
+        let kt = parse_kind_test("element(*)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -251,7 +251,7 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("element(a)").unwrap();
+        let kt = parse_kind_test("element(a)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -266,14 +266,14 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("element(a, xs:untypedAtomic)").unwrap();
+        let kt = parse_kind_test("element(a, xs:untypedAtomic)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(kind_test(&kt, &xot, xml::Node::Xot(a)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
 
         // but we're not an xs:string
-        let kt = ast::KindTest::parse("element(a, xs:string)").unwrap();
+        let kt = parse_kind_test("element(a, xs:string)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
     }
 
@@ -289,7 +289,7 @@ mod tests {
         let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
         let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
 
-        let kt = ast::KindTest::parse("attribute()").unwrap();
+        let kt = parse_kind_test("attribute()").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -310,7 +310,7 @@ mod tests {
         let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
         let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
 
-        let kt = ast::KindTest::parse("attribute(alpha)").unwrap();
+        let kt = parse_kind_test("attribute(alpha)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -331,7 +331,7 @@ mod tests {
         let alpha = xml::Node::Attribute(a, xot.name("alpha").unwrap());
         let beta = xml::Node::Attribute(a, xot.name("beta").unwrap());
 
-        let kt = ast::KindTest::parse("attribute(alpha, xs:untypedAtomic)").unwrap();
+        let kt = parse_kind_test("attribute(alpha, xs:untypedAtomic)").unwrap();
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
@@ -339,7 +339,7 @@ mod tests {
         assert!(!kind_test(&kt, &xot, beta));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
 
-        let kt = ast::KindTest::parse("attribute(alpha, xs:string)").unwrap();
+        let kt = parse_kind_test("attribute(alpha, xs:string)").unwrap();
         assert!(!kind_test(&kt, &xot, alpha));
     }
 
@@ -351,13 +351,13 @@ mod tests {
         let a = xot.first_child(doc_el).unwrap();
         let text = xot.first_child(a).unwrap();
 
-        let kt = ast::KindTest::parse("document-node(element(root))").unwrap();
+        let kt = parse_kind_test("document-node(element(root))").unwrap();
         assert!(kind_test(&kt, &xot, xml::Node::Xot(doc)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc_el)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(a)));
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(text)));
 
-        let kt = ast::KindTest::parse("document-node(element(a))").unwrap();
+        let kt = parse_kind_test("document-node(element(a))").unwrap();
         // the document doesn't match as its root node isn't 'a'
         assert!(!kind_test(&kt, &xot, xml::Node::Xot(doc)));
         // the 'a' node doesn't match either as it's not a document node

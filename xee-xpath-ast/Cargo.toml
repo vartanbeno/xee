@@ -19,6 +19,7 @@ serde = [
     "xee-schema-type/serde",
     "chumsky/serde",
     "xee-name/serde",
+    "xee-xpath-type/serde",
 ]
 
 [dependencies]
@@ -34,6 +35,7 @@ xot = { workspace = true }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-name = { path = "../xee-name" }
 serde = { workspace = true, features = ["derive"], optional = true }
+xee-xpath-type = { path = "../xee-xpath-type" }
 
 [dev-dependencies]
 # we want to depend on serde feature during tests

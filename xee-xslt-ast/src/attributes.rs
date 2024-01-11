@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use xee_xpath_ast::{ast as xpath_ast, parse_name};
+use xee_xpath_ast::{ast as xpath_ast, parse_item_type, parse_name, parse_sequence_type};
 
 use crate::ast_core as ast;
 use crate::content::Content;
@@ -527,7 +527,7 @@ impl<'a> Attributes<'a> {
         s: &str,
         _span: Span,
     ) -> Result<xpath_ast::SequenceType, AttributeError> {
-        Ok(xpath_ast::SequenceType::parse(
+        Ok(parse_sequence_type(
             s,
             &self.content.parser_context().namespaces,
         )?)
@@ -540,7 +540,7 @@ impl<'a> Attributes<'a> {
     }
 
     fn _item_type(&self, s: &str, _span: Span) -> Result<xpath_ast::ItemType, AttributeError> {
-        Ok(xpath_ast::ItemType::parse(
+        Ok(parse_item_type(
             s,
             &self.content.parser_context().namespaces,
         )?)

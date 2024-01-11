@@ -1,0 +1,22 @@
+[package]
+name = "xee-xpath-type"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XPath type information"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath-type"
+homepage = "https://github.com/Paligo/xee"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+serde = ["dep:serde", "xee-name/serde"]
+
+[dependencies]
+xee-schema-type = { path = "../xee-schema-type" }
+xee-name = { path = "../xee-name" }
+serde = { workspace = true, features = ["derive"], optional = true }

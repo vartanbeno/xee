@@ -3536,6 +3536,7 @@ dependencies = [
  "xee-name",
  "xee-schema-type",
  "xee-xpath-ast",
+ "xee-xpath-type",
  "xot",
 ]
 
@@ -3549,6 +3550,15 @@ dependencies = [
  "syn 2.0.37",
  "xee-schema-type",
  "xee-xpath-ast",
+]
+
+[[package]]
+name = "xee-xpath-type"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "xee-name",
+ "xee-schema-type",
 ]
 
 [[package]]
