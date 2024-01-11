@@ -18,7 +18,7 @@
 
 use xot::{NameId, Node};
 
-use xee_xpath::{context::DynamicContext, context::Variables, sequence::Sequence};
+use xee_interpreter::{context::DynamicContext, context::Variables, sequence::Sequence};
 use xee_xpath_ast::ast as xpath_ast;
 use xee_xpath_outer::compile;
 
@@ -199,7 +199,7 @@ impl StaticEvaluator {
         &self,
         xpath: xpath_ast::XPath,
         content: &Content,
-    ) -> Result<Sequence, xee_xpath::error::SpannedError> {
+    ) -> Result<Sequence, xee_interpreter::error::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
@@ -232,7 +232,7 @@ mod tests {
     use super::*;
     use crate::names::Names;
 
-    use xee_xpath::{sequence::Item, xml::Node};
+    use xee_interpreter::{sequence::Item, xml::Node};
 
     #[test]
     fn test_one_static_variable() {

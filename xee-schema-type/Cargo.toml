@@ -8,8 +8,8 @@ license = "Apache-2.0"
 description = "XML Schema type information"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
-documentation = "https://docs.rs/xee-xpath-types"
-homepage = "https://github.com/Paligo/xee-xpath"
+documentation = "https://docs.rs/xee-schema-type"
+homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
 ahash = { workspace = true }

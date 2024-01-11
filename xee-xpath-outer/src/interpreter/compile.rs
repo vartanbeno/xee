@@ -1,5 +1,4 @@
-use xee_xpath::interpreter::Program;
-use xee_xpath::{context, error};
+use xee_interpreter::{context, error, interpreter::Program};
 use xee_xpath_ast::ast;
 
 use crate::ir;

@@ -2,7 +2,7 @@ use insta::assert_debug_snapshot;
 use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
-use xee_xpath::{
+use xee_interpreter::{
     atomic::Atomic, context::DynamicContext, context::StaticContext, context::Variables,
     error::SpannedResult, sequence::Item, sequence::Sequence, xml::Document, xml::Documents,
     xml::Node, xml::Uri,

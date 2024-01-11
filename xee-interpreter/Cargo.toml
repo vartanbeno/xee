@@ -1,15 +1,15 @@
 [package]
-name = "xee-xpath"
+name = "xee-interpreter"
 version = "0.1.0"
 edition = "2021"
 authors = ["Martijn Faassen <faassen@startifact.com>"]
 keywords = ["xml", "xpath"]
 license = "Apache-2.0"
-description = "XPath implementation"
+description = "Interpreter for XPath and XSLT"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
-documentation = "https://docs.rs/xee-xpath"
-homepage = "https://github.com/Paligo/xee-xpath"
+documentation = "https://docs.rs/xee-interpreter"
+homepage = "https://github.com/Paligo/xee"
 
 [features]
 serde = [

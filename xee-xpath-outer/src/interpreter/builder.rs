@@ -1,7 +1,9 @@
 use xee_xpath_ast::ast;
 
-use xee_xpath::interpreter::instruction::{encode_instruction, instruction_size, Instruction};
-use xee_xpath::{function, interpreter, span, stack, xml};
+use xee_interpreter::interpreter::instruction::{
+    encode_instruction, instruction_size, Instruction,
+};
+use xee_interpreter::{function, interpreter, span, stack, xml};
 
 use crate::ir;
 

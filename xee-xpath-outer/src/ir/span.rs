@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use insta::assert_debug_snapshot;
-    use xee_xpath::{context, error, sequence, span::SourceSpan};
+    use xee_interpreter::{context, error, sequence, span::SourceSpan};
 
     use crate::evaluate_without_focus;
     use crate::interpreter::convert_ir;

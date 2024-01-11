@@ -1,6 +1,6 @@
-use xee_xpath::error::Result;
-use xee_xpath::{context::DynamicContext, context::StaticContext};
-use xee_xpath::{interpreter::Program, sequence::Item};
+use xee_interpreter::error::Result;
+use xee_interpreter::{context::DynamicContext, context::StaticContext};
+use xee_interpreter::{interpreter::Program, sequence::Item};
 
 use crate::interpreter;
 
@@ -301,7 +301,7 @@ impl ManyRecurseQuery {
 #[cfg(test)]
 mod tests {
     use ibig::{ibig, IBig};
-    use xee_xpath::{error::Result, xml::Node};
+    use xee_interpreter::{error::Result, xml::Node};
     use xot::Xot;
 
     use super::*;

@@ -3,8 +3,8 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
-use xee_xpath::Name;
-use xee_xpath::{
+use xee_interpreter::Name;
+use xee_interpreter::{
     context::DynamicContext, context::StaticContext, sequence::Item, xml::Node, Namespaces,
 };
 use xee_xpath_outer::{Queries, Query, Recurse, Session};
@@ -116,11 +116,11 @@ fn test_set_query<'a>(
     Ok((queries, test_set_query))
 }
 
-fn convert_string(_: &Session, item: &Item) -> xee_xpath::error::Result<String> {
+fn convert_string(_: &Session, item: &Item) -> xee_interpreter::error::Result<String> {
     item.to_atomic()?.try_into()
 }
 
-fn convert_boolean(session: &Session, item: &Item) -> xee_xpath::error::Result<bool> {
+fn convert_boolean(session: &Session, item: &Item) -> xee_interpreter::error::Result<bool> {
     Ok(convert_string(session, item)? == "true")
 }
 

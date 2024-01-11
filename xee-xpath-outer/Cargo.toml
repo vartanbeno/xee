@@ -5,11 +5,11 @@ edition = "2021"
 authors = ["Martijn Faassen <faassen@startifact.com>"]
 keywords = ["xml", "xpath"]
 license = "Apache-2.0"
-description = "XPath implementation"
+description = "XPath 3.1 library"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
 documentation = "https://docs.rs/xee-xpath"
-homepage = "https://github.com/Paligo/xee-xpath"
+homepage = "https://github.com/Paligo/xee"
 
 
 [dependencies]
@@ -20,7 +20,7 @@ thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-schema-type = { path = "../xee-schema-type" }
-xee-xpath = { path = "../xee-xpath" }
+xee-interpreter = { path = "../xee-interpreter" }
 ibig = "0.3.6"
 
 [dev-dependencies]

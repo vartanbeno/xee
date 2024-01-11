@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "xee",
-  "xee-xpath",
+  "xee-interpreter",
   "xee-qt",
   "xee-xpath-ast",
   "xee-xpath-macros",

@@ -2,7 +2,7 @@ use ahash::AHashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use xee_xpath::{
+use xee_interpreter::{
     context::DynamicContext, context::StaticContext, context::Variables, sequence::Item,
     xml::Documents, xml::Node, xml::Uri, Name,
 };

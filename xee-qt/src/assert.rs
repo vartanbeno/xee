@@ -2,7 +2,7 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
-use xee_xpath::{
+use xee_interpreter::{
     context::DynamicContext, context::StaticContext, error::Error, error::Result,
     interpreter::Runnable, occurrence::Occurrence, sequence::Sequence, string::Collation, Name,
     Namespaces, VariableNames,

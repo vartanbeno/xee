@@ -3,7 +3,7 @@ use ahash::{HashMap, HashMapExt};
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
 
-use xee_xpath::{context, error, error::Error, function, xml};
+use xee_interpreter::{context, error, error::Error, function, xml};
 
 use super::{ir_core as ir, AtomS};
 

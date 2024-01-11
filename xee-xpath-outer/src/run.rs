@@ -1,6 +1,6 @@
 use xot::Xot;
 
-use xee_xpath::{
+use xee_interpreter::{
     context::DynamicContext, context::StaticContext, context::Variables, error::SpannedResult,
     sequence::Sequence, xml::Documents, xml::Uri,
 };

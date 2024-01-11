@@ -42,7 +42,7 @@ pub(crate) enum ElementError {
     Attribute(AttributeError),
     ValueTemplate(value_template::Error),
     // XPath runtime error
-    XPathRunTime(xee_xpath::error::SpannedError),
+    XPathRunTime(xee_interpreter::error::SpannedError),
     // internal error, should not happen
     Internal,
 }
@@ -53,8 +53,8 @@ impl From<AttributeError> for ElementError {
     }
 }
 
-impl From<xee_xpath::error::SpannedError> for ElementError {
-    fn from(e: xee_xpath::error::SpannedError) -> Self {
+impl From<xee_interpreter::error::SpannedError> for ElementError {
+    fn from(e: xee_interpreter::error::SpannedError) -> Self {
         ElementError::XPathRunTime(e)
     }
 }
@@ -64,5 +64,3 @@ impl From<value_template::Error> for ElementError {
         ElementError::ValueTemplate(e)
     }
 }
-
-// type Result<T> = std::result::Result<T, ElementError>;

@@ -5,10 +5,10 @@ use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 
+pub use xee_interpreter::function::Name;
+use xee_interpreter::function::{CastType, Signature, StaticFunctionId};
+use xee_interpreter::xml;
 use xee_schema_type::Xs;
-pub use xee_xpath::function::Name;
-use xee_xpath::function::{CastType, Signature, StaticFunctionId};
-use xee_xpath::xml;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
