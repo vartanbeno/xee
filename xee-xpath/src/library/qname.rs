@@ -9,11 +9,11 @@ use xee_xpath_ast::Namespaces;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::DynamicContext;
 
 #[xpath_fn("fn:resolve-QName($qname as xs:string?, $element as element()) as xs:QName?")]
 fn resolve_qname(

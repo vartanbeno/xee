@@ -13,7 +13,6 @@ mod numeric;
 mod qname;
 mod sequence;
 mod string;
-mod xpath_fn;
 mod xs;
 
 use crate::function::StaticFunctionDescription;

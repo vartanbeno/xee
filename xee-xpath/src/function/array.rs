@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use xot::Xot;
 
-use crate::{error, sequence, Collation};
+use crate::{error, sequence, string};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array(pub Rc<Vec<sequence::Sequence>>);
@@ -100,7 +100,7 @@ impl Array {
     pub(crate) fn deep_equal(
         &self,
         other: Array,
-        collation: &Collation,
+        collation: &string::Collation,
         default_offset: chrono::FixedOffset,
         xot: &Xot,
     ) -> error::Result<bool> {

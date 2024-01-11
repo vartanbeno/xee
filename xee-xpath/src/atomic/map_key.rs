@@ -6,9 +6,11 @@ use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 use xee_xpath_ast::ast::Name;
 
-use crate::{error, Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth};
+use crate::error;
 
-use super::{Atomic, BinaryType, ToDateTimeStamp};
+use super::{
+    Atomic, BinaryType, Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, ToDateTimeStamp,
+};
 
 // A map key is constructed according to the rules in
 // https://www.w3.org/TR/xpath-functions-31/#func-same-key
@@ -147,7 +149,7 @@ impl MapKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::NaiveDateTimeWithOffset;
+    use crate::atomic::NaiveDateTimeWithOffset;
 
     use super::*;
 

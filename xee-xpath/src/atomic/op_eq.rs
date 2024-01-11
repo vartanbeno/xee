@@ -2,13 +2,12 @@ use std::cmp::Ordering;
 
 use ordered_float::OrderedFloat;
 
-use crate::atomic::BinaryType;
 use crate::error;
-use crate::Atomic;
 
 use super::cast_binary::cast_binary_compare;
 use super::compare::AtomicCompare;
 use super::datetime::EqWithDefaultOffset;
+use super::{Atomic, BinaryType};
 
 pub(crate) struct OpEq;
 

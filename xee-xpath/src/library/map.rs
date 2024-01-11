@@ -14,9 +14,9 @@ use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter;
 use crate::interpreter::Interpreter;
+use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::wrap_xpath_fn;
-use crate::Occurrence;
 
 #[xpath_fn("map:merge($maps as map(*)*) as map(*)")]
 fn merge1(maps: &[function::Map]) -> error::Result<function::Map> {

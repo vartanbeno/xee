@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 
 use crate::error;
-use crate::Atomic;
 
 use super::op_eq::OpEq;
-use super::AtomicCompare;
+use super::{Atomic, AtomicCompare};
 
 pub(crate) struct OpNe;
 
@@ -21,4 +20,3 @@ impl AtomicCompare for OpNe {
         OpEq::atomic_compare(a, b, string_compare, default_offset).map(|eq| !eq)
     }
 }
-

@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
-    Documents, DynamicContext, Item, Name, Node, Program, StaticContext, Uri, Variables,
+    context::DynamicContext, context::StaticContext, context::Variables, sequence::Item,
+    xml::Documents, xml::Node, xml::Uri, Name,
 };
 use xee_xpath_outer::parse;
 use xot::Xot;

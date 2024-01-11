@@ -13,7 +13,7 @@ use crate::error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::xml;
-use crate::{Item, Sequence};
+use crate::{sequence::Item, sequence::Sequence};
 
 use super::sequence_type::TypeInfo;
 

@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{error, Atomic};
+use crate::{atomic::Atomic, error};
 
 pub(crate) trait AtomicCompare {
     fn atomic_compare<F>(

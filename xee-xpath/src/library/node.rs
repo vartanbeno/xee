@@ -6,10 +6,10 @@ use std::rc::Rc;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::context::DynamicContext;
 use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::DynamicContext;
 
 #[xpath_fn("fn:name($arg as node()?) as xs:string", context_first)]
 fn name(context: &DynamicContext, arg: Option<xml::Node>) -> String {

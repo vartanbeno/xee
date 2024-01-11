@@ -1,12 +1,10 @@
 use std::cmp::Ordering;
 
-use crate::atomic::datetime::OrdWithDefaultOffset;
-use crate::atomic::BinaryType;
 use crate::error;
-use crate::Atomic;
 
 use super::cast_binary::cast_binary_compare;
-use super::AtomicCompare;
+use super::datetime::OrdWithDefaultOffset;
+use super::{Atomic, AtomicCompare, BinaryType};
 
 pub(crate) struct OpLe;
 

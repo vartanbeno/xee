@@ -8,8 +8,8 @@ use xee_xpath_macros::xpath_fn;
 use crate::atomic::ToDateTimeStamp;
 use crate::function::StaticFunctionDescription;
 use crate::{
-    error, wrap_xpath_fn, DynamicContext, NaiveDateTimeWithOffset, NaiveDateWithOffset,
-    NaiveTimeWithOffset,
+    atomic::NaiveDateTimeWithOffset, atomic::NaiveDateWithOffset, atomic::NaiveTimeWithOffset,
+    context::DynamicContext, error, wrap_xpath_fn,
 };
 
 #[xpath_fn("fn:dateTime($arg1 as xs:date?, $arg2 as xs:time?) as xs:dateTime?")]

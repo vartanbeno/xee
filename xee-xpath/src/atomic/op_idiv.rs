@@ -28,7 +28,7 @@ pub(crate) fn op_idiv(a: atomic::Atomic, b: atomic::Atomic) -> error::Result<ato
 fn op_idiv_decimal(a: Rc<Decimal>, b: Rc<Decimal>) -> error::Result<atomic::Atomic> {
     let v = op_div_decimal(a, b)?;
     let v: i128 = v.trunc().to_i128().ok_or(error::Error::FOAR0002)?;
-    let i: IBig = v.try_into().map_err(|_| error::Error::FOAR0002)?;
+    let i: IBig = v.into();
     Ok(i.into())
 }
 
@@ -52,7 +52,7 @@ where
 
     let v = op_div_float(a, b);
     let v: i128 = v.trunc().to_i128().ok_or(error::Error::FOAR0002)?;
-    let i: IBig = v.try_into().map_err(|_| error::Error::FOAR0002)?;
+    let i: IBig = v.into();
     Ok(i.into())
 }
 

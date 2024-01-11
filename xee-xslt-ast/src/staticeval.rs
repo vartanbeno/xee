@@ -18,7 +18,7 @@
 
 use xot::{NameId, Node};
 
-use xee_xpath::{DynamicContext, Sequence, Variables};
+use xee_xpath::{context::DynamicContext, context::Variables, sequence::Sequence};
 use xee_xpath_ast::ast as xpath_ast;
 use xee_xpath_outer::compile;
 
@@ -199,7 +199,7 @@ impl StaticEvaluator {
         &self,
         xpath: xpath_ast::XPath,
         content: &Content,
-    ) -> Result<Sequence, xee_xpath::SpannedError> {
+    ) -> Result<Sequence, xee_xpath::error::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
@@ -232,6 +232,8 @@ mod tests {
     use super::*;
     use crate::names::Names;
 
+    use xee_xpath::{sequence::Item, xml::Node};
+
     #[test]
     fn test_one_static_variable() {
         let xml = r#"
@@ -248,10 +250,7 @@ mod tests {
         let variables = static_evaluate(&mut state, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 1);
         let name = xpath_ast::Name::new("x".to_string(), None, None);
-        assert_eq!(
-            variables.get(&name),
-            Some(&xee_xpath::Item::from("foo").into())
-        );
+        assert_eq!(variables.get(&name), Some(&Item::from("foo").into()));
     }
 
     #[test]
@@ -271,10 +270,7 @@ mod tests {
         let variables = static_evaluate(&mut state, document_element, Variables::new()).unwrap();
         assert_eq!(variables.len(), 2);
         let name = xpath_ast::Name::new("y".to_string(), None, None);
-        assert_eq!(
-            variables.get(&name),
-            Some(&xee_xpath::Item::from("foo!").into())
-        );
+        assert_eq!(variables.get(&name), Some(&Item::from("foo!").into()));
     }
 
     #[test]
@@ -290,17 +286,13 @@ mod tests {
         let document_element = xot.document_element(root).unwrap();
 
         let name = xpath_ast::Name::new("x".to_string(), None, None);
-        let static_parameters =
-            Variables::from([(name.clone(), xee_xpath::Item::from("bar").into())]);
+        let static_parameters = Variables::from([(name.clone(), Item::from("bar").into())]);
 
         let mut state = State::new(xot, span_info, names);
         let variables = static_evaluate(&mut state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
-        assert_eq!(
-            variables.get(&name),
-            Some(&xee_xpath::Item::from("bar").into())
-        );
+        assert_eq!(variables.get(&name), Some(&Item::from("bar").into()));
     }
 
     #[test]
@@ -322,10 +314,7 @@ mod tests {
         let variables = static_evaluate(&mut state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
-        assert_eq!(
-            variables.get(&name),
-            Some(&xee_xpath::Item::from("foo").into())
-        );
+        assert_eq!(variables.get(&name), Some(&Item::from("foo").into()));
     }
 
     #[test]
@@ -347,10 +336,7 @@ mod tests {
         let variables = static_evaluate(&mut state, document_element, static_parameters).unwrap();
         assert_eq!(variables.len(), 1);
 
-        assert_eq!(
-            variables.get(&name),
-            Some(&xee_xpath::Item::from("").into())
-        );
+        assert_eq!(variables.get(&name), Some(&Item::from("").into()));
     }
 
     #[test]
@@ -499,15 +485,12 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         let variables = static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(variables.len(), 2);
         let y = xpath_ast::Name::new("y".to_string(), None, None);
-        assert_eq!(
-            variables.get(&y),
-            Some(&xee_xpath::Item::from("foo").into())
-        );
+        assert_eq!(variables.get(&y), Some(&Item::from("foo").into()));
     }
 
     #[test]
@@ -535,15 +518,12 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         let variables = static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(variables.len(), 2);
         let y = xpath_ast::Name::new("y".to_string(), None, None);
-        assert_eq!(
-            variables.get(&y),
-            Some(&xee_xpath::Item::from("foo").into())
-        );
+        assert_eq!(variables.get(&y), Some(&Item::from("foo").into()));
     }
 
     #[test]
@@ -647,7 +627,7 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(
@@ -681,7 +661,7 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(
@@ -715,7 +695,7 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(
@@ -749,7 +729,7 @@ mod tests {
         let mut state = State::new(xot, span_info, names);
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            xee_xpath::Item::Node(xee_xpath::Node::Xot(xhtml)).into(),
+            Item::Node(Node::Xot(xhtml)).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters).unwrap();
         assert_eq!(

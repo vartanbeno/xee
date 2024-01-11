@@ -2,12 +2,12 @@
 use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
+use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::DynamicContext;
 
 #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
 fn node_name(context: &DynamicContext, arg: Option<xml::Node>) -> Option<ast::Name> {

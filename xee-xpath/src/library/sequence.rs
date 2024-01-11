@@ -6,17 +6,17 @@ use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::op_add;
 use crate::atomic::op_div;
+use crate::atomic::Atomic;
 use crate::atomic::AtomicCompare;
 use crate::atomic::OpGt;
 use crate::atomic::OpLt;
 use crate::atomic::StringType;
+use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::sequence;
+use crate::string::Collation;
 use crate::wrap_xpath_fn;
-use crate::Atomic;
-use crate::Collation;
-use crate::DynamicContext;
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
 fn empty(arg: &[sequence::Item]) -> bool {

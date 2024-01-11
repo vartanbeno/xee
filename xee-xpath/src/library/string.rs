@@ -12,7 +12,7 @@ use xee_xpath_macros::xpath_fn;
 use crate::context::DynamicContext;
 use crate::function::{self, StaticFunctionDescription};
 use crate::string::Collation;
-use crate::{atomic, error, interpreter, sequence, wrap_xpath_fn, Occurrence};
+use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_xpath_fn};
 
 // we don't accept concat() invocations with an arity
 // of greater than this

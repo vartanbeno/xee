@@ -1,4 +1,4 @@
-use xee_xpath::{Node, Sequence};
+use xee_xpath::{sequence::Sequence, xml::Node};
 use xot::Xot;
 
 use crate::error::{Error, Result};

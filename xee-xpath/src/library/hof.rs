@@ -10,10 +10,10 @@ use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
+use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
-use crate::Occurrence;
 
 // we use the special marker context_last_optional here. The last node
 // argument, $arg, is not part of the official signature, but it is

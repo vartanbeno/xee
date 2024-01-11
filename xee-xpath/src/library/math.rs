@@ -2,10 +2,10 @@
 use ordered_float::OrderedFloat;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic::Atomic;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
-use crate::Atomic;
 
 #[xpath_fn("math:pi() as xs:double")]
 fn pi() -> f64 {

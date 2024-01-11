@@ -1,9 +1,9 @@
 use ibig::{ibig, IBig};
 
+use xee_xpath::error::Error;
 use xee_xpath::function::FunctionRule;
 use xee_xpath::interpreter::instruction::Instruction;
 use xee_xpath::span::SourceSpan;
-use xee_xpath::Error;
 use xee_xpath::{context, error, function, stack};
 
 use crate::ir;

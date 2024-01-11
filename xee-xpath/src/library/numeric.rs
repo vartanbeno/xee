@@ -10,11 +10,11 @@ use rust_decimal::Decimal;
 use rust_decimal::RoundingStrategy;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic::Atomic;
 use crate::atomic::{round_double, round_float};
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::wrap_xpath_fn;
-use crate::Atomic;
 
 #[xpath_fn("fn:abs($arg as xs:numeric?) as xs:numeric?")]
 fn abs(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {

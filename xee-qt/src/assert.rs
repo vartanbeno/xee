@@ -3,8 +3,9 @@ use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
 use xee_xpath::{
-    Collation, DynamicContext, Error, Name, Namespaces, Occurrence, Result, Runnable, Sequence,
-    StaticContext, VariableNames,
+    context::DynamicContext, context::StaticContext, error::Error, error::Result,
+    interpreter::Runnable, occurrence::Occurrence, sequence::Sequence, string::Collation, Name,
+    Namespaces, VariableNames,
 };
 use xee_xpath_outer::parse;
 use xot::Xot;

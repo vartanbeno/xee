@@ -98,7 +98,7 @@ fn make_wrapper(
     };
 
     Ok(
-        quote!(fn #wrapper_name(context: &crate::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::Sequence]) -> Result<crate::Sequence, crate::error::Error> {
+        quote!(fn #wrapper_name(context: &crate::context::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::sequence::Sequence]) -> Result<crate::sequence::Sequence, crate::error::Error> {
             #body
         }),
     )

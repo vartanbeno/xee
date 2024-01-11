@@ -1,7 +1,8 @@
 use xot::Xot;
 
 use xee_xpath::{
-    Documents, DynamicContext, Program, Sequence, SpannedResult, StaticContext, Uri, Variables,
+    context::DynamicContext, context::StaticContext, context::Variables, error::SpannedResult,
+    sequence::Sequence, xml::Documents, xml::Uri,
 };
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 

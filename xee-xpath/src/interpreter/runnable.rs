@@ -5,11 +5,11 @@ use xee_xpath_ast::ast;
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
+use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
-use crate::Occurrence;
-use crate::{error, Collation};
+use crate::{error, string};
 
 use super::Interpreter;
 use super::Program;
@@ -122,7 +122,7 @@ impl<'a> Runnable<'a> {
         self.dynamic_context.static_context.default_collation_uri()
     }
 
-    pub fn default_collation(&self) -> error::Result<Rc<Collation>> {
+    pub fn default_collation(&self) -> error::Result<Rc<string::Collation>> {
         self.dynamic_context.static_context.default_collation()
     }
 

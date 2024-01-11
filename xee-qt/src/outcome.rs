@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use xee_xpath::Error;
+use xee_xpath::error::Error;
 
 use crate::assert::Failure;
 

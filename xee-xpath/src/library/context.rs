@@ -1,19 +1,19 @@
 // https://www.w3.org/TR/2017/REC-xpath-functions-31-20170321/#context
 
-use crate::interpreter;
-use crate::wrap_xpath_fn;
-use crate::NaiveDateWithOffset;
-use crate::NaiveTimeWithOffset;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::Namespaces;
 use xee_xpath_ast::FN_NAMESPACE;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic::NaiveDateWithOffset;
+use crate::atomic::NaiveTimeWithOffset;
+use crate::context::DynamicContext;
 use crate::error;
 use crate::function::FunctionKind;
 use crate::function::StaticFunctionDescription;
+use crate::interpreter;
 use crate::sequence;
-use crate::DynamicContext;
+use crate::wrap_xpath_fn;
 
 use super::datetime::offset_to_duration;
 

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use ahash::{HashMap, HashMapExt};
 use xot::Xot;
 
-use crate::{atomic, error, sequence, Collation};
+use crate::{atomic, error, sequence, string};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Map(pub Rc<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>>);
@@ -63,7 +63,7 @@ impl Map {
     pub(crate) fn deep_equal(
         &self,
         other: Map,
-        collation: &Collation,
+        collation: &string::Collation,
         default_offset: chrono::FixedOffset,
         xot: &Xot,
     ) -> error::Result<bool> {

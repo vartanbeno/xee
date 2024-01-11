@@ -10,9 +10,9 @@ use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
+use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::wrap_xpath_fn;
-use crate::Occurrence;
 
 #[xpath_fn("array:get($array as array(*), $position as xs:integer) as item()*")]
 fn get(array: function::Array, position: IBig) -> error::Result<sequence::Sequence> {

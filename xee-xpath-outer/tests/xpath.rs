@@ -3,8 +3,9 @@ use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
 use xee_xpath::{
-    Atomic, Document, Documents, DynamicContext, Item, Node, Sequence, SpannedResult,
-    StaticContext, Uri, Variables,
+    atomic::Atomic, context::DynamicContext, context::StaticContext, context::Variables,
+    error::SpannedResult, sequence::Item, sequence::Sequence, xml::Document, xml::Documents,
+    xml::Node, xml::Uri,
 };
 use xee_xpath_outer::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse,

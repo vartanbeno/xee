@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"xs:anyAtomicType\")"
 ---
-"let a = crate :: Occurrence :: one (& mut arguments [0] . atomized (context . xot)) ? ;"
+"let a = crate :: occurrence :: Occurrence :: one (& mut arguments [0] . atomized (context . xot)) ? ;"

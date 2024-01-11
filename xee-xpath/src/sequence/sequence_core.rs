@@ -11,10 +11,10 @@ use crate::error;
 use crate::function;
 use crate::occurrence;
 use crate::sequence;
+use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
 use crate::xml;
-use crate::Item;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sequence {
