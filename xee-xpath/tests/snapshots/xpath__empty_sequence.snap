@@ -1,9 +1,0 @@
----
-source: xee-xpath/tests/xpath.rs
-expression: "run(\"()\")"
----
-Ok(
-    Sequence {
-        stack_value: Empty,
-    },
-)

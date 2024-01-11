@@ -1,8 +1,6 @@
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 
-use crate::ir;
-
 use super::static_function::FunctionKind;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -108,19 +106,6 @@ impl From<ast::Signature> for Signature {
                 .map(|p| Some(p.type_))
                 .collect(),
             return_type: Some(signature.return_type),
-        }
-    }
-}
-
-impl From<&ir::FunctionDefinition> for Signature {
-    fn from(function_definition: &ir::FunctionDefinition) -> Self {
-        Self {
-            parameter_types: function_definition
-                .params
-                .iter()
-                .map(|param| param.type_.clone())
-                .collect(),
-            return_type: function_definition.return_type.clone(),
         }
     }
 }
