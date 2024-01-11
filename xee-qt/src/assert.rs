@@ -2,12 +2,11 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
-use xee_interpreter::{
+use xee_xpath::{
     context::DynamicContext, context::StaticContext, error::Error, error::Result,
-    interpreter::Runnable, occurrence::Occurrence, sequence::Sequence, string::Collation, Name,
-    Namespaces, VariableNames,
+    occurrence::Occurrence, parse, sequence::Sequence, string::Collation, Name, Namespaces,
+    Runnable, VariableNames,
 };
-use xee_xpath::parse;
 use xot::Xot;
 
 use crate::outcome::{TestOutcome, UnexpectedError};

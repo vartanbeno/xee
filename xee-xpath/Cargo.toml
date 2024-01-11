@@ -11,6 +11,8 @@ readme = "README.md"
 documentation = "https://docs.rs/xee-xpath"
 homepage = "https://github.com/Paligo/xee"
 
+[features]
+serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
 ahash = { workspace = true }

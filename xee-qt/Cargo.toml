@@ -15,7 +15,6 @@ homepage = "https://github.com/Paligo/xee"
 ahash = { workspace = true }
 thiserror = "1.0.40"
 xot = { workspace = true }
-xee-interpreter = { path = "../xee-interpreter" }
 xee-xpath = { path = "../xee-xpath" }
 fxhash = "0.2.1"
 indexmap = "1.9.3"

@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use xee_interpreter::Name;
+use xee_xpath::Name;
 
 pub(crate) use crate::assert::TestCaseResult;
 use crate::collection::FxIndexSet;

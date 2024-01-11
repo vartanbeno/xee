@@ -2,11 +2,10 @@ use ahash::AHashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use xee_interpreter::{
-    context::DynamicContext, context::StaticContext, context::Variables, sequence::Item,
+use xee_xpath::{
+    context::DynamicContext, context::StaticContext, context::Variables, parse, sequence::Item,
     xml::Documents, xml::Node, xml::Uri, Name,
 };
-use xee_xpath::parse;
 use xot::Xot;
 
 use crate::collection::FxIndexMap;

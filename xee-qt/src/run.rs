@@ -1,11 +1,10 @@
 use derive_builder::Builder;
 use std::borrow::Cow;
 use std::path::Path;
-use xee_interpreter::{
-    context::DynamicContext, context::StaticContext, context::Variables, sequence::Item,
+use xee_xpath::{
+    context::DynamicContext, context::StaticContext, context::Variables, parse, sequence::Item,
     xml::Documents, Namespaces,
 };
-use xee_xpath::parse;
 use xot::Xot;
 
 use crate::collection::FxIndexSet;
@@ -302,7 +301,7 @@ mod tests {
     use std::path::PathBuf;
     use tempfile::tempdir;
 
-    use xee_interpreter::{atomic::Atomic, error::Error, sequence::Sequence};
+    use xee_xpath::{atomic::Atomic, error::Error, sequence::Sequence};
 
     use crate::assert;
     use crate::assert::{AssertCountFailure, AssertStringValueFailure, Failure};
