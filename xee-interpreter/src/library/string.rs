@@ -5,9 +5,11 @@ use std::cmp::Ordering;
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
+
+use xee_name::{Name, FN_NAMESPACE};
 use xee_schema_type::Xs;
-use xee_xpath_ast::{ast, FN_NAMESPACE};
 use xee_xpath_macros::xpath_fn;
+use xee_xpath_type::ast;
 
 use crate::context::DynamicContext;
 use crate::function::{self, StaticFunctionDescription};
@@ -635,7 +637,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         occurrence: ast::Occurrence::One,
         item_type: ast::ItemType::AtomicOrUnionType(Xs::String),
     });
-    let name = ast::Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None);
+    let name = Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None);
 
     for arity in 2..MAX_CONCAT_ARITY {
         let signature = function::Signature {

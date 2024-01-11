@@ -1,6 +1,6 @@
 // https://www.w3.org/TR/xpath-31/#id-sequencetype-subtype
 
-use xee_xpath_ast::ast;
+use xee_xpath_type::ast;
 
 pub(crate) trait TypeInfo {
     fn subtype(&self, other: &Self) -> bool;

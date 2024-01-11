@@ -16,10 +16,10 @@ serde = [
     "dep:serde",
     "ibig/serde",
     "ordered-float/serde",
-    "xee-schema-type/serde",
     "chumsky/serde",
-    "xee-name/serde",
+    "xee-schema-type/serde",
     "xee-xpath-type/serde",
+    "xee-name/serde",
 ]
 
 [dependencies]

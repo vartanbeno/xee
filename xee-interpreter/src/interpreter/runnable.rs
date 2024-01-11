@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use xee_xpath_ast::ast;
+use xee_name::Name;
 
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
@@ -185,7 +185,7 @@ impl<'runnable, 'function> FunctionInfo<'runnable, 'function> {
         }
     }
 
-    pub(crate) fn name(&self) -> Option<ast::Name> {
+    pub(crate) fn name(&self) -> Option<Name> {
         match self.function {
             function::Function::Static {
                 static_function_id, ..

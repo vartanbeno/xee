@@ -3454,9 +3454,11 @@ dependencies = [
  "test-generator",
  "thiserror",
  "url",
+ "xee-name",
  "xee-schema-type",
  "xee-xpath-ast",
  "xee-xpath-macros",
+ "xee-xpath-type",
  "xot",
 ]
 

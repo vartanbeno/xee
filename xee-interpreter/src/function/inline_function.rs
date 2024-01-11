@@ -1,5 +1,5 @@
 use xee_schema_type::Xs;
-use xee_xpath_ast::ast;
+use xee_xpath_type::ast::SequenceType;
 
 use crate::span::SourceSpan;
 use crate::stack;
@@ -30,7 +30,7 @@ pub struct InlineFunction {
     pub constants: Vec<stack::Value>,
     pub steps: Vec<xml::Step>,
     pub cast_types: Vec<CastType>,
-    pub sequence_types: Vec<ast::SequenceType>,
+    pub sequence_types: Vec<SequenceType>,
     pub closure_names: Vec<Name>,
     // the compiled code, and the spans of each instruction
     pub chunk: Vec<u8>,

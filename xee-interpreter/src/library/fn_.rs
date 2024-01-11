@@ -1,5 +1,7 @@
 use ibig::IBig;
-use xee_xpath_ast::{ast, FN_NAMESPACE};
+
+use xee_name::{Name, FN_NAMESPACE};
+use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
 use crate::context::DynamicContext;
@@ -39,7 +41,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(my_function),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
-            name: ast::Name::new("error".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new("error".to_string(), Some(FN_NAMESPACE.to_string()), None),
             // TODO: this is not the right signature for fn:error, as it always
             // returns a none
             signature: ast::Signature::parse("fn:error() as item()*", &Default::default())

@@ -4,7 +4,8 @@ use chrono::Offset;
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
-use xee_xpath_ast::ast::Name;
+
+use xee_name::Name;
 
 use crate::error;
 

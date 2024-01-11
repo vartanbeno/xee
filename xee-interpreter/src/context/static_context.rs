@@ -3,9 +3,9 @@ use std::fmt::Debug;
 use std::rc::Rc;
 
 use icu_provider_blob::BlobDataProvider;
+
+use xee_name::{Namespaces, VariableNames};
 use xee_xpath_ast::ast;
-use xee_xpath_ast::Namespaces;
-use xee_xpath_ast::VariableNames;
 use xee_xpath_ast::XPathParserContext;
 
 use crate::error;

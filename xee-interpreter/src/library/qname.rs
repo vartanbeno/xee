@@ -4,9 +4,8 @@ use ahash::HashMap;
 use std::rc::Rc;
 use xot::Xot;
 
-use xee_xpath_ast::ast;
+use xee_name::{Name, Namespaces};
 use xee_xpath_ast::parse_name;
-use xee_xpath_ast::Namespaces;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
@@ -83,7 +82,7 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
 }
 
 #[xpath_fn("fn:prefix-from-QName($arg as xs:QName?) as xs:NCName?")]
-fn prefix_from_qname(arg: Option<ast::Name>) -> error::Result<Option<atomic::Atomic>> {
+fn prefix_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
         if let Some(prefix) = arg.prefix() {
             Ok(Some(atomic::Atomic::String(
@@ -99,7 +98,7 @@ fn prefix_from_qname(arg: Option<ast::Name>) -> error::Result<Option<atomic::Ato
 }
 
 #[xpath_fn("fn:local-name-from-QName($arg as xs:QName?) as xs:NCName?")]
-fn local_name_from_qname(arg: Option<ast::Name>) -> error::Result<Option<atomic::Atomic>> {
+fn local_name_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
         Ok(Some(atomic::Atomic::String(
             atomic::StringType::NCName,
@@ -111,7 +110,7 @@ fn local_name_from_qname(arg: Option<ast::Name>) -> error::Result<Option<atomic:
 }
 
 #[xpath_fn("fn:namespace-uri-from-QName($arg as xs:QName?) as xs:anyURI?")]
-fn namespace_uri_from_qname(arg: Option<ast::Name>) -> error::Result<Option<atomic::Atomic>> {
+fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
         if let Some(namespace) = arg.namespace() {
             Ok(Some(atomic::Atomic::String(

@@ -17,11 +17,13 @@ serde = [
     "ibig/serde",
     "ordered-float/serde",
     "xee-schema-type/serde",
+    "xee-xpath-type/serde",
     "xee-xpath-ast/serde",
     "chumsky/serde",
 ]
 
 [dependencies]
+xee-xpath-ast = { path = "../xee-xpath-ast" }
 ahash = { workspace = true }
 arrayvec = "0.7.2"
 chumsky = { workspace = true }
@@ -35,9 +37,10 @@ ordered-float = "3.6.0"
 rust_decimal = "1.30.0"
 thiserror = "1.0.40"
 xot = { workspace = true }
-xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-xpath-macros = { path = "../xee-xpath-macros" }
 xee-schema-type = { path = "../xee-schema-type" }
+xee-xpath-type = { path = "../xee-xpath-type" }
+xee-name = { path = "../xee-name" }
 lexical = { version = "6.1.1", features = ["format"] }
 ibig = "0.3.6"
 regex = "1.9.3"

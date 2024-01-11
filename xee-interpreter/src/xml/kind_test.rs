@@ -158,7 +158,7 @@ fn name_id_for_name(xot: &Xot, name: &ast::Name) -> Option<xot::NameId> {
 
 #[cfg(test)]
 mod tests {
-    use xee_xpath_ast::{ast, parse_kind_test};
+    use xee_xpath_ast::parse_kind_test;
 
     use super::*;
 

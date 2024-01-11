@@ -1,7 +1,8 @@
 // https://www.w3.org/TR/xpath-functions-31/#higher-order-functions
 
 use ibig::IBig;
-use xee_xpath_ast::ast;
+
+use xee_name::Name;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
@@ -27,7 +28,7 @@ use crate::xml;
 fn function_lookup(
     context: &context::DynamicContext,
     interpreter: &mut Interpreter,
-    name: ast::Name,
+    name: Name,
     arity: IBig,
     arg: Option<xml::Node>,
 ) -> Option<sequence::Item> {
@@ -45,10 +46,7 @@ fn function_lookup(
 }
 
 #[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
-fn function_name(
-    interpreter: &Interpreter,
-    func: sequence::Item,
-) -> error::Result<Option<ast::Name>> {
+fn function_name(interpreter: &Interpreter, func: sequence::Item) -> error::Result<Option<Name>> {
     let function = func.to_function()?;
     Ok(interpreter.function_name(function.as_ref()))
 }

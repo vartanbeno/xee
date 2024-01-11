@@ -1,8 +1,10 @@
 use std::rc::Rc;
 use std::vec;
-use xee_schema_type::Xs;
-use xee_xpath_ast::ast;
+
 use xot::Xot;
+
+use xee_name::Name;
+use xee_schema_type::Xs;
 
 use crate::atomic;
 use crate::string::Collation;
@@ -70,13 +72,13 @@ impl Node {
         }
     }
 
-    pub(crate) fn node_name(&self, xot: &Xot) -> Option<ast::Name> {
+    pub(crate) fn node_name(&self, xot: &Xot) -> Option<Name> {
         let name_id = self.node_name_id(xot)?;
         let namespace_id = xot.namespace_for_name(name_id);
         let (local_name, uri) = xot.name_ns_str(name_id);
         let prefix_id = xot.prefix_for_namespace(self.xot_node(), namespace_id);
         let prefix = prefix_id.map(|id| xot.prefix_str(id).to_string());
-        Some(ast::Name::new(
+        Some(Name::new(
             local_name.to_string(),
             Some(uri.to_string()),
             prefix,

@@ -16,5 +16,4 @@ pub mod stack;
 pub mod string;
 pub mod xml;
 
-pub use xee_xpath_ast::ast::Name;
-pub use xee_xpath_ast::{Namespaces, VariableNames};
+pub use xee_name::{Name, Namespaces, VariableNames};

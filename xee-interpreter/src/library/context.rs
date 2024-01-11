@@ -1,8 +1,7 @@
 // https://www.w3.org/TR/2017/REC-xpath-functions-31-20170321/#context
 
+use xee_name::{Name, Namespaces, FN_NAMESPACE};
 use xee_xpath_ast::ast;
-use xee_xpath_ast::Namespaces;
-use xee_xpath_ast::FN_NAMESPACE;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::NaiveDateWithOffset;
@@ -75,7 +74,7 @@ fn default_collation(context: &DynamicContext) -> String {
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
-            name: ast::Name::new("position".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new("position".to_string(), Some(FN_NAMESPACE.to_string()), None),
             signature: ast::Signature::parse("fn:position() as xs:integer", &Namespaces::default())
                 .unwrap()
                 .into(),
@@ -83,7 +82,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             func: bound_position,
         },
         StaticFunctionDescription {
-            name: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
             signature: ast::Signature::parse("fn:last() as xs:integer", &Namespaces::default())
                 .unwrap()
                 .into(),

@@ -2,8 +2,9 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use ibig::IBig;
+
+use xee_name::Name;
 use xee_schema_type::Xs;
-use xee_xpath_ast::ast;
 
 use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
@@ -535,7 +536,7 @@ impl<'a> Interpreter<'a> {
         self.runnable.inline_function(self.state.frame().function())
     }
 
-    pub(crate) fn function_name(&self, function: &function::Function) -> Option<ast::Name> {
+    pub(crate) fn function_name(&self, function: &function::Function) -> Option<Name> {
         self.runnable.function_info(function).name()
     }
 

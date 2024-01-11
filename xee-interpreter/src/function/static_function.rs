@@ -1,7 +1,8 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
+
+use xee_name::{Name, Namespaces};
 use xee_xpath_ast::ast;
-use xee_xpath_ast::Namespaces;
 
 use crate::context::DynamicContext;
 use crate::error;
@@ -53,7 +54,7 @@ pub(crate) type StaticFunctionType = fn(
 ) -> error::Result<sequence::Sequence>;
 
 pub(crate) struct StaticFunctionDescription {
-    pub(crate) name: ast::Name,
+    pub(crate) name: Name,
     pub(crate) signature: function::Signature,
     pub(crate) function_kind: Option<FunctionKind>,
     pub(crate) func: StaticFunctionType,
@@ -65,7 +66,7 @@ pub(crate) struct StaticFunctionDescription {
 macro_rules! wrap_xpath_fn {
     ($function:path) => {{
         use $function as wrapped_function;
-        let namespaces = xee_xpath_ast::Namespaces::default();
+        let namespaces = xee_name::Namespaces::default();
         $crate::function::StaticFunctionDescription::new(
             wrapped_function::WRAPPER,
             wrapped_function::SIGNATURE,
@@ -141,7 +142,7 @@ impl From<FunctionKind> for FunctionRule {
 }
 
 pub struct StaticFunction {
-    name: ast::Name,
+    name: Name,
     signature: function::Signature,
     arity: usize,
     pub function_rule: Option<FunctionRule>,
@@ -161,7 +162,7 @@ impl Debug for StaticFunction {
 impl StaticFunction {
     pub(crate) fn new(
         func: StaticFunctionType,
-        name: ast::Name,
+        name: Name,
         signature: function::Signature,
         function_kind: Option<FunctionKind>,
     ) -> Self {
@@ -229,7 +230,7 @@ impl StaticFunction {
         }
     }
 
-    pub(crate) fn name(&self) -> &ast::Name {
+    pub(crate) fn name(&self) -> &Name {
         &self.name
     }
 
@@ -248,7 +249,7 @@ fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
 
 #[derive(Debug)]
 pub struct StaticFunctions {
-    by_name: HashMap<(ast::Name, u8), function::StaticFunctionId>,
+    by_name: HashMap<(Name, u8), function::StaticFunctionId>,
     by_index: Vec<StaticFunction>,
 }
 
@@ -270,7 +271,7 @@ impl StaticFunctions {
         Self { by_name, by_index }
     }
 
-    pub fn get_by_name(&self, name: &ast::Name, arity: u8) -> Option<function::StaticFunctionId> {
+    pub fn get_by_name(&self, name: &Name, arity: u8) -> Option<function::StaticFunctionId> {
         // TODO annoying clone
         self.by_name.get(&(name.clone(), arity)).copied()
     }
