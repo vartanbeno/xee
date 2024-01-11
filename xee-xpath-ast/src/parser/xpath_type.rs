@@ -47,13 +47,10 @@ where
         .boxed();
     let item_type_atomic_or_union = eqname.clone().try_map(|name, _span| {
         Ok(ast::ItemType::AtomicOrUnionType(
-            name.value
-                .clone()
-                .try_into()
-                .map_err(|_| ParserError::UnknownType {
-                    name: name.value.clone(),
-                    span: name.span,
-                })?,
+            name_to_xs(&name.value).map_err(|_| ParserError::UnknownType {
+                name: name.value.clone(),
+                span: name.span,
+            })?,
         ))
     });
 
@@ -73,11 +70,9 @@ where
             .then(sequence_type.clone()))
         .try_map(|(key_type, value_type), _span| {
             Ok(ast::MapTest::TypedMapTest(Box::new(ast::TypedMapTest {
-                key_type: key_type.value.clone().try_into().map_err(|_| {
-                    ParserError::UnknownType {
-                        name: key_type.value.clone(),
-                        span: key_type.span,
-                    }
+                key_type: name_to_xs(&key_type.value).map_err(|_| ParserError::UnknownType {
+                    name: key_type.value.clone(),
+                    span: key_type.span,
                 })?,
                 value_type,
             })))
@@ -195,10 +190,14 @@ where
     }
 }
 
-impl TryFrom<ast::Name> for Xs {
-    type Error = ();
-
-    fn try_from(name: ast::Name) -> Result<Xs, ()> {
-        Xs::by_name(name.namespace(), name.local_name()).ok_or(())
-    }
+pub(crate) fn name_to_xs(name: &ast::Name) -> Result<Xs, ()> {
+    Xs::by_name(name.namespace(), name.local_name()).ok_or(())
 }
+
+// impl TryFrom<ast::Name> for Xs {
+//     type Error = ();
+
+//     fn try_from(name: ast::Name) -> Result<Xs, ()> {
+//         Xs::by_name(name.namespace(), name.local_name()).ok_or(())
+//     }
+// }

@@ -18,6 +18,7 @@ serde = [
     "ordered-float/serde",
     "xee-schema-type/serde",
     "chumsky/serde",
+    "xee-name/serde",
 ]
 
 [dependencies]
@@ -31,6 +32,7 @@ ibig = { workspace = true }
 rust_decimal = { workspace = true }
 xot = { workspace = true }
 xee-schema-type = { path = "../xee-schema-type" }
+xee-name = { path = "../xee-name" }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]

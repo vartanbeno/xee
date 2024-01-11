@@ -1,5 +1,5 @@
 use ahash::{HashSet, HashSetExt};
-use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_ast::{ast as xpath_ast, parse_name};
 
 use crate::ast_core as ast;
 use crate::content::Content;
@@ -292,8 +292,7 @@ impl<'a> Attributes<'a> {
     }
 
     fn _eqname(&self, s: &str, span: Span) -> Result<xpath_ast::Name, AttributeError> {
-        if let Ok(name) =
-            xpath_ast::Name::parse(s, &self.content.parser_context().namespaces).map(|n| n.value)
+        if let Ok(name) = parse_name(s, &self.content.parser_context().namespaces).map(|n| n.value)
         {
             Ok(name)
         } else {

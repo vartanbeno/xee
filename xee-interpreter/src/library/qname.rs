@@ -5,6 +5,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use xee_xpath_ast::ast;
+use xee_xpath_ast::parse_name;
 use xee_xpath_ast::Namespaces;
 use xee_xpath_macros::xpath_fn;
 
@@ -26,7 +27,7 @@ fn resolve_qname(
         // that used NamespaceLookup instead of Namespaces, but that requires a lot
         // of generics we're not ready for at this point.
         let namespaces = element_namespaces(node, context.xot);
-        let name = ast::Name::parse(qname, &namespaces)?.value;
+        let name = parse_name(qname, &namespaces)?.value;
         Ok(Some(name.into()))
     } else {
         Ok(None)
@@ -69,7 +70,7 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
     let pairs = HashMap::from_iter(pairs);
     // TODO: see efficiency note for resolve-QName
     let namespaces = Namespaces::new(pairs, None, None);
-    let name = ast::Name::parse(param_qname, &namespaces)
+    let name = parse_name(param_qname, &namespaces)
         .map_err(|_| error::Error::FOCA0002)?
         .value;
     // TODO: the parser should do this already

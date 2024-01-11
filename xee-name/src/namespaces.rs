@@ -17,8 +17,8 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
 #[derive(Debug, Clone)]
 pub struct Namespaces<'a> {
     namespaces: HashMap<&'a str, &'a str>,
-    pub(crate) default_element_namespace: Option<&'a str>,
-    pub(crate) default_function_namespace: Option<&'a str>,
+    pub default_element_namespace: Option<&'a str>,
+    pub default_function_namespace: Option<&'a str>,
 }
 
 impl<'a> Namespaces<'a> {

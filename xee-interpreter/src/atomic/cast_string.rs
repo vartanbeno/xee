@@ -2,7 +2,7 @@ use regex::Regex;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
-use xee_xpath_ast::ast;
+use xee_xpath_ast::parse_name;
 
 use crate::atomic;
 use crate::context;
@@ -145,7 +145,7 @@ impl atomic::Atomic {
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 // https://www.w3.org/TR/xpath-functions-31/#constructor-qname-notation
                 let namespaces = dynamic_context.static_context.namespaces();
-                let name = ast::Name::parse(&s, namespaces);
+                let name = parse_name(&s, namespaces);
                 match name {
                     Ok(name) => {
                         let name = name.value;

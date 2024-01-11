@@ -1,11 +1,12 @@
 use ahash::{HashSet, HashSetExt};
 
+use crate::Name;
 use crate::{ast, span::WithSpan, VariableNames};
 
 use super::visitor::AstVisitor;
 
 struct UniqueNameGenerator {
-    names: HashSet<ast::Name>,
+    names: HashSet<Name>,
 }
 
 impl UniqueNameGenerator {
@@ -15,7 +16,7 @@ impl UniqueNameGenerator {
         }
     }
 
-    fn generate(&mut self, name: &ast::Name) -> ast::Name {
+    fn generate(&mut self, name: &Name) -> Name {
         let mut name = name.clone();
         while self.names.contains(&name) {
             name = name.with_suffix();
@@ -26,7 +27,7 @@ impl UniqueNameGenerator {
 }
 
 struct Names {
-    names: Vec<(ast::Name, ast::Name)>,
+    names: Vec<(Name, Name)>,
     generator: UniqueNameGenerator,
 }
 
@@ -38,7 +39,7 @@ impl Names {
         }
     }
 
-    fn get(&mut self, name: &ast::Name) -> ast::Name {
+    fn get(&mut self, name: &Name) -> Name {
         // this always returns a name, even if the
         // name is unknown, in which case a unique bogus
         // name is generated
@@ -50,7 +51,7 @@ impl Names {
             .unwrap_or_else(|| self.generator.generate(name))
     }
 
-    fn push_name(&mut self, name: &ast::Name) -> ast::Name {
+    fn push_name(&mut self, name: &Name) -> Name {
         let new_name = self.generator.generate(name);
         self.names.push((name.clone(), new_name.clone()));
         new_name
@@ -72,7 +73,7 @@ impl Renamer {
         }
     }
 
-    fn push_name(&mut self, name: &ast::Name) -> ast::Name {
+    fn push_name(&mut self, name: &Name) -> Name {
         self.names.push_name(name)
     }
 
@@ -116,7 +117,7 @@ impl AstVisitor for Renamer {
         }
     }
 
-    fn visit_var_ref(&mut self, name: &mut ast::Name) {
+    fn visit_var_ref(&mut self, name: &mut Name) {
         let new_name = self.names.get(name);
         *name = new_name;
     }

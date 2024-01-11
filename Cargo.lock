@@ -3461,6 +3461,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-name"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "serde",
+ "xot",
+]
+
+[[package]]
 name = "xee-qt"
 version = "0.1.0"
 dependencies = [
@@ -3524,6 +3533,7 @@ dependencies = [
  "rust_decimal_macros",
  "serde",
  "thiserror",
+ "xee-name",
  "xee-schema-type",
  "xee-xpath-ast",
  "xot",

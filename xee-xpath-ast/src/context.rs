@@ -1,9 +1,7 @@
-use ahash::HashSet;
+use xee_name::VariableNames;
 
 use crate::ast;
 use crate::{Namespaces, ParserError};
-
-pub type VariableNames = HashSet<ast::Name>;
 
 #[derive(Debug, Default)]
 pub struct XPathParserContext<'a> {

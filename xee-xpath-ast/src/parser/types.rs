@@ -2,7 +2,7 @@ use chumsky::{extra::Full, prelude::*};
 use std::borrow::Cow;
 
 use crate::error::ParserError;
-use crate::namespaces::Namespaces;
+use crate::Namespaces;
 
 pub(crate) struct State<'a> {
     pub(crate) namespaces: Cow<'a, Namespaces<'a>>,

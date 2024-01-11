@@ -6,6 +6,7 @@ use crate::lexer::Token;
 use crate::{ast, error::ParserError};
 
 use super::types::{BoxedParser, State};
+use super::xpath_type::name_to_xs;
 
 #[derive(Clone)]
 pub(crate) struct ParserKindTestOutput<'a, I>
@@ -53,14 +54,10 @@ where
         .then(just(Token::QuestionMark).or_not())
         .try_map(|(name, question_mark), _span| {
             Ok(ast::TypeName {
-                name: name
-                    .value
-                    .clone()
-                    .try_into()
-                    .map_err(|_| ParserError::UnknownType {
-                        name: name.value.clone(),
-                        span: name.span,
-                    })?,
+                name: name_to_xs(&name.value).map_err(|_| ParserError::UnknownType {
+                    name: name.value.clone(),
+                    span: name.span,
+                })?,
                 can_be_nilled: question_mark.is_some(),
             })
         })
@@ -109,7 +106,7 @@ where
                 type_name: type_name
                     .map(|name| {
                         Ok(ast::TypeName {
-                            name: name.value.clone().try_into().map_err(|_| {
+                            name: name_to_xs(&name.value).map_err(|_| {
                                 ParserError::UnknownType {
                                     name: name.value.clone(),
                                     span: name.span,

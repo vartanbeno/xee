@@ -1,0 +1,20 @@
+[package]
+name = "xee-name"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "Xee XML name and namespace support"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-ast-base"
+homepage = "https://github.com/Paligo/xee"
+
+[features]
+serde = ["dep:serde"]
+
+[dependencies]
+ahash = { workspace = true }
+xot = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }

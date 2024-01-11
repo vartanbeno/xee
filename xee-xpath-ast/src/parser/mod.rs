@@ -12,13 +12,14 @@ use chumsky::input::Stream;
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 
+use xee_name::VariableNames;
+
 use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
-use crate::context::VariableNames;
 use crate::error::ParserError;
 use crate::lexer::{lexer, Token};
-use crate::namespaces::Namespaces;
+use crate::Namespaces;
 
 use super::parser::parser_core::parser;
 use super::parser::types::{BoxedParser, State};
@@ -122,10 +123,8 @@ impl ast::ItemType {
     }
 }
 
-impl ast::Name {
-    pub fn parse<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<ast::NameS, ParserError> {
-        parse(parser().name, tokens(src), Cow::Borrowed(namespaces))
-    }
+pub fn parse_name<'a>(src: &'a str, namespaces: &'a Namespaces) -> Result<ast::NameS, ParserError> {
+    parse(parser().name, tokens(src), Cow::Borrowed(namespaces))
 }
 
 #[cfg(test)]
@@ -153,19 +152,19 @@ mod tests {
     #[test]
     fn test_unprefixed_name() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(ast::Name::parse("foo", &namespaces));
+        assert_ron_snapshot!(parse_name("foo", &namespaces));
     }
 
     #[test]
     fn test_prefixed_name() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(ast::Name::parse("xs:foo", &namespaces));
+        assert_ron_snapshot!(parse_name("xs:foo", &namespaces));
     }
 
     #[test]
     fn test_qualified_name() {
         let namespaces = Namespaces::default();
-        assert_ron_snapshot!(ast::Name::parse("Q{http://example.com}foo", &namespaces));
+        assert_ron_snapshot!(parse_name("Q{http://example.com}foo", &namespaces));
     }
 
     #[test]
