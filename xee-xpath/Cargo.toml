@@ -28,7 +28,6 @@ chumsky = { workspace = true }
 next-gen = "0.1.1"
 strum = { workspace = true }
 strum_macros = { workspace = true }
-nonempty = "0.8.1"
 num = "0.4.1"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
@@ -48,7 +47,6 @@ chrono = { workspace = true }
 icu = { workspace = true, features = ["serde"] }
 icu_provider_adapters = { version = "1.2.0", features = ["serde"] }
 icu_provider_blob = "1.2"
-serde-querystring = "0.2.1"
 serde = { workspace = true, features = ["derive"], optional = true }
 url = "2.4.1"
 fancy-regex = "0.11.0"
