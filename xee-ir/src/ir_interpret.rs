@@ -13,14 +13,26 @@ use super::scope;
 
 pub(crate) type Scopes = scope::Scopes<ir::Name>;
 
-pub(crate) struct InterpreterCompiler<'a> {
+pub struct InterpreterCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
     pub(crate) static_context: &'a context::StaticContext<'a>,
     pub(crate) builder: FunctionBuilder<'a>,
 }
 
 impl<'a> InterpreterCompiler<'a> {
-    pub(crate) fn compile_expr(&mut self, expr: &ir::ExprS) -> error::SpannedResult<()> {
+    pub fn new(
+        builder: FunctionBuilder<'a>,
+        scopes: &'a mut Scopes,
+        static_context: &'a context::StaticContext<'a>,
+    ) -> Self {
+        Self {
+            builder,
+            scopes,
+            static_context,
+        }
+    }
+
+    pub fn compile_expr(&mut self, expr: &ir::ExprS) -> error::SpannedResult<()> {
         let span = expr.span.into();
         match &expr.value {
             ir::Expr::Atom(atom) => self.compile_atom(atom),

@@ -23,13 +23,13 @@ impl<N: Eq + Clone> Scope<N> {
 }
 
 #[derive(Debug)]
-pub(crate) struct Scopes<N: Eq + Clone> {
+pub struct Scopes<N: Eq + Clone> {
     scopes: Vec<Scope<N>>,
     dummy: N,
 }
 
 impl<N: Eq + Clone> Scopes<N> {
-    pub(crate) fn new(dummy: N) -> Self {
+    pub fn new(dummy: N) -> Self {
         Self {
             scopes: vec![Scope::new()],
             dummy,

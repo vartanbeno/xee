@@ -5,7 +5,7 @@ use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
 
 use xee_interpreter::{context, error, error::Error, function, xml};
 
-use super::{ir_core as ir, AtomS};
+use xee_ir::{ir, ir::AtomS};
 
 #[derive(Debug, Clone)]
 struct Binding {

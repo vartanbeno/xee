@@ -12,11 +12,11 @@ use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 
-pub(crate) type AtomS = Spanned<Atom>;
-pub(crate) type ExprS = Spanned<Expr>;
+pub type AtomS = Spanned<Atom>;
+pub type ExprS = Spanned<Expr>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Expr {
+pub enum Expr {
     Atom(AtomS),
     Let(Let),
     If(If),
@@ -49,13 +49,13 @@ pub(crate) enum Expr {
 
 // not to be confused with an XPath atom; this is a variable or a constant
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Atom {
+pub enum Atom {
     Const(Const),
     Variable(Name),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Const {
+pub enum Const {
     Integer(IBig),
     String(String),
     Double(OrderedFloat<f64>),
@@ -66,48 +66,48 @@ pub(crate) enum Const {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ContextNames {
-    pub(crate) item: Name,
-    pub(crate) position: Name,
-    pub(crate) last: Name,
+pub struct ContextNames {
+    pub item: Name,
+    pub position: Name,
+    pub last: Name,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Let {
-    pub(crate) name: Name,
-    pub(crate) var_expr: Box<ExprS>,
-    pub(crate) return_expr: Box<ExprS>,
+pub struct Let {
+    pub name: Name,
+    pub var_expr: Box<ExprS>,
+    pub return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct If {
-    pub(crate) condition: AtomS,
-    pub(crate) then: Box<ExprS>,
-    pub(crate) else_: Box<ExprS>,
+pub struct If {
+    pub condition: AtomS,
+    pub then: Box<ExprS>,
+    pub else_: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Binary {
-    pub(crate) left: AtomS,
-    pub(crate) op: BinaryOperator,
-    pub(crate) right: AtomS,
+pub struct Binary {
+    pub left: AtomS,
+    pub op: BinaryOperator,
+    pub right: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Unary {
-    pub(crate) op: UnaryOperator,
-    pub(crate) atom: AtomS,
+pub struct Unary {
+    pub op: UnaryOperator,
+    pub atom: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FunctionDefinition {
-    pub(crate) params: Vec<Param>,
-    pub(crate) return_type: Option<SequenceType>,
-    pub(crate) body: Box<ExprS>,
+pub struct FunctionDefinition {
+    pub params: Vec<Param>,
+    pub return_type: Option<SequenceType>,
+    pub body: Box<ExprS>,
 }
 
 impl FunctionDefinition {
-    pub(crate) fn signature(&self) -> Signature {
+    pub fn signature(&self) -> Signature {
         Signature {
             parameter_types: self
                 .params
@@ -120,71 +120,71 @@ impl FunctionDefinition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Param {
-    pub(crate) name: Name,
-    pub(crate) type_: Option<SequenceType>,
+pub struct Param {
+    pub name: Name,
+    pub type_: Option<SequenceType>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FunctionCall {
-    pub(crate) atom: AtomS,
-    pub(crate) args: Vec<AtomS>,
+pub struct FunctionCall {
+    pub atom: AtomS,
+    pub args: Vec<AtomS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Lookup {
-    pub(crate) atom: AtomS,
-    pub(crate) arg_atom: AtomS,
+pub struct Lookup {
+    pub atom: AtomS,
+    pub arg_atom: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct WildcardLookup {
-    pub(crate) atom: AtomS,
+pub struct WildcardLookup {
+    pub atom: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Step {
-    pub(crate) step: xml::Step,
-    pub(crate) context: AtomS,
+pub struct Step {
+    pub step: xml::Step,
+    pub context: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Map {
-    pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: AtomS,
-    pub(crate) return_expr: Box<ExprS>,
+pub struct Map {
+    pub context_names: ContextNames,
+    pub var_atom: AtomS,
+    pub return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Filter {
-    pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: AtomS,
-    pub(crate) return_expr: Box<ExprS>,
+pub struct Filter {
+    pub context_names: ContextNames,
+    pub var_atom: AtomS,
+    pub return_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Quantified {
-    pub(crate) quantifier: Quantifier,
-    pub(crate) context_names: ContextNames,
-    pub(crate) var_atom: AtomS,
-    pub(crate) satisifies_expr: Box<ExprS>,
+pub struct Quantified {
+    pub quantifier: Quantifier,
+    pub context_names: ContextNames,
+    pub var_atom: AtomS,
+    pub satisifies_expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Quantifier {
+pub enum Quantifier {
     Some,
     Every,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Cast {
-    pub(crate) atom: AtomS,
-    pub(crate) xs: Xs,
-    pub(crate) empty_sequence_allowed: bool,
+pub struct Cast {
+    pub atom: AtomS,
+    pub xs: Xs,
+    pub empty_sequence_allowed: bool,
 }
 
 impl Cast {
-    pub(crate) fn cast_type(&self) -> CastType {
+    pub fn cast_type(&self) -> CastType {
         CastType {
             xs: self.xs,
             empty_sequence_allowed: self.empty_sequence_allowed,
@@ -193,14 +193,14 @@ impl Cast {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Castable {
-    pub(crate) atom: AtomS,
-    pub(crate) xs: Xs,
-    pub(crate) empty_sequence_allowed: bool,
+pub struct Castable {
+    pub atom: AtomS,
+    pub xs: Xs,
+    pub empty_sequence_allowed: bool,
 }
 
 impl Castable {
-    pub(crate) fn cast_type(&self) -> CastType {
+    pub fn cast_type(&self) -> CastType {
         CastType {
             xs: self.xs,
             empty_sequence_allowed: self.empty_sequence_allowed,
@@ -209,72 +209,72 @@ impl Castable {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct InstanceOf {
-    pub(crate) atom: AtomS,
-    pub(crate) sequence_type: SequenceType,
+pub struct InstanceOf {
+    pub atom: AtomS,
+    pub sequence_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Treat {
-    pub(crate) atom: AtomS,
-    pub(crate) sequence_type: SequenceType,
+pub struct Treat {
+    pub atom: AtomS,
+    pub sequence_type: SequenceType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct MapConstructor {
-    pub(crate) members: Vec<(AtomS, AtomS)>,
+pub struct MapConstructor {
+    pub members: Vec<(AtomS, AtomS)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum ArrayConstructor {
+pub enum ArrayConstructor {
     Square(Vec<AtomS>),
     Curly(AtomS),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct XmlName {
-    pub(crate) local_name: AtomS,
-    pub(crate) namespace: AtomS,
+pub struct XmlName {
+    pub local_name: AtomS,
+    pub namespace: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Root {}
+pub struct Root {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Element {
-    pub(crate) element: AtomS,
-    pub(crate) name: AtomS,
+pub struct Element {
+    pub element: AtomS,
+    pub name: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Attribute {
-    pub(crate) element: AtomS,
-    pub(crate) name: AtomS,
-    pub(crate) value: AtomS,
+pub struct Attribute {
+    pub element: AtomS,
+    pub name: AtomS,
+    pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Prefix {
-    pub(crate) element: AtomS,
-    pub(crate) name: AtomS,
-    pub(crate) uri: AtomS,
+pub struct Prefix {
+    pub element: AtomS,
+    pub name: AtomS,
+    pub uri: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Text {
-    pub(crate) element: AtomS,
-    pub(crate) value: AtomS,
+pub struct Text {
+    pub element: AtomS,
+    pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Comment {
-    pub(crate) element: AtomS,
-    pub(crate) value: AtomS,
+pub struct Comment {
+    pub element: AtomS,
+    pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ProcessingInstruction {
-    pub(crate) element: AtomS,
-    pub(crate) target: AtomS,
-    pub(crate) content: AtomS,
+pub struct ProcessingInstruction {
+    pub element: AtomS,
+    pub target: AtomS,
+    pub content: AtomS,
 }

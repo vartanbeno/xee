@@ -16,23 +16,13 @@ pub(crate) struct ForwardJumpRef(usize);
 pub(crate) struct BackwardJumpRef(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Comparison {
-    Eq,
-    Ne,
-    Lt,
-    Le,
-    Gt,
-    Ge,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum JumpCondition {
     Always,
     True,
     False,
 }
 
-pub(crate) struct FunctionBuilder<'a> {
+pub struct FunctionBuilder<'a> {
     program: &'a mut interpreter::Program,
     compiled: Vec<u8>,
     spans: Vec<span::SourceSpan>,
@@ -44,7 +34,7 @@ pub(crate) struct FunctionBuilder<'a> {
 }
 
 impl<'a> FunctionBuilder<'a> {
-    pub(crate) fn new(program: &'a mut interpreter::Program) -> Self {
+    pub fn new(program: &'a mut interpreter::Program) -> Self {
         FunctionBuilder {
             program,
             compiled: Vec::new(),
@@ -111,17 +101,6 @@ impl<'a> FunctionBuilder<'a> {
             panic!("too many sequence types");
         }
         sequence_type_id
-    }
-
-    pub(crate) fn emit_compare_value(&mut self, comparison: Comparison, span: span::SourceSpan) {
-        match comparison {
-            Comparison::Eq => self.emit(Instruction::Eq, span),
-            Comparison::Ne => self.emit(Instruction::Ne, span),
-            Comparison::Lt => self.emit(Instruction::Lt, span),
-            Comparison::Le => self.emit(Instruction::Le, span),
-            Comparison::Gt => self.emit(Instruction::Gt, span),
-            Comparison::Ge => self.emit(Instruction::Ge, span),
-        }
     }
 
     pub(crate) fn loop_start(&self) -> BackwardJumpRef {

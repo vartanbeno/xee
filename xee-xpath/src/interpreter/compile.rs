@@ -1,18 +1,20 @@
 use xee_interpreter::{context, error, interpreter::Program};
+use xee_ir::{ir, FunctionBuilder, InterpreterCompiler, Scopes};
 use xee_xpath_ast::ast;
 
-use crate::ir;
+// use crate::ir;
+use crate::ir::IrConverter;
 
-use super::builder::FunctionBuilder;
-use super::ir_interpret::InterpreterCompiler;
-use super::scope::Scopes;
+// use super::builder::FunctionBuilder;
+// use super::ir_interpret::InterpreterCompiler;
+// use super::scope::Scopes;
 
 /// Construct a program from an XPath AST.
 pub fn compile(
     static_context: &context::StaticContext,
     xpath: ast::XPath,
 ) -> error::SpannedResult<Program> {
-    let mut ir_converter = ir::IrConverter::new(static_context);
+    let mut ir_converter = IrConverter::new(static_context);
     let expr = ir_converter.convert_xpath(&xpath)?;
     // this expression contains a function definition, we're getting it
     // in the end
@@ -22,11 +24,7 @@ pub fn compile(
     };
     let mut scopes = Scopes::new(ir::Name::new("dummy".to_string()));
     let builder = FunctionBuilder::new(&mut program);
-    let mut compiler = InterpreterCompiler {
-        builder,
-        scopes: &mut scopes,
-        static_context,
-    };
+    let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
     compiler.compile_expr(&expr)?;
 
     Ok(program)
@@ -46,6 +44,6 @@ pub fn convert_ir(
     xpath: &str,
 ) -> error::SpannedResult<ir::ExprS> {
     let ast = static_context.parse_xpath(xpath)?;
-    let mut converter = ir::IrConverter::new(static_context);
+    let mut converter = IrConverter::new(static_context);
     converter.convert_xpath(&ast)
 }

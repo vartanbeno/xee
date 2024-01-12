@@ -3463,6 +3463,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-ir"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "ibig",
+ "ordered-float",
+ "rust_decimal",
+ "xee-interpreter",
+ "xee-schema-type",
+ "xee-xpath-ast",
+ "xot",
+]
+
+[[package]]
 name = "xee-name"
 version = "0.1.0"
 dependencies = [
@@ -3514,6 +3528,7 @@ dependencies = [
  "test-generator",
  "thiserror",
  "xee-interpreter",
+ "xee-ir",
  "xee-schema-type",
  "xee-xpath-ast",
  "xot",

@@ -1,0 +1,16 @@
+[package]
+name = "xee-ir"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ahash = { workspace = true }
+ordered-float = "3.6.0"
+rust_decimal = "1.30.0"
+xot = { workspace = true }
+xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-schema-type = { path = "../xee-schema-type" }
+xee-interpreter = { path = "../xee-interpreter" }
+ibig = "0.3.6"

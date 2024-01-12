@@ -1,15 +1,16 @@
 [workspace]
 members = [
   "xee",
+  "xee-name",
+  "xee-schema-type",
+  "xee-xpath-type",
   "xee-interpreter",
-  "xee-qt",
+  "xee-ir",
   "xee-xpath-ast",
   "xee-xpath-macros",
-  "xee-schema-type",
-  "xee-xslt-ast",
   "xee-xpath",
-  "xee-name",
-  "xee-xpath-type",
+  "xee-xslt-ast",
+  "xee-qt",
 ]
 # even if all crates are set to edition 2021, we still need to force the
 # resolver to 2
