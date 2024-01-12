@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod ast_ir;
 mod compile;
 mod query;

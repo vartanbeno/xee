@@ -1,11 +1,9 @@
 use ahash::{HashMap, HashMapExt};
 
+use xee_interpreter::{context, error, error::Error, function, xml};
+use xee_ir::{ir, ir::AtomS};
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
-
-use xee_interpreter::{context, error, error::Error, function, xml};
-
-use xee_ir::{ir, ir::AtomS};
 
 #[derive(Debug, Clone)]
 struct Binding {
@@ -20,11 +18,7 @@ struct Bindings {
 }
 
 impl Bindings {
-    fn new() -> Self {
-        Self { bindings: vec![] }
-    }
-
-    fn from_vec(bindings: Vec<Binding>) -> Self {
+    fn new(bindings: Vec<Binding>) -> Self {
         Self { bindings }
     }
 
@@ -149,7 +143,7 @@ impl<'a> IrConverter<'a> {
             .variables
             .get(name)
             .ok_or(Error::XPST0008.with_ast_span(span))?;
-        Ok(Bindings::from_vec(vec![Binding {
+        Ok(Bindings::new(vec![Binding {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
             span,
@@ -175,7 +169,7 @@ impl<'a> IrConverter<'a> {
             match context_scope {
                 ContextItem::Names(names) => {
                     let ir_name = get_name(names);
-                    Ok(Bindings::from_vec(vec![Binding {
+                    Ok(Bindings::new(vec![Binding {
                         name: ir_name.clone(),
                         expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name), empty_span)),
                         span: empty_span,
@@ -207,6 +201,7 @@ impl<'a> IrConverter<'a> {
         Binding { name, expr, span }
     }
 
+    #[cfg(test)]
     fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> error::SpannedResult<ir::ExprS> {
         let bindings = self.expr_single(ast)?;
         Ok(bindings.expr())
@@ -253,7 +248,7 @@ impl<'a> IrConverter<'a> {
             body: Box::new(exprs_bindings.expr()),
         });
         let binding = self.new_binding(outer_function_expr, ast.0.span);
-        Ok(Bindings::from_vec(vec![binding]))
+        Ok(Bindings::new(vec![binding]))
     }
 
     fn expr_single(&mut self, ast: &ast::ExprSingleS) -> error::SpannedResult<Bindings> {
@@ -447,7 +442,7 @@ impl<'a> IrConverter<'a> {
         // create a new binding for the step
         let binding = self.new_binding(expr, span);
 
-        let bindings = Ok(Bindings::from_vec(vec![binding]));
+        let bindings = Ok(Bindings::new(vec![binding]));
 
         // now apply predicates
         ast.predicates.iter().fold(bindings, |acc, predicate| {
@@ -475,7 +470,7 @@ impl<'a> IrConverter<'a> {
         };
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
-        Ok(Bindings::from_vec(vec![binding]))
+        Ok(Bindings::new(vec![binding]))
     }
 
     fn expr(&mut self, expr: &ast::ExprS) -> error::SpannedResult<Bindings> {
@@ -516,7 +511,7 @@ impl<'a> IrConverter<'a> {
                 span,
             ));
             let binding = self.new_binding(expr, span);
-            Ok(Bindings::from_vec(vec![binding]))
+            Ok(Bindings::new(vec![binding]))
         }
     }
 
@@ -660,7 +655,7 @@ impl<'a> IrConverter<'a> {
             var_expr: Box::new(var_bindings.expr()),
             return_expr: Box::new(return_bindings.expr()),
         });
-        Ok(Bindings::from_vec(vec![self.new_binding(expr, span)]))
+        Ok(Bindings::new(vec![self.new_binding(expr, span)]))
     }
 
     fn for_expr(&mut self, ast: &ast::ForExpr, span: Span) -> error::SpannedResult<Bindings> {
@@ -734,7 +729,7 @@ impl<'a> IrConverter<'a> {
             body: Box::new(body_bindings.expr()),
         });
         let binding = self.new_binding(expr, span);
-        Ok(Bindings::from_vec(vec![binding]))
+        Ok(Bindings::new(vec![binding]))
     }
 
     fn param(&mut self, param: &ast::Param) -> ir::Param {
@@ -817,12 +812,12 @@ impl<'a> IrConverter<'a> {
         ));
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
-        Bindings::from_vec(vec![binding])
+        Bindings::new(vec![binding])
     }
 
     fn args(&mut self, args: &[ast::ExprSingleS]) -> error::SpannedResult<(Bindings, Vec<AtomS>)> {
         if args.is_empty() {
-            return Ok((Bindings::from_vec(vec![]), vec![]));
+            return Ok((Bindings::new(vec![]), vec![]));
         }
         let first = &args[0];
         let rest = &args[1..];
@@ -895,7 +890,7 @@ impl<'a> IrConverter<'a> {
     fn atom(&mut self, atom: AtomS, span: Span) -> Bindings {
         let expr = ir::Expr::Atom(atom);
         let binding = self.new_binding(expr, span);
-        Bindings::from_vec(vec![binding])
+        Bindings::new(vec![binding])
     }
 
     fn map_constructor(
@@ -944,24 +939,24 @@ impl<'a> IrConverter<'a> {
     }
 }
 
-fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
-    let ast = ast::ExprSingle::parse(s)?;
-    let static_context = context::StaticContext::default();
-    let mut converter = IrConverter::new(&static_context);
-    converter.convert_expr_single(&ast)
-}
-
-pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
-    let static_context = context::StaticContext::default();
-    let ast = static_context.parse_xpath(s)?;
-    let mut converter = IrConverter::new(&static_context);
-    converter.convert_xpath(&ast)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use insta::assert_debug_snapshot;
+
+    fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
+        let ast = ast::ExprSingle::parse(s)?;
+        let static_context = context::StaticContext::default();
+        let mut converter = IrConverter::new(&static_context);
+        converter.convert_expr_single(&ast)
+    }
+
+    pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
+        let static_context = context::StaticContext::default();
+        let ast = static_context.parse_xpath(s)?;
+        let mut converter = IrConverter::new(&static_context);
+        converter.convert_xpath(&ast)
+    }
 
     #[test]
     fn test_integer() {

@@ -1,10 +1,21 @@
 #[cfg(test)]
 mod tests {
     use insta::assert_debug_snapshot;
-    use xee_interpreter::{context, error, sequence, span::SourceSpan};
 
-    use crate::compile::convert_ir;
+    use xee_interpreter::{context, error, sequence, span::SourceSpan};
+    use xee_ir::ir;
+
+    use crate::ast_ir::IrConverter;
     use crate::evaluate_without_focus;
+
+    pub fn convert_ir(
+        static_context: &context::StaticContext,
+        xpath: &str,
+    ) -> error::SpannedResult<ir::ExprS> {
+        let ast = static_context.parse_xpath(xpath)?;
+        let mut converter = IrConverter::new(static_context);
+        converter.convert_xpath(&ast)
+    }
 
     fn span(result: error::SpannedResult<sequence::Sequence>) -> SourceSpan {
         result.err().unwrap().span

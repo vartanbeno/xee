@@ -1,13 +1,8 @@
 use xee_interpreter::{context, error, interpreter::Program};
-use xee_ir::{ir, FunctionBuilder, InterpreterCompiler, Scopes};
+use xee_ir::{FunctionBuilder, InterpreterCompiler, Scopes};
 use xee_xpath_ast::ast;
 
-// use crate::ir;
 use crate::ast_ir::IrConverter;
-
-// use super::builder::FunctionBuilder;
-// use super::ir_interpret::InterpreterCompiler;
-// use super::scope::Scopes;
 
 /// Construct a program from an XPath AST.
 pub fn compile(
@@ -37,13 +32,4 @@ pub fn parse(
 ) -> error::SpannedResult<Program> {
     let xpath = static_context.parse_xpath(xpath)?;
     compile(static_context, xpath)
-}
-
-pub fn convert_ir(
-    static_context: &context::StaticContext,
-    xpath: &str,
-) -> error::SpannedResult<ir::ExprS> {
-    let ast = static_context.parse_xpath(xpath)?;
-    let mut converter = IrConverter::new(static_context);
-    converter.convert_xpath(&ast)
 }
