@@ -1963,4 +1963,11 @@ mod tests {
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><p><another/></p></xsl:if>"#
         ));
     }
+
+    #[test]
+    fn test_sequence_constructor_nested_in_literal_element() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><p><xsl:if test="true()">foo</xsl:if></p></xsl:if>"#
+        ));
+    }
 }
