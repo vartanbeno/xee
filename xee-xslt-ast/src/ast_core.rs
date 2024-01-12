@@ -1,3 +1,4 @@
+use ahash::HashMap;
 use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
 // use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
@@ -1682,9 +1683,8 @@ pub type SequenceConstructor = Vec<SequenceConstructorItem>;
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ElementNode {
     pub name: Name,
-
-    // pub attributes: HashMap<Name, Templ<String>>,
-    // pub sequence_constructor: SequenceConstructor,
+    pub attributes: HashMap<Name, ValueTemplate<String>>,
+    pub sequence_constructor: SequenceConstructor,
     pub span: Span,
 }
 

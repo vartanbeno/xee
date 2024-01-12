@@ -7,6 +7,8 @@ Ok(ElementNode(ElementNode(
     namespace: "",
     local: "foo",
   ),
+  attributes: {},
+  sequence_constructor: [],
   span: Span(
     start: 1,
     end: 4,

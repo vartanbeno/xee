@@ -1,5 +1,6 @@
 use std::sync::OnceLock;
 
+use ahash::HashMap;
 use xot::{NameId, Node, Xot};
 
 use crate::ast_core::{self as ast};
@@ -123,8 +124,9 @@ impl InstructionParser for ast::ElementNode {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
         Ok(ast::ElementNode {
             name: to_name(&content.state.xot, attributes.element.name()),
-
+            attributes: HashMap::default(),
             span: content.span()?,
+            sequence_constructor: content.sequence_constructor()?,
         })
     }
 }
@@ -1952,6 +1954,13 @@ mod tests {
     fn test_expand_text_disabled_should_not_expand_text() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()" expand-text="yes"><xsl:if expand-text="no" test="true()">Hello {world}!</xsl:if></xsl:if>"#
+        ));
+    }
+
+    #[test]
+    fn test_nested_literal_elements() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><p><another/></p></xsl:if>"#
         ));
     }
 }
