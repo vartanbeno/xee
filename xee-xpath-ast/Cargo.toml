@@ -27,10 +27,10 @@ ahash = { workspace = true }
 chumsky = { workspace = true }
 logos = "0.13.0"
 blanket = { workspace = true }
-thiserror = "1.0.40"
 ordered-float = { workspace = true }
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
+thiserror = { workspace = true }
 xot = { workspace = true }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-name = { path = "../xee-name" }

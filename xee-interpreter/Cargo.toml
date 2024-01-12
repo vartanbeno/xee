@@ -33,16 +33,16 @@ strum_macros = { workspace = true }
 num = "0.4.1"
 num-derive = "0.4.1"
 num-traits = "0.2.17"
-ordered-float = "3.6.0"
-rust_decimal = "1.30.0"
-thiserror = "1.0.40"
+ordered-float = { workspace = true }
+rust_decimal = { workspace = true }
+ibig = { workspace = true }
+thiserror = { workspace = true }
 xot = { workspace = true }
 xee-xpath-macros = { path = "../xee-xpath-macros" }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-xpath-type = { path = "../xee-xpath-type" }
 xee-name = { path = "../xee-name" }
 lexical = { version = "6.1.1", features = ["format"] }
-ibig = "0.3.6"
 regex = "1.9.3"
 hex = "0.4.3"
 base64 = "0.21.2"

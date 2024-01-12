@@ -26,12 +26,13 @@ clap = "4.2.7"
 ibig = "0.3.6"
 ordered-float = "3.7.0"
 rust_decimal = "1.30.0"
+rust_decimal_macros = "1.29.1"
 chumsky = { git = "https://github.com/zesterer/chumsky.git" }
-#  "1.0.0-alpha.4"
 icu = "1.2.0"
 serde = "1"
 chrono = "0.4.30"
 blanket = "0.2.0"
+thiserror = "1.0.40"
 
 [profile.test.package.xot]
 opt-level = 3

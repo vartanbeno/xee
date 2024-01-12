@@ -1,7 +1,8 @@
-use ibig::IBig;
 // an Intermediate Representation in ANF - administrative normal form
 // XXX is this really ANF? Maybe it is, though it doesn't support recursion
 // (without function arguments), as XPath doesn't.
+
+use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
 

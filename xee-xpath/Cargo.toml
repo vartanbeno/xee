@@ -16,19 +16,16 @@ serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
 ahash = { workspace = true }
-ordered-float = "3.6.0"
-rust_decimal = "1.30.0"
-thiserror = "1.0.40"
+ordered-float = { workspace = true }
+rust_decimal = { workspace = true }
+ibig = { workspace = true }
+thiserror = { workspace = true }
 xot = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-interpreter = { path = "../xee-interpreter" }
 xee-ir = { path = "../xee-ir" }
-ibig = "0.3.6"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
-rstest = "0.16.0"
-test-generator = "0.3.0"
-xot = { workspace = true, features = ["proptest"] }
-rust_decimal_macros = "1.29.1"
+rust_decimal_macros = { workspace = true }

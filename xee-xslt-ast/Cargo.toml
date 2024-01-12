@@ -21,11 +21,11 @@ serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath/serde"]
 ahash = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-xpath = { path = "../xee-xpath" }
-thiserror = "1.0.40"
+thiserror = { workspace = true }
 xot = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-strum = "0.25"
-strum_macros = "0.25"
+strum = { workspace = true }
+strum_macros = { workspace = true }
 blanket = { workspace = true }
 
 [dev-dependencies]
