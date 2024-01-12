@@ -22,7 +22,7 @@ pub fn compile(
         xpath,
         functions: Vec::new(),
     };
-    let mut scopes = Scopes::new(ir::Name::new("dummy".to_string()));
+    let mut scopes = Scopes::new();
     let builder = FunctionBuilder::new(&mut program);
     let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
     compiler.compile_expr(&expr)?;
