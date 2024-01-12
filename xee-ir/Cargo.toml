@@ -2,8 +2,14 @@
 name = "xee-ir"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath", "xslt"]
+license = "Apache-2.0"
+description = "Xee intermediate representation and compilation to bytecode"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-ir"
+homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
 ahash = { workspace = true }
