@@ -2,7 +2,7 @@ use xee_interpreter::error::Result;
 use xee_interpreter::{context::DynamicContext, context::StaticContext};
 use xee_interpreter::{interpreter::Program, sequence::Item};
 
-use crate::interpreter;
+use crate::compile::parse;
 
 pub trait Convert<V>: Fn(&Session, &Item) -> Result<V> {}
 impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> Result<V> {}
@@ -50,7 +50,7 @@ impl<'s> Queries<'s> {
     }
 
     fn register(&mut self, s: &str) -> Result<usize> {
-        let program = interpreter::parse(self.static_context, s).map_err(|e| e.error)?;
+        let program = parse(self.static_context, s).map_err(|e| e.error)?;
         let id = self.queries.len();
         self.queries.push(program);
         Ok(id)
