@@ -1,4 +1,3 @@
-use xee_xpath_ast::ast;
 use xee_xpath_ast::ast::Span;
 
 use crate::context;
@@ -8,13 +7,20 @@ use super::Runnable;
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    pub xpath: ast::XPath,
+    span: Span,
     pub functions: Vec<function::InlineFunction>,
 }
 
 impl Program {
+    pub fn new(span: Span) -> Self {
+        Program {
+            span,
+            functions: Vec::new(),
+        }
+    }
+
     pub fn span(&self) -> Span {
-        self.xpath.0.span
+        self.span
     }
 
     /// Obtain a runnable version of this program, with a particular dynamic context.

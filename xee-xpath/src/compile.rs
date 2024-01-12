@@ -13,10 +13,7 @@ pub fn compile(
     let expr = ir_converter.convert_xpath(&xpath)?;
     // this expression contains a function definition, we're getting it
     // in the end
-    let mut program = Program {
-        xpath,
-        functions: Vec::new(),
-    };
+    let mut program = Program::new(xpath.0.span);
     let mut scopes = Scopes::new();
     let builder = FunctionBuilder::new(&mut program);
     let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
