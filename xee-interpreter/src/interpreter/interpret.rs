@@ -472,6 +472,14 @@ impl<'a> Interpreter<'a> {
                     let is_numeric = self.pop_is_numeric()?;
                     self.state.push(is_numeric.into());
                 }
+                EncodedInstruction::XmlName => {}
+                EncodedInstruction::Root => {}
+                EncodedInstruction::Element => {}
+                EncodedInstruction::Attribute => {}
+                EncodedInstruction::Prefix => {}
+                EncodedInstruction::Text => {}
+                EncodedInstruction::Comment => {}
+                EncodedInstruction::ProcessingInstruction => {}
                 EncodedInstruction::PrintTop => {
                     let top = self.state.top();
                     println!("{:#?}", top);

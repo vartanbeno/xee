@@ -37,6 +37,14 @@ pub(crate) enum Expr {
     Treat(Treat),
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
+    XmlName(XmlName),
+    Root(Root),
+    Element(Element),
+    Attribute(Attribute),
+    Prefix(Prefix),
+    Text(Text),
+    Comment(Comment),
+    ProcessingInstruction(ProcessingInstruction),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -221,4 +229,52 @@ pub(crate) struct MapConstructor {
 pub(crate) enum ArrayConstructor {
     Square(Vec<AtomS>),
     Curly(AtomS),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct XmlName {
+    pub(crate) local_name: AtomS,
+    pub(crate) namespace: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Root {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Element {
+    pub(crate) element: AtomS,
+    pub(crate) name: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Attribute {
+    pub(crate) element: AtomS,
+    pub(crate) name: AtomS,
+    pub(crate) value: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Prefix {
+    pub(crate) element: AtomS,
+    pub(crate) name: AtomS,
+    pub(crate) uri: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Text {
+    pub(crate) element: AtomS,
+    pub(crate) value: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Comment {
+    pub(crate) element: AtomS,
+    pub(crate) value: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ProcessingInstruction {
+    pub(crate) element: AtomS,
+    pub(crate) target: AtomS,
+    pub(crate) content: AtomS,
 }

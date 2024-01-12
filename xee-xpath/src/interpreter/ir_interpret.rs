@@ -53,6 +53,16 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::ArrayConstructor(array_constructor) => {
                 self.compile_array_constructor(array_constructor, span)
             }
+            ir::Expr::XmlName(xml_name) => self.compile_xml_name(xml_name, span),
+            ir::Expr::Root(root) => self.compile_root(root, span),
+            ir::Expr::Element(element) => self.compile_element(element, span),
+            ir::Expr::Attribute(attribute) => self.compile_attribute(attribute, span),
+            ir::Expr::Prefix(prefix) => self.compile_prefix(prefix, span),
+            ir::Expr::Text(text) => self.compile_text(text, span),
+            ir::Expr::Comment(comment) => self.compile_comment(comment, span),
+            ir::Expr::ProcessingInstruction(processing_instruction) => {
+                self.compile_processing_instruction(processing_instruction, span)
+            }
         }
     }
 
@@ -736,5 +746,86 @@ impl<'a> InterpreterCompiler<'a> {
         // pop length and index
         self.builder.emit(Instruction::Pop, span);
         self.builder.emit(Instruction::Pop, span);
+    }
+
+    fn compile_xml_name(
+        &mut self,
+        xml_name: &ir::XmlName,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&xml_name.namespace)?;
+        self.compile_atom(&xml_name.local_name)?;
+        self.builder.emit(Instruction::XmlName, span);
+        Ok(())
+    }
+
+    fn compile_root(&mut self, _root: &ir::Root, span: SourceSpan) -> error::SpannedResult<()> {
+        self.builder.emit(Instruction::Root, span);
+        Ok(())
+    }
+
+    fn compile_element(
+        &mut self,
+        element: &ir::Element,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&element.element)?;
+        self.compile_atom(&element.name)?;
+        self.builder.emit(Instruction::Element, span);
+        Ok(())
+    }
+
+    fn compile_attribute(
+        &mut self,
+        attribute: &ir::Attribute,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&attribute.element)?;
+        self.compile_atom(&attribute.name)?;
+        self.compile_atom(&attribute.value)?;
+        self.builder.emit(Instruction::Attribute, span);
+        Ok(())
+    }
+
+    fn compile_prefix(
+        &mut self,
+        prefix: &ir::Prefix,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&prefix.element)?;
+        self.compile_atom(&prefix.name)?;
+        self.compile_atom(&prefix.uri)?;
+        self.builder.emit(Instruction::Prefix, span);
+        Ok(())
+    }
+
+    fn compile_text(&mut self, text: &ir::Text, span: SourceSpan) -> error::SpannedResult<()> {
+        self.compile_atom(&text.element)?;
+        self.compile_atom(&text.value)?;
+        self.builder.emit(Instruction::Text, span);
+        Ok(())
+    }
+
+    fn compile_comment(
+        &mut self,
+        comment: &ir::Comment,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&comment.element)?;
+        self.compile_atom(&comment.value)?;
+        self.builder.emit(Instruction::Comment, span);
+        Ok(())
+    }
+
+    fn compile_processing_instruction(
+        &mut self,
+        processing_instruction: &ir::ProcessingInstruction,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&processing_instruction.element)?;
+        self.compile_atom(&processing_instruction.target)?;
+        self.compile_atom(&processing_instruction.content)?;
+        self.builder.emit(Instruction::ProcessingInstruction, span);
+        Ok(())
     }
 }
