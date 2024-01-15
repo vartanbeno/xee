@@ -31,7 +31,6 @@ pub struct State {
     build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
     pub(crate) output: Xot,
-    pub(crate) current_node: Option<xot::Node>,
 }
 
 impl State {
@@ -41,7 +40,6 @@ impl State {
             build_stack: vec![],
             frames: ArrayVec::new(),
             output: Xot::new(),
-            current_node: None,
         }
     }
 
