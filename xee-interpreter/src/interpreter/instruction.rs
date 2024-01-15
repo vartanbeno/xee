@@ -67,13 +67,13 @@ pub enum Instruction {
     BuildComplete,
     IsNumeric,
     XmlName,
-    Root,
-    Element,
-    Attribute,
-    Prefix,
-    Text,
-    Comment,
-    ProcessingInstruction,
+    XmlRoot,
+    XmlElement,
+    XmlAttribute,
+    XmlPrefix,
+    XmlText,
+    XmlComment,
+    XmlProcessingInstruction,
     PrintTop,
     PrintStack,
 }
@@ -142,13 +142,13 @@ pub(crate) enum EncodedInstruction {
     BuildComplete,
     IsNumeric,
     XmlName,
-    Root,
-    Element,
-    Attribute,
-    Prefix,
-    Text,
-    Comment,
-    ProcessingInstruction,
+    XmlRoot,
+    XmlElement,
+    XmlAttribute,
+    XmlPrefix,
+    XmlText,
+    XmlComment,
+    XmlProcessingInstruction,
     PrintTop,
     PrintStack,
 }
@@ -267,13 +267,13 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::BuildComplete => (Instruction::BuildComplete, 1),
         EncodedInstruction::IsNumeric => (Instruction::IsNumeric, 1),
         EncodedInstruction::XmlName => (Instruction::XmlName, 1),
-        EncodedInstruction::Root => (Instruction::Root, 1),
-        EncodedInstruction::Element => (Instruction::Element, 1),
-        EncodedInstruction::Attribute => (Instruction::Attribute, 1),
-        EncodedInstruction::Prefix => (Instruction::Prefix, 1),
-        EncodedInstruction::Text => (Instruction::Text, 1),
-        EncodedInstruction::Comment => (Instruction::Comment, 1),
-        EncodedInstruction::ProcessingInstruction => (Instruction::ProcessingInstruction, 1),
+        EncodedInstruction::XmlRoot => (Instruction::XmlRoot, 1),
+        EncodedInstruction::XmlElement => (Instruction::XmlElement, 1),
+        EncodedInstruction::XmlAttribute => (Instruction::XmlAttribute, 1),
+        EncodedInstruction::XmlPrefix => (Instruction::XmlPrefix, 1),
+        EncodedInstruction::XmlText => (Instruction::XmlText, 1),
+        EncodedInstruction::XmlComment => (Instruction::XmlComment, 1),
+        EncodedInstruction::XmlProcessingInstruction => (Instruction::XmlProcessingInstruction, 1),
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -408,15 +408,17 @@ pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         }
         Instruction::IsNumeric => bytes.push(EncodedInstruction::IsNumeric.to_u8().unwrap()),
         Instruction::XmlName => bytes.push(EncodedInstruction::XmlName.to_u8().unwrap()),
-        Instruction::Root => bytes.push(EncodedInstruction::Root.to_u8().unwrap()),
-        Instruction::Element => bytes.push(EncodedInstruction::Element.to_u8().unwrap()),
-        Instruction::Attribute => bytes.push(EncodedInstruction::Attribute.to_u8().unwrap()),
-        Instruction::Prefix => bytes.push(EncodedInstruction::Prefix.to_u8().unwrap()),
-        Instruction::Text => bytes.push(EncodedInstruction::Text.to_u8().unwrap()),
-        Instruction::Comment => bytes.push(EncodedInstruction::Comment.to_u8().unwrap()),
-        Instruction::ProcessingInstruction => {
-            bytes.push(EncodedInstruction::ProcessingInstruction.to_u8().unwrap())
-        }
+        Instruction::XmlRoot => bytes.push(EncodedInstruction::XmlRoot.to_u8().unwrap()),
+        Instruction::XmlElement => bytes.push(EncodedInstruction::XmlElement.to_u8().unwrap()),
+        Instruction::XmlAttribute => bytes.push(EncodedInstruction::XmlAttribute.to_u8().unwrap()),
+        Instruction::XmlPrefix => bytes.push(EncodedInstruction::XmlPrefix.to_u8().unwrap()),
+        Instruction::XmlText => bytes.push(EncodedInstruction::XmlText.to_u8().unwrap()),
+        Instruction::XmlComment => bytes.push(EncodedInstruction::XmlComment.to_u8().unwrap()),
+        Instruction::XmlProcessingInstruction => bytes.push(
+            EncodedInstruction::XmlProcessingInstruction
+                .to_u8()
+                .unwrap(),
+        ),
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }
@@ -477,13 +479,13 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Lookup
         | Instruction::WildcardLookup
         | Instruction::XmlName
-        | Instruction::Root
-        | Instruction::Element
-        | Instruction::Attribute
-        | Instruction::Prefix
-        | Instruction::Text
-        | Instruction::Comment
-        | Instruction::ProcessingInstruction
+        | Instruction::XmlRoot
+        | Instruction::XmlElement
+        | Instruction::XmlAttribute
+        | Instruction::XmlPrefix
+        | Instruction::XmlText
+        | Instruction::XmlComment
+        | Instruction::XmlProcessingInstruction
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,

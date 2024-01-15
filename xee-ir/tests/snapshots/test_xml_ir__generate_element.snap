@@ -10,7 +10,7 @@ expression: "decode_instructions(&program.functions[0].chunk)"
         1,
     ),
     XmlName,
-    Root,
+    XmlRoot,
     LetDone,
     Return,
 ]

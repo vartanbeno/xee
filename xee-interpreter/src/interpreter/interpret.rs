@@ -484,20 +484,19 @@ impl<'a> Interpreter<'a> {
                     let name = xee_name::Name::new(local_name, namespace, None);
                     self.state.push(name.into());
                 }
-                EncodedInstruction::Root => {
+                EncodedInstruction::XmlRoot => {
                     let name_id = self.pop_xot_name()?;
                     let element_node = self.state.output.new_element(name_id);
                     let root_node = self.state.output.new_root(element_node).unwrap();
                     let item = sequence::Item::Node(xml::Node::Xot(root_node));
                     self.state.push(item.into());
-                    // self.state.current_node = Some(root_node);
                 }
-                EncodedInstruction::Element => {}
-                EncodedInstruction::Attribute => {}
-                EncodedInstruction::Prefix => {}
-                EncodedInstruction::Text => {}
-                EncodedInstruction::Comment => {}
-                EncodedInstruction::ProcessingInstruction => {}
+                EncodedInstruction::XmlElement => {}
+                EncodedInstruction::XmlAttribute => {}
+                EncodedInstruction::XmlPrefix => {}
+                EncodedInstruction::XmlText => {}
+                EncodedInstruction::XmlComment => {}
+                EncodedInstruction::XmlProcessingInstruction => {}
                 EncodedInstruction::PrintTop => {
                     let top = self.state.top();
                     println!("{:#?}", top);

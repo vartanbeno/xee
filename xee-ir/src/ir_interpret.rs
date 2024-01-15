@@ -772,7 +772,7 @@ impl<'a> InterpreterCompiler<'a> {
     }
 
     fn compile_root(&mut self, _root: &ir::Root, span: SourceSpan) -> error::SpannedResult<()> {
-        self.builder.emit(Instruction::Root, span);
+        self.builder.emit(Instruction::XmlRoot, span);
         Ok(())
     }
 
@@ -783,7 +783,7 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> error::SpannedResult<()> {
         self.compile_atom(&element.element)?;
         self.compile_atom(&element.name)?;
-        self.builder.emit(Instruction::Element, span);
+        self.builder.emit(Instruction::XmlElement, span);
         Ok(())
     }
 
@@ -795,7 +795,7 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&attribute.element)?;
         self.compile_atom(&attribute.name)?;
         self.compile_atom(&attribute.value)?;
-        self.builder.emit(Instruction::Attribute, span);
+        self.builder.emit(Instruction::XmlAttribute, span);
         Ok(())
     }
 
@@ -807,14 +807,14 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&prefix.element)?;
         self.compile_atom(&prefix.name)?;
         self.compile_atom(&prefix.uri)?;
-        self.builder.emit(Instruction::Prefix, span);
+        self.builder.emit(Instruction::XmlPrefix, span);
         Ok(())
     }
 
     fn compile_text(&mut self, text: &ir::Text, span: SourceSpan) -> error::SpannedResult<()> {
         self.compile_atom(&text.element)?;
         self.compile_atom(&text.value)?;
-        self.builder.emit(Instruction::Text, span);
+        self.builder.emit(Instruction::XmlText, span);
         Ok(())
     }
 
@@ -825,7 +825,7 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> error::SpannedResult<()> {
         self.compile_atom(&comment.element)?;
         self.compile_atom(&comment.value)?;
-        self.builder.emit(Instruction::Comment, span);
+        self.builder.emit(Instruction::XmlComment, span);
         Ok(())
     }
 
@@ -837,7 +837,8 @@ impl<'a> InterpreterCompiler<'a> {
         self.compile_atom(&processing_instruction.element)?;
         self.compile_atom(&processing_instruction.target)?;
         self.compile_atom(&processing_instruction.content)?;
-        self.builder.emit(Instruction::ProcessingInstruction, span);
+        self.builder
+            .emit(Instruction::XmlProcessingInstruction, span);
         Ok(())
     }
 }
