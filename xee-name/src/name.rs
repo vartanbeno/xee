@@ -76,14 +76,17 @@ impl Name {
         self.namespace.is_some() && self.prefix.is_none()
     }
 
+    #[inline]
     pub fn prefix(&self) -> Option<&str> {
         self.prefix.as_deref()
     }
 
+    #[inline]
     pub fn namespace(&self) -> Option<&str> {
         self.namespace.as_deref()
     }
 
+    #[inline]
     pub fn local_name(&self) -> &str {
         &self.name
     }

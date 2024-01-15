@@ -55,10 +55,12 @@ impl<'a> Namespaces<'a> {
         }
     }
 
+    #[inline]
     pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).copied()
     }
 
+    #[inline]
     pub fn default_element_namespace(&self) -> Option<&str> {
         self.default_element_namespace
     }
