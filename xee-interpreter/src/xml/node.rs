@@ -17,6 +17,7 @@ pub enum Node {
 }
 
 impl Node {
+    #[inline]
     pub(crate) fn parent(&self, xot: &Xot) -> Option<Node> {
         match self {
             Node::Xot(node) => xot.parent(*node).map(Self::Xot),
@@ -25,6 +26,7 @@ impl Node {
         }
     }
 
+    #[inline]
     pub(crate) fn is_element(&self, xot: &Xot) -> bool {
         match self {
             Node::Xot(node) => xot.is_element(*node),
@@ -33,6 +35,7 @@ impl Node {
         }
     }
 
+    #[inline]
     pub fn xot_node(&self) -> xot::Node {
         match self {
             Node::Xot(node) => *node,

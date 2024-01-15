@@ -185,4 +185,8 @@ impl State {
     pub fn stack(&self) -> &[stack::Value] {
         &self.stack
     }
+
+    pub fn output(self) -> Xot {
+        self.output
+    }
 }

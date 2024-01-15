@@ -38,8 +38,8 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub fn state(&self) -> &State {
-        &self.state
+    pub fn state(self) -> State {
+        self.state
     }
 
     pub(crate) fn runnable(&self) -> &Runnable {
@@ -472,8 +472,8 @@ impl<'a> Interpreter<'a> {
                     self.state.push(is_numeric.into());
                 }
                 EncodedInstruction::XmlName => {
-                    let namespace_value = self.pop_atomic()?;
                     let local_name_value = self.pop_atomic()?;
+                    let namespace_value = self.pop_atomic()?;
                     let namespace_str: &str = namespace_value.to_str()?;
                     let namespace = if !namespace_str.is_empty() {
                         Some(namespace_str.to_string())
@@ -488,7 +488,9 @@ impl<'a> Interpreter<'a> {
                     let name_id = self.pop_xot_name()?;
                     let element_node = self.state.output.new_element(name_id);
                     let root_node = self.state.output.new_root(element_node).unwrap();
-                    self.state.current_node = Some(root_node);
+                    let item = sequence::Item::Node(xml::Node::Xot(root_node));
+                    self.state.push(item.into());
+                    // self.state.current_node = Some(root_node);
                 }
                 EncodedInstruction::Element => {}
                 EncodedInstruction::Attribute => {}
@@ -921,8 +923,10 @@ impl<'a> Interpreter<'a> {
         let name: xee_name::Name = value.try_into()?;
         if let Some(namespace) = name.namespace() {
             let ns = self.state.output.add_namespace(namespace);
+            println!("name {}, namespace {}", name.local_name(), namespace);
             Ok(self.state.output.add_name_ns(name.local_name(), ns))
         } else {
+            println!("no namespace");
             Ok(self.state.output.add_name(name.local_name()))
         }
     }

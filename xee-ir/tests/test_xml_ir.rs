@@ -4,7 +4,7 @@ use xee_interpreter::context::{DynamicContext, StaticContext};
 use xee_interpreter::interpreter::{instruction::decode_instructions, Program};
 use xee_interpreter::occurrence::Occurrence;
 use xee_ir::{ir, FunctionBuilder, InterpreterCompiler, Scopes};
-use xee_xpath_ast::{span::Spanned, Namespaces};
+use xee_xpath_ast::span::Spanned;
 
 fn spanned<T>(t: T) -> Spanned<T> {
     Spanned::new(t, (0..0).into())
@@ -21,7 +21,6 @@ fn test_generate_element() {
     };
 
     let root_name = ir::Name::new("root".to_string());
-    // let element_name = ir::Name::new("element".to_string());
 
     // create a root element of that name
     // create an element with that name in root
@@ -59,22 +58,27 @@ fn test_generate_element() {
     assert_debug_snapshot!(decode_instructions(&program.functions[0].chunk));
 
     // we now should run the generated code
-    // let static_context = StaticContext::default();
-    // let xot = xot::Xot::new();
-    // let context = DynamicContext::empty(&xot, &static_context);
+    let static_context = StaticContext::default();
+    let xot = xot::Xot::new();
+    let context = DynamicContext::empty(&xot, &static_context);
 
-    // let runnable = program.runnable(&context);
-    // let sequence = runnable.many(None).unwrap();
+    let runnable = program.runnable(&context);
+    let o = runnable.many_output(None).unwrap();
+    let output = o.output;
+    let sequence = o.sequence;
     // we should have the new root on the stack now
-    // assert_eq!(
-    //     sequence
-    //         .items()
-    //         .one()
-    //         .unwrap()
-    //         .to_node()
-    //         .unwrap()
-    //         .to_string(),
-    //     "<root><foo/></root>"
-    // );
-    // now we should see stuff in output
+    assert_eq!(
+        output
+            .to_string(
+                sequence
+                    .items()
+                    .one()
+                    .unwrap()
+                    .to_node()
+                    .unwrap()
+                    .xot_node()
+            )
+            .unwrap(),
+        "<foo/>"
+    );
 }

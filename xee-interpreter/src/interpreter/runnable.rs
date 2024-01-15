@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use xee_name::Name;
+use xot::Xot;
 
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
@@ -26,6 +27,16 @@ pub struct Runnable<'a> {
     pub(crate) dynamic_context: &'a DynamicContext<'a>,
 }
 
+struct RunValue {
+    output: Xot,
+    value: stack::Value,
+}
+
+pub struct SequenceOutput {
+    pub output: Xot,
+    pub sequence: sequence::Sequence,
+}
+
 impl<'a> Runnable<'a> {
     pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext<'a>) -> Self {
         Self {
@@ -36,10 +47,7 @@ impl<'a> Runnable<'a> {
         }
     }
 
-    pub(crate) fn run_value(
-        &self,
-        context_item: Option<&sequence::Item>,
-    ) -> error::SpannedResult<stack::Value> {
+    fn run_value(&self, context_item: Option<&sequence::Item>) -> error::SpannedResult<RunValue> {
         let mut interpreter = Interpreter::new(self);
         // TODO: the arguments aren't supplied to the function that are expected.
         // This should result in an error, preferrably the variable that is missing
@@ -48,24 +56,47 @@ impl<'a> Runnable<'a> {
         let arguments = self.dynamic_context.arguments().unwrap();
         interpreter.start(context_item, arguments);
         interpreter.run(0)?;
+
+        let state = interpreter.state();
         // the stack has to be 1 values and return the result of the expression
         // why 1 value if the context item is on the top of the stack? This is because
         // the outer main function will pop the context item; this code is there to
         // remove the function id from the stack but the main function has no function id
         assert_eq!(
-            interpreter.state().stack().len(),
+            state.stack().len(),
             1,
             "stack must only have 1 value but found {:?}",
-            interpreter.state().stack()
+            state.stack()
         );
-        let value = interpreter.state().stack().last().unwrap().clone();
+        let value = state.stack().last().unwrap().clone();
+        let output = state.output();
         match value {
             stack::Value::Absent => Err(SpannedError {
                 error: error::Error::XPDY0002,
                 span: self.program.span().into(),
             }),
-            _ => Ok(value),
+            _ => Ok(RunValue { output, value }),
         }
+    }
+
+    /// Run the program against a sequence item.
+    pub fn many(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Sequence> {
+        let value = self.run_value(item)?;
+        Ok(value.value.into())
+    }
+
+    /// Run the program against a sequence item.
+    ///
+    /// Also deliver output Xot.
+    pub fn many_output(
+        &self,
+        item: Option<&sequence::Item>,
+    ) -> error::SpannedResult<SequenceOutput> {
+        let value = self.run_value(item)?;
+        Ok(SequenceOutput {
+            output: value.output,
+            sequence: value.value.into(),
+        })
     }
 
     /// Run the program against a xot Node.
@@ -73,12 +104,6 @@ impl<'a> Runnable<'a> {
         let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
         self.many(Some(&item))
-    }
-
-    /// Run the program against a sequence item.
-    pub fn many(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Sequence> {
-        let value = self.run_value(item)?;
-        Ok(value.into())
     }
 
     /// Run the program, expect a single item as the result.
