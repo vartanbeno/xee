@@ -39,13 +39,13 @@ pub enum Expr {
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
     XmlName(XmlName),
-    Root(Root),
-    Element(Element),
-    Attribute(Attribute),
-    Prefix(Prefix),
-    Text(Text),
-    Comment(Comment),
-    ProcessingInstruction(ProcessingInstruction),
+    Root(XmlRoot),
+    Element(XmlElement),
+    Attribute(XmlAttribute),
+    Prefix(XmlPrefix),
+    Text(XmlText),
+    Comment(XmlComment),
+    ProcessingInstruction(XmlProcessingInstruction),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -239,44 +239,43 @@ pub struct XmlName {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Root {
-    pub name: AtomS,
-}
+pub struct XmlRoot {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Element {
+pub struct XmlElement {
+    // element or root to which to add the new element
     pub element: AtomS,
     pub name: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Attribute {
+pub struct XmlAttribute {
     pub element: AtomS,
     pub name: AtomS,
     pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Prefix {
+pub struct XmlPrefix {
     pub element: AtomS,
     pub name: AtomS,
     pub uri: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Text {
+pub struct XmlText {
     pub element: AtomS,
     pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Comment {
+pub struct XmlComment {
     pub element: AtomS,
     pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProcessingInstruction {
+pub struct XmlProcessingInstruction {
     pub element: AtomS,
     pub target: AtomS,
     pub content: AtomS,

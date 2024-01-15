@@ -485,13 +485,18 @@ impl<'a> Interpreter<'a> {
                     self.state.push(name.into());
                 }
                 EncodedInstruction::XmlRoot => {
-                    let name_id = self.pop_xot_name()?;
-                    let element_node = self.state.output.new_element(name_id);
-                    let root_node = self.state.output.new_root(element_node).unwrap();
+                    let root_node = self.state.output.new_root_unconnected();
                     let item = sequence::Item::Node(xml::Node::Xot(root_node));
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlElement => {}
+                EncodedInstruction::XmlElement => {
+                    let name_id = self.pop_xot_name()?;
+                    let parent_node = self.pop_node()?.xot_node();
+                    let element_node = self.state.output.new_element(name_id);
+                    self.state.output.append(parent_node, element_node).unwrap();
+                    let item = sequence::Item::Node(xml::Node::Xot(element_node));
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlAttribute => {}
                 EncodedInstruction::XmlPrefix => {}
                 EncodedInstruction::XmlText => {}
@@ -928,6 +933,12 @@ impl<'a> Interpreter<'a> {
             println!("no namespace");
             Ok(self.state.output.add_name(name.local_name()))
         }
+    }
+
+    fn pop_node(&mut self) -> error::Result<xml::Node> {
+        let value = self.state.pop();
+        let node = value.items().one()?.to_node()?;
+        Ok(node)
     }
 
     fn pop_atomic2(&mut self) -> error::Result<(atomic::Atomic, atomic::Atomic)> {

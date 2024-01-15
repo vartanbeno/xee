@@ -12,7 +12,7 @@ fn spanned<T>(t: T) -> Spanned<T> {
 
 #[test]
 fn test_generate_element() {
-    // first come up with the element name
+    // we create an element name from consts
     let local_name = ir::Atom::Const(ir::Const::String("foo".to_string()));
     let namespace = ir::Atom::Const(ir::Const::String("".to_string()));
     let name = ir::XmlName {
@@ -21,25 +21,49 @@ fn test_generate_element() {
     };
 
     let root_name = ir::Name::new("root".to_string());
+    let element_name = ir::Name::new("element".to_string());
 
-    // create a root element of that name
-    // create an element with that name in root
-    let element_expr = ir::Expr::Root(ir::Root {
-        name: spanned(ir::Atom::Variable(root_name.clone())),
+    // create a root element
+    let root_expr = ir::Expr::Root(ir::XmlRoot {});
+
+    // create an element of element_name into the root
+    let element_expr = ir::Expr::Element(ir::XmlElement {
+        element: spanned(ir::Atom::Variable(root_name.clone())),
+        name: spanned(ir::Atom::Variable(element_name.clone())),
     });
 
-    // we need to make sure the name exists
-    let let_name = ir::Expr::Let(ir::Let {
-        name: root_name,
+    // we need to make sure the element name exists within scope of element_expr
+    let let_element_name = ir::Expr::Let(ir::Let {
+        name: element_name,
         var_expr: Box::new(spanned(ir::Expr::XmlName(name))),
         return_expr: Box::new(spanned(element_expr)),
     });
 
+    // we need to make sure root name exists within the scope of let_element_name
+    let let_root = ir::Expr::Let(ir::Let {
+        name: root_name,
+        var_expr: Box::new(spanned(root_expr)),
+        return_expr: Box::new(spanned(let_element_name)),
+    });
+
     // wrap all of this into a function definition
     let function_definition = ir::FunctionDefinition {
-        params: vec![],
+        params: vec![
+            ir::Param {
+                name: ir::Name::new("item".to_string()),
+                type_: None,
+            },
+            ir::Param {
+                name: ir::Name::new("position".to_string()),
+                type_: None,
+            },
+            ir::Param {
+                name: ir::Name::new("last".to_string()),
+                type_: None,
+            },
+        ],
         return_type: None,
-        body: Box::new(spanned(let_name)),
+        body: Box::new(spanned(let_root)),
     };
 
     let outer_expr = spanned(ir::Expr::FunctionDefinition(function_definition));
@@ -66,7 +90,7 @@ fn test_generate_element() {
     let o = runnable.many_output(None).unwrap();
     let output = o.output;
     let sequence = o.sequence;
-    // we should have the new root on the stack now
+    // we should have the newly created element on top of the stack
     assert_eq!(
         output
             .to_string(

@@ -66,14 +66,14 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_array_constructor(array_constructor, span)
             }
             ir::Expr::XmlName(xml_name) => self.compile_xml_name(xml_name, span),
-            ir::Expr::Root(root) => self.compile_root(root, span),
-            ir::Expr::Element(element) => self.compile_element(element, span),
-            ir::Expr::Attribute(attribute) => self.compile_attribute(attribute, span),
-            ir::Expr::Prefix(prefix) => self.compile_prefix(prefix, span),
-            ir::Expr::Text(text) => self.compile_text(text, span),
-            ir::Expr::Comment(comment) => self.compile_comment(comment, span),
+            ir::Expr::Root(root) => self.compile_xml_root(root, span),
+            ir::Expr::Element(element) => self.compile_xml_element(element, span),
+            ir::Expr::Attribute(attribute) => self.compile_xml_attribute(attribute, span),
+            ir::Expr::Prefix(prefix) => self.compile_xml_prefix(prefix, span),
+            ir::Expr::Text(text) => self.compile_xml_text(text, span),
+            ir::Expr::Comment(comment) => self.compile_xml_comment(comment, span),
             ir::Expr::ProcessingInstruction(processing_instruction) => {
-                self.compile_processing_instruction(processing_instruction, span)
+                self.compile_xml_processing_instruction(processing_instruction, span)
             }
         }
     }
@@ -771,14 +771,18 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_root(&mut self, _root: &ir::Root, span: SourceSpan) -> error::SpannedResult<()> {
+    fn compile_xml_root(
+        &mut self,
+        _root: &ir::XmlRoot,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.builder.emit(Instruction::XmlRoot, span);
         Ok(())
     }
 
-    fn compile_element(
+    fn compile_xml_element(
         &mut self,
-        element: &ir::Element,
+        element: &ir::XmlElement,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&element.element)?;
@@ -787,9 +791,9 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_attribute(
+    fn compile_xml_attribute(
         &mut self,
-        attribute: &ir::Attribute,
+        attribute: &ir::XmlAttribute,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&attribute.element)?;
@@ -799,9 +803,9 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_prefix(
+    fn compile_xml_prefix(
         &mut self,
-        prefix: &ir::Prefix,
+        prefix: &ir::XmlPrefix,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&prefix.element)?;
@@ -811,16 +815,20 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_text(&mut self, text: &ir::Text, span: SourceSpan) -> error::SpannedResult<()> {
+    fn compile_xml_text(
+        &mut self,
+        text: &ir::XmlText,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
         self.compile_atom(&text.element)?;
         self.compile_atom(&text.value)?;
         self.builder.emit(Instruction::XmlText, span);
         Ok(())
     }
 
-    fn compile_comment(
+    fn compile_xml_comment(
         &mut self,
-        comment: &ir::Comment,
+        comment: &ir::XmlComment,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&comment.element)?;
@@ -829,9 +837,9 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_processing_instruction(
+    fn compile_xml_processing_instruction(
         &mut self,
-        processing_instruction: &ir::ProcessingInstruction,
+        processing_instruction: &ir::XmlProcessingInstruction,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&processing_instruction.element)?;
