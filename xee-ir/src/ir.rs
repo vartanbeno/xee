@@ -239,7 +239,9 @@ pub struct XmlName {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Root {}
+pub struct Root {
+    pub name: AtomS,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {

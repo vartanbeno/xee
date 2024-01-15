@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use arrayvec::ArrayVec;
+use xot::Xot;
 
 use crate::error;
 use crate::function;
@@ -25,11 +26,12 @@ impl Frame {
     }
 }
 
-#[derive(Debug, Clone)]
 pub struct State {
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
+    pub(crate) output: Xot,
+    pub(crate) current_node: Option<xot::Node>,
 }
 
 impl State {
@@ -38,6 +40,8 @@ impl State {
             stack: vec![],
             build_stack: vec![],
             frames: ArrayVec::new(),
+            output: Xot::new(),
+            current_node: None,
         }
     }
 

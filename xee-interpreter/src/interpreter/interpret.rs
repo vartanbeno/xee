@@ -25,7 +25,6 @@ use super::state::State;
 
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
-#[derive(Debug, Clone)]
 pub struct Interpreter<'a> {
     runnable: &'a Runnable<'a>,
     state: State,
@@ -472,8 +471,25 @@ impl<'a> Interpreter<'a> {
                     let is_numeric = self.pop_is_numeric()?;
                     self.state.push(is_numeric.into());
                 }
-                EncodedInstruction::XmlName => {}
-                EncodedInstruction::Root => {}
+                EncodedInstruction::XmlName => {
+                    let namespace_value = self.pop_atomic()?;
+                    let local_name_value = self.pop_atomic()?;
+                    let namespace_str: &str = namespace_value.to_str()?;
+                    let namespace = if !namespace_str.is_empty() {
+                        Some(namespace_str.to_string())
+                    } else {
+                        None
+                    };
+                    let local_name = local_name_value.to_string()?;
+                    let name = xee_name::Name::new(local_name, namespace, None);
+                    self.state.push(name.into());
+                }
+                EncodedInstruction::Root => {
+                    let name_id = self.pop_xot_name()?;
+                    let element_node = self.state.output.new_element(name_id);
+                    let root_node = self.state.output.new_root(element_node).unwrap();
+                    self.state.current_node = Some(root_node);
+                }
                 EncodedInstruction::Element => {}
                 EncodedInstruction::Attribute => {}
                 EncodedInstruction::Prefix => {}
@@ -898,6 +914,17 @@ impl<'a> Interpreter<'a> {
         let value = self.state.pop();
         let mut atomized = value.atomized(self.runnable.xot());
         atomized.option()
+    }
+
+    fn pop_xot_name(&mut self) -> error::Result<xot::NameId> {
+        let value = self.pop_atomic()?;
+        let name: xee_name::Name = value.try_into()?;
+        if let Some(namespace) = name.namespace() {
+            let ns = self.state.output.add_namespace(namespace);
+            Ok(self.state.output.add_name_ns(name.local_name(), ns))
+        } else {
+            Ok(self.state.output.add_name(name.local_name()))
+        }
     }
 
     fn pop_atomic2(&mut self) -> error::Result<(atomic::Atomic, atomic::Atomic)> {

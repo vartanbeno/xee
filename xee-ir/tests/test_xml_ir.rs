@@ -1,7 +1,10 @@
 use insta::assert_debug_snapshot;
+
+use xee_interpreter::context::{DynamicContext, StaticContext};
 use xee_interpreter::interpreter::{instruction::decode_instructions, Program};
+use xee_interpreter::occurrence::Occurrence;
 use xee_ir::{ir, FunctionBuilder, InterpreterCompiler, Scopes};
-use xee_xpath_ast::span::Spanned;
+use xee_xpath_ast::{span::Spanned, Namespaces};
 
 fn spanned<T>(t: T) -> Spanned<T> {
     Spanned::new(t, (0..0).into())
@@ -18,35 +21,26 @@ fn test_generate_element() {
     };
 
     let root_name = ir::Name::new("root".to_string());
-    let element_name = ir::Name::new("element".to_string());
+    // let element_name = ir::Name::new("element".to_string());
 
+    // create a root element of that name
     // create an element with that name in root
-    let element_expr = ir::Expr::Element(ir::Element {
-        element: spanned(ir::Atom::Variable(root_name.clone())),
-        name: spanned(ir::Atom::Variable(element_name.clone())),
+    let element_expr = ir::Expr::Root(ir::Root {
+        name: spanned(ir::Atom::Variable(root_name.clone())),
     });
 
     // we need to make sure the name exists
-    let let_name = ir::Let {
-        name: element_name,
-        var_expr: Box::new(spanned(ir::Expr::XmlName(name))),
-        return_expr: Box::new(Spanned::new(element_expr, (0..0).into())),
-    };
-
-    // we also need to make sure the root exists
-    let root_expr = ir::Expr::Root(ir::Root {});
-
-    let let_root = ir::Let {
+    let let_name = ir::Expr::Let(ir::Let {
         name: root_name,
-        var_expr: Box::new(spanned(root_expr)),
-        return_expr: Box::new(spanned(ir::Expr::Let(let_name))),
-    };
-    let expr = spanned(ir::Expr::Let(let_root));
+        var_expr: Box::new(spanned(ir::Expr::XmlName(name))),
+        return_expr: Box::new(spanned(element_expr)),
+    });
+
     // wrap all of this into a function definition
     let function_definition = ir::FunctionDefinition {
         params: vec![],
         return_type: None,
-        body: Box::new(expr),
+        body: Box::new(spanned(let_name)),
     };
 
     let outer_expr = spanned(ir::Expr::FunctionDefinition(function_definition));
@@ -62,5 +56,25 @@ fn test_generate_element() {
 
     compiler.compile_expr(&outer_expr).unwrap();
 
-    assert_debug_snapshot!(decode_instructions(&program.functions[0].chunk))
+    assert_debug_snapshot!(decode_instructions(&program.functions[0].chunk));
+
+    // we now should run the generated code
+    // let static_context = StaticContext::default();
+    // let xot = xot::Xot::new();
+    // let context = DynamicContext::empty(&xot, &static_context);
+
+    // let runnable = program.runnable(&context);
+    // let sequence = runnable.many(None).unwrap();
+    // we should have the new root on the stack now
+    // assert_eq!(
+    //     sequence
+    //         .items()
+    //         .one()
+    //         .unwrap()
+    //         .to_node()
+    //         .unwrap()
+    //         .to_string(),
+    //     "<root><foo/></root>"
+    // );
+    // now we should see stuff in output
 }
