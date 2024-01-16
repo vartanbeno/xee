@@ -1,88 +1,9 @@
 use ahash::{HashMap, HashMapExt};
 
 use xee_interpreter::{context, error, error::Error, function, xml};
-use xee_ir::{ir, ir::AtomS};
+use xee_ir::{ir, ir::AtomS, Binding, Bindings};
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
-
-/// A binding consists of a unique variable name and an expression.
-#[derive(Debug, Clone)]
-struct Binding {
-    name: ir::Name,
-    expr: ir::Expr,
-    span: Span,
-}
-
-#[derive(Debug, Clone)]
-struct Bindings {
-    bindings: Vec<Binding>,
-}
-
-impl Bindings {
-    fn new(binding: Binding) -> Self {
-        Self {
-            bindings: vec![binding],
-        }
-    }
-
-    fn empty() -> Self {
-        Self {
-            bindings: Vec::new(),
-        }
-    }
-
-    /// Create an atom
-    /// Takes the last added binding
-    /// If it's already an atom, return it, and pops it from the bindings.
-    /// If it's not atom, create a variable based on its name and
-    /// return that as an atom.
-    fn atom(&mut self) -> ir::AtomS {
-        let last = self.bindings.last().unwrap();
-        let (want_pop, atom) = match &last.expr {
-            ir::Expr::Atom(atom) => (true, atom.clone()),
-            _ => (
-                false,
-                Spanned::new(ir::Atom::Variable(last.name.clone()), last.span),
-            ),
-        };
-        if want_pop {
-            self.bindings.pop();
-        }
-        atom
-    }
-
-    /// Given bindings, return a let expression.
-    /// This takes all the bindings and wraps it in a let expression.
-    fn expr(&self) -> ir::ExprS {
-        let last_binding = self.bindings.last().unwrap();
-        let bindings = &self.bindings[..self.bindings.len() - 1];
-        let expr = last_binding.expr.clone();
-        Spanned::new(
-            bindings.iter().rev().fold(expr, |expr, binding| {
-                ir::Expr::Let(ir::Let {
-                    name: binding.name.clone(),
-                    var_expr: Box::new(Spanned::new(binding.expr.clone(), binding.span)),
-                    return_expr: Box::new(Spanned::new(expr, last_binding.span)),
-                })
-            }),
-            last_binding.span,
-        )
-    }
-
-    /// Create a new Bindings by adding the existing binding to it
-    fn bind(&self, binding: Binding) -> Self {
-        let mut bindings = self.clone();
-        bindings.bindings.push(binding);
-        bindings
-    }
-
-    /// Concatenate one bindings object with another, creating a new one.
-    fn concat(&self, bindings: Bindings) -> Self {
-        let mut result = self.clone();
-        result.bindings.extend(bindings.bindings);
-        result
-    }
-}
 
 #[derive(Debug)]
 enum ContextItem {
@@ -161,11 +82,11 @@ impl<'a> IrConverter<'a> {
             .variables
             .get(name)
             .ok_or(Error::XPST0008.with_ast_span(span))?;
-        Ok(Bindings::new(Binding {
-            name: ir_name.clone(),
-            expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
+        Ok(Bindings::new(Binding::new(
+            ir_name.clone(),
+            ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
             span,
-        }))
+        )))
     }
 
     fn current_context_names(&self) -> Option<ir::ContextNames> {
@@ -187,11 +108,11 @@ impl<'a> IrConverter<'a> {
             match context_scope {
                 ContextItem::Names(names) => {
                     let ir_name = get_name(names);
-                    Ok(Bindings::new(Binding {
-                        name: ir_name.clone(),
-                        expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name), empty_span)),
-                        span: empty_span,
-                    }))
+                    Ok(Bindings::new(Binding::new(
+                        ir_name.clone(),
+                        ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name), empty_span)),
+                        empty_span,
+                    )))
                 }
                 // we can detect statically that the context is absent if it's in
                 // a function definition
@@ -216,7 +137,7 @@ impl<'a> IrConverter<'a> {
 
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
         let name = self.new_name();
-        Binding { name, expr, span }
+        Binding::new(name, expr, span)
     }
 
     #[cfg(test)]
@@ -388,11 +309,11 @@ impl<'a> IrConverter<'a> {
         // make up an internal name for the loop variable
         let name = self.new_name();
         // access the loop variable
-        let mut bindings = bindings.bind(Binding {
-            name: name.clone(),
-            expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(name.clone()), span)),
+        let mut bindings = bindings.bind(Binding::new(
+            name.clone(),
+            ir::Expr::Atom(Spanned::new(ir::Atom::Variable(name.clone()), span)),
             span,
-        });
+        ));
 
         let atom = bindings.atom();
 
