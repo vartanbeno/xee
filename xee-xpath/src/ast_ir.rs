@@ -5,6 +5,7 @@ use xee_ir::{ir, ir::AtomS};
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
 
+/// A binding consists of a unique variable name and an expression.
 #[derive(Debug, Clone)]
 struct Binding {
     name: ir::Name,
@@ -22,6 +23,11 @@ impl Bindings {
         Self { bindings }
     }
 
+    /// Create an atom
+    /// Takes the last added binding
+    /// If it's already an atom, return it, and pops it from the bindings.
+    /// If it's not atom, create a variable based on its name and
+    /// return that as an atom.
     fn atom(&mut self) -> ir::AtomS {
         let last = self.bindings.last().unwrap();
         let (want_pop, atom) = match &last.expr {
@@ -37,6 +43,8 @@ impl Bindings {
         atom
     }
 
+    /// Given bindings, return a let expression.
+    /// This takes all the bindings and wraps it in a let expression.
     fn expr(&self) -> ir::ExprS {
         let last_binding = self.bindings.last().unwrap();
         let bindings = &self.bindings[..self.bindings.len() - 1];
@@ -53,12 +61,14 @@ impl Bindings {
         )
     }
 
+    /// Create a new Bindings by adding the existing binding to it
     fn bind(&self, binding: Binding) -> Self {
         let mut bindings = self.clone();
         bindings.bindings.push(binding);
         bindings
     }
 
+    /// Concatenate one bindings object with another, creating a new one.
     fn concat(&self, bindings: Bindings) -> Self {
         let mut result = self.clone();
         result.bindings.extend(bindings.bindings);
