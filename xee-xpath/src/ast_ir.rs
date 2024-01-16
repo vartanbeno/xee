@@ -19,8 +19,16 @@ struct Bindings {
 }
 
 impl Bindings {
-    fn new(bindings: Vec<Binding>) -> Self {
-        Self { bindings }
+    fn new(binding: Binding) -> Self {
+        Self {
+            bindings: vec![binding],
+        }
+    }
+
+    fn empty() -> Self {
+        Self {
+            bindings: Vec::new(),
+        }
     }
 
     /// Create an atom
@@ -153,11 +161,11 @@ impl<'a> IrConverter<'a> {
             .variables
             .get(name)
             .ok_or(Error::XPST0008.with_ast_span(span))?;
-        Ok(Bindings::new(vec![Binding {
+        Ok(Bindings::new(Binding {
             name: ir_name.clone(),
             expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name.clone()), span)),
             span,
-        }]))
+        }))
     }
 
     fn current_context_names(&self) -> Option<ir::ContextNames> {
@@ -179,11 +187,11 @@ impl<'a> IrConverter<'a> {
             match context_scope {
                 ContextItem::Names(names) => {
                     let ir_name = get_name(names);
-                    Ok(Bindings::new(vec![Binding {
+                    Ok(Bindings::new(Binding {
                         name: ir_name.clone(),
                         expr: ir::Expr::Atom(Spanned::new(ir::Atom::Variable(ir_name), empty_span)),
                         span: empty_span,
-                    }]))
+                    }))
                 }
                 // we can detect statically that the context is absent if it's in
                 // a function definition
@@ -258,7 +266,7 @@ impl<'a> IrConverter<'a> {
             body: Box::new(exprs_bindings.expr()),
         });
         let binding = self.new_binding(outer_function_expr, ast.0.span);
-        Ok(Bindings::new(vec![binding]))
+        Ok(Bindings::new(binding))
     }
 
     fn expr_single(&mut self, ast: &ast::ExprSingleS) -> error::SpannedResult<Bindings> {
@@ -452,7 +460,7 @@ impl<'a> IrConverter<'a> {
         // create a new binding for the step
         let binding = self.new_binding(expr, span);
 
-        let bindings = Ok(Bindings::new(vec![binding]));
+        let bindings = Ok(Bindings::new(binding));
 
         // now apply predicates
         ast.predicates.iter().fold(bindings, |acc, predicate| {
@@ -480,7 +488,7 @@ impl<'a> IrConverter<'a> {
         };
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
-        Ok(Bindings::new(vec![binding]))
+        Ok(Bindings::new(binding))
     }
 
     fn expr(&mut self, expr: &ast::ExprS) -> error::SpannedResult<Bindings> {
@@ -521,7 +529,7 @@ impl<'a> IrConverter<'a> {
                 span,
             ));
             let binding = self.new_binding(expr, span);
-            Ok(Bindings::new(vec![binding]))
+            Ok(Bindings::new(binding))
         }
     }
 
@@ -665,7 +673,7 @@ impl<'a> IrConverter<'a> {
             var_expr: Box::new(var_bindings.expr()),
             return_expr: Box::new(return_bindings.expr()),
         });
-        Ok(Bindings::new(vec![self.new_binding(expr, span)]))
+        Ok(Bindings::new(self.new_binding(expr, span)))
     }
 
     fn for_expr(&mut self, ast: &ast::ForExpr, span: Span) -> error::SpannedResult<Bindings> {
@@ -739,7 +747,7 @@ impl<'a> IrConverter<'a> {
             body: Box::new(body_bindings.expr()),
         });
         let binding = self.new_binding(expr, span);
-        Ok(Bindings::new(vec![binding]))
+        Ok(Bindings::new(binding))
     }
 
     fn param(&mut self, param: &ast::Param) -> ir::Param {
@@ -822,12 +830,12 @@ impl<'a> IrConverter<'a> {
         ));
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
-        Bindings::new(vec![binding])
+        Bindings::new(binding)
     }
 
     fn args(&mut self, args: &[ast::ExprSingleS]) -> error::SpannedResult<(Bindings, Vec<AtomS>)> {
         if args.is_empty() {
-            return Ok((Bindings::new(vec![]), vec![]));
+            return Ok((Bindings::empty(), vec![]));
         }
         let first = &args[0];
         let rest = &args[1..];
@@ -900,7 +908,7 @@ impl<'a> IrConverter<'a> {
     fn atom(&mut self, atom: AtomS, span: Span) -> Bindings {
         let expr = ir::Expr::Atom(atom);
         let binding = self.new_binding(expr, span);
-        Bindings::new(vec![binding])
+        Bindings::new(binding)
     }
 
     fn map_constructor(
