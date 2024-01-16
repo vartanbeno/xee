@@ -3578,6 +3578,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xslt"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "ibig",
+ "insta",
+ "ordered-float",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "thiserror",
+ "xee-interpreter",
+ "xee-ir",
+ "xee-schema-type",
+ "xee-xslt-ast",
+ "xot",
+]
+
+[[package]]
 name = "xee-xslt-ast"
 version = "0.1.0"
 dependencies = [
