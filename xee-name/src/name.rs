@@ -103,6 +103,15 @@ impl Name {
         }
     }
 
+    pub fn add_name_id(&self, xot: &mut Xot) -> xot::NameId {
+        if let Some(namespace) = &self.namespace {
+            let ns = xot.add_namespace(namespace);
+            xot.add_name_ns(&self.name, ns)
+        } else {
+            xot.add_name(&self.name)
+        }
+    }
+
     pub fn to_name_id(&self, xot: &Xot) -> Option<xot::NameId> {
         if let Some(namespace) = &self.namespace {
             let namespace_id = xot.namespace(namespace);

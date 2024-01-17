@@ -1,5 +1,7 @@
 use crate::ast;
 
+pub use crate::ast::{NameTest, NodeTest};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Pattern {
@@ -90,7 +92,7 @@ pub enum Argument {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum StepExpr {
-    PostfixExprP(PostfixExpr),
+    PostfixExpr(PostfixExpr),
     AxisStep(AxisStep),
 }
 

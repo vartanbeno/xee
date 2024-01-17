@@ -160,7 +160,7 @@ where
 
         let step_expr = postfix_expr
             .map(|(expr, predicates)| {
-                pattern::StepExpr::PostfixExprP(pattern::PostfixExpr { expr, predicates })
+                pattern::StepExpr::PostfixExpr(pattern::PostfixExpr { expr, predicates })
             })
             .or(axis_step.map(|((axis, node_test), predicates)| {
                 pattern::StepExpr::AxisStep(pattern::AxisStep {

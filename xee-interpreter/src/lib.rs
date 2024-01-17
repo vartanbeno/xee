@@ -10,6 +10,7 @@ pub mod function;
 pub mod interpreter;
 mod library;
 pub mod occurrence;
+pub mod pattern;
 pub mod sequence;
 pub mod span;
 pub mod stack;
