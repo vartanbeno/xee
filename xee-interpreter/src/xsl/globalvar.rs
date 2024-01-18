@@ -36,10 +36,12 @@ impl GlobalVariables {
         if seen.contains(name) {
             return None;
         }
-        let mut new_seen = seen.clone();
-        new_seen.insert(name.to_string());
+        let name_seen = name.to_string();
+
         resolve(Rc::new(move |name: &str| {
-            self.clone().get_internal(name, new_seen.clone())
+            let mut new_seen = seen.clone();
+            new_seen.insert(name_seen.clone());
+            self.clone().get_internal(name, new_seen)
         }))
     }
 }
@@ -51,7 +53,7 @@ mod tests {
     #[test]
     fn test_single_global_variable() {
         // first declare a few global variables
-        let mut global_variables = Box::new(GlobalVariables::new());
+        let mut global_variables = GlobalVariables::new();
         global_variables.add_declaration("foo");
         global_variables.add_declaration("bar");
 
@@ -60,7 +62,7 @@ mod tests {
         global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
 
         // now we can resolve foo and bar
-        let global_variables = Rc::new(*global_variables);
+        let global_variables = Rc::new(global_variables);
         assert_eq!(global_variables.clone().get("foo"), Some(3));
         assert_eq!(global_variables.get("bar"), Some(2));
     }
@@ -68,7 +70,7 @@ mod tests {
     #[test]
     fn test_circular() {
         // first declare a few global variables
-        let mut global_variables = Box::new(GlobalVariables::new());
+        let mut global_variables = GlobalVariables::new();
         global_variables.add_declaration("foo");
         global_variables.add_declaration("bar");
 
@@ -77,7 +79,7 @@ mod tests {
         global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
 
         // now we can resolve foo but resolution fails as there is a circular dependency
-        let global_variables = Rc::new(*global_variables);
+        let global_variables = Rc::new(global_variables);
         assert_eq!(global_variables.clone().get("foo"), None);
     }
 }
