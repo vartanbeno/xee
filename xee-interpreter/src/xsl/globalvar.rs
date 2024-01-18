@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
+struct Error {}
 type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Option<u64>>) -> Option<u64>;
 
 struct GlobalVariables {
@@ -26,9 +27,20 @@ impl GlobalVariables {
     }
 
     fn get(self: Rc<Self>, name: &str) -> Option<u64> {
+        self.get_internal(name, HashSet::new())
+    }
+
+    fn get_internal(self: Rc<Self>, name: &str, seen: HashSet<String>) -> Option<u64> {
         let s = self.clone();
         let resolve = s.resolvers.get(name)?;
-        resolve(Rc::new(move |name: &str| self.clone().get(name)))
+        if seen.contains(name) {
+            return None;
+        }
+        let mut new_seen = seen.clone();
+        new_seen.insert(name.to_string());
+        resolve(Rc::new(move |name: &str| {
+            self.clone().get_internal(name, new_seen.clone())
+        }))
     }
 }
 
@@ -51,5 +63,22 @@ mod tests {
         let global_variables = Rc::new(*global_variables);
         assert_eq!(global_variables.clone().get("foo"), Some(3));
         assert_eq!(global_variables.get("bar"), Some(2));
+    }
+
+    #[test]
+    fn test_circular() {
+        // first declare a few global variables
+        let mut global_variables = Box::new(GlobalVariables::new());
+        global_variables.add_declaration("foo");
+        global_variables.add_declaration("bar");
+
+        // now something that uses the global variables
+        global_variables.add_resolver("bar", Rc::new(|resolve| resolve("foo")));
+        global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
+
+        // now we can resolve foo and bar
+        let global_variables = Rc::new(*global_variables);
+        assert_eq!(global_variables.clone().get("foo"), None);
+        // assert_eq!(global_variables.get("bar"), Some(2));
     }
 }
