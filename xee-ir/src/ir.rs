@@ -21,6 +21,7 @@ pub enum Expr {
     Atom(AtomS),
     Let(Let),
     If(If),
+    Match,
     Binary(Binary),
     Unary(Unary),
     FunctionDefinition(FunctionDefinition),

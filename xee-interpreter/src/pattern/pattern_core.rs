@@ -5,21 +5,22 @@ use xee_xpath_ast::pattern;
 
 use crate::{sequence::Item, xml};
 
-struct PatternLookup<V> {
-    by_name: HashMap<xot::NameId, V>,
+#[derive(Debug, Default)]
+pub struct PatternLookup<V> {
+    by_name: HashMap<xee_name::Name, V>,
 }
 
 impl<V> PatternLookup<V> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             by_name: HashMap::new(),
         }
     }
 
-    fn add(&mut self, pattern: &pattern::Pattern, value: V, xot: &mut Xot) {
+    pub fn add(&mut self, pattern: &pattern::Pattern, value: V) {
         match pattern {
             pattern::Pattern::Expr(expr_pattern) => {
-                self.add_expr_pattern(expr_pattern, value, xot);
+                self.add_expr_pattern(expr_pattern, value);
             }
             pattern::Pattern::Predicate(_predicate_pattern) => {
                 todo!()
@@ -27,10 +28,10 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_expr_pattern(&mut self, expr_pattern: &pattern::ExprPattern, value: V, xot: &mut Xot) {
+    fn add_expr_pattern(&mut self, expr_pattern: &pattern::ExprPattern, value: V) {
         match expr_pattern {
             pattern::ExprPattern::Path(path_expr) => {
-                self.add_path_expr(path_expr, value, xot);
+                self.add_path_expr(path_expr, value);
             }
             pattern::ExprPattern::BinaryExpr(_binary_expr) => {
                 todo!();
@@ -38,7 +39,7 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_path_expr(&mut self, path_expr: &pattern::PathExpr, value: V, xot: &mut Xot) {
+    fn add_path_expr(&mut self, path_expr: &pattern::PathExpr, value: V) {
         match &path_expr.root {
             pattern::PathRoot::Rooted {
                 root: _,
@@ -53,19 +54,19 @@ impl<V> PatternLookup<V> {
                 todo!();
             }
             pattern::PathRoot::Relative => {
-                self.add_relative_steps(&path_expr.steps, value, xot);
+                self.add_relative_steps(&path_expr.steps, value);
             }
         }
     }
 
-    fn add_relative_steps(&mut self, steps: &[pattern::StepExpr], value: V, xot: &mut Xot) {
+    fn add_relative_steps(&mut self, steps: &[pattern::StepExpr], value: V) {
         if steps.len() != 1 {
             todo!();
         }
         let step = &steps[0];
         match step {
             pattern::StepExpr::AxisStep(axis_step) => {
-                self.add_single_axis_step(axis_step, value, xot);
+                self.add_single_axis_step(axis_step, value);
             }
             pattern::StepExpr::PostfixExpr(_postfix_expr) => {
                 todo!()
@@ -73,7 +74,7 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_single_axis_step(&mut self, step: &pattern::AxisStep, value: V, xot: &mut Xot) {
+    fn add_single_axis_step(&mut self, step: &pattern::AxisStep, value: V) {
         if step.forward != pattern::ForwardAxis::Child {
             todo!();
         }
@@ -83,9 +84,7 @@ impl<V> PatternLookup<V> {
         match &step.node_test {
             pattern::NodeTest::NameTest(name_test) => match name_test {
                 pattern::NameTest::Name(name) => {
-                    let name = &name.value;
-                    let name = name.add_name_id(xot);
-                    self.by_name.insert(name, value);
+                    self.by_name.insert(name.value.clone(), value);
                 }
                 _ => {
                     todo!();
@@ -97,12 +96,13 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn lookup(&self, item: Item, xot: &Xot) -> Option<&V> {
+    pub(crate) fn lookup(&self, item: Item, xot: &Xot) -> Option<&V> {
         match item {
             Item::Node(node) => match node {
                 xml::Node::Xot(node) => {
                     if let Some(element) = xot.element(node) {
-                        self.by_name.get(&element.name())
+                        self.by_name
+                            .get(&xee_name::Name::from_xot(element.name(), xot))
                     } else {
                         None
                     }
@@ -139,7 +139,7 @@ mod tests {
         let namespaces = Namespaces::default();
         let variable_names = VariableNames::default();
         let pattern = pattern::Pattern::parse("foo", &namespaces, &variable_names).unwrap();
-        lookup.add(&pattern, 1, &mut xot);
+        lookup.add(&pattern, 1);
         let found = lookup.lookup(item, &xot).unwrap();
         assert_eq!(*found, 1);
     }

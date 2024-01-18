@@ -16,5 +16,6 @@ pub mod span;
 pub mod stack;
 pub mod string;
 pub mod xml;
+pub mod xsl;
 
 pub use xee_name::{Name, Namespaces, VariableNames};

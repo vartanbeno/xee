@@ -5,7 +5,7 @@ use crate::function;
 
 use super::Runnable;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Program {
     span: Span,
     pub functions: Vec<function::InlineFunction>,

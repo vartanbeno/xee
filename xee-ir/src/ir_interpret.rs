@@ -52,6 +52,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Step(step) => self.compile_step(step, span),
             ir::Expr::Deduplicate(expr) => self.compile_deduplicate(expr, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
+            ir::Expr::Match => self.compile_match(span),
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
@@ -168,6 +169,12 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(jump_else);
         self.compile_expr(&if_.else_)?;
         self.builder.patch_jump(jump_end);
+        Ok(())
+    }
+
+
+    fn compile_match(&mut self, span: SourceSpan) -> error::SpannedResult<()> {
+        todo!();
         Ok(())
     }
 
@@ -308,11 +315,11 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_function_definition(
+    fn compile_function_id(
         &mut self,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
-    ) -> error::SpannedResult<()> {
+    ) -> error::SpannedResult<function::InlineFunctionId> {
         let nested_builder = self.builder.builder();
         self.scopes.push_scope();
 
@@ -341,7 +348,15 @@ impl<'a> InterpreterCompiler<'a> {
         for name in function.closure_names.iter().rev() {
             self.compile_variable(name, span)?;
         }
-        let function_id = self.builder.add_function(function);
+        Ok(self.builder.add_function(function))
+    }
+
+    fn compile_function_definition(
+        &mut self,
+        function_definition: &ir::FunctionDefinition,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        let function_id = self.compile_function_id(function_definition, span)?;
         self.builder
             .emit(Instruction::Closure(function_id.as_u16()), span);
         Ok(())

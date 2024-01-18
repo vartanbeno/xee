@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-mod ast_core;
+pub mod ast_core;
 mod attributes;
 mod combinator;
 mod content;
@@ -17,3 +17,5 @@ mod tokenize;
 mod value_template;
 mod visitor;
 mod whitespace;
+
+pub use ast_core as ast;
