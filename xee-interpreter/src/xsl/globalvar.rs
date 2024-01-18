@@ -76,9 +76,8 @@ mod tests {
         global_variables.add_resolver("bar", Rc::new(|resolve| resolve("foo")));
         global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
 
-        // now we can resolve foo and bar
+        // now we can resolve foo but resolution fails as there is a circular dependency
         let global_variables = Rc::new(*global_variables);
         assert_eq!(global_variables.clone().get("foo"), None);
-        // assert_eq!(global_variables.get("bar"), Some(2));
     }
 }
