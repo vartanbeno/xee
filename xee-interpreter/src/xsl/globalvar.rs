@@ -2,15 +2,11 @@ use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
-trait Resolver {
-    fn resolve(self: Rc<Self>, name: &str) -> Option<u64>;
-}
-
-// type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Option<u64>>) -> Option<u64>;
+type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Option<u64>>) -> Option<u64>;
 
 struct GlobalVariables {
     declarations: HashSet<String>,
-    resolvers: HashMap<String, Rc<dyn Fn(Rc<dyn Resolver>) -> Option<u64>>>,
+    resolvers: HashMap<String, Rc<Resolver>>,
 }
 
 impl GlobalVariables {
@@ -25,19 +21,14 @@ impl GlobalVariables {
         self.declarations.insert(name.to_string());
     }
 
-    fn add_resolver(&mut self, name: &str, resolver: Rc<dyn Fn(Rc<dyn Resolver>) -> Option<u64>>) {
+    fn add_resolver(&mut self, name: &str, resolver: Rc<Resolver>) {
         self.resolvers.insert(name.to_string(), resolver);
     }
 
     fn get(self: Rc<Self>, name: &str) -> Option<u64> {
-        let resolve = self.resolvers.get(name)?;
-        resolve(self.clone())
-    }
-}
-
-impl Resolver for GlobalVariables {
-    fn resolve(self: Rc<Self>, name: &str) -> Option<u64> {
-        self.get(name)
+        let s = self.clone();
+        let resolve = s.resolvers.get(name)?;
+        resolve(Rc::new(move |name: &str| self.clone().get(name)))
     }
 }
 
@@ -54,10 +45,7 @@ mod tests {
 
         // now something that uses the global variables
         global_variables.add_resolver("bar", Rc::new(|_| Some(2)));
-        global_variables.add_resolver(
-            "foo",
-            Rc::new(|resolver| Some(resolver.resolve("bar")? + 1)),
-        );
+        global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
 
         // now we can resolve foo and bar
         let global_variables = Rc::new(*global_variables);
