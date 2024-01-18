@@ -34,6 +34,20 @@ impl Name {
         }
     }
 
+    pub fn from_xot(name: xot::NameId, xot: &Xot) -> Self {
+        let (name, namespace) = xot.name_ns_str(name);
+        let namespace = if !namespace.is_empty() {
+            Some(namespace.to_string())
+        } else {
+            None
+        };
+        Name {
+            name: name.to_string(),
+            namespace,
+            prefix: None,
+        }
+    }
+
     pub fn prefixed(prefix: &str, name: &str, namespaces: impl NamespaceLookup) -> Option<Self> {
         let namespace = namespaces.by_prefix(prefix)?;
         Some(Name {
