@@ -4,14 +4,14 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::error::{Error, Result};
 
-type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Result<u64>>) -> Result<u64>;
+type Resolver<V> = dyn Fn(Rc<dyn Fn(&str) -> Result<V>>) -> Result<V>;
 
-struct GlobalVariables {
+struct GlobalVariables<V: 'static> {
     declarations: HashSet<String>,
-    resolvers: HashMap<String, Rc<Resolver>>,
+    resolvers: HashMap<String, Rc<Resolver<V>>>,
 }
 
-impl GlobalVariables {
+impl<V: 'static> GlobalVariables<V> {
     fn new() -> Self {
         Self {
             declarations: HashSet::new(),
@@ -23,15 +23,15 @@ impl GlobalVariables {
         self.declarations.insert(name.to_string());
     }
 
-    fn add_resolver(&mut self, name: &str, resolver: Rc<Resolver>) {
+    fn add_resolver(&mut self, name: &str, resolver: Rc<Resolver<V>>) {
         self.resolvers.insert(name.to_string(), resolver);
     }
 
-    fn get(self: &Rc<Self>, name: &str) -> Result<u64> {
+    fn get(self: &Rc<Self>, name: &str) -> Result<V> {
         self.get_internal(name, HashSet::new())
     }
 
-    fn get_internal(self: &Rc<Self>, name: &str, seen: HashSet<String>) -> Result<u64> {
+    fn get_internal(self: &Rc<Self>, name: &str, seen: HashSet<String>) -> Result<V> {
         let resolve = self.resolvers.get(name).unwrap();
         if seen.contains(name) {
             return Err(Error::XTDE0640);
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_single_global_variable() {
         // first declare a few global variables
-        let mut global_variables = GlobalVariables::new();
+        let mut global_variables = GlobalVariables::<u64>::new();
         global_variables.add_declaration("foo");
         global_variables.add_declaration("bar");
 
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn test_circular() {
         // first declare a few global variables
-        let mut global_variables = GlobalVariables::new();
+        let mut global_variables = GlobalVariables::<u64>::new();
         global_variables.add_declaration("foo");
         global_variables.add_declaration("bar");
 
