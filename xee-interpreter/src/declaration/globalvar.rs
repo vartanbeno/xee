@@ -8,9 +8,9 @@ use crate::error::{Error, Result};
 type Resolver<'a, V> = dyn Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a;
 
 struct GlobalVariables<'a, V: Clone + 'a> {
-    declarations: HashSet<Name>,
-    resolvers: HashMap<Name, Box<Resolver<'a, V>>>,
-    resolved: RefCell<HashMap<Name, V>>,
+    declarations: HashSet<&'a Name>,
+    resolvers: HashMap<&'a Name, Box<Resolver<'a, V>>>,
+    resolved: RefCell<HashMap<&'a Name, V>>,
 }
 
 impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
@@ -22,15 +22,15 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
         }
     }
 
-    fn add_declaration(&mut self, name: &Name) {
-        self.declarations.insert(name.clone());
+    fn add_declaration(&mut self, name: &'a Name) {
+        self.declarations.insert(name);
     }
 
-    fn add_resolver<F>(&mut self, name: &Name, resolver: F)
+    fn add_resolver<F>(&mut self, name: &'a Name, resolver: F)
     where
         F: Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a,
     {
-        self.resolvers.insert(name.clone(), Box::new(resolver));
+        self.resolvers.insert(name, Box::new(resolver));
     }
 
     fn get(self: &Rc<Self>, name: &'a Name) -> Result<V> {
@@ -40,17 +40,17 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
     fn get_resolve(
         self: &Rc<Self>,
         name_seen: &'a Name,
-        seen: HashSet<Name>,
+        seen: HashSet<&'a Name>,
     ) -> Box<dyn Fn(&'a Name) -> Result<V> + 'a> {
         let s = self.clone();
         Box::new(move |name: &'a Name| {
             let mut new_seen = seen.clone();
-            new_seen.insert(name_seen.clone());
+            new_seen.insert(name_seen);
             s.get_internal(name, new_seen)
         })
     }
 
-    fn get_internal(self: &Rc<Self>, name: &'a Name, seen: HashSet<Name>) -> Result<V> {
+    fn get_internal(self: &Rc<Self>, name: &'a Name, seen: HashSet<&'a Name>) -> Result<V> {
         if let Some(value) = self.resolved.borrow().get(name) {
             return Ok(value.clone());
         }
@@ -62,7 +62,7 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
         let value = resolve(self.get_resolve(name, seen))?;
 
         let mut resolved = self.resolved.borrow_mut();
-        resolved.insert(name.clone(), value.clone());
+        resolved.insert(name, value.clone());
         Ok(value)
     }
 }
