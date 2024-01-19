@@ -1,15 +1,16 @@
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use std::{cell::RefCell, rc::Rc};
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use xee_name::Name;
 
 use crate::error::{Error, Result};
 
-type Resolver<'a, V> = dyn Fn(Box<dyn Fn(&'a str) -> Result<V> + 'a>) -> Result<V> + 'a;
+type Resolver<'a, V> = dyn Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a;
 
 struct GlobalVariables<'a, V: Clone + 'a> {
-    declarations: HashSet<String>,
-    resolvers: HashMap<String, Box<Resolver<'a, V>>>,
-    resolved: RefCell<HashMap<String, V>>,
+    declarations: HashSet<Name>,
+    resolvers: HashMap<Name, Box<Resolver<'a, V>>>,
+    resolved: RefCell<HashMap<Name, V>>,
 }
 
 impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
@@ -21,35 +22,35 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
         }
     }
 
-    fn add_declaration(&mut self, name: &str) {
-        self.declarations.insert(name.to_string());
+    fn add_declaration(&mut self, name: &Name) {
+        self.declarations.insert(name.clone());
     }
 
-    fn add_resolver<F>(&mut self, name: &str, resolver: F)
+    fn add_resolver<F>(&mut self, name: &Name, resolver: F)
     where
-        F: Fn(Box<dyn Fn(&'a str) -> Result<V> + 'a>) -> Result<V> + 'a,
+        F: Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a,
     {
-        self.resolvers.insert(name.to_string(), Box::new(resolver));
+        self.resolvers.insert(name.clone(), Box::new(resolver));
     }
 
-    fn get(self: &Rc<Self>, name: &'a str) -> Result<V> {
+    fn get(self: &Rc<Self>, name: &'a Name) -> Result<V> {
         self.get_internal(name, HashSet::new())
     }
 
     fn get_resolve(
         self: &Rc<Self>,
-        name_seen: &'a str,
-        seen: HashSet<String>,
-    ) -> Box<dyn Fn(&'a str) -> Result<V> + 'a> {
+        name_seen: &'a Name,
+        seen: HashSet<Name>,
+    ) -> Box<dyn Fn(&'a Name) -> Result<V> + 'a> {
         let s = self.clone();
-        Box::new(move |name: &'a str| {
+        Box::new(move |name: &'a Name| {
             let mut new_seen = seen.clone();
-            new_seen.insert(name_seen.to_string());
+            new_seen.insert(name_seen.clone());
             s.get_internal(name, new_seen)
         })
     }
 
-    fn get_internal(self: &Rc<Self>, name: &'a str, seen: HashSet<String>) -> Result<V> {
+    fn get_internal(self: &Rc<Self>, name: &'a Name, seen: HashSet<Name>) -> Result<V> {
         if let Some(value) = self.resolved.borrow().get(name) {
             return Ok(value.clone());
         }
@@ -61,7 +62,7 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
         let value = resolve(self.get_resolve(name, seen))?;
 
         let mut resolved = self.resolved.borrow_mut();
-        resolved.insert(name.to_string(), value.clone());
+        resolved.insert(name.clone(), value.clone());
         Ok(value)
     }
 }
@@ -73,43 +74,49 @@ mod tests {
 
     #[test]
     fn test_single_global_variable() {
+        let foo = Name::from("foo");
+        let bar = Name::from("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
-        global_variables.add_declaration("foo");
-        global_variables.add_declaration("bar");
+        global_variables.add_declaration(&foo);
+        global_variables.add_declaration(&bar);
 
         // now something that uses the global variables
-        global_variables.add_resolver("bar", |_| Ok(2));
-        global_variables.add_resolver("foo", |resolve| Ok(resolve("bar")? + 1));
+        global_variables.add_resolver(&bar, |_| Ok(2));
+        global_variables.add_resolver(&foo, |resolve| Ok(resolve(&bar)? + 1));
 
         // now we can resolve foo and bar
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.get("foo"), Ok(3));
-        assert_eq!(global_variables.get("bar"), Ok(2));
+        assert_eq!(global_variables.get(&foo), Ok(3));
+        assert_eq!(global_variables.get(&bar), Ok(2));
     }
 
     #[test]
     fn test_circular() {
+        let foo = Name::from("foo");
+        let bar = Name::from("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
-        global_variables.add_declaration("foo");
-        global_variables.add_declaration("bar");
+        global_variables.add_declaration(&foo);
+        global_variables.add_declaration(&bar);
 
         // now something that uses the global variables
-        global_variables.add_resolver("bar", |resolve| resolve("foo"));
-        global_variables.add_resolver("foo", |resolve| Ok(resolve("bar")? + 1));
+        global_variables.add_resolver(&bar, |resolve| resolve(&foo));
+        global_variables.add_resolver(&foo, |resolve| Ok(resolve(&bar)? + 1));
 
         // now we can resolve foo but resolution fails as there is a circular dependency
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.get("foo"), Err(Error::XTDE0640));
+        assert_eq!(global_variables.get(&foo), Err(Error::XTDE0640));
     }
 
     #[test]
     fn test_cache() {
+        let foo = Name::from("foo");
+        let bar = Name::from("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
-        global_variables.add_declaration("foo");
-        global_variables.add_declaration("bar");
+        global_variables.add_declaration(&foo);
+        global_variables.add_declaration(&bar);
 
         struct Counter {
             count: RefCell<usize>,
@@ -127,15 +134,15 @@ mod tests {
             count: RefCell::new(0),
         });
         let current_counter = counter.clone();
-        global_variables.add_resolver("foo", move |_resolve| {
+        global_variables.add_resolver(&foo, move |_resolve| {
             current_counter.plus();
             Ok(1)
         });
 
         // now we can resolve foo and if we resolve it twice, the resolver is only called once
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.get("foo"), Ok(1));
-        assert_eq!(global_variables.get("foo"), Ok(1));
+        assert_eq!(global_variables.get(&foo), Ok(1));
+        assert_eq!(global_variables.get(&foo), Ok(1));
         assert_eq!(counter.get(), 1);
     }
 }
