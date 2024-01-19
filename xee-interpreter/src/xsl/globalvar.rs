@@ -3,6 +3,7 @@ use std::rc::Rc;
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 struct Error {}
+
 type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Option<u64>>) -> Option<u64>;
 
 struct GlobalVariables {
@@ -26,22 +27,22 @@ impl GlobalVariables {
         self.resolvers.insert(name.to_string(), resolver);
     }
 
-    fn get(self: Rc<Self>, name: &str) -> Option<u64> {
+    fn get(self: &Rc<Self>, name: &str) -> Option<u64> {
         self.get_internal(name, HashSet::new())
     }
 
-    fn get_internal(self: Rc<Self>, name: &str, seen: HashSet<String>) -> Option<u64> {
-        let s = self.clone();
-        let resolve = s.resolvers.get(name)?;
+    fn get_internal(self: &Rc<Self>, name: &str, seen: HashSet<String>) -> Option<u64> {
+        let resolve = self.resolvers.get(name)?;
         if seen.contains(name) {
             return None;
         }
-        let name_seen = name.to_string();
 
+        let s = self.clone();
+        let name_seen = name.to_string();
         resolve(Rc::new(move |name: &str| {
             let mut new_seen = seen.clone();
             new_seen.insert(name_seen.clone());
-            self.clone().get_internal(name, new_seen)
+            s.get_internal(name, new_seen)
         }))
     }
 }
@@ -63,7 +64,7 @@ mod tests {
 
         // now we can resolve foo and bar
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.clone().get("foo"), Some(3));
+        assert_eq!(global_variables.get("foo"), Some(3));
         assert_eq!(global_variables.get("bar"), Some(2));
     }
 
@@ -80,6 +81,6 @@ mod tests {
 
         // now we can resolve foo but resolution fails as there is a circular dependency
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.clone().get("foo"), None);
+        assert_eq!(global_variables.get("foo"), None);
     }
 }

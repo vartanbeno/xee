@@ -521,6 +521,14 @@ pub enum Error {
     ///
     /// This XPath feature is not supported by Xee.
     Unsupported,
+
+    /// Duplicate global variable name.
+    ///
+    /// It is a static error if a package contains more than one non-hidden
+    /// binding of a global variable with the same name and same import
+    /// precedence, unless it also contains another binding with the same name
+    /// and higher import precedence.
+    XTSE0630,
 }
 
 impl Error {
