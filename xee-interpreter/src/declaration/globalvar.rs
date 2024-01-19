@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
-struct Error {}
+use crate::error::{Error, Result};
 
-type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Option<u64>>) -> Option<u64>;
+type Resolver = dyn Fn(Rc<dyn Fn(&str) -> Result<u64>>) -> Result<u64>;
 
 struct GlobalVariables {
     declarations: HashSet<String>,
@@ -27,14 +27,14 @@ impl GlobalVariables {
         self.resolvers.insert(name.to_string(), resolver);
     }
 
-    fn get(self: &Rc<Self>, name: &str) -> Option<u64> {
+    fn get(self: &Rc<Self>, name: &str) -> Result<u64> {
         self.get_internal(name, HashSet::new())
     }
 
-    fn get_internal(self: &Rc<Self>, name: &str, seen: HashSet<String>) -> Option<u64> {
-        let resolve = self.resolvers.get(name)?;
+    fn get_internal(self: &Rc<Self>, name: &str, seen: HashSet<String>) -> Result<u64> {
+        let resolve = self.resolvers.get(name).unwrap();
         if seen.contains(name) {
-            return None;
+            return Err(Error::XTDE0640);
         }
 
         let s = self.clone();
@@ -59,13 +59,13 @@ mod tests {
         global_variables.add_declaration("bar");
 
         // now something that uses the global variables
-        global_variables.add_resolver("bar", Rc::new(|_| Some(2)));
-        global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
+        global_variables.add_resolver("bar", Rc::new(|_| Ok(2)));
+        global_variables.add_resolver("foo", Rc::new(|resolve| Ok(resolve("bar")? + 1)));
 
         // now we can resolve foo and bar
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.get("foo"), Some(3));
-        assert_eq!(global_variables.get("bar"), Some(2));
+        assert_eq!(global_variables.get("foo"), Ok(3));
+        assert_eq!(global_variables.get("bar"), Ok(2));
     }
 
     #[test]
@@ -77,10 +77,10 @@ mod tests {
 
         // now something that uses the global variables
         global_variables.add_resolver("bar", Rc::new(|resolve| resolve("foo")));
-        global_variables.add_resolver("foo", Rc::new(|resolve| Some(resolve("bar")? + 1)));
+        global_variables.add_resolver("foo", Rc::new(|resolve| Ok(resolve("bar")? + 1)));
 
         // now we can resolve foo but resolution fails as there is a circular dependency
         let global_variables = Rc::new(global_variables);
-        assert_eq!(global_variables.get("foo"), None);
+        assert_eq!(global_variables.get("foo"), Err(Error::XTDE0640));
     }
 }

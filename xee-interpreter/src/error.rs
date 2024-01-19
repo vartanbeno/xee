@@ -529,6 +529,10 @@ pub enum Error {
     /// precedence, unless it also contains another binding with the same name
     /// and higher import precedence.
     XTSE0630,
+    /// Circularity
+    ///
+    /// Circularity in global declarations is now allowed.
+    XTDE0640,
 }
 
 impl Error {
