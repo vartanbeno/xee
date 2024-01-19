@@ -4,11 +4,11 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::error::{Error, Result};
 
-type Resolver<V> = dyn Fn(Rc<dyn Fn(&str) -> Result<V>>) -> Result<V>;
+type Resolver<V> = dyn Fn(Box<dyn Fn(&str) -> Result<V>>) -> Result<V>;
 
 struct GlobalVariables<V: Clone + 'static> {
     declarations: HashSet<String>,
-    resolvers: HashMap<String, Rc<Resolver<V>>>,
+    resolvers: HashMap<String, Box<Resolver<V>>>,
     resolved: RefCell<HashMap<String, V>>,
 }
 
@@ -25,7 +25,7 @@ impl<V: Clone + 'static> GlobalVariables<V> {
         self.declarations.insert(name.to_string());
     }
 
-    fn add_resolver(&mut self, name: &str, resolver: Rc<Resolver<V>>) {
+    fn add_resolver(&mut self, name: &str, resolver: Box<Resolver<V>>) {
         self.resolvers.insert(name.to_string(), resolver);
     }
 
@@ -44,7 +44,7 @@ impl<V: Clone + 'static> GlobalVariables<V> {
 
         let s = self.clone();
         let name_seen = name.to_string();
-        let value = resolve(Rc::new(move |name: &str| {
+        let value = resolve(Box::new(move |name: &str| {
             let mut new_seen = seen.clone();
             new_seen.insert(name_seen.clone());
             s.get_internal(name, new_seen)
@@ -68,8 +68,8 @@ mod tests {
         global_variables.add_declaration("bar");
 
         // now something that uses the global variables
-        global_variables.add_resolver("bar", Rc::new(|_| Ok(2)));
-        global_variables.add_resolver("foo", Rc::new(|resolve| Ok(resolve("bar")? + 1)));
+        global_variables.add_resolver("bar", Box::new(|_| Ok(2)));
+        global_variables.add_resolver("foo", Box::new(|resolve| Ok(resolve("bar")? + 1)));
 
         // now we can resolve foo and bar
         let global_variables = Rc::new(global_variables);
@@ -85,8 +85,8 @@ mod tests {
         global_variables.add_declaration("bar");
 
         // now something that uses the global variables
-        global_variables.add_resolver("bar", Rc::new(|resolve| resolve("foo")));
-        global_variables.add_resolver("foo", Rc::new(|resolve| Ok(resolve("bar")? + 1)));
+        global_variables.add_resolver("bar", Box::new(|resolve| resolve("foo")));
+        global_variables.add_resolver("foo", Box::new(|resolve| Ok(resolve("bar")? + 1)));
 
         // now we can resolve foo but resolution fails as there is a circular dependency
         let global_variables = Rc::new(global_variables);
@@ -118,7 +118,7 @@ mod tests {
         let current_counter = counter.clone();
         global_variables.add_resolver(
             "foo",
-            Rc::new(move |_resolve| {
+            Box::new(move |_resolve| {
                 current_counter.plus();
                 Ok(1)
             }),
