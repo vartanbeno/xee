@@ -5,6 +5,7 @@ extern crate num_derive;
 
 pub mod atomic;
 pub mod context;
+pub mod declaration;
 pub mod error;
 pub mod function;
 pub mod interpreter;
@@ -16,6 +17,5 @@ pub mod span;
 pub mod stack;
 pub mod string;
 pub mod xml;
-pub mod xsl;
 
 pub use xee_name::{Name, Namespaces, VariableNames};
