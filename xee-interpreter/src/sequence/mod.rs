@@ -1,3 +1,8 @@
+/// A sequence is a list of items, where each item is either a atomic value,
+/// a node or a function. XPath is defined around sequences.
+///
+/// A sequence is a wrapper around a stack value, implemented by the
+/// stack module.
 mod item;
 mod matching;
 mod sequence_core;

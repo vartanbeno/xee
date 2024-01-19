@@ -1,3 +1,5 @@
+/// XPath can be extended with both static functions as well as user defined
+/// functions.
 mod array;
 mod function_core;
 mod inline_function;

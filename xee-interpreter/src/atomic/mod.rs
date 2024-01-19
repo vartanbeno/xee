@@ -1,3 +1,7 @@
+/// Atomic values.
+///
+/// XPath defines a host of Atomic values, and rules for how to do arithmetic
+/// on them, compare them, and cast them to other value types.
 mod atomic_core;
 mod cast;
 mod cast_binary;

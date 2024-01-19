@@ -1,3 +1,5 @@
+/// XPath defines a standard function library, and this module implements
+/// it.
 mod accessor;
 mod array;
 mod boolean;
