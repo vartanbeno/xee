@@ -149,3 +149,13 @@ impl Name {
         }
     }
 }
+
+impl From<&str> for Name {
+    fn from(name: &str) -> Self {
+        Name {
+            name: name.to_string(),
+            namespace: None,
+            prefix: None,
+        }
+    }
+}
