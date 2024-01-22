@@ -4,4 +4,4 @@
 mod decl;
 mod globalvar;
 
-use decl::Declarations;
+pub use decl::Declarations;
