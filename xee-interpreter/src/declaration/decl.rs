@@ -4,6 +4,14 @@ use crate::sequence::Sequence;
 
 use super::globalvar::GlobalVariables;
 
-struct Declarations<'a> {
+pub struct Declarations<'a> {
     global_variables: Rc<GlobalVariables<'a, Sequence>>,
+}
+
+impl Declarations<'_> {
+    pub(crate) fn new() -> Self {
+        Self {
+            global_variables: Rc::new(GlobalVariables::new()),
+        }
+    }
 }

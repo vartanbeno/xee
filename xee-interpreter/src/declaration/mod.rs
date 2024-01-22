@@ -3,3 +3,5 @@
 /// contains the runtime information to execute XSLT.
 mod decl;
 mod globalvar;
+
+use decl::Declarations;
