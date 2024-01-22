@@ -47,6 +47,7 @@ pub enum Expr {
     Text(XmlText),
     Comment(XmlComment),
     ProcessingInstruction(XmlProcessingInstruction),
+    XmlAppend(XmlAppend),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -244,8 +245,6 @@ pub struct XmlRoot {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlElement {
-    // element or root to which to add the new element
-    pub element: AtomS,
     pub name: AtomS,
 }
 
@@ -265,19 +264,22 @@ pub struct XmlPrefix {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlText {
-    pub element: AtomS,
     pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlComment {
-    pub element: AtomS,
     pub value: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlProcessingInstruction {
-    pub element: AtomS,
     pub target: AtomS,
     pub content: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct XmlAppend {
+    pub parent: AtomS,
+    pub child: AtomS,
 }

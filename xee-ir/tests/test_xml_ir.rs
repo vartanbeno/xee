@@ -26,24 +26,36 @@ fn test_generate_element() {
     // create a root element
     let root_expr = ir::Expr::Root(ir::XmlRoot {});
 
-    // create an element of element_name into the root
+    // create an element of element_name
     let element_expr = ir::Expr::Element(ir::XmlElement {
-        element: spanned(ir::Atom::Variable(root_name.clone())),
         name: spanned(ir::Atom::Variable(element_name.clone())),
     });
 
     // we need to make sure the element name exists within scope of element_expr
-    let let_element_name = ir::Expr::Let(ir::Let {
-        name: element_name,
+    let let_element = ir::Expr::Let(ir::Let {
+        name: element_name.clone(),
         var_expr: Box::new(spanned(ir::Expr::XmlName(name))),
         return_expr: Box::new(spanned(element_expr)),
     });
 
-    // we need to make sure root name exists within the scope of let_element_name
+    // we can now appedn the element to the root
+    let append = ir::Expr::XmlAppend(ir::XmlAppend {
+        parent: spanned(ir::Atom::Variable(root_name.clone())),
+        child: spanned(ir::Atom::Variable(element_name.clone())),
+    });
+
+    // we need to make sure element_name exists within the scope of append
+    let element_name_append = ir::Expr::Let(ir::Let {
+        name: element_name.clone(),
+        var_expr: Box::new(spanned(let_element)),
+        return_expr: Box::new(spanned(append)),
+    });
+
+    // we need to make sure root name exists within the scope of append too
     let let_root = ir::Expr::Let(ir::Let {
         name: root_name,
         var_expr: Box::new(spanned(root_expr)),
-        return_expr: Box::new(spanned(let_element_name)),
+        return_expr: Box::new(spanned(element_name_append)),
     });
 
     // wrap all of this into a function definition

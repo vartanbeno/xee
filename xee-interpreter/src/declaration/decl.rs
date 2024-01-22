@@ -1,17 +1,14 @@
-use std::rc::Rc;
+use crate::{function, pattern::PatternLookup};
 
-use crate::sequence::Sequence;
-
-use super::globalvar::GlobalVariables;
-
-pub struct Declarations<'a> {
-    global_variables: Rc<GlobalVariables<'a, Sequence>>,
+#[derive(Debug)]
+pub struct Declarations {
+    pub pattern_lookup: PatternLookup<function::InlineFunctionId>,
 }
 
-impl Declarations<'_> {
+impl Declarations {
     pub(crate) fn new() -> Self {
         Self {
-            global_variables: Rc::new(GlobalVariables::new()),
+            pattern_lookup: PatternLookup::new(),
         }
     }
 }

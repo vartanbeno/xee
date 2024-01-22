@@ -491,11 +491,16 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlElement => {
                     let name_id = self.pop_xot_name()?;
-                    let parent_node = self.pop_node()?.xot_node();
+                    // let parent_node = self.pop_node()?.xot_node();
                     let element_node = self.state.output.new_element(name_id);
-                    self.state.output.append(parent_node, element_node).unwrap();
+                    // self.state.output.append(parent_node, element_node).unwrap();
                     let item = sequence::Item::Node(xml::Node::Xot(element_node));
                     self.state.push(item.into());
+                }
+                EncodedInstruction::XmlAppend => {
+                    let child_node = self.pop_node()?.xot_node();
+                    let parent_node = self.pop_node()?.xot_node();
+                    self.state.output.append(parent_node, child_node).unwrap();
                 }
                 EncodedInstruction::XmlAttribute => {}
                 EncodedInstruction::XmlPrefix => {}

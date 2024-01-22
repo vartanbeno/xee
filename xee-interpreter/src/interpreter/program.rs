@@ -1,6 +1,7 @@
 use xee_xpath_ast::ast::Span;
 
 use crate::context;
+use crate::declaration::Declarations;
 use crate::function;
 
 use super::Runnable;
@@ -9,6 +10,7 @@ use super::Runnable;
 pub struct Program {
     span: Span,
     pub functions: Vec<function::InlineFunction>,
+    pub declarations: Declarations,
 }
 
 impl Program {
@@ -16,6 +18,7 @@ impl Program {
         Program {
             span,
             functions: Vec::new(),
+            declarations: Declarations::new(),
         }
     }
 

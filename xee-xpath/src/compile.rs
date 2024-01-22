@@ -22,6 +22,21 @@ pub fn compile(
     Ok(program)
 }
 
+// /// Construct a function within an existing program
+// pub fn compile_function(
+//     program: &mut Program,
+//     static_context: &context::StaticContext,
+//     xpath: ast::XPath,
+// ) -> error::SpannedResult<function::InlineFunctionId> {
+//     let mut ir_converter = IrConverter::new(static_context);
+//     let expr = ir_converter.convert_xpath(&xpath)?;
+//     let mut scopes = Scopes::new();
+//     let builder = FunctionBuilder::new(program);
+//     let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
+//     compiler.compile_function_id(&expr.value, expr.span)?;
+//     Ok(())
+// }
+
 /// Parse an XPath string into a program.
 pub fn parse(
     static_context: &context::StaticContext,

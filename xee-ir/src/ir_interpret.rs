@@ -76,6 +76,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::ProcessingInstruction(processing_instruction) => {
                 self.compile_xml_processing_instruction(processing_instruction, span)
             }
+            ir::Expr::XmlAppend(xml_append) => self.compile_xml_append(xml_append, span),
         }
     }
 
@@ -171,7 +172,6 @@ impl<'a> InterpreterCompiler<'a> {
         self.builder.patch_jump(jump_end);
         Ok(())
     }
-
 
     fn compile_match(&mut self, span: SourceSpan) -> error::SpannedResult<()> {
         todo!();
@@ -315,7 +315,7 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_function_id(
+    pub fn compile_function_id(
         &mut self,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
@@ -800,7 +800,7 @@ impl<'a> InterpreterCompiler<'a> {
         element: &ir::XmlElement,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&element.element)?;
+        // self.compile_atom(&element.element)?;
         self.compile_atom(&element.name)?;
         self.builder.emit(Instruction::XmlElement, span);
         Ok(())
@@ -835,9 +835,20 @@ impl<'a> InterpreterCompiler<'a> {
         text: &ir::XmlText,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&text.element)?;
+        // self.compile_atom(&text.element)?;
         self.compile_atom(&text.value)?;
         self.builder.emit(Instruction::XmlText, span);
+        Ok(())
+    }
+
+    fn compile_xml_append(
+        &mut self,
+        append: &ir::XmlAppend,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&append.parent)?;
+        self.compile_atom(&append.child)?;
+        self.builder.emit(Instruction::XmlAppend, span);
         Ok(())
     }
 
@@ -846,7 +857,7 @@ impl<'a> InterpreterCompiler<'a> {
         comment: &ir::XmlComment,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&comment.element)?;
+        // self.compile_atom(&comment.element)?;
         self.compile_atom(&comment.value)?;
         self.builder.emit(Instruction::XmlComment, span);
         Ok(())
@@ -857,7 +868,7 @@ impl<'a> InterpreterCompiler<'a> {
         processing_instruction: &ir::XmlProcessingInstruction,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&processing_instruction.element)?;
+        // self.compile_atom(&processing_instruction.element)?;
         self.compile_atom(&processing_instruction.target)?;
         self.compile_atom(&processing_instruction.content)?;
         self.builder

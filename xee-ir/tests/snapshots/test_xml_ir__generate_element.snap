@@ -12,12 +12,17 @@ expression: "decode_instructions(&program.functions[0].chunk)"
     ),
     XmlName,
     Var(
+        4,
+    ),
+    XmlElement,
+    LetDone,
+    Var(
         3,
     ),
     Var(
         4,
     ),
-    XmlElement,
+    XmlAppend,
     LetDone,
     LetDone,
     Return,
