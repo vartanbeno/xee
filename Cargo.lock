@@ -3590,7 +3590,9 @@ dependencies = [
  "thiserror",
  "xee-interpreter",
  "xee-ir",
+ "xee-name",
  "xee-schema-type",
+ "xee-xpath-ast",
  "xee-xslt-ast",
  "xot",
 ]

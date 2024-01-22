@@ -21,6 +21,8 @@ rust_decimal = { workspace = true }
 ibig = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
+xee-name = { path = "../xee-name" }
+xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-xslt-ast = { path = "../xee-xslt-ast" }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-interpreter = { path = "../xee-interpreter" }
