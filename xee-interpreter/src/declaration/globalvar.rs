@@ -7,14 +7,14 @@ use crate::error::{Error, Result};
 
 type Resolver<'a, V> = dyn Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a;
 
-struct GlobalVariables<'a, V: Clone + 'a> {
+pub(crate) struct GlobalVariables<'a, V: Clone + 'a> {
     declarations: HashSet<&'a Name>,
     resolvers: HashMap<&'a Name, Box<Resolver<'a, V>>>,
     resolved: RefCell<HashMap<&'a Name, V>>,
 }
 
 impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             declarations: HashSet::new(),
             resolvers: HashMap::new(),
@@ -22,18 +22,18 @@ impl<'a, V: Clone + 'a> GlobalVariables<'a, V> {
         }
     }
 
-    fn add_declaration(&mut self, name: &'a Name) {
+    pub(crate) fn add_declaration(&mut self, name: &'a Name) {
         self.declarations.insert(name);
     }
 
-    fn add_resolver<F>(&mut self, name: &'a Name, resolver: F)
+    pub(crate) fn add_resolver<F>(&mut self, name: &'a Name, resolver: F)
     where
         F: Fn(Box<dyn Fn(&'a Name) -> Result<V> + 'a>) -> Result<V> + 'a,
     {
         self.resolvers.insert(name, Box::new(resolver));
     }
 
-    fn get(self: &Rc<Self>, name: &'a Name) -> Result<V> {
+    pub(crate) fn get(self: &Rc<Self>, name: &'a Name) -> Result<V> {
         self.get_internal(name, HashSet::new())
     }
 
