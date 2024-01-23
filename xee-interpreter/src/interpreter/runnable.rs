@@ -1,3 +1,4 @@
+use std::fmt::Formatter;
 use std::rc::Rc;
 
 use xee_name::Name;
@@ -35,6 +36,22 @@ struct RunValue {
 pub struct SequenceOutput {
     pub output: Xot,
     pub sequence: sequence::Sequence,
+}
+
+impl std::fmt::Display for SequenceOutput {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // writeln!(f, "Sequence length: {}", self.sequence.len())?;
+        for item in self.sequence.items() {
+            write!(
+                f,
+                "{}",
+                self.output
+                    .to_string(item.unwrap().to_node().unwrap().xot_node())
+                    .unwrap()
+            )?;
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Runnable<'a> {
@@ -147,7 +164,6 @@ impl<'a> Runnable<'a> {
             if let Some(function_id) = function_id {
                 let arguments = Vec::new();
                 interpreter.start_function(*function_id, Some(&item), arguments);
-                println!("function started");
                 interpreter.run(0)?;
                 // append top of stack to result sequence
                 let state = &mut interpreter.state;

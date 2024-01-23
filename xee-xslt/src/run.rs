@@ -7,7 +7,7 @@ use xot::{Node, Xot};
 
 use crate::ast_ir::parse;
 
-fn evaluate_program(
+pub fn evaluate_program(
     xot: &Xot,
     program: &Program,
     root: Node,
@@ -22,7 +22,7 @@ fn evaluate_program(
     runnable.apply_templates_xot_node(document.root)
 }
 
-fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
+pub fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), None, Some(FN_NAMESPACE));
     let static_context = StaticContext::from_namespaces(namespaces);
     let mut xot = Xot::new();
@@ -33,31 +33,44 @@ fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
 
 #[cfg(test)]
 mod tests {
-    use xee_interpreter::occurrence::Occurrence;
 
     use super::*;
 
     #[test]
     fn test_transform() {
-        let o = evaluate(
+        let output = evaluate(
             "<doc/>",
             r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><a/></xsl:template></xsl:transform>"#,
         ).unwrap();
-        let sequence = o.sequence;
-        let output = o.output;
-        assert_eq!(
-            output
-                .to_string(
-                    sequence
-                        .items()
-                        .one()
-                        .unwrap()
-                        .to_node()
-                        .unwrap()
-                        .xot_node()
-                )
-                .unwrap(),
-            "<a/>"
-        );
+        assert_eq!(output.to_string(), "<a/>");
     }
+
+    #[test]
+    fn test_transform_nested() {
+        let output = evaluate(
+            "<doc/>",
+            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><a><b/><b/></a></xsl:template></xsl:transform>"#,
+        ).unwrap();
+        assert_eq!(output.to_string(), "<a><b/><b/></a>");
+    }
+
+    // #[test]
+    // fn test_transform_nested_name() {
+    //     let output = evaluate(
+    //         "<doc><foo/><bar/></doc>",
+    //         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    //              <xsl:template match="/">
+    //                <o><xsl:apply-templates select="*" /></o>
+    //              </xsl:template>
+    //              <xsl:template match="foo">
+    //                <f/>
+    //              </xsl:template>
+    //              <xsl:template match="bar">
+    //                 <b/>
+    //               </xsl:template>
+    //           </xsl:transform>"#,
+    //     )
+    //     .unwrap();
+    //     assert_eq!(output.to_string(), "<o><f/><b/></o>");
+    // }
 }

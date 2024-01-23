@@ -126,7 +126,6 @@ impl<'a> IrConverter<'a> {
         let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut self.program);
         let mut compiler = InterpreterCompiler::new(builder, &mut scopes, self.static_context);
-        dbg!(&function_definition);
         compiler.compile_function_id(&function_definition, (0..0).into())
     }
 
@@ -135,22 +134,26 @@ impl<'a> IrConverter<'a> {
         sequence_constructor: &ast::SequenceConstructor,
     ) -> error::SpannedResult<Bindings> {
         let mut items = sequence_constructor.iter();
-        let left = items.next().unwrap();
-        let span_start = 0; // TODO
-        let left_bindings = Ok(self.sequence_constructor_item(left)?);
-        items.fold(left_bindings, |left, right| {
-            let mut left_bindings = left?;
-            let mut right_bindings = self.sequence_constructor_item(right)?;
-            let expr = ir::Expr::Binary(ir::Binary {
-                left: left_bindings.atom(),
-                op: ir::BinaryOperator::Comma,
-                right: right_bindings.atom(),
-            });
-            let span_end = 0; // TODO
-            let span = (span_start..span_end).into();
-            let binding = self.new_binding(expr, span);
-            Ok(left_bindings.concat(right_bindings).bind(binding))
-        })
+        let left = items.next();
+        if let Some(left) = left {
+            let span_start = 0; // TODO
+            let left_bindings = Ok(self.sequence_constructor_item(left)?);
+            items.fold(left_bindings, |left, right| {
+                let mut left_bindings = left?;
+                let mut right_bindings = self.sequence_constructor_item(right)?;
+                let expr = ir::Expr::Binary(ir::Binary {
+                    left: left_bindings.atom(),
+                    op: ir::BinaryOperator::Comma,
+                    right: right_bindings.atom(),
+                });
+                let span_end = 0; // TODO
+                let span = (span_start..span_end).into();
+                let binding = self.new_binding(expr, span);
+                Ok(left_bindings.concat(right_bindings).bind(binding))
+            })
+        } else {
+            Ok(Bindings::empty())
+        }
     }
 
     fn sequence_constructor_item(
@@ -159,11 +162,26 @@ impl<'a> IrConverter<'a> {
     ) -> error::SpannedResult<Bindings> {
         match item {
             ast::SequenceConstructorItem::ElementNode(element_node) => {
-                let mut name_bindings = self.element_name(&element_node.name)?;
-                let name_atom = name_bindings.atom();
+                let mut bindings = self.element_name(&element_node.name)?;
+                let name_atom = bindings.atom();
                 let expr = ir::Expr::Element(ir::XmlElement { name: name_atom });
-                let binding = self.new_binding(expr, (0..0).into());
-                let bindings = name_bindings.bind(binding);
+                let element_binding = self.new_binding(expr, (0..0).into());
+                let mut bindings = bindings.bind(element_binding);
+                let bindings = if !element_node.sequence_constructor.is_empty() {
+                    let element_atom = bindings.atom();
+                    let mut content_bindings =
+                        self.sequence_constructor(&element_node.sequence_constructor)?;
+                    let content_atom = content_bindings.atom();
+                    let bindings = bindings.concat(content_bindings);
+                    let append = ir::Expr::XmlAppend(ir::XmlAppend {
+                        parent: element_atom,
+                        child: content_atom,
+                    });
+                    let append_binding = self.new_binding(append, (0..0).into());
+                    bindings.bind(append_binding)
+                } else {
+                    bindings
+                };
                 Ok(bindings)
             }
             _ => todo!(),
@@ -188,29 +206,4 @@ impl<'a> IrConverter<'a> {
         );
         Ok(Bindings::new(binding))
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use insta::assert_debug_snapshot;
-
-    // fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
-    //     let ast = ast::ExprSingle::parse(s)?;
-    //     let static_context = context::StaticContext::default();
-    //     let mut converter = IrConverter::new(&static_context);
-    //     converter.convert_expr_single(&ast)
-    // }
-
-    // pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
-    //     let static_context = context::StaticContext::default();
-    //     let ast = static_context.parse_xpath(s)?;
-    //     let mut converter = IrConverter::new(&static_context);
-    //     converter.convert_xpath(&ast)
-    // }
-
-    // #[test]
-    // fn test_integer() {
-    //     assert_debug_snapshot!(convert_expr_single("1"));
-    // }
 }

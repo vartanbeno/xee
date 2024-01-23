@@ -523,9 +523,20 @@ impl<'a> Interpreter<'a> {
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlAppend => {
-                    let child_node = self.pop_node()?.xot_node();
+                    let child_sequence = self.state.pop();
                     let parent_node = self.pop_node()?.xot_node();
-                    self.state.output.append(parent_node, child_node).unwrap();
+                    for item in child_sequence.items() {
+                        let child_node = item?.to_node()?;
+                        // TODO: handle adding attribute xot node using
+                        // same operation
+                        self.state
+                            .output
+                            .append(parent_node, child_node.xot_node())
+                            .unwrap();
+                    }
+                    // now we can push back the parent node
+                    let item = sequence::Item::Node(xml::Node::Xot(parent_node));
+                    self.state.push(item.into());
                 }
                 EncodedInstruction::XmlAttribute => {}
                 EncodedInstruction::XmlPrefix => {}
@@ -957,10 +968,10 @@ impl<'a> Interpreter<'a> {
         let name: xee_name::Name = value.try_into()?;
         if let Some(namespace) = name.namespace() {
             let ns = self.state.output.add_namespace(namespace);
-            println!("name {}, namespace {}", name.local_name(), namespace);
+            // println!("name {}, namespace {}", name.local_name(), namespace);
             Ok(self.state.output.add_name_ns(name.local_name(), ns))
         } else {
-            println!("no namespace");
+            // println!("no namespace");
             Ok(self.state.output.add_name(name.local_name()))
         }
     }
