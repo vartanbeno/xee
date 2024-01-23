@@ -82,6 +82,18 @@ pub struct Let {
     pub return_expr: Box<ExprS>,
 }
 
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub struct MultiLet {
+//     pub bindings: Vec<LetBinding>,
+//     pub return_expr: Box<ExprS>,
+// }
+
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub struct LetBinding {
+//     pub name: Name,
+//     pub var_expr: Box<ExprS>,
+// }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct If {
     pub condition: AtomS,
