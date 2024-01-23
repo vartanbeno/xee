@@ -33,7 +33,7 @@ impl From<value_template::Error> for AttributeError {
 
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub(crate) enum ElementError {
+pub enum ElementError {
     // Did not expect this node
     Unexpected { span: Span },
     // Did not expect end TODO: how to get span info?

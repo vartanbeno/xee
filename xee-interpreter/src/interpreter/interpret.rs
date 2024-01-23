@@ -27,7 +27,7 @@ const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 pub struct Interpreter<'a> {
     runnable: &'a Runnable<'a>,
-    state: State,
+    pub(crate) state: State,
 }
 
 impl<'a> Interpreter<'a> {
@@ -51,8 +51,35 @@ impl<'a> Interpreter<'a> {
         context_item: Option<&sequence::Item>,
         arguments: Vec<sequence::Sequence>,
     ) {
-        self.state
-            .push_start_frame(self.runnable.program().main_id());
+        self.start_function(self.runnable.program().main_id(), context_item, arguments)
+        // self.state
+        //     .push_start_frame(self.runnable.program().main_id());
+
+        // if let Some(context_item) = context_item {
+        //     // the context item
+        //     self.state.push(stack::Value::from(context_item.clone()));
+        //     // position & size
+        //     self.state.push(1i64.into());
+        //     self.state.push(1i64.into());
+        // } else {
+        //     // absent context, position and size
+        //     self.state.push(stack::Value::Absent);
+        //     self.state.push(stack::Value::Absent);
+        //     self.state.push(stack::Value::Absent);
+        // }
+        // // and any arguments
+        // for arg in arguments {
+        //     self.state.push(stack::Value::from(arg));
+        // }
+    }
+
+    pub fn start_function(
+        &mut self,
+        function_id: function::InlineFunctionId,
+        context_item: Option<&sequence::Item>,
+        arguments: Vec<sequence::Sequence>,
+    ) {
+        self.state.push_start_frame(function_id);
 
         if let Some(context_item) = context_item {
             // the context item
@@ -491,9 +518,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlElement => {
                     let name_id = self.pop_xot_name()?;
-                    // let parent_node = self.pop_node()?.xot_node();
                     let element_node = self.state.output.new_element(name_id);
-                    // self.state.output.append(parent_node, element_node).unwrap();
                     let item = sequence::Item::Node(xml::Node::Xot(element_node));
                     self.state.push(item.into());
                 }

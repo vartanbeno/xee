@@ -7,12 +7,14 @@ use crate::{sequence::Item, xml};
 
 #[derive(Debug, Default)]
 pub struct PatternLookup<V> {
+    root: Option<V>,
     by_name: HashMap<xee_name::Name, V>,
 }
 
 impl<V> PatternLookup<V> {
     pub fn new() -> Self {
         Self {
+            root: None,
             by_name: HashMap::new(),
         }
     }
@@ -48,7 +50,7 @@ impl<V> PatternLookup<V> {
                 todo!()
             }
             pattern::PathRoot::AbsoluteSlash => {
-                todo!();
+                self.add_absolute_steps(&path_expr.steps, value);
             }
             pattern::PathRoot::AbsoluteDoubleSlash => {
                 todo!();
@@ -57,6 +59,13 @@ impl<V> PatternLookup<V> {
                 self.add_relative_steps(&path_expr.steps, value);
             }
         }
+    }
+
+    fn add_absolute_steps(&mut self, steps: &[pattern::StepExpr], value: V) {
+        if !steps.is_empty() {
+            todo!();
+        }
+        self.root = Some(value);
     }
 
     fn add_relative_steps(&mut self, steps: &[pattern::StepExpr], value: V) {
@@ -96,11 +105,14 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    pub(crate) fn lookup(&self, item: Item, xot: &Xot) -> Option<&V> {
+    pub(crate) fn lookup(&self, item: &Item, xot: &Xot) -> Option<&V> {
         match item {
             Item::Node(node) => match node {
                 xml::Node::Xot(node) => {
-                    if let Some(element) = xot.element(node) {
+                    if xot.is_root(*node) {
+                        return self.root.as_ref();
+                    }
+                    if let Some(element) = xot.element(*node) {
                         self.by_name
                             .get(&xee_name::Name::from_xot(element.name(), xot))
                     } else {
@@ -128,6 +140,22 @@ mod tests {
     use crate::xml;
 
     #[test]
+    fn test_lookup_root() {
+        let mut xot = Xot::new();
+        let root = xot.new_root_unconnected();
+        let node = xml::Node::Xot(root);
+        let item: Item = node.into();
+
+        let mut lookup = PatternLookup::new();
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::default();
+        let pattern = pattern::Pattern::parse("/", &namespaces, &variable_names).unwrap();
+        lookup.add(&pattern, 1);
+        let found = lookup.lookup(&item, &xot).unwrap();
+        assert_eq!(*found, 1);
+    }
+
+    #[test]
     fn test_lookup_by_name() {
         let mut xot = Xot::new();
         let name = xot.add_name("foo");
@@ -140,7 +168,7 @@ mod tests {
         let variable_names = VariableNames::default();
         let pattern = pattern::Pattern::parse("foo", &namespaces, &variable_names).unwrap();
         lookup.add(&pattern, 1);
-        let found = lookup.lookup(item, &xot).unwrap();
+        let found = lookup.lookup(&item, &xot).unwrap();
         assert_eq!(*found, 1);
     }
 }

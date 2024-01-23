@@ -1454,6 +1454,12 @@ impl From<Template> for OverrideContent {
     }
 }
 
+impl From<Template> for Declaration {
+    fn from(t: Template) -> Self {
+        Declaration::Template(Box::new(t))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Text {

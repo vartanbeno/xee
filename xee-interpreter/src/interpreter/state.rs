@@ -26,6 +26,7 @@ impl Frame {
     }
 }
 
+#[derive(Debug)]
 pub struct State {
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,

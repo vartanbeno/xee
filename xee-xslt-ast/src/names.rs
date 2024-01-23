@@ -136,6 +136,7 @@ impl DeclarationName {
     pub(crate) fn parse(&self, attributes: &Attributes) -> Result<ast::Declaration, ElementError> {
         match self {
             DeclarationName::Accumulator => ast::Accumulator::parse_declaration(attributes),
+            DeclarationName::Template => ast::Template::parse_declaration(attributes),
             _ => {
                 unimplemented!()
             }

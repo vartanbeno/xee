@@ -10,6 +10,7 @@ mod error;
 mod instruction;
 mod name;
 mod names;
+mod parse;
 mod preprocess;
 mod state;
 mod staticeval;
@@ -19,3 +20,4 @@ mod visitor;
 mod whitespace;
 
 pub use ast_core as ast;
+pub use parse::parse_transform;

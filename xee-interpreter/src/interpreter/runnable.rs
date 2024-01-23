@@ -127,6 +127,59 @@ impl<'a> Runnable<'a> {
         })
     }
 
+    pub fn apply_templates_sequence(
+        &self,
+        sequence: sequence::Sequence,
+    ) -> error::SpannedResult<SequenceOutput> {
+        // create a single interpreter to run many functions, as we
+        // want to share the output
+        let mut interpreter = Interpreter::new(self);
+
+        let mut r: Vec<sequence::Item> = Vec::new();
+
+        for item in sequence.items() {
+            let item = item.unwrap(); // TODO
+            let function_id = self
+                .program
+                .declarations
+                .pattern_lookup
+                .lookup(&item, self.dynamic_context.xot);
+            if let Some(function_id) = function_id {
+                let arguments = Vec::new();
+                interpreter.start_function(*function_id, Some(&item), arguments);
+                println!("function started");
+                interpreter.run(0)?;
+                // append top of stack to result sequence
+                let state = &mut interpreter.state;
+                assert_eq!(
+                    state.stack().len(),
+                    1,
+                    "stack must only have 1 value but found {:?}",
+                    state.stack()
+                );
+                let value = state.pop().clone();
+                for item in value.items() {
+                    r.push(item.unwrap());
+                }
+            }
+        }
+        let output = interpreter.state.output();
+        Ok(SequenceOutput {
+            output,
+            sequence: r.into(),
+        })
+    }
+
+    pub fn apply_templates_xot_node(
+        &self,
+        node: xot::Node,
+    ) -> error::SpannedResult<SequenceOutput> {
+        let node = xml::Node::Xot(node);
+        let item = sequence::Item::Node(node);
+        let sequence: sequence::Sequence = item.into();
+        self.apply_templates_sequence(sequence)
+    }
+
     pub(crate) fn program(&self) -> &'a Program {
         self.program
     }

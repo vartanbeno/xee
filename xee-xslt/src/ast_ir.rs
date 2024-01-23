@@ -1,23 +1,60 @@
-use xee_name::Name;
+use ahash::{HashMap, HashMapExt};
 use xee_xpath_ast::ast::Span;
-use xot::Xot;
 
-use xee_interpreter::pattern::PatternLookup;
-use xee_interpreter::{error, function, interpreter};
-use xee_ir::{ir, Binding, Bindings};
+use xee_interpreter::{context::StaticContext, error, function, interpreter};
+use xee_ir::{ir, Binding, Bindings, FunctionBuilder, InterpreterCompiler, Scopes};
 use xee_xpath_ast::span::Spanned;
-use xee_xslt_ast::ast;
+use xee_xslt_ast::{ast, parse_transform};
 
-struct IrConverter {
+struct IrConverter<'a> {
     program: interpreter::Program,
+    static_context: &'a StaticContext<'a>,
     counter: usize,
+    variables: HashMap<ast::Name, ir::Name>,
 }
 
-impl IrConverter {
+pub(crate) fn compile(
+    static_context: &StaticContext,
+    transform: ast::Transform,
+) -> error::SpannedResult<interpreter::Program> {
+    let ir_converter = IrConverter::new(static_context);
+    ir_converter.convert_transform(&transform)
+}
+
+pub(crate) fn parse(
+    static_context: &StaticContext,
+    xslt: &str,
+) -> error::SpannedResult<interpreter::Program> {
+    let transform = parse_transform(xslt).unwrap(); // TODO get rid of error definitely wrong
+    compile(static_context, transform)
+}
+
+impl<'a> IrConverter<'a> {
+    fn new(static_context: &'a StaticContext<'a>) -> Self {
+        IrConverter {
+            program: interpreter::Program::new((0..0).into()),
+            static_context,
+            counter: 0,
+            variables: HashMap::new(),
+        }
+    }
+
+    fn program(self) -> interpreter::Program {
+        self.program
+    }
+
     fn new_name(&mut self) -> ir::Name {
         let name = format!("x{}", self.counter);
         self.counter += 1;
         ir::Name::new(name)
+    }
+
+    fn new_var_name(&mut self, name: &ast::Name) -> ir::Name {
+        self.variables.get(name).cloned().unwrap_or_else(|| {
+            let new_name = self.new_name();
+            self.variables.insert(name.clone(), new_name.clone());
+            new_name
+        })
     }
 
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
@@ -45,10 +82,12 @@ impl IrConverter {
         match declaration {
             Template(template) => {
                 if let Some(pattern) = &template.match_ {
-                    self.program.declarations.pattern_lookup.add(
-                        &pattern.pattern,
-                        self.sequence_constructor(&template.sequence_constructor)?,
-                    );
+                    let function_id =
+                        self.sequence_constructor_function_id(&template.sequence_constructor)?;
+                    self.program
+                        .declarations
+                        .pattern_lookup
+                        .add(&pattern.pattern, function_id);
                     Ok(())
                 } else {
                     todo!();
@@ -60,25 +99,58 @@ impl IrConverter {
         }
     }
 
-    fn sequence_constructor(
-        &self,
+    fn sequence_constructor_function_id(
+        &mut self,
         sequence_constructor: &ast::SequenceConstructor,
     ) -> error::SpannedResult<function::InlineFunctionId> {
+        let bindings = self.sequence_constructor(sequence_constructor)?;
+        let params = vec![
+            ir::Param {
+                name: ir::Name::new("item".to_string()),
+                type_: None,
+            },
+            ir::Param {
+                name: ir::Name::new("position".to_string()),
+                type_: None,
+            },
+            ir::Param {
+                name: ir::Name::new("last".to_string()),
+                type_: None,
+            },
+        ];
+        let function_definition = ir::FunctionDefinition {
+            params,
+            return_type: None,
+            body: Box::new(bindings.expr()),
+        };
+        let mut scopes = Scopes::new();
+        let builder = FunctionBuilder::new(&mut self.program);
+        let mut compiler = InterpreterCompiler::new(builder, &mut scopes, self.static_context);
+        dbg!(&function_definition);
+        compiler.compile_function_id(&function_definition, (0..0).into())
+    }
+
+    fn sequence_constructor(
+        &mut self,
+        sequence_constructor: &ast::SequenceConstructor,
+    ) -> error::SpannedResult<Bindings> {
         let mut items = sequence_constructor.iter();
         let left = items.next().unwrap();
-        // let left_bindings = Ok(self.sequence_constructor_item(left)?);
-        // TODO: compile bindings into function for program, then
-        // return function id
-        todo!();
-        // items.fold(left, |left, right| {
-        //     let left = self.sequence_constructor_item(left)?;
-        //     let right = self.sequence_constructor_item(right)?;
-        //     Ok(ir::Binary {
-        //         left: ,
-        //         op: ir::BinaryOperator::Comma,
-        //         right
-        //     )
-        // })
+        let span_start = 0; // TODO
+        let left_bindings = Ok(self.sequence_constructor_item(left)?);
+        items.fold(left_bindings, |left, right| {
+            let mut left_bindings = left?;
+            let mut right_bindings = self.sequence_constructor_item(right)?;
+            let expr = ir::Expr::Binary(ir::Binary {
+                left: left_bindings.atom(),
+                op: ir::BinaryOperator::Comma,
+                right: right_bindings.atom(),
+            });
+            let span_end = 0; // TODO
+            let span = (span_start..span_end).into();
+            let binding = self.new_binding(expr, span);
+            Ok(left_bindings.concat(right_bindings).bind(binding))
+        })
     }
 
     fn sequence_constructor_item(
@@ -91,7 +163,8 @@ impl IrConverter {
                 let name_atom = name_bindings.atom();
                 let expr = ir::Expr::Element(ir::XmlElement { name: name_atom });
                 let binding = self.new_binding(expr, (0..0).into());
-                Ok(Bindings::new(binding))
+                let bindings = name_bindings.bind(binding);
+                Ok(bindings)
             }
             _ => todo!(),
         }
