@@ -543,6 +543,9 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::XmlText => {}
                 EncodedInstruction::XmlComment => {}
                 EncodedInstruction::XmlProcessingInstruction => {}
+                EncodedInstruction::ApplyTemplates => {
+                    todo!();
+                }
                 EncodedInstruction::PrintTop => {
                     let top = self.state.top();
                     println!("{:#?}", top);

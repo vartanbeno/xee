@@ -52,7 +52,6 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::Step(step) => self.compile_step(step, span),
             ir::Expr::Deduplicate(expr) => self.compile_deduplicate(expr, span),
             ir::Expr::If(if_) => self.compile_if(if_, span),
-            ir::Expr::Match => self.compile_match(span),
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
@@ -77,6 +76,9 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_xml_processing_instruction(processing_instruction, span)
             }
             ir::Expr::XmlAppend(xml_append) => self.compile_xml_append(xml_append, span),
+            ir::Expr::ApplyTemplates(apply_templates) => {
+                self.compile_apply_templates(apply_templates, span)
+            }
         }
     }
 
@@ -857,7 +859,6 @@ impl<'a> InterpreterCompiler<'a> {
         comment: &ir::XmlComment,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        // self.compile_atom(&comment.element)?;
         self.compile_atom(&comment.value)?;
         self.builder.emit(Instruction::XmlComment, span);
         Ok(())
@@ -868,11 +869,20 @@ impl<'a> InterpreterCompiler<'a> {
         processing_instruction: &ir::XmlProcessingInstruction,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        // self.compile_atom(&processing_instruction.element)?;
         self.compile_atom(&processing_instruction.target)?;
         self.compile_atom(&processing_instruction.content)?;
         self.builder
             .emit(Instruction::XmlProcessingInstruction, span);
+        Ok(())
+    }
+
+    fn compile_apply_templates(
+        &mut self,
+        apply_templates: &ir::ApplyTemplates,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&apply_templates.select)?;
+        self.builder.emit(Instruction::ApplyTemplates, span);
         Ok(())
     }
 }

@@ -212,7 +212,7 @@ impl StaticEvaluator {
     }
 }
 
-fn static_evaluate(
+pub(crate) fn static_evaluate(
     state: &mut State,
     node: Node,
     static_parameters: Variables,

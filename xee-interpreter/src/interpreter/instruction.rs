@@ -75,6 +75,7 @@ pub enum Instruction {
     XmlComment,
     XmlProcessingInstruction,
     XmlAppend,
+    ApplyTemplates,
     PrintTop,
     PrintStack,
 }
@@ -150,6 +151,7 @@ pub(crate) enum EncodedInstruction {
     XmlText,
     XmlComment,
     XmlProcessingInstruction,
+    ApplyTemplates,
     XmlAppend,
     PrintTop,
     PrintStack,
@@ -277,6 +279,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::XmlComment => (Instruction::XmlComment, 1),
         EncodedInstruction::XmlProcessingInstruction => (Instruction::XmlProcessingInstruction, 1),
         EncodedInstruction::XmlAppend => (Instruction::XmlAppend, 1),
+        EncodedInstruction::ApplyTemplates => (Instruction::ApplyTemplates, 1),
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -423,6 +426,9 @@ pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
                 .unwrap(),
         ),
         Instruction::XmlAppend => bytes.push(EncodedInstruction::XmlAppend.to_u8().unwrap()),
+        Instruction::ApplyTemplates => {
+            bytes.push(EncodedInstruction::ApplyTemplates.to_u8().unwrap())
+        }
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
     }
@@ -491,6 +497,7 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::XmlComment
         | Instruction::XmlProcessingInstruction
         | Instruction::XmlAppend
+        | Instruction::ApplyTemplates
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,

@@ -21,7 +21,6 @@ pub enum Expr {
     Atom(AtomS),
     Let(Let),
     If(If),
-    Match,
     Binary(Binary),
     Unary(Unary),
     FunctionDefinition(FunctionDefinition),
@@ -48,6 +47,7 @@ pub enum Expr {
     Comment(XmlComment),
     ProcessingInstruction(XmlProcessingInstruction),
     XmlAppend(XmlAppend),
+    ApplyTemplates(ApplyTemplates),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -294,4 +294,9 @@ pub struct XmlProcessingInstruction {
 pub struct XmlAppend {
     pub parent: AtomS,
     pub child: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ApplyTemplates {
+    pub select: AtomS,
 }

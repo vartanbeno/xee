@@ -67,7 +67,7 @@ mod tests {
     //              </xsl:template>
     //              <xsl:template match="bar">
     //                 <b/>
-    //               </xsl:template>
+    //              </xsl:template>
     //           </xsl:transform>"#,
     //     )
     //     .unwrap();

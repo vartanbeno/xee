@@ -184,8 +184,36 @@ impl<'a> IrConverter<'a> {
                 };
                 Ok(bindings)
             }
+            ast::SequenceConstructorItem::Instruction(instruction) => {
+                self.sequence_constructor_instruction(instruction)
+            }
             _ => todo!(),
         }
+    }
+
+    fn sequence_constructor_instruction(
+        &mut self,
+        instruction: &ast::SequenceConstructorInstruction,
+    ) -> error::SpannedResult<Bindings> {
+        use ast::SequenceConstructorInstruction::*;
+        match instruction {
+            ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
+            _ => todo!(),
+        }
+    }
+
+    fn apply_templates(
+        &mut self,
+        apply_templates: &ast::ApplyTemplates,
+    ) -> error::SpannedResult<Bindings> {
+        todo!();
+        // let select = self.expression(&apply_templates.select)?;
+        // let select_atom = select.atom();
+        // let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
+        //     select: select_atom,
+        // });
+        // let binding = self.new_binding(expr, (0..0).into());
+        // Ok(Bindings::new(binding))
     }
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
