@@ -543,12 +543,10 @@ pub(crate) fn read_u8(bytes: &[u8], ip: &mut usize) -> u8 {
     byte
 }
 
-#[cfg(test)]
 use crate::function::InlineFunction;
 
-#[cfg(test)]
 impl InlineFunction {
-    pub(crate) fn decoded(&self) -> Vec<Instruction> {
+    pub fn decoded(&self) -> Vec<Instruction> {
         decode_instructions(&self.chunk)
     }
 }

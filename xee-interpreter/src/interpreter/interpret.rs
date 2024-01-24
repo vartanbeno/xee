@@ -74,6 +74,14 @@ impl<'a> Interpreter<'a> {
     ) {
         self.state.push_start_frame(function_id);
 
+        self.push_context_info(context_info);
+        // and any arguments
+        for arg in arguments {
+            self.state.push(stack::Value::from(arg));
+        }
+    }
+
+    pub(crate) fn push_context_info(&mut self, context_info: Option<ContextInfo>) {
         if let Some(context_info) = context_info {
             // the context item
             self.state.push(context_info.item.into());
@@ -84,10 +92,6 @@ impl<'a> Interpreter<'a> {
             self.state.push(stack::Value::Absent);
             self.state.push(stack::Value::Absent);
             self.state.push(stack::Value::Absent);
-        }
-        // and any arguments
-        for arg in arguments {
-            self.state.push(stack::Value::from(arg));
         }
     }
 
@@ -538,11 +542,11 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();
                     // TODO: this unwrap hides errors
-                    let output = self
+                    let value = self
                         .runnable
-                        .apply_templates_sequence(value.into())
+                        .apply_templates_sequence(self, value.into())
                         .unwrap();
-                    self.state.push(output.sequence.into());
+                    self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
                     let top = self.state.top();
@@ -680,7 +684,7 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_inline(
+    pub(crate) fn call_inline(
         &mut self,
         function_id: function::InlineFunctionId,
         arity: u8,

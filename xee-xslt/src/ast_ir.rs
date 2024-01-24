@@ -1,3 +1,5 @@
+use ahash::HashSetExt;
+use xee_name::Namespaces;
 use xee_xpath_ast::ast::Span;
 
 use xee_interpreter::{context::StaticContext, error, function, interpreter};
@@ -49,8 +51,31 @@ impl<'a> IrConverter<'a> {
         mut self,
         transform: &ast::Transform,
     ) -> error::SpannedResult<interpreter::Program> {
-        let bindings = self.transform(transform)?;
+        // the main entry point calls apply-templates on root
+        self.transform(transform)?;
+        // now register main function
+        let main_sequence_constructor = self.main_sequence_constructor();
+        self.sequence_constructor_function_id(&main_sequence_constructor)?;
         Ok(self.program)
+    }
+
+    fn main_sequence_constructor(&mut self) -> ast::SequenceConstructor {
+        vec![ast::SequenceConstructorItem::Instruction(
+            ast::SequenceConstructorInstruction::ApplyTemplates(Box::new(ast::ApplyTemplates {
+                mode: None,
+                select: Some(ast::Expression {
+                    xpath: xee_xpath_ast::ast::XPath::parse(
+                        "/",
+                        &Namespaces::default(),
+                        &xee_name::VariableNames::new(),
+                    )
+                    .unwrap(),
+                    span: xee_xslt_ast::ast::Span::new(0, 0),
+                }),
+                content: vec![],
+                span: xee_xslt_ast::ast::Span::new(0, 0),
+            })),
+        )]
     }
 
     fn transform(&mut self, transform: &ast::Transform) -> error::SpannedResult<()> {
@@ -108,6 +133,7 @@ impl<'a> IrConverter<'a> {
             return_type: None,
             body: Box::new(bindings.expr()),
         };
+        // dbg!(&function_definition);
         let mut scopes = Scopes::new();
         let builder = FunctionBuilder::new(&mut self.program);
         let mut compiler = InterpreterCompiler::new(builder, &mut scopes, self.static_context);
@@ -194,14 +220,6 @@ impl<'a> IrConverter<'a> {
         // TODO: default for select should be child::node()
         let mut bindings = self.expression(apply_templates.select.as_ref().unwrap())?;
         let select_atom = bindings.atom();
-        // let args = vec![];
-        // let function_call = ir::Expr::FunctionCall(ir::FunctionCall {
-        //     atom: expression_atom,
-        //     args,
-        // });
-        // let binding = self.new_binding(function_call, (0..0).into());
-        // let mut bindings = bindings.bind(binding);
-        // let select_atom = bindings.atom();
         let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
             select: select_atom,
         });

@@ -2,6 +2,8 @@ use xee_interpreter::context::DynamicContext;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
 use xee_interpreter::interpreter::{Program, SequenceOutput};
+use xee_interpreter::sequence;
+use xee_interpreter::xml;
 use xee_name::{Namespaces, FN_NAMESPACE};
 use xot::{Node, Xot};
 
@@ -19,7 +21,8 @@ pub fn evaluate_program(
     let context = DynamicContext::from_documents(xot, static_context, &documents);
     let document = documents.get(&uri).unwrap();
     let runnable = program.runnable(&context);
-    runnable.apply_templates_xot_node(document.root)
+    let item: sequence::Item = xml::Node::Xot(document.root).into();
+    runnable.many_output(Some(&item))
 }
 
 pub fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
@@ -28,6 +31,7 @@ pub fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
     let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
     let program = parse(&static_context, xslt).unwrap();
+    // dbg!(&program.functions[0].decoded());
     evaluate_program(&xot, &program, root, &static_context)
 }
 
@@ -55,12 +59,12 @@ mod tests {
     }
 
     // #[test]
-    // fn test_transform_nested_name() {
+    // fn test_transform_nested_apply_templates() {
     //     let output = evaluate(
     //         "<doc><foo/><bar/></doc>",
     //         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     //              <xsl:template match="/">
-    //                <o><xsl:apply-templates select="*" /></o>
+    //                <o><xsl:apply-templates select="doc/*" /></o>
     //              </xsl:template>
     //              <xsl:template match="foo">
     //                <f/>

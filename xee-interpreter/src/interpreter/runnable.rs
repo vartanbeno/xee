@@ -42,7 +42,6 @@ pub struct SequenceOutput {
 
 impl std::fmt::Display for SequenceOutput {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // writeln!(f, "Sequence length: {}", self.sequence.len())?;
         for item in self.sequence.items() {
             write!(
                 f,
@@ -148,12 +147,9 @@ impl<'a> Runnable<'a> {
 
     pub fn apply_templates_sequence(
         &self,
+        interpreter: &mut Interpreter,
         sequence: sequence::Sequence,
-    ) -> error::SpannedResult<SequenceOutput> {
-        // create a single interpreter to run many functions, as we
-        // want to share the output
-        let mut interpreter = Interpreter::new(self);
-
+    ) -> error::SpannedResult<stack::Value> {
         let mut r: Vec<sequence::Item> = Vec::new();
         let size: IBig = sequence.len().into();
         for (i, item) in sequence.items().enumerate() {
@@ -164,46 +160,21 @@ impl<'a> Runnable<'a> {
                 .pattern_lookup
                 .lookup(&item, self.dynamic_context.xot);
             if let Some(function_id) = function_id {
-                let arguments = Vec::new();
-                interpreter.start_function(
-                    *function_id,
-                    Some(ContextInfo {
-                        item,
-                        position: (i + 1).into(),
-                        size: size.clone(),
-                    }),
-                    arguments,
-                );
-                interpreter.run(0)?;
+                interpreter.push_context_info(Some(ContextInfo {
+                    item,
+                    position: (i + 1).into(),
+                    size: size.clone(),
+                }));
+                interpreter.call_inline(*function_id, 3).unwrap();
                 // append top of stack to result sequence
                 let state = &mut interpreter.state;
-                assert_eq!(
-                    state.stack().len(),
-                    1,
-                    "stack must only have 1 value but found {:?}",
-                    state.stack()
-                );
                 let value = state.pop().clone();
                 for item in value.items() {
                     r.push(item.unwrap());
                 }
             }
         }
-        let output = interpreter.state.output();
-        Ok(SequenceOutput {
-            output,
-            sequence: r.into(),
-        })
-    }
-
-    pub fn apply_templates_xot_node(
-        &self,
-        node: xot::Node,
-    ) -> error::SpannedResult<SequenceOutput> {
-        let node = xml::Node::Xot(node);
-        let item = sequence::Item::Node(node);
-        let sequence: sequence::Sequence = item.into();
-        self.apply_templates_sequence(sequence)
+        Ok(r.into())
     }
 
     pub(crate) fn program(&self) -> &'a Program {
