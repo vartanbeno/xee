@@ -12,28 +12,18 @@ enum ContextItem {
 }
 
 #[derive(Debug)]
-pub struct IrConverter<'a> {
+struct Variables {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
     context_scope: Vec<ContextItem>,
-    static_context: &'a context::StaticContext<'a>,
-    fn_position: ast::Name,
-    fn_last: ast::Name,
 }
 
-impl<'a> IrConverter<'a> {
-    pub fn new(static_context: &'a context::StaticContext) -> Self {
+impl Variables {
+    fn new() -> Self {
         Self {
             counter: 0,
             variables: HashMap::new(),
             context_scope: Vec::new(),
-            static_context,
-            fn_position: ast::Name::new(
-                "position".to_string(),
-                Some(FN_NAMESPACE.to_string()),
-                None,
-            ),
-            fn_last: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
         }
     }
 
@@ -134,9 +124,32 @@ impl<'a> IrConverter<'a> {
     fn fn_last(&mut self, span: Span) -> error::SpannedResult<Bindings> {
         self.context_name(|names| names.last.clone(), span)
     }
+}
+
+#[derive(Debug)]
+pub struct IrConverter<'a> {
+    variables: Variables,
+    static_context: &'a context::StaticContext<'a>,
+    fn_position: ast::Name,
+    fn_last: ast::Name,
+}
+
+impl<'a> IrConverter<'a> {
+    pub fn new(static_context: &'a context::StaticContext) -> Self {
+        Self {
+            variables: Variables::new(),
+            static_context,
+            fn_position: ast::Name::new(
+                "position".to_string(),
+                Some(FN_NAMESPACE.to_string()),
+                None,
+            ),
+            fn_last: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
+        }
+    }
 
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
-        let name = self.new_name();
+        let name = self.variables.new_name();
         Binding::new(name, expr, span)
     }
 
@@ -152,14 +165,14 @@ impl<'a> IrConverter<'a> {
     }
 
     pub fn xpath(&mut self, ast: &ast::XPath) -> error::SpannedResult<Bindings> {
-        let context_names = self.push_context();
+        let context_names = self.variables.push_context();
         // define any external variable names
         let mut ir_names = Vec::new();
         for name in self.static_context.variable_names() {
-            ir_names.push(self.new_var_name(name));
+            ir_names.push(self.variables.new_var_name(name));
         }
         let exprs_bindings = self.expr(&ast.0)?;
-        self.pop_context();
+        self.variables.pop_context();
         let mut params = vec![
             ir::Param {
                 name: context_names.item,
@@ -213,9 +226,9 @@ impl<'a> IrConverter<'a> {
             .fold(first_step_bindings, |acc, step_expr| {
                 let mut step_bindings = acc?;
                 let step_atom = step_bindings.atom();
-                let context_names = self.push_context();
+                let context_names = self.variables.push_context();
                 let return_bindings = self.step_expr(step_expr)?;
-                self.pop_context();
+                self.variables.pop_context();
                 let expr = ir::Expr::Map(ir::Map {
                     context_names,
                     var_atom: step_atom,
@@ -245,9 +258,9 @@ impl<'a> IrConverter<'a> {
         let span = ast.span;
         match outer_ast {
             ast::PrimaryExpr::Literal(ast) => Ok(self.literal(ast, span)?),
-            ast::PrimaryExpr::VarRef(ast) => self.var_ref(ast, span),
+            ast::PrimaryExpr::VarRef(ast) => self.variables.var_ref(ast, span),
             ast::PrimaryExpr::Expr(expr) => self.expr_or_empty(expr),
-            ast::PrimaryExpr::ContextItem => self.context_item(span),
+            ast::PrimaryExpr::ContextItem => self.variables.context_item(span),
             ast::PrimaryExpr::InlineFunction(ast) => self.inline_function(ast, span),
             ast::PrimaryExpr::FunctionCall(ast) => self.function_call(ast, span),
             ast::PrimaryExpr::NamedFunctionRef(ast) => self.named_function_ref(ast, span),
@@ -268,9 +281,9 @@ impl<'a> IrConverter<'a> {
             match postfix {
                 ast::Postfix::Predicate(exprs) => {
                     let atom = bindings.atom();
-                    let context_names = self.push_context();
+                    let context_names = self.variables.push_context();
                     let return_bindings = self.expr(exprs)?;
-                    self.pop_context();
+                    self.variables.pop_context();
                     let expr = ir::Expr::Filter(ir::Filter {
                         context_names,
                         var_atom: atom,
@@ -307,7 +320,7 @@ impl<'a> IrConverter<'a> {
         let var_atom = bindings.atom();
 
         // make up an internal name for the loop variable
-        let name = self.new_name();
+        let name = self.variables.new_name();
         // access the loop variable
         let mut bindings = bindings.bind(Binding::new(
             name.clone(),
@@ -353,7 +366,7 @@ impl<'a> IrConverter<'a> {
             }
         };
         // we wrap the whole thing in a map
-        let context_names = self.explicit_context_names(name);
+        let context_names = self.variables.explicit_context_names(name);
         let expr = ir::Expr::Map(ir::Map {
             context_names,
             var_atom,
@@ -365,7 +378,7 @@ impl<'a> IrConverter<'a> {
 
     fn axis_step(&mut self, ast: &ast::AxisStep, span: Span) -> error::SpannedResult<Bindings> {
         // get the current context
-        let mut current_context_bindings = self.context_item(span)?;
+        let mut current_context_bindings = self.variables.context_item(span)?;
 
         let step = xml::Step {
             axis: ast.axis.clone(),
@@ -387,9 +400,9 @@ impl<'a> IrConverter<'a> {
         ast.predicates.iter().fold(bindings, |acc, predicate| {
             let mut bindings = acc?;
             let atom = bindings.atom();
-            let context_names = self.push_context();
+            let context_names = self.variables.push_context();
             let return_bindings = self.expr(predicate)?;
-            self.pop_context();
+            self.variables.pop_context();
             let expr = ir::Expr::Filter(ir::Filter {
                 context_names,
                 var_atom: atom,
@@ -479,9 +492,9 @@ impl<'a> IrConverter<'a> {
                 path_exprs.iter().fold(path_bindings, |acc, path_expr| {
                     let mut path_bindings = acc?;
                     let path_atom = path_bindings.atom();
-                    let context_names = self.push_context();
+                    let context_names = self.variables.push_context();
                     let return_bindings = self.path_expr(path_expr)?;
-                    self.pop_context();
+                    self.variables.pop_context();
                     let expr = ir::Expr::Map(ir::Map {
                         context_names,
                         var_atom: path_atom,
@@ -586,7 +599,7 @@ impl<'a> IrConverter<'a> {
     }
 
     fn let_expr(&mut self, ast: &ast::LetExpr, span: Span) -> error::SpannedResult<Bindings> {
-        let name = self.new_var_name(&ast.var_name.value);
+        let name = self.variables.new_var_name(&ast.var_name.value);
         let var_bindings = self.expr_single(&ast.var_expr)?;
         let return_bindings = self.expr_single(&ast.return_expr)?;
         let expr = ir::Expr::Let(ir::Let {
@@ -598,10 +611,10 @@ impl<'a> IrConverter<'a> {
     }
 
     fn for_expr(&mut self, ast: &ast::ForExpr, span: Span) -> error::SpannedResult<Bindings> {
-        let name = self.new_var_name(&ast.var_name.value);
+        let name = self.variables.new_var_name(&ast.var_name.value);
         let mut var_bindings = self.expr_single(&ast.var_expr)?;
         let var_atom = var_bindings.atom();
-        let context_names = self.explicit_context_names(name);
+        let context_names = self.variables.explicit_context_names(name);
         let return_bindings = self.expr_single(&ast.return_expr)?;
         let expr = ir::Expr::Map(ir::Map {
             context_names,
@@ -618,11 +631,11 @@ impl<'a> IrConverter<'a> {
         ast: &ast::QuantifiedExpr,
         span: Span,
     ) -> error::SpannedResult<Bindings> {
-        let name = self.new_var_name(&ast.var_name.value);
+        let name = self.variables.new_var_name(&ast.var_name.value);
         let mut var_bindings = self.expr_single(&ast.var_expr)?;
         let var_atom = var_bindings.atom();
 
-        let context_names = self.explicit_context_names(name);
+        let context_names = self.variables.explicit_context_names(name);
         let satisfies_bindings = self.expr_single(&ast.satisfies_expr)?;
         let expr = ir::Expr::Quantified(ir::Quantified {
             quantifier: self.quantifier(&ast.quantifier),
@@ -656,11 +669,11 @@ impl<'a> IrConverter<'a> {
         // have an absent context, but instead share the context of their
         // environment. Normal inline functions wipe out the context, however.
         if !inline_function.wrapper {
-            self.push_absent_context();
+            self.variables.push_absent_context();
         }
         let body_bindings = self.expr_or_empty(&inline_function.body)?;
         if !inline_function.wrapper {
-            self.pop_context();
+            self.variables.pop_context();
         }
         let expr = ir::Expr::FunctionDefinition(ir::FunctionDefinition {
             params,
@@ -673,7 +686,7 @@ impl<'a> IrConverter<'a> {
 
     fn param(&mut self, param: &ast::Param) -> ir::Param {
         ir::Param {
-            name: self.new_var_name(&param.name),
+            name: self.variables.new_var_name(&param.name),
             type_: param.type_.clone(),
         }
     }
@@ -698,13 +711,13 @@ impl<'a> IrConverter<'a> {
                 // advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
                 return Err(Error::XPST0017.with_ast_span(span));
             }
-            return self.fn_position(span);
+            return self.variables.fn_position(span);
         } else if ast.name.value == self.fn_last {
             if arity != 0 {
                 // advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
                 return Err(Error::XPST0017.with_ast_span(span));
             }
-            return self.fn_last(span);
+            return self.variables.fn_last(span);
         }
 
         // advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
@@ -747,7 +760,7 @@ impl<'a> IrConverter<'a> {
     ) -> Bindings {
         let atom = ir::Atom::Const(ir::Const::StaticFunctionReference(
             static_function_id,
-            self.current_context_names(),
+            self.variables.current_context_names(),
         ));
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
         let binding = self.new_binding(expr, span);
@@ -776,7 +789,7 @@ impl<'a> IrConverter<'a> {
         ast: &ast::KeySpecifier,
         span: Span,
     ) -> error::SpannedResult<Bindings> {
-        let mut bindings = self.context_item(span)?;
+        let mut bindings = self.variables.context_item(span)?;
         let context_atom = bindings.atom();
 
         match ast {
@@ -817,7 +830,7 @@ impl<'a> IrConverter<'a> {
                 Ok(bindings.bind(binding))
             }
             ast::KeySpecifier::Star => {
-                let mut bindings = self.context_item(span)?;
+                let mut bindings = self.variables.context_item(span)?;
                 let context_atom = bindings.atom();
                 let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom: context_atom });
                 let binding = self.new_binding(expr, span);
