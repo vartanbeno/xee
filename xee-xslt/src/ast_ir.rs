@@ -66,7 +66,7 @@ impl<'a> IrConverter<'a> {
         mut self,
         transform: &ast::Transform,
     ) -> error::SpannedResult<interpreter::Program> {
-        let bindings = (&mut self).transform(transform)?;
+        let bindings = self.transform(transform)?;
         Ok(self.program)
     }
 
@@ -206,14 +206,22 @@ impl<'a> IrConverter<'a> {
         &mut self,
         apply_templates: &ast::ApplyTemplates,
     ) -> error::SpannedResult<Bindings> {
-        todo!();
-        // let select = self.expression(&apply_templates.select)?;
-        // let select_atom = select.atom();
-        // let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
-        //     select: select_atom,
-        // });
-        // let binding = self.new_binding(expr, (0..0).into());
-        // Ok(Bindings::new(binding))
+        // TODO: default for select should be child::node()
+        let mut bindings = self.expression(apply_templates.select.as_ref().unwrap())?;
+        let expression_atom = bindings.atom();
+        let args = vec![];
+        let function_call = ir::Expr::FunctionCall(ir::FunctionCall {
+            atom: expression_atom,
+            args,
+        });
+        let binding = self.new_binding(function_call, (0..0).into());
+        let mut bindings = bindings.bind(binding);
+        let select_atom = bindings.atom();
+        let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
+            select: select_atom,
+        });
+        let binding = self.new_binding(expr, (0..0).into());
+        Ok(bindings.bind(binding))
     }
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
@@ -233,5 +241,10 @@ impl<'a> IrConverter<'a> {
             (0..0).into(),
         );
         Ok(Bindings::new(binding))
+    }
+
+    fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
+        let mut ir_converter = xee_xpath::IrConverter::new(self.static_context);
+        ir_converter.xpath(&expression.xpath)
     }
 }

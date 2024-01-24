@@ -30,6 +30,22 @@ pub struct Interpreter<'a> {
     pub(crate) state: State,
 }
 
+pub struct ContextInfo {
+    pub item: sequence::Item,
+    pub position: IBig,
+    pub size: IBig,
+}
+
+impl From<sequence::Item> for ContextInfo {
+    fn from(item: sequence::Item) -> Self {
+        ContextInfo {
+            item,
+            position: 1.into(),
+            size: 1.into(),
+        }
+    }
+}
+
 impl<'a> Interpreter<'a> {
     pub fn new(runnable: &'a Runnable<'a>) -> Self {
         Interpreter {
@@ -46,47 +62,23 @@ impl<'a> Interpreter<'a> {
         self.runnable
     }
 
-    pub fn start(
-        &mut self,
-        context_item: Option<&sequence::Item>,
-        arguments: Vec<sequence::Sequence>,
-    ) {
-        self.start_function(self.runnable.program().main_id(), context_item, arguments)
-        // self.state
-        //     .push_start_frame(self.runnable.program().main_id());
-
-        // if let Some(context_item) = context_item {
-        //     // the context item
-        //     self.state.push(stack::Value::from(context_item.clone()));
-        //     // position & size
-        //     self.state.push(1i64.into());
-        //     self.state.push(1i64.into());
-        // } else {
-        //     // absent context, position and size
-        //     self.state.push(stack::Value::Absent);
-        //     self.state.push(stack::Value::Absent);
-        //     self.state.push(stack::Value::Absent);
-        // }
-        // // and any arguments
-        // for arg in arguments {
-        //     self.state.push(stack::Value::from(arg));
-        // }
+    pub fn start(&mut self, context_info: Option<ContextInfo>, arguments: Vec<sequence::Sequence>) {
+        self.start_function(self.runnable.program().main_id(), context_info, arguments)
     }
 
     pub fn start_function(
         &mut self,
         function_id: function::InlineFunctionId,
-        context_item: Option<&sequence::Item>,
+        context_info: Option<ContextInfo>,
         arguments: Vec<sequence::Sequence>,
     ) {
         self.state.push_start_frame(function_id);
 
-        if let Some(context_item) = context_item {
+        if let Some(context_info) = context_info {
             // the context item
-            self.state.push(stack::Value::from(context_item.clone()));
-            // position & size
-            self.state.push(1i64.into());
-            self.state.push(1i64.into());
+            self.state.push(context_info.item.into());
+            self.state.push(context_info.position.into());
+            self.state.push(context_info.size.into());
         } else {
             // absent context, position and size
             self.state.push(stack::Value::Absent);
@@ -544,7 +536,13 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::XmlComment => {}
                 EncodedInstruction::XmlProcessingInstruction => {}
                 EncodedInstruction::ApplyTemplates => {
-                    todo!();
+                    let value = self.state.pop();
+                    // TODO: this unwrap hides errors
+                    let output = self
+                        .runnable
+                        .apply_templates_sequence(value.into())
+                        .unwrap();
+                    self.state.push(output.sequence.into());
                 }
                 EncodedInstruction::PrintTop => {
                     let top = self.state.top();

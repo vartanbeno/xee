@@ -1,12 +1,14 @@
 use std::fmt::Formatter;
 use std::rc::Rc;
 
+use ibig::IBig;
 use xee_name::Name;
 use xot::Xot;
 
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
+use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
@@ -71,7 +73,7 @@ impl<'a> Runnable<'a> {
         // underlined in the xpath expression. But that requires some more work to
         // accomplish, so for now we panic.
         let arguments = self.dynamic_context.arguments().unwrap();
-        interpreter.start(context_item, arguments);
+        interpreter.start(context_item.map(|item| item.clone().into()), arguments);
         interpreter.run(0)?;
 
         let state = interpreter.state();
@@ -153,8 +155,8 @@ impl<'a> Runnable<'a> {
         let mut interpreter = Interpreter::new(self);
 
         let mut r: Vec<sequence::Item> = Vec::new();
-
-        for item in sequence.items() {
+        let size: IBig = sequence.len().into();
+        for (i, item) in sequence.items().enumerate() {
             let item = item.unwrap(); // TODO
             let function_id = self
                 .program
@@ -163,7 +165,15 @@ impl<'a> Runnable<'a> {
                 .lookup(&item, self.dynamic_context.xot);
             if let Some(function_id) = function_id {
                 let arguments = Vec::new();
-                interpreter.start_function(*function_id, Some(&item), arguments);
+                interpreter.start_function(
+                    *function_id,
+                    Some(ContextInfo {
+                        item,
+                        position: (i + 1).into(),
+                        size: size.clone(),
+                    }),
+                    arguments,
+                );
                 interpreter.run(0)?;
                 // append top of stack to result sequence
                 let state = &mut interpreter.state;

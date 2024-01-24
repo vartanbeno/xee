@@ -12,7 +12,7 @@ enum ContextItem {
 }
 
 #[derive(Debug)]
-pub(crate) struct IrConverter<'a> {
+pub struct IrConverter<'a> {
     counter: usize,
     variables: HashMap<ast::Name, ir::Name>,
     context_scope: Vec<ContextItem>,
@@ -22,7 +22,7 @@ pub(crate) struct IrConverter<'a> {
 }
 
 impl<'a> IrConverter<'a> {
-    pub(crate) fn new(static_context: &'a context::StaticContext) -> Self {
+    pub fn new(static_context: &'a context::StaticContext) -> Self {
         Self {
             counter: 0,
             variables: HashMap::new(),
@@ -43,7 +43,7 @@ impl<'a> IrConverter<'a> {
         ir::Name::new(name)
     }
 
-    fn push_context(&mut self) -> ir::ContextNames {
+    pub fn push_context(&mut self) -> ir::ContextNames {
         let names = ir::ContextNames {
             item: self.new_name(),
             position: self.new_name(),
@@ -57,7 +57,7 @@ impl<'a> IrConverter<'a> {
         self.context_scope.push(ContextItem::Absent);
     }
 
-    fn pop_context(&mut self) {
+    pub fn pop_context(&mut self) {
         self.context_scope.pop();
     }
 
@@ -151,7 +151,7 @@ impl<'a> IrConverter<'a> {
         Ok(bindings.expr())
     }
 
-    fn xpath(&mut self, ast: &ast::XPath) -> error::SpannedResult<Bindings> {
+    pub fn xpath(&mut self, ast: &ast::XPath) -> error::SpannedResult<Bindings> {
         let context_names = self.push_context();
         // define any external variable names
         let mut ir_names = Vec::new();

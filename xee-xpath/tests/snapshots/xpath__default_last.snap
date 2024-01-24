@@ -7,7 +7,7 @@ Ok(
         stack_value: One(
             Atomic(
                 Integer(
-                    Long,
+                    Integer,
                     1,
                 ),
             ),

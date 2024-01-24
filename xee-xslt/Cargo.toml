@@ -23,6 +23,7 @@ thiserror = { workspace = true }
 xot = { workspace = true }
 xee-name = { path = "../xee-name" }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-xpath = { path = "../xee-xpath" }
 xee-xslt-ast = { path = "../xee-xslt-ast" }
 xee-schema-type = { path = "../xee-schema-type" }
 xee-interpreter = { path = "../xee-interpreter" }

@@ -3592,6 +3592,7 @@ dependencies = [
  "xee-ir",
  "xee-name",
  "xee-schema-type",
+ "xee-xpath",
  "xee-xpath-ast",
  "xee-xslt-ast",
  "xot",
