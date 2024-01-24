@@ -304,7 +304,7 @@ impl<'a> IrConverter<'a> {
         Ok(Bindings::new(binding))
     }
 
-    fn expr(&mut self, expr: &ast::ExprS) -> error::SpannedResult<Bindings> {
+    pub fn expr(&mut self, expr: &ast::ExprS) -> error::SpannedResult<Bindings> {
         self.expr_with_span(&expr.value, expr.span)
     }
 
