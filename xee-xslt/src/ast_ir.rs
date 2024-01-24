@@ -1,16 +1,14 @@
-use ahash::{HashMap, HashMapExt};
 use xee_xpath_ast::ast::Span;
 
 use xee_interpreter::{context::StaticContext, error, function, interpreter};
-use xee_ir::{ir, Binding, Bindings, FunctionBuilder, InterpreterCompiler, Scopes};
+use xee_ir::{ir, Binding, Bindings, FunctionBuilder, InterpreterCompiler, Scopes, Variables};
 use xee_xpath_ast::span::Spanned;
 use xee_xslt_ast::{ast, parse_transform};
 
 struct IrConverter<'a> {
+    variables: Variables,
     program: interpreter::Program,
     static_context: &'a StaticContext<'a>,
-    counter: usize,
-    variables: HashMap<ast::Name, ir::Name>,
 }
 
 pub(crate) fn compile(
@@ -32,10 +30,9 @@ pub(crate) fn parse(
 impl<'a> IrConverter<'a> {
     fn new(static_context: &'a StaticContext<'a>) -> Self {
         IrConverter {
+            variables: Variables::new(),
             program: interpreter::Program::new((0..0).into()),
             static_context,
-            counter: 0,
-            variables: HashMap::new(),
         }
     }
 
@@ -43,22 +40,8 @@ impl<'a> IrConverter<'a> {
         self.program
     }
 
-    fn new_name(&mut self) -> ir::Name {
-        let name = format!("x{}", self.counter);
-        self.counter += 1;
-        ir::Name::new(name)
-    }
-
-    fn new_var_name(&mut self, name: &ast::Name) -> ir::Name {
-        self.variables.get(name).cloned().unwrap_or_else(|| {
-            let new_name = self.new_name();
-            self.variables.insert(name.clone(), new_name.clone());
-            new_name
-        })
-    }
-
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
-        let name = self.new_name();
+        let name = self.variables.new_name();
         Binding::new(name, expr, span)
     }
 
@@ -244,7 +227,8 @@ impl<'a> IrConverter<'a> {
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
-        let mut ir_converter = xee_xpath::IrConverter::new(self.static_context);
+        let mut ir_converter =
+            xee_xpath::IrConverter::new(&mut self.variables, self.static_context);
         ir_converter.xpath(&expression.xpath)
     }
 }

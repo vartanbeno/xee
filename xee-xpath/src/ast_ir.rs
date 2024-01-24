@@ -7,16 +7,16 @@ use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
 
 #[derive(Debug)]
 pub struct IrConverter<'a> {
-    variables: Variables,
+    variables: &'a mut Variables,
     static_context: &'a context::StaticContext<'a>,
     fn_position: ast::Name,
     fn_last: ast::Name,
 }
 
 impl<'a> IrConverter<'a> {
-    pub fn new(static_context: &'a context::StaticContext) -> Self {
+    pub fn new(variables: &'a mut Variables, static_context: &'a context::StaticContext) -> Self {
         Self {
-            variables: Variables::new(),
+            variables,
             static_context,
             fn_position: ast::Name::new(
                 "position".to_string(),
@@ -778,14 +778,16 @@ mod tests {
     fn convert_expr_single(s: &str) -> error::SpannedResult<ir::ExprS> {
         let ast = ast::ExprSingle::parse(s)?;
         let static_context = context::StaticContext::default();
-        let mut converter = IrConverter::new(&static_context);
+        let mut variables = Variables::new();
+        let mut converter = IrConverter::new(&mut variables, &static_context);
         converter.convert_expr_single(&ast)
     }
 
     pub(crate) fn convert_xpath(s: &str) -> error::SpannedResult<ir::ExprS> {
         let static_context = context::StaticContext::default();
         let ast = static_context.parse_xpath(s)?;
-        let mut converter = IrConverter::new(&static_context);
+        let mut variables = Variables::new();
+        let mut converter = IrConverter::new(&mut variables, &static_context);
         converter.convert_xpath(&ast)
     }
 

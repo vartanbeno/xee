@@ -1,5 +1,5 @@
 use xee_interpreter::{context, error, interpreter::Program};
-use xee_ir::{FunctionBuilder, InterpreterCompiler, Scopes};
+use xee_ir::{FunctionBuilder, InterpreterCompiler, Scopes, Variables};
 use xee_xpath_ast::ast;
 
 use crate::ast_ir::IrConverter;
@@ -9,7 +9,8 @@ pub fn compile(
     static_context: &context::StaticContext,
     xpath: ast::XPath,
 ) -> error::SpannedResult<Program> {
-    let mut ir_converter = IrConverter::new(static_context);
+    let mut variables = Variables::new();
+    let mut ir_converter = IrConverter::new(&mut variables, static_context);
     let expr = ir_converter.convert_xpath(&xpath)?;
     // this expression contains a function definition, we're getting it
     // in the end

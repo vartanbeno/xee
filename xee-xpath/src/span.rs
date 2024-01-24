@@ -3,7 +3,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     use xee_interpreter::{context, error, sequence, span::SourceSpan};
-    use xee_ir::ir;
+    use xee_ir::{ir, Variables};
 
     use crate::ast_ir::IrConverter;
     use crate::evaluate_without_focus;
@@ -13,7 +13,8 @@ mod tests {
         xpath: &str,
     ) -> error::SpannedResult<ir::ExprS> {
         let ast = static_context.parse_xpath(xpath)?;
-        let mut converter = IrConverter::new(static_context);
+        let mut variables = Variables::new();
+        let mut converter = IrConverter::new(&mut variables, static_context);
         converter.convert_xpath(&ast)
     }
 
