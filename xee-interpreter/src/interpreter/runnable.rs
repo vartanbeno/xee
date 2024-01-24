@@ -5,6 +5,7 @@ use ibig::IBig;
 use xee_name::Name;
 use xot::Xot;
 
+use crate::atomic::Atomic;
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
@@ -160,15 +161,19 @@ impl<'a> Runnable<'a> {
                 .pattern_lookup
                 .lookup(&item, self.dynamic_context.xot);
             if let Some(function_id) = function_id {
-                interpreter.push_context_info(Some(ContextInfo {
-                    item,
-                    position: (i + 1).into(),
-                    size: size.clone(),
-                }));
-                interpreter.call_inline(*function_id, 3).unwrap();
-                // append top of stack to result sequence
-                let state = &mut interpreter.state;
-                let value = state.pop().clone();
+                let position: IBig = (i + 1).into();
+                let arguments: Vec<sequence::Sequence> = vec![
+                    item.into(),
+                    Atomic::from(position).into(),
+                    Atomic::from(size.clone()).into(),
+                ];
+                let function = Rc::new(function::Function::Inline {
+                    inline_function_id: *function_id,
+                    closure_vars: Vec::new(),
+                });
+                let value = interpreter
+                    .call_function_with_arguments(function, &arguments)
+                    .unwrap();
                 for item in value.items() {
                     r.push(item.unwrap());
                 }

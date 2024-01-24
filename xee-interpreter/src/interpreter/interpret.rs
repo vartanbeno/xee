@@ -66,7 +66,7 @@ impl<'a> Interpreter<'a> {
         self.start_function(self.runnable.program().main_id(), context_info, arguments)
     }
 
-    pub fn start_function(
+    fn start_function(
         &mut self,
         function_id: function::InlineFunctionId,
         context_info: Option<ContextInfo>,
@@ -81,7 +81,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn push_context_info(&mut self, context_info: Option<ContextInfo>) {
+    fn push_context_info(&mut self, context_info: Option<ContextInfo>) {
         if let Some(context_info) = context_info {
             // the context item
             self.state.push(context_info.item.into());
@@ -684,7 +684,7 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    pub(crate) fn call_inline(
+    fn call_inline(
         &mut self,
         function_id: function::InlineFunctionId,
         arity: u8,

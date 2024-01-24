@@ -58,23 +58,23 @@ mod tests {
         assert_eq!(output.to_string(), "<a><b/><b/></a>");
     }
 
-    // #[test]
-    // fn test_transform_nested_apply_templates() {
-    //     let output = evaluate(
-    //         "<doc><foo/><bar/></doc>",
-    //         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-    //              <xsl:template match="/">
-    //                <o><xsl:apply-templates select="doc/*" /></o>
-    //              </xsl:template>
-    //              <xsl:template match="foo">
-    //                <f/>
-    //              </xsl:template>
-    //              <xsl:template match="bar">
-    //                 <b/>
-    //              </xsl:template>
-    //           </xsl:transform>"#,
-    //     )
-    //     .unwrap();
-    //     assert_eq!(output.to_string(), "<o><f/><b/></o>");
-    // }
+    #[test]
+    fn test_transform_nested_apply_templates() {
+        let output = evaluate(
+            "<doc><foo/><bar/></doc>",
+            r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                 <xsl:template match="/">
+                   <o><xsl:apply-templates select="doc/*" /></o>
+                 </xsl:template>
+                 <xsl:template match="foo">
+                   <f/>
+                 </xsl:template>
+                 <xsl:template match="bar">
+                    <b/>
+                 </xsl:template>
+              </xsl:transform>"#,
+        )
+        .unwrap();
+        assert_eq!(output.to_string(), "<o><f/><b/></o>");
+    }
 }
