@@ -191,11 +191,6 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_match(&mut self, span: SourceSpan) -> error::SpannedResult<()> {
-        todo!();
-        Ok(())
-    }
-
     fn compile_binary(
         &mut self,
         binary: &ir::Binary,

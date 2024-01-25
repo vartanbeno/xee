@@ -9,7 +9,6 @@ use crate::atomic::Atomic;
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
-use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;

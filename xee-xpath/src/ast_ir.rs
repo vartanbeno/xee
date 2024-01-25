@@ -1,5 +1,3 @@
-use ahash::{HashMap, HashMapExt};
-
 use xee_interpreter::{context, error, error::Error, function, xml};
 use xee_ir::{ir, ir::AtomS, Binding, Bindings, Variables};
 use xee_schema_type::Xs;

@@ -1,4 +1,3 @@
-use xee_interpreter::pattern::{self, PatternLookup};
 use xee_xpath_ast::{ast, Pattern};
 
 use xee_interpreter::interpreter::instruction::{
