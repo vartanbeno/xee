@@ -29,6 +29,11 @@ impl Variables {
         }
     }
 
+    pub fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
+        let name = self.new_name();
+        Binding::new(name, expr, span)
+    }
+
     pub fn new_name(&mut self) -> ir::Name {
         let name = format!("v{}", self.counter);
         self.counter += 1;

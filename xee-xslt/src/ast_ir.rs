@@ -1,9 +1,8 @@
 use ahash::HashSetExt;
 use xee_name::{Name, Namespaces, FN_NAMESPACE};
-use xee_xpath_ast::ast::Span;
 
 use xee_interpreter::{context::StaticContext, error, interpreter};
-use xee_ir::{compile_xslt, ir, Binding, Bindings, Variables};
+use xee_ir::{compile_xslt, ir, Bindings, Variables};
 use xee_xpath_ast::span::Spanned;
 use xee_xslt_ast::{ast, parse_transform};
 
@@ -35,11 +34,6 @@ impl<'a> IrConverter<'a> {
             variables: Variables::new(),
             static_context,
         }
-    }
-
-    fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
-        let name = self.variables.new_name();
-        Binding::new(name, expr, span)
     }
 
     fn main_sequence_constructor(&mut self) -> ast::SequenceConstructor {
@@ -161,7 +155,7 @@ impl<'a> IrConverter<'a> {
                 });
                 let span_end = 0; // TODO
                 let span = (span_start..span_end).into();
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(left_bindings.concat(right_bindings).bind(binding))
             })
         } else {
@@ -178,7 +172,7 @@ impl<'a> IrConverter<'a> {
                 let mut bindings = self.element_name(&element_node.name)?;
                 let name_atom = bindings.atom();
                 let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
-                let element_binding = self.new_binding(expr, (0..0).into());
+                let element_binding = self.variables.new_binding(expr, (0..0).into());
                 let mut bindings = bindings.bind(element_binding);
                 let bindings = if !element_node.sequence_constructor.is_empty() {
                     let element_atom = bindings.atom();
@@ -190,7 +184,7 @@ impl<'a> IrConverter<'a> {
                         parent: element_atom,
                         child: content_atom,
                     });
-                    let append_binding = self.new_binding(append, (0..0).into());
+                    let append_binding = self.variables.new_binding(append, (0..0).into());
                     bindings.bind(append_binding)
                 } else {
                     bindings
@@ -226,7 +220,7 @@ impl<'a> IrConverter<'a> {
         let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
             select: select_atom,
         });
-        let binding = self.new_binding(expr, (0..0).into());
+        let binding = self.variables.new_binding(expr, (0..0).into());
         Ok(bindings.bind(binding))
     }
 
@@ -234,23 +228,43 @@ impl<'a> IrConverter<'a> {
         if let Some(select) = &value_of.select {
             let mut bindings = self.expression(select)?;
             let select_atom = bindings.atom();
-            let separator_atom = Spanned::new(
-                ir::Atom::Const(ir::Const::String(" ".to_string())),
-                (0..0).into(),
-            );
+            let mut separator_bindings = if let Some(separator) = &value_of.separator {
+                self.attribute_value_template(separator)?
+                // todo!();
+                // separator.template.clone()
+            } else {
+                Bindings::new(self.variables.new_binding(
+                    ir::Expr::Atom(Spanned::new(
+                        ir::Atom::Const(ir::Const::String(" ".to_string())),
+                        (0..0).into(),
+                    )),
+                    (0..0).into(),
+                ))
+            };
+            let separator_atom = separator_bindings.atom();
+            bindings = bindings.concat(separator_bindings);
             let simple_content_call = ir::Expr::FunctionCall(ir::FunctionCall {
                 atom: Spanned::new(self.simple_content(), (0..0).into()),
                 args: vec![select_atom, separator_atom],
             });
-            let binding = self.new_binding(simple_content_call, (0..0).into());
+            let binding = self
+                .variables
+                .new_binding(simple_content_call, (0..0).into());
             let mut bindings = bindings.bind(binding);
             let text_atom = bindings.atom();
             let text = ir::Expr::XmlText(ir::XmlText { value: text_atom });
-            let binding = self.new_binding(text, (0..0).into());
+            let binding = self.variables.new_binding(text, (0..0).into());
             Ok(bindings.bind(binding))
         } else {
             todo!()
         }
+    }
+
+    fn attribute_value_template(
+        &mut self,
+        _value_template: &ast::ValueTemplate<String>,
+    ) -> error::SpannedResult<Bindings> {
+        todo!();
     }
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
@@ -262,7 +276,7 @@ impl<'a> IrConverter<'a> {
             ir::Atom::Const(ir::Const::String(name.namespace.clone())),
             (0..0).into(),
         );
-        let binding = self.new_binding(
+        let binding = self.variables.new_binding(
             ir::Expr::XmlName(ir::XmlName {
                 local_name,
                 namespace,

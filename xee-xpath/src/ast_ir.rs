@@ -25,11 +25,6 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
-        let name = self.variables.new_name();
-        Binding::new(name, expr, span)
-    }
-
     #[cfg(test)]
     fn convert_expr_single(&mut self, ast: &ast::ExprSingleS) -> error::SpannedResult<ir::ExprS> {
         let bindings = self.expr_single(ast)?;
@@ -76,7 +71,7 @@ impl<'a> IrConverter<'a> {
             return_type: None,
             body: Box::new(exprs_bindings.expr()),
         });
-        let binding = self.new_binding(outer_function_expr, ast.0.span);
+        let binding = self.variables.new_binding(outer_function_expr, ast.0.span);
         Ok(Bindings::new(binding))
     }
 
@@ -115,7 +110,7 @@ impl<'a> IrConverter<'a> {
                 let deduplicate_expr =
                     ir::Expr::Deduplicate(Box::new(Spanned::new(expr, step_expr.span)));
 
-                let binding = self.new_binding(deduplicate_expr, step_expr.span);
+                let binding = self.variables.new_binding(deduplicate_expr, step_expr.span);
                 Ok(step_bindings.bind(binding))
             })
     }
@@ -167,7 +162,7 @@ impl<'a> IrConverter<'a> {
                         return_expr: Box::new(return_bindings.expr()),
                     });
                     // TODO should use postfix span, not exprs span
-                    let binding = self.new_binding(expr, exprs.span);
+                    let binding = self.variables.new_binding(expr, exprs.span);
                     Ok(bindings.bind(binding))
                 }
                 ast::Postfix::ArgumentList(exprs) => {
@@ -176,7 +171,7 @@ impl<'a> IrConverter<'a> {
                     let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args: atoms });
                     // TODO should be able to get span for postfix
                     let empty_span = (0..0).into();
-                    let binding = self.new_binding(expr, empty_span);
+                    let binding = self.variables.new_binding(expr, empty_span);
                     Ok(bindings.concat(arg_bindings).bind(binding))
                 }
                 ast::Postfix::Lookup(key_specifier) => {
@@ -215,7 +210,7 @@ impl<'a> IrConverter<'a> {
                 let mut bindings = bindings.concat(arg_bindings);
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 bindings.bind(binding)
             }
             ast::KeySpecifier::Integer(integer) => {
@@ -225,7 +220,7 @@ impl<'a> IrConverter<'a> {
                 let mut bindings = bindings.concat(arg_bindings);
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 bindings.bind(binding)
             }
             ast::KeySpecifier::Expr(expr) => {
@@ -233,12 +228,12 @@ impl<'a> IrConverter<'a> {
                 let mut bindings = bindings.concat(arg_bindings);
                 let arg_atom = bindings.atom();
                 let expr = ir::Expr::Lookup(ir::Lookup { atom, arg_atom });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 bindings.bind(binding)
             }
             ast::KeySpecifier::Star => {
                 let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 bindings.bind(binding)
             }
         };
@@ -249,7 +244,7 @@ impl<'a> IrConverter<'a> {
             var_atom,
             return_expr: Box::new(return_bindings.expr()),
         });
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(bindings.bind(binding))
     }
 
@@ -269,7 +264,7 @@ impl<'a> IrConverter<'a> {
         });
 
         // create a new binding for the step
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
 
         let bindings = Ok(Bindings::new(binding));
 
@@ -285,7 +280,7 @@ impl<'a> IrConverter<'a> {
                 var_atom: atom,
                 return_expr: Box::new(return_bindings.expr()),
             });
-            let binding = self.new_binding(expr, predicate.span);
+            let binding = self.variables.new_binding(expr, predicate.span);
             Ok(bindings.bind(binding))
         })
     }
@@ -298,7 +293,7 @@ impl<'a> IrConverter<'a> {
             ast::Literal::Decimal(d) => ir::Atom::Const(ir::Const::Decimal(*d)),
         };
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(Bindings::new(binding))
     }
 
@@ -325,7 +320,7 @@ impl<'a> IrConverter<'a> {
                 });
                 let span_end = expr_single.span.end;
                 let span = (span_start..span_end).into();
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(left_bindings.concat(right_bindings).bind(binding))
             })
     }
@@ -339,7 +334,7 @@ impl<'a> IrConverter<'a> {
                 ir::Atom::Const(ir::Const::EmptySequence),
                 span,
             ));
-            let binding = self.new_binding(expr, span);
+            let binding = self.variables.new_binding(expr, span);
             Ok(Bindings::new(binding))
         }
     }
@@ -353,7 +348,7 @@ impl<'a> IrConverter<'a> {
             op,
             right: right_bindings.atom(),
         });
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
 
         Ok(left_bindings.concat(right_bindings).bind(binding))
     }
@@ -377,7 +372,7 @@ impl<'a> IrConverter<'a> {
                         var_atom: path_atom,
                         return_expr: Box::new(return_bindings.expr()),
                     });
-                    let binding = self.new_binding(expr, span);
+                    let binding = self.variables.new_binding(expr, span);
                     Ok(path_bindings.bind(binding))
                 })
             }
@@ -389,7 +384,7 @@ impl<'a> IrConverter<'a> {
                         op: op.clone(),
                         atom: bindings.atom(),
                     });
-                    let binding = self.new_binding(expr, span);
+                    let binding = self.variables.new_binding(expr, span);
                     Ok(bindings.bind(binding))
                 })
             }
@@ -411,7 +406,7 @@ impl<'a> IrConverter<'a> {
                         xs,
                         empty_sequence_allowed: single_type.optional,
                     });
-                    let binding = self.new_binding(expr, span);
+                    let binding = self.variables.new_binding(expr, span);
                     Ok(bindings.bind(binding))
                 } else {
                     Err(Error::XQST0052.with_ast_span(span))
@@ -435,7 +430,7 @@ impl<'a> IrConverter<'a> {
                         xs,
                         empty_sequence_allowed: single_type.optional,
                     });
-                    let binding = self.new_binding(expr, span);
+                    let binding = self.variables.new_binding(expr, span);
                     Ok(bindings.bind(binding))
                 } else {
                     Err(Error::XQST0052.with_ast_span(span))
@@ -447,7 +442,7 @@ impl<'a> IrConverter<'a> {
                     atom: bindings.atom(),
                     sequence_type: sequence_type.clone(),
                 });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
             ast::ApplyOperator::Treat(sequence_type) => {
@@ -456,7 +451,7 @@ impl<'a> IrConverter<'a> {
                     atom: bindings.atom(),
                     sequence_type: sequence_type.clone(),
                 });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
         }
@@ -471,7 +466,7 @@ impl<'a> IrConverter<'a> {
             then: Box::new(then_bindings.expr()),
             else_: Box::new(else_bindings.expr()),
         });
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(condition_bindings.bind(binding))
     }
 
@@ -484,7 +479,7 @@ impl<'a> IrConverter<'a> {
             var_expr: Box::new(var_bindings.expr()),
             return_expr: Box::new(return_bindings.expr()),
         });
-        Ok(Bindings::new(self.new_binding(expr, span)))
+        Ok(Bindings::new(self.variables.new_binding(expr, span)))
     }
 
     fn for_expr(&mut self, ast: &ast::ForExpr, span: Span) -> error::SpannedResult<Bindings> {
@@ -499,7 +494,7 @@ impl<'a> IrConverter<'a> {
             return_expr: Box::new(return_bindings.expr()),
         });
 
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(var_bindings.bind(binding))
     }
 
@@ -521,7 +516,7 @@ impl<'a> IrConverter<'a> {
             satisifies_expr: Box::new(satisfies_bindings.expr()),
         });
 
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(var_bindings.bind(binding))
     }
 
@@ -557,7 +552,7 @@ impl<'a> IrConverter<'a> {
             return_type: inline_function.return_type.clone(),
             body: Box::new(body_bindings.expr()),
         });
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(Bindings::new(binding))
     }
 
@@ -610,7 +605,7 @@ impl<'a> IrConverter<'a> {
         let atom = static_function_ref_bindings.atom();
         let (arg_bindings, atoms) = self.args(&ast.arguments)?;
         let expr = ir::Expr::FunctionCall(ir::FunctionCall { atom, args: atoms });
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Ok(static_function_ref_bindings
             .concat(arg_bindings)
             .bind(binding))
@@ -640,7 +635,7 @@ impl<'a> IrConverter<'a> {
             self.variables.current_context_names(),
         ));
         let expr = ir::Expr::Atom(Spanned::new(atom, span));
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Bindings::new(binding)
     }
 
@@ -680,7 +675,7 @@ impl<'a> IrConverter<'a> {
                     atom: context_atom,
                     arg_atom,
                 });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
             ast::KeySpecifier::Integer(i) => {
@@ -692,7 +687,7 @@ impl<'a> IrConverter<'a> {
                     atom: context_atom,
                     arg_atom,
                 });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
             ast::KeySpecifier::Expr(expr) => {
@@ -703,14 +698,14 @@ impl<'a> IrConverter<'a> {
                     atom: context_atom,
                     arg_atom,
                 });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
             ast::KeySpecifier::Star => {
                 let mut bindings = self.variables.context_item(span)?;
                 let context_atom = bindings.atom();
                 let expr = ir::Expr::WildcardLookup(ir::WildcardLookup { atom: context_atom });
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
         }
@@ -718,7 +713,7 @@ impl<'a> IrConverter<'a> {
 
     fn atom(&mut self, atom: AtomS, span: Span) -> Bindings {
         let expr = ir::Expr::Atom(atom);
-        let binding = self.new_binding(expr, span);
+        let binding = self.variables.new_binding(expr, span);
         Bindings::new(binding)
     }
 
@@ -741,7 +736,7 @@ impl<'a> IrConverter<'a> {
         let (value_bindings, value_atoms) = self.args(&values)?;
         let members = key_atoms.into_iter().zip(value_atoms).collect::<Vec<_>>();
         let expr = ir::Expr::MapConstructor(ir::MapConstructor { members });
-        let expr_binding = self.new_binding(expr, span);
+        let expr_binding = self.variables.new_binding(expr, span);
         let bindings = key_bindings.concat(value_bindings).bind(expr_binding);
         Ok(bindings)
     }
@@ -755,13 +750,13 @@ impl<'a> IrConverter<'a> {
             ast::ArrayConstructor::Square(expr) => {
                 let (bindings, atoms) = self.args(&expr.value.0)?;
                 let expr = ir::Expr::ArrayConstructor(ir::ArrayConstructor::Square(atoms));
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
             ast::ArrayConstructor::Curly(expr_or_empty) => {
                 let mut bindings = self.expr_or_empty(expr_or_empty)?;
                 let expr = ir::Expr::ArrayConstructor(ir::ArrayConstructor::Curly(bindings.atom()));
-                let binding = self.new_binding(expr, span);
+                let binding = self.variables.new_binding(expr, span);
                 Ok(bindings.bind(binding))
             }
         }
