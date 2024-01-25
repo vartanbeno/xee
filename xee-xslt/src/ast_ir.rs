@@ -212,20 +212,23 @@ impl<'a> IrConverter<'a> {
         apply_templates: &ast::ApplyTemplates,
     ) -> error::SpannedResult<Bindings> {
         // TODO: default for select should be child::node()
-        let mut bindings = self.expression(apply_templates.select.as_ref().unwrap())?;
-        let select_atom = bindings.atom();
-        let expr = ir::Expr::ApplyTemplates(ir::ApplyTemplates {
-            select: select_atom,
-        });
-        let binding = self.variables.new_binding_no_span(expr);
-        Ok(bindings.bind(binding))
+        let (select_atom, bindings) = self
+            .expression(apply_templates.select.as_ref().unwrap())?
+            .atom_bindings();
+        // let select_atom = bindings.atom();
+        Ok(bindings.bind_expr_no_span(
+            &mut self.variables,
+            ir::Expr::ApplyTemplates(ir::ApplyTemplates {
+                select: select_atom,
+            }),
+        ))
     }
 
     fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
         if let Some(select) = &value_of.select {
-            let mut bindings = self.expression(select)?;
-            let select_atom = bindings.atom();
-            let mut separator_bindings = if let Some(separator) = &value_of.separator {
+            let (select_atom, select_bindings) = self.expression(select)?.atom_bindings();
+            let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator
+            {
                 self.attribute_value_template(separator)?
                 // todo!();
                 // separator.template.clone()
@@ -237,19 +240,20 @@ impl<'a> IrConverter<'a> {
                             (0..0).into(),
                         ))),
                 )
-            };
-            let separator_atom = separator_bindings.atom();
-            bindings = bindings.concat(separator_bindings);
-            let simple_content_call = ir::Expr::FunctionCall(ir::FunctionCall {
+            }
+            .atom_bindings();
+            let bindings = select_bindings.concat(separator_bindings);
+            let expr = ir::Expr::FunctionCall(ir::FunctionCall {
                 atom: Spanned::new(self.simple_content(), (0..0).into()),
                 args: vec![select_atom, separator_atom],
             });
-            let binding = self.variables.new_binding_no_span(simple_content_call);
-            let mut bindings = bindings.bind(binding);
-            let text_atom = bindings.atom();
-            let text = ir::Expr::XmlText(ir::XmlText { value: text_atom });
-            let binding = self.variables.new_binding_no_span(text);
-            Ok(bindings.bind(binding))
+            let (text_atom, bindings) = bindings
+                .bind_expr_no_span(&mut self.variables, expr)
+                .atom_bindings();
+            Ok(bindings.bind_expr_no_span(
+                &mut self.variables,
+                ir::Expr::XmlText(ir::XmlText { value: text_atom }),
+            ))
         } else {
             todo!()
         }

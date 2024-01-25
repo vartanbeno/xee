@@ -1,5 +1,6 @@
-use crate::ir;
+use crate::{ir, Variables};
 
+use xee_interpreter::error;
 use xee_xpath_ast::{ast::Span, span::Spanned};
 
 /// A binding consists of a unique variable name and an expression.
@@ -71,6 +72,21 @@ impl Bindings {
             }),
             last_binding.span,
         )
+    }
+
+    pub fn atom_bindings(mut self) -> (ir::AtomS, Self) {
+        let atom = self.atom();
+        (atom, self)
+    }
+
+    pub fn bind_expr(&self, variables: &mut Variables, expr: ir::ExprS) -> Self {
+        let binding = variables.new_binding(expr.value, expr.span);
+        self.bind(binding)
+    }
+
+    pub fn bind_expr_no_span(&self, variables: &mut Variables, expr: ir::Expr) -> Self {
+        let binding = variables.new_binding(expr, (0..0).into());
+        self.bind(binding)
     }
 
     /// Create a new Bindings by adding the existing binding to it
