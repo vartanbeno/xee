@@ -2,23 +2,28 @@ use ahash::HashSetExt;
 use xee_name::Namespaces;
 use xee_xpath_ast::ast::Span;
 
-use xee_interpreter::{context::StaticContext, error, function, interpreter};
+use xee_interpreter::{context::StaticContext, error, interpreter};
 use xee_ir::{ir, Binding, Bindings, FunctionBuilder, InterpreterCompiler, Scopes, Variables};
 use xee_xpath_ast::span::Spanned;
 use xee_xslt_ast::{ast, parse_transform};
 
 struct IrConverter<'a> {
     variables: Variables,
-    program: interpreter::Program,
     static_context: &'a StaticContext<'a>,
 }
 
-pub(crate) fn compile(
-    static_context: &StaticContext,
+pub fn compile(
     transform: ast::Transform,
+    static_context: &StaticContext,
 ) -> error::SpannedResult<interpreter::Program> {
-    let ir_converter = IrConverter::new(static_context);
-    ir_converter.convert_transform(&transform)
+    let mut ir_converter = IrConverter::new(static_context);
+    let declarations = ir_converter.transform(&transform)?;
+    let mut program = interpreter::Program::new((0..0).into());
+    let mut scopes = Scopes::new();
+    let builder = FunctionBuilder::new(&mut program);
+    let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
+    compiler.compile_declarations(&declarations)?;
+    Ok(program)
 }
 
 pub(crate) fn parse(
@@ -26,37 +31,20 @@ pub(crate) fn parse(
     xslt: &str,
 ) -> error::SpannedResult<interpreter::Program> {
     let transform = parse_transform(xslt).unwrap(); // TODO get rid of error definitely wrong
-    compile(static_context, transform)
+    compile(transform, static_context)
 }
 
 impl<'a> IrConverter<'a> {
     fn new(static_context: &'a StaticContext<'a>) -> Self {
         IrConverter {
             variables: Variables::new(),
-            program: interpreter::Program::new((0..0).into()),
             static_context,
         }
-    }
-
-    fn program(self) -> interpreter::Program {
-        self.program
     }
 
     fn new_binding(&mut self, expr: ir::Expr, span: Span) -> Binding {
         let name = self.variables.new_name();
         Binding::new(name, expr, span)
-    }
-
-    fn convert_transform(
-        mut self,
-        transform: &ast::Transform,
-    ) -> error::SpannedResult<interpreter::Program> {
-        // the main entry point calls apply-templates on root
-        self.transform(transform)?;
-        // now register main function
-        let main_sequence_constructor = self.main_sequence_constructor();
-        self.sequence_constructor_function_id(&main_sequence_constructor)?;
-        Ok(self.program)
     }
 
     fn main_sequence_constructor(&mut self) -> ast::SequenceConstructor {
@@ -78,24 +66,31 @@ impl<'a> IrConverter<'a> {
         )]
     }
 
-    fn transform(&mut self, transform: &ast::Transform) -> error::SpannedResult<()> {
+    fn transform(&mut self, transform: &ast::Transform) -> error::SpannedResult<ir::Declarations> {
+        let main_sequence_constructor = self.main_sequence_constructor();
+        let main = self.sequence_constructor_function(&main_sequence_constructor)?;
+        let mut declarations = ir::Declarations::new(main);
         for declaration in &transform.declarations {
-            self.declaration(declaration)?;
+            self.declaration(&mut declarations, declaration)?;
         }
-        Ok(())
+        Ok(declarations)
     }
 
-    fn declaration(&mut self, declaration: &ast::Declaration) -> error::SpannedResult<()> {
+    fn declaration(
+        &mut self,
+        declarations: &mut ir::Declarations,
+        declaration: &ast::Declaration,
+    ) -> error::SpannedResult<()> {
         use ast::Declaration::*;
         match declaration {
             Template(template) => {
                 if let Some(pattern) = &template.match_ {
-                    let function_id =
-                        self.sequence_constructor_function_id(&template.sequence_constructor)?;
-                    self.program
-                        .declarations
-                        .pattern_lookup
-                        .add(&pattern.pattern, function_id);
+                    let function_definition =
+                        self.sequence_constructor_function(&template.sequence_constructor)?;
+                    declarations.rules.push(ir::Rule {
+                        pattern: pattern.pattern.clone(),
+                        function_definition,
+                    });
                     Ok(())
                 } else {
                     todo!();
@@ -107,10 +102,10 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn sequence_constructor_function_id(
+    fn sequence_constructor_function(
         &mut self,
         sequence_constructor: &ast::SequenceConstructor,
-    ) -> error::SpannedResult<function::InlineFunctionId> {
+    ) -> error::SpannedResult<ir::FunctionDefinition> {
         let context_names = self.variables.push_context();
         let bindings = self.sequence_constructor(sequence_constructor)?;
         self.variables.pop_context();
@@ -128,16 +123,11 @@ impl<'a> IrConverter<'a> {
                 type_: None,
             },
         ];
-        let function_definition = ir::FunctionDefinition {
+        Ok(ir::FunctionDefinition {
             params,
             return_type: None,
             body: Box::new(bindings.expr()),
-        };
-        // dbg!(&function_definition);
-        let mut scopes = Scopes::new();
-        let builder = FunctionBuilder::new(&mut self.program);
-        let mut compiler = InterpreterCompiler::new(builder, &mut scopes, self.static_context);
-        compiler.compile_function_id(&function_definition, (0..0).into())
+        })
     }
 
     fn sequence_constructor(

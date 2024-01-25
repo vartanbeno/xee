@@ -1,4 +1,5 @@
-use xee_xpath_ast::ast;
+use xee_interpreter::pattern::{self, PatternLookup};
+use xee_xpath_ast::{ast, Pattern};
 
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
@@ -193,5 +194,12 @@ impl<'a> FunctionBuilder<'a> {
         function: function::InlineFunction,
     ) -> function::InlineFunctionId {
         self.program.add_function(function)
+    }
+
+    pub(crate) fn add_rule(&mut self, pattern: &Pattern, function_id: function::InlineFunctionId) {
+        self.program
+            .declarations
+            .pattern_lookup
+            .add(pattern, function_id);
     }
 }

@@ -12,6 +12,7 @@ use xee_interpreter::xml;
 use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
+use xee_xpath_ast::Pattern;
 
 pub type AtomS = Spanned<Atom>;
 pub type ExprS = Spanned<Expr>;
@@ -81,18 +82,6 @@ pub struct Let {
     pub var_expr: Box<ExprS>,
     pub return_expr: Box<ExprS>,
 }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct MultiLet {
-//     pub bindings: Vec<LetBinding>,
-//     pub return_expr: Box<ExprS>,
-// }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct LetBinding {
-//     pub name: Name,
-//     pub var_expr: Box<ExprS>,
-// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct If {
@@ -246,6 +235,8 @@ pub enum ArrayConstructor {
     Curly(AtomS),
 }
 
+// These are extensions to the IR that are only used by XSLT
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlName {
     pub local_name: AtomS,
@@ -299,4 +290,33 @@ pub struct XmlAppend {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApplyTemplates {
     pub select: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Rule {
+    pub pattern: Pattern,
+    pub function_definition: FunctionDefinition,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Declarations {
+    pub rules: Vec<Rule>,
+    pub functions: Vec<FunctionBinding>,
+    pub main: FunctionDefinition,
+}
+
+impl Declarations {
+    pub fn new(main: FunctionDefinition) -> Self {
+        Self {
+            rules: Vec::new(),
+            functions: Vec::new(),
+            main,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionBinding {
+    pub name: Name,
+    pub main: FunctionDefinition,
 }

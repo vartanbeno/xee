@@ -82,6 +82,22 @@ impl<'a> InterpreterCompiler<'a> {
         }
     }
 
+    pub fn compile_declarations(
+        &mut self,
+        declarations: &ir::Declarations,
+    ) -> error::SpannedResult<()> {
+        for rule in &declarations.rules {
+            self.compile_rule(rule)?;
+        }
+        self.compile_function_definition(&declarations.main, (0..0).into())
+    }
+
+    fn compile_rule(&mut self, rule: &ir::Rule) -> error::SpannedResult<()> {
+        let function_id = self.compile_function_id(&rule.function_definition, (0..0).into())?;
+        self.builder.add_rule(&rule.pattern, function_id);
+        Ok(())
+    }
+
     fn compile_atom(&mut self, atom: &ir::AtomS) -> error::SpannedResult<()> {
         let span = atom.span.into();
         match &atom.value {
