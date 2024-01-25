@@ -1,5 +1,5 @@
 use ahash::HashSetExt;
-use xee_name::Namespaces;
+use xee_name::{Name, Namespaces, FN_NAMESPACE};
 use xee_xpath_ast::ast::Span;
 
 use xee_interpreter::{context::StaticContext, error, interpreter};
@@ -59,6 +59,23 @@ impl<'a> IrConverter<'a> {
                 span: xee_xslt_ast::ast::Span::new(0, 0),
             })),
         )]
+    }
+
+    fn simple_content(&mut self) -> ir::Atom {
+        ir::Atom::Const(ir::Const::StaticFunctionReference(
+            self.static_context
+                .functions
+                .get_by_name(
+                    &Name::new(
+                        "simple-content".to_string(),
+                        Some(FN_NAMESPACE.to_string()),
+                        None,
+                    ),
+                    2,
+                )
+                .unwrap(),
+            None,
+        ))
     }
 
     fn transform(&mut self, transform: &ast::Transform) -> error::SpannedResult<ir::Declarations> {
@@ -160,7 +177,7 @@ impl<'a> IrConverter<'a> {
             ast::SequenceConstructorItem::ElementNode(element_node) => {
                 let mut bindings = self.element_name(&element_node.name)?;
                 let name_atom = bindings.atom();
-                let expr = ir::Expr::Element(ir::XmlElement { name: name_atom });
+                let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
                 let element_binding = self.new_binding(expr, (0..0).into());
                 let mut bindings = bindings.bind(element_binding);
                 let bindings = if !element_node.sequence_constructor.is_empty() {
@@ -194,6 +211,7 @@ impl<'a> IrConverter<'a> {
         use ast::SequenceConstructorInstruction::*;
         match instruction {
             ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
+            ValueOf(value_of) => self.value_of(value_of),
             _ => todo!(),
         }
     }
@@ -210,6 +228,29 @@ impl<'a> IrConverter<'a> {
         });
         let binding = self.new_binding(expr, (0..0).into());
         Ok(bindings.bind(binding))
+    }
+
+    fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
+        if let Some(select) = &value_of.select {
+            let mut bindings = self.expression(select)?;
+            let select_atom = bindings.atom();
+            let separator_atom = Spanned::new(
+                ir::Atom::Const(ir::Const::String(" ".to_string())),
+                (0..0).into(),
+            );
+            let simple_content_call = ir::Expr::FunctionCall(ir::FunctionCall {
+                atom: Spanned::new(self.simple_content(), (0..0).into()),
+                args: vec![select_atom, separator_atom],
+            });
+            let binding = self.new_binding(simple_content_call, (0..0).into());
+            let mut bindings = bindings.bind(binding);
+            let text_atom = bindings.atom();
+            let text = ir::Expr::XmlText(ir::XmlText { value: text_atom });
+            let binding = self.new_binding(text, (0..0).into());
+            Ok(bindings.bind(binding))
+        } else {
+            todo!()
+        }
     }
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {

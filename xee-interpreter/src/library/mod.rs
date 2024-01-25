@@ -7,6 +7,7 @@ mod context;
 mod datetime;
 mod duration;
 mod fn_;
+mod hidden_xslt;
 mod hof;
 mod map;
 mod math;
@@ -37,5 +38,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(hof::static_function_descriptions());
     descriptions.extend(array::static_function_descriptions());
     descriptions.extend(map::static_function_descriptions());
+    descriptions.extend(hidden_xslt::static_function_descriptions());
     descriptions
 }

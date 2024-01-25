@@ -1,4 +1,3 @@
-
 use xee_xslt::evaluate;
 
 #[test]
@@ -37,4 +36,19 @@ fn test_transform_nested_apply_templates() {
     )
     .unwrap();
     assert_eq!(output.to_string(), "<o><f/><b/></o>");
+}
+
+#[test]
+fn test_transform_value_of_select() {
+    let output = evaluate(
+        "<doc/>",
+        r#"
+<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:value-of select="1 to 4" /></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(output.to_string(), "<o>1 2 3 4</o>");
 }

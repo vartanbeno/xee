@@ -536,7 +536,13 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlAttribute => {}
                 EncodedInstruction::XmlPrefix => {}
-                EncodedInstruction::XmlText => {}
+                EncodedInstruction::XmlText => {
+                    let text_atomic = self.pop_atomic()?;
+                    let text = text_atomic.into_canonical();
+                    let text_node = self.state.output.new_text(&text);
+                    let item = sequence::Item::Node(xml::Node::Xot(text_node));
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlComment => {}
                 EncodedInstruction::XmlProcessingInstruction => {}
                 EncodedInstruction::ApplyTemplates => {

@@ -66,13 +66,13 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_array_constructor(array_constructor, span)
             }
             ir::Expr::XmlName(xml_name) => self.compile_xml_name(xml_name, span),
-            ir::Expr::Root(root) => self.compile_xml_root(root, span),
-            ir::Expr::Element(element) => self.compile_xml_element(element, span),
-            ir::Expr::Attribute(attribute) => self.compile_xml_attribute(attribute, span),
-            ir::Expr::Prefix(prefix) => self.compile_xml_prefix(prefix, span),
-            ir::Expr::Text(text) => self.compile_xml_text(text, span),
-            ir::Expr::Comment(comment) => self.compile_xml_comment(comment, span),
-            ir::Expr::ProcessingInstruction(processing_instruction) => {
+            ir::Expr::XmlRoot(root) => self.compile_xml_root(root, span),
+            ir::Expr::XmlElement(element) => self.compile_xml_element(element, span),
+            ir::Expr::XmlAttribute(attribute) => self.compile_xml_attribute(attribute, span),
+            ir::Expr::XmlPrefix(prefix) => self.compile_xml_prefix(prefix, span),
+            ir::Expr::XmlText(text) => self.compile_xml_text(text, span),
+            ir::Expr::XmlComment(comment) => self.compile_xml_comment(comment, span),
+            ir::Expr::XmlProcessingInstruction(processing_instruction) => {
                 self.compile_xml_processing_instruction(processing_instruction, span)
             }
             ir::Expr::XmlAppend(xml_append) => self.compile_xml_append(xml_append, span),
