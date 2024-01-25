@@ -3,7 +3,7 @@ use xee_name::Namespaces;
 use xee_xpath_ast::ast::Span;
 
 use xee_interpreter::{context::StaticContext, error, interpreter};
-use xee_ir::{ir, Binding, Bindings, FunctionBuilder, InterpreterCompiler, Scopes, Variables};
+use xee_ir::{compile_xslt, ir, Binding, Bindings, Variables};
 use xee_xpath_ast::span::Spanned;
 use xee_xslt_ast::{ast, parse_transform};
 
@@ -18,12 +18,7 @@ pub fn compile(
 ) -> error::SpannedResult<interpreter::Program> {
     let mut ir_converter = IrConverter::new(static_context);
     let declarations = ir_converter.transform(&transform)?;
-    let mut program = interpreter::Program::new((0..0).into());
-    let mut scopes = Scopes::new();
-    let builder = FunctionBuilder::new(&mut program);
-    let mut compiler = InterpreterCompiler::new(builder, &mut scopes, static_context);
-    compiler.compile_declarations(&declarations)?;
-    Ok(program)
+    compile_xslt(declarations, static_context)
 }
 
 pub(crate) fn parse(
