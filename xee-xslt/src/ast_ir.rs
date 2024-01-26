@@ -55,21 +55,36 @@ impl<'a> IrConverter<'a> {
         )]
     }
 
-    fn simple_content(&mut self) -> ir::Atom {
+    fn simple_content_atom(&mut self) -> ir::Atom {
+        self.static_function_atom("simple-content", Some(FN_NAMESPACE), 2)
+    }
+
+    fn concat_atom(&mut self, arity: u8) -> ir::Atom {
+        self.static_function_atom("concat", Some(FN_NAMESPACE), arity)
+    }
+
+    fn static_function_atom(&mut self, name: &str, namespace: Option<&str>, arity: u8) -> ir::Atom {
         ir::Atom::Const(ir::Const::StaticFunctionReference(
             self.static_context
                 .functions
                 .get_by_name(
-                    &Name::new(
-                        "simple-content".to_string(),
-                        Some(FN_NAMESPACE.to_string()),
-                        None,
-                    ),
-                    2,
+                    &Name::new(name.to_string(), namespace.map(|ns| ns.to_string()), None),
+                    arity,
                 )
                 .unwrap(),
             None,
         ))
+    }
+
+    fn simple_content_expr(
+        &mut self,
+        select_atom: ir::AtomS,
+        separator_atom: ir::AtomS,
+    ) -> ir::Expr {
+        ir::Expr::FunctionCall(ir::FunctionCall {
+            atom: Spanned::new(self.simple_content_atom(), (0..0).into()),
+            args: vec![select_atom, separator_atom],
+        })
     }
 
     fn transform(&mut self, transform: &ast::Transform) -> error::SpannedResult<ir::Declarations> {
@@ -230,8 +245,6 @@ impl<'a> IrConverter<'a> {
             let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator
             {
                 self.attribute_value_template(separator)?
-                // todo!();
-                // separator.template.clone()
             } else {
                 Bindings::new(
                     self.variables
@@ -243,10 +256,7 @@ impl<'a> IrConverter<'a> {
             }
             .atom_bindings();
             let bindings = select_bindings.concat(separator_bindings);
-            let expr = ir::Expr::FunctionCall(ir::FunctionCall {
-                atom: Spanned::new(self.simple_content(), (0..0).into()),
-                args: vec![select_atom, separator_atom],
-            });
+            let expr = self.simple_content_expr(select_atom, separator_atom);
             let (text_atom, bindings) = bindings
                 .bind_expr_no_span(&mut self.variables, expr)
                 .atom_bindings();
@@ -261,9 +271,76 @@ impl<'a> IrConverter<'a> {
 
     fn attribute_value_template(
         &mut self,
-        _value_template: &ast::ValueTemplate<String>,
+        value_template: &ast::ValueTemplate<String>,
     ) -> error::SpannedResult<Bindings> {
-        todo!();
+        let mut all_bindings = Vec::new();
+        for item in &value_template.template {
+            let bindings = match item {
+                ast::ValueTemplateItem::String { text, span: _span } => {
+                    let text_atom = Spanned::new(
+                        ir::Atom::Const(ir::Const::String(text.clone())),
+                        (0..0).into(),
+                    );
+                    let bindings = Bindings::empty();
+                    bindings.bind_expr_no_span(&mut self.variables, ir::Expr::Atom(text_atom))
+                }
+                ast::ValueTemplateItem::Curly { c } => {
+                    let text_atom = Spanned::new(
+                        ir::Atom::Const(ir::Const::String(c.to_string())),
+                        (0..0).into(),
+                    );
+                    let bindings = Bindings::empty();
+                    bindings.bind_expr_no_span(&mut self.variables, ir::Expr::Atom(text_atom))
+                }
+                ast::ValueTemplateItem::Value { xpath, span: _ } => {
+                    let (atom, bindings) = self.xpath(&xpath.0)?.atom_bindings();
+                    let expr = self.simple_content_expr(
+                        atom,
+                        Spanned::new(
+                            ir::Atom::Const(ir::Const::String(" ".to_string())),
+                            (0..0).into(),
+                        ),
+                    );
+                    bindings.bind_expr_no_span(&mut self.variables, expr)
+                }
+            };
+            all_bindings.push(bindings);
+        }
+        Ok(if all_bindings.is_empty() {
+            // empty attribute value template is a string
+            let bindings = Bindings::empty();
+            bindings.bind_expr_no_span(
+                &mut self.variables,
+                ir::Expr::Atom(Spanned::new(
+                    ir::Atom::Const(ir::Const::String("".to_string())),
+                    (0..0).into(),
+                )),
+            )
+        } else if all_bindings.len() == 1 {
+            // a single binding is just that binding
+            all_bindings.pop().unwrap()
+        } else {
+            // TODO: speculative code, needs tests
+            // if we have multiple bindings, concatenate each result into
+            // a single string
+            let mut combined_bindings = Bindings::empty();
+            let mut atoms = Vec::new();
+            for binding in all_bindings {
+                let (atom, binding) = binding.atom_bindings();
+                combined_bindings = combined_bindings.concat(binding);
+                atoms.push(atom);
+            }
+            // concatenate all the pieces of content into a single string
+            // TODO: this may create more than we have arities for, so we may want to use more
+            // generic concat function that takes a sequence at some point
+            let concat_atom =
+                self.static_function_atom("concat", Some(FN_NAMESPACE), atoms.len() as u8);
+            let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+                atom: Spanned::new(concat_atom, (0..0).into()),
+                args: atoms,
+            });
+            combined_bindings.bind_expr_no_span(&mut self.variables, expr)
+        })
     }
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
@@ -285,8 +362,12 @@ impl<'a> IrConverter<'a> {
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
+        self.xpath(&expression.xpath.0)
+    }
+
+    fn xpath(&mut self, xpath: &xee_xpath_ast::ast::ExprS) -> error::SpannedResult<Bindings> {
         let mut ir_converter =
             xee_xpath::IrConverter::new(&mut self.variables, self.static_context);
-        ir_converter.expr(&expression.xpath.0)
+        ir_converter.expr(xpath)
     }
 }

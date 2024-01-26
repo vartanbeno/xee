@@ -53,17 +53,17 @@ fn test_transform_value_of_select() {
     assert_eq!(output.to_string(), "<o>1 2 3 4</o>");
 }
 
-// #[test]
-// fn test_transform_value_of_select_separator() {
-//     let output = evaluate(
-//         "<doc/>",
-//         r#"
-// <xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-//   <xsl:template match="/">
-//     <o><xsl:value-of select="1 to 4" separator="|" /></o>
-//   </xsl:template>
-// </xsl:transform>"#,
-//     )
-//     .unwrap();
-//     assert_eq!(output.to_string(), "<o>1|2|3|4</o>");
-// }
+#[test]
+fn test_transform_value_of_select_separator() {
+    let output = evaluate(
+        "<doc/>",
+        r#"
+<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:value-of select="1 to 4" separator="|" /></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(output.to_string(), "<o>1|2|3|4</o>");
+}
