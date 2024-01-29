@@ -169,20 +169,12 @@ impl<'a> IrConverter<'a> {
                 ));
             }
             self.sequence_constructor_concat(left, items)
-            // let left_bindings = Ok(self.sequence_constructor_item(left)?);
-            // items.fold(left_bindings, |left, right| {
-            //     let mut left_bindings = left?;
-            //     let mut right_bindings = self.sequence_constructor_item(right)?;
-            //     let expr = ir::Expr::Binary(ir::Binary {
-            //         left: left_bindings.atom(),
-            //         op: ir::BinaryOperator::Comma,
-            //         right: right_bindings.atom(),
-            //     });
-            //     let binding = self.variables.new_binding_no_span(expr);
-            //     Ok(left_bindings.concat(right_bindings).bind(binding))
-            // })
         } else {
-            Ok(Bindings::empty())
+            let empty_sequence = self.empty_sequence();
+            Ok(Bindings::new(
+                self.variables
+                    .new_binding(empty_sequence.value, empty_sequence.span),
+            ))
         }
     }
 
@@ -248,9 +240,9 @@ impl<'a> IrConverter<'a> {
         match instruction {
             ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
             ValueOf(value_of) => self.value_of(value_of),
+            If(if_) => self.if_(if_),
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
-            If(_if) => unreachable!(),
             _ => todo!(),
         }
     }
@@ -412,6 +404,26 @@ impl<'a> IrConverter<'a> {
         } else {
             Ok(None)
         }
+    }
+
+    fn empty_sequence(&mut self) -> ir::ExprS {
+        Spanned::new(
+            ir::Expr::Atom(Spanned::new(
+                ir::Atom::Const(ir::Const::EmptySequence),
+                (0..0).into(),
+            )),
+            (0..0).into(),
+        )
+    }
+
+    fn if_(&mut self, if_: &ast::If) -> error::SpannedResult<Bindings> {
+        let (condition, bindings) = self.expression(&if_.test)?.atom_bindings();
+        let expr = ir::Expr::If(ir::If {
+            condition,
+            then: Box::new(self.sequence_constructor(&if_.sequence_constructor)?.expr()),
+            else_: Box::new(self.empty_sequence()),
+        });
+        Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {

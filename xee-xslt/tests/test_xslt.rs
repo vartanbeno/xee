@@ -101,32 +101,32 @@ fn test_transform_local_variable_shadow() {
     assert_eq!(output.to_string(), "<o>BAR</o>");
 }
 
-// #[test]
-// fn test_transform_if_true() {
-//     let output = evaluate(
-//         "<doc/>",
-//         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-//   <xsl:template match="/">
-//     <o><xsl:if test="1">foo</xsl:if></o>
-//   </xsl:template>
-// </xsl:transform>"#,
-//     )
-//     .unwrap();
+#[test]
+fn test_transform_if_true() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:if test="1"><foo/></xsl:if></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
 
-//     assert_eq!(output.to_string(), "<o>foo</o>");
-// }
+    assert_eq!(output.to_string(), "<o><foo/></o>");
+}
 
-// #[test]
-// fn test_transform_if_false() {
-//     let output = evaluate(
-//         "<doc/>",
-//         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-//   <xsl:template match="/">
-//     <o><xsl:if test="0">foo</xsl:if></o>
-//   </xsl:template>
-// </xsl:transform>"#,
-//     )
-//     .unwrap();
+#[test]
+fn test_transform_if_false() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:if test="0"><foo/></xsl:if></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
 
-//     assert_eq!(output.to_string(), "<o/>");
-// }
+    assert_eq!(output.to_string(), "<o/>");
+}
