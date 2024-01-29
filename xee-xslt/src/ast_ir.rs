@@ -168,21 +168,41 @@ impl<'a> IrConverter<'a> {
                     self.variables.new_binding(expr, (0..0).into()),
                 ));
             }
-            let left_bindings = Ok(self.sequence_constructor_item(left)?);
-            items.fold(left_bindings, |left, right| {
-                let mut left_bindings = left?;
-                let mut right_bindings = self.sequence_constructor_item(right)?;
-                let expr = ir::Expr::Binary(ir::Binary {
-                    left: left_bindings.atom(),
-                    op: ir::BinaryOperator::Comma,
-                    right: right_bindings.atom(),
-                });
-                let binding = self.variables.new_binding_no_span(expr);
-                Ok(left_bindings.concat(right_bindings).bind(binding))
-            })
+            self.sequence_constructor_concat(left, items)
+            // let left_bindings = Ok(self.sequence_constructor_item(left)?);
+            // items.fold(left_bindings, |left, right| {
+            //     let mut left_bindings = left?;
+            //     let mut right_bindings = self.sequence_constructor_item(right)?;
+            //     let expr = ir::Expr::Binary(ir::Binary {
+            //         left: left_bindings.atom(),
+            //         op: ir::BinaryOperator::Comma,
+            //         right: right_bindings.atom(),
+            //     });
+            //     let binding = self.variables.new_binding_no_span(expr);
+            //     Ok(left_bindings.concat(right_bindings).bind(binding))
+            // })
         } else {
             Ok(Bindings::empty())
         }
+    }
+
+    fn sequence_constructor_concat<'b>(
+        &mut self,
+        left: &ast::SequenceConstructorItem,
+        items: impl Iterator<Item = &'b ast::SequenceConstructorItem>,
+    ) -> error::SpannedResult<Bindings> {
+        let left_bindings = Ok(self.sequence_constructor_item(left)?);
+        items.fold(left_bindings, |left, right| {
+            let mut left_bindings = left?;
+            let mut right_bindings = self.sequence_constructor_item(right)?;
+            let expr = ir::Expr::Binary(ir::Binary {
+                left: left_bindings.atom(),
+                op: ir::BinaryOperator::Comma,
+                right: right_bindings.atom(),
+            });
+            let binding = self.variables.new_binding_no_span(expr);
+            Ok(left_bindings.concat(right_bindings).bind(binding))
+        })
     }
 
     fn sequence_constructor_item(
@@ -228,8 +248,9 @@ impl<'a> IrConverter<'a> {
         match instruction {
             ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
             ValueOf(value_of) => self.value_of(value_of),
-            // variables are handled earlier
+            // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
+            If(_if) => unreachable!(),
             _ => todo!(),
         }
     }
