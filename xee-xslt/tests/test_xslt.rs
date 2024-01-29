@@ -83,3 +83,20 @@ fn test_transform_local_variable() {
 
     assert_eq!(output.to_string(), "<o>FOO</o>");
 }
+
+#[test]
+fn test_transform_local_variable_shadow() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:variable name="foo" select="'FOO'"/>
+    <xsl:variable name="foo" select="'BAR'"/>
+    <o><xsl:value-of select="$foo"/></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(output.to_string(), "<o>BAR</o>");
+}
