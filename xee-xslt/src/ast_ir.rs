@@ -241,6 +241,7 @@ impl<'a> IrConverter<'a> {
             ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
             ValueOf(value_of) => self.value_of(value_of),
             If(if_) => self.if_(if_),
+            Choose(choose) => self.choose(choose),
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -358,8 +359,7 @@ impl<'a> IrConverter<'a> {
             // concatenate all the pieces of content into a single string
             // TODO: this may create more than we have arities for, so we may want to use more
             // generic concat function that takes a sequence at some point
-            let concat_atom =
-                self.static_function_atom("concat", Some(FN_NAMESPACE), atoms.len() as u8);
+            let concat_atom = self.concat_atom(atoms.len() as u8);
             let expr = ir::Expr::FunctionCall(ir::FunctionCall {
                 atom: Spanned::new(concat_atom, (0..0).into()),
                 args: atoms,
@@ -424,6 +424,34 @@ impl<'a> IrConverter<'a> {
             else_: Box::new(self.empty_sequence()),
         });
         Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+    }
+
+    fn choose(&mut self, choose: &ast::Choose) -> error::SpannedResult<Bindings> {
+        let (condition, bindings) = self.expression(&choose.when[0].test)?.atom_bindings();
+        if let Some(otherwise) = &choose.otherwise {
+            let expr = ir::Expr::If(ir::If {
+                condition,
+                then: Box::new(
+                    self.sequence_constructor(&choose.when[0].sequence_constructor)?
+                        .expr(),
+                ),
+                else_: Box::new(
+                    self.sequence_constructor(&otherwise.sequence_constructor)?
+                        .expr(),
+                ),
+            });
+            Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+        } else {
+            let expr = ir::Expr::If(ir::If {
+                condition,
+                then: Box::new(
+                    self.sequence_constructor(&choose.when[0].sequence_constructor)?
+                        .expr(),
+                ),
+                else_: Box::new(self.empty_sequence()),
+            });
+            Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+        }
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {

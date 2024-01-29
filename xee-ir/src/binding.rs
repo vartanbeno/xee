@@ -1,7 +1,6 @@
-use crate::{ir, Variables};
-
-use xee_interpreter::error;
 use xee_xpath_ast::{ast::Span, span::Spanned};
+
+use crate::{ir, Variables};
 
 /// A binding consists of a unique variable name and an expression.
 #[derive(Debug, Clone)]
