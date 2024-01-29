@@ -67,3 +67,19 @@ fn test_transform_value_of_select_separator() {
     .unwrap();
     assert_eq!(output.to_string(), "<o>1|2|3|4</o>");
 }
+
+#[test]
+fn test_transform_local_variable() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:variable name="foo" select="'FOO'"/>
+    <o><xsl:value-of select="$foo"/></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(output.to_string(), "<o>FOO</o>");
+}

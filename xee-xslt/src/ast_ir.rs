@@ -153,11 +153,21 @@ impl<'a> IrConverter<'a> {
 
     fn sequence_constructor(
         &mut self,
-        sequence_constructor: &ast::SequenceConstructor,
+        sequence_constructor: &[ast::SequenceConstructorItem],
     ) -> error::SpannedResult<Bindings> {
         let mut items = sequence_constructor.iter();
         let left = items.next();
         if let Some(left) = left {
+            if let Some((name, var_bindings)) = self.variable(left)? {
+                let expr = ir::Expr::Let(ir::Let {
+                    name,
+                    var_expr: Box::new(var_bindings.expr()),
+                    return_expr: Box::new(self.sequence_constructor(items.as_slice())?.expr()),
+                });
+                return Ok(Bindings::new(
+                    self.variables.new_binding(expr, (0..0).into()),
+                ));
+            }
             let left_bindings = Ok(self.sequence_constructor_item(left)?);
             items.fold(left_bindings, |left, right| {
                 let mut left_bindings = left?;
@@ -218,6 +228,8 @@ impl<'a> IrConverter<'a> {
         match instruction {
             ApplyTemplates(apply_templates) => self.apply_templates(apply_templates),
             ValueOf(value_of) => self.value_of(value_of),
+            // variables are handled earlier
+            Variable(_variable) => unreachable!(),
             _ => todo!(),
         }
     }
@@ -359,6 +371,26 @@ impl<'a> IrConverter<'a> {
                 namespace,
             }));
         Ok(Bindings::new(binding))
+    }
+
+    fn variable(
+        &mut self,
+        item: &ast::SequenceConstructorItem,
+    ) -> error::SpannedResult<Option<(ir::Name, Bindings)>> {
+        if let ast::SequenceConstructorItem::Instruction(
+            ast::SequenceConstructorInstruction::Variable(variable),
+        ) = item
+        {
+            let name = self.variables.new_var_name(&variable.name);
+            if let Some(select) = &variable.select {
+                let var_bindings = self.expression(select)?;
+                Ok(Some((name, var_bindings)))
+            } else {
+                todo!()
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
