@@ -221,3 +221,38 @@ fn test_transform_multiple_when_with_otherwise() {
 
     assert_eq!(output.to_string(), "<o><baz/></o>");
 }
+
+#[test]
+fn test_basic_for_each() {
+    let output = evaluate(
+        "<doc><foo/><foo/><foo/></doc>",
+        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                 <xsl:template match="/">
+                   <o><xsl:for-each select="doc/foo"><bar/></xsl:for-each></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(output.to_string(), "<o><bar/><bar/><bar/></o>");
+}
+
+#[test]
+fn test_for_each_context() {
+    let output = evaluate(
+        "<doc><foo>0</foo><foo>1</foo><foo>2</foo></doc>",
+        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                 <xsl:template match="/">
+                   <o><xsl:for-each select="doc/foo">
+                     <bar><xsl:value-of select="string()"/></bar>
+                   </xsl:for-each></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        output.to_string(),
+        "<o><bar>0</bar><bar>1</bar><bar>2</bar></o>"
+    );
+}
+
+// xsl:copy?

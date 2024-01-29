@@ -242,6 +242,7 @@ impl<'a> IrConverter<'a> {
             ValueOf(value_of) => self.value_of(value_of),
             If(if_) => self.if_(if_),
             Choose(choose) => self.choose(choose),
+            ForEach(for_each) => self.for_each(for_each),
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -428,34 +429,6 @@ impl<'a> IrConverter<'a> {
 
     fn choose(&mut self, choose: &ast::Choose) -> error::SpannedResult<Bindings> {
         self.choose_when_otherwise(&choose.when, choose.otherwise.as_ref())
-        // let first = &choose.when.first().unwrap();
-        // let rest = &choose.when[1..];
-
-        // let (condition, bindings) = self.expression(&choose.when[0].test)?.atom_bindings();
-        // if let Some(otherwise) = &choose.otherwise {
-        //     let expr = ir::Expr::If(ir::If {
-        //         condition,
-        //         then: Box::new(
-        //             self.sequence_constructor(&choose.when[0].sequence_constructor)?
-        //                 .expr(),
-        //         ),
-        //         else_: Box::new(
-        //             self.sequence_constructor(&otherwise.sequence_constructor)?
-        //                 .expr(),
-        //         ),
-        //     });
-        //     Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
-        // } else {
-        //     let expr = ir::Expr::If(ir::If {
-        //         condition,
-        //         then: Box::new(
-        //             self.sequence_constructor(&choose.when[0].sequence_constructor)?
-        //                 .expr(),
-        //         ),
-        //         else_: Box::new(self.empty_sequence()),
-        //     });
-        //     Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
-        // }
     }
 
     fn choose_when_otherwise(
@@ -484,6 +457,21 @@ impl<'a> IrConverter<'a> {
             ),
             else_: Box::new(else_expr),
         });
+        Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+    }
+
+    fn for_each(&mut self, for_each: &ast::ForEach) -> error::SpannedResult<Bindings> {
+        let (var_atom, bindings) = self.expression(&for_each.select)?.atom_bindings();
+
+        let context_names = self.variables.push_context();
+        let return_bindings = self.sequence_constructor(&for_each.sequence_constructor)?;
+        self.variables.pop_context();
+        let expr = ir::Expr::Map(ir::Map {
+            context_names,
+            var_atom,
+            return_expr: Box::new(return_bindings.expr()),
+        });
+
         Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
     }
 
