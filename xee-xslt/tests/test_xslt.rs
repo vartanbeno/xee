@@ -183,3 +183,41 @@ fn test_transform_choose_when_false_no_otherwise() {
 
     assert_eq!(output.to_string(), "<o/>");
 }
+
+#[test]
+fn test_transform_multiple_when() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:choose>
+      <xsl:when test="0"><foo/></xsl:when>
+      <xsl:when test="1"><bar/></xsl:when>
+      <xsl:otherwise><baz/></xsl:otherwise>
+    </xsl:choose></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(output.to_string(), "<o><bar/></o>");
+}
+
+#[test]
+fn test_transform_multiple_when_with_otherwise() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <o><xsl:choose>
+      <xsl:when test="0"><foo/></xsl:when>
+      <xsl:when test="0"><bar/></xsl:when>
+      <xsl:otherwise><baz/></xsl:otherwise>
+    </xsl:choose></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(output.to_string(), "<o><baz/></o>");
+}

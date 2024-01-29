@@ -427,31 +427,64 @@ impl<'a> IrConverter<'a> {
     }
 
     fn choose(&mut self, choose: &ast::Choose) -> error::SpannedResult<Bindings> {
-        let (condition, bindings) = self.expression(&choose.when[0].test)?.atom_bindings();
-        if let Some(otherwise) = &choose.otherwise {
-            let expr = ir::Expr::If(ir::If {
-                condition,
-                then: Box::new(
-                    self.sequence_constructor(&choose.when[0].sequence_constructor)?
-                        .expr(),
-                ),
-                else_: Box::new(
-                    self.sequence_constructor(&otherwise.sequence_constructor)?
-                        .expr(),
-                ),
-            });
-            Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+        self.choose_when_otherwise(&choose.when, choose.otherwise.as_ref())
+        // let first = &choose.when.first().unwrap();
+        // let rest = &choose.when[1..];
+
+        // let (condition, bindings) = self.expression(&choose.when[0].test)?.atom_bindings();
+        // if let Some(otherwise) = &choose.otherwise {
+        //     let expr = ir::Expr::If(ir::If {
+        //         condition,
+        //         then: Box::new(
+        //             self.sequence_constructor(&choose.when[0].sequence_constructor)?
+        //                 .expr(),
+        //         ),
+        //         else_: Box::new(
+        //             self.sequence_constructor(&otherwise.sequence_constructor)?
+        //                 .expr(),
+        //         ),
+        //     });
+        //     Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+        // } else {
+        //     let expr = ir::Expr::If(ir::If {
+        //         condition,
+        //         then: Box::new(
+        //             self.sequence_constructor(&choose.when[0].sequence_constructor)?
+        //                 .expr(),
+        //         ),
+        //         else_: Box::new(self.empty_sequence()),
+        //     });
+        //     Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+        // }
+    }
+
+    fn choose_when_otherwise(
+        &mut self,
+        when: &[ast::When],
+        otherwise: Option<&ast::Otherwise>,
+    ) -> error::SpannedResult<Bindings> {
+        let first = &when.first().unwrap();
+        let rest = &when[1..];
+
+        let (condition, bindings) = self.expression(&first.test)?.atom_bindings();
+        let else_expr = if !rest.is_empty() {
+            self.choose_when_otherwise(rest, otherwise)?.expr()
+        } else if let Some(otherwise) = otherwise {
+            self.sequence_constructor(&otherwise.sequence_constructor)?
+                .expr()
         } else {
-            let expr = ir::Expr::If(ir::If {
-                condition,
-                then: Box::new(
-                    self.sequence_constructor(&choose.when[0].sequence_constructor)?
-                        .expr(),
-                ),
-                else_: Box::new(self.empty_sequence()),
-            });
-            Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
-        }
+            self.empty_sequence()
+        };
+
+        let expr = ir::Expr::If(ir::If {
+            condition,
+            then: Box::new(
+                self.sequence_constructor(&first.sequence_constructor)?
+                    .expr(),
+            ),
+            else_: Box::new(else_expr),
+        });
+        Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
