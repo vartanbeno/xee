@@ -243,6 +243,7 @@ impl<'a> IrConverter<'a> {
             If(if_) => self.if_(if_),
             Choose(choose) => self.choose(choose),
             ForEach(for_each) => self.for_each(for_each),
+            Copy(copy) => self.copy(copy),
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -473,6 +474,16 @@ impl<'a> IrConverter<'a> {
         });
 
         Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+    }
+
+    fn copy(&mut self, _copy: &ast::Copy) -> error::SpannedResult<Bindings> {
+        // handle case that sequence is empty, or more than 1
+        // if what is selected is not an element or document,
+        // create a literal copy. If it's a document, create a new
+        // document node and sequence constructor content into it.
+        // If it's an element, copy the element name and sequence
+        // constructor content into it.
+        todo!();
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
