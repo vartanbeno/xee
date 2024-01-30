@@ -547,7 +547,10 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::XmlProcessingInstruction => {}
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();
-                    // TODO: this unwrap hides errors
+                    // TODO: we throw away span information in this map.
+                    // either apply_templates_sequence shouldn't result
+                    // in a spanned error, or we somehow want to propagate
+                    // spanned errors on the interpreter level
                     let value = self
                         .runnable
                         .apply_templates_sequence(self, value.into())
