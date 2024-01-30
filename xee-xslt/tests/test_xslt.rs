@@ -255,4 +255,16 @@ fn test_for_each_context() {
     );
 }
 
-// xsl:copy?
+#[test]
+fn test_copy_empty_sequence() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                 <xsl:template match="/">
+                   <o><xsl:copy select="()"/></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(output.to_string(), "<o/>");
+}

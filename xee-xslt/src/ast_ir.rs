@@ -3,7 +3,7 @@ use xee_name::{Name, Namespaces, FN_NAMESPACE};
 
 use xee_interpreter::{context::StaticContext, error, interpreter};
 use xee_ir::{compile_xslt, ir, Bindings, Variables};
-use xee_xpath_ast::span::Spanned;
+use xee_xpath_ast::{ast as xpath_ast, span::Spanned};
 use xee_xslt_ast::{ast, parse_transform};
 
 struct IrConverter<'a> {
@@ -61,6 +61,10 @@ impl<'a> IrConverter<'a> {
 
     fn concat_atom(&mut self, arity: u8) -> ir::Atom {
         self.static_function_atom("concat", Some(FN_NAMESPACE), arity)
+    }
+
+    fn error_atom(&mut self) -> ir::Atom {
+        self.static_function_atom("error", Some(FN_NAMESPACE), 0)
     }
 
     fn static_function_atom(&mut self, name: &str, namespace: Option<&str>, arity: u8) -> ir::Atom {
@@ -476,14 +480,83 @@ impl<'a> IrConverter<'a> {
         Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
     }
 
-    fn copy(&mut self, _copy: &ast::Copy) -> error::SpannedResult<Bindings> {
-        // handle case that sequence is empty, or more than 1
-        // if what is selected is not an element or document,
-        // create a literal copy. If it's a document, create a new
-        // document node and sequence constructor content into it.
-        // If it's an element, copy the element name and sequence
-        // constructor content into it.
-        todo!();
+    fn copy(&mut self, copy: &ast::Copy) -> error::SpannedResult<Bindings> {
+        let (context_atom, bindings) = if let Some(select) = &copy.select {
+            self.expression(select)?.atom_bindings()
+        } else {
+            self.variables.context_item((0..0).into())?.atom_bindings()
+        };
+        let empty_sequence_expr = self.is_empty_sequence_expr(context_atom.clone());
+        let (is_empty_sequence_atom, bindings) = bindings
+            .bind_expr_no_span(&mut self.variables, empty_sequence_expr)
+            .atom_bindings();
+        let if_expr = ir::Expr::If(ir::If {
+            condition: is_empty_sequence_atom,
+            then: Box::new(self.empty_sequence()),
+            else_: Box::new(self.copy_item(context_atom)?.expr()),
+        });
+        Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
+    }
+
+    fn throw_error(&mut self) -> error::SpannedResult<Bindings> {
+        let error_atom = self.error_atom();
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+            atom: Spanned::new(error_atom, (0..0).into()),
+            args: vec![],
+        });
+        Ok(Bindings::new(self.variables.new_binding_no_span(expr)))
+    }
+
+    fn copy_item(&mut self, _context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
+        self.throw_error()
+
+        // let is_one_item_expr = self.is_one_item_expr(context_atom);
+        // let is_document_expr = self.is_document_expr(context_atom);
+        // let is_element_expr = self.is_element_expr(context_atom);
+
+        // let mut expr = ir::Expr::If(ir::If {
+        //     condition: is_one_item_atom,
+        //     then: Box::new(self.copy_one_item(context_atom)?.expr()),
+        //     // call error function as this is not allowed
+        //     else_:
+        // })
+    }
+
+    fn is_empty_sequence_expr(&self, atom: ir::AtomS) -> ir::Expr {
+        ir::Expr::InstanceOf(ir::InstanceOf {
+            atom,
+            sequence_type: xpath_ast::SequenceType::Empty,
+        })
+    }
+
+    fn is_one_item_expr(&self, atom: ir::AtomS) -> ir::Expr {
+        ir::Expr::InstanceOf(ir::InstanceOf {
+            atom,
+            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
+                item_type: xpath_ast::ItemType::Item,
+                occurrence: xpath_ast::Occurrence::One,
+            }),
+        })
+    }
+
+    fn is_document_expr(&self, atom: ir::AtomS) -> ir::Expr {
+        ir::Expr::InstanceOf(ir::InstanceOf {
+            atom,
+            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
+                item_type: xpath_ast::ItemType::KindTest(xpath_ast::KindTest::Document(None)),
+                occurrence: xpath_ast::Occurrence::One,
+            }),
+        })
+    }
+
+    fn is_element_expr(&self, atom: ir::AtomS) -> ir::Expr {
+        ir::Expr::InstanceOf(ir::InstanceOf {
+            atom,
+            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
+                item_type: xpath_ast::ItemType::KindTest(xpath_ast::KindTest::Element(None)),
+                occurrence: xpath_ast::Occurrence::One,
+            }),
+        })
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {
