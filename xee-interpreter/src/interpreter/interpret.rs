@@ -551,7 +551,7 @@ impl<'a> Interpreter<'a> {
                     let value = self
                         .runnable
                         .apply_templates_sequence(self, value.into())
-                        .unwrap();
+                        .map_err(|e| e.error)?;
                     self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
@@ -1016,7 +1016,7 @@ impl<'a> Interpreter<'a> {
     // nesting in the function. When this happens the interpreter stops with
     // the error code. We here wrap it in a SpannedError using the current
     // span.
-    fn err(&self, value_error: error::Error) -> error::SpannedError {
+    pub(crate) fn err(&self, value_error: error::Error) -> error::SpannedError {
         error::SpannedError {
             error: value_error,
             span: self.current_span(),

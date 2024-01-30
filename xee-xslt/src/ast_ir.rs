@@ -486,9 +486,9 @@ impl<'a> IrConverter<'a> {
         } else {
             self.variables.context_item((0..0).into())?.atom_bindings()
         };
-        let empty_sequence_expr = self.is_empty_sequence_expr(context_atom.clone());
+        let is_empty_sequence_expr = self.is_empty_sequence_expr(context_atom.clone());
         let (is_empty_sequence_atom, bindings) = bindings
-            .bind_expr_no_span(&mut self.variables, empty_sequence_expr)
+            .bind_expr_no_span(&mut self.variables, is_empty_sequence_expr)
             .atom_bindings();
         let if_expr = ir::Expr::If(ir::If {
             condition: is_empty_sequence_atom,
@@ -498,19 +498,20 @@ impl<'a> IrConverter<'a> {
         Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
     }
 
-    fn throw_error(&mut self) -> error::SpannedResult<Bindings> {
-        let error_atom = self.error_atom();
-        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
-            atom: Spanned::new(error_atom, (0..0).into()),
-            args: vec![],
+    fn copy_item(&mut self, context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
+        let one_item_expr = self.is_one_item_expr(context_atom.clone());
+        let bindings = Bindings::empty();
+        let (is_one_item_atom, bindings) = bindings
+            .bind_expr_no_span(&mut self.variables, one_item_expr)
+            .atom_bindings();
+
+        let if_expr = ir::Expr::If(ir::If {
+            condition: is_one_item_atom,
+            then: Box::new(self.copy_one_item(context_atom)?.expr()),
+            else_: Box::new(self.throw_error()?.expr()),
         });
-        Ok(Bindings::new(self.variables.new_binding_no_span(expr)))
-    }
+        Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
 
-    fn copy_item(&mut self, _context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
-        self.throw_error()
-
-        // let is_one_item_expr = self.is_one_item_expr(context_atom);
         // let is_document_expr = self.is_document_expr(context_atom);
         // let is_element_expr = self.is_element_expr(context_atom);
 
@@ -520,6 +521,10 @@ impl<'a> IrConverter<'a> {
         //     // call error function as this is not allowed
         //     else_:
         // })
+    }
+
+    fn copy_one_item(&mut self, _context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
+        self.throw_error()
     }
 
     fn is_empty_sequence_expr(&self, atom: ir::AtomS) -> ir::Expr {
@@ -557,6 +562,15 @@ impl<'a> IrConverter<'a> {
                 occurrence: xpath_ast::Occurrence::One,
             }),
         })
+    }
+
+    fn throw_error(&mut self) -> error::SpannedResult<Bindings> {
+        let error_atom = self.error_atom();
+        let expr = ir::Expr::FunctionCall(ir::FunctionCall {
+            atom: Spanned::new(error_atom, (0..0).into()),
+            args: vec![],
+        });
+        Ok(Bindings::new(self.variables.new_binding_no_span(expr)))
     }
 
     fn expression(&mut self, expression: &ast::Expression) -> error::SpannedResult<Bindings> {

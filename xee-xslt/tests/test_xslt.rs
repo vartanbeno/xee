@@ -1,3 +1,4 @@
+use xee_interpreter::error;
 use xee_xslt::evaluate;
 
 #[test]
@@ -267,4 +268,18 @@ fn test_copy_empty_sequence() {
     )
     .unwrap();
     assert_eq!(output.to_string(), "<o/>");
+}
+
+#[test]
+fn test_copy_not_one_item_fails() {
+    let output = evaluate(
+        "<doc/>",
+        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                 <xsl:template match="/">
+                   <o><xsl:copy select="(1, 2)"/></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    );
+    // TODO: check the right error value
+    assert!(matches!(output, error::SpannedResult::Err(_)));
 }

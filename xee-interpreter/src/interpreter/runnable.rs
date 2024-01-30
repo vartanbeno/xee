@@ -172,7 +172,7 @@ impl<'a> Runnable<'a> {
                 });
                 let value = interpreter
                     .call_function_with_arguments(function, &arguments)
-                    .unwrap();
+                    .map_err(|e| interpreter.err(e))?;
                 for item in value.items() {
                     r.push(item.unwrap());
                 }
