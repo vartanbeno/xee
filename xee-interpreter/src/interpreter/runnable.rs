@@ -30,31 +30,6 @@ pub struct Runnable<'a> {
     pub(crate) dynamic_context: &'a DynamicContext<'a>,
 }
 
-struct RunValue {
-    output: Xot,
-    value: stack::Value,
-}
-
-pub struct SequenceOutput {
-    pub output: Xot,
-    pub sequence: sequence::Sequence,
-}
-
-impl std::fmt::Display for SequenceOutput {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for item in self.sequence.items() {
-            write!(
-                f,
-                "{}",
-                self.output
-                    .to_string(item.unwrap().to_node().unwrap().xot_node())
-                    .unwrap()
-            )?;
-        }
-        Ok(())
-    }
-}
-
 impl<'a> Runnable<'a> {
     pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext<'a>) -> Self {
         Self {

@@ -1,7 +1,7 @@
 use xee_interpreter::context::DynamicContext;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
-use xee_interpreter::interpreter::{Program, SequenceOutput};
+use xee_interpreter::interpreter::Program;
 use xee_interpreter::sequence;
 use xee_interpreter::xml;
 use xee_name::{Namespaces, FN_NAMESPACE};

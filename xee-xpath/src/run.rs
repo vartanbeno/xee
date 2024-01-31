@@ -34,7 +34,7 @@ pub fn evaluate_root(
     let static_context = StaticContext::from_namespaces(namespaces);
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
-    documents.add_root(&xot, &uri, root);
+    documents.add_root(xot, &uri, root);
     let context = DynamicContext::from_documents(&static_context, &documents);
     let document = documents.get(&uri).unwrap();
 

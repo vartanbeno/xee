@@ -40,11 +40,11 @@ impl qt::TestSet {
 
             let (queries, query) = test_set_query(xot, path, queries)?;
 
-            let dynamic_context = DynamicContext::empty(xot, &static_context);
-            let session = queries.session(&dynamic_context);
+            let dynamic_context = DynamicContext::empty(&static_context);
+            let mut session = queries.session(&dynamic_context, xot);
             // the query has a lifetime for the dynamic context, and a lifetime
             // for the static context
-            query.execute(&session, &Item::from(root))?
+            query.execute(&mut session, &Item::from(root))?
         };
         xot.remove(xot_root).unwrap();
         Ok(r)
@@ -77,9 +77,9 @@ impl qt::Catalog {
 
             let (queries, query) = catalog_query(xot, path, queries)?;
 
-            let dynamic_context = DynamicContext::empty(xot, &static_context);
-            let session = queries.session(&dynamic_context);
-            query.execute(&session, &Item::from(root))?
+            let dynamic_context = DynamicContext::empty(&static_context);
+            let mut session = queries.session(&dynamic_context, xot);
+            query.execute(&mut session, &Item::from(root))?
         };
         xot.remove(xot_root).unwrap();
         Ok(r)
@@ -87,7 +87,7 @@ impl qt::Catalog {
 }
 
 fn test_set_query<'a>(
-    xot: &'a Xot,
+    xot: &Xot,
     path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::TestSet> + 'a)> {
@@ -115,16 +115,16 @@ fn test_set_query<'a>(
     Ok((queries, test_set_query))
 }
 
-fn convert_string(_: &Session, item: &Item) -> xee_xpath::error::Result<String> {
+fn convert_string(_: &mut Session, item: &Item) -> xee_xpath::error::Result<String> {
     item.to_atomic()?.try_into()
 }
 
-fn convert_boolean(session: &Session, item: &Item) -> xee_xpath::error::Result<bool> {
+fn convert_boolean(session: &mut Session, item: &Item) -> xee_xpath::error::Result<bool> {
     Ok(convert_string(session, item)? == "true")
 }
 
 fn metadata_query<'a>(
-    _xot: &'a Xot,
+    _xot: &Xot,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::Metadata> + 'a)> {
     let description_query = queries.option("description/string()", convert_string)?;
@@ -171,7 +171,7 @@ fn metadata_query<'a>(
 }
 
 fn dependency_query<'a>(
-    _xot: &'a Xot,
+    _xot: &Xot,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<Vec<Vec<qt::Dependency>>> + 'a)> {
     let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
@@ -208,7 +208,7 @@ fn dependency_query<'a>(
 }
 
 fn test_cases_query<'a>(
-    xot: &'a Xot,
+    xot: &Xot,
     path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<Vec<qt::TestCase>> + 'a)> {
@@ -306,8 +306,8 @@ fn test_cases_query<'a>(
     // `query.option()` to detect entries (like "error", "assert-true", etc)
     // doesn't work for "any-of", as it contains a list of entries.
     let local_name_query = queries.one("local-name()", convert_string)?;
-    let result_query = queries.one("result/*", move |session: &Session, item: &Item| {
-        let f = |session: &Session, item: &Item, recurse: &Recurse<qt::TestCaseResult>| {
+    let result_query = queries.one("result/*", move |session: &mut Session, item: &Item| {
+        let f = |session: &mut Session, item: &Item, recurse: &Recurse<qt::TestCaseResult>| {
             let local_name = local_name_query.execute(session, item)?;
             let r = if local_name == "any-of" {
                 let contents = any_all_recurse.execute(session, item, recurse)?;
@@ -377,7 +377,7 @@ fn test_cases_query<'a>(
 }
 
 fn environment_spec_query<'a>(
-    xot: &'a Xot,
+    xot: &Xot,
     path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::EnvironmentSpec> + 'a)> {
@@ -481,7 +481,7 @@ fn environment_spec_query<'a>(
 }
 
 fn shared_environments_query<'a>(
-    xot: &'a Xot,
+    xot: &Xot,
     path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<SharedEnvironments> + 'a)> {
@@ -500,7 +500,7 @@ fn shared_environments_query<'a>(
 }
 
 fn catalog_query<'a>(
-    xot: &'a Xot,
+    xot: &Xot,
     path: &'a Path,
     mut queries: Queries<'a>,
 ) -> Result<(Queries<'a>, impl Query<qt::Catalog> + 'a)> {

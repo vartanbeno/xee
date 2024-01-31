@@ -11,7 +11,7 @@ use crate::collection::FxIndexSet;
 use crate::environment::EnvironmentSpecIterator;
 use crate::error::Result;
 use crate::outcome::TestOutcome;
-use crate::qt;
+use crate::qt::{self, Catalog};
 
 #[derive(Debug)]
 pub(crate) struct KnownDependencies {
@@ -198,7 +198,7 @@ impl qt::TestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let namespaces = self.namespaces(run_context, test_set);
+        let namespaces = self.namespaces(&run_context.catalog, test_set);
         let namespaces = match namespaces {
             Ok(namespaces) => namespaces,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
@@ -221,15 +221,17 @@ impl qt::TestCase {
         };
 
         let dynamic_context = DynamicContext::new(
-            &run_context.xot,
             &static_context,
             Cow::Borrowed(&run_context.documents),
             Cow::Borrowed(&variables),
         );
         let runnable = program.runnable(&dynamic_context);
-        let result = runnable.many(context_item.as_ref());
-        self.result
-            .assert_result(&runnable, &result.map_err(|error| error.error))
+        let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
+        self.result.assert_result(
+            &runnable,
+            &mut run_context.xot,
+            &result.map_err(|error| error.error),
+        )
     }
 
     fn environment_specs<'a>(
@@ -279,11 +281,11 @@ impl qt::TestCase {
 
     fn namespaces<'a>(
         &'a self,
-        run_context: &'a RunContext,
+        catalog: &'a Catalog,
         test_set: &'a qt::TestSet,
     ) -> Result<Namespaces<'a>> {
         let environment_specs = self
-            .environment_specs(&run_context.catalog, test_set)
+            .environment_specs(catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
         let mut namespaces = Namespaces::default();
         for environment_spec in environment_specs {

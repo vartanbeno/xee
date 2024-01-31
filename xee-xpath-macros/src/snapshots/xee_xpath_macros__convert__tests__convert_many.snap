@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"xs:integer*\")"
 ---
-"let tmp_a = crate :: occurrence :: Occurrence :: many (& mut arguments [0] . unboxed_atomized (context . xot , | atomic | std :: convert :: TryInto :: < ibig :: IBig > :: try_into (atomic))) ? ; let a = tmp_a . as_slice () ;"
+"let tmp_a = crate :: occurrence :: Occurrence :: many (& mut arguments [0] . unboxed_atomized (interpreter . xot () , | atomic | std :: convert :: TryInto :: < ibig :: IBig > :: try_into (atomic))) ? ; let a = tmp_a . as_slice () ;"
