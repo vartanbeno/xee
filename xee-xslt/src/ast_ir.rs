@@ -232,7 +232,10 @@ impl<'a> IrConverter<'a> {
             ast::SequenceConstructorItem::Instruction(instruction) => {
                 self.sequence_constructor_instruction(instruction)
             }
-            _ => todo!(),
+            ast::SequenceConstructorItem::Content(content) => {
+                self.sequence_constructor_content(content)
+            }
+            _ => todo!("Unsupported sequence constructor item {:?}", item),
         }
     }
 
@@ -251,6 +254,28 @@ impl<'a> IrConverter<'a> {
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
             _ => todo!(),
+        }
+    }
+
+    fn sequence_constructor_content(
+        &mut self,
+        content: &ast::Content,
+    ) -> error::SpannedResult<Bindings> {
+        match content {
+            ast::Content::Text(text) => {
+                let text_atom = Spanned::new(
+                    ir::Atom::Const(ir::Const::String(text.clone())),
+                    (0..0).into(),
+                );
+                let bindings = Bindings::empty();
+                Ok(bindings.bind_expr_no_span(
+                    &mut self.variables,
+                    ir::Expr::XmlText(ir::XmlText { value: text_atom }),
+                ))
+            }
+            ast::Content::Value(expression) => {
+                todo!("Cannot yet generate xpath as content");
+            }
         }
     }
 
@@ -401,12 +426,12 @@ impl<'a> IrConverter<'a> {
         ) = item
         {
             let name = self.variables.new_var_name(&variable.name);
-            if let Some(select) = &variable.select {
-                let var_bindings = self.expression(select)?;
-                Ok(Some((name, var_bindings)))
+            let var_bindings = if let Some(select) = &variable.select {
+                self.expression(select)?
             } else {
-                todo!()
-            }
+                self.sequence_constructor(&variable.sequence_constructor)?
+            };
+            Ok(Some((name, var_bindings)))
         } else {
             Ok(None)
         }
@@ -511,19 +536,17 @@ impl<'a> IrConverter<'a> {
             else_: Box::new(self.throw_error()?.expr()),
         });
         Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
-
-        // let is_document_expr = self.is_document_expr(context_atom);
-        // let is_element_expr = self.is_element_expr(context_atom);
-
-        // let mut expr = ir::Expr::If(ir::If {
-        //     condition: is_one_item_atom,
-        //     then: Box::new(self.copy_one_item(context_atom)?.expr()),
-        //     // call error function as this is not allowed
-        //     else_:
-        // })
     }
 
-    fn copy_one_item(&mut self, _context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
+    fn copy_one_item(&mut self, context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
+        // first make a copy using CopyShallow - this clones
+        // the item, and in the case of element and document, making
+        // a shallow copy (the element only copies the name, and namespace prefixes)
+        let is_document_expr = self.is_document_expr(context_atom.clone());
+        let is_element_expr = self.is_element_expr(context_atom);
+        // if this is an document or an element are true, with an or expression, then we
+        // want to run the sequence constructor for it, appending the
+        // result to the copy
         self.throw_error()
     }
 

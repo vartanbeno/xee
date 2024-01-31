@@ -4,36 +4,58 @@ use xee_xslt::evaluate;
 #[test]
 fn test_transform() {
     let output = evaluate(
-            "<doc/>",
-            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><a/></xsl:template></xsl:transform>"#,
-        ).unwrap();
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/"><a/></xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
     assert_eq!(output.to_string(), "<a/>");
 }
 
 #[test]
 fn test_transform_nested() {
     let output = evaluate(
-            "<doc/>",
-            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/"><a><b/><b/></a></xsl:template></xsl:transform>"#,
-        ).unwrap();
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/"><a><b/><b/></a></xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
     assert_eq!(output.to_string(), "<a><b/><b/></a>");
+}
+
+#[test]
+fn test_transform_text_node() {
+    let output = evaluate(
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/"><a>foo</a></xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(output.to_string(), "<a>foo</a>");
 }
 
 #[test]
 fn test_transform_nested_apply_templates() {
     let output = evaluate(
         "<doc><foo/><bar/></doc>",
-        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-                 <xsl:template match="/">
-                   <o><xsl:apply-templates select="doc/*" /></o>
-                 </xsl:template>
-                 <xsl:template match="foo">
-                   <f/>
-                 </xsl:template>
-                 <xsl:template match="bar">
-                    <b/>
-                 </xsl:template>
-              </xsl:transform>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:apply-templates select="doc/*" /></o>
+  </xsl:template>
+  <xsl:template match="foo">
+    <f/>
+  </xsl:template>
+  <xsl:template match="bar">
+    <b/>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
     assert_eq!(output.to_string(), "<o><f/><b/></o>");
@@ -44,7 +66,7 @@ fn test_transform_value_of_select() {
     let output = evaluate(
         "<doc/>",
         r#"
-<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
   <xsl:template match="/">
     <o><xsl:value-of select="1 to 4" /></o>
   </xsl:template>
@@ -59,7 +81,7 @@ fn test_transform_value_of_select_separator() {
     let output = evaluate(
         "<doc/>",
         r#"
-<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
   <xsl:template match="/">
     <o><xsl:value-of select="1 to 4" separator="|" /></o>
   </xsl:template>
@@ -73,7 +95,8 @@ fn test_transform_value_of_select_separator() {
 fn test_transform_local_variable() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <xsl:variable name="foo" select="'FOO'"/>
     <o><xsl:value-of select="$foo"/></o>
@@ -89,7 +112,8 @@ fn test_transform_local_variable() {
 fn test_transform_local_variable_shadow() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
   <xsl:template match="/">
     <xsl:variable name="foo" select="'FOO'"/>
     <xsl:variable name="foo" select="'BAR'"/>
@@ -102,11 +126,29 @@ fn test_transform_local_variable_shadow() {
     assert_eq!(output.to_string(), "<o>BAR</o>");
 }
 
+// #[test]
+// fn test_transform_local_variable_from_sequence_constructor() {
+//     let output = evaluate(
+//         "<doc/>",
+//         r#"
+// <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//   <xsl:template match="/">
+//     <xsl:variable name="foo"><b>B</b></xsl:variable>
+//     <o><xsl:value-of select="$foo"/></o>
+//   </xsl:template>
+// </xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(output.to_string(), "<o>B</o>");
+// }
+
 #[test]
 fn test_transform_if_true() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:if test="1"><foo/></xsl:if></o>
   </xsl:template>
@@ -121,7 +163,8 @@ fn test_transform_if_true() {
 fn test_transform_if_false() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:if test="0"><foo/></xsl:if></o>
   </xsl:template>
@@ -136,7 +179,8 @@ fn test_transform_if_false() {
 fn test_transform_choose_when() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:choose>
       <xsl:when test="1"><foo/></xsl:when>
@@ -154,7 +198,8 @@ fn test_transform_choose_when() {
 fn test_transform_choose_otherwise() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:choose>
       <xsl:when test="0"><foo/></xsl:when>
@@ -172,7 +217,8 @@ fn test_transform_choose_otherwise() {
 fn test_transform_choose_when_false_no_otherwise() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:choose>
       <xsl:when test="0"><foo/></xsl:when>
@@ -189,7 +235,8 @@ fn test_transform_choose_when_false_no_otherwise() {
 fn test_transform_multiple_when() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
   <xsl:template match="/">
     <o><xsl:choose>
       <xsl:when test="0"><foo/></xsl:when>
@@ -208,7 +255,8 @@ fn test_transform_multiple_when() {
 fn test_transform_multiple_when_with_otherwise() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
   <xsl:template match="/">
     <o><xsl:choose>
       <xsl:when test="0"><foo/></xsl:when>
@@ -227,11 +275,12 @@ fn test_transform_multiple_when_with_otherwise() {
 fn test_basic_for_each() {
     let output = evaluate(
         "<doc><foo/><foo/><foo/></doc>",
-        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-                 <xsl:template match="/">
-                   <o><xsl:for-each select="doc/foo"><bar/></xsl:for-each></o>
-                 </xsl:template>
-              </xsl:transform>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:for-each select="doc/foo"><bar/></xsl:for-each></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
     assert_eq!(output.to_string(), "<o><bar/><bar/><bar/></o>");
@@ -241,13 +290,14 @@ fn test_basic_for_each() {
 fn test_for_each_context() {
     let output = evaluate(
         "<doc><foo>0</foo><foo>1</foo><foo>2</foo></doc>",
-        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-                 <xsl:template match="/">
-                   <o><xsl:for-each select="doc/foo">
-                     <bar><xsl:value-of select="string()"/></bar>
-                   </xsl:for-each></o>
-                 </xsl:template>
-              </xsl:transform>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:for-each select="doc/foo">
+      <bar><xsl:value-of select="string()"/></bar>
+    </xsl:for-each></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
     assert_eq!(
@@ -260,11 +310,12 @@ fn test_for_each_context() {
 fn test_copy_empty_sequence() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-                 <xsl:template match="/">
-                   <o><xsl:copy select="()"/></o>
-                 </xsl:template>
-              </xsl:transform>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:copy select="()"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
     assert_eq!(output.to_string(), "<o/>");
@@ -274,12 +325,28 @@ fn test_copy_empty_sequence() {
 fn test_copy_not_one_item_fails() {
     let output = evaluate(
         "<doc/>",
-        r#"<xsl:transform version="3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-                 <xsl:template match="/">
-                   <o><xsl:copy select="(1, 2)"/></o>
-                 </xsl:template>
-              </xsl:transform>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
+  <xsl:template match="/">
+    <o><xsl:copy select="(1, 2)"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     );
     // TODO: check the right error value
     assert!(matches!(output, error::SpannedResult::Err(_)));
 }
+
+// #[test]
+// fn test_copy_atom() {
+//     let output = evaluate(
+//         "<doc/>",
+//         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//                  <xsl:template match="/">
+//                    <xsl:variable name="foo"><xsl:copy select=""/></xsl:variable>
+//                    <o><xsl:value-of select="string($foo)"/></o>
+//                  </xsl:template>
+//               </xsl:transform>"#,
+//     )
+//     .unwrap();
+//     assert_eq!(output.to_string(), "<o>1</o>");
+// }
