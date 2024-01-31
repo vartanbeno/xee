@@ -1,9 +1,27 @@
-use xee_interpreter::error;
+use std::fmt::Write;
+
+use xee_interpreter::{error, sequence::Sequence};
 use xee_xslt::evaluate;
+use xot::Xot;
+
+fn xml(xot: &Xot, sequence: Sequence) -> String {
+    let mut f = String::new();
+
+    for item in sequence.items() {
+        f.write_str(
+            &xot.to_string(item.unwrap().to_node().unwrap().xot_node())
+                .unwrap(),
+        )
+        .unwrap();
+    }
+    f
+}
 
 #[test]
 fn test_transform() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -11,12 +29,14 @@ fn test_transform() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<a/>");
+    assert_eq!(xml(&xot, output), "<a/>");
 }
 
 #[test]
 fn test_transform_nested() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -24,12 +44,14 @@ fn test_transform_nested() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<a><b/><b/></a>");
+    assert_eq!(xml(&xot, output), "<a><b/><b/></a>");
 }
 
 #[test]
 fn test_transform_text_node() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -37,12 +59,14 @@ fn test_transform_text_node() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<a>foo</a>");
+    assert_eq!(xml(&xot, output), "<a>foo</a>");
 }
 
 #[test]
 fn test_transform_nested_apply_templates() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc><foo/><bar/></doc>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -58,12 +82,14 @@ fn test_transform_nested_apply_templates() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<o><f/><b/></o>");
+    assert_eq!(xml(&xot, output), "<o><f/><b/></o>");
 }
 
 #[test]
 fn test_transform_value_of_select() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -73,12 +99,14 @@ fn test_transform_value_of_select() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<o>1 2 3 4</o>");
+    assert_eq!(xml(&xot, output), "<o>1 2 3 4</o>");
 }
 
 #[test]
 fn test_transform_value_of_select_separator() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -88,12 +116,14 @@ fn test_transform_value_of_select_separator() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<o>1|2|3|4</o>");
+    assert_eq!(xml(&xot, output), "<o>1|2|3|4</o>");
 }
 
 #[test]
 fn test_transform_local_variable() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -105,12 +135,14 @@ fn test_transform_local_variable() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o>FOO</o>");
+    assert_eq!(xml(&xot, output), "<o>FOO</o>");
 }
 
 #[test]
 fn test_transform_local_variable_shadow() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -123,12 +155,13 @@ fn test_transform_local_variable_shadow() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o>BAR</o>");
+    assert_eq!(xml(&xot, output), "<o>BAR</o>");
 }
 
 // #[test]
 // fn test_transform_local_variable_from_sequence_constructor() {
-//     let output = evaluate(
+// let mut xot = Xot::new();
+// let output = evaluate(&mut xot,
 //         "<doc/>",
 //         r#"
 // <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -140,12 +173,14 @@ fn test_transform_local_variable_shadow() {
 //     )
 //     .unwrap();
 
-//     assert_eq!(output.to_string(), "<o>B</o>");
+//     assert_eq!(xml(&xot, output), "<o>B</o>");
 // }
 
 #[test]
 fn test_transform_if_true() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -156,12 +191,14 @@ fn test_transform_if_true() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o><foo/></o>");
+    assert_eq!(xml(&xot, output), "<o><foo/></o>");
 }
 
 #[test]
 fn test_transform_if_false() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -172,12 +209,14 @@ fn test_transform_if_false() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o/>");
+    assert_eq!(xml(&xot, output), "<o/>");
 }
 
 #[test]
 fn test_transform_choose_when() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -191,12 +230,14 @@ fn test_transform_choose_when() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o><foo/></o>");
+    assert_eq!(xml(&xot, output), "<o><foo/></o>");
 }
 
 #[test]
 fn test_transform_choose_otherwise() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -210,12 +251,14 @@ fn test_transform_choose_otherwise() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o><bar/></o>");
+    assert_eq!(xml(&xot, output), "<o><bar/></o>");
 }
 
 #[test]
 fn test_transform_choose_when_false_no_otherwise() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -228,12 +271,14 @@ fn test_transform_choose_when_false_no_otherwise() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o/>");
+    assert_eq!(xml(&xot, output), "<o/>");
 }
 
 #[test]
 fn test_transform_multiple_when() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -248,12 +293,14 @@ fn test_transform_multiple_when() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o><bar/></o>");
+    assert_eq!(xml(&xot, output), "<o><bar/></o>");
 }
 
 #[test]
 fn test_transform_multiple_when_with_otherwise() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -268,12 +315,14 @@ fn test_transform_multiple_when_with_otherwise() {
     )
     .unwrap();
 
-    assert_eq!(output.to_string(), "<o><baz/></o>");
+    assert_eq!(xml(&xot, output), "<o><baz/></o>");
 }
 
 #[test]
 fn test_basic_for_each() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc><foo/><foo/><foo/></doc>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -283,12 +332,14 @@ fn test_basic_for_each() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<o><bar/><bar/><bar/></o>");
+    assert_eq!(xml(&xot, output), "<o><bar/><bar/><bar/></o>");
 }
 
 #[test]
 fn test_for_each_context() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc><foo>0</foo><foo>1</foo><foo>2</foo></doc>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -301,14 +352,16 @@ fn test_for_each_context() {
     )
     .unwrap();
     assert_eq!(
-        output.to_string(),
+        xml(&xot, output),
         "<o><bar>0</bar><bar>1</bar><bar>2</bar></o>"
     );
 }
 
 #[test]
 fn test_copy_empty_sequence() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
@@ -318,12 +371,14 @@ fn test_copy_empty_sequence() {
 </xsl:transform>"#,
     )
     .unwrap();
-    assert_eq!(output.to_string(), "<o/>");
+    assert_eq!(xml(&xot, output), "<o/>");
 }
 
 #[test]
 fn test_copy_not_one_item_fails() {
+    let mut xot = Xot::new();
     let output = evaluate(
+        &mut xot,
         "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" >
@@ -348,5 +403,5 @@ fn test_copy_not_one_item_fails() {
 //               </xsl:transform>"#,
 //     )
 //     .unwrap();
-//     assert_eq!(output.to_string(), "<o>1</o>");
+//     assert_eq!(xml(&xot, output), "<o>1</o>");
 // }

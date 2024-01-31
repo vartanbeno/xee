@@ -10,26 +10,25 @@ use xot::{Node, Xot};
 use crate::ast_ir::parse;
 
 pub fn evaluate_program(
-    xot: &Xot,
+    xot: &mut Xot,
     program: &Program,
     root: Node,
     static_context: &StaticContext,
-) -> error::SpannedResult<SequenceOutput> {
+) -> error::SpannedResult<sequence::Sequence> {
     let uri = xee_interpreter::xml::Uri::new("http://example.com");
     let mut documents = xee_interpreter::xml::Documents::new();
     documents.add_root(xot, &uri, root);
-    let context = DynamicContext::from_documents(xot, static_context, &documents);
+    let context = DynamicContext::from_documents(static_context, &documents);
     let document = documents.get(&uri).unwrap();
     let runnable = program.runnable(&context);
     let item: sequence::Item = xml::Node::Xot(document.root).into();
-    runnable.many_output(Some(&item))
+    runnable.many(Some(&item), xot)
 }
 
-pub fn evaluate(xml: &str, xslt: &str) -> error::SpannedResult<SequenceOutput> {
+pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<sequence::Sequence> {
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), None, Some(FN_NAMESPACE));
     let static_context = StaticContext::from_namespaces(namespaces);
-    let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
     let program = parse(&static_context, xslt).unwrap();
-    evaluate_program(&xot, &program, root, &static_context)
+    evaluate_program(xot, &program, root, &static_context)
 }
