@@ -14,7 +14,9 @@ pub fn parse_transform(s: &str) -> Result<ast::Transform> {
     let (node, span_info) = xot.parse_with_span_info(s).unwrap();
     let node = xot.document_element(node).unwrap();
     let mut state = State::new(xot, span_info, names);
-    static_evaluate(&mut state, node, Variables::new()).unwrap();
+
+    let mut xot = Xot::new();
+    static_evaluate(&mut state, node, Variables::new(), &mut xot).unwrap();
     let parser = XsltParser::new(&state);
     parser.parse_transform(node)
 }
