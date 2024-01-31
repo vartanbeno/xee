@@ -89,7 +89,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_schema_type(
         self,
         xs: Xs,
-        dynamic_context: &context::DynamicContext,
+        static_context: &context::StaticContext,
     ) -> error::Result<atomic::Atomic> {
         // if we try to cast to any atomic type, we're already the correct type
         if xs == Xs::AnyAtomicType {
@@ -125,7 +125,7 @@ impl atomic::Atomic {
             Xs::Base64Binary => self.cast_to_base64_binary(),
             Xs::HexBinary => self.cast_to_hex_binary(),
             Xs::AnyURI => self.cast_to_any_uri(),
-            Xs::QName => self.cast_to_qname(dynamic_context),
+            Xs::QName => self.cast_to_qname(static_context),
 
             // string subtypes
             Xs::NormalizedString => Ok(self.cast_to_normalized_string()),
@@ -159,7 +159,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_schema_type_of(
         self,
         other: &atomic::Atomic,
-        context: &context::DynamicContext,
+        context: &context::StaticContext,
     ) -> error::Result<atomic::Atomic> {
         self.cast_to_schema_type(other.schema_type(), context)
     }
@@ -168,7 +168,7 @@ impl atomic::Atomic {
     pub(crate) fn cast_to_same_schema_type(
         self,
         other: atomic::Atomic,
-        context: &context::DynamicContext,
+        context: &context::StaticContext,
     ) -> error::Result<(atomic::Atomic, atomic::Atomic)> {
         if self.derives_from(&other) {
             let a = self.cast_to_schema_type_of(&other, context)?;

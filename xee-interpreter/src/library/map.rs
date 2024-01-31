@@ -34,7 +34,7 @@ fn merge2(
     maps: &[function::Map],
     options: function::Map,
 ) -> error::Result<function::Map> {
-    let options = MergeOptions::from_map(&options, interpreter.runnable())?;
+    let options = MergeOptions::from_map(&options, interpreter)?;
     merge(maps, options)
 }
 
@@ -69,11 +69,14 @@ struct MergeOptions {
 }
 
 impl MergeOptions {
-    fn from_map(map: &function::Map, runnable: &interpreter::Runnable) -> error::Result<Self> {
+    fn from_map(
+        map: &function::Map,
+        interpreter: &interpreter::Interpreter,
+    ) -> error::Result<Self> {
         let key: atomic::Atomic = "duplicates".to_string().into();
         let duplicates = map.get(&key);
         if let Some(duplicates) = duplicates {
-            let value = Self::duplicates_value(runnable, &duplicates)?;
+            let value = Self::duplicates_value(interpreter, &duplicates)?;
             let duplicates = MergeDuplicates::from_str(&value)?;
             Ok(Self { duplicates })
         } else {
@@ -85,7 +88,7 @@ impl MergeOptions {
     }
 
     fn duplicates_value(
-        runnable: &interpreter::Runnable,
+        interpreter: &interpreter::Interpreter,
         duplicates: &sequence::Sequence,
     ) -> error::Result<String> {
         // we want a string type
@@ -95,11 +98,13 @@ impl MergeOptions {
         });
         // apply function conversion rules as specified by the option parameter
         // conventions
+        let runnable = interpreter.runnable();
         let duplicates = duplicates
             .clone()
             .sequence_type_matching_function_conversion(
                 &sequence_type,
-                runnable.dynamic_context(),
+                runnable.dynamic_context().static_context,
+                interpreter.xot(),
                 &|function| runnable.function_info(function).signature(),
             )?;
         // take the first value, which should be a string

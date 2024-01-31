@@ -27,20 +27,20 @@ impl Frame {
 }
 
 #[derive(Debug)]
-pub struct State {
+pub struct State<'a> {
     stack: Vec<stack::Value>,
     build_stack: Vec<Vec<sequence::Item>>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
-    pub(crate) output: Xot,
+    pub(crate) xot: &'a mut Xot,
 }
 
-impl State {
-    pub(crate) fn new() -> Self {
+impl<'a> State<'a> {
+    pub(crate) fn new(xot: &'a mut Xot) -> Self {
         Self {
             stack: vec![],
             build_stack: vec![],
             frames: ArrayVec::new(),
-            output: Xot::new(),
+            xot,
         }
     }
 
@@ -185,7 +185,11 @@ impl State {
         &self.stack
     }
 
-    pub fn output(self) -> Xot {
-        self.output
+    pub fn xot(&self) -> &Xot {
+        &self.xot
+    }
+
+    pub fn xot_mut(&mut self) -> &mut Xot {
+        &mut self.xot
     }
 }

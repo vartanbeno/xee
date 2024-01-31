@@ -160,19 +160,25 @@ fn for_each_pair(
 #[xpath_fn("fn:sort($input as item()*) as item()*")]
 fn sort1(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: &sequence::Sequence,
 ) -> error::Result<sequence::Sequence> {
-    input.sorted(context, context.static_context.default_collation_uri())
+    input.sorted(
+        context,
+        context.static_context.default_collation_uri(),
+        interpreter.xot(),
+    )
 }
 
 #[xpath_fn("fn:sort($input as item()*, $collation as xs:string?) as item()*")]
 fn sort2(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: &sequence::Sequence,
     collation: Option<&str>,
 ) -> error::Result<sequence::Sequence> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
-    input.sorted(context, collation)
+    input.sorted(context, collation, interpreter.xot())
 }
 
 #[xpath_fn("fn:sort($input as item()*, $collation as xs:string?, $key as function(item()) as xs:anyAtomicType*) as item()*")]
@@ -194,6 +200,7 @@ fn sort3(
 
 fn sort_without_key(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: &sequence::Sequence,
     collation: &str,
 ) -> error::Result<sequence::Sequence> {
@@ -201,7 +208,7 @@ fn sort_without_key(
         // the equivalent of fn:data()
         let seq: sequence::Sequence = item.clone().into();
         let atoms = seq
-            .atomized(context.xot)
+            .atomized(interpreter.xot())
             .collect::<error::Result<Vec<_>>>()?;
         Ok(atoms.into())
     })

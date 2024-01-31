@@ -18,7 +18,7 @@ use crate::{error, string};
 use super::Interpreter;
 use super::Program;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Runnable<'a> {
     program: &'a Program,
     map_signature: function::Signature,
@@ -65,8 +65,12 @@ impl<'a> Runnable<'a> {
         }
     }
 
-    fn run_value(&self, context_item: Option<&sequence::Item>) -> error::SpannedResult<RunValue> {
-        let mut interpreter = Interpreter::new(self);
+    fn run_value(
+        &self,
+        context_item: Option<&sequence::Item>,
+        xot: &'a mut Xot,
+    ) -> error::SpannedResult<stack::Value> {
+        let mut interpreter = Interpreter::new(self, xot);
         // TODO: the arguments aren't supplied to the function that are expected.
         // This should result in an error, preferrably the variable that is missing
         // underlined in the xpath expression. But that requires some more work to
@@ -87,46 +91,42 @@ impl<'a> Runnable<'a> {
             state.stack()
         );
         let value = state.stack().last().unwrap().clone();
-        let output = state.output();
         match value {
             stack::Value::Absent => Err(SpannedError {
                 error: error::Error::XPDY0002,
                 span: self.program.span().into(),
             }),
-            _ => Ok(RunValue { output, value }),
+            _ => Ok(value),
         }
     }
 
     /// Run the program against a sequence item.
-    pub fn many(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Sequence> {
-        let value = self.run_value(item)?;
-        Ok(value.value.into())
-    }
-
-    /// Run the program against a sequence item.
-    ///
-    /// Also deliver output Xot.
-    pub fn many_output(
+    pub fn many(
         &self,
         item: Option<&sequence::Item>,
-    ) -> error::SpannedResult<SequenceOutput> {
-        let value = self.run_value(item)?;
-        Ok(SequenceOutput {
-            output: value.output,
-            sequence: value.value.into(),
-        })
+        xot: &'a mut Xot,
+    ) -> error::SpannedResult<sequence::Sequence> {
+        Ok(self.run_value(item, xot)?.into())
     }
 
     /// Run the program against a xot Node.
-    pub fn many_xot_node(&self, node: xot::Node) -> error::SpannedResult<sequence::Sequence> {
+    pub fn many_xot_node(
+        &self,
+        node: xot::Node,
+        xot: &'a mut Xot,
+    ) -> error::SpannedResult<sequence::Sequence> {
         let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
-        self.many(Some(&item))
+        self.many(Some(&item), xot)
     }
 
     /// Run the program, expect a single item as the result.
-    pub fn one(&self, item: Option<&sequence::Item>) -> error::SpannedResult<sequence::Item> {
-        let sequence = self.many(item)?;
+    pub fn one(
+        &self,
+        item: Option<&sequence::Item>,
+        xot: &'a mut Xot,
+    ) -> error::SpannedResult<sequence::Item> {
+        let sequence = self.many(item, xot)?;
         sequence.items().one().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),
@@ -137,8 +137,9 @@ impl<'a> Runnable<'a> {
     pub fn option(
         &self,
         item: Option<&sequence::Item>,
+        xot: &'a mut Xot,
     ) -> error::SpannedResult<Option<sequence::Item>> {
-        let sequence = self.many(item)?;
+        let sequence = self.many(item, xot)?;
         sequence.items().option().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),
@@ -158,7 +159,7 @@ impl<'a> Runnable<'a> {
                 .program
                 .declarations
                 .pattern_lookup
-                .lookup(&item, self.dynamic_context.xot);
+                .lookup(&item, interpreter.state.xot);
             if let Some(function_id) = function_id {
                 let position: IBig = (i + 1).into();
                 let arguments: Vec<sequence::Sequence> = vec![
@@ -191,10 +192,6 @@ impl<'a> Runnable<'a> {
 
     pub(crate) fn annotations(&self) -> &xml::Annotations {
         &self.dynamic_context.documents.annotations
-    }
-
-    pub fn xot(&self) -> &xot::Xot {
-        self.dynamic_context.xot
     }
 
     pub fn default_collation_uri(&self) -> &str {

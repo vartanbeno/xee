@@ -95,17 +95,13 @@ impl Value {
         &self,
         other: Value,
         context: &context::DynamicContext,
+        xot: &Xot,
         op: O,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
     {
-        comparison::general_comparison(
-            self.atomized(context.xot),
-            other.atomized(context.xot),
-            context,
-            op,
-        )
+        comparison::general_comparison(self.atomized(xot), other.atomized(xot), context, op)
     }
 
     pub(crate) fn concat(self, other: stack::Value) -> stack::Value {

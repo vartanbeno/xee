@@ -62,23 +62,25 @@ impl Sequence {
     pub(crate) fn sequence_type_matching_function_conversion<'a>(
         self,
         sequence_type: &ast::SequenceType,
-        context: &'a context::DynamicContext,
+        context: &'a context::StaticContext,
+        xot: &Xot,
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            &|sequence, xs| Self::convert_atomic(sequence, xs, context),
+            &|sequence, xs| Self::convert_atomic(sequence, xs, context, xot),
             &|function_test, item| item.function_arity_matching(function_test, &get_signature),
-            context.xot,
+            xot,
         )
     }
 
     fn convert_atomic(
         sequence: &Sequence,
         xs: Xs,
-        context: &context::DynamicContext,
+        context: &context::StaticContext,
+        xot: &Xot,
     ) -> error::Result<Sequence> {
-        let atomized = sequence.atomized(context.xot);
+        let atomized = sequence.atomized(xot);
         let mut items = Vec::new();
         for atom in atomized {
             let atom = atom?;
@@ -620,13 +622,12 @@ mod tests {
         // integers count as decimals, so should be promoted to a double
         let right_sequence = Sequence::from(vec![Item::from(ibig!(1)), Item::from(ibig!(2))]);
 
-        let xot = Xot::new();
         let static_context = context::StaticContext::default();
-        let dynamic_context = context::DynamicContext::empty(&xot, &static_context);
-
+        let xot = Xot::new();
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,
-            &dynamic_context,
+            &static_context,
+            &xot,
             &|_| unreachable!(),
         );
         // atomization has changed the result sequence
@@ -656,11 +657,11 @@ mod tests {
         let right_sequence = Sequence::from(vec![Item::from(a), Item::from(b)]);
 
         let static_context = context::StaticContext::default();
-        let dynamic_context = context::DynamicContext::empty(&xot, &static_context);
 
         let right_result = right_sequence.sequence_type_matching_function_conversion(
             &sequence_type,
-            &dynamic_context,
+            &static_context,
+            &xot,
             &|_| unreachable!(),
         );
         // atomization has changed the result sequence

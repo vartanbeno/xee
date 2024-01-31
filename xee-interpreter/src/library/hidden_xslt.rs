@@ -6,6 +6,7 @@ use xot::Xot;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
+use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
 use crate::xml;
@@ -16,15 +17,15 @@ use crate::xml;
 
 #[xpath_fn("fn:simple-content($arg as item()*, $separator as xs:string) as xs:string?")]
 fn simple_content(
-    context: &DynamicContext,
+    interpreter: &Interpreter,
     arg: &sequence::Sequence,
     separator: &str,
 ) -> error::Result<String> {
-    let arg = simple_content_text_nodes(arg, context.xot)?;
+    let arg = simple_content_text_nodes(arg, interpreter.xot())?;
     // now atomize the sequence, putting in separators, except at the end
     let mut s = String::new();
     let mut first = true;
-    for atom in arg.atomized(context.xot) {
+    for atom in arg.atomized(interpreter.xot()) {
         let atom = atom?;
         if !first {
             s.push_str(separator);

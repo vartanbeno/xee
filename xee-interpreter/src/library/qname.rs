@@ -12,12 +12,13 @@ use crate::atomic;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
+use crate::interpreter::Interpreter;
 use crate::wrap_xpath_fn;
 use crate::xml;
 
 #[xpath_fn("fn:resolve-QName($qname as xs:string?, $element as element()) as xs:QName?")]
 fn resolve_qname(
-    context: &DynamicContext,
+    interpreter: &Interpreter,
     qname: Option<&str>,
     node: xml::Node,
 ) -> error::Result<Option<atomic::Atomic>> {
@@ -25,7 +26,7 @@ fn resolve_qname(
         // TODO: we could make this more efficient if we could have a parser state
         // that used NamespaceLookup instead of Namespaces, but that requires a lot
         // of generics we're not ready for at this point.
-        let namespaces = element_namespaces(node, context.xot);
+        let namespaces = element_namespaces(node, interpreter.xot());
         let name = parse_name(qname, &namespaces)?.value;
         Ok(Some(name.into()))
     } else {
@@ -129,7 +130,7 @@ fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::A
     "fn:namespace-uri-for-prefix($prefix as xs:string?, $element as element()) as xs:anyURI?"
 )]
 fn namespace_uri_for_prefix(
-    context: &DynamicContext,
+    interpreter: &Interpreter,
     prefix: Option<&str>,
     node: xml::Node,
 ) -> error::Result<Option<atomic::Atomic>> {
@@ -137,7 +138,7 @@ fn namespace_uri_for_prefix(
         // TODO: efficiency could be made faster if we used NameSpaceLookup, see
         // resolve-QName
 
-        let namespaces = element_namespaces(node, context.xot);
+        let namespaces = element_namespaces(node, interpreter.xot());
         Ok(namespaces
             .by_prefix(prefix)
             .map(|s| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::new(s.to_string()))))

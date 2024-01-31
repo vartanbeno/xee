@@ -235,13 +235,12 @@ impl Sequence {
         &self,
         context: &context::DynamicContext,
         collation: &str,
+        xot: &Xot,
     ) -> error::Result<Self> {
         self.sorted_by_key(context, collation, |item| {
             // the equivalent of fn:data()
             let seq: sequence::Sequence = item.clone().into();
-            let atoms = seq
-                .atomized(context.xot)
-                .collect::<error::Result<Vec<_>>>()?;
+            let atoms = seq.atomized(xot).collect::<error::Result<Vec<_>>>()?;
             Ok(atoms.into())
         })
     }

@@ -14,6 +14,7 @@ use crate::atomic::StringType;
 use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
+use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::string::Collation;
 use crate::wrap_xpath_fn;
@@ -210,13 +211,14 @@ fn index_of(
 #[xpath_fn("fn:deep-equal($parameter1 as item()*, $parameter2 as item()*, $collation as xs:string) as xs:boolean", collation)]
 fn deep_equal(
     context: &DynamicContext,
+    interpreter: &Interpreter,
     parameter1: &sequence::Sequence,
     parameter2: &sequence::Sequence,
     collation: &str,
 ) -> error::Result<bool> {
     let collation = context.static_context.collation(collation)?;
     let default_offset = context.implicit_timezone();
-    parameter1.deep_equal(parameter2, &collation, default_offset, context.xot)
+    parameter1.deep_equal(parameter2, &collation, default_offset, interpreter.xot())
 }
 
 #[xpath_fn("fn:zero-or-one($arg as item()*) as item()?")]

@@ -138,13 +138,13 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_qname(
         self,
-        dynamic_context: &context::DynamicContext,
+        static_context: &context::StaticContext,
     ) -> error::Result<atomic::Atomic> {
         match self {
             atomic::Atomic::QName(_) => Ok(self.clone()),
             atomic::Atomic::String(_, s) | atomic::Atomic::Untyped(s) => {
                 // https://www.w3.org/TR/xpath-functions-31/#constructor-qname-notation
-                let namespaces = dynamic_context.static_context.namespaces();
+                let namespaces = static_context.namespaces();
                 let name = parse_name(&s, namespaces);
                 match name {
                     Ok(name) => {

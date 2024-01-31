@@ -5,6 +5,7 @@ use ibig::IBig;
 
 use xee_name::Name;
 use xee_schema_type::Xs;
+use xot::Xot;
 
 use crate::atomic::{self, AtomicCompare};
 use crate::atomic::{
@@ -27,7 +28,7 @@ const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 pub struct Interpreter<'a> {
     runnable: &'a Runnable<'a>,
-    pub(crate) state: State,
+    pub(crate) state: State<'a>,
 }
 
 pub struct ContextInfo {
@@ -47,14 +48,14 @@ impl From<sequence::Item> for ContextInfo {
 }
 
 impl<'a> Interpreter<'a> {
-    pub fn new(runnable: &'a Runnable<'a>) -> Self {
+    pub fn new(runnable: &'a Runnable<'a>, xot: &'a mut Xot) -> Self {
         Interpreter {
             runnable,
-            state: State::new(),
+            state: State::new(xot),
         }
     }
 
-    pub fn state(self) -> State {
+    pub fn state(self) -> State<'a> {
         self.state
     }
 
@@ -334,7 +335,7 @@ impl<'a> Interpreter<'a> {
                     let step_id = self.read_u16();
                     let node = self.state.pop().try_into()?;
                     let step = &(self.current_inline_function().steps[step_id as usize]);
-                    let value = xml::resolve_step(step, node, self.runnable.xot());
+                    let value = xml::resolve_step(step, node, self.state.xot());
                     self.state.push(value);
                 }
                 EncodedInstruction::Deduplicate => {
@@ -356,7 +357,8 @@ impl<'a> Interpreter<'a> {
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
-                        self.runnable.dynamic_context(),
+                        self.runnable.dynamic_context().static_context,
+                        self.state.xot(),
                         &|function| self.runnable.function_info(function).signature(),
                     )?;
                     self.state.push(sequence.into());
@@ -372,8 +374,10 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value = value
-                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context())?;
+                        let cast_value = value.cast_to_schema_type(
+                            cast_type.xs,
+                            self.runnable.dynamic_context().static_context,
+                        )?;
                         self.state.push(cast_value.into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(stack::Value::Empty);
@@ -386,8 +390,10 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value = value
-                            .cast_to_schema_type(cast_type.xs, self.runnable.dynamic_context());
+                        let cast_value = value.cast_to_schema_type(
+                            cast_type.xs,
+                            self.runnable.dynamic_context().static_context,
+                        );
                         self.state.push(cast_value.is_ok().into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(true.into())
@@ -403,7 +409,7 @@ impl<'a> Interpreter<'a> {
                     let sequence: sequence::Sequence = value.into();
                     let matches = sequence.sequence_type_matching(
                         sequence_type,
-                        self.runnable.xot(),
+                        self.state.xot(),
                         &|function| self.runnable.function_info(function).signature(),
                     );
                     if matches.is_ok() {
@@ -420,7 +426,7 @@ impl<'a> Interpreter<'a> {
                     let sequence: sequence::Sequence = value.into();
                     let matches = sequence.sequence_type_matching(
                         sequence_type,
-                        self.runnable.xot(),
+                        self.state.xot(),
                         &|function| self.runnable.function_info(function).signature(),
                     );
                     if matches.is_err() {
@@ -430,8 +436,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Range => {
                     let b = self.state.pop();
                     let a = self.state.pop();
-                    let mut a = a.atomized(self.runnable.xot());
-                    let mut b = b.atomized(self.runnable.xot());
+                    let mut a = a.atomized(self.state.xot());
+                    let mut b = b.atomized(self.state.xot());
                     let a = a.option()?;
                     let b = b.option()?;
                     let (a, b) = match (a, b) {
@@ -508,13 +514,13 @@ impl<'a> Interpreter<'a> {
                     self.state.push(name.into());
                 }
                 EncodedInstruction::XmlRoot => {
-                    let root_node = self.state.output.new_root_unconnected();
+                    let root_node = self.state.xot.new_root_unconnected();
                     let item = sequence::Item::Node(xml::Node::Xot(root_node));
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlElement => {
                     let name_id = self.pop_xot_name()?;
-                    let element_node = self.state.output.new_element(name_id);
+                    let element_node = self.state.xot.new_element(name_id);
                     let item = sequence::Item::Node(xml::Node::Xot(element_node));
                     self.state.push(item.into());
                 }
@@ -526,7 +532,7 @@ impl<'a> Interpreter<'a> {
                         // TODO: handle adding attribute xot node using
                         // same operation
                         self.state
-                            .output
+                            .xot
                             .append(parent_node, child_node.xot_node())
                             .unwrap();
                     }
@@ -539,7 +545,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::XmlText => {
                     let text_atomic = self.pop_atomic()?;
                     let text = text_atomic.into_canonical();
-                    let text_node = self.state.output.new_text(&text);
+                    let text_node = self.state.xot.new_text(&text);
                     let item = sequence::Item::Node(xml::Node::Xot(text_node));
                     self.state.push(item.into());
                 }
@@ -720,7 +726,8 @@ impl<'a> Interpreter<'a> {
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
-                    self.runnable.dynamic_context(),
+                    self.runnable.dynamic_context().static_context,
+                    self.state.xot(),
                     &|function| self.runnable.function_info(function).signature(),
                 )?;
                 arguments.push(sequence.into())
@@ -830,7 +837,7 @@ impl<'a> Interpreter<'a> {
         get_key: impl Fn(&T, atomic::Atomic) -> error::Result<sequence::Sequence>,
     ) -> error::Result<Vec<sequence::Item>> {
         let keys = key_specifier
-            .atomized(self.runnable.xot())
+            .atomized(self.state.xot())
             .collect::<error::Result<Vec<_>>>()?;
         let mut result = Vec::new();
         for key in keys {
@@ -882,8 +889,8 @@ impl<'a> Interpreter<'a> {
             self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.runnable.xot());
-        let mut atomized_b = b.atomized(self.runnable.xot());
+        let mut atomized_a = a.atomized(self.state.xot());
+        let mut atomized_b = b.atomized(self.state.xot());
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
         let collation = self.runnable.default_collation()?;
@@ -904,7 +911,7 @@ impl<'a> Interpreter<'a> {
         let b = self.state.pop();
         let a = self.state.pop();
         let value = a
-            .general_comparison(b, self.runnable.dynamic_context(), op)?
+            .general_comparison(b, self.runnable.dynamic_context(), self.state.xot(), op)?
             .into();
         self.state.push(value);
         Ok(())
@@ -929,8 +936,8 @@ impl<'a> Interpreter<'a> {
             self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.runnable.xot());
-        let mut atomized_b = b.atomized(self.runnable.xot());
+        let mut atomized_a = a.atomized(self.state.xot());
+        let mut atomized_b = b.atomized(self.state.xot());
         let a = atomized_a.one()?;
         let b = atomized_b.one()?;
         let result = op(a, b, self.runnable.implicit_timezone())?;
@@ -947,7 +954,7 @@ impl<'a> Interpreter<'a> {
             self.state.push(stack::Value::Empty);
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.runnable.xot());
+        let mut atomized_a = a.atomized(self.state.xot());
         let a = atomized_a.one()?;
         let value = op(a)?;
         self.state.push(value.into());
@@ -956,7 +963,7 @@ impl<'a> Interpreter<'a> {
 
     fn pop_is_numeric(&mut self) -> error::Result<bool> {
         let value = self.state.pop();
-        let mut atomized = value.atomized(self.runnable.xot());
+        let mut atomized = value.atomized(self.state.xot());
         let a = atomized.option()?;
         if let Some(a) = a {
             Ok(a.is_numeric())
@@ -967,13 +974,13 @@ impl<'a> Interpreter<'a> {
 
     fn pop_atomic(&mut self) -> error::Result<atomic::Atomic> {
         let value = self.state.pop();
-        let mut atomized = value.atomized(self.runnable.xot());
+        let mut atomized = value.atomized(self.state.xot());
         atomized.one()
     }
 
     fn pop_atomic_option(&mut self) -> error::Result<Option<atomic::Atomic>> {
         let value = self.state.pop();
-        let mut atomized = value.atomized(self.runnable.xot());
+        let mut atomized = value.atomized(self.state.xot());
         atomized.option()
     }
 
@@ -981,12 +988,12 @@ impl<'a> Interpreter<'a> {
         let value = self.pop_atomic()?;
         let name: xee_name::Name = value.try_into()?;
         if let Some(namespace) = name.namespace() {
-            let ns = self.state.output.add_namespace(namespace);
+            let ns = self.state.xot.add_namespace(namespace);
             // println!("name {}, namespace {}", name.local_name(), namespace);
-            Ok(self.state.output.add_name_ns(name.local_name(), ns))
+            Ok(self.state.xot.add_name_ns(name.local_name(), ns))
         } else {
             // println!("no namespace");
-            Ok(self.state.output.add_name(name.local_name()))
+            Ok(self.state.xot.add_name(name.local_name()))
         }
     }
 
@@ -1013,6 +1020,10 @@ impl<'a> Interpreter<'a> {
     fn pop_effective_boolean(&mut self) -> error::Result<bool> {
         let a = self.state.pop();
         a.effective_boolean_value()
+    }
+
+    pub(crate) fn xot(&self) -> &Xot {
+        self.state.xot()
     }
 
     // The interpreter can return an error for any byte code, in any level of

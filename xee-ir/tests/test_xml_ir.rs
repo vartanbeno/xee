@@ -95,26 +95,23 @@ fn test_generate_element() {
 
     // we now should run the generated code
     let static_context = StaticContext::default();
-    let xot = xot::Xot::new();
-    let context = DynamicContext::empty(&xot, &static_context);
+    let context = DynamicContext::empty(&static_context);
 
+    let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);
-    let o = runnable.many_output(None).unwrap();
-    let output = o.output;
-    let sequence = o.sequence;
+    let sequence = runnable.many(None, &mut xot).unwrap();
     // we should have the newly created element on top of the stack
     assert_eq!(
-        output
-            .to_string(
-                sequence
-                    .items()
-                    .one()
-                    .unwrap()
-                    .to_node()
-                    .unwrap()
-                    .xot_node()
-            )
-            .unwrap(),
+        xot.to_string(
+            sequence
+                .items()
+                .one()
+                .unwrap()
+                .to_node()
+                .unwrap()
+                .xot_node()
+        )
+        .unwrap(),
         "<foo/>"
     );
 }

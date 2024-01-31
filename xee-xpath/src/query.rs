@@ -1,11 +1,12 @@
 use xee_interpreter::error::Result;
 use xee_interpreter::{context::DynamicContext, context::StaticContext};
 use xee_interpreter::{interpreter::Program, sequence::Item};
+use xot::Xot;
 
 use crate::compile::parse;
 
-pub trait Convert<V>: Fn(&Session, &Item) -> Result<V> {}
-impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> Result<V> {}
+pub trait Convert<V>: Fn(&mut Session, &Item) -> Result<V> {}
+impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
 
 // Recursion was very hard to get right. The trick is to use an intermediate
 // struct.
@@ -14,7 +15,7 @@ impl<V, T> Convert<V> for T where T: Fn(&Session, &Item) -> Result<V> {}
 // The dyn and dereference are unavoidable, as closures are not allowed
 // to refer to themselves:
 // https://github.com/rust-lang/rust/issues/46062
-type RecurseFn<'s, V> = &'s dyn Fn(&Session, &Item, &Recurse<'s, V>) -> Result<V>;
+type RecurseFn<'s, V> = &'s dyn Fn(&mut Session, &Item, &Recurse<'s, V>) -> Result<V>;
 
 pub struct Recurse<'s, V> {
     f: RecurseFn<'s, V>,
@@ -24,7 +25,7 @@ impl<'s, V> Recurse<'s, V> {
     pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
-    pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
         (self.f)(session, item, self)
     }
 }
@@ -45,8 +46,12 @@ impl<'s> Queries<'s> {
         }
     }
 
-    pub fn session<'d>(&'d self, dynamic_context: &'d DynamicContext<'d>) -> Session {
-        Session::new(dynamic_context, self)
+    pub fn session<'d>(
+        &'d self,
+        dynamic_context: &'d DynamicContext<'d>,
+        xot: &'d mut Xot,
+    ) -> Session {
+        Session::new(dynamic_context, self, xot)
     }
 
     fn register(&mut self, s: &str) -> Result<usize> {
@@ -109,26 +114,32 @@ impl<'s> Queries<'s> {
 }
 
 #[derive(Debug)]
-pub struct Session<'s> {
+pub struct Session<'s, 'x> {
     dynamic_context: &'s DynamicContext<'s>,
     queries: &'s Queries<'s>,
+    xot: &'x mut Xot,
 }
 
-impl<'s> Session<'s> {
-    pub fn new(dynamic_context: &'s DynamicContext<'s>, queries: &'s Queries<'s>) -> Self {
+impl<'s, 'x> Session<'s, 'x> {
+    pub fn new(
+        dynamic_context: &'s DynamicContext<'s>,
+        queries: &'s Queries<'s>,
+        xot: &'x mut Xot,
+    ) -> Self {
         Self {
             dynamic_context,
             queries,
+            xot,
         }
     }
 
-    fn one_query_program(&self, id: usize) -> &Program {
+    fn one_query_program(&self, id: usize) -> &'s Program {
         &self.queries.queries[id]
     }
 }
 
 pub trait Query<V> {
-    fn execute(&self, session: &Session, item: &Item) -> Result<V>;
+    fn execute(&self, session: &mut Session, item: &Item) -> Result<V>;
 }
 
 #[derive(Debug, Clone)]
@@ -145,10 +156,10 @@ impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item)).map_err(|e| e.error)?;
+        let item = runnable.one(Some(item), session.xot).map_err(|e| e.error)?;
         (self.convert)(session, &item)
     }
 }
@@ -157,7 +168,7 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &Item) -> Result<V> {
+    fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
         Self::execute(self, session, item)
     }
 }
@@ -168,10 +179,15 @@ pub struct OneRecurseQuery {
 }
 
 impl OneRecurseQuery {
-    pub fn execute<V>(&self, session: &Session, item: &Item, recurse: &Recurse<V>) -> Result<V> {
+    pub fn execute<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item)).map_err(|e| e.error)?;
+        let item = runnable.one(Some(item), session.xot).map_err(|e| e.error)?;
         recurse.execute(session, &item)
     }
 }
@@ -190,10 +206,12 @@ impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &Item) -> Result<Option<V>> {
+    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<Option<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.option(Some(item)).map_err(|e| e.error)?;
+        let item = runnable
+            .option(Some(item), session.xot)
+            .map_err(|e| e.error)?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -209,7 +227,7 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &Item) -> Result<Option<V>> {
+    fn execute(&self, session: &mut Session, item: &Item) -> Result<Option<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -222,13 +240,15 @@ pub struct OptionRecurseQuery {
 impl OptionRecurseQuery {
     pub fn execute<V>(
         &self,
-        session: &Session,
+        session: &mut Session,
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.option(Some(item)).map_err(|e| e.error)?;
+        let item = runnable
+            .option(Some(item), session.xot)
+            .map_err(|e| e.error)?;
         if let Some(item) = item {
             Ok(Some(recurse.execute(session, &item)?))
         } else {
@@ -251,10 +271,12 @@ impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
+    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<Vec<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let sequence = runnable.many(Some(item)).map_err(|e| e.error)?;
+        let sequence = runnable
+            .many(Some(item), session.xot)
+            .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             match (self.convert)(session, &item?) {
@@ -270,7 +292,7 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute(&self, session: &Session, item: &Item) -> Result<Vec<V>> {
+    fn execute(&self, session: &mut Session, item: &Item) -> Result<Vec<V>> {
         Self::execute(self, session, item)
     }
 }
@@ -283,13 +305,15 @@ pub struct ManyRecurseQuery {
 impl ManyRecurseQuery {
     pub fn execute<V>(
         &self,
-        session: &Session,
+        session: &mut Session,
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let sequence = runnable.many(Some(item)).map_err(|e| e.error)?;
+        let sequence = runnable
+            .many(Some(item), session.xot)
+            .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items() {
             values.push(recurse.execute(session, &item?)?);
@@ -317,10 +341,10 @@ mod tests {
             })
             .unwrap();
 
-        let xot = Xot::new();
-        let dynamic_context = DynamicContext::empty(&xot, &static_context);
-        let session = queries.session(&dynamic_context);
-        let r = q.execute(&session, &1i64.into()).unwrap();
+        let mut xot = Xot::new();
+        let dynamic_context = DynamicContext::empty(&static_context);
+        let mut session = queries.session(&dynamic_context, &mut xot);
+        let r = q.execute(&mut session, &1i64.into()).unwrap();
         assert_eq!(r, ibig!(3));
     }
 
@@ -339,8 +363,8 @@ mod tests {
         let value_query =
             queries.option("value/string()", |_, item| item.to_atomic()?.to_string())?;
 
-        let result_query = queries.one("doc/result", |session: &Session, item: &Item| {
-            let f = |session: &Session, item: &Item, recurse: &Recurse<Expr>| {
+        let result_query = queries.one("doc/result", |session: &mut Session, item: &Item| {
+            let f = |session: &mut Session, item: &Item, recurse: &Recurse<Expr>| {
                 let any_of = any_of_recurse.execute(session, item, recurse)?;
                 if let Some(any_of) = any_of {
                     return Ok(Expr::AnyOf(Box::new(any_of)));
@@ -360,13 +384,13 @@ mod tests {
         let xml2 = "<doc><result><value>A</value></result></doc>";
         let root2 = xot.parse(xml2).unwrap();
 
-        let dynamic_context = DynamicContext::empty(&xot, &static_context);
-        let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &Item::from(Node::Xot(root)))?;
+        let dynamic_context = DynamicContext::empty(&static_context);
+        let mut session = queries.session(&dynamic_context, &mut xot);
+        let r = result_query.execute(&mut session, &Item::from(Node::Xot(root)))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
-        let session = queries.session(&dynamic_context);
-        let r = result_query.execute(&session, &Item::from(Node::Xot(root2)))?;
+        let mut session = queries.session(&dynamic_context, &mut xot);
+        let r = result_query.execute(&mut session, &Item::from(Node::Xot(root2)))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }

@@ -124,8 +124,8 @@ fn contains_token(
 // concat function and then register it for a sufficient amount
 // of arities
 fn concat(
-    context: &DynamicContext,
-    _interpreter: &mut interpreter::Interpreter,
+    _context: &DynamicContext,
+    interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
     debug_assert!(arguments.len() >= 2);
@@ -133,7 +133,7 @@ fn concat(
     let strings = arguments
         .iter()
         .map(|argument| {
-            let atomic = argument.atomized(context.xot).option()?;
+            let atomic = argument.atomized(interpreter.xot()).option()?;
             if let Some(atomic) = atomic {
                 atomic.string_value()
             } else {

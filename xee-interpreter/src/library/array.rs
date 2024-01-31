@@ -204,10 +204,12 @@ fn for_each_pair(
 #[xpath_fn("array:sort($array as array(*)) as array(*)")]
 fn sort1(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: function::Array,
 ) -> error::Result<function::Array> {
     sort_without_key(
         context,
+        interpreter,
         input,
         context.static_context.default_collation_uri(),
     )
@@ -216,11 +218,12 @@ fn sort1(
 #[xpath_fn("array:sort($array as array(*), $collation as xs:string?) as array(*)")]
 fn sort2(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: function::Array,
     collation: Option<&str>,
 ) -> error::Result<function::Array> {
     let collation = collation.unwrap_or(context.static_context.default_collation_uri());
-    sort_without_key(context, input, collation)
+    sort_without_key(context, interpreter, input, collation)
 }
 
 #[xpath_fn("array:sort($array as array(*), $collation as xs:string?, $key as function(item()*) as xs:anyAtomicType*) as array(*)")]
@@ -242,13 +245,14 @@ fn sort3(
 
 fn sort_without_key(
     context: &context::DynamicContext,
+    interpreter: &Interpreter,
     input: function::Array,
     collation: &str,
 ) -> error::Result<function::Array> {
     sort_by_sequence(context, input, collation, |sequence| {
         // the sequivalent of fn:data()
         let atoms = sequence
-            .atomized(context.xot)
+            .atomized(interpreter.xot())
             .collect::<error::Result<Vec<_>>>()?;
         Ok(atoms.into())
     })
