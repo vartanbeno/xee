@@ -525,17 +525,9 @@ impl<'a> Interpreter<'a> {
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlAppend => {
-                    let child_sequence = self.state.pop();
+                    let child_value = self.state.pop();
                     let parent_node = self.pop_node()?.xot_node();
-                    for item in child_sequence.items() {
-                        let child_node = item?.to_node()?;
-                        // TODO: handle adding attribute xot node using
-                        // same operation
-                        self.state
-                            .xot
-                            .append(parent_node, child_node.xot_node())
-                            .unwrap();
-                    }
+                    self.xml_append(parent_node, child_value)?;
                     // now we can push back the parent node
                     let item = sequence::Item::Node(xml::Node::Xot(parent_node));
                     self.state.push(item.into());
@@ -1073,6 +1065,60 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn xot(&self) -> &Xot {
         self.state.xot()
+    }
+
+    fn xml_append(&mut self, parent_node: xot::Node, value: stack::Value) -> error::Result<()> {
+        let mut string_values = Vec::new();
+        for item in value.items() {
+            match item? {
+                sequence::Item::Node(node) => {
+                    // if there were any string values before this node, add them
+                    // to the node, separated by a space character
+                    if !string_values.is_empty() {
+                        self.xml_append_string_values(parent_node, &string_values);
+                        string_values.clear();
+                    }
+                    let xot_node = node.xot_node();
+                    match self.state.xot.value(xot_node) {
+                        xot::Value::Root => {
+                            todo!("Handle adding all the children instead");
+                        }
+                        xot::Value::Text(text) => {
+                            // zero length text nodes are skipped
+                            // Can this even exist, or does Xot not have
+                            // them anyway?
+                            if text.get().is_empty() {
+                                continue;
+                            }
+                        }
+                        _ => {}
+                    }
+                    // TODO: handle adding attribute and ns node
+
+                    // if we have a parent we're already in another document,
+                    // in which case we want to make a clone first
+                    let xot_node = if self.state.xot.parent(xot_node).is_some() {
+                        self.state.xot.clone(xot_node)
+                    } else {
+                        xot_node
+                    };
+                    self.state.xot.append(parent_node, xot_node).unwrap();
+                }
+                sequence::Item::Atomic(atomic) => string_values.push(atomic.string_value()?),
+                sequence::Item::Function(_) => return Err(error::Error::XTDE0450),
+            }
+        }
+        // if there are any string values left in the end
+        if !string_values.is_empty() {
+            self.xml_append_string_values(parent_node, &string_values);
+        }
+        Ok(())
+    }
+
+    fn xml_append_string_values(&mut self, parent_node: xot::Node, string_values: &[String]) {
+        let text = string_values.join(" ");
+        let text_node = self.state.xot.new_text(&text);
+        self.state.xot.append(parent_node, text_node).unwrap();
     }
 
     fn shallow_copy_node(&mut self, node: xot::Node) -> xot::Node {

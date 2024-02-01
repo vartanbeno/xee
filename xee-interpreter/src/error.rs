@@ -533,8 +533,15 @@ pub enum Error {
     ///
     /// Circularity in global declarations is now allowed.
     XTDE0640,
-    /// Shallow copy of sequence of more than one item
+    /// Shallow copy
+    ///
+    /// Shallow copy of sequence of more than one item is not allowed.
     XTTE3180,
+    /// Function item in complex content
+    ///
+    /// The result sequence to be added as content cannot contain a function
+    /// item.
+    XTDE0450,
 }
 
 impl Error {

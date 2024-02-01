@@ -554,21 +554,87 @@ fn test_sequence() {
     assert_eq!(xml(&xot, output), "<o>1 2 3 4</o>");
 }
 
-// #[test]
-// fn test_complex_content_single_string() {
-//     let mut xot = Xot::new();
-//     let output = evaluate(
-//         &mut xot,
-//         "<doc/>",
-//         r#"
-// <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-//   <xsl:template match="/">
-//     <o>
-//       <xsl:sequence select="'foo'" />
-//     </o>
-//   </xsl:template>
-// </xsl:transform>"#,
-//     )
-//     .unwrap();
-//     assert_eq!(xml(&xot, output), "<o>foo</o>");
-// }
+#[test]
+fn test_complex_content_single_string() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:sequence select="'foo'" />
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>foo</o>");
+}
+
+#[test]
+fn test_complex_content_multiple_strings() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:sequence select="('foo', 'bar')" />
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>foo bar</o>");
+}
+
+#[test]
+fn test_complex_content_xml_and_atomic() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:sequence select="('foo', 'bar')" />
+      <hello>Hello</hello>
+      <xsl:sequence select="('baz', 'qux')" />
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        xml(&xot, output),
+        "<o>foo bar<hello>Hello</hello>baz qux</o>"
+    );
+}
+
+#[test]
+fn test_function_item_in_complex_content() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc><foo/></doc>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:sequence select="function() { 1 }" /></o>
+  </xsl:template>
+</xsl:transform>"#,
+    );
+
+    assert!(matches!(
+        output,
+        error::SpannedResult::Err(error::SpannedError {
+            error: error::Error::XTDE0450,
+            span: _
+        })
+    ));
+}
