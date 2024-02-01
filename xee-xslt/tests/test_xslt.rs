@@ -158,23 +158,24 @@ fn test_transform_local_variable_shadow() {
     assert_eq!(xml(&xot, output), "<o>BAR</o>");
 }
 
-// #[test]
-// fn test_transform_local_variable_from_sequence_constructor() {
-// let mut xot = Xot::new();
-// let output = evaluate(&mut xot,
-//         "<doc/>",
-//         r#"
-// <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-//   <xsl:template match="/">
-//     <xsl:variable name="foo"><b>B</b></xsl:variable>
-//     <o><xsl:value-of select="$foo"/></o>
-//   </xsl:template>
-// </xsl:transform>"#,
-//     )
-//     .unwrap();
+#[test]
+fn test_transform_local_variable_from_sequence_constructor() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <xsl:variable name="foo"><b>B</b></xsl:variable>
+    <o><xsl:value-of select="$foo"/></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
 
-//     assert_eq!(xml(&xot, output), "<o>B</o>");
-// }
+    assert_eq!(xml(&xot, output), "<o>B</o>");
+}
 
 #[test]
 fn test_transform_if_true() {
