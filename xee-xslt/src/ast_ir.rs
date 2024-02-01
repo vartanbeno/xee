@@ -297,13 +297,21 @@ impl<'a> IrConverter<'a> {
         ))
     }
 
-    fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
-        let (select_atom, select_bindings) = if let Some(select) = &value_of.select {
-            self.expression(select)?.atom_bindings()
+    fn select_or_sequence_constructor(
+        &mut self,
+        instruction: &impl ast::SelectOrSequenceConstructor,
+    ) -> error::SpannedResult<Bindings> {
+        if let Some(select) = instruction.select() {
+            self.expression(select)
         } else {
-            self.sequence_constructor(&value_of.sequence_constructor)?
-                .atom_bindings()
-        };
+            self.sequence_constructor(&instruction.sequence_constructor())
+        }
+    }
+
+    fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
+        let (select_atom, select_bindings) = self
+            .select_or_sequence_constructor(value_of)?
+            .atom_bindings();
 
         let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator {
             self.attribute_value_template(separator)?
@@ -579,7 +587,7 @@ impl<'a> IrConverter<'a> {
     }
 
     fn sequence(&mut self, sequence: &ast::Sequence) -> error::SpannedResult<Bindings> {
-        todo!();
+        self.select_or_sequence_constructor(sequence)
     }
 
     fn throw_error(&mut self) -> error::SpannedResult<Bindings> {

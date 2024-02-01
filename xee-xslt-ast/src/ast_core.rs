@@ -3,6 +3,11 @@ use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
 // use ahash::HashMap;
 use xee_xpath_ast::ast as xpath_ast;
 
+pub trait SelectOrSequenceConstructor {
+    fn select(&self) -> Option<&Expression>;
+    fn sequence_constructor(&self) -> &SequenceConstructor;
+}
+
 // TODO: standard attribute support such as expand-text during the parse, this
 // should be respected and parse into the right thing, so the AST does not need
 // to retain knowledge of expand-text
@@ -1387,6 +1392,16 @@ impl From<Sequence> for SequenceConstructorItem {
     }
 }
 
+impl SelectOrSequenceConstructor for Sequence {
+    fn select(&self) -> Option<&Expression> {
+        self.select.as_ref()
+    }
+
+    fn sequence_constructor(&self) -> &SequenceConstructor {
+        &self.sequence_constructor
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Sort {
@@ -1548,6 +1563,16 @@ pub struct ValueOf {
 impl From<ValueOf> for SequenceConstructorItem {
     fn from(i: ValueOf) -> Self {
         SequenceConstructorInstruction::ValueOf(Box::new(i)).into()
+    }
+}
+
+impl SelectOrSequenceConstructor for ValueOf {
+    fn select(&self) -> Option<&Expression> {
+        self.select.as_ref()
+    }
+
+    fn sequence_constructor(&self) -> &SequenceConstructor {
+        &self.sequence_constructor
     }
 }
 
