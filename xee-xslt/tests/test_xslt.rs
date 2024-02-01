@@ -621,7 +621,7 @@ fn test_function_item_in_complex_content() {
     let mut xot = Xot::new();
     let output = evaluate(
         &mut xot,
-        "<doc><foo/></doc>",
+        "<doc/>",
         r#"
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
   <xsl:template match="/">
@@ -637,4 +637,30 @@ fn test_function_item_in_complex_content() {
             span: _
         })
     ));
+}
+
+#[test]
+fn test_source_nodes_complex_content() {
+    let mut xot = Xot::new();
+    // try this twice, so that we verify no mutation of source takes place and
+    // source code nodes are properly copied
+    let output = evaluate(
+        &mut xot,
+        "<doc><hello>Hello</hello></doc>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:sequence select="/doc/hello" />
+      <xsl:sequence select="/doc/hello" />
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(
+        xml(&xot, output),
+        "<o><hello>Hello</hello><hello>Hello</hello></o>"
+    );
 }
