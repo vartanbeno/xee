@@ -235,7 +235,6 @@ impl<'a> IrConverter<'a> {
             ast::SequenceConstructorItem::Content(content) => {
                 self.sequence_constructor_content(content)
             }
-            _ => todo!("Unsupported sequence constructor item {:?}", item),
         }
     }
 
@@ -273,7 +272,7 @@ impl<'a> IrConverter<'a> {
                     ir::Expr::XmlText(ir::XmlText { value: text_atom }),
                 ))
             }
-            ast::Content::Value(expression) => {
+            ast::Content::Value(_expression) => {
                 todo!("Cannot yet generate xpath as content");
             }
         }
@@ -542,8 +541,8 @@ impl<'a> IrConverter<'a> {
         // first make a copy using CopyShallow - this clones
         // the item, and in the case of element and document, making
         // a shallow copy (the element only copies the name, and namespace prefixes)
-        let is_document_expr = self.is_document_expr(context_atom.clone());
-        let is_element_expr = self.is_element_expr(context_atom);
+        let _is_document_expr = self.is_document_expr(context_atom.clone());
+        let _is_element_expr = self.is_element_expr(context_atom);
         // if this is an document or an element are true, with an or expression, then we
         // want to run the sequence constructor for it, appending the
         // result to the copy

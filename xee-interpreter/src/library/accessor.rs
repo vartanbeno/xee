@@ -2,7 +2,6 @@
 use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;

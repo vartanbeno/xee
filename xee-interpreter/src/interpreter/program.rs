@@ -1,9 +1,7 @@
-use xee_xpath_ast::ast::Span;
-use xot::Xot;
-
 use crate::context;
 use crate::declaration::Declarations;
 use crate::function;
+use xee_xpath_ast::ast::Span;
 
 use super::Runnable;
 

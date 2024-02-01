@@ -295,7 +295,7 @@ impl Assertable for AssertCount {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
         let found_len = sequence.len();
@@ -380,7 +380,7 @@ impl AssertXml {
 impl Assertable for AssertXml {
     fn assert_value(
         &self,
-        runnable: &Runnable<'_>,
+        _runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -426,7 +426,7 @@ impl Assertable for AssertEmpty {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
         if sequence.is_empty() {
@@ -490,7 +490,7 @@ impl Assertable for AssertTrue {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
@@ -520,7 +520,7 @@ impl Assertable for AssertFalse {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
@@ -549,7 +549,7 @@ impl AssertStringValue {
 impl Assertable for AssertStringValue {
     fn assert_value(
         &self,
-        runnable: &Runnable<'_>,
+        _runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -612,7 +612,7 @@ impl Assertable for AssertError {
     fn assert_result(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match result {

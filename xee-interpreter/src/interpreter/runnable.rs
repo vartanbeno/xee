@@ -1,4 +1,3 @@
-use std::fmt::Formatter;
 use std::rc::Rc;
 
 use ibig::IBig;
