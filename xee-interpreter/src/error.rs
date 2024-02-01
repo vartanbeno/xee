@@ -533,6 +533,8 @@ pub enum Error {
     ///
     /// Circularity in global declarations is now allowed.
     XTDE0640,
+    /// Shallow copy of sequence of more than one item
+    XTTE3180,
 }
 
 impl Error {

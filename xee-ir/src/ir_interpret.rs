@@ -79,6 +79,8 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::ApplyTemplates(apply_templates) => {
                 self.compile_apply_templates(apply_templates, span)
             }
+            ir::Expr::CopyShallow(copy_shallow) => self.compile_copy_shallow(copy_shallow, span),
+            ir::Expr::CopyDeep(copy_deep) => self.compile_copy_deep(copy_deep, span),
         }
     }
 
@@ -894,6 +896,26 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> error::SpannedResult<()> {
         self.compile_atom(&apply_templates.select)?;
         self.builder.emit(Instruction::ApplyTemplates, span);
+        Ok(())
+    }
+
+    fn compile_copy_shallow(
+        &mut self,
+        copy_shallow: &ir::CopyShallow,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&copy_shallow.select)?;
+        self.builder.emit(Instruction::CopyShallow, span);
+        Ok(())
+    }
+
+    fn compile_copy_deep(
+        &mut self,
+        copy_deep: &ir::CopyDeep,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        self.compile_atom(&copy_deep.select)?;
+        self.builder.emit(Instruction::CopyDeep, span);
         Ok(())
     }
 }

@@ -49,6 +49,8 @@ pub enum Expr {
     XmlProcessingInstruction(XmlProcessingInstruction),
     XmlAppend(XmlAppend),
     ApplyTemplates(ApplyTemplates),
+    CopyShallow(CopyShallow),
+    CopyDeep(CopyDeep),
 }
 
 // not to be confused with an XPath atom; this is a variable or a constant
@@ -289,6 +291,16 @@ pub struct XmlAppend {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApplyTemplates {
+    pub select: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CopyShallow {
+    pub select: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CopyDeep {
     pub select: AtomS,
 }
 

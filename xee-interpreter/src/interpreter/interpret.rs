@@ -551,6 +551,33 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlComment => {}
                 EncodedInstruction::XmlProcessingInstruction => {}
+                EncodedInstruction::CopyShallow => {
+                    let value = &self.state.pop();
+                    if value.is_empty_sequence() {
+                        self.state.push(stack::Value::Empty);
+                        continue;
+                    }
+                    if value.len()? > 1 {
+                        Err(error::Error::XTTE3180)?;
+                    }
+                    let item = value.items().next().unwrap()?;
+                    let copy = match &item {
+                        sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
+                        sequence::Item::Node(node) => match node {
+                            xml::Node::Xot(node) => {
+                                let copied_node = self.shallow_copy_node(*node);
+                                sequence::Item::Node(xml::Node::Xot(copied_node))
+                            }
+                            _ => {
+                                todo!("copy shallow not yet supported for this node type")
+                            }
+                        },
+                    };
+                    self.state.push(copy.into());
+                }
+                EncodedInstruction::CopyDeep => {
+                    todo!()
+                }
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();
                     // TODO: we throw away span information in this map.
@@ -1024,6 +1051,22 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn xot(&self) -> &Xot {
         self.state.xot()
+    }
+
+    fn shallow_copy_node(&mut self, node: xot::Node) -> xot::Node {
+        let xot = &mut self.state.xot;
+        let value = xot.value(node);
+        match value {
+            // root and element are shallow copies
+            xot::Value::Root => xot.new_root_unconnected(),
+            // TODO: work on copying prefixes
+            xot::Value::Element(element) => xot.new_element(element.name()),
+            // we can clone (deep-copy) these nodes as it's the same
+            // operation as shallow copy
+            xot::Value::Text(_) | xot::Value::ProcessingInstruction(_) | xot::Value::Comment(_) => {
+                xot.clone(node)
+            }
+        }
     }
 
     // The interpreter can return an error for any byte code, in any level of

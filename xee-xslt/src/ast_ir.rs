@@ -510,60 +510,43 @@ impl<'a> IrConverter<'a> {
         } else {
             self.variables.context_item((0..0).into())?.atom_bindings()
         };
-        let is_empty_sequence_expr = self.is_empty_sequence_expr(context_atom.clone());
-        let (is_empty_sequence_atom, bindings) = bindings
-            .bind_expr_no_span(&mut self.variables, is_empty_sequence_expr)
-            .atom_bindings();
-        let if_expr = ir::Expr::If(ir::If {
-            condition: is_empty_sequence_atom,
-            then: Box::new(self.empty_sequence()),
-            else_: Box::new(self.copy_item(context_atom)?.expr()),
+        // copy shallow this item
+        let expr = ir::Expr::CopyShallow(ir::CopyShallow {
+            select: context_atom,
         });
-        Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
-    }
-
-    fn copy_item(&mut self, context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
-        let one_item_expr = self.is_one_item_expr(context_atom.clone());
-        let bindings = Bindings::empty();
-        let (is_one_item_atom, bindings) = bindings
-            .bind_expr_no_span(&mut self.variables, one_item_expr)
+        let (copy_atom, bindings) = bindings
+            .bind_expr_no_span(&mut self.variables, expr)
             .atom_bindings();
 
-        let if_expr = ir::Expr::If(ir::If {
-            condition: is_one_item_atom,
-            then: Box::new(self.copy_one_item(context_atom)?.expr()),
-            else_: Box::new(self.throw_error()?.expr()),
+        // if it is an element or document,
+        // execute sequence constructor
+        // TODO: work on document check
+        // let _is_document_expr = self.is_document_expr(context_atom.clone());
+        let is_element_expr = self.is_element_expr(copy_atom.clone());
+        let (is_element_atom, bindings) = bindings
+            .bind_expr_no_span(&mut self.variables, is_element_expr)
+            .atom_bindings();
+
+        let copy_expr = ir::Expr::Atom(copy_atom.clone());
+
+        let (sequence_constructor_atom, sequence_constructor_bindings) = self
+            .sequence_constructor(&copy.sequence_constructor)?
+            .atom_bindings();
+
+        let bindings = bindings.concat(sequence_constructor_bindings);
+
+        let append = ir::Expr::XmlAppend(ir::XmlAppend {
+            parent: copy_atom,
+            child: sequence_constructor_atom,
         });
+
+        let if_expr = ir::Expr::If(ir::If {
+            condition: is_element_atom,
+            then: Box::new(Spanned::new(append, (0..0).into())),
+            else_: Box::new(Spanned::new(copy_expr, (0..0).into())),
+        });
+
         Ok(bindings.bind_expr_no_span(&mut self.variables, if_expr))
-    }
-
-    fn copy_one_item(&mut self, context_atom: ir::AtomS) -> error::SpannedResult<Bindings> {
-        // first make a copy using CopyShallow - this clones
-        // the item, and in the case of element and document, making
-        // a shallow copy (the element only copies the name, and namespace prefixes)
-        let _is_document_expr = self.is_document_expr(context_atom.clone());
-        let _is_element_expr = self.is_element_expr(context_atom);
-        // if this is an document or an element are true, with an or expression, then we
-        // want to run the sequence constructor for it, appending the
-        // result to the copy
-        self.throw_error()
-    }
-
-    fn is_empty_sequence_expr(&self, atom: ir::AtomS) -> ir::Expr {
-        ir::Expr::InstanceOf(ir::InstanceOf {
-            atom,
-            sequence_type: xpath_ast::SequenceType::Empty,
-        })
-    }
-
-    fn is_one_item_expr(&self, atom: ir::AtomS) -> ir::Expr {
-        ir::Expr::InstanceOf(ir::InstanceOf {
-            atom,
-            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
-                item_type: xpath_ast::ItemType::Item,
-                occurrence: xpath_ast::Occurrence::One,
-            }),
-        })
     }
 
     fn is_document_expr(&self, atom: ir::AtomS) -> ir::Expr {

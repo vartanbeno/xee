@@ -392,17 +392,91 @@ fn test_copy_not_one_item_fails() {
     assert!(matches!(output, error::SpannedResult::Err(_)));
 }
 
-// #[test]
-// fn test_copy_atom() {
-//     let output = evaluate(
-//         "<doc/>",
-//         r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-//                  <xsl:template match="/">
-//                    <xsl:variable name="foo"><xsl:copy select=""/></xsl:variable>
-//                    <o><xsl:value-of select="string($foo)"/></o>
-//                  </xsl:template>
-//               </xsl:transform>"#,
-//     )
-//     .unwrap();
-//     assert_eq!(xml(&xot, output), "<o>1</o>");
-// }
+#[test]
+fn test_copy_atom() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+                 <xsl:template match="/">
+                   <xsl:variable name="foo"><xsl:copy select="1"/></xsl:variable>
+                   <o><xsl:value-of select="string($foo)"/></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>1</o>");
+}
+
+#[test]
+fn test_copy_function() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+                 <xsl:template match="/">
+                   <xsl:variable name="foo"><xsl:copy select="function() { 1 }"/></xsl:variable>
+                   <o><xsl:value-of select="string($foo)"/></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    );
+    // this is an error as we try to atomize a function
+    assert!(matches!(
+        output,
+        error::SpannedResult::Err(error::SpannedError {
+            error: error::Error::FOTY0014,
+            span: _
+        })
+    ));
+}
+
+#[test]
+fn test_copy_text() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc>content</doc>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+                 <xsl:template match="/">
+                   <xsl:variable name="foo"><xsl:copy select="doc/child::node()" /></xsl:variable>
+                   <o><xsl:value-of select="string($foo)"/></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>content</o>");
+}
+
+#[test]
+fn test_copy_element() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc><p>Content</p></doc>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+                 <xsl:template match="/">
+                   <o><xsl:copy select="doc/*" /></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o><p/></o>");
+}
+
+#[test]
+fn test_copy_element_with_sequence_constructor() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc><p>Content</p></doc>",
+        r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+                 <xsl:template match="/">
+                   <o><xsl:copy select="doc/*">Constructed</xsl:copy></o>
+                 </xsl:template>
+              </xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o><p>Constructed</p></o>");
+}

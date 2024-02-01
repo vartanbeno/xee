@@ -27,7 +27,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub(crate) fn len(self) -> error::Result<usize> {
+    pub(crate) fn len(&self) -> error::Result<usize> {
         match self {
             Value::Empty => Ok(0),
             Value::One(_) => Ok(1),
