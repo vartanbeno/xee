@@ -250,6 +250,7 @@ impl<'a> IrConverter<'a> {
             Choose(choose) => self.choose(choose),
             ForEach(for_each) => self.for_each(for_each),
             Copy(copy) => self.copy(copy),
+            CopyOf(copy_of) => self.copy_of(copy_of),
             // a bunch of language-like instructions are supported earlier
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -567,6 +568,12 @@ impl<'a> IrConverter<'a> {
                 occurrence: xpath_ast::Occurrence::One,
             }),
         })
+    }
+
+    fn copy_of(&mut self, copy_of: &ast::CopyOf) -> error::SpannedResult<Bindings> {
+        let (atom, bindings) = self.expression(&copy_of.select)?.atom_bindings();
+        let copy_deep_expr = ir::Expr::CopyDeep(ir::CopyDeep { select: atom });
+        Ok(bindings.bind_expr_no_span(&mut self.variables, copy_deep_expr))
     }
 
     fn throw_error(&mut self) -> error::SpannedResult<Bindings> {

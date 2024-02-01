@@ -576,7 +576,29 @@ impl<'a> Interpreter<'a> {
                     self.state.push(copy.into());
                 }
                 EncodedInstruction::CopyDeep => {
-                    todo!()
+                    let value = &self.state.pop();
+                    if value.is_empty_sequence() {
+                        self.state.push(stack::Value::Empty);
+                        continue;
+                    }
+                    let mut new_sequence = Vec::with_capacity(value.len()?);
+                    for item in value.items() {
+                        let item = item?;
+                        let copy = match &item {
+                            sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
+                            sequence::Item::Node(node) => match node {
+                                xml::Node::Xot(node) => {
+                                    let copied_node = self.state.xot.clone(*node);
+                                    sequence::Item::Node(xml::Node::Xot(copied_node))
+                                }
+                                _ => {
+                                    todo!("copy deep not yet supported for this node type")
+                                }
+                            },
+                        };
+                        new_sequence.push(copy);
+                    }
+                    self.state.push(new_sequence.into());
                 }
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();

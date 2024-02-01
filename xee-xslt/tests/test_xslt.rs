@@ -480,3 +480,42 @@ fn test_copy_element_with_sequence_constructor() {
     .unwrap();
     assert_eq!(xml(&xot, output), "<o><p>Constructed</p></o>");
 }
+
+#[test]
+fn test_copy_of_atom() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:variable name="foo"><xsl:copy-of select="'foo'" /></xsl:variable>
+      <xsl:value-of select="string($foo)"/>
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>foo</o>");
+}
+
+#[test]
+fn test_copy_of_node() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc><foo>FOO</foo></doc>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>
+      <xsl:copy-of select="/doc/foo" />
+    </o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o><foo>FOO</foo></o>");
+}
