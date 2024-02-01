@@ -251,7 +251,8 @@ impl<'a> IrConverter<'a> {
             ForEach(for_each) => self.for_each(for_each),
             Copy(copy) => self.copy(copy),
             CopyOf(copy_of) => self.copy_of(copy_of),
-            // a bunch of language-like instructions are supported earlier
+            Sequence(sequence) => self.sequence(sequence),
+            // xsl:variable does not produce content and is handled earlier already
             Variable(_variable) => unreachable!(),
             _ => todo!(),
         }
@@ -297,33 +298,34 @@ impl<'a> IrConverter<'a> {
     }
 
     fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
-        if let Some(select) = &value_of.select {
-            let (select_atom, select_bindings) = self.expression(select)?.atom_bindings();
-            let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator
-            {
-                self.attribute_value_template(separator)?
-            } else {
-                Bindings::new(
-                    self.variables
-                        .new_binding_no_span(ir::Expr::Atom(Spanned::new(
-                            ir::Atom::Const(ir::Const::String(" ".to_string())),
-                            (0..0).into(),
-                        ))),
-                )
-            }
-            .atom_bindings();
-            let bindings = select_bindings.concat(separator_bindings);
-            let expr = self.simple_content_expr(select_atom, separator_atom);
-            let (text_atom, bindings) = bindings
-                .bind_expr_no_span(&mut self.variables, expr)
-                .atom_bindings();
-            Ok(bindings.bind_expr_no_span(
-                &mut self.variables,
-                ir::Expr::XmlText(ir::XmlText { value: text_atom }),
-            ))
+        let (select_atom, select_bindings) = if let Some(select) = &value_of.select {
+            self.expression(select)?.atom_bindings()
         } else {
-            todo!()
+            self.sequence_constructor(&value_of.sequence_constructor)?
+                .atom_bindings()
+        };
+
+        let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator {
+            self.attribute_value_template(separator)?
+        } else {
+            Bindings::new(
+                self.variables
+                    .new_binding_no_span(ir::Expr::Atom(Spanned::new(
+                        ir::Atom::Const(ir::Const::String(" ".to_string())),
+                        (0..0).into(),
+                    ))),
+            )
         }
+        .atom_bindings();
+        let bindings = select_bindings.concat(separator_bindings);
+        let expr = self.simple_content_expr(select_atom, separator_atom);
+        let (text_atom, bindings) = bindings
+            .bind_expr_no_span(&mut self.variables, expr)
+            .atom_bindings();
+        Ok(bindings.bind_expr_no_span(
+            &mut self.variables,
+            ir::Expr::XmlText(ir::XmlText { value: text_atom }),
+        ))
     }
 
     fn attribute_value_template(
@@ -574,6 +576,10 @@ impl<'a> IrConverter<'a> {
         let (atom, bindings) = self.expression(&copy_of.select)?.atom_bindings();
         let copy_deep_expr = ir::Expr::CopyDeep(ir::CopyDeep { select: atom });
         Ok(bindings.bind_expr_no_span(&mut self.variables, copy_deep_expr))
+    }
+
+    fn sequence(&mut self, sequence: &ast::Sequence) -> error::SpannedResult<Bindings> {
+        todo!();
     }
 
     fn throw_error(&mut self) -> error::SpannedResult<Bindings> {

@@ -120,6 +120,23 @@ fn test_transform_value_of_select_separator() {
 }
 
 #[test]
+fn test_value_of_with_sequence_constructor() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc/>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:value-of>Hello</xsl:value-of></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o>Hello</o>");
+}
+
+#[test]
 fn test_transform_local_variable() {
     let mut xot = Xot::new();
     let output = evaluate(
@@ -519,3 +536,39 @@ fn test_copy_of_node() {
     .unwrap();
     assert_eq!(xml(&xot, output), "<o><foo>FOO</foo></o>");
 }
+
+// #[test]
+// fn test_sequence() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         "<doc/>",
+//         r#"
+// <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//   <xsl:template match="/">
+//     <o><xsl:value-of><xsl:sequence select="1 to 4" /></xsl:value-of></o>
+//   </xsl:template>
+// </xsl:transform>"#,
+//     )
+//     .unwrap();
+//     assert_eq!(xml(&xot, output), "<o>1 2 3 4</o>");
+// }
+
+// #[test]
+// fn test_complex_content_single_string() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         "<doc/>",
+//         r#"
+// <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//   <xsl:template match="/">
+//     <o>
+//       <xsl:sequence select="'foo'" />
+//     </o>
+//   </xsl:template>
+// </xsl:transform>"#,
+//     )
+//     .unwrap();
+//     assert_eq!(xml(&xot, output), "<o>foo</o>");
+// }
