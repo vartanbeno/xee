@@ -1,0 +1,60 @@
+---
+source: xee-xpath-ast/src/parser/pattern.rs
+expression: "pattern::Pattern::parse(\"foo intersect (bar | baz)\", &namespaces,\n    &variable_names)"
+---
+Ok(Expr(BinaryExpr(BinaryExpr(
+  operator: Intersect,
+  left: Path(PathExpr(
+    root: Relative,
+    steps: [
+      AxisStep(AxisStep(
+        forward: Child,
+        node_test: NameTest(Name(Name(
+          name: "foo",
+          prefix: None,
+          namespace: None,
+        ))),
+        predicates: [],
+      )),
+    ],
+  )),
+  right: Path(PathExpr(
+    root: Relative,
+    steps: [
+      PostfixExpr(PostfixExpr(
+        expr: BinaryExpr(BinaryExpr(
+          operator: Union,
+          left: Path(PathExpr(
+            root: Relative,
+            steps: [
+              AxisStep(AxisStep(
+                forward: Child,
+                node_test: NameTest(Name(Name(
+                  name: "bar",
+                  prefix: None,
+                  namespace: None,
+                ))),
+                predicates: [],
+              )),
+            ],
+          )),
+          right: Path(PathExpr(
+            root: Relative,
+            steps: [
+              AxisStep(AxisStep(
+                forward: Child,
+                node_test: NameTest(Name(Name(
+                  name: "baz",
+                  prefix: None,
+                  namespace: None,
+                ))),
+                predicates: [],
+              )),
+            ],
+          )),
+        )),
+        predicates: [],
+      )),
+    ],
+  )),
+))))

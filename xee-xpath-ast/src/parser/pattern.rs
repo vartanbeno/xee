@@ -398,4 +398,59 @@ mod tests {
             &variable_names
         ));
     }
+
+    #[test]
+    fn test_union() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo | bar",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_intersect() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo intersect bar",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_union_with_intersect() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo intersect bar | baz",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_union_with_union() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo | (bar | baz)",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_intersect_with_union() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "foo intersect (bar | baz)",
+            &namespaces,
+            &variable_names
+        ));
+    }
 }
