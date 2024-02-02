@@ -18,6 +18,7 @@ serde = ["xee-xslt-ast/serde", "xee-interpreter/serde"]
 ahash = { workspace = true }
 ordered-float = { workspace = true }
 rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
 ibig = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
