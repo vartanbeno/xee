@@ -5,6 +5,8 @@ use rust_decimal_macros::dec;
 use xee_xpath_ast::{ast, pattern};
 
 pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
+    let default = dec!(0.5);
+
     match pattern {
         pattern::Pattern::Predicate(predicate) => {
             if !predicate.predicates.is_empty() {
@@ -13,46 +15,51 @@ pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
                 dec!(-1)
             }
         }
-        pattern::Pattern::Expr(expr) => match expr {
-            pattern::ExprPattern::Path(path) => match path.root {
-                pattern::PathRoot::AbsoluteSlash => {
-                    if path.steps.is_empty() {
-                        dec!(-0.5)
-                    } else {
-                        todo!();
-                    }
+        pattern::Pattern::Expr(expr) => default_priority_expr_pattern(expr),
+    }
+}
+
+fn default_priority_expr_pattern(expr_pattern: &pattern::ExprPattern) -> Decimal {
+    let default = dec!(0.5);
+    match expr_pattern {
+        pattern::ExprPattern::Path(path) => match path.root {
+            pattern::PathRoot::AbsoluteSlash => {
+                if path.steps.is_empty() {
+                    dec!(-0.5)
+                } else {
+                    default
                 }
-                pattern::PathRoot::Relative => {
-                    if path.steps.is_empty() {
-                        todo!()
-                    } else if path.steps.len() > 1 {
-                        todo!()
-                    } else {
-                        let step = &path.steps[0];
-                        match step {
-                            pattern::StepExpr::AxisStep(axis_step) => {
-                                if axis_step.predicates.is_empty() {
-                                    match &axis_step.node_test {
-                                        pattern::NodeTest::NameTest(name_test) => match name_test {
-                                            pattern::NameTest::Name(_) => dec!(0),
-                                            _ => todo!(),
-                                        },
-                                        pattern::NodeTest::KindTest(kind_test) => {
-                                            default_priority_kind_test(kind_test)
-                                        }
+            }
+            pattern::PathRoot::Relative => {
+                if path.steps.is_empty() || path.steps.len() > 1 {
+                    default
+                } else {
+                    let step = &path.steps[0];
+                    match step {
+                        pattern::StepExpr::AxisStep(axis_step) => {
+                            if axis_step.predicates.is_empty() {
+                                match &axis_step.node_test {
+                                    pattern::NodeTest::NameTest(name_test) => match name_test {
+                                        pattern::NameTest::Name(_) => dec!(0),
+                                        pattern::NameTest::LocalName(_)
+                                        | pattern::NameTest::Namespace(_) => dec!(-0.25),
+                                        pattern::NameTest::Star => dec!(-0.5),
+                                    },
+                                    pattern::NodeTest::KindTest(kind_test) => {
+                                        default_priority_kind_test(kind_test)
                                     }
-                                } else {
-                                    todo!()
                                 }
+                            } else {
+                                default
                             }
-                            pattern::StepExpr::PostfixExpr(_) => todo!(),
                         }
+                        pattern::StepExpr::PostfixExpr(_) => default,
                     }
                 }
-                _ => todo!(),
-            },
-            pattern::ExprPattern::BinaryExpr(_) => todo!(),
+            }
+            _ => default,
         },
+        _ => todo!(),
     }
 }
 
@@ -87,12 +94,26 @@ fn default_priority_kind_test(kind_test: &ast::KindTest) -> Decimal {
             if let Some(_pi_test) = pi_test {
                 dec!(0)
             } else {
-                todo!()
+                dec!(-0.5)
             }
         }
         ast::KindTest::SchemaAttribute(_) => dec!(0.25),
         ast::KindTest::SchemaElement(_) => dec!(0.25),
-        _ => todo!(),
+        ast::KindTest::Document(document_test) => {
+            if let Some(document_test) = document_test {
+                match document_test {
+                    ast::DocumentTest::Element(element_or_attribute_test) => {
+                        default_priority_kind_test(&ast::KindTest::Element(
+                            element_or_attribute_test.clone(),
+                        ))
+                    }
+                    ast::DocumentTest::SchemaElement(_schema_element_test) => dec!(0.25),
+                }
+            } else {
+                dec!(-0.5)
+            }
+        }
+        _ => dec!(-0.5),
     }
 }
 
@@ -241,10 +262,80 @@ mod tests {
         assert_eq!(default_priority(&pattern), dec!(0.25));
     }
 
-    // #[test]
-    // fn test_processing_instruction_without_arguments() {
-    //     let pattern = parse("processing-instruction()");
+    #[test]
+    fn test_8_document_test() {
+        let pattern = parse("document-node()");
 
-    //     assert_eq!(default_priority(&pattern), dec!(0));
-    // }
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_8_document_test_with_element_test() {
+        let pattern = parse("document-node(element(foo))");
+
+        assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_8_document_test_with_element_test_and_type() {
+        let pattern = parse("document-node(element(foo, xs:integer))");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
+    }
+
+    #[test]
+    fn test_8_document_test_with_schema_element() {
+        let pattern = parse("document-node(schema-element(foo))");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
+    }
+
+    #[test]
+    fn test_9_ncname_star() {
+        let pattern = parse("fn:*");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.25));
+    }
+
+    #[test]
+    fn test_9_star_ncname() {
+        let pattern = parse("*:foo");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.25));
+    }
+
+    #[test]
+    fn test_10_any_other_node_test_node() {
+        let pattern = parse("node()");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_10_any_other_node_test_star() {
+        let pattern = parse("*");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_10_processing_instruction_without_arguments() {
+        let pattern = parse("processing-instruction()");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_pattern_with_predicate() {
+        let pattern = parse("foo[1]");
+
+        assert_eq!(default_priority(&pattern), dec!(0.5));
+    }
+
+    #[test]
+    fn test_multi_step_pattern() {
+        let pattern = parse("foo/bar");
+
+        assert_eq!(default_priority(&pattern), dec!(0.5));
+    }
 }
