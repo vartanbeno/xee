@@ -243,9 +243,23 @@ where
                 root: pattern::PathRoot::AbsoluteDoubleSlash,
                 steps,
             });
-        let relative_path = relative_path_expr.map(|steps| pattern::PathExpr {
-            root: pattern::PathRoot::Relative,
-            steps,
+        let relative_path = relative_path_expr.map(|steps| {
+            // shortcut to create an absolute path if that's possible.
+            // The use of parenthesized expr can otherwise turn stuff into
+            // a postfix expr even though it's actually a simple path expr
+            if steps.len() == 1 {
+                if let pattern::StepExpr::PostfixExpr(postfix_expr) = &steps[0] {
+                    if postfix_expr.predicates.is_empty() {
+                        if let pattern::ExprPattern::Path(path_expr) = &postfix_expr.expr {
+                            return path_expr.clone();
+                        }
+                    }
+                }
+            }
+            pattern::PathExpr {
+                root: pattern::PathRoot::Relative,
+                steps,
+            }
         });
 
         let path_expr = absolute_slash_path
@@ -266,9 +280,7 @@ where
                 _ => unreachable!(),
             });
 
-        let expr_pattern = path_expr
-            .clone()
-            .map(pattern::ExprPattern::Path)
+        let expr_pattern = (path_expr.clone().map(pattern::ExprPattern::Path))
             .foldl(
                 operator.then(path_expr.clone()).repeated(),
                 |left, (operator, right)| {
@@ -382,6 +394,20 @@ mod tests {
     }
 
     #[test]
+    fn test_absolute_slash_without_steps() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse("/", &namespaces, &variable_names));
+    }
+
+    #[test]
+    fn test_absolute_slash_without_steps_in_parenthesis() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        assert_ron_snapshot!(pattern::Pattern::parse("(/)", &namespaces, &variable_names));
+    }
+
+    #[test]
     fn test_expr_pattern_relative() {
         let namespaces = Namespaces::default();
         let variable_names = VariableNames::new();
@@ -449,6 +475,19 @@ mod tests {
         let variable_names = VariableNames::new();
         assert_ron_snapshot!(pattern::Pattern::parse(
             "foo intersect (bar | baz)",
+            &namespaces,
+            &variable_names
+        ));
+    }
+
+    #[test]
+    fn test_root_intersect_with_other_path() {
+        let namespaces = Namespaces::default();
+        let variable_names = VariableNames::new();
+        // have to use bracketrs here, as otherwise 'intersect' is interpreted
+        // as an element name as per xpath rules
+        assert_ron_snapshot!(pattern::Pattern::parse(
+            "(/) intersect foo",
             &namespaces,
             &variable_names
         ));

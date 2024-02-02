@@ -1,34 +1,72 @@
 // an implementation of https://www.w3.org/TR/xslt-30/#default-priority
+use std::borrow::Cow;
 
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+
 use xee_xpath_ast::{ast, pattern};
 
 pub(crate) fn default_priority<'a>(
     pattern: &'a pattern::Pattern,
-) -> Box<dyn Iterator<Item = (&'a pattern::Pattern, Decimal)> + 'a> {
+) -> Box<dyn Iterator<Item = (Cow<'a, pattern::Pattern>, Decimal)> + 'a> {
     match pattern {
         pattern::Pattern::Predicate(predicate) => {
             if !predicate.predicates.is_empty() {
-                Box::new(std::iter::once((pattern, dec!(1))))
+                Box::new(std::iter::once((Cow::Borrowed(pattern), dec!(1))))
             } else {
-                Box::new(std::iter::once((pattern, dec!(-1))))
+                Box::new(std::iter::once((Cow::Borrowed(pattern), dec!(-1))))
             }
         }
-        pattern::Pattern::Expr(expr) => {
-            Box::new(default_priority_expr_pattern(expr).map(move |priority| (pattern, priority)))
+        pattern::Pattern::Expr(pattern::ExprPattern::Path(path)) => Box::new(std::iter::once((
+            Cow::Borrowed(pattern),
+            default_priority_path_expr(path),
+        ))),
+        pattern::Pattern::Expr(pattern::ExprPattern::BinaryExpr(binary_expr)) => Box::new(
+            default_priority_top_level_binary(Cow::Borrowed(pattern), binary_expr),
+        ),
+    }
+}
+
+fn default_priority_top_level_binary<'a>(
+    pattern: Cow<'a, pattern::Pattern>,
+    binary_expr: &'a pattern::BinaryExpr,
+) -> Box<dyn Iterator<Item = (Cow<'a, pattern::Pattern>, Decimal)> + 'a> {
+    let default = dec!(0.5);
+    match binary_expr.operator {
+        pattern::Operator::Union => Box::new(
+            default_priority_union(binary_expr)
+                .into_iter()
+                .map(|(p, d)| (Cow::Owned(p), d)),
+        ),
+        pattern::Operator::Intersect | pattern::Operator::Except => {
+            let path = leftmost_intersect_path_expr(binary_expr);
+            let priority = if let Some(path) = path {
+                default_priority_path_expr(path)
+            } else {
+                default
+            };
+            Box::new(std::iter::once((pattern, priority)))
         }
     }
 }
 
-fn default_priority_expr_pattern(
-    expr_pattern: &pattern::ExprPattern,
-) -> Box<dyn Iterator<Item = Decimal>> {
-    match expr_pattern {
-        pattern::ExprPattern::Path(path) => {
-            Box::new(std::iter::once(default_priority_path_expr(path)))
-        }
-        _ => todo!(),
+fn default_priority_union(binary_expr: &pattern::BinaryExpr) -> Vec<(pattern::Pattern, Decimal)> {
+    let left_pattern = pattern::Pattern::Expr(binary_expr.left.as_ref().clone());
+    let right_pattern = pattern::Pattern::Expr(binary_expr.right.as_ref().clone());
+    let left = default_priority(&left_pattern).map(|(p, d)| (p.into_owned(), d));
+    let right = default_priority(&right_pattern).map(|(p, d)| (p.into_owned(), d));
+    left.chain(right).collect::<Vec<_>>()
+}
+
+fn leftmost_intersect_path_expr(binary_expr: &pattern::BinaryExpr) -> Option<&pattern::PathExpr> {
+    match binary_expr.left.as_ref() {
+        pattern::ExprPattern::Path(path) => Some(path),
+        pattern::ExprPattern::BinaryExpr(expr) => match expr.operator {
+            pattern::Operator::Intersect | pattern::Operator::Except => {
+                leftmost_intersect_path_expr(expr)
+            }
+            _ => None,
+        },
     }
 }
 
@@ -143,8 +181,99 @@ mod tests {
     fn one_default_priority(pattern: &Pattern) -> Decimal {
         let v = default_priority(pattern).collect::<Vec<_>>();
         assert_eq!(v.len(), 1);
-        assert_eq!(v[0].0, pattern);
+        assert_eq!(v[0].0, Cow::Borrowed(pattern));
         v[0].1
+    }
+
+    #[test]
+    fn test_2_top_level_union_is_multiple_patterns() {
+        let pattern = parse("foo | bar");
+        let (first_pattern, second_pattern) = match pattern.clone() {
+            Pattern::Expr(pattern::ExprPattern::BinaryExpr(binary_expr)) => (
+                pattern::Pattern::Expr(binary_expr.left.as_ref().clone()),
+                pattern::Pattern::Expr(binary_expr.right.as_ref().clone()),
+            ),
+            _ => panic!("Expected binary expression"),
+        };
+
+        let priorities = default_priority(&pattern).collect::<Vec<_>>();
+        assert_eq!(
+            priorities,
+            vec![
+                (Cow::Owned(first_pattern), dec!(0)),
+                (Cow::Owned(second_pattern), dec!(0))
+            ]
+        );
+    }
+
+    #[test]
+    fn test_2_top_level_union_is_multiple_patterns_different_priority() {
+        let pattern = parse("(/) | bar");
+        let (first_pattern, second_pattern) = match pattern.clone() {
+            Pattern::Expr(pattern::ExprPattern::BinaryExpr(binary_expr)) => (
+                pattern::Pattern::Expr(binary_expr.left.as_ref().clone()),
+                pattern::Pattern::Expr(binary_expr.right.as_ref().clone()),
+            ),
+            _ => panic!("Expected binary expression"),
+        };
+
+        let priorities = default_priority(&pattern).collect::<Vec<_>>();
+        assert_eq!(
+            priorities,
+            vec![
+                (Cow::Owned(first_pattern), dec!(-0.5)),
+                (Cow::Owned(second_pattern), dec!(0))
+            ]
+        );
+    }
+
+    #[test]
+    fn test_2_top_level_union_more_unions() {
+        let pattern = parse("foo | bar | baz");
+        let ((first_pattern, second_pattern), third_pattern) = match pattern.clone() {
+            Pattern::Expr(pattern::ExprPattern::BinaryExpr(binary_expr)) => (
+                match binary_expr.left.as_ref() {
+                    pattern::ExprPattern::BinaryExpr(binary_expr) => (
+                        pattern::Pattern::Expr(binary_expr.left.as_ref().clone()),
+                        pattern::Pattern::Expr(binary_expr.right.as_ref().clone()),
+                    ),
+                    _ => panic!("Expected binary expression"),
+                },
+                pattern::Pattern::Expr(binary_expr.right.as_ref().clone()),
+            ),
+            _ => panic!("Expected binary expression"),
+        };
+
+        let priorities = default_priority(&pattern).collect::<Vec<_>>();
+        assert_eq!(
+            priorities,
+            vec![
+                (Cow::Owned(first_pattern), dec!(0)),
+                (Cow::Owned(second_pattern), dec!(0)),
+                (Cow::Owned(third_pattern), dec!(0))
+            ]
+        );
+    }
+
+    #[test]
+    fn test_3_top_level_intersect_first_is_eqname() {
+        let pattern = parse("foo intersect bar");
+
+        assert_eq!(one_default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_3_top_level_intersect_first_is_root() {
+        let pattern = parse("(/) intersect bar");
+
+        assert_eq!(one_default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_3_top_level_except_first_is_root() {
+        let pattern = parse("(/) except bar");
+
+        assert_eq!(one_default_priority(&pattern), dec!(-0.5));
     }
 
     #[test]
