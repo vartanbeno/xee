@@ -38,6 +38,32 @@ pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
                                             _ => todo!(),
                                         },
                                         pattern::NodeTest::KindTest(kind_test) => match kind_test {
+                                            ast::KindTest::Element(test)
+                                            | ast::KindTest::Attribute(test) => {
+                                                if let Some(test) = test {
+                                                    if test.type_name.is_some() {
+                                                        match test.name_or_wildcard {
+                                                            ast::NameOrWildcard::Name(_) => {
+                                                                dec!(0.25)
+                                                            }
+                                                            ast::NameOrWildcard::Wildcard => {
+                                                                dec!(0)
+                                                            }
+                                                        }
+                                                    } else {
+                                                        match test.name_or_wildcard {
+                                                            ast::NameOrWildcard::Name(_) => {
+                                                                dec!(0)
+                                                            }
+                                                            ast::NameOrWildcard::Wildcard => {
+                                                                dec!(-0.5)
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    dec!(-0.5)
+                                                }
+                                            }
                                             ast::KindTest::PI(pi_test) => {
                                                 if let Some(_pi_test) = pi_test {
                                                     dec!(0)
@@ -45,6 +71,8 @@ pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
                                                     todo!()
                                                 }
                                             }
+                                            ast::KindTest::SchemaAttribute(_) => dec!(0.25),
+                                            ast::KindTest::SchemaElement(_) => dec!(0.25),
                                             _ => todo!(),
                                         },
                                     }
@@ -122,6 +150,90 @@ mod tests {
         let pattern = parse("processing-instruction(foo)");
 
         assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_7_element_test() {
+        let pattern = parse("element()");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_7_element_test_star() {
+        let pattern = parse("element(*)");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_7_attribute_test() {
+        let pattern = parse("attribute()");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_7_attribute_test_start() {
+        let pattern = parse("attribute(*)");
+
+        assert_eq!(default_priority(&pattern), dec!(-0.5));
+    }
+
+    #[test]
+    fn test_7_element_test_name() {
+        let pattern = parse("element(foo)");
+
+        assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_7_element_test_type() {
+        let pattern = parse("element(*, xs:integer)");
+
+        assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_7_attribute_test_name() {
+        let pattern = parse("attribute(foo)");
+
+        assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_7_attribute_test_type() {
+        let pattern = parse("attribute(*, xs:integer)");
+
+        assert_eq!(default_priority(&pattern), dec!(0));
+    }
+
+    #[test]
+    fn test_7_element_test_name_type() {
+        let pattern = parse("element(foo, xs:integer)");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
+    }
+
+    #[test]
+    fn test_7_schema_element_test() {
+        let pattern = parse("schema-element(foo)");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
+    }
+
+    #[test]
+    fn test_7_attribute_test_name_type() {
+        let pattern = parse("attribute(foo, xs:integer)");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
+    }
+
+    #[test]
+    fn test_7_schema_attribute_test() {
+        let pattern = parse("schema-attribute(foo)");
+
+        assert_eq!(default_priority(&pattern), dec!(0.25));
     }
 
     // #[test]
