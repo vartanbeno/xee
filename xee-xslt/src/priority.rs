@@ -37,44 +37,9 @@ pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
                                             pattern::NameTest::Name(_) => dec!(0),
                                             _ => todo!(),
                                         },
-                                        pattern::NodeTest::KindTest(kind_test) => match kind_test {
-                                            ast::KindTest::Element(test)
-                                            | ast::KindTest::Attribute(test) => {
-                                                if let Some(test) = test {
-                                                    if test.type_name.is_some() {
-                                                        match test.name_or_wildcard {
-                                                            ast::NameOrWildcard::Name(_) => {
-                                                                dec!(0.25)
-                                                            }
-                                                            ast::NameOrWildcard::Wildcard => {
-                                                                dec!(0)
-                                                            }
-                                                        }
-                                                    } else {
-                                                        match test.name_or_wildcard {
-                                                            ast::NameOrWildcard::Name(_) => {
-                                                                dec!(0)
-                                                            }
-                                                            ast::NameOrWildcard::Wildcard => {
-                                                                dec!(-0.5)
-                                                            }
-                                                        }
-                                                    }
-                                                } else {
-                                                    dec!(-0.5)
-                                                }
-                                            }
-                                            ast::KindTest::PI(pi_test) => {
-                                                if let Some(_pi_test) = pi_test {
-                                                    dec!(0)
-                                                } else {
-                                                    todo!()
-                                                }
-                                            }
-                                            ast::KindTest::SchemaAttribute(_) => dec!(0.25),
-                                            ast::KindTest::SchemaElement(_) => dec!(0.25),
-                                            _ => todo!(),
-                                        },
+                                        pattern::NodeTest::KindTest(kind_test) => {
+                                            default_priority_kind_test(kind_test)
+                                        }
                                     }
                                 } else {
                                     todo!()
@@ -88,6 +53,46 @@ pub(crate) fn default_priority(pattern: &pattern::Pattern) -> Decimal {
             },
             pattern::ExprPattern::BinaryExpr(_) => todo!(),
         },
+    }
+}
+
+fn default_priority_kind_test(kind_test: &ast::KindTest) -> Decimal {
+    match kind_test {
+        ast::KindTest::Element(test) | ast::KindTest::Attribute(test) => {
+            if let Some(test) = test {
+                if test.type_name.is_some() {
+                    match test.name_or_wildcard {
+                        ast::NameOrWildcard::Name(_) => {
+                            dec!(0.25)
+                        }
+                        ast::NameOrWildcard::Wildcard => {
+                            dec!(0)
+                        }
+                    }
+                } else {
+                    match test.name_or_wildcard {
+                        ast::NameOrWildcard::Name(_) => {
+                            dec!(0)
+                        }
+                        ast::NameOrWildcard::Wildcard => {
+                            dec!(-0.5)
+                        }
+                    }
+                }
+            } else {
+                dec!(-0.5)
+            }
+        }
+        ast::KindTest::PI(pi_test) => {
+            if let Some(_pi_test) = pi_test {
+                dec!(0)
+            } else {
+                todo!()
+            }
+        }
+        ast::KindTest::SchemaAttribute(_) => dec!(0.25),
+        ast::KindTest::SchemaElement(_) => dec!(0.25),
+        _ => todo!(),
     }
 }
 
