@@ -118,7 +118,7 @@ pub struct ForwardAxisNodeTest {
     pub node_test: ast::NodeTest,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ForwardAxis {
     Child,

@@ -1,3 +1,4 @@
+use xee_xpath_type::ast;
 use xot::Xot;
 
 use xee_xpath_ast::pattern;
@@ -11,9 +12,10 @@ struct Patterns<V> {
 }
 
 enum Backwards {
+    ElementFound,
+    AttributeFound,
     NotFound,
-    One,
-    Any,
+    Parent,
 }
 
 impl Pattern {
@@ -55,96 +57,76 @@ impl Pattern {
 
     fn matches_relative_steps(steps: &[pattern::StepExpr], node: xml::Node, xot: &Xot) -> bool {
         let mut node = Some(node);
-        let mut backwards = Backwards::One;
+        let mut axis = pattern::ForwardAxis::Child;
         for step in steps.iter().rev() {
-            match backwards {
-                Backwards::NotFound => return false,
-                Backwards::One => {
-                    if let Some(n) = node {
-                        backwards = Self::matches_step_expr(step, n, xot);
-                        node = n.parent(xot);
-                    } else {
-                        return false;
-                    }
-                }
-                Backwards::Any => loop {
-                    if let Some(n) = node {
-                        let new_backwards = Self::matches_step_expr(step, n, xot);
-                        match new_backwards {
-                            Backwards::NotFound => {
-                                // this parent wasn't it, so go up one more
+            loop {
+                if let Some(n) = node {
+                    let (matches, new_axis) = Self::matches_step_expr(step, n, xot);
+                    match axis {
+                        pattern::ForwardAxis::Descendant => {
+                            if !matches {
                                 node = n.parent(xot);
+                                continue;
                             }
-                            // we did find it
-                            _ => {
-                                backwards = new_backwards;
-                                node = n.parent(xot);
-                                break;
-                            }
+                            axis = new_axis;
+                            break;
                         }
-                    } else {
-                        return false;
+                        _ => {
+                            if !matches {
+                                return false;
+                            }
+                            axis = new_axis;
+                            break;
+                        }
                     }
-                },
+                } else {
+                    return false;
+                }
+            }
+            if let Some(n) = node {
+                node = match axis {
+                    pattern::ForwardAxis::Attribute => match n {
+                        xml::Node::Attribute(n, _) => Some(xml::Node::Xot(n)),
+                        _ => return false,
+                    },
+                    _ => n.parent(xot),
+                };
+            } else {
+                return false;
             }
         }
-        !matches!(backwards, Backwards::NotFound)
+        true
     }
 
-    fn matches_step_expr(step: &pattern::StepExpr, node: xml::Node, xot: &Xot) -> Backwards {
+    fn matches_step_expr(
+        step: &pattern::StepExpr,
+        node: xml::Node,
+        xot: &Xot,
+    ) -> (bool, pattern::ForwardAxis) {
         match step {
             pattern::StepExpr::AxisStep(axis_step) => Self::matches_axis_step(axis_step, node, xot),
             pattern::StepExpr::PostfixExpr(_) => todo!(),
         }
     }
 
-    fn matches_axis_step(step: &pattern::AxisStep, node: xml::Node, xot: &Xot) -> Backwards {
+    fn matches_axis_step(
+        step: &pattern::AxisStep,
+        node: xml::Node,
+        xot: &Xot,
+    ) -> (bool, pattern::ForwardAxis) {
         if !step.predicates.is_empty() {
             todo!();
         }
-        match &step.forward {
-            pattern::ForwardAxis::Child => match node {
-                xml::Node::Xot(_) => {
-                    if Self::matches_node_test(&step.node_test, node, xot) {
-                        Backwards::One
-                    } else {
-                        Backwards::NotFound
-                    }
-                }
-                xml::Node::Attribute(_, _) => Backwards::NotFound,
-                xml::Node::Namespace(_, _) => Backwards::NotFound,
-            },
-            pattern::ForwardAxis::Descendant => match node {
-                xml::Node::Xot(_) => {
-                    if Self::matches_node_test(&step.node_test, node, xot) {
-                        Backwards::Any
-                    } else {
-                        Backwards::NotFound
-                    }
-                }
-                xml::Node::Attribute(_, _) => Backwards::NotFound,
-                xml::Node::Namespace(_, _) => Backwards::NotFound,
-            },
-            pattern::ForwardAxis::Attribute => match node {
-                xml::Node::Attribute(_, _) => {
-                    if Self::matches_node_test(&step.node_test, node, xot) {
-                        Backwards::One
-                    } else {
-                        Backwards::NotFound
-                    }
-                }
-                _ => Backwards::NotFound,
-            },
-            pattern::ForwardAxis::Self_ => todo!(),
-            pattern::ForwardAxis::DescendantOrSelf => todo!(),
-            pattern::ForwardAxis::Namespace => todo!(),
-        }
+        (
+            Self::matches_node_test(&step.node_test, node, xot),
+            step.forward,
+        )
     }
 
     fn matches_node_test(node_test: &pattern::NodeTest, node: xml::Node, xot: &Xot) -> bool {
         match node_test {
             pattern::NodeTest::NameTest(name_test) => Self::matches_name_test(name_test, node, xot),
-            pattern::NodeTest::KindTest(_kind_test) => todo!(),
+            pattern::NodeTest::KindTest(kind_test) => Self::matches_kind_test(kind_test, node, xot),
         }
     }
 
@@ -177,6 +159,13 @@ impl Pattern {
                     false
                 }
             }
+        }
+    }
+
+    fn matches_kind_test(kind_test: &ast::KindTest, node: xml::Node, xot: &Xot) -> bool {
+        match kind_test {
+            ast::KindTest::Any => true,
+            _ => todo!(),
         }
     }
 }
@@ -419,5 +408,22 @@ mod tests {
 
         let pattern = parse_pattern("@bar");
         assert!(!pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_matches_kind_test_any() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root><foo bar="BAR" /></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let element_node = xml::Node::Xot(node);
+        let element_item: Item = element_node.into();
+        let attribute_name = xot.add_name("bar");
+        let attribute_node = xml::Node::Attribute(node, attribute_name);
+        let attribute_item: Item = attribute_node.into();
+
+        let pattern = parse_pattern("node()");
+        assert!(pattern.matches(&element_item, &xot));
+        assert!(pattern.matches(&attribute_item, &xot));
     }
 }
