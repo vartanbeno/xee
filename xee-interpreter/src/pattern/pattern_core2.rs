@@ -117,6 +117,20 @@ impl Pattern {
         if !step.predicates.is_empty() {
             todo!();
         }
+        // if the forward axis is attribute based, we won't match with an element,
+        // and vice versa
+        match node {
+            xml::Node::Attribute(_, _) => {
+                if step.forward != pattern::ForwardAxis::Attribute {
+                    return (false, step.forward);
+                }
+            }
+            _ => {
+                if step.forward == pattern::ForwardAxis::Attribute {
+                    return (false, step.forward);
+                }
+            }
+        }
         (
             Self::matches_node_test(&step.node_test, node, xot),
             step.forward,
@@ -398,6 +412,34 @@ mod tests {
     }
 
     #[test]
+    fn test_not_match_name_element_because_its_attribute() {
+        let mut xot = Xot::new();
+        let bar_name = xot.add_name("bar");
+        let root = xot.parse(r#"<root><foo bar="BAR"/></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Attribute(node, bar_name);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("bar");
+        assert!(!pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_not_match_name_element_descendant_because_its_attribute() {
+        let mut xot = Xot::new();
+        let bar_name = xot.add_name("bar");
+        let root = xot.parse(r#"<root><foo bar="BAR"/></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Attribute(node, bar_name);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("root//bar");
+        assert!(!pattern.matches(&item, &xot));
+    }
+
+    #[test]
     fn test_not_match_name_attribute_because_its_element() {
         let mut xot = Xot::new();
         let root = xot.parse(r#"<root><bar /></root>"#).unwrap();
@@ -424,6 +466,11 @@ mod tests {
 
         let pattern = parse_pattern("node()");
         assert!(pattern.matches(&element_item, &xot));
+        // the attribute item won't match, as it's not a child node
+        // TODO: is this really correct?
+        assert!(!pattern.matches(&attribute_item, &xot));
+        let pattern = parse_pattern("attribute::node()");
+        assert!(!pattern.matches(&element_item, &xot));
         assert!(pattern.matches(&attribute_item, &xot));
     }
 }
