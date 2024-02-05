@@ -84,13 +84,7 @@ impl Pattern {
                 }
             }
             if let Some(n) = node {
-                node = match axis {
-                    pattern::ForwardAxis::Attribute => match n {
-                        xml::Node::Attribute(n, _) => Some(xml::Node::Xot(n)),
-                        _ => return false,
-                    },
-                    _ => n.parent(xot),
-                };
+                node = n.parent(xot);
             } else {
                 return false;
             }
