@@ -173,6 +173,16 @@ impl Pattern {
     fn matches_kind_test(kind_test: &ast::KindTest, node: xml::Node, xot: &Xot) -> bool {
         match kind_test {
             ast::KindTest::Any => true,
+            ast::KindTest::Element(element_test) => {
+                if let Some(_element_test) = element_test {
+                    todo!()
+                } else {
+                    match node {
+                        xml::Node::Xot(node) => xot.is_element(node),
+                        _ => false,
+                    }
+                }
+            }
             _ => todo!(),
         }
     }
@@ -466,5 +476,28 @@ mod tests {
         let pattern = parse_pattern("attribute::node()");
         assert!(!pattern.matches(&element_item, &xot));
         assert!(pattern.matches(&attribute_item, &xot));
+    }
+
+    #[test]
+    fn test_matches_kind_test_element() {
+        let mut xot = Xot::new();
+        let root = xot
+            .parse(r#"<root><foo bar="BAR">text</foo></root>"#)
+            .unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let element_node = xml::Node::Xot(node);
+        let element_item: Item = element_node.into();
+        let attribute_name = xot.add_name("bar");
+        let attribute_node = xml::Node::Attribute(node, attribute_name);
+        let attribute_item: Item = attribute_node.into();
+        let text_node = xot.first_child(node).unwrap();
+        let text_node = xml::Node::Xot(text_node);
+        let text_item: Item = text_node.into();
+
+        let pattern = parse_pattern("element()");
+        assert!(pattern.matches(&element_item, &xot));
+        assert!(!pattern.matches(&text_item, &xot));
+        assert!(!pattern.matches(&attribute_item, &xot));
     }
 }
