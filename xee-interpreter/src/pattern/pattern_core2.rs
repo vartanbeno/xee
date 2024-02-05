@@ -20,22 +20,17 @@ impl Pattern {
     fn matches(&self, item: &Item, xot: &Xot) -> bool {
         match &self.0 {
             pattern::Pattern::Expr(expr_pattern) => {
-                self.matches_expr_pattern(expr_pattern, item, xot)
+                Self::matches_expr_pattern(expr_pattern, item, xot)
             }
             pattern::Pattern::Predicate(_predicate_pattern) => todo!(),
         }
     }
 
-    fn matches_expr_pattern(
-        &self,
-        expr_pattern: &pattern::ExprPattern,
-        item: &Item,
-        xot: &Xot,
-    ) -> bool {
+    fn matches_expr_pattern(expr_pattern: &pattern::ExprPattern, item: &Item, xot: &Xot) -> bool {
         if let Item::Node(node) = item {
             match expr_pattern {
                 pattern::ExprPattern::Path(path_expr) => {
-                    self.matches_path_expr(path_expr, *node, xot)
+                    Self::matches_path_expr(path_expr, *node, xot)
                 }
                 pattern::ExprPattern::BinaryExpr(_binary_expr) => todo!(),
             }
@@ -44,7 +39,7 @@ impl Pattern {
         }
     }
 
-    fn matches_path_expr(&self, path_expr: &pattern::PathExpr, node: xml::Node, xot: &Xot) -> bool {
+    fn matches_path_expr(path_expr: &pattern::PathExpr, node: xml::Node, xot: &Xot) -> bool {
         match &path_expr.root {
             pattern::PathRoot::Rooted {
                 root: _,
@@ -52,16 +47,13 @@ impl Pattern {
             } => todo!(),
             pattern::PathRoot::AbsoluteSlash => todo!(),
             pattern::PathRoot::AbsoluteDoubleSlash => todo!(),
-            pattern::PathRoot::Relative => self.matches_relative_steps(&path_expr.steps, node, xot),
+            pattern::PathRoot::Relative => {
+                Self::matches_relative_steps(&path_expr.steps, node, xot)
+            }
         }
     }
 
-    fn matches_relative_steps(
-        &self,
-        steps: &[pattern::StepExpr],
-        node: xml::Node,
-        xot: &Xot,
-    ) -> bool {
+    fn matches_relative_steps(steps: &[pattern::StepExpr], node: xml::Node, xot: &Xot) -> bool {
         let mut node = Some(node);
         let mut backwards = Backwards::One;
         for step in steps.iter().rev() {
@@ -69,7 +61,7 @@ impl Pattern {
                 Backwards::NotFound => return false,
                 Backwards::One => {
                     if let Some(n) = node {
-                        backwards = self.matches_step_expr(step, n, xot);
+                        backwards = Self::matches_step_expr(step, n, xot);
                         node = n.parent(xot);
                     } else {
                         return false;
@@ -77,7 +69,7 @@ impl Pattern {
                 }
                 Backwards::Any => loop {
                     if let Some(n) = node {
-                        let new_backwards = self.matches_step_expr(step, n, xot);
+                        let new_backwards = Self::matches_step_expr(step, n, xot);
                         match new_backwards {
                             Backwards::NotFound => {
                                 // this parent wasn't it, so go up one more
@@ -99,21 +91,21 @@ impl Pattern {
         !matches!(backwards, Backwards::NotFound)
     }
 
-    fn matches_step_expr(&self, step: &pattern::StepExpr, node: xml::Node, xot: &Xot) -> Backwards {
+    fn matches_step_expr(step: &pattern::StepExpr, node: xml::Node, xot: &Xot) -> Backwards {
         match step {
-            pattern::StepExpr::AxisStep(axis_step) => self.matches_axis_step(axis_step, node, xot),
+            pattern::StepExpr::AxisStep(axis_step) => Self::matches_axis_step(axis_step, node, xot),
             pattern::StepExpr::PostfixExpr(_) => todo!(),
         }
     }
 
-    fn matches_axis_step(&self, step: &pattern::AxisStep, node: xml::Node, xot: &Xot) -> Backwards {
+    fn matches_axis_step(step: &pattern::AxisStep, node: xml::Node, xot: &Xot) -> Backwards {
         if !step.predicates.is_empty() {
             todo!();
         }
         match &step.forward {
             pattern::ForwardAxis::Child => match node {
                 xml::Node::Xot(_) => {
-                    if self.matches_node_test(&step.node_test, node, xot) {
+                    if Self::matches_node_test(&step.node_test, node, xot) {
                         Backwards::One
                     } else {
                         Backwards::NotFound
@@ -124,7 +116,7 @@ impl Pattern {
             },
             pattern::ForwardAxis::Descendant => match node {
                 xml::Node::Xot(_) => {
-                    if self.matches_node_test(&step.node_test, node, xot) {
+                    if Self::matches_node_test(&step.node_test, node, xot) {
                         Backwards::Any
                     } else {
                         Backwards::NotFound
@@ -135,7 +127,7 @@ impl Pattern {
             },
             pattern::ForwardAxis::Attribute => match node {
                 xml::Node::Attribute(_, _) => {
-                    if self.matches_node_test(&step.node_test, node, xot) {
+                    if Self::matches_node_test(&step.node_test, node, xot) {
                         Backwards::One
                     } else {
                         Backwards::NotFound
@@ -149,14 +141,14 @@ impl Pattern {
         }
     }
 
-    fn matches_node_test(&self, node_test: &pattern::NodeTest, node: xml::Node, xot: &Xot) -> bool {
+    fn matches_node_test(node_test: &pattern::NodeTest, node: xml::Node, xot: &Xot) -> bool {
         match node_test {
-            pattern::NodeTest::NameTest(name_test) => self.matches_name_test(name_test, node, xot),
+            pattern::NodeTest::NameTest(name_test) => Self::matches_name_test(name_test, node, xot),
             pattern::NodeTest::KindTest(_kind_test) => todo!(),
         }
     }
 
-    fn matches_name_test(&self, name_test: &pattern::NameTest, node: xml::Node, xot: &Xot) -> bool {
+    fn matches_name_test(name_test: &pattern::NameTest, node: xml::Node, xot: &Xot) -> bool {
         match name_test {
             pattern::NameTest::Name(expected_name) => {
                 if let Some(name) = node.node_name(xot) {
