@@ -464,10 +464,10 @@ mod tests {
         let attribute_node = xml::Node::Attribute(node, attribute_name);
         let attribute_item: Item = attribute_node.into();
 
+        // the axis determines whether we match. This is a bit
+        // counter intuitive, so I hope that this is correct.
         let pattern = parse_pattern("node()");
         assert!(pattern.matches(&element_item, &xot));
-        // the attribute item won't match, as it's not a child node
-        // TODO: is this really correct?
         assert!(!pattern.matches(&attribute_item, &xot));
         let pattern = parse_pattern("attribute::node()");
         assert!(!pattern.matches(&element_item, &xot));
