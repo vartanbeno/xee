@@ -77,15 +77,7 @@ impl Node {
 
     pub(crate) fn node_name(&self, xot: &Xot) -> Option<Name> {
         let name_id = self.node_name_id(xot)?;
-        let namespace_id = xot.namespace_for_name(name_id);
-        let (local_name, uri) = xot.name_ns_str(name_id);
-        let prefix_id = xot.prefix_for_namespace(self.xot_node(), namespace_id);
-        let prefix = prefix_id.map(|id| xot.prefix_str(id).to_string());
-        Some(Name::new(
-            local_name.to_string(),
-            Some(uri.to_string()),
-            prefix,
-        ))
+        Some(Name::from_xot(name_id, xot))
     }
 
     pub(crate) fn local_name(&self, xot: &Xot) -> String {

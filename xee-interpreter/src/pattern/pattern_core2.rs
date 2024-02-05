@@ -1,4 +1,3 @@
-use xee_name::Name;
 use xot::Xot;
 
 use xee_xpath_ast::pattern;
@@ -108,61 +107,74 @@ impl<V> Patterns<V> {
     }
 
     fn matches_step_expr(&self, step: &pattern::StepExpr, node: xml::Node, xot: &Xot) -> Backwards {
-        match node {
-            xml::Node::Xot(node) => match step {
-                pattern::StepExpr::AxisStep(axis_step) => {
-                    self.matches_axis_step(axis_step, node, xot)
-                }
-                pattern::StepExpr::PostfixExpr(_) => todo!(),
-            },
-            xml::Node::Attribute(_, _) => todo!(),
-            xml::Node::Namespace(_, _) => todo!(),
+        match step {
+            pattern::StepExpr::AxisStep(axis_step) => self.matches_axis_step(axis_step, node, xot),
+            pattern::StepExpr::PostfixExpr(_) => todo!(),
         }
     }
 
-    fn matches_axis_step(&self, step: &pattern::AxisStep, node: xot::Node, xot: &Xot) -> Backwards {
+    fn matches_axis_step(&self, step: &pattern::AxisStep, node: xml::Node, xot: &Xot) -> Backwards {
         if !step.predicates.is_empty() {
             todo!();
         }
         match &step.forward {
-            pattern::ForwardAxis::Child => {
-                if self.matches_node_test(&step.node_test, node, xot) {
-                    Backwards::One
-                } else {
-                    Backwards::NotFound
+            pattern::ForwardAxis::Child => match node {
+                xml::Node::Xot(_) => {
+                    if self.matches_node_test(&step.node_test, node, xot) {
+                        Backwards::One
+                    } else {
+                        Backwards::NotFound
+                    }
                 }
-            }
-            pattern::ForwardAxis::Descendant => {
-                if self.matches_node_test(&step.node_test, node, xot) {
-                    Backwards::Any
-                } else {
-                    Backwards::NotFound
+                xml::Node::Attribute(_, _) => Backwards::NotFound,
+                xml::Node::Namespace(_, _) => Backwards::NotFound,
+            },
+            pattern::ForwardAxis::Descendant => match node {
+                xml::Node::Xot(_) => {
+                    if self.matches_node_test(&step.node_test, node, xot) {
+                        Backwards::Any
+                    } else {
+                        Backwards::NotFound
+                    }
                 }
-            }
-            pattern::ForwardAxis::Attribute => todo!(),
+                xml::Node::Attribute(_, _) => Backwards::NotFound,
+                xml::Node::Namespace(_, _) => Backwards::NotFound,
+            },
+            pattern::ForwardAxis::Attribute => match node {
+                xml::Node::Attribute(_, _) => {
+                    if self.matches_node_test(&step.node_test, node, xot) {
+                        Backwards::One
+                    } else {
+                        Backwards::NotFound
+                    }
+                }
+                _ => Backwards::NotFound,
+            },
             pattern::ForwardAxis::Self_ => todo!(),
             pattern::ForwardAxis::DescendantOrSelf => todo!(),
             pattern::ForwardAxis::Namespace => todo!(),
         }
     }
 
-    fn matches_node_test(&self, node_test: &pattern::NodeTest, node: xot::Node, xot: &Xot) -> bool {
+    fn matches_node_test(&self, node_test: &pattern::NodeTest, node: xml::Node, xot: &Xot) -> bool {
         match node_test {
             pattern::NodeTest::NameTest(name_test) => self.matches_name_test(name_test, node, xot),
             pattern::NodeTest::KindTest(_kind_test) => todo!(),
         }
     }
 
-    fn matches_name_test(&self, name_test: &pattern::NameTest, node: xot::Node, xot: &Xot) -> bool {
-        if let Some(element) = xot.element(node) {
-            match name_test {
-                pattern::NameTest::Name(name) => Name::from_xot(element.name(), xot) == name.value,
-                pattern::NameTest::Star => true,
-                pattern::NameTest::LocalName(_) => todo!(),
-                pattern::NameTest::Namespace(_) => todo!(),
+    fn matches_name_test(&self, name_test: &pattern::NameTest, node: xml::Node, xot: &Xot) -> bool {
+        match name_test {
+            pattern::NameTest::Name(expected_name) => {
+                if let Some(name) = node.node_name(xot) {
+                    name == expected_name.value
+                } else {
+                    false
+                }
             }
-        } else {
-            false
+            pattern::NameTest::Star => true,
+            pattern::NameTest::LocalName(_) => todo!(),
+            pattern::NameTest::Namespace(_) => todo!(),
         }
     }
 }
@@ -344,5 +356,26 @@ mod tests {
                 .unwrap();
         patterns.patterns.push((pattern, 1));
         assert_eq!(patterns.lookup(&item, &xot), None);
+    }
+
+    #[test]
+    fn test_match_name_attribute() {
+        let mut xot = Xot::new();
+        let bar_name = xot.add_name("bar");
+        let root = xot.parse(r#"<root><foo bar="BAR"/></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Attribute(node, bar_name);
+        let item: Item = node.into();
+
+        let mut patterns = Patterns {
+            patterns: Vec::new(),
+        };
+        let namespaces = xee_name::Namespaces::default();
+        let variable_names = xee_name::VariableNames::default();
+        let pattern = pattern::Pattern::parse("@bar", &namespaces, &variable_names).unwrap();
+        patterns.patterns.push((pattern, 1));
+        let found = patterns.lookup(&item, &xot).unwrap();
+        assert_eq!(*found, 1);
     }
 }

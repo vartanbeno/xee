@@ -10,9 +10,7 @@ Ok(
                     Name {
                         name: "root",
                         prefix: None,
-                        namespace: Some(
-                            "",
-                        ),
+                        namespace: None,
                     },
                 ),
             ),
