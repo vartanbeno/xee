@@ -158,8 +158,25 @@ impl Pattern {
                 }
             }
             pattern::NameTest::Star => true,
-            pattern::NameTest::LocalName(_) => todo!(),
-            pattern::NameTest::Namespace(_) => todo!(),
+            pattern::NameTest::LocalName(expected_local_name) => {
+                if let Some(name) = node.node_name(xot) {
+                    name.local_name() == expected_local_name
+                } else {
+                    false
+                }
+            }
+            pattern::NameTest::Namespace(ns) => {
+                if let Some(name) = node.node_name(xot) {
+                    let namespace = name.namespace();
+                    if let Some(namespace) = namespace {
+                        namespace == ns
+                    } else {
+                        ns.is_empty()
+                    }
+                } else {
+                    false
+                }
+            }
         }
     }
 }
@@ -185,6 +202,11 @@ mod tests {
         Pattern(pattern::Pattern::parse(pattern, &namespaces, &variable_names).unwrap())
     }
 
+    fn parse_pattern_namespaces(pattern: &str, namespaces: &xee_name::Namespaces) -> Pattern {
+        let variable_names = xee_name::VariableNames::default();
+        Pattern(pattern::Pattern::parse(pattern, namespaces, &variable_names).unwrap())
+    }
+
     #[test]
     fn test_match_name() {
         let mut xot = Xot::new();
@@ -196,6 +218,63 @@ mod tests {
 
         let pattern = parse_pattern("foo");
         assert!(pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_match_star() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root><foo/></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Xot(node);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("*");
+        assert!(pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_match_local_name() {
+        let mut xot = Xot::new();
+        let root = xot
+            .parse(r#"<root><foo xmlns="different"/></root>"#)
+            .unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Xot(node);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("*:foo");
+        assert!(pattern.matches(&item, &xot));
+        let pattern = parse_pattern("foo");
+        assert!(!pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_match_namespace_name() {
+        let mut xot = Xot::new();
+        let root = xot
+            .parse(r#"<root><foo xmlns="different"/></root>"#)
+            .unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Xot(node);
+        let item: Item = node.into();
+
+        let namespaces = xee_name::Namespaces::new(
+            vec![("d", "different"), ("o", "other")]
+                .into_iter()
+                .collect(),
+            None,
+            None,
+        );
+
+        let pattern = parse_pattern_namespaces("d:*", &namespaces);
+        assert!(pattern.matches(&item, &xot));
+        let pattern = parse_pattern_namespaces("d:foo", &namespaces);
+        assert!(pattern.matches(&item, &xot));
+        let pattern = parse_pattern_namespaces("o:*", &namespaces);
+        assert!(!pattern.matches(&item, &xot));
     }
 
     #[test]
