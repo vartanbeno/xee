@@ -199,7 +199,7 @@ mod tests {
     }
 
     #[test]
-    fn test_match_name_not_found() {
+    fn test_not_match_name() {
         let mut xot = Xot::new();
         let root = xot.parse(r#"<root><foo/></root>"#).unwrap();
         let document_element = xot.document_element(root).unwrap();
@@ -226,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn test_match_name_nested_notfound() {
+    fn test_not_match_name_nested() {
         let mut xot = Xot::new();
         let root = xot.parse(r#"<root><bar><foo/></bar></root>"#).unwrap();
         let document_element = xot.document_element(root).unwrap();
@@ -254,7 +254,7 @@ mod tests {
     }
 
     #[test]
-    fn test_match_name_nested_with_explicit_descendant_axis_not_found() {
+    fn test_not_match_name_nested_with_explicit_descendant_axis() {
         let mut xot = Xot::new();
         let root = xot.parse(r#"<root><bar><foo/></bar></root>"#).unwrap();
         let document_element = xot.document_element(root).unwrap();
@@ -285,7 +285,7 @@ mod tests {
     }
 
     #[test]
-    fn test_match_name_nested_actually_with_explicit_descendant_axis_not_found() {
+    fn test_not_match_name_nested_actually_with_explicit_descendant_axis() {
         let mut xot = Xot::new();
         let root = xot
             .parse(r#"<root><qux><bar><foo/></bar></qux></root>"#)
@@ -313,5 +313,32 @@ mod tests {
 
         let pattern = parse_pattern("@bar");
         assert!(pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_not_match_name_attribute() {
+        let mut xot = Xot::new();
+        let bar_name = xot.add_name("bar");
+        let root = xot.parse(r#"<root><foo bar="BAR"/></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Attribute(node, bar_name);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("@qux");
+        assert!(!pattern.matches(&item, &xot));
+    }
+
+    #[test]
+    fn test_not_match_name_attribute_because_its_element() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root><bar /></root>"#).unwrap();
+        let document_element = xot.document_element(root).unwrap();
+        let node = xot.first_child(document_element).unwrap();
+        let node = xml::Node::Xot(node);
+        let item: Item = node.into();
+
+        let pattern = parse_pattern("@bar");
+        assert!(!pattern.matches(&item, &xot));
     }
 }
