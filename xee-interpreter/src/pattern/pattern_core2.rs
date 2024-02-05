@@ -4,8 +4,10 @@ use xee_xpath_ast::pattern;
 
 use crate::{sequence::Item, xml};
 
+struct Pattern(pattern::Pattern);
+
 struct Patterns<V> {
-    patterns: Vec<(pattern::Pattern, V)>,
+    patterns: Vec<(Pattern, V)>,
 }
 
 enum Backwards {
@@ -14,18 +16,9 @@ enum Backwards {
     Any,
 }
 
-impl<V> Patterns<V> {
-    pub(crate) fn lookup(&self, item: &Item, xot: &Xot) -> Option<&V> {
-        for (pattern, value) in &self.patterns {
-            if self.matches(pattern, item, xot) {
-                return Some(value);
-            }
-        }
-        None
-    }
-
-    fn matches(&self, pattern: &pattern::Pattern, item: &Item, xot: &Xot) -> bool {
-        match pattern {
+impl Pattern {
+    fn matches(&self, item: &Item, xot: &Xot) -> bool {
+        match &self.0 {
             pattern::Pattern::Expr(expr_pattern) => {
                 self.matches_expr_pattern(expr_pattern, item, xot)
             }
@@ -179,9 +172,26 @@ impl<V> Patterns<V> {
     }
 }
 
+impl<V> Patterns<V> {
+    pub(crate) fn lookup(&self, item: &Item, xot: &Xot) -> Option<&V> {
+        for (pattern, value) in &self.patterns {
+            if pattern.matches(item, xot) {
+                return Some(value);
+            }
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn parse_pattern(pattern: &str) -> Pattern {
+        let namespaces = xee_name::Namespaces::default();
+        let variable_names = xee_name::VariableNames::default();
+        Pattern(pattern::Pattern::parse(pattern, &namespaces, &variable_names).unwrap())
+    }
 
     #[test]
     fn test_match_name() {
@@ -192,15 +202,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern = pattern::Pattern::parse("foo", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        let found = patterns.lookup(&item, &xot).unwrap();
-        assert_eq!(*found, 1);
+        let pattern = parse_pattern("foo");
+        assert!(pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -212,14 +215,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern = pattern::Pattern::parse("notfound", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        assert_eq!(patterns.lookup(&item, &xot), None);
+        let pattern = parse_pattern("notfound");
+        assert!(!pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -232,15 +229,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern = pattern::Pattern::parse("bar/foo", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        let found = patterns.lookup(&item, &xot).unwrap();
-        assert_eq!(*found, 1);
+        let pattern = parse_pattern("bar/foo");
+        assert!(pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -253,15 +243,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern =
-            pattern::Pattern::parse("notfound/foo", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        assert_eq!(patterns.lookup(&item, &xot), None);
+        let pattern = parse_pattern("notfound/foo");
+        assert!(!pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -274,16 +257,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern =
-            pattern::Pattern::parse("bar/descendant::foo", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        let found = patterns.lookup(&item, &xot).unwrap();
-        assert_eq!(*found, 1);
+        let pattern = parse_pattern("bar/descendant::foo");
+        assert!(pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -296,16 +271,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern =
-            pattern::Pattern::parse("notfound/descendant::foo", &namespaces, &variable_names)
-                .unwrap();
-        patterns.patterns.push((pattern, 1));
-        assert_eq!(patterns.lookup(&item, &xot), None);
+        let pattern = parse_pattern("notfound/descendant::foo");
+        assert!(!pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -321,16 +288,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern =
-            pattern::Pattern::parse("qux/descendant::foo", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        let found = patterns.lookup(&item, &xot).unwrap();
-        assert_eq!(*found, 1);
+        let pattern = parse_pattern("qux/descendant::foo");
+        assert!(pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -346,16 +305,8 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern =
-            pattern::Pattern::parse("notfound/descendant::foo", &namespaces, &variable_names)
-                .unwrap();
-        patterns.patterns.push((pattern, 1));
-        assert_eq!(patterns.lookup(&item, &xot), None);
+        let pattern = parse_pattern("notfound/descendant::foo");
+        assert!(!pattern.matches(&item, &xot));
     }
 
     #[test]
@@ -368,14 +319,7 @@ mod tests {
         let node = xml::Node::Attribute(node, bar_name);
         let item: Item = node.into();
 
-        let mut patterns = Patterns {
-            patterns: Vec::new(),
-        };
-        let namespaces = xee_name::Namespaces::default();
-        let variable_names = xee_name::VariableNames::default();
-        let pattern = pattern::Pattern::parse("@bar", &namespaces, &variable_names).unwrap();
-        patterns.patterns.push((pattern, 1));
-        let found = patterns.lookup(&item, &xot).unwrap();
-        assert_eq!(*found, 1);
+        let pattern = parse_pattern("@bar");
+        assert!(pattern.matches(&item, &xot));
     }
 }
