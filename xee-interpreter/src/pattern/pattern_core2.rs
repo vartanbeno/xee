@@ -1,7 +1,7 @@
-use xee_xpath_type::ast;
+use xee_xpath_type::ast::KindTest;
 use xot::Xot;
 
-use xee_xpath_ast::pattern;
+use xee_xpath_ast::{ast, pattern};
 
 use crate::sequence::Item;
 use crate::xml;
@@ -27,7 +27,11 @@ impl Pattern {
         }
     }
 
-    fn matches_expr_pattern(expr_pattern: &pattern::ExprPattern, item: &Item, xot: &Xot) -> bool {
+    fn matches_expr_pattern(
+        expr_pattern: &pattern::ExprPattern<ast::ExprS>,
+        item: &Item,
+        xot: &Xot,
+    ) -> bool {
         if let Item::Node(node) = item {
             match expr_pattern {
                 pattern::ExprPattern::Path(path_expr) => {
@@ -40,7 +44,11 @@ impl Pattern {
         }
     }
 
-    fn matches_path_expr(path_expr: &pattern::PathExpr, node: xml::Node, xot: &Xot) -> bool {
+    fn matches_path_expr(
+        path_expr: &pattern::PathExpr<ast::ExprS>,
+        node: xml::Node,
+        xot: &Xot,
+    ) -> bool {
         match &path_expr.root {
             pattern::PathRoot::Rooted {
                 root: _,
@@ -61,7 +69,11 @@ impl Pattern {
         }
     }
 
-    fn matches_absolute_steps(steps: &[pattern::StepExpr], node: xml::Node, xot: &Xot) -> bool {
+    fn matches_absolute_steps(
+        steps: &[pattern::StepExpr<ast::ExprS>],
+        node: xml::Node,
+        xot: &Xot,
+    ) -> bool {
         let node_match = Self::matches_relative_steps(steps, node, xot);
         if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
             xot.is_root(node)
@@ -71,7 +83,7 @@ impl Pattern {
     }
 
     fn matches_absolute_double_slash_steps(
-        steps: &[pattern::StepExpr],
+        steps: &[pattern::StepExpr<ast::ExprS>],
         node: xml::Node,
         xot: &Xot,
     ) -> bool {
@@ -95,7 +107,7 @@ impl Pattern {
     }
 
     fn matches_relative_steps(
-        steps: &[pattern::StepExpr],
+        steps: &[pattern::StepExpr<ast::ExprS>],
         node: xml::Node,
         xot: &Xot,
     ) -> NodeMatch {
@@ -136,7 +148,7 @@ impl Pattern {
     }
 
     fn matches_step_expr(
-        step: &pattern::StepExpr,
+        step: &pattern::StepExpr<ast::ExprS>,
         node: xml::Node,
         xot: &Xot,
     ) -> (bool, pattern::ForwardAxis) {
@@ -147,7 +159,7 @@ impl Pattern {
     }
 
     fn matches_axis_step(
-        step: &pattern::AxisStep,
+        step: &pattern::AxisStep<ast::ExprS>,
         node: xml::Node,
         xot: &Xot,
     ) -> (bool, pattern::ForwardAxis) {
@@ -213,7 +225,7 @@ impl Pattern {
         }
     }
 
-    fn matches_kind_test(kind_test: &ast::KindTest, node: xml::Node, xot: &Xot) -> bool {
+    fn matches_kind_test(kind_test: &KindTest, node: xml::Node, xot: &Xot) -> bool {
         xml::kind_test(kind_test, xot, node)
     }
 }

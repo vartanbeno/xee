@@ -1,7 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use xot::Xot;
 
-use xee_xpath_ast::pattern;
+use xee_xpath_ast::{ast, pattern};
 
 use crate::{sequence::Item, xml};
 
@@ -30,7 +30,7 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_expr_pattern(&mut self, expr_pattern: &pattern::ExprPattern, value: V) {
+    fn add_expr_pattern(&mut self, expr_pattern: &pattern::ExprPattern<ast::ExprS>, value: V) {
         match expr_pattern {
             pattern::ExprPattern::Path(path_expr) => {
                 self.add_path_expr(path_expr, value);
@@ -41,7 +41,7 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_path_expr(&mut self, path_expr: &pattern::PathExpr, value: V) {
+    fn add_path_expr(&mut self, path_expr: &pattern::PathExpr<ast::ExprS>, value: V) {
         match &path_expr.root {
             pattern::PathRoot::Rooted {
                 root: _,
@@ -61,14 +61,14 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_absolute_steps(&mut self, steps: &[pattern::StepExpr], value: V) {
+    fn add_absolute_steps(&mut self, steps: &[pattern::StepExpr<ast::ExprS>], value: V) {
         if !steps.is_empty() {
             todo!();
         }
         self.root = Some(value);
     }
 
-    fn add_relative_steps(&mut self, steps: &[pattern::StepExpr], value: V) {
+    fn add_relative_steps(&mut self, steps: &[pattern::StepExpr<ast::ExprS>], value: V) {
         if steps.len() != 1 {
             todo!();
         }
@@ -83,7 +83,7 @@ impl<V> PatternLookup<V> {
         }
     }
 
-    fn add_single_axis_step(&mut self, step: &pattern::AxisStep, value: V) {
+    fn add_single_axis_step(&mut self, step: &pattern::AxisStep<ast::ExprS>, value: V) {
         if step.forward != pattern::ForwardAxis::Child {
             todo!();
         }

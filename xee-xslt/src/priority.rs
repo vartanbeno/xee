@@ -29,7 +29,7 @@ pub(crate) fn default_priority<'a>(
 
 fn default_priority_top_level_binary<'a>(
     pattern: Cow<'a, pattern::Pattern>,
-    binary_expr: &'a pattern::BinaryExpr,
+    binary_expr: &'a pattern::BinaryExpr<ast::ExprS>,
 ) -> Box<dyn Iterator<Item = (Cow<'a, pattern::Pattern>, Decimal)> + 'a> {
     let default = dec!(0.5);
     match binary_expr.operator {
@@ -50,7 +50,9 @@ fn default_priority_top_level_binary<'a>(
     }
 }
 
-fn default_priority_union(binary_expr: &pattern::BinaryExpr) -> Vec<(pattern::Pattern, Decimal)> {
+fn default_priority_union(
+    binary_expr: &pattern::BinaryExpr<ast::ExprS>,
+) -> Vec<(pattern::Pattern, Decimal)> {
     let left_pattern = pattern::Pattern::Expr(binary_expr.left.as_ref().clone());
     let right_pattern = pattern::Pattern::Expr(binary_expr.right.as_ref().clone());
     let left = default_priority(&left_pattern).map(|(p, d)| (p.into_owned(), d));
@@ -58,7 +60,9 @@ fn default_priority_union(binary_expr: &pattern::BinaryExpr) -> Vec<(pattern::Pa
     left.chain(right).collect::<Vec<_>>()
 }
 
-fn leftmost_intersect_path_expr(binary_expr: &pattern::BinaryExpr) -> Option<&pattern::PathExpr> {
+fn leftmost_intersect_path_expr(
+    binary_expr: &pattern::BinaryExpr<ast::ExprS>,
+) -> Option<&pattern::PathExpr<ast::ExprS>> {
     match binary_expr.left.as_ref() {
         pattern::ExprPattern::Path(path) => Some(path),
         pattern::ExprPattern::BinaryExpr(expr) => match expr.operator {
@@ -70,7 +74,7 @@ fn leftmost_intersect_path_expr(binary_expr: &pattern::BinaryExpr) -> Option<&pa
     }
 }
 
-fn default_priority_path_expr(path: &pattern::PathExpr) -> Decimal {
+fn default_priority_path_expr(path: &pattern::PathExpr<ast::ExprS>) -> Decimal {
     let default = dec!(0.5);
 
     match path.root {

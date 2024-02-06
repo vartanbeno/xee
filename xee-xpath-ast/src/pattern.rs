@@ -4,30 +4,34 @@ pub use crate::ast::{NameTest, NodeTest};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum Pattern {
-    Predicate(PredicatePattern),
-    Expr(ExprPattern),
+pub enum BasePattern<E> {
+    Predicate(PredicatePattern<E>),
+    Expr(ExprPattern<E>),
+}
+
+pub type Pattern = BasePattern<ast::ExprS>;
+
+//  ast::ExprS
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct PredicatePattern<E> {
+    pub predicates: Vec<E>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct PredicatePattern {
-    pub predicates: Vec<ast::ExprS>,
+pub enum ExprPattern<E> {
+    Path(PathExpr<E>),
+    BinaryExpr(BinaryExpr<E>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum ExprPattern {
-    Path(PathExpr),
-    BinaryExpr(BinaryExpr),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct BinaryExpr {
+pub struct BinaryExpr<E> {
     pub operator: Operator,
-    pub left: Box<ExprPattern>,
-    pub right: Box<ExprPattern>,
+    pub left: Box<ExprPattern<E>>,
+    pub right: Box<ExprPattern<E>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,18 +44,15 @@ pub enum Operator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct PathExpr {
-    pub root: PathRoot,
-    pub steps: Vec<StepExpr>,
+pub struct PathExpr<E> {
+    pub root: PathRoot<E>,
+    pub steps: Vec<StepExpr<E>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum PathRoot {
-    Rooted {
-        root: RootExpr,
-        predicates: Vec<ast::ExprS>,
-    },
+pub enum PathRoot<E> {
+    Rooted { root: RootExpr, predicates: Vec<E> },
     AbsoluteSlash,
     AbsoluteDoubleSlash,
     Relative,
@@ -91,24 +92,24 @@ pub enum Argument {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum StepExpr {
-    PostfixExpr(PostfixExpr),
-    AxisStep(AxisStep),
+pub enum StepExpr<E> {
+    PostfixExpr(PostfixExpr<E>),
+    AxisStep(AxisStep<E>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct PostfixExpr {
-    pub expr: ExprPattern,
-    pub predicates: Vec<ast::ExprS>,
+pub struct PostfixExpr<E> {
+    pub expr: ExprPattern<E>,
+    pub predicates: Vec<E>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct AxisStep {
+pub struct AxisStep<E> {
     pub forward: ForwardAxis,
     pub node_test: ast::NodeTest,
-    pub predicates: Vec<ast::ExprS>,
+    pub predicates: Vec<E>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
