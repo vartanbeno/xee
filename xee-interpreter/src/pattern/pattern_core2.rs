@@ -12,6 +12,11 @@ struct Patterns<V> {
     patterns: Vec<(Pattern, V)>,
 }
 
+enum NodeMatch {
+    Match(Option<xml::Node>),
+    NotMatch,
+}
+
 impl Pattern {
     fn matches(&self, item: &Item, xot: &Xot) -> bool {
         match &self.0 {
@@ -41,15 +46,59 @@ impl Pattern {
                 root: _,
                 predicates: _,
             } => todo!(),
-            pattern::PathRoot::AbsoluteSlash => todo!(),
-            pattern::PathRoot::AbsoluteDoubleSlash => todo!(),
+            pattern::PathRoot::AbsoluteSlash => {
+                Self::matches_absolute_steps(&path_expr.steps, node, xot)
+            }
+            pattern::PathRoot::AbsoluteDoubleSlash => {
+                Self::matches_absolute_double_slash_steps(&path_expr.steps, node, xot)
+            }
             pattern::PathRoot::Relative => {
-                Self::matches_relative_steps(&path_expr.steps, node, xot)
+                match Self::matches_relative_steps(&path_expr.steps, node, xot) {
+                    NodeMatch::Match(_) => true,
+                    NodeMatch::NotMatch => false,
+                }
             }
         }
     }
 
-    fn matches_relative_steps(steps: &[pattern::StepExpr], node: xml::Node, xot: &Xot) -> bool {
+    fn matches_absolute_steps(steps: &[pattern::StepExpr], node: xml::Node, xot: &Xot) -> bool {
+        let node_match = Self::matches_relative_steps(steps, node, xot);
+        if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
+            xot.is_root(node)
+        } else {
+            false
+        }
+    }
+
+    fn matches_absolute_double_slash_steps(
+        steps: &[pattern::StepExpr],
+        node: xml::Node,
+        xot: &Xot,
+    ) -> bool {
+        let node_match = Self::matches_relative_steps(steps, node, xot);
+        if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
+            // we need to be under root
+            let mut current_node = node;
+            loop {
+                if xot.is_root(current_node) {
+                    return true;
+                }
+                if let Some(parent) = xot.parent(current_node) {
+                    current_node = parent;
+                } else {
+                    return false;
+                }
+            }
+        } else {
+            false
+        }
+    }
+
+    fn matches_relative_steps(
+        steps: &[pattern::StepExpr],
+        node: xml::Node,
+        xot: &Xot,
+    ) -> NodeMatch {
         let mut node = Some(node);
         let mut axis = pattern::ForwardAxis::Child;
         for step in steps.iter().rev() {
@@ -67,23 +116,23 @@ impl Pattern {
                         }
                         _ => {
                             if !matches {
-                                return false;
+                                return NodeMatch::NotMatch;
                             }
                             axis = new_axis;
                             break;
                         }
                     }
                 } else {
-                    return false;
+                    return NodeMatch::NotMatch;
                 }
             }
             if let Some(n) = node {
                 node = n.parent(xot);
             } else {
-                return false;
+                return NodeMatch::NotMatch;
             }
         }
-        true
+        NodeMatch::Match(node)
     }
 
     fn matches_step_expr(
@@ -480,5 +529,69 @@ mod tests {
         assert!(pattern.matches(&element_item, &xot));
         assert!(!pattern.matches(&text_item, &xot));
         assert!(!pattern.matches(&attribute_item, &xot));
+    }
+
+    #[test]
+    fn test_matches_absolute_slash() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root/>"#).unwrap();
+        let node = xml::Node::Xot(root);
+        let document_element = xot.document_element(root).unwrap();
+        let document_element_node = xml::Node::Xot(document_element);
+        let item: Item = node.into();
+        let document_element_item: Item = document_element_node.into();
+
+        let pattern = parse_pattern("/");
+        assert!(pattern.matches(&item, &xot));
+        assert!(!pattern.matches(&document_element_item, &xot));
+    }
+
+    #[test]
+    fn test_matches_absolute_slash_with_element() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root/>"#).unwrap();
+        let node = xml::Node::Xot(root);
+        let document_element = xot.document_element(root).unwrap();
+        let document_element_node = xml::Node::Xot(document_element);
+        let item: Item = node.into();
+        let document_element_item: Item = document_element_node.into();
+
+        let pattern = parse_pattern("/root");
+        assert!(!pattern.matches(&item, &xot));
+        assert!(pattern.matches(&document_element_item, &xot));
+    }
+
+    #[test]
+    fn test_matches_absolute_double_slash() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root/>"#).unwrap();
+        let node = xml::Node::Xot(root);
+        let document_element = xot.document_element(root).unwrap();
+        let document_element_node = xml::Node::Xot(document_element);
+        let item: Item = node.into();
+        let document_element_item: Item = document_element_node.into();
+
+        let pattern = parse_pattern("//root");
+        assert!(!pattern.matches(&item, &xot));
+        assert!(pattern.matches(&document_element_item, &xot));
+    }
+
+    #[test]
+    fn test_matches_absolute_double_slash_nesting() {
+        let mut xot = Xot::new();
+        let root = xot.parse(r#"<root><foo/></root>"#).unwrap();
+        let node = xml::Node::Xot(root);
+        let document_element = xot.document_element(root).unwrap();
+        let document_element_node = xml::Node::Xot(document_element);
+        let item: Item = node.into();
+        let document_element_item: Item = document_element_node.into();
+        let foo_node = xot.first_child(document_element).unwrap();
+        let foo_node = xml::Node::Xot(foo_node);
+        let foo_item: Item = foo_node.into();
+
+        let pattern = parse_pattern("//root/foo");
+        assert!(!pattern.matches(&item, &xot));
+        assert!(!pattern.matches(&document_element_item, &xot));
+        assert!(pattern.matches(&foo_item, &xot));
     }
 }
