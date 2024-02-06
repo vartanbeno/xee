@@ -186,10 +186,10 @@ impl<'a> State<'a> {
     }
 
     pub fn xot(&self) -> &Xot {
-        &self.xot
+        self.xot
     }
 
     pub fn xot_mut(&mut self) -> &mut Xot {
-        &mut self.xot
+        self.xot
     }
 }
