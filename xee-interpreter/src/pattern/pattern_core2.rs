@@ -3,19 +3,13 @@ use xot::Xot;
 
 use xee_xpath_ast::pattern;
 
-use crate::{sequence::Item, xml};
+use crate::sequence::Item;
+use crate::xml;
 
 struct Pattern(pattern::Pattern);
 
 struct Patterns<V> {
     patterns: Vec<(Pattern, V)>,
-}
-
-enum Backwards {
-    ElementFound,
-    AttributeFound,
-    NotFound,
-    Parent,
 }
 
 impl Pattern {
@@ -171,20 +165,7 @@ impl Pattern {
     }
 
     fn matches_kind_test(kind_test: &ast::KindTest, node: xml::Node, xot: &Xot) -> bool {
-        match kind_test {
-            ast::KindTest::Any => true,
-            ast::KindTest::Element(element_test) => {
-                if let Some(_element_test) = element_test {
-                    todo!()
-                } else {
-                    match node {
-                        xml::Node::Xot(node) => xot.is_element(node),
-                        _ => false,
-                    }
-                }
-            }
-            _ => todo!(),
-        }
+        xml::kind_test(kind_test, xot, node)
     }
 }
 
