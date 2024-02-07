@@ -195,7 +195,11 @@ impl<'a> FunctionBuilder<'a> {
         self.program.add_function(function)
     }
 
-    pub(crate) fn add_rule(&mut self, pattern: &Pattern, function_id: function::InlineFunctionId) {
+    pub(crate) fn add_rule(
+        &mut self,
+        pattern: &Pattern<function::InlineFunctionId>,
+        function_id: function::InlineFunctionId,
+    ) {
         self.program
             .declarations
             .pattern_lookup

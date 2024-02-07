@@ -3,7 +3,7 @@ use xee_name::{Name, Namespaces, FN_NAMESPACE};
 
 use xee_interpreter::{context::StaticContext, error, interpreter};
 use xee_ir::{compile_xslt, ir, Bindings, Variables};
-use xee_xpath_ast::{ast as xpath_ast, span::Spanned};
+use xee_xpath_ast::{ast as xpath_ast, pattern::transform_pattern, span::Spanned};
 use xee_xslt_ast::{ast, parse_transform};
 
 struct IrConverter<'a> {
@@ -113,7 +113,9 @@ impl<'a> IrConverter<'a> {
                     let function_definition =
                         self.sequence_constructor_function(&template.sequence_constructor)?;
                     declarations.rules.push(ir::Rule {
-                        pattern: pattern.pattern.clone(),
+                        pattern: transform_pattern(&pattern.pattern, |expr| {
+                            self.pattern_predicate(expr)
+                        })?,
                         function_definition,
                     });
                     Ok(())
@@ -607,5 +609,44 @@ impl<'a> IrConverter<'a> {
         let mut ir_converter =
             xee_xpath::IrConverter::new(&mut self.variables, self.static_context);
         ir_converter.expr(xpath)
+    }
+
+    fn pattern_predicate(
+        &mut self,
+        expr: &xpath_ast::ExprS,
+    ) -> error::SpannedResult<ir::FunctionDefinition> {
+        let context_names = self.variables.push_context();
+        let bindings = self.xpath(expr)?;
+        self.variables.pop_context();
+        // a predicate is a function that takes a sequence as an argument and returns
+        // a boolean that is true if the sequence matches the predicate
+        let name = self.variables.new_name();
+        let var_atom = Spanned::new(ir::Atom::Variable(name.clone()), (0..0).into());
+        let filter = ir::Expr::Filter(ir::Filter {
+            context_names,
+            var_atom,
+            return_expr: Box::new(bindings.expr()),
+        });
+        let (atom, bindings) = bindings
+            .bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()))
+            .atom_bindings();
+
+        // if the sequence is not empty, it's a match
+        let condition = ir::Expr::InstanceOf(ir::InstanceOf {
+            atom,
+            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
+                item_type: xpath_ast::ItemType::Item,
+                occurrence: xpath_ast::Occurrence::NonEmpty,
+            }),
+        });
+
+        let bindings =
+            bindings.bind_expr(&mut self.variables, Spanned::new(condition, (0..0).into()));
+
+        Ok(ir::FunctionDefinition {
+            params: vec![ir::Param { name, type_: None }],
+            return_type: None,
+            body: Box::new(bindings.expr()),
+        })
     }
 }

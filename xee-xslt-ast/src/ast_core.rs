@@ -60,7 +60,7 @@ pub struct Expression {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Pattern {
-    pub pattern: xee_xpath_ast::Pattern,
+    pub pattern: xee_xpath_ast::Pattern<xpath_ast::ExprS>,
     pub span: Span,
 }
 

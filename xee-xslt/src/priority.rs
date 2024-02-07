@@ -3,12 +3,13 @@ use std::borrow::Cow;
 
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-
 use xee_xpath_ast::{ast, pattern};
 
+type Pattern = pattern::Pattern<ast::ExprS>;
+
 pub(crate) fn default_priority<'a>(
-    pattern: &'a pattern::Pattern,
-) -> Box<dyn Iterator<Item = (Cow<'a, pattern::Pattern>, Decimal)> + 'a> {
+    pattern: &'a Pattern,
+) -> Box<dyn Iterator<Item = (Cow<'a, Pattern>, Decimal)> + 'a> {
     match pattern {
         pattern::Pattern::Predicate(predicate) => {
             if !predicate.predicates.is_empty() {
@@ -28,9 +29,9 @@ pub(crate) fn default_priority<'a>(
 }
 
 fn default_priority_top_level_binary<'a>(
-    pattern: Cow<'a, pattern::Pattern>,
+    pattern: Cow<'a, Pattern>,
     binary_expr: &'a pattern::BinaryExpr<ast::ExprS>,
-) -> Box<dyn Iterator<Item = (Cow<'a, pattern::Pattern>, Decimal)> + 'a> {
+) -> Box<dyn Iterator<Item = (Cow<'a, Pattern>, Decimal)> + 'a> {
     let default = dec!(0.5);
     match binary_expr.operator {
         pattern::Operator::Union => Box::new(
@@ -52,7 +53,7 @@ fn default_priority_top_level_binary<'a>(
 
 fn default_priority_union(
     binary_expr: &pattern::BinaryExpr<ast::ExprS>,
-) -> Vec<(pattern::Pattern, Decimal)> {
+) -> Vec<(Pattern, Decimal)> {
     let left_pattern = pattern::Pattern::Expr(binary_expr.left.as_ref().clone());
     let right_pattern = pattern::Pattern::Expr(binary_expr.right.as_ref().clone());
     let left = default_priority(&left_pattern).map(|(p, d)| (p.into_owned(), d));
@@ -174,7 +175,6 @@ fn default_priority_kind_test(kind_test: &ast::KindTest) -> Decimal {
 mod tests {
     use super::*;
     use xee_name::{Namespaces, VariableNames};
-    use xee_xpath_ast::pattern::Pattern;
 
     fn parse(expr: &str) -> Pattern {
         let namespaces = Namespaces::default();

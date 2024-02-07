@@ -5,6 +5,7 @@ use xee_interpreter::function::FunctionRule;
 use xee_interpreter::interpreter::instruction::Instruction;
 use xee_interpreter::span::SourceSpan;
 use xee_interpreter::{context, error, function, stack};
+use xee_xpath_ast::pattern::transform_pattern;
 
 use crate::ir;
 
@@ -96,7 +97,12 @@ impl<'a> InterpreterCompiler<'a> {
 
     fn compile_rule(&mut self, rule: &ir::Rule) -> error::SpannedResult<()> {
         let function_id = self.compile_function_id(&rule.function_definition, (0..0).into())?;
-        self.builder.add_rule(&rule.pattern, function_id);
+
+        let pattern = transform_pattern(&rule.pattern, |function_definition| {
+            self.compile_function_id(function_definition, (0..0).into())
+        })?;
+
+        self.builder.add_rule(&pattern, function_id);
         Ok(())
     }
 

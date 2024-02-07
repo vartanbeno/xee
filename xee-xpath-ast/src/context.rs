@@ -30,7 +30,7 @@ impl<'a> XPathParserContext<'a> {
     }
 
     /// Given an XSLT pattern, parse into an AST
-    pub fn parse_pattern(&self, s: &str) -> Result<crate::Pattern, ParserError> {
+    pub fn parse_pattern(&self, s: &str) -> Result<crate::Pattern<ast::ExprS>, ParserError> {
         crate::Pattern::parse(s, &self.namespaces, &self.variable_names)
     }
 

@@ -2,16 +2,15 @@ use crate::ast;
 
 pub use crate::ast::{NameTest, NodeTest};
 
+// todo, put all pattern related stuff in a single package module
+pub use crate::pattern_transform::transform_pattern;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum BasePattern<E> {
+pub enum Pattern<E> {
     Predicate(PredicatePattern<E>),
     Expr(ExprPattern<E>),
 }
-
-pub type Pattern = BasePattern<ast::ExprS>;
-
-//  ast::ExprS
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -34,7 +33,7 @@ pub struct BinaryExpr<E> {
     pub right: Box<ExprPattern<E>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Operator {
     Union,

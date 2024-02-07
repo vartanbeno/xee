@@ -19,7 +19,7 @@ pub(crate) struct PatternParserOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    pub(crate) pattern: BoxedParser<'a, I, pattern::Pattern>,
+    pub(crate) pattern: BoxedParser<'a, I, pattern::Pattern<ast::ExprS>>,
 }
 
 pub(crate) fn parser<'a, I>() -> PatternParserOutput<'a, I>
@@ -312,7 +312,7 @@ where
     PatternParserOutput { pattern }
 }
 
-impl pattern::Pattern {
+impl pattern::Pattern<ast::ExprS> {
     pub fn parse<'a>(
         input: &'a str,
         namespaces: &'a Namespaces,

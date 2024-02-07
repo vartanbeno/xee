@@ -5,6 +5,7 @@ mod lexer;
 mod operator;
 mod parser;
 pub mod pattern;
+mod pattern_transform;
 pub mod span;
 
 pub use xee_name::{Name, NamespaceLookup, Namespaces, VariableNames, FN_NAMESPACE, XS_NAMESPACE};

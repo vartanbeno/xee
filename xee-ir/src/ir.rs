@@ -306,7 +306,7 @@ pub struct CopyDeep {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rule {
-    pub pattern: Pattern,
+    pub pattern: Pattern<FunctionDefinition>,
     pub function_definition: FunctionDefinition,
 }
 

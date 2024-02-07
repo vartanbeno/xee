@@ -6,7 +6,7 @@ use xee_xpath_ast::{ast, pattern};
 use crate::sequence::Item;
 use crate::xml;
 
-struct Pattern(pattern::Pattern);
+struct Pattern(pattern::Pattern<ast::ExprS>);
 
 struct Patterns<V> {
     patterns: Vec<(Pattern, V)>,
