@@ -160,6 +160,15 @@ trait PredicateMatcher {
                             break;
                         }
                         // TODO: handle other kinds of forward axes
+                        pattern::ForwardAxis::Self_ => {
+                            todo!()
+                        }
+                        pattern::ForwardAxis::DescendantOrSelf => {
+                            todo!()
+                        }
+                        pattern::ForwardAxis::Namespace => {
+                            todo!()
+                        }
                         _ => {
                             if !matches {
                                 return NodeMatch::NotMatch;
