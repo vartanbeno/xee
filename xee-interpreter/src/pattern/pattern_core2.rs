@@ -7,11 +7,9 @@ use crate::function::InlineFunctionId;
 use crate::sequence::{Item, Sequence};
 use crate::xml;
 
-struct Pattern(pattern::Pattern<ast::ExprS>);
-
-struct Patterns<V> {
-    patterns: Vec<(Pattern, V)>,
-}
+// struct Patterns<V> {
+//     patterns: Vec<(Pattern, V)>,
+// }
 
 enum NodeMatch {
     Match(Option<xml::Node>),
@@ -21,28 +19,22 @@ enum NodeMatch {
 trait PredicateMatcher {
     fn match_predicate(&self, inline_function_id: InlineFunctionId, sequence: &Sequence) -> bool;
     fn xot(&self) -> &Xot;
-}
 
-impl Pattern {
-    fn matches(&self, item: &Item, predicate_matcher: &impl PredicateMatcher) -> bool {
-        match &self.0 {
-            pattern::Pattern::Expr(expr_pattern) => {
-                Self::matches_expr_pattern(expr_pattern, item, predicate_matcher)
-            }
+    fn matches(&self, pattern: &pattern::Pattern<InlineFunctionId>, item: &Item) -> bool {
+        match pattern {
+            pattern::Pattern::Expr(expr_pattern) => self.matches_expr_pattern(expr_pattern, item),
             pattern::Pattern::Predicate(_predicate_pattern) => todo!(),
         }
     }
 
     fn matches_expr_pattern(
-        expr_pattern: &pattern::ExprPattern<ast::ExprS>,
+        &self,
+        expr_pattern: &pattern::ExprPattern<InlineFunctionId>,
         item: &Item,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> bool {
         if let Item::Node(node) = item {
             match expr_pattern {
-                pattern::ExprPattern::Path(path_expr) => {
-                    Self::matches_path_expr(path_expr, *node, predicate_matcher)
-                }
+                pattern::ExprPattern::Path(path_expr) => self.matches_path_expr(path_expr, *node),
                 pattern::ExprPattern::BinaryExpr(_binary_expr) => todo!(),
             }
         } else {
@@ -51,23 +43,21 @@ impl Pattern {
     }
 
     fn matches_path_expr(
-        path_expr: &pattern::PathExpr<ast::ExprS>,
+        &self,
+        path_expr: &pattern::PathExpr<InlineFunctionId>,
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> bool {
         match &path_expr.root {
             pattern::PathRoot::Rooted {
                 root: _,
                 predicates: _,
             } => todo!(),
-            pattern::PathRoot::AbsoluteSlash => {
-                Self::matches_absolute_steps(&path_expr.steps, node, predicate_matcher)
-            }
+            pattern::PathRoot::AbsoluteSlash => self.matches_absolute_steps(&path_expr.steps, node),
             pattern::PathRoot::AbsoluteDoubleSlash => {
-                Self::matches_absolute_double_slash_steps(&path_expr.steps, node, predicate_matcher)
+                self.matches_absolute_double_slash_steps(&path_expr.steps, node)
             }
             pattern::PathRoot::Relative => {
-                match Self::matches_relative_steps(&path_expr.steps, node, predicate_matcher) {
+                match self.matches_relative_steps(&path_expr.steps, node) {
                     NodeMatch::Match(_) => true,
                     NodeMatch::NotMatch => false,
                 }
@@ -76,32 +66,32 @@ impl Pattern {
     }
 
     fn matches_absolute_steps(
-        steps: &[pattern::StepExpr<ast::ExprS>],
+        &self,
+        steps: &[pattern::StepExpr<InlineFunctionId>],
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> bool {
-        let node_match = Self::matches_relative_steps(steps, node, predicate_matcher);
+        let node_match = self.matches_relative_steps(steps, node);
         if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
-            predicate_matcher.xot().is_root(node)
+            self.xot().is_root(node)
         } else {
             false
         }
     }
 
     fn matches_absolute_double_slash_steps(
-        steps: &[pattern::StepExpr<ast::ExprS>],
+        &self,
+        steps: &[pattern::StepExpr<InlineFunctionId>],
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> bool {
-        let node_match = Self::matches_relative_steps(steps, node, predicate_matcher);
+        let node_match = self.matches_relative_steps(steps, node);
         if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
             // we need to be under root
             let mut current_node = node;
             loop {
-                if predicate_matcher.xot().is_root(current_node) {
+                if self.xot().is_root(current_node) {
                     return true;
                 }
-                if let Some(parent) = predicate_matcher.xot().parent(current_node) {
+                if let Some(parent) = self.xot().parent(current_node) {
                     current_node = parent;
                 } else {
                     return false;
@@ -113,20 +103,20 @@ impl Pattern {
     }
 
     fn matches_relative_steps(
-        steps: &[pattern::StepExpr<ast::ExprS>],
+        &self,
+        steps: &[pattern::StepExpr<InlineFunctionId>],
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> NodeMatch {
         let mut node = Some(node);
         let mut axis = pattern::ForwardAxis::Child;
         for step in steps.iter().rev() {
             loop {
                 if let Some(n) = node {
-                    let (matches, new_axis) = Self::matches_step_expr(step, n, predicate_matcher);
+                    let (matches, new_axis) = self.matches_step_expr(step, n);
                     match axis {
                         pattern::ForwardAxis::Descendant => {
                             if !matches {
-                                node = n.parent(predicate_matcher.xot());
+                                node = n.parent(self.xot());
                                 continue;
                             }
                             axis = new_axis;
@@ -145,7 +135,7 @@ impl Pattern {
                 }
             }
             if let Some(n) = node {
-                node = n.parent(predicate_matcher.xot());
+                node = n.parent(self.xot());
             } else {
                 return NodeMatch::NotMatch;
             }
@@ -154,22 +144,20 @@ impl Pattern {
     }
 
     fn matches_step_expr(
-        step: &pattern::StepExpr<ast::ExprS>,
+        &self,
+        step: &pattern::StepExpr<InlineFunctionId>,
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> (bool, pattern::ForwardAxis) {
         match step {
-            pattern::StepExpr::AxisStep(axis_step) => {
-                Self::matches_axis_step(axis_step, node, predicate_matcher)
-            }
+            pattern::StepExpr::AxisStep(axis_step) => self.matches_axis_step(axis_step, node),
             pattern::StepExpr::PostfixExpr(_) => todo!(),
         }
     }
 
     fn matches_axis_step(
-        step: &pattern::AxisStep<ast::ExprS>,
+        &self,
+        step: &pattern::AxisStep<InlineFunctionId>,
         node: xml::Node,
-        predicate_matcher: &impl PredicateMatcher,
     ) -> (bool, pattern::ForwardAxis) {
         if !step.predicates.is_empty() {
             todo!();
@@ -189,7 +177,7 @@ impl Pattern {
             }
         }
         (
-            Self::matches_node_test(&step.node_test, node, predicate_matcher.xot()),
+            Self::matches_node_test(&step.node_test, node, self.xot()),
             step.forward,
         )
     }
@@ -238,6 +226,221 @@ impl Pattern {
     }
 }
 
+// impl Pattern {
+//     fn matches(&self, item: &Item, predicate_matcher: &impl PredicateMatcher) -> bool {
+//         match &self.0 {
+//             pattern::Pattern::Expr(expr_pattern) => {
+//                 Self::matches_expr_pattern(expr_pattern, item, predicate_matcher)
+//             }
+//             pattern::Pattern::Predicate(_predicate_pattern) => todo!(),
+//         }
+//     }
+
+//     fn matches_expr_pattern(
+//         expr_pattern: &pattern::ExprPattern<ast::ExprS>,
+//         item: &Item,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> bool {
+//         if let Item::Node(node) = item {
+//             match expr_pattern {
+//                 pattern::ExprPattern::Path(path_expr) => {
+//                     Self::matches_path_expr(path_expr, *node, predicate_matcher)
+//                 }
+//                 pattern::ExprPattern::BinaryExpr(_binary_expr) => todo!(),
+//             }
+//         } else {
+//             false
+//         }
+//     }
+
+//     fn matches_path_expr(
+//         path_expr: &pattern::PathExpr<ast::ExprS>,
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> bool {
+//         match &path_expr.root {
+//             pattern::PathRoot::Rooted {
+//                 root: _,
+//                 predicates: _,
+//             } => todo!(),
+//             pattern::PathRoot::AbsoluteSlash => {
+//                 Self::matches_absolute_steps(&path_expr.steps, node, predicate_matcher)
+//             }
+//             pattern::PathRoot::AbsoluteDoubleSlash => {
+//                 Self::matches_absolute_double_slash_steps(&path_expr.steps, node, predicate_matcher)
+//             }
+//             pattern::PathRoot::Relative => {
+//                 match Self::matches_relative_steps(&path_expr.steps, node, predicate_matcher) {
+//                     NodeMatch::Match(_) => true,
+//                     NodeMatch::NotMatch => false,
+//                 }
+//             }
+//         }
+//     }
+
+//     fn matches_absolute_steps(
+//         steps: &[pattern::StepExpr<ast::ExprS>],
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> bool {
+//         let node_match = Self::matches_relative_steps(steps, node, predicate_matcher);
+//         if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
+//             predicate_matcher.xot().is_root(node)
+//         } else {
+//             false
+//         }
+//     }
+
+//     fn matches_absolute_double_slash_steps(
+//         steps: &[pattern::StepExpr<ast::ExprS>],
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> bool {
+//         let node_match = Self::matches_relative_steps(steps, node, predicate_matcher);
+//         if let NodeMatch::Match(Some(xml::Node::Xot(node))) = node_match {
+//             // we need to be under root
+//             let mut current_node = node;
+//             loop {
+//                 if predicate_matcher.xot().is_root(current_node) {
+//                     return true;
+//                 }
+//                 if let Some(parent) = predicate_matcher.xot().parent(current_node) {
+//                     current_node = parent;
+//                 } else {
+//                     return false;
+//                 }
+//             }
+//         } else {
+//             false
+//         }
+//     }
+
+//     fn matches_relative_steps(
+//         steps: &[pattern::StepExpr<ast::ExprS>],
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> NodeMatch {
+//         let mut node = Some(node);
+//         let mut axis = pattern::ForwardAxis::Child;
+//         for step in steps.iter().rev() {
+//             loop {
+//                 if let Some(n) = node {
+//                     let (matches, new_axis) = Self::matches_step_expr(step, n, predicate_matcher);
+//                     match axis {
+//                         pattern::ForwardAxis::Descendant => {
+//                             if !matches {
+//                                 node = n.parent(predicate_matcher.xot());
+//                                 continue;
+//                             }
+//                             axis = new_axis;
+//                             break;
+//                         }
+//                         _ => {
+//                             if !matches {
+//                                 return NodeMatch::NotMatch;
+//                             }
+//                             axis = new_axis;
+//                             break;
+//                         }
+//                     }
+//                 } else {
+//                     return NodeMatch::NotMatch;
+//                 }
+//             }
+//             if let Some(n) = node {
+//                 node = n.parent(predicate_matcher.xot());
+//             } else {
+//                 return NodeMatch::NotMatch;
+//             }
+//         }
+//         NodeMatch::Match(node)
+//     }
+
+//     fn matches_step_expr(
+//         step: &pattern::StepExpr<ast::ExprS>,
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> (bool, pattern::ForwardAxis) {
+//         match step {
+//             pattern::StepExpr::AxisStep(axis_step) => {
+//                 Self::matches_axis_step(axis_step, node, predicate_matcher)
+//             }
+//             pattern::StepExpr::PostfixExpr(_) => todo!(),
+//         }
+//     }
+
+//     fn matches_axis_step(
+//         step: &pattern::AxisStep<ast::ExprS>,
+//         node: xml::Node,
+//         predicate_matcher: &impl PredicateMatcher,
+//     ) -> (bool, pattern::ForwardAxis) {
+//         if !step.predicates.is_empty() {
+//             todo!();
+//         }
+//         // if the forward axis is attribute based, we won't match with an element,
+//         // and vice versa
+//         match node {
+//             xml::Node::Attribute(_, _) => {
+//                 if step.forward != pattern::ForwardAxis::Attribute {
+//                     return (false, step.forward);
+//                 }
+//             }
+//             _ => {
+//                 if step.forward == pattern::ForwardAxis::Attribute {
+//                     return (false, step.forward);
+//                 }
+//             }
+//         }
+//         (
+//             Self::matches_node_test(&step.node_test, node, predicate_matcher.xot()),
+//             step.forward,
+//         )
+//     }
+
+//     fn matches_node_test(node_test: &pattern::NodeTest, node: xml::Node, xot: &Xot) -> bool {
+//         match node_test {
+//             pattern::NodeTest::NameTest(name_test) => Self::matches_name_test(name_test, node, xot),
+//             pattern::NodeTest::KindTest(kind_test) => Self::matches_kind_test(kind_test, node, xot),
+//         }
+//     }
+
+//     fn matches_name_test(name_test: &pattern::NameTest, node: xml::Node, xot: &Xot) -> bool {
+//         match name_test {
+//             pattern::NameTest::Name(expected_name) => {
+//                 if let Some(name) = node.node_name(xot) {
+//                     name == expected_name.value
+//                 } else {
+//                     false
+//                 }
+//             }
+//             pattern::NameTest::Star => true,
+//             pattern::NameTest::LocalName(expected_local_name) => {
+//                 if let Some(name) = node.node_name(xot) {
+//                     name.local_name() == expected_local_name
+//                 } else {
+//                     false
+//                 }
+//             }
+//             pattern::NameTest::Namespace(ns) => {
+//                 if let Some(name) = node.node_name(xot) {
+//                     let namespace = name.namespace();
+//                     if let Some(namespace) = namespace {
+//                         namespace == ns
+//                     } else {
+//                         ns.is_empty()
+//                     }
+//                 } else {
+//                     false
+//                 }
+//             }
+//         }
+//     }
+
+//     fn matches_kind_test(kind_test: &KindTest, node: xml::Node, xot: &Xot) -> bool {
+//         xml::kind_test(kind_test, xot, node)
+//     }
+// }
+
 // impl<V> Patterns<V> {
 //     pub(crate) fn lookup(&self, item: &Item, xot: &Xot) -> Option<&V> {
 //         for (pattern, value) in &self.patterns {
@@ -253,17 +456,28 @@ impl Pattern {
 mod tests {
     use std::prelude;
 
+    use xee_xpath_ast::pattern::transform_pattern;
+
     use super::*;
 
-    fn parse_pattern(pattern: &str) -> Pattern {
+    fn parse_pattern(pattern: &str) -> pattern::Pattern<InlineFunctionId> {
         let namespaces = xee_name::Namespaces::default();
         let variable_names = xee_name::VariableNames::default();
-        Pattern(pattern::Pattern::parse(pattern, &namespaces, &variable_names).unwrap())
+        parse_pattern_namespaces(pattern, &namespaces)
     }
 
-    fn parse_pattern_namespaces(pattern: &str, namespaces: &xee_name::Namespaces) -> Pattern {
+    fn parse_pattern_namespaces(
+        pattern: &str,
+        namespaces: &xee_name::Namespaces,
+    ) -> pattern::Pattern<InlineFunctionId> {
         let variable_names = xee_name::VariableNames::default();
-        Pattern(pattern::Pattern::parse(pattern, namespaces, &variable_names).unwrap())
+        let pattern = pattern::Pattern::parse(pattern, namespaces, &variable_names).unwrap();
+
+        transform_pattern(&pattern, |expr| dummy_inline_function_id()).unwrap()
+    }
+
+    fn dummy_inline_function_id() -> Result<InlineFunctionId, ()> {
+        Ok(InlineFunctionId::new(0))
     }
 
     struct BasicPredicateMatcher<'a> {
@@ -302,8 +516,8 @@ mod tests {
 
         let pattern = parse_pattern("foo");
 
-        let predicate_matcher = BasicPredicateMatcher::new(&xot);
-        assert!(pattern.matches(&item, &predicate_matcher));
+        let pm = BasicPredicateMatcher::new(&xot);
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -317,8 +531,8 @@ mod tests {
 
         let pattern = parse_pattern("*");
 
-        let predicate_matcher = BasicPredicateMatcher::new(&xot);
-        assert!(pattern.matches(&item, &predicate_matcher));
+        let pm = BasicPredicateMatcher::new(&xot);
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -332,11 +546,11 @@ mod tests {
         let node = xml::Node::Xot(node);
         let item: Item = node.into();
 
-        let predicate_matcher = BasicPredicateMatcher::new(&xot);
+        let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("*:foo");
-        assert!(pattern.matches(&item, &predicate_matcher));
+        assert!(pm.matches(&pattern, &item));
         let pattern = parse_pattern("foo");
-        assert!(!pattern.matches(&item, &predicate_matcher));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -360,11 +574,11 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern_namespaces("d:*", &namespaces);
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
         let pattern = parse_pattern_namespaces("d:foo", &namespaces);
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
         let pattern = parse_pattern_namespaces("o:*", &namespaces);
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -378,7 +592,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("notfound");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -393,7 +607,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("bar/foo");
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -408,7 +622,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("notfound/foo");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -423,7 +637,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("bar/descendant::foo");
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -438,7 +652,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("notfound/descendant::foo");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -456,7 +670,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("qux/descendant::foo");
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -474,7 +688,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("notfound/descendant::foo");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -489,7 +703,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("@bar");
-        assert!(pattern.matches(&item, &pm));
+        assert!(pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -504,7 +718,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("@qux");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -519,7 +733,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("bar");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -535,7 +749,7 @@ mod tests {
         let pm = BasicPredicateMatcher::new(&xot);
 
         let pattern = parse_pattern("root//bar");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -549,7 +763,7 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("@bar");
-        assert!(!pattern.matches(&item, &pm));
+        assert!(!pm.matches(&pattern, &item));
     }
 
     #[test]
@@ -569,11 +783,11 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("node()");
-        assert!(pattern.matches(&element_item, &pm));
-        assert!(!pattern.matches(&attribute_item, &pm));
+        assert!(pm.matches(&pattern, &element_item));
+        assert!(!pm.matches(&pattern, &attribute_item));
         let pattern = parse_pattern("attribute::node()");
-        assert!(!pattern.matches(&element_item, &pm));
-        assert!(pattern.matches(&attribute_item, &pm));
+        assert!(!pm.matches(&pattern, &element_item));
+        assert!(pm.matches(&pattern, &attribute_item));
     }
 
     #[test]
@@ -595,9 +809,9 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("element()");
-        assert!(pattern.matches(&element_item, &pm));
-        assert!(!pattern.matches(&text_item, &pm));
-        assert!(!pattern.matches(&attribute_item, &pm));
+        assert!(pm.matches(&pattern, &element_item));
+        assert!(!pm.matches(&pattern, &text_item));
+        assert!(!pm.matches(&pattern, &attribute_item));
     }
 
     #[test]
@@ -612,8 +826,8 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("/");
-        assert!(pattern.matches(&item, &pm));
-        assert!(!pattern.matches(&document_element_item, &pm));
+        assert!(pm.matches(&pattern, &item));
+        assert!(!pm.matches(&pattern, &document_element_item));
     }
 
     #[test]
@@ -628,8 +842,8 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("/root");
-        assert!(!pattern.matches(&item, &pm));
-        assert!(pattern.matches(&document_element_item, &pm));
+        assert!(!pm.matches(&pattern, &item));
+        assert!(pm.matches(&pattern, &document_element_item));
     }
 
     #[test]
@@ -644,8 +858,8 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("//root");
-        assert!(!pattern.matches(&item, &pm));
-        assert!(pattern.matches(&document_element_item, &pm));
+        assert!(!pm.matches(&pattern, &item));
+        assert!(pm.matches(&pattern, &document_element_item));
     }
 
     #[test]
@@ -663,8 +877,8 @@ mod tests {
 
         let pm = BasicPredicateMatcher::new(&xot);
         let pattern = parse_pattern("//root/foo");
-        assert!(!pattern.matches(&item, &pm));
-        assert!(!pattern.matches(&document_element_item, &pm));
-        assert!(pattern.matches(&foo_item, &pm));
+        assert!(!pm.matches(&pattern, &item));
+        assert!(!pm.matches(&pattern, &document_element_item));
+        assert!(pm.matches(&pattern, &foo_item));
     }
 }
