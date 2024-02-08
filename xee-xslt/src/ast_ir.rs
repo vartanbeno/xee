@@ -622,29 +622,49 @@ impl<'a> IrConverter<'a> {
         // a boolean that is true if the sequence matches the predicate
         let name = self.variables.new_name();
         let var_atom = Spanned::new(ir::Atom::Variable(name.clone()), (0..0).into());
-        let filter = ir::Expr::Filter(ir::Filter {
-            context_names,
+        let filter = ir::Expr::PatternPredicate(ir::PatternPredicate {
+            context_names: context_names.clone(),
             var_atom,
-            return_expr: Box::new(bindings.expr()),
+            expr: Box::new(bindings.expr()),
         });
-        let (atom, bindings) = bindings
-            .bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()))
-            .atom_bindings();
+        let bindings = bindings.bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()));
+        // let (atom, bindings) = bindings
+        //     .bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()))
+        //     .atom_bindings();
 
-        // if the sequence is not empty, it's a match
-        let condition = ir::Expr::InstanceOf(ir::InstanceOf {
-            atom,
-            sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
-                item_type: xpath_ast::ItemType::Item,
-                occurrence: xpath_ast::Occurrence::NonEmpty,
-            }),
-        });
+        // // if the sequence is not empty, it's a match
+        // let condition = ir::Expr::InstanceOf(ir::InstanceOf {
+        //     atom,
+        //     sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
+        //         item_type: xpath_ast::ItemType::Item,
+        //         occurrence: xpath_ast::Occurrence::NonEmpty,
+        //     }),
+        // });
 
-        let bindings =
-            bindings.bind_expr(&mut self.variables, Spanned::new(condition, (0..0).into()));
+        // let bindings =
+        //     bindings.bind_expr(&mut self.variables, Spanned::new(condition, (0..0).into()));
+
+        // let context_names = self.variables.push_context();
+        // let bindings = self.sequence_constructor(sequence_constructor)?;
+        // self.variables.pop_context();
+
+        let params = vec![
+            ir::Param {
+                name: context_names.item,
+                type_: None,
+            },
+            ir::Param {
+                name: context_names.position,
+                type_: None,
+            },
+            ir::Param {
+                name: context_names.last,
+                type_: None,
+            },
+        ];
 
         Ok(ir::FunctionDefinition {
-            params: vec![ir::Param { name, type_: None }],
+            params,
             return_type: None,
             body: Box::new(bindings.expr()),
         })

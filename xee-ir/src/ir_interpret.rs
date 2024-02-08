@@ -55,6 +55,9 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::If(if_) => self.compile_if(if_, span),
             ir::Expr::Map(map) => self.compile_map(map, span),
             ir::Expr::Filter(filter) => self.compile_filter(filter, span),
+            ir::Expr::PatternPredicate(pattern_predicate) => {
+                self.compile_pattern_predicate(pattern_predicate, span)
+            }
             ir::Expr::Quantified(quantified) => self.compile_quantified(quantified, span),
             ir::Expr::Cast(cast) => self.compile_cast(cast, span),
             ir::Expr::Castable(castable) => self.compile_castable(castable, span),
@@ -922,6 +925,27 @@ impl<'a> InterpreterCompiler<'a> {
     ) -> error::SpannedResult<()> {
         self.compile_atom(&copy_deep.select)?;
         self.builder.emit(Instruction::CopyDeep, span);
+        Ok(())
+    }
+
+    fn compile_pattern_predicate(
+        &mut self,
+        predicate: &ir::PatternPredicate,
+        span: SourceSpan,
+    ) -> error::SpannedResult<()> {
+        // execute the expression, placing result on stack
+        self.compile_expr(&predicate.expr)?;
+        // duplicate result so we can do the IsNumeric check
+        self.builder.emit(Instruction::Dup, span);
+        // the resulting value can be a numeric value
+        self.builder.emit(Instruction::IsNumeric, span);
+        // if it's not a numeric expression we're going to interpret it as boolean,
+        // a normal filter
+        let is_not_numeric = self.builder.emit_jump_forward(JumpCondition::False, span);
+        // It was numeric, we have on the stack a position to compare with
+        self.compile_variable(&predicate.context_names.position, span)?;
+        self.builder.emit(Instruction::Eq, span);
+        self.builder.patch_jump(is_not_numeric);
         Ok(())
     }
 }

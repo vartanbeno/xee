@@ -15,6 +15,7 @@ use crate::context::DynamicContext;
 use crate::error;
 use crate::function;
 use crate::occurrence::Occurrence;
+use crate::pattern::PredicateMatcher;
 use crate::sequence;
 use crate::span::SourceSpan;
 use crate::stack;
@@ -594,14 +595,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();
-                    // TODO: we throw away span information in this map.
-                    // either apply_templates_sequence shouldn't result
-                    // in a spanned error, or we somehow want to propagate
-                    // spanned errors on the interpreter level
-                    let value = self
-                        .runnable
-                        .apply_templates_sequence(self, value.into())
-                        .map_err(|e| e.error)?;
+                    let value = self.apply_templates_sequence(value.into())?;
                     self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
@@ -1135,6 +1129,63 @@ impl<'a> Interpreter<'a> {
                 xot.clone(node)
             }
         }
+    }
+
+    fn apply_templates_sequence(
+        &mut self,
+        sequence: sequence::Sequence,
+    ) -> error::Result<stack::Value> {
+        let mut r: Vec<sequence::Item> = Vec::new();
+        let size: IBig = sequence.len().into();
+
+        for (i, item) in sequence.items().enumerate() {
+            let item = item.unwrap(); // TODO
+            let sequence = self.apply_templates_item(item, i, size.clone())?;
+            if let Some(sequence) = sequence {
+                for item in sequence.items() {
+                    r.push(item.unwrap());
+                }
+            }
+        }
+        Ok(r.into())
+    }
+
+    fn apply_templates_item(
+        &mut self,
+        item: sequence::Item,
+        position: usize,
+        size: IBig,
+    ) -> error::Result<Option<sequence::Sequence>> {
+        let function_id = self.lookup_pattern(&item);
+
+        if let Some(function_id) = function_id {
+            let position: IBig = (position + 1).into();
+            let arguments: Vec<sequence::Sequence> = vec![
+                item.into(),
+                atomic::Atomic::from(position).into(),
+                atomic::Atomic::from(size.clone()).into(),
+            ];
+            let function = Rc::new(function::Function::Inline {
+                inline_function_id: function_id,
+                closure_vars: Vec::new(),
+            });
+            self.call_function_with_arguments(function, &arguments)
+                .map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub(crate) fn lookup_pattern(
+        &mut self,
+        item: &sequence::Item,
+    ) -> Option<function::InlineFunctionId> {
+        self.runnable
+            .program()
+            .declarations
+            .pattern_lookup
+            .lookup(|pattern| self.matches(pattern, item))
+            .copied()
     }
 
     // The interpreter can return an error for any byte code, in any level of

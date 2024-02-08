@@ -32,6 +32,7 @@ pub enum Expr {
     Deduplicate(Box<ExprS>),
     Map(Map),
     Filter(Filter),
+    PatternPredicate(PatternPredicate),
     Quantified(Quantified),
     Cast(Cast),
     Castable(Castable),
@@ -166,6 +167,13 @@ pub struct Filter {
     pub context_names: ContextNames,
     pub var_atom: AtomS,
     pub return_expr: Box<ExprS>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PatternPredicate {
+    pub context_names: ContextNames,
+    pub var_atom: AtomS,
+    pub expr: Box<ExprS>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

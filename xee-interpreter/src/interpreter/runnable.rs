@@ -1,10 +1,8 @@
 use std::rc::Rc;
 
-use ibig::IBig;
 use xee_name::Name;
 use xot::Xot;
 
-use crate::atomic::Atomic;
 use crate::context::DynamicContext;
 use crate::error::SpannedError;
 use crate::function;
@@ -118,42 +116,6 @@ impl<'a> Runnable<'a> {
             error,
             span: self.program.span().into(),
         })
-    }
-
-    pub fn apply_templates_sequence(
-        &self,
-        interpreter: &mut Interpreter,
-        sequence: sequence::Sequence,
-    ) -> error::SpannedResult<stack::Value> {
-        let mut r: Vec<sequence::Item> = Vec::new();
-        let size: IBig = sequence.len().into();
-        for (i, item) in sequence.items().enumerate() {
-            let item = item.unwrap(); // TODO
-            let function_id = self
-                .program
-                .declarations
-                .pattern_lookup
-                .lookup(&item, interpreter.state.xot);
-            if let Some(function_id) = function_id {
-                let position: IBig = (i + 1).into();
-                let arguments: Vec<sequence::Sequence> = vec![
-                    item.into(),
-                    Atomic::from(position).into(),
-                    Atomic::from(size.clone()).into(),
-                ];
-                let function = Rc::new(function::Function::Inline {
-                    inline_function_id: *function_id,
-                    closure_vars: Vec::new(),
-                });
-                let value = interpreter
-                    .call_function_with_arguments(function, &arguments)
-                    .map_err(|e| interpreter.err(e))?;
-                for item in value.items() {
-                    r.push(item.unwrap());
-                }
-            }
-        }
-        Ok(r.into())
     }
 
     pub(crate) fn program(&self) -> &'a Program {
