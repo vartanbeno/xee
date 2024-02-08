@@ -304,7 +304,6 @@ impl<'a> IrConverter<'a> {
         let (select_atom, bindings) = self
             .expression(apply_templates.select.as_ref().unwrap())?
             .atom_bindings();
-        // let select_atom = bindings.atom();
         Ok(bindings.bind_expr_no_span(
             &mut self.variables,
             ir::Expr::ApplyTemplates(ir::ApplyTemplates {
