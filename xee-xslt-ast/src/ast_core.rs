@@ -1,6 +1,6 @@
 use ahash::HashMap;
 use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
-// use ahash::HashMap;
+pub use xee_name::Name;
 use xee_xpath_ast::ast as xpath_ast;
 
 pub trait SelectOrSequenceConstructor {
@@ -1725,12 +1725,12 @@ impl From<ElementNode> for SequenceConstructorItem {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Name {
-    pub namespace: String,
-    pub local: String,
-}
+// #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+// pub struct Name {
+//     pub namespace: String,
+//     pub local: String,
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

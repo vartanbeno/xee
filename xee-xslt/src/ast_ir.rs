@@ -417,11 +417,13 @@ impl<'a> IrConverter<'a> {
 
     fn element_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
         let local_name = Spanned::new(
-            ir::Atom::Const(ir::Const::String(name.local.clone())),
+            ir::Atom::Const(ir::Const::String(name.local_name().to_string())),
             (0..0).into(),
         );
         let namespace = Spanned::new(
-            ir::Atom::Const(ir::Const::String(name.namespace.clone())),
+            ir::Atom::Const(ir::Const::String(
+                name.namespace().unwrap_or("").to_string(),
+            )),
             (0..0).into(),
         );
         let binding = self

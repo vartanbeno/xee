@@ -3610,6 +3610,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "thiserror",
+ "xee-name",
  "xee-xpath",
  "xee-xpath-ast",
  "xee-xslt-ast",

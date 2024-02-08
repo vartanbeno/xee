@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use ahash::HashMap;
-use xot::{NameId, Node, Xot};
+use xot::Node;
 
 use crate::ast_core::{self as ast};
 use crate::attributes::Attributes;
@@ -122,20 +122,13 @@ impl InstructionParser for ast::Declaration {
 
 impl InstructionParser for ast::ElementNode {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
+        // let element_attributes = attributes.element.attributes();
         Ok(ast::ElementNode {
-            name: to_name(&content.state.xot, attributes.element.name()),
+            name: ast::Name::from_xot(attributes.element.name(), &content.state.xot),
             attributes: HashMap::default(),
             span: content.span()?,
             sequence_constructor: content.sequence_constructor()?,
         })
-    }
-}
-
-fn to_name(xot: &Xot, name: NameId) -> ast::Name {
-    let (local, namespace) = xot.name_ns_str(name);
-    ast::Name {
-        namespace: namespace.to_string(),
-        local: local.to_string(),
     }
 }
 
@@ -1689,6 +1682,7 @@ mod tests {
 
     use super::*;
     use insta::assert_ron_snapshot;
+    use xot::Xot;
 
     fn parse_sequence_constructor_item(s: &str) -> Result<ast::SequenceConstructorItem> {
         let mut xot = Xot::new();

@@ -4,8 +4,9 @@ expression: "parse_sequence_constructor_item(r#\"<foo/>\"#)"
 ---
 Ok(Content(Element(ElementNode(
   name: Name(
-    namespace: "",
-    local: "foo",
+    name: "foo",
+    prefix: None,
+    namespace: None,
   ),
   attributes: {},
   sequence_constructor: [],

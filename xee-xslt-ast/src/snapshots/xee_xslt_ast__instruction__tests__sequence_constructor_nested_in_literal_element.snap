@@ -26,8 +26,9 @@ Ok(Instruction(If(If(
   sequence_constructor: [
     Content(Element(ElementNode(
       name: Name(
-        namespace: "",
-        local: "p",
+        name: "p",
+        prefix: None,
+        namespace: None,
       ),
       attributes: {},
       sequence_constructor: [

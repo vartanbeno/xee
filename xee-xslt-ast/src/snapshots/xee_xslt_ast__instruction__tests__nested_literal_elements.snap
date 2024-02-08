@@ -26,15 +26,17 @@ Ok(Instruction(If(If(
   sequence_constructor: [
     Content(Element(ElementNode(
       name: Name(
-        namespace: "",
-        local: "p",
+        name: "p",
+        prefix: None,
+        namespace: None,
       ),
       attributes: {},
       sequence_constructor: [
         Content(Element(ElementNode(
           name: Name(
-            namespace: "",
-            local: "another",
+            name: "another",
+            prefix: None,
+            namespace: None,
           ),
           attributes: {},
           sequence_constructor: [],
