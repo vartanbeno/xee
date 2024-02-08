@@ -296,7 +296,7 @@ Todo: all of the attibutes
 
 ## xsl:template
 
-Todo:
+nOt yet:
 
 - match: variable support, rooted paths, certain axes
 
