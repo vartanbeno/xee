@@ -292,11 +292,11 @@ TODO
 
 ## xsl:stylesheet
 
-Todo: all of the attibutes
+Not yet: all of the attibutes
 
 ## xsl:template
 
-nOt yet:
+Not yet:
 
 - match: variable support, rooted paths, certain axes
 
@@ -334,7 +334,7 @@ Done except:
 
 ## xsl:variable
 
-Todo:
+Not yet:
 
 - compile-time variables used as global variables
 
