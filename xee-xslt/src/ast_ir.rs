@@ -208,29 +208,6 @@ impl<'a> IrConverter<'a> {
         item: &ast::SequenceConstructorItem,
     ) -> error::SpannedResult<Bindings> {
         match item {
-            ast::SequenceConstructorItem::ElementNode(element_node) => {
-                let mut bindings = self.element_name(&element_node.name)?;
-                let name_atom = bindings.atom();
-                let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
-                let element_binding = self.variables.new_binding_no_span(expr);
-                let mut bindings = bindings.bind(element_binding);
-                let bindings = if !element_node.sequence_constructor.is_empty() {
-                    let element_atom = bindings.atom();
-                    let mut content_bindings =
-                        self.sequence_constructor(&element_node.sequence_constructor)?;
-                    let content_atom = content_bindings.atom();
-                    let bindings = bindings.concat(content_bindings);
-                    let append = ir::Expr::XmlAppend(ir::XmlAppend {
-                        parent: element_atom,
-                        child: content_atom,
-                    });
-                    let append_binding = self.variables.new_binding_no_span(append);
-                    bindings.bind(append_binding)
-                } else {
-                    bindings
-                };
-                Ok(bindings)
-            }
             ast::SequenceConstructorItem::Instruction(instruction) => {
                 self.sequence_constructor_instruction(instruction)
             }
@@ -265,6 +242,29 @@ impl<'a> IrConverter<'a> {
         content: &ast::Content,
     ) -> error::SpannedResult<Bindings> {
         match content {
+            ast::Content::ElementNode(element_node) => {
+                let mut bindings = self.element_name(&element_node.name)?;
+                let name_atom = bindings.atom();
+                let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
+                let element_binding = self.variables.new_binding_no_span(expr);
+                let mut bindings = bindings.bind(element_binding);
+                let bindings = if !element_node.sequence_constructor.is_empty() {
+                    let element_atom = bindings.atom();
+                    let mut content_bindings =
+                        self.sequence_constructor(&element_node.sequence_constructor)?;
+                    let content_atom = content_bindings.atom();
+                    let bindings = bindings.concat(content_bindings);
+                    let append = ir::Expr::XmlAppend(ir::XmlAppend {
+                        parent: element_atom,
+                        child: content_atom,
+                    });
+                    let append_binding = self.variables.new_binding_no_span(append);
+                    bindings.bind(append_binding)
+                } else {
+                    bindings
+                };
+                Ok(bindings)
+            }
             ast::Content::Text(text) => {
                 let text_atom = Spanned::new(
                     ir::Atom::Const(ir::Const::String(text.clone())),

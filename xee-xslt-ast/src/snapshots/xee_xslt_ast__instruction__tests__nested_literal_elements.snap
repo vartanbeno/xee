@@ -24,14 +24,14 @@ Ok(Instruction(If(If(
     ),
   ),
   sequence_constructor: [
-    ElementNode(ElementNode(
+    Content(ElementNode(ElementNode(
       name: Name(
         namespace: "",
         local: "p",
       ),
       attributes: {},
       sequence_constructor: [
-        ElementNode(ElementNode(
+        Content(ElementNode(ElementNode(
           name: Name(
             namespace: "",
             local: "another",
@@ -42,13 +42,13 @@ Ok(Instruction(If(If(
             start: 75,
             end: 82,
           ),
-        )),
+        ))),
       ],
       span: Span(
         start: 72,
         end: 73,
       ),
-    )),
+    ))),
   ],
   span: Span(
     start: 1,

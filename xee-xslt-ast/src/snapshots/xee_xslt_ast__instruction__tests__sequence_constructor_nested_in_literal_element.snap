@@ -24,7 +24,7 @@ Ok(Instruction(If(If(
     ),
   ),
   sequence_constructor: [
-    ElementNode(ElementNode(
+    Content(ElementNode(ElementNode(
       name: Name(
         namespace: "",
         local: "p",
@@ -65,7 +65,7 @@ Ok(Instruction(If(If(
         start: 72,
         end: 73,
       ),
-    )),
+    ))),
   ],
   span: Span(
     start: 1,

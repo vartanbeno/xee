@@ -322,10 +322,12 @@ pub(crate) mod visit {
         use ast::SequenceConstructorItem::*;
 
         match sequence_constructor_item {
+            Content(ast::Content::ElementNode(element_node)) => v.visit_element_node(element_node),
+            // TODO: document content
             Content(_) => {
                 // no children
             }
-            ElementNode(element_node) => v.visit_element_node(element_node),
+            // ElementNode(element_node) => v.visit_element_node(element_node),
             Instruction(instruction) => v.visit_instruction(instruction),
         }
     }

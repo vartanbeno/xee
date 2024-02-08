@@ -2,7 +2,7 @@
 source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<foo/>\"#)"
 ---
-Ok(ElementNode(ElementNode(
+Ok(Content(ElementNode(ElementNode(
   name: Name(
     namespace: "",
     local: "foo",
@@ -13,4 +13,4 @@ Ok(ElementNode(ElementNode(
     start: 1,
     end: 4,
   ),
-)))
+))))

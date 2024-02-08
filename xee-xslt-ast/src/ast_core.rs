@@ -1643,13 +1643,13 @@ pub struct WithParam {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum SequenceConstructorItem {
     Content(Content),
-    ElementNode(Box<ElementNode>),
     Instruction(SequenceConstructorInstruction),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Content {
+    ElementNode(Box<ElementNode>),
     Text(String),
     Value(Box<xpath_ast::XPath>),
 }
@@ -1721,7 +1721,7 @@ pub struct ElementNode {
 
 impl From<ElementNode> for SequenceConstructorItem {
     fn from(e: ElementNode) -> Self {
-        SequenceConstructorItem::ElementNode(Box::new(e))
+        SequenceConstructorItem::Content(Content::ElementNode(Box::new(e)))
     }
 }
 
