@@ -628,25 +628,6 @@ impl<'a> IrConverter<'a> {
             expr: Box::new(bindings.expr()),
         });
         let bindings = bindings.bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()));
-        // let (atom, bindings) = bindings
-        //     .bind_expr(&mut self.variables, Spanned::new(filter, (0..0).into()))
-        //     .atom_bindings();
-
-        // // if the sequence is not empty, it's a match
-        // let condition = ir::Expr::InstanceOf(ir::InstanceOf {
-        //     atom,
-        //     sequence_type: xpath_ast::SequenceType::Item(xpath_ast::Item {
-        //         item_type: xpath_ast::ItemType::Item,
-        //         occurrence: xpath_ast::Occurrence::NonEmpty,
-        //     }),
-        // });
-
-        // let bindings =
-        //     bindings.bind_expr(&mut self.variables, Spanned::new(condition, (0..0).into()));
-
-        // let context_names = self.variables.push_context();
-        // let bindings = self.sequence_constructor(sequence_constructor)?;
-        // self.variables.pop_context();
 
         let params = vec![
             ir::Param {

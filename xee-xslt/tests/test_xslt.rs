@@ -664,3 +664,43 @@ fn test_source_nodes_complex_content() {
         "<o><hello>Hello</hello><hello>Hello</hello></o>"
     );
 }
+
+#[test]
+fn test_transform_predicate() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        "<doc><foo>1</foo><foo>2</foo></doc>",
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:apply-templates select="doc/*" /></o>
+  </xsl:template>
+  <xsl:template match="foo[2]">
+    <found><xsl:value-of select="string()" /></found>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o><found>2</found></o>");
+}
+
+#[test]
+fn test_transform_predicate_with_attribute() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc><foo>1</foo><foo bar="BAR">2</foo></doc>"#,
+        r#"
+<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:apply-templates select="doc/*" /></o>
+  </xsl:template>
+  <xsl:template match="foo[@bar]">
+    <found><xsl:value-of select="string()" /></found>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+    assert_eq!(xml(&xot, output), "<o><found>2</found></o>");
+}
