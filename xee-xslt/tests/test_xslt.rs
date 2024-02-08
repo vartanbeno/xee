@@ -704,3 +704,21 @@ fn test_transform_predicate_with_attribute() {
     .unwrap();
     assert_eq!(xml(&xot, output), "<o><found>2</found></o>");
 }
+
+// #[test]
+// fn test_text_value_template() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         r#"<doc>VALUE</doc>"#,
+//         r#"
+//   <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//     <xsl:template match="/">
+//       <o>Value: {string()}></o>
+//     </xsl:template>
+//   </xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(xml(&xot, output), "<o>Value: VALUE</o>");
+// }
