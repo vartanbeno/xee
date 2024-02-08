@@ -122,10 +122,20 @@ impl InstructionParser for ast::Declaration {
 
 impl InstructionParser for ast::ElementNode {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
-        // let element_attributes = attributes.element.attributes();
+        let mut element_attributes = HashMap::default();
+        for (k, _) in attributes.element.attributes() {
+            let name = ast::Name::from_xot(*k, &content.state.xot);
+            // if any name is in the xsl namespace, we skip it
+            let ns = content.state.xot.namespace_for_name(*k);
+            if ns == content.state.names.xsl_ns {
+                continue;
+            }
+            let value = attributes.required(*k, attributes.value_template(attributes.string()))?;
+            element_attributes.insert(name, value);
+        }
         Ok(ast::ElementNode {
             name: ast::Name::from_xot(attributes.element.name(), &content.state.xot),
-            attributes: HashMap::default(),
+            attributes: element_attributes,
             span: content.span()?,
             sequence_constructor: content.sequence_constructor()?,
         })
@@ -1962,6 +1972,13 @@ mod tests {
     fn test_sequence_constructor_nested_in_literal_element() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<xsl:if xmlns:xsl="http://www.w3.org/1999/XSL/Transform" test="true()"><p><xsl:if test="true()">foo</xsl:if></p></xsl:if>"#
+        ));
+    }
+
+    #[test]
+    fn test_attributes_on_literal_element() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<p xmlns:xsl="http://www.w3.org/1999/XSL/Transform" foo="FOO"/>"#
         ));
     }
 }

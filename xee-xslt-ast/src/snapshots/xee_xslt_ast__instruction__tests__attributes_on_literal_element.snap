@@ -1,0 +1,34 @@
+---
+source: xee-xslt-ast/src/instruction.rs
+expression: "parse_sequence_constructor_item(r#\"<p xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" foo=\"FOO\"/>\"#)"
+---
+Ok(Content(Element(ElementNode(
+  name: Name(
+    name: "p",
+    prefix: None,
+    namespace: None,
+  ),
+  attributes: {
+    Name(
+      name: "foo",
+      prefix: None,
+      namespace: None,
+    ): ValueTemplate(
+      template: [
+        String(
+          text: "FOO",
+          span: Span(
+            start: 57,
+            end: 60,
+          ),
+        ),
+      ],
+      phantom: PhantomData,
+    ),
+  },
+  sequence_constructor: [],
+  span: Span(
+    start: 1,
+    end: 2,
+  ),
+))))
