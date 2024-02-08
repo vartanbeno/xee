@@ -319,7 +319,7 @@ impl<'a> IrConverter<'a> {
         if let Some(select) = instruction.select() {
             self.expression(select)
         } else {
-            self.sequence_constructor(&instruction.sequence_constructor())
+            self.sequence_constructor(instruction.sequence_constructor())
         }
     }
 
