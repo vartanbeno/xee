@@ -125,7 +125,9 @@ fn text_value_template(
         let content = match token {
             ValueTemplateItem::String { text, span: _ } => ast::Content::Text(text.to_string()),
             ValueTemplateItem::Curly { c } => ast::Content::Text(c.to_string()),
-            ValueTemplateItem::Value { xpath, span: _ } => ast::Content::Value(Box::new(xpath)),
+            ValueTemplateItem::Value { xpath, span } => {
+                ast::Content::Value(Box::new(ast::Expression { xpath, span }))
+            }
         };
         let item = ast::SequenceConstructorItem::Content(content);
         items.push(item);

@@ -1651,7 +1651,7 @@ pub enum SequenceConstructorItem {
 pub enum Content {
     Element(Box<ElementNode>),
     Text(String),
-    Value(Box<xpath_ast::XPath>),
+    Value(Box<Expression>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]

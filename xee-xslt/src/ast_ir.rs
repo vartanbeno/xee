@@ -275,10 +275,25 @@ impl<'a> IrConverter<'a> {
                     ir::Expr::XmlText(ir::XmlText { value: text_atom }),
                 ))
             }
-            ast::Content::Value(_expression) => {
-                todo!("Cannot yet generate xpath as content");
+            ast::Content::Value(expression) => {
+                let (atom, bindings) = self.expression(expression)?.atom_bindings();
+                let expr = self.simple_content_expr(atom, self.space_separator_atom());
+                let (text_atom, bindings) = bindings
+                    .bind_expr_no_span(&mut self.variables, expr)
+                    .atom_bindings();
+                Ok(bindings.bind_expr_no_span(
+                    &mut self.variables,
+                    ir::Expr::XmlText(ir::XmlText { value: text_atom }),
+                ))
             }
         }
+    }
+
+    fn space_separator_atom(&self) -> ir::AtomS {
+        Spanned::new(
+            ir::Atom::Const(ir::Const::String(" ".to_string())),
+            (0..0).into(),
+        )
     }
 
     fn apply_templates(
@@ -319,10 +334,7 @@ impl<'a> IrConverter<'a> {
         } else {
             Bindings::new(
                 self.variables
-                    .new_binding_no_span(ir::Expr::Atom(Spanned::new(
-                        ir::Atom::Const(ir::Const::String(" ".to_string())),
-                        (0..0).into(),
-                    ))),
+                    .new_binding_no_span(ir::Expr::Atom(self.space_separator_atom())),
             )
         }
         .atom_bindings();
@@ -362,13 +374,7 @@ impl<'a> IrConverter<'a> {
                 }
                 ast::ValueTemplateItem::Value { xpath, span: _ } => {
                     let (atom, bindings) = self.xpath(&xpath.0)?.atom_bindings();
-                    let expr = self.simple_content_expr(
-                        atom,
-                        Spanned::new(
-                            ir::Atom::Const(ir::Const::String(" ".to_string())),
-                            (0..0).into(),
-                        ),
-                    );
+                    let expr = self.simple_content_expr(atom, self.space_separator_atom());
                     bindings.bind_expr_no_span(&mut self.variables, expr)
                 }
             };

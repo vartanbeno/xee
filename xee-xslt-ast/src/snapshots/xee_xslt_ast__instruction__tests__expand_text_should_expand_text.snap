@@ -25,21 +25,27 @@ Ok(Instruction(If(If(
   ),
   sequence_constructor: [
     Content(Text("Hello ")),
-    Content(Value(XPath(Expr([
-      Path(PathExpr(
-        steps: [
-          AxisStep(AxisStep(
-            axis: Child,
-            node_test: NameTest(Name(Name(
-              name: "world",
-              prefix: None,
-              namespace: None,
-            ))),
-            predicates: [],
-          )),
-        ],
-      )),
-    ])))),
+    Content(Value(Expression(
+      xpath: XPath(Expr([
+        Path(PathExpr(
+          steps: [
+            AxisStep(AxisStep(
+              axis: Child,
+              node_test: NameTest(Name(Name(
+                name: "world",
+                prefix: None,
+                namespace: None,
+              ))),
+              predicates: [],
+            )),
+          ],
+        )),
+      ])),
+      span: Span(
+        start: 96,
+        end: 101,
+      ),
+    ))),
     Content(Text("!")),
   ],
   span: Span(
