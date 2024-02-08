@@ -1649,7 +1649,7 @@ pub enum SequenceConstructorItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Content {
-    ElementNode(Box<ElementNode>),
+    Element(Box<ElementNode>),
     Text(String),
     Value(Box<xpath_ast::XPath>),
 }
@@ -1721,7 +1721,7 @@ pub struct ElementNode {
 
 impl From<ElementNode> for SequenceConstructorItem {
     fn from(e: ElementNode) -> Self {
-        SequenceConstructorItem::Content(Content::ElementNode(Box::new(e)))
+        SequenceConstructorItem::Content(Content::Element(Box::new(e)))
     }
 }
 

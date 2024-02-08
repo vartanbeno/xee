@@ -2,7 +2,7 @@
 source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<foo xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xsl:expand-text=\"yes\"/>\"#)"
 ---
-Ok(Content(ElementNode(ElementNode(
+Ok(Content(Element(ElementNode(
   name: Name(
     namespace: "",
     local: "foo",

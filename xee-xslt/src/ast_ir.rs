@@ -242,7 +242,7 @@ impl<'a> IrConverter<'a> {
         content: &ast::Content,
     ) -> error::SpannedResult<Bindings> {
         match content {
-            ast::Content::ElementNode(element_node) => {
+            ast::Content::Element(element_node) => {
                 let (name_atom, bindings) = self.element_name(&element_node.name)?.atom_bindings();
                 let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
                 let element_binding = self.variables.new_binding_no_span(expr);

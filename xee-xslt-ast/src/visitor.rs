@@ -33,7 +33,7 @@ pub(crate) trait AstVisitor {
     fn visit_override(&mut self, override_: &mut ast::Override);
     fn visit_attribute_set(&mut self, attribute_set: &mut ast::AttributeSet);
     fn visit_attribute(&mut self, attribute: &mut ast::Attribute);
-    fn visit_element_node(&mut self, element_node: &mut ast::ElementNode);
+    fn visit_content_element(&mut self, element_node: &mut ast::ElementNode);
     fn visit_instruction(&mut self, instruction: &mut ast::SequenceConstructorInstruction);
     fn visit_analyze_string(&mut self, analyze_string: &mut ast::AnalyzeString);
     fn visit_apply_imports(&mut self, apply_imports: &mut ast::ApplyImports);
@@ -322,17 +322,16 @@ pub(crate) mod visit {
         use ast::SequenceConstructorItem::*;
 
         match sequence_constructor_item {
-            Content(ast::Content::ElementNode(element_node)) => v.visit_element_node(element_node),
+            Content(ast::Content::Element(element)) => v.visit_content_element(element),
             // TODO: document content
             Content(_) => {
                 // no children
             }
-            // ElementNode(element_node) => v.visit_element_node(element_node),
             Instruction(instruction) => v.visit_instruction(instruction),
         }
     }
 
-    pub(crate) fn visit_element_node<V: AstVisitor + ?Sized>(
+    pub(crate) fn visit_content_element<V: AstVisitor + ?Sized>(
         _v: &mut V,
         _element_node: &mut ast::ElementNode,
     ) {

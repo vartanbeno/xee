@@ -24,7 +24,7 @@ Ok(Instruction(If(If(
     ),
   ),
   sequence_constructor: [
-    Content(ElementNode(ElementNode(
+    Content(Element(ElementNode(
       name: Name(
         namespace: "",
         local: "p",
