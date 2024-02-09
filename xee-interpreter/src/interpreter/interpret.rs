@@ -533,7 +533,19 @@ impl<'a> Interpreter<'a> {
                     let item = sequence::Item::Node(xml::Node::Xot(parent_node));
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlAttribute => {}
+                EncodedInstruction::XmlAttribute => {
+                    let value = self.pop_atomic()?;
+                    let name_id = self.pop_xot_name()?;
+                    let element_node = self.pop_node()?.xot_node();
+                    if let Some(element) = self.state.xot.element_mut(element_node) {
+                        element.set_attribute(name_id, value.string_value()?);
+                    } else {
+                        unreachable!("xml attribute should always follow an element");
+                    }
+                    // now we can push back the element node
+                    let item = sequence::Item::Node(xml::Node::Xot(element_node));
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlPrefix => {}
                 EncodedInstruction::XmlText => {
                     let text_atomic = self.pop_atomic()?;
@@ -1072,31 +1084,35 @@ impl<'a> Interpreter<'a> {
                         self.xml_append_string_values(parent_node, &string_values);
                         string_values.clear();
                     }
-                    let xot_node = node.xot_node();
-                    match self.state.xot.value(xot_node) {
-                        xot::Value::Root => {
-                            todo!("Handle adding all the children instead");
-                        }
-                        xot::Value::Text(text) => {
-                            // zero length text nodes are skipped
-                            // Can this even exist, or does Xot not have
-                            // them anyway?
-                            if text.get().is_empty() {
-                                continue;
+                    match node {
+                        xml::Node::Xot(xot_node) => {
+                            match self.state.xot.value(xot_node) {
+                                xot::Value::Root => {
+                                    todo!("Handle adding all the children instead");
+                                }
+                                xot::Value::Text(text) => {
+                                    // zero length text nodes are skipped
+                                    // Can this even exist, or does Xot not have
+                                    // them anyway?
+                                    if text.get().is_empty() {
+                                        continue;
+                                    }
+                                }
+                                _ => {}
                             }
+                            // if we have a parent we're already in another document,
+                            // in which case we want to make a clone first
+                            let xot_node = if self.state.xot.parent(xot_node).is_some() {
+                                self.state.xot.clone(xot_node)
+                            } else {
+                                xot_node
+                            };
+                            self.state.xot.append(parent_node, xot_node).unwrap();
                         }
-                        _ => {}
+                        _ => {
+                            unreachable!("attribute and namespace should have been added to element right away");
+                        }
                     }
-                    // TODO: handle adding attribute and ns node
-
-                    // if we have a parent we're already in another document,
-                    // in which case we want to make a clone first
-                    let xot_node = if self.state.xot.parent(xot_node).is_some() {
-                        self.state.xot.clone(xot_node)
-                    } else {
-                        xot_node
-                    };
-                    self.state.xot.append(parent_node, xot_node).unwrap();
                 }
                 sequence::Item::Atomic(atomic) => string_values.push(atomic.string_value()?),
                 sequence::Item::Function(_) => return Err(error::Error::XTDE0450),

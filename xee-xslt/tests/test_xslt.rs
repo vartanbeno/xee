@@ -723,20 +723,37 @@ fn test_text_value_template() {
     assert_eq!(xml(&xot, output), "<o>Value: VALUE</o>");
 }
 
-// #[test]
-// fn test_literal_attribute() {
-//     let mut xot = Xot::new();
-//     let output = evaluate(
-//         &mut xot,
-//         r#"<doc/>"#,
-//         r#"
-//   <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-//     <xsl:template match="/">
-//       <o><foo bar="baz"/></o>
-//     </xsl:template>
-//   </xsl:transform>"#,
-//     )
-//     .unwrap();
+#[test]
+fn test_literal_attribute() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><foo bar="baz"/></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
 
-//     assert_eq!(xml(&xot, output), r#"<o><foo bar="baz"/></o>"#);
-// }
+    assert_eq!(xml(&xot, output), r#"<o><foo bar="baz"/></o>"#);
+}
+#[test]
+fn test_literal_attributes() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><foo bar="BAR" qux="QUX"/></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><foo bar="BAR" qux="QUX"/></o>"#);
+}
