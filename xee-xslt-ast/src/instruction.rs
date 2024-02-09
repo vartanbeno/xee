@@ -1,6 +1,5 @@
 use std::sync::OnceLock;
 
-use ahash::HashMap;
 use xot::Node;
 
 use crate::ast_core::{self as ast};
@@ -122,7 +121,7 @@ impl InstructionParser for ast::Declaration {
 
 impl InstructionParser for ast::ElementNode {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
-        let mut element_attributes = HashMap::default();
+        let mut element_attributes = Vec::new();
         for (k, _) in attributes.element.attributes() {
             let name = ast::Name::from_xot(*k, &content.state.xot);
             // if any name is in the xsl namespace, we skip it
@@ -131,7 +130,7 @@ impl InstructionParser for ast::ElementNode {
                 continue;
             }
             let value = attributes.required(*k, attributes.value_template(attributes.string()))?;
-            element_attributes.insert(name, value);
+            element_attributes.push((name, value));
         }
         Ok(ast::ElementNode {
             name: ast::Name::from_xot(attributes.element.name(), &content.state.xot),

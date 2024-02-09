@@ -8,7 +8,7 @@ Ok(Content(Element(ElementNode(
     prefix: None,
     namespace: None,
   ),
-  attributes: {},
+  attributes: [],
   sequence_constructor: [],
   span: Span(
     start: 1,

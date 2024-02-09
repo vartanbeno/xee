@@ -30,7 +30,7 @@ Ok(Instruction(If(If(
         prefix: None,
         namespace: None,
       ),
-      attributes: {},
+      attributes: [],
       sequence_constructor: [
         Content(Element(ElementNode(
           name: Name(
@@ -38,7 +38,7 @@ Ok(Instruction(If(If(
             prefix: None,
             namespace: None,
           ),
-          attributes: {},
+          attributes: [],
           sequence_constructor: [],
           span: Span(
             start: 75,

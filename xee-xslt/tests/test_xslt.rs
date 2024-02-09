@@ -740,6 +740,7 @@ fn test_literal_attribute() {
 
     assert_eq!(xml(&xot, output), r#"<o><foo bar="baz"/></o>"#);
 }
+
 #[test]
 fn test_literal_attributes() {
     let mut xot = Xot::new();
@@ -756,4 +757,22 @@ fn test_literal_attributes() {
     .unwrap();
 
     assert_eq!(xml(&xot, output), r#"<o><foo bar="BAR" qux="QUX"/></o>"#);
+}
+
+#[test]
+fn test_literal_attribute_with_value_template() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc>value</doc>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><foo bar="found: {doc/string()}"/></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><foo bar="found: value"/></o>"#);
 }

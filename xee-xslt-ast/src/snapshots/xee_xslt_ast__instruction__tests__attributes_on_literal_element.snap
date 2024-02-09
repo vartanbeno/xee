@@ -8,12 +8,12 @@ Ok(Content(Element(ElementNode(
     prefix: None,
     namespace: None,
   ),
-  attributes: {
-    Name(
+  attributes: [
+    (Name(
       name: "foo",
       prefix: None,
       namespace: None,
-    ): ValueTemplate(
+    ), ValueTemplate(
       template: [
         String(
           text: "FOO",
@@ -24,8 +24,8 @@ Ok(Content(Element(ElementNode(
         ),
       ],
       phantom: PhantomData,
-    ),
-  },
+    )),
+  ],
   sequence_constructor: [],
   span: Span(
     start: 1,
