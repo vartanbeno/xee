@@ -1546,18 +1546,36 @@ impl InstructionParser for ast::Template {
 impl InstructionParser for ast::Text {
     fn parse(content: &Content, attributes: &Attributes) -> Result<Self> {
         let names = &content.state.names;
+
+        let children = content.state.xot.children(content.node).collect::<Vec<_>>();
+        if children.len() > 1 {
+            return Err(Error::Unexpected {
+                span: content.span()?,
+            });
+        }
+        let text = if !children.is_empty() {
+            let text = content.state.xot.text_content_str(content.node);
+            if let Some(text) = text {
+                text
+            } else {
+                // this wasn't text content, and it wasn't because it was
+                // empty either
+                return Err(Error::Unexpected {
+                    span: content.span()?,
+                });
+            }
+        } else {
+            ""
+        };
+        let text_content = attributes.value_template(attributes.string())(text, content.span()?)?;
+
         Ok(ast::Text {
             disable_output_escaping: attributes
                 .boolean_with_default(names.disable_output_escaping, false)?,
 
             span: content.span()?,
 
-            content: content
-                .state
-                .xot
-                .text_str(content.node)
-                .unwrap_or("")
-                .to_string(),
+            content: text_content,
         })
     }
 }

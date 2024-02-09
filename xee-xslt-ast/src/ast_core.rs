@@ -1479,7 +1479,8 @@ impl From<Template> for Declaration {
 pub struct Text {
     // DEPRECATED
     pub disable_output_escaping: bool,
-    pub content: PcData,
+
+    pub content: ValueTemplate<String>,
 
     pub span: Span,
 }

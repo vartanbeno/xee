@@ -776,3 +776,95 @@ fn test_literal_attribute_with_value_template() {
 
     assert_eq!(xml(&xot, output), r#"<o><foo bar="found: value"/></o>"#);
 }
+
+#[test]
+fn test_xsl_element() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><xsl:element name="foo">content</xsl:element></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><foo>content</foo></o>"#);
+}
+
+// cannot test this yet as we need namespace prefix handling
+
+// #[test]
+// fn test_xsl_element_with_namespace() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         r#"<doc/>"#,
+//         r#"
+//   <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//     <xsl:template match="/">
+//       <o><xsl:element name="foo" namespace="http://example.com">content</xsl:element></o>
+//     </xsl:template>
+//   </xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(xml(&xot, output), r#"<o><foo>content</foo></o>"#);
+// }
+
+#[test]
+fn test_xsl_text() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><xsl:text>content</xsl:text></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o>content</o>"#);
+}
+
+#[test]
+fn test_xsl_text_empty() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><xsl:text/></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o/>"#);
+}
+
+#[test]
+fn test_xsl_text_value_template() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><xsl:text>Content: {"foo"}</xsl:text></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o>Content: foo</o>"#);
+}
