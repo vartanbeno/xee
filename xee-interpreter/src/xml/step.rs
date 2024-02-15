@@ -80,7 +80,7 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xot::
                         name_str == local_name
                     }
                     xot::Value::Attribute(attribute) => {
-                        xot.localname_str(attribute.name()) == local_name
+                        xot.local_name_str(attribute.name()) == local_name
                     }
                     _ => false,
                 },

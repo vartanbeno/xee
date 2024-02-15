@@ -32,7 +32,7 @@ fn local_name(interpreter: &Interpreter, arg: Option<xot::Node>) -> String {
     if let Some(arg) = arg {
         let name = interpreter.xot().node_name(arg);
         if let Some(name) = name {
-            interpreter.xot().localname_str(name).to_string()
+            interpreter.xot().local_name_str(name).to_string()
         } else {
             "".to_string()
         }
@@ -59,9 +59,7 @@ fn namespace_uri(interpreter: &Interpreter, arg: Option<xot::Node>) -> atomic::A
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<xot::Node> {
     if let Some(arg) = arg {
-        // XXX there should be a xot.root() to obtain this in one step
-        let top = interpreter.xot().top_element(arg);
-        Some(interpreter.xot().parent(top).unwrap())
+        Some(interpreter.xot().root(arg))
     } else {
         None
     }

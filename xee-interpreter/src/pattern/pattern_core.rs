@@ -268,7 +268,7 @@ pub(crate) trait PredicateMatcher {
             pattern::NameTest::Star => true,
             pattern::NameTest::LocalName(expected_local_name) => {
                 if let Some(name) = xot.node_name(node) {
-                    xot.localname_str(name) == expected_local_name
+                    xot.local_name_str(name) == expected_local_name
                 } else {
                     false
                 }
