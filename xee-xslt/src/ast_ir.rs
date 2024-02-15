@@ -233,6 +233,7 @@ impl<'a> IrConverter<'a> {
             Sequence(sequence) => self.sequence(sequence),
             Element(element) => self.element(element),
             Text(text) => self.text(text),
+            Attribute(attribute) => self.attribute(attribute),
             // xsl:variable does not produce content and is handled earlier already
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -363,12 +364,16 @@ impl<'a> IrConverter<'a> {
         }
     }
 
-    fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
+    fn select_or_sequence_constructor_simple_content(
+        &mut self,
+        instruction: &impl ast::SelectOrSequenceConstructor,
+        separator: &Option<ast::ValueTemplate<String>>,
+    ) -> error::SpannedResult<Bindings> {
         let (select_atom, select_bindings) = self
-            .select_or_sequence_constructor(value_of)?
+            .select_or_sequence_constructor(instruction)?
             .atom_bindings();
 
-        let (separator_atom, separator_bindings) = if let Some(separator) = &value_of.separator {
+        let (separator_atom, separator_bindings) = if let Some(separator) = separator {
             self.attribute_value_template(separator)?
         } else {
             Bindings::new(
@@ -379,9 +384,14 @@ impl<'a> IrConverter<'a> {
         .atom_bindings();
         let bindings = select_bindings.concat(separator_bindings);
         let expr = self.simple_content_expr(select_atom, separator_atom);
-        let (text_atom, bindings) = bindings
-            .bind_expr_no_span(&mut self.variables, expr)
+        Ok(bindings.bind_expr_no_span(&mut self.variables, expr))
+    }
+
+    fn value_of(&mut self, value_of: &ast::ValueOf) -> error::SpannedResult<Bindings> {
+        let (text_atom, bindings) = self
+            .select_or_sequence_constructor_simple_content(value_of, &value_of.separator)?
             .atom_bindings();
+
         Ok(bindings.bind_expr_no_span(
             &mut self.variables,
             ir::Expr::XmlText(ir::XmlText { value: text_atom }),
@@ -422,13 +432,8 @@ impl<'a> IrConverter<'a> {
         Ok(if all_bindings.is_empty() {
             // empty attribute value template is a string
             let bindings = Bindings::empty();
-            bindings.bind_expr_no_span(
-                &mut self.variables,
-                ir::Expr::Atom(Spanned::new(
-                    ir::Atom::Const(ir::Const::String("".to_string())),
-                    (0..0).into(),
-                )),
-            )
+            let empty_string = ir::Expr::Atom(self.empty_string());
+            bindings.bind_expr_no_span(&mut self.variables, empty_string)
         } else if all_bindings.len() == 1 {
             // a single binding is just that binding
             all_bindings.pop().unwrap()
@@ -453,26 +458,6 @@ impl<'a> IrConverter<'a> {
             });
             combined_bindings.bind_expr_no_span(&mut self.variables, expr)
         })
-    }
-
-    fn xml_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
-        let local_name = Spanned::new(
-            ir::Atom::Const(ir::Const::String(name.local_name().to_string())),
-            (0..0).into(),
-        );
-        let namespace = Spanned::new(
-            ir::Atom::Const(ir::Const::String(
-                name.namespace().unwrap_or("").to_string(),
-            )),
-            (0..0).into(),
-        );
-        let binding = self
-            .variables
-            .new_binding_no_span(ir::Expr::XmlName(ir::XmlName {
-                local_name,
-                namespace,
-            }));
-        Ok(Bindings::new(binding))
     }
 
     fn variable(
@@ -501,6 +486,13 @@ impl<'a> IrConverter<'a> {
                 ir::Atom::Const(ir::Const::EmptySequence),
                 (0..0).into(),
             )),
+            (0..0).into(),
+        )
+    }
+
+    fn empty_string(&self) -> ir::AtomS {
+        Spanned::new(
+            ir::Atom::Const(ir::Const::String("".to_string())),
             (0..0).into(),
         )
     }
@@ -638,18 +630,32 @@ impl<'a> IrConverter<'a> {
         self.select_or_sequence_constructor(sequence)
     }
 
-    // the xsl:element instruction
-    fn element(&mut self, element: &ast::Element) -> error::SpannedResult<Bindings> {
-        let (localname_atom, bindings) = self
-            .attribute_value_template(&element.name)?
-            .atom_bindings();
-        let (namespace_atom, namespace_bindings) = if let Some(namespace) = &element.namespace {
+    fn xml_name(&mut self, name: &ast::Name) -> error::SpannedResult<Bindings> {
+        let local_name = Spanned::new(
+            ir::Atom::Const(ir::Const::String(name.local_name().to_string())),
+            (0..0).into(),
+        );
+        let namespace = self.empty_string();
+
+        let binding = self
+            .variables
+            .new_binding_no_span(ir::Expr::XmlName(ir::XmlName {
+                local_name,
+                namespace,
+            }));
+        Ok(Bindings::new(binding))
+    }
+
+    fn xml_name_dynamic(
+        &mut self,
+        name: &ast::ValueTemplate<String>,
+        namespace: &Option<ast::ValueTemplate<String>>,
+    ) -> error::SpannedResult<Bindings> {
+        let (localname_atom, bindings) = self.attribute_value_template(name)?.atom_bindings();
+        let (namespace_atom, namespace_bindings) = if let Some(namespace) = namespace {
             self.attribute_value_template(namespace)?.atom_bindings()
         } else {
-            let namespace_atom = Spanned::new(
-                ir::Atom::Const(ir::Const::String("".to_string())),
-                (0..0).into(),
-            );
+            let namespace_atom = self.empty_string();
             (namespace_atom, Bindings::empty())
         };
         let bindings = bindings.concat(namespace_bindings);
@@ -657,8 +663,12 @@ impl<'a> IrConverter<'a> {
             local_name: localname_atom,
             namespace: namespace_atom,
         });
-        let (name_atom, bindings) = bindings
-            .bind_expr_no_span(&mut self.variables, name)
+        Ok(bindings.bind_expr_no_span(&mut self.variables, name))
+    }
+
+    fn element(&mut self, element: &ast::Element) -> error::SpannedResult<Bindings> {
+        let (name_atom, bindings) = self
+            .xml_name_dynamic(&element.name, &element.namespace)?
             .atom_bindings();
 
         let expr = ir::Expr::XmlElement(ir::XmlElement { name: name_atom });
@@ -677,6 +687,23 @@ impl<'a> IrConverter<'a> {
         Ok(bindings.bind_expr_no_span(
             &mut self.variables,
             ir::Expr::XmlText(ir::XmlText { value: atom }),
+        ))
+    }
+
+    fn attribute(&mut self, attribute: &ast::Attribute) -> error::SpannedResult<Bindings> {
+        let (name_atom, name_bindings) = self
+            .xml_name_dynamic(&attribute.name, &attribute.namespace)?
+            .atom_bindings();
+        let (text_atom, text_bindings) = self
+            .select_or_sequence_constructor_simple_content(attribute, &attribute.separator)?
+            .atom_bindings();
+        let bindings = name_bindings.concat(text_bindings);
+        Ok(bindings.bind_expr_no_span(
+            &mut self.variables,
+            ir::Expr::XmlAttribute(ir::XmlAttribute {
+                name: name_atom,
+                value: text_atom,
+            }),
         ))
     }
 

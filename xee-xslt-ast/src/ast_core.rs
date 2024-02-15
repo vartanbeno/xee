@@ -358,6 +358,16 @@ impl From<Attribute> for SequenceConstructorItem {
     }
 }
 
+impl SelectOrSequenceConstructor for Attribute {
+    fn select(&self) -> Option<&Expression> {
+        self.select.as_ref()
+    }
+
+    fn sequence_constructor(&self) -> &SequenceConstructor {
+        &self.sequence_constructor
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct AttributeSet {
