@@ -2,12 +2,19 @@ use xot::Xot;
 
 use crate::namespaces::NamespaceLookup;
 
+// TODO: use Cow<str> for the various fields
+
 #[derive(Debug, Clone, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Name {
     name: String,
     prefix: Option<String>,
     namespace: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Error {
+    MissingPrefix,
 }
 
 // a custom hasher that ignores the prefix
@@ -45,6 +52,49 @@ impl Name {
             name: name.to_string(),
             namespace,
             prefix: None,
+        }
+    }
+
+    /// Get the full name from xot including any prefix information.
+    pub fn from_xot_with_prefix(
+        name: xot::NameId,
+        context: xot::Node,
+        xot: &Xot,
+    ) -> Result<Self, Error> {
+        let namespace = xot.namespace_for_name(name);
+        let local_name = xot.local_name_str(name);
+        if namespace == xot.no_namespace() {
+            return Ok(Name {
+                name: local_name.to_string(),
+                namespace: None,
+                prefix: None,
+            });
+        }
+        let prefix = xot.prefix_for_namespace(context, namespace);
+        if let Some(prefix) = prefix {
+            let namespace = xot.namespace_str(namespace);
+
+            let prefix = xot.prefix_str(prefix);
+            Ok(Name {
+                name: local_name.to_string(),
+                namespace: Some(namespace.to_string()),
+                prefix: Some(prefix.to_string()),
+            })
+        } else {
+            Err(Error::MissingPrefix)
+        }
+    }
+
+    /// Take the node name of the xot node. If it exists, pull out full
+    /// information, including prefix.
+    ///
+    /// If the node has no name, return None.
+    pub fn from_xot_node(node: xot::Node, xot: &Xot) -> Result<Option<Self>, Error> {
+        let name = xot.node_name(node);
+        if let Some(name) = name {
+            Ok(Some(Name::from_xot_with_prefix(name, node, xot)?))
+        } else {
+            Ok(None)
         }
     }
 

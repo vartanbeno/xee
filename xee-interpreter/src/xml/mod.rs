@@ -1,9 +1,7 @@
-/// XML integration. This wraps the Xot XML tree library in various ways to
-/// support XPath's requirements.
+/// XML integration.
 mod annotation;
 mod document;
 mod kind_test;
-mod node;
 mod step;
 
 pub use annotation::Annotations;

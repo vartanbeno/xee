@@ -605,6 +605,24 @@ impl From<xee_xpath_ast::ParserError> for SpannedError {
     }
 }
 
+impl From<xot::Error> for Error {
+    fn from(e: xot::Error) -> Self {
+        match e {
+            xot::Error::MissingPrefix(_) => Error::XPST0081,
+            // TODO: are there other xot errors that need to be translated?
+            _ => Error::XPST0003,
+        }
+    }
+}
+
+impl From<xee_name::Error> for Error {
+    fn from(e: xee_name::Error) -> Self {
+        match e {
+            xee_name::Error::MissingPrefix => Error::XPST0081,
+        }
+    }
+}
+
 impl From<OutOfBoundsError> for Error {
     fn from(_e: OutOfBoundsError) -> Self {
         Error::FOCA0003

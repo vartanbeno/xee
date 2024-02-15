@@ -9,15 +9,15 @@ use crate::sequence;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
-fn node_name(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<ast::Name> {
-    if let Some(node) = arg {
-        interpreter
-            .xot()
-            .node_name(node)
-            .map(|name| ast::Name::from_xot(name, interpreter.xot()))
+fn node_name(
+    interpreter: &Interpreter,
+    arg: Option<xot::Node>,
+) -> error::Result<Option<ast::Name>> {
+    Ok(if let Some(node) = arg {
+        ast::Name::from_xot_node(node, interpreter.xot())?
     } else {
         None
-    }
+    })
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]

@@ -2,29 +2,26 @@
 
 use ahash::HashSet;
 use ahash::HashSetExt;
-use xee_name::Name;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("fn:name($arg as node()?) as xs:string", context_first)]
-fn name(interpreter: &Interpreter, arg: Option<xot::Node>) -> String {
-    if let Some(node) = arg {
+fn name(interpreter: &Interpreter, arg: Option<xot::Node>) -> error::Result<String> {
+    Ok(if let Some(node) = arg {
         let name = interpreter.xot().node_name(node);
         if let Some(name) = name {
-            // TODO: prefix information is lost as it's not in the
-            // a xot name id. How to restore it?
-            let name = Name::from_xot(name, interpreter.xot());
-            name.to_full_name()
+            interpreter.xot().full_name(node, name)?
         } else {
             "".to_string()
         }
     } else {
         "".to_string()
-    }
+    })
 }
 
 #[xpath_fn("fn:local-name($arg as node()?) as xs:string", context_first)]
