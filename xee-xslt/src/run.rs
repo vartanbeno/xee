@@ -21,7 +21,7 @@ pub fn evaluate_program(
     let context = DynamicContext::from_documents(static_context, &documents);
     let document = documents.get(&uri).unwrap();
     let runnable = program.runnable(&context);
-    let item: sequence::Item = xml::Node::Xot(document.root).into();
+    let item: sequence::Item = document.root.into();
     runnable.many(Some(&item), xot)
 }
 

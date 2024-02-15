@@ -403,7 +403,7 @@ impl Assertable for AssertXml {
         let expected = compare_xot.parse(&expected_xml).unwrap();
 
         // and compare
-        let c = compare_xot.compare(expected, found);
+        let c = compare_xot.deep_equal(expected, found);
 
         if c {
             TestOutcome::Passed

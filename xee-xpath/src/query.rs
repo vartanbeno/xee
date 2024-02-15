@@ -325,7 +325,7 @@ impl ManyRecurseQuery {
 #[cfg(test)]
 mod tests {
     use ibig::{ibig, IBig};
-    use xee_interpreter::{error::Result, xml::Node};
+    use xee_interpreter::error::Result;
     use xot::Xot;
 
     use super::*;
@@ -386,11 +386,11 @@ mod tests {
 
         let dynamic_context = DynamicContext::empty(&static_context);
         let mut session = queries.session(&dynamic_context, &mut xot);
-        let r = result_query.execute(&mut session, &Item::from(Node::Xot(root)))?;
+        let r = result_query.execute(&mut session, &Item::from(root))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
         let mut session = queries.session(&dynamic_context, &mut xot);
-        let r = result_query.execute(&mut session, &Item::from(Node::Xot(root2)))?;
+        let r = result_query.execute(&mut session, &Item::from(root2))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
     }

@@ -7,7 +7,6 @@ use crate::function;
 use crate::interpreter::Interpreter;
 use crate::pattern::pattern_core::PredicateMatcher;
 use crate::sequence::Item;
-use crate::xml;
 
 #[derive(Debug, Default)]
 pub struct PatternLookup<V> {
@@ -37,7 +36,7 @@ impl<'a> PredicateMatcher for Interpreter<'a> {
             inline_function_id,
             closure_vars: Vec::new(),
         });
-        let arguments = if let Item::Node(xml::Node::Xot(node)) = item {
+        let arguments = if let Item::Node(node) = item {
             if let Some(parent) = self.xot().parent(*node) {
                 let position = self.xot().child_index(parent, *node).unwrap() + 1;
                 let size = self.xot().children(parent).count();

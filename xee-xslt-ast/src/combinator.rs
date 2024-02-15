@@ -497,9 +497,9 @@ mod tests {
         let names = Names::new(&mut xot);
         let (doc, span_info) = xot.parse_with_span_info(s).unwrap();
         let outer = xot.document_element(doc).unwrap();
+        let prefixes = xot.prefixes(outer);
         let state = State::new(xot, span_info, names);
-        let element = state.xot.element(outer).unwrap();
-        let context = Context::new(element.prefixes().clone());
+        let context = Context::new(prefixes);
         (state, context, outer)
     }
 
@@ -988,7 +988,7 @@ mod tests {
         let parser = one(|Content { node, state, .. }| {
             if let Some(element) = state.xot.element(node) {
                 if element.name() == names.name_b {
-                    let value = element.get_attribute(names.foo).unwrap();
+                    let value = state.xot.attributes(node).get(names.foo).unwrap();
                     return Ok(Value {
                         foo: value.to_string(),
                     });

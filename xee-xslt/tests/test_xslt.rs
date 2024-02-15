@@ -8,11 +8,8 @@ fn xml(xot: &Xot, sequence: Sequence) -> String {
     let mut f = String::new();
 
     for item in sequence.items() {
-        f.write_str(
-            &xot.to_string(item.unwrap().to_node().unwrap().xot_node())
-                .unwrap(),
-        )
-        .unwrap();
+        f.write_str(&xot.to_string(item.unwrap().to_node().unwrap()).unwrap())
+            .unwrap();
     }
     f
 }

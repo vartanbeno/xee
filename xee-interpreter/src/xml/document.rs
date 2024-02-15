@@ -2,8 +2,6 @@ use ahash::{HashMap, HashMapExt};
 use std::fmt::Debug;
 use xot::Xot;
 
-use crate::xml;
-
 use super::annotation::Annotations;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -22,8 +20,8 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn root(&self) -> xml::Node {
-        xml::Node::Xot(self.root)
+    pub fn root(&self) -> xot::Node {
+        self.root
     }
 
     pub fn cleanup(&self, xot: &mut Xot) {
@@ -65,7 +63,7 @@ impl Documents {
             root,
         };
         self.documents.insert(uri.clone(), document);
-        self.annotations.add(xot, xml::Node::Xot(root));
+        self.annotations.add(xot, root);
     }
 
     pub fn get(&self, uri: &Uri) -> Option<&Document> {

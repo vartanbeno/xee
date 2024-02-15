@@ -516,34 +516,38 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlRoot => {
                     let root_node = self.state.xot.new_root_unconnected();
-                    let item = sequence::Item::Node(xml::Node::Xot(root_node));
+                    let item = sequence::Item::Node(root_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlElement => {
                     let name_id = self.pop_xot_name()?;
                     let element_node = self.state.xot.new_element(name_id);
-                    let item = sequence::Item::Node(xml::Node::Xot(element_node));
+                    let item = sequence::Item::Node(element_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlAppend => {
                     let child_value = self.state.pop();
-                    let parent_node = self.pop_node()?.xot_node();
+                    let parent_node = self.pop_node()?;
                     self.xml_append(parent_node, child_value)?;
                     // now we can push back the parent node
-                    let item = sequence::Item::Node(xml::Node::Xot(parent_node));
+                    let item = sequence::Item::Node(parent_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlAttribute => {
                     let value = self.pop_atomic()?;
                     let name_id = self.pop_xot_name()?;
-                    let element_node = self.pop_node()?.xot_node();
-                    if let Some(element) = self.state.xot.element_mut(element_node) {
-                        element.set_attribute(name_id, value.string_value()?);
-                    } else {
+                    let element_node = self.pop_node()?;
+                    // TODO: change this so it creates an attribute node instead
+                    if !self.xot().is_element(element_node) {
                         unreachable!("xml attribute should always follow an element");
                     }
+                    self.state
+                        .xot_mut()
+                        .attributes_mut(element_node)
+                        .insert(name_id, value.string_value()?);
+
                     // now we can push back the element node
-                    let item = sequence::Item::Node(xml::Node::Xot(element_node));
+                    let item = sequence::Item::Node(element_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlPrefix => {}
@@ -551,7 +555,7 @@ impl<'a> Interpreter<'a> {
                     let text_atomic = self.pop_atomic()?;
                     let text = text_atomic.into_canonical();
                     let text_node = self.state.xot.new_text(&text);
-                    let item = sequence::Item::Node(xml::Node::Xot(text_node));
+                    let item = sequence::Item::Node(text_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlComment => {}
@@ -568,15 +572,10 @@ impl<'a> Interpreter<'a> {
                     let item = value.items().next().unwrap()?;
                     let copy = match &item {
                         sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
-                        sequence::Item::Node(node) => match node {
-                            xml::Node::Xot(node) => {
-                                let copied_node = self.shallow_copy_node(*node);
-                                sequence::Item::Node(xml::Node::Xot(copied_node))
-                            }
-                            _ => {
-                                todo!("copy shallow not yet supported for this node type")
-                            }
-                        },
+                        sequence::Item::Node(node) => {
+                            let copied_node = self.shallow_copy_node(*node);
+                            sequence::Item::Node(copied_node)
+                        }
                     };
                     self.state.push(copy.into());
                 }
@@ -591,15 +590,10 @@ impl<'a> Interpreter<'a> {
                         let item = item?;
                         let copy = match &item {
                             sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
-                            sequence::Item::Node(node) => match node {
-                                xml::Node::Xot(node) => {
-                                    let copied_node = self.state.xot.clone(*node);
-                                    sequence::Item::Node(xml::Node::Xot(copied_node))
-                                }
-                                _ => {
-                                    todo!("copy deep not yet supported for this node type")
-                                }
-                            },
+                            sequence::Item::Node(node) => {
+                                let copied_node = self.state.xot.clone(*node);
+                                sequence::Item::Node(copied_node)
+                            }
                         };
                         new_sequence.push(copy);
                     }
@@ -634,7 +628,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn create_static_closure_from_context(
         &mut self,
         static_function_id: function::StaticFunctionId,
-        arg: Option<xml::Node>,
+        arg: Option<xot::Node>,
     ) -> function::Function {
         Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
             arg.map(|n| n.into())
@@ -1044,7 +1038,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn pop_node(&mut self) -> error::Result<xml::Node> {
+    fn pop_node(&mut self) -> error::Result<xot::Node> {
         let value = self.state.pop();
         let node = value.items().one()?.to_node()?;
         Ok(node)
@@ -1084,35 +1078,31 @@ impl<'a> Interpreter<'a> {
                         self.xml_append_string_values(parent_node, &string_values);
                         string_values.clear();
                     }
-                    match node {
-                        xml::Node::Xot(xot_node) => {
-                            match self.state.xot.value(xot_node) {
-                                xot::Value::Root => {
-                                    todo!("Handle adding all the children instead");
-                                }
-                                xot::Value::Text(text) => {
-                                    // zero length text nodes are skipped
-                                    // Can this even exist, or does Xot not have
-                                    // them anyway?
-                                    if text.get().is_empty() {
-                                        continue;
-                                    }
-                                }
-                                _ => {}
+                    match self.state.xot.value(node) {
+                        xot::Value::Root => {
+                            todo!("Handle adding all the children instead");
+                        }
+                        xot::Value::Text(text) => {
+                            // zero length text nodes are skipped
+                            // Can this even exist, or does Xot not have
+                            // them anyway?
+                            if text.get().is_empty() {
+                                continue;
                             }
-                            // if we have a parent we're already in another document,
-                            // in which case we want to make a clone first
-                            let xot_node = if self.state.xot.parent(xot_node).is_some() {
-                                self.state.xot.clone(xot_node)
-                            } else {
-                                xot_node
-                            };
-                            self.state.xot.append(parent_node, xot_node).unwrap();
                         }
-                        _ => {
-                            unreachable!("attribute and namespace should have been added to element right away");
-                        }
+                        _ => {}
                     }
+
+                    // if we have a parent we're already in another document,
+                    // in which case we want to make a clone first
+                    let node = if self.state.xot.parent(node).is_some() {
+                        self.state.xot.clone(node)
+                    } else {
+                        node
+                    };
+                    // TODO: error out if namespace or attribute node
+                    // is added once a normal child already exists
+                    self.state.xot.any_append(parent_node, node).unwrap();
                 }
                 sequence::Item::Atomic(atomic) => string_values.push(atomic.string_value()?),
                 sequence::Item::Function(_) => return Err(error::Error::XTDE0450),
@@ -1141,9 +1131,7 @@ impl<'a> Interpreter<'a> {
             xot::Value::Element(element) => xot.new_element(element.name()),
             // we can clone (deep-copy) these nodes as it's the same
             // operation as shallow copy
-            xot::Value::Text(_) | xot::Value::ProcessingInstruction(_) | xot::Value::Comment(_) => {
-                xot.clone(node)
-            }
+            _ => xot.clone(node),
         }
     }
 

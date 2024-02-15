@@ -14,7 +14,6 @@ use crate::interpreter::Interpreter;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::wrap_xpath_fn;
-use crate::xml;
 
 // we use the special marker context_last_optional here. The last node
 // argument, $arg, is not part of the official signature, but it is
@@ -30,7 +29,7 @@ fn function_lookup(
     interpreter: &mut Interpreter,
     name: Name,
     arity: IBig,
-    arg: Option<xml::Node>,
+    arg: Option<xot::Node>,
 ) -> Option<sequence::Item> {
     let arity: u8 = if let Ok(arity) = arity.try_into() {
         arity

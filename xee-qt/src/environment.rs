@@ -4,7 +4,7 @@ use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use xee_xpath::{
     context::DynamicContext, context::StaticContext, context::Variables, parse, sequence::Item,
-    xml::Documents, xml::Node, xml::Uri, Name,
+    xml::Documents, xml::Uri, Name,
 };
 use xot::Xot;
 
@@ -123,7 +123,7 @@ impl<'a> Iterator for EnvironmentSpecIterator<'a> {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct SourceCache {
-    nodes: AHashMap<PathBuf, Node>,
+    nodes: AHashMap<PathBuf, xot::Node>,
 }
 
 impl SourceCache {
@@ -135,9 +135,7 @@ impl SourceCache {
 
     pub(crate) fn cleanup(&self, xot: &mut Xot) {
         for node in self.nodes.values() {
-            if let Node::Xot(root) = node {
-                xot.remove(*root).unwrap();
-            }
+            xot.remove(*node).unwrap();
         }
     }
 }
@@ -148,7 +146,7 @@ impl Source {
         xot: &mut Xot,
         base_dir: &Path,
         documents: &mut Documents,
-    ) -> Result<Node> {
+    ) -> Result<xot::Node> {
         let full_path = base_dir.join(&self.file);
         // construct a Uri
         // TODO: this is not really a proper URI but

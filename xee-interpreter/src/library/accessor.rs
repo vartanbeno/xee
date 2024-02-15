@@ -7,12 +7,14 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
-use crate::xml;
 
 #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
-fn node_name(interpreter: &Interpreter, arg: Option<xml::Node>) -> Option<ast::Name> {
+fn node_name(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<ast::Name> {
     if let Some(node) = arg {
-        node.node_name(interpreter.xot())
+        interpreter
+            .xot()
+            .node_name(node)
+            .map(|name| ast::Name::from_xot(name, interpreter.xot()))
     } else {
         None
     }

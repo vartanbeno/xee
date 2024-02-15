@@ -10,7 +10,6 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
-use crate::xml;
 
 #[xpath_fn("fn:my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
 fn my_function(a: IBig, b: IBig) -> IBig {
@@ -18,7 +17,7 @@ fn my_function(a: IBig, b: IBig) -> IBig {
 }
 
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
-fn generate_id(context: &DynamicContext, arg: Option<xml::Node>) -> String {
+fn generate_id(context: &DynamicContext, arg: Option<xot::Node>) -> String {
     if let Some(arg) = arg {
         let annotations = &context.documents.annotations;
         let annotation = annotations.get(arg).unwrap();

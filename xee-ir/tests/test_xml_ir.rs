@@ -102,16 +102,8 @@ fn test_generate_element() {
     let sequence = runnable.many(None, &mut xot).unwrap();
     // we should have the newly created element on top of the stack
     assert_eq!(
-        xot.to_string(
-            sequence
-                .items()
-                .one()
-                .unwrap()
-                .to_node()
-                .unwrap()
-                .xot_node()
-        )
-        .unwrap(),
+        xot.to_string(sequence.items().one().unwrap().to_node().unwrap())
+            .unwrap(),
         "<foo/>"
     );
 }

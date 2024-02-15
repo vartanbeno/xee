@@ -5,14 +5,14 @@ use xot::Xot;
 use xee_interpreter::{
     atomic::Atomic, context::DynamicContext, context::StaticContext, context::Variables,
     error::SpannedResult, sequence::Item, sequence::Sequence, xml::Document, xml::Documents,
-    xml::Node, xml::Uri,
+    xml::Uri,
 };
 use xee_xpath::{evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse};
 
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
     Sequence::from(
         node.iter()
-            .map(|&node| Item::from(Node::Xot(node)))
+            .map(|&node| Item::from(node))
             .collect::<Vec<_>>(),
     )
 }

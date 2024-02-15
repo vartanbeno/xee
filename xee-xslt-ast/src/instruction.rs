@@ -122,14 +122,14 @@ impl InstructionParser for ast::Declaration {
 impl InstructionParser for ast::ElementNode {
     fn parse(content: &Content, attributes: &Attributes) -> Result<ast::ElementNode> {
         let mut element_attributes = Vec::new();
-        for (k, _) in attributes.element.attributes() {
-            let name = ast::Name::from_xot(*k, &content.state.xot);
+        for key in content.state.xot.attributes(content.node).keys() {
+            let name = ast::Name::from_xot(key, &content.state.xot);
             // if any name is in the xsl namespace, we skip it
-            let ns = content.state.xot.namespace_for_name(*k);
+            let ns = content.state.xot.namespace_for_name(key);
             if ns == content.state.names.xsl_ns {
                 continue;
             }
-            let value = attributes.required(*k, attributes.value_template(attributes.string()))?;
+            let value = attributes.required(key, attributes.value_template(attributes.string()))?;
             element_attributes.push((name, value));
         }
         Ok(ast::ElementNode {
@@ -1719,7 +1719,7 @@ mod tests {
         let node = state.xot.document_element(node).unwrap();
 
         if let Some(element) = state.xot.element(node) {
-            let context = Context::new(element.prefixes().clone());
+            let context = Context::new(state.xot.prefixes(node));
             let content = Content::new(node, &state, context);
             content.parse_element(
                 element,

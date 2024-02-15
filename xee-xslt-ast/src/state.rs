@@ -31,6 +31,9 @@ impl State {
             Comment(_comment) => self.span_info.get(SpanInfoKey::Comment(node)),
             ProcessingInstruction(_pi) => self.span_info.get(SpanInfoKey::PiTarget(node)),
             Root => unreachable!(),
+            // TODO: is it worthwhile to introduce span info keys for this?
+            Attribute(_attribute) => unreachable!(),
+            Namespace(_namespace) => unreachable!(),
         }
         .map(|span| span.into())
     }

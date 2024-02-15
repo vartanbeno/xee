@@ -4,8 +4,8 @@ use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
 use xee_xpath::{
-    context::DynamicContext, context::StaticContext, sequence::Item, xml::Node, Name, Namespaces,
-    Queries, Query, Recurse, Session,
+    context::DynamicContext, context::StaticContext, sequence::Item, Name, Namespaces, Queries,
+    Query, Recurse, Session,
 };
 use xot::Xot;
 
@@ -26,8 +26,7 @@ impl qt::TestSet {
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
-        let xot_root = xot.parse(xml)?;
-        let root = Node::Xot(xot_root);
+        let root = xot.parse(xml)?;
         let namespaces = Namespaces::new(
             Namespaces::default_namespaces(),
             Some(NS),
@@ -46,7 +45,7 @@ impl qt::TestSet {
             // for the static context
             query.execute(&mut session, &Item::from(root))?
         };
-        xot.remove(xot_root).unwrap();
+        xot.remove(root).unwrap();
         Ok(r)
     }
 }
@@ -62,8 +61,8 @@ impl qt::Catalog {
     }
 
     pub(crate) fn load_from_xml(xot: &mut Xot, path: &Path, xml: &str) -> Result<Self> {
-        let xot_root = xot.parse(xml)?;
-        let root = Node::Xot(xot_root);
+        let root = xot.parse(xml)?;
+
         let namespaces = Namespaces::new(
             Namespaces::default_namespaces(),
             Some(NS),
@@ -81,7 +80,7 @@ impl qt::Catalog {
             let mut session = queries.session(&dynamic_context, xot);
             query.execute(&mut session, &Item::from(root))?
         };
-        xot.remove(xot_root).unwrap();
+        xot.remove(root).unwrap();
         Ok(r)
     }
 }

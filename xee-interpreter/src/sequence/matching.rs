@@ -363,8 +363,6 @@ mod tests {
     use xee_name::Namespaces;
     use xee_xpath_ast::parse_sequence_type;
 
-    use crate::xml;
-
     #[test]
     fn test_one_integer() {
         let namespaces = Namespaces::default();
@@ -450,7 +448,6 @@ mod tests {
         let mut xot = Xot::new();
         let root = xot.parse("<doc/>").unwrap();
         let node = xot.document_element(root).unwrap();
-        let node = xml::Node::Xot(node);
         let right_sequence = Sequence::from(vec![Item::from(atomic::Atomic::from(1i64))]);
         let wrong_amount_sequence = Sequence::from(vec![
             Item::from(atomic::Atomic::from(1i64)),
@@ -547,12 +544,10 @@ mod tests {
         let a = xot.first_child(doc).unwrap();
         let b = xot.next_sibling(a).unwrap();
         let text = xot.first_child(a).unwrap();
-
-        let doc = xml::Node::Xot(doc);
-        let attr = xml::Node::Attribute(a, xot.name("attr").unwrap());
-        let a = xml::Node::Xot(a);
-        let b = xml::Node::Xot(b);
-        let text = xml::Node::Xot(text);
+        let attr = xot
+            .attributes(a)
+            .get_node(xot.name("attr").unwrap())
+            .unwrap();
 
         let right_sequence = Sequence::from(vec![
             Item::from(doc),
@@ -587,12 +582,10 @@ mod tests {
         let a = xot.first_child(doc).unwrap();
         let b = xot.next_sibling(a).unwrap();
         let text = xot.first_child(a).unwrap();
-
-        let doc = xml::Node::Xot(doc);
-        let attr = xml::Node::Attribute(a, xot.name("attr").unwrap());
-        let a = xml::Node::Xot(a);
-        let b = xml::Node::Xot(b);
-        let text = xml::Node::Xot(text);
+        let attr = xot
+            .attributes(a)
+            .get_node(xot.name("attr").unwrap())
+            .unwrap();
 
         let right_sequence = Sequence::from(vec![Item::from(doc), Item::from(a), Item::from(b)]);
 
@@ -650,9 +643,6 @@ mod tests {
         let doc = xot.document_element(doc).unwrap();
         let a = xot.first_child(doc).unwrap();
         let b = xot.next_sibling(a).unwrap();
-
-        let a = xml::Node::Xot(a);
-        let b = xml::Node::Xot(b);
 
         let right_sequence = Sequence::from(vec![Item::from(a), Item::from(b)]);
 

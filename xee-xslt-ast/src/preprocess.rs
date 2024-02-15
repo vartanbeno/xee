@@ -42,12 +42,12 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
                 }
                 if let Some(element) = xot.element(node) {
                     // record all shadow attributes to process
-                    for key in element.attributes().keys() {
-                        let (name, ns) = xot.name_ns_str(*key);
+                    for key in xot.attributes(node).keys() {
+                        let (name, ns) = xot.name_ns_str(key);
                         if ns.is_empty() && name.starts_with('_') {
                             let non_shadow_name = name[1..].to_string();
                             non_shadow_names.push(non_shadow_name);
-                            shadow_attributes.push((node, *key));
+                            shadow_attributes.push((node, key));
                         }
                     }
                     // TODO: use-when itself can be a shadow attribute
@@ -56,7 +56,7 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
                     } else {
                         xsl_use_when
                     };
-                    if let Some(value) = element.attributes().get(&use_when) {
+                    if let Some(value) = xot.attributes(node).get(use_when) {
                         // TODO: replace with real xpath evaluation
                         if value == "false()" {
                             to_remove.push(node);
@@ -84,14 +84,15 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
         let (name, _) = xot.name_ns_str(shadow_name);
         let non_shadow_name = &name[1..];
         let non_shadow_name = xot.name(non_shadow_name).ok_or(Error::Internal)?;
-        let element = xot.element_mut(node).ok_or(Error::Internal)?;
-        let value = element
-            .get_attribute(shadow_name)
+        let value = xot
+            .attributes(node)
+            .get(shadow_name)
             .ok_or(Error::Internal)?
             .to_string();
         // TODO execute xpath
-        element.set_attribute(non_shadow_name, value);
-        element.remove_attribute(shadow_name);
+        let mut attributes = xot.attributes_mut(node);
+        attributes.insert(non_shadow_name, value);
+        attributes.remove(shadow_name);
     }
 
     for node in to_remove {
@@ -99,8 +100,7 @@ fn preprocess(xot: &mut Xot, top: Node) -> Result<(), Error> {
     }
 
     for (node, name) in to_remove_attribute {
-        let element = xot.element_mut(node).ok_or(Error::Internal)?;
-        element.remove_attribute(name);
+        xot.attributes_mut(node).remove(name);
     }
 
     Ok(())

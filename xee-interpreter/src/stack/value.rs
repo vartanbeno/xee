@@ -131,7 +131,7 @@ impl Value {
         }
     }
 
-    fn one_node(self) -> error::Result<xml::Node> {
+    fn one_node(self) -> error::Result<xot::Node> {
         match self {
             Value::One(item) => item.to_node(),
             _ => Err(error::Error::XPTY0004),
@@ -233,6 +233,7 @@ impl Value {
     pub(crate) fn deduplicate(self, annotations: &xml::Annotations) -> error::Result<stack::Value> {
         let mut s = HashSet::new();
         let mut non_node_seen = false;
+
         for item in self.items() {
             match item? {
                 sequence::Item::Node(n) => {
@@ -256,7 +257,7 @@ impl Value {
         }
     }
 
-    fn process_set_result(s: HashSet<xml::Node>, annotations: &xml::Annotations) -> stack::Value {
+    fn process_set_result(s: HashSet<xot::Node>, annotations: &xml::Annotations) -> stack::Value {
         // sort nodes by document order
         let mut nodes = s.into_iter().collect::<Vec<_>>();
         nodes.sort_by_key(|n| annotations.document_order(*n));
@@ -301,18 +302,18 @@ impl TryFrom<&stack::Value> for Rc<function::Function> {
     }
 }
 
-impl TryFrom<stack::Value> for xml::Node {
+impl TryFrom<stack::Value> for xot::Node {
     type Error = error::Error;
 
-    fn try_from(value: stack::Value) -> error::Result<xml::Node> {
+    fn try_from(value: stack::Value) -> error::Result<xot::Node> {
         TryFrom::try_from(&value)
     }
 }
 
-impl TryFrom<&stack::Value> for xml::Node {
+impl TryFrom<&stack::Value> for xot::Node {
     type Error = error::Error;
 
-    fn try_from(value: &stack::Value) -> error::Result<xml::Node> {
+    fn try_from(value: &stack::Value) -> error::Result<xot::Node> {
         match value {
             stack::Value::One(sequence::Item::Node(n)) => Ok(*n),
             _ => Err(error::Error::XPTY0004),

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
-use xee_xpath::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item, xml::Node};
+use xee_xpath::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
 use xot::Xot;
 
 #[derive(Parser)]
@@ -68,14 +68,11 @@ fn display_atomic(atomic: &Atomic) -> String {
     format!("{}", atomic)
 }
 
-fn display_node(xot: &Xot, node: Node) -> Result<String, xot::Error> {
-    match node {
-        Node::Xot(node) => xot
-            .with_serialize_options(xot::SerializeOptions { pretty: true })
-            .to_string(node),
-        Node::Attribute(node, name) => {
-            let value = xot.element(node).unwrap().get_attribute(name).unwrap();
-            let (name, namespace) = xot.name_ns_str(name);
+fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
+    match xot.value(node) {
+        xot::Value::Attribute(attribute) => {
+            let value = attribute.value();
+            let (name, namespace) = xot.name_ns_str(attribute.name());
             let name = if !namespace.is_empty() {
                 format!("Q{{{}}}{}", namespace, name)
             } else {
@@ -83,9 +80,12 @@ fn display_node(xot: &Xot, node: Node) -> Result<String, xot::Error> {
             };
             Ok(format!("Attribute {}=\"{}\"", name, value))
         }
-        Node::Namespace(..) => {
+        xot::Value::Namespace(..) => {
             todo!()
         }
+        _ => xot
+            .with_serialize_options(xot::SerializeOptions { pretty: true })
+            .to_string(node),
     }
 }
 

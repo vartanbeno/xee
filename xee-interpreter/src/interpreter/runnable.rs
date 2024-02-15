@@ -87,7 +87,6 @@ impl<'a> Runnable<'a> {
         node: xot::Node,
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Sequence> {
-        let node = xml::Node::Xot(node);
         let item = sequence::Item::Node(node);
         self.many(Some(&item), xot)
     }

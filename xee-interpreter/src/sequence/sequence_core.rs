@@ -14,7 +14,6 @@ use crate::sequence;
 use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
-use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sequence {
@@ -89,10 +88,10 @@ impl Sequence {
     pub fn elements<'a>(
         &self,
         xot: &'a Xot,
-    ) -> impl Iterator<Item = error::Result<xml::Node>> + 'a {
+    ) -> impl Iterator<Item = error::Result<xot::Node>> + 'a {
         self.nodes().map(|n| match n {
             Ok(n) => {
-                if n.is_element(xot) {
+                if xot.is_element(n) {
                     Ok(n)
                 } else {
                     Err(error::Error::XPTY0004)
@@ -160,7 +159,7 @@ impl Sequence {
                     }
                 }
                 (Item::Node(a), Item::Node(b)) => {
-                    if !a.deep_equal(&b, collation, xot) {
+                    if !xot.deep_equal_xpath(a, b, |a, b| collation.compare(a, b).is_eq()) {
                         return Ok(false);
                     }
                 }
@@ -319,8 +318,8 @@ impl From<Vec<sequence::Item>> for Sequence {
     }
 }
 
-impl From<Vec<xml::Node>> for Sequence {
-    fn from(items: Vec<xml::Node>) -> Self {
+impl From<Vec<xot::Node>> for Sequence {
+    fn from(items: Vec<xot::Node>) -> Self {
         let items = items
             .into_iter()
             .map(sequence::Item::from)
@@ -396,7 +395,7 @@ pub struct NodeIter {
 }
 
 impl Iterator for NodeIter {
-    type Item = error::Result<xml::Node>;
+    type Item = error::Result<xot::Node>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.value_iter.next();

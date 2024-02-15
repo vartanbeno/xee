@@ -37,4 +37,12 @@ impl<'a> Content<'a> {
     pub(crate) fn attributes(self, element: &'a xot::Element) -> Attributes<'a> {
         Attributes::new(self, element)
     }
+
+    pub(crate) fn xot_namespaces(&self) -> xot::Namespaces<'_> {
+        self.state.xot.namespaces(self.node)
+    }
+
+    pub(crate) fn xot_attributes(&self) -> xot::Attributes<'a> {
+        self.state.xot.attributes(self.node)
+    }
 }

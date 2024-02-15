@@ -5,13 +5,12 @@ use crate::atomic;
 use crate::error;
 use crate::function;
 use crate::stack;
-use crate::xml;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Atomic(atomic::Atomic),
     Function(Rc<function::Function>),
-    Node(xml::Node),
+    Node(xot::Node),
 }
 
 impl Item {
@@ -21,7 +20,7 @@ impl Item {
             _ => Err(error::Error::XPTY0004),
         }
     }
-    pub fn to_node(&self) -> error::Result<xml::Node> {
+    pub fn to_node(&self) -> error::Result<xot::Node> {
         match self {
             Item::Node(n) => Ok(*n),
             _ => Err(error::Error::XPTY0004),
@@ -69,7 +68,7 @@ impl Item {
     pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
         match self {
             Item::Atomic(atomic) => atomic.string_value(),
-            Item::Node(node) => Ok(node.string_value(xot)),
+            Item::Node(node) => Ok(xot.string_value(*node)),
             Item::Function(_) => Err(error::Error::FOTY0014),
         }
     }
@@ -98,8 +97,8 @@ where
     }
 }
 
-impl From<xml::Node> for Item {
-    fn from(node: xml::Node) -> Self {
+impl From<xot::Node> for Item {
+    fn from(node: xot::Node) -> Self {
         Self::Node(node)
     }
 }
@@ -170,12 +169,18 @@ pub struct AtomizedNodeIter {
 }
 
 impl AtomizedNodeIter {
-    fn new(node: xml::Node, xot: &Xot) -> Self {
+    fn new(node: xot::Node, xot: &Xot) -> Self {
         Self {
-            typed_value: node.typed_value(xot),
+            typed_value: typed_value(xot, node),
             typed_value_index: 0,
         }
     }
+}
+
+fn typed_value(xot: &Xot, node: xot::Node) -> Vec<atomic::Atomic> {
+    // for now we don't know any types of nodes yet; everything is untyped
+    let s = xot.string_value(node);
+    vec![atomic::Atomic::Untyped(Rc::new(s))]
 }
 
 impl Iterator for AtomizedNodeIter {

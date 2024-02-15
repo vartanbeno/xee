@@ -1,8 +1,5 @@
-use ::next_gen::prelude::*;
 use ahash::{HashMap, HashMapExt};
 use xot::Xot;
-
-use crate::xml;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct DocumentOrder(usize, usize);
@@ -28,7 +25,7 @@ impl Annotation {
 pub struct Annotations {
     // each document has a different id, so track this
     document_id: usize,
-    map: HashMap<xml::Node, Annotation>,
+    map: HashMap<xot::Node, Annotation>,
 }
 
 impl Annotations {
@@ -44,13 +41,12 @@ impl Annotations {
         self.document_id = 0;
     }
 
-    pub(crate) fn add(&mut self, xot: &Xot, doc: xml::Node) {
+    pub(crate) fn add(&mut self, xot: &Xot, doc: xot::Node) {
         // if we already know this document, we are done
         if self.map.contains_key(&doc) {
             return;
         }
-        mk_gen!(let gen = document_descendants(xot, doc));
-        let map_init = gen.enumerate().map(|(i, node)| {
+        let map_init = xot.all_descendants(doc).enumerate().map(|(i, node)| {
             (
                 node,
                 Annotation {
@@ -62,39 +58,14 @@ impl Annotations {
         self.document_id += 1;
     }
 
-    pub(crate) fn get(&self, node: xml::Node) -> Option<&Annotation> {
+    pub(crate) fn get(&self, node: xot::Node) -> Option<&Annotation> {
         self.map.get(&node)
     }
 
-    pub(crate) fn document_order(&self, node: xml::Node) -> DocumentOrder {
+    pub(crate) fn document_order(&self, node: xot::Node) -> DocumentOrder {
         self.get(node)
             .map(|annotation| annotation.document_order)
             .expect("node not found")
-    }
-}
-
-#[generator(yield(xml::Node))]
-fn document_descendants(xot: &Xot, doc: xml::Node) {
-    match doc {
-        xml::Node::Xot(node) => {
-            if !xot.is_root(node) {
-                panic!("node is not a document");
-            }
-            for descendant in xot.descendants(node) {
-                yield_!(xml::Node::Xot(descendant));
-                if let Some(element) = xot.element(descendant) {
-                    for prefix in element.prefixes().keys() {
-                        yield_!(xml::Node::Namespace(descendant, *prefix));
-                    }
-                    for attr_name in element.attributes().keys() {
-                        yield_!(xml::Node::Attribute(descendant, *attr_name));
-                    }
-                }
-            }
-        }
-        xml::Node::Attribute(..) | xml::Node::Namespace(..) => {
-            panic!("node is not a document");
-        }
     }
 }
 
@@ -109,11 +80,9 @@ mod tests {
         let root = xot.document_element(doc).unwrap();
         let a = xot.first_child(root).unwrap();
         let b = xot.next_sibling(a).unwrap();
-        let root = xml::Node::Xot(root);
-        let a = xml::Node::Xot(a);
-        let b = xml::Node::Xot(b);
+
         let mut annotations = Annotations::new();
-        annotations.add(&xot, xml::Node::Xot(doc));
+        annotations.add(&xot, doc);
 
         assert!(annotations.document_order(a) < annotations.document_order(b));
         assert!(annotations.document_order(root) < annotations.document_order(a));
@@ -126,21 +95,15 @@ mod tests {
         let root0 = xot.document_element(doc0).unwrap();
         let a = xot.first_child(root0).unwrap();
         let b = xot.next_sibling(a).unwrap();
-        let root0 = xml::Node::Xot(root0);
-        let a = xml::Node::Xot(a);
-        let b = xml::Node::Xot(b);
 
         let doc1 = xot.parse(r#"<root><c/><d/></root>"#).unwrap();
         let root1 = xot.document_element(doc1).unwrap();
         let c = xot.first_child(root1).unwrap();
         let d = xot.next_sibling(c).unwrap();
-        let root1 = xml::Node::Xot(root1);
-        let c = xml::Node::Xot(c);
-        let d = xml::Node::Xot(d);
 
         let mut annotations = Annotations::new();
-        annotations.add(&xot, xml::Node::Xot(doc0));
-        annotations.add(&xot, xml::Node::Xot(doc1));
+        annotations.add(&xot, doc0);
+        annotations.add(&xot, doc1);
 
         assert!(annotations.document_order(a) < annotations.document_order(b));
         assert!(annotations.document_order(root0) < annotations.document_order(a));
@@ -159,14 +122,12 @@ mod tests {
         let root = xot.document_element(doc).unwrap();
         let x = xot.first_child(root).unwrap();
         let y = xot.next_sibling(x).unwrap();
-        let a = xml::Node::Attribute(x, xot.name("a").unwrap());
-        let b = xml::Node::Attribute(x, xot.name("b").unwrap());
-        let c = xml::Node::Attribute(y, xot.name("c").unwrap());
-        let x = xml::Node::Xot(x);
-        let y = xml::Node::Xot(y);
+        let a = xot.attributes(x).get_node(xot.name("a").unwrap()).unwrap();
+        let b = xot.attributes(x).get_node(xot.name("b").unwrap()).unwrap();
+        let c = xot.attributes(y).get_node(xot.name("c").unwrap()).unwrap();
 
         let mut annotations = Annotations::new();
-        annotations.add(&xot, xml::Node::Xot(doc));
+        annotations.add(&xot, doc);
 
         assert!(annotations.document_order(a) < annotations.document_order(b));
         assert!(annotations.document_order(x) < annotations.document_order(a));

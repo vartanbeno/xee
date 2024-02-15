@@ -31,7 +31,7 @@ impl<'a> Attributes<'a> {
         let content = self.content.with_context(
             self.content
                 .context
-                .with_standard(self.element.prefixes(), self.standard()?),
+                .with_standard(self.content.xot_namespaces(), self.standard()?),
         );
         // we now create a new attributes object that has the new content
         Ok(Self { content, ..self })
@@ -42,7 +42,7 @@ impl<'a> Attributes<'a> {
         let content = self.content.with_context(
             self.content
                 .context
-                .with_static_standard(self.element.prefixes(), self.static_standard()?),
+                .with_static_standard(self.content.xot_namespaces(), self.static_standard()?),
         );
         // we now create a new attributes object that has the new content
         Ok(Self { content, ..self })
@@ -54,8 +54,7 @@ impl<'a> Attributes<'a> {
         parse_value: impl Fn(&'a str, Span) -> Result<T, AttributeError>,
     ) -> Result<Option<T>, AttributeError> {
         self.seen.borrow_mut().insert(name);
-
-        if let Some(value) = self.element.get_attribute(name) {
+        if let Some(value) = self.content.xot_attributes().get(name) {
             let span = self.value_span(name)?;
             let value = parse_value(value, span).map_err(|e| {
                 if let AttributeError::XPathParser(e) = e {
@@ -110,9 +109,9 @@ impl<'a> Attributes<'a> {
     pub(crate) fn unseen_attributes(&self) -> Vec<NameId> {
         let mut result = Vec::new();
         let seen = self.seen.borrow();
-        for name in self.element.attributes().keys() {
-            if !seen.contains(name) {
-                result.push(*name);
+        for name in self.content.state.xot.attributes(self.content.node).keys() {
+            if !seen.contains(&name) {
+                result.push(name);
             }
         }
         result

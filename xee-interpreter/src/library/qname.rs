@@ -13,13 +13,12 @@ use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::wrap_xpath_fn;
-use crate::xml;
 
 #[xpath_fn("fn:resolve-QName($qname as xs:string?, $element as element()) as xs:QName?")]
 fn resolve_qname(
     interpreter: &Interpreter,
     qname: Option<&str>,
-    node: xml::Node,
+    node: xot::Node,
 ) -> error::Result<Option<atomic::Atomic>> {
     if let Some(qname) = qname {
         // TODO: we could make this more efficient if we could have a parser state
@@ -33,12 +32,12 @@ fn resolve_qname(
     }
 }
 
-fn element_namespaces(node: xml::Node, xot: &Xot) -> Namespaces {
-    let node = node.xot_node();
+fn element_namespaces(node: xot::Node, xot: &Xot) -> Namespaces {
     let pairs = xot
-        .namespaces(node)
+        .inherited_prefixes(node)
+        .iter()
         .map(|(prefix_id, namespace_id)| {
-            (xot.prefix_str(prefix_id), xot.namespace_str(namespace_id))
+            (xot.prefix_str(*prefix_id), xot.namespace_str(*namespace_id))
         })
         .collect::<HashMap<_, _>>();
 
@@ -131,7 +130,7 @@ fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::A
 fn namespace_uri_for_prefix(
     interpreter: &Interpreter,
     prefix: Option<&str>,
-    node: xml::Node,
+    node: xot::Node,
 ) -> error::Result<Option<atomic::Atomic>> {
     if let Some(prefix) = prefix {
         // TODO: efficiency could be made faster if we used NameSpaceLookup, see

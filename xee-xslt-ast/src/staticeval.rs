@@ -253,7 +253,7 @@ mod tests {
     use super::*;
     use crate::names::Names;
 
-    use xee_xpath::{sequence::Item, xml::Node};
+    use xee_xpath::sequence::Item;
 
     #[test]
     fn test_one_static_variable() {
@@ -536,7 +536,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         let variables =
             static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
@@ -572,7 +572,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         let variables =
             static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
@@ -692,7 +692,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
         assert_eq!(
@@ -728,7 +728,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
         assert_eq!(
@@ -764,7 +764,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
         assert_eq!(
@@ -800,7 +800,7 @@ mod tests {
         let xhtml = xot.parse(xhtml).unwrap();
         let parameters = Variables::from([(
             xpath_ast::Name::new("x".to_string(), None, None),
-            Item::Node(Node::Xot(xhtml)).into(),
+            Item::Node(xhtml).into(),
         )]);
         static_evaluate(&mut state, document_element, parameters, &mut xot).unwrap();
         assert_eq!(
