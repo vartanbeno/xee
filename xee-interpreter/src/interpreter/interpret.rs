@@ -525,29 +525,14 @@ impl<'a> Interpreter<'a> {
                     let item = sequence::Item::Node(element_node);
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlAppend => {
-                    let child_value = self.state.pop();
-                    let parent_node = self.pop_node()?;
-                    self.xml_append(parent_node, child_value)?;
-                    // now we can push back the parent node
-                    let item = sequence::Item::Node(parent_node);
-                    self.state.push(item.into());
-                }
                 EncodedInstruction::XmlAttribute => {
                     let value = self.pop_atomic()?;
                     let name_id = self.pop_xot_name()?;
-                    let element_node = self.pop_node()?;
-                    // TODO: change this so it creates an attribute node instead
-                    if !self.xot().is_element(element_node) {
-                        unreachable!("xml attribute should always follow an element");
-                    }
-                    self.state
-                        .xot_mut()
-                        .attributes_mut(element_node)
-                        .insert(name_id, value.string_value()?);
-
-                    // now we can push back the element node
-                    let item = sequence::Item::Node(element_node);
+                    let attribute_node = self
+                        .state
+                        .xot
+                        .new_attribute_node(name_id, value.string_value()?);
+                    let item = sequence::Item::Node(attribute_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlPrefix => {}
@@ -560,6 +545,14 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::XmlComment => {}
                 EncodedInstruction::XmlProcessingInstruction => {}
+                EncodedInstruction::XmlAppend => {
+                    let child_value = self.state.pop();
+                    let parent_node = self.pop_node()?;
+                    self.xml_append(parent_node, child_value)?;
+                    // now we can push back the parent node
+                    let item = sequence::Item::Node(parent_node);
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::CopyShallow => {
                     let value = &self.state.pop();
                     if value.is_empty_sequence() {

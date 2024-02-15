@@ -865,3 +865,39 @@ fn test_xsl_text_value_template() {
 
     assert_eq!(xml(&xot, output), r#"<o>Content: foo</o>"#);
 }
+
+// #[test]
+// fn test_xsl_attribute_with_select() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         r#"<doc/>"#,
+//         r#"
+//   <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//     <xsl:template match="/">
+//       <o><xsl:attribute name="foo" select="'FOO'"/></o>
+//     </xsl:template>
+//   </xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(xml(&xot, output), r#"<o foo="FOO">content</o>"#);
+// }
+
+// #[test]
+// fn test_xsl_attribute_with_content() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         r#"<doc/>"#,
+//         r#"
+//   <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//     <xsl:template match="/">
+//       <o><xsl:attribute name="foo"/>FOO</o>
+//     </xsl:template>
+//   </xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(xml(&xot, output), r#"<o foo="FOO">content</o>"#);
+// }

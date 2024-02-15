@@ -263,7 +263,6 @@ pub struct XmlElement {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XmlAttribute {
-    pub element: AtomS,
     pub name: AtomS,
     pub value: AtomS,
 }

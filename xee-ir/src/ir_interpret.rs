@@ -824,7 +824,6 @@ impl<'a> InterpreterCompiler<'a> {
         element: &ir::XmlElement,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        // self.compile_atom(&element.element)?;
         self.compile_atom(&element.name)?;
         self.builder.emit(Instruction::XmlElement, span);
         Ok(())
@@ -835,7 +834,6 @@ impl<'a> InterpreterCompiler<'a> {
         attribute: &ir::XmlAttribute,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&attribute.element)?;
         self.compile_atom(&attribute.name)?;
         self.compile_atom(&attribute.value)?;
         self.builder.emit(Instruction::XmlAttribute, span);

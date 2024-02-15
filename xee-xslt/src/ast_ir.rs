@@ -287,13 +287,19 @@ impl<'a> IrConverter<'a> {
             let (attribute_name_atom, attribute_bindings) = self.xml_name(name)?.atom_bindings();
             let value_bindings = value_bindings.concat(attribute_bindings);
             let attribute_expr = ir::Expr::XmlAttribute(ir::XmlAttribute {
-                element: element_atom.clone(),
                 name: attribute_name_atom,
                 value: value_atom,
             });
-            let attribute_bindings =
-                value_bindings.bind_expr_no_span(&mut self.variables, attribute_expr);
-            bindings = bindings.concat(attribute_bindings);
+            let (attribute_atom, attribute_bindings) = value_bindings
+                .bind_expr_no_span(&mut self.variables, attribute_expr)
+                .atom_bindings();
+            let append_expr = ir::Expr::XmlAppend(ir::XmlAppend {
+                parent: element_atom.clone(),
+                child: attribute_atom,
+            });
+            let append_bindings =
+                attribute_bindings.bind_expr_no_span(&mut self.variables, append_expr);
+            bindings = bindings.concat(append_bindings);
         }
         let sequence_constructor_bindings = self.sequence_constructor_append(
             element_atom.clone(),
