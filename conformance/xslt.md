@@ -42,7 +42,11 @@ TODO
 
 ## xsl:attribute
 
-TODO: nodes
+Not yet:
+
+- type
+
+- validation
 
 ## xsl:attribute-set
 
