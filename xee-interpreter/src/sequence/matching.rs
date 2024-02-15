@@ -355,11 +355,11 @@ impl atomic::Atomic {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::rc::Rc;
 
-    use super::*;
     use ibig::ibig;
-
     use xee_name::Namespaces;
     use xee_xpath_ast::parse_sequence_type;
 
