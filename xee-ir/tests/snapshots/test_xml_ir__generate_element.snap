@@ -3,7 +3,7 @@ source: xee-ir/tests/test_xml_ir.rs
 expression: "decode_instructions(&program.functions[0].chunk)"
 ---
 [
-    XmlRoot,
+    XmlDocument,
     Const(
         0,
     ),

@@ -70,7 +70,7 @@ impl<'a> InterpreterCompiler<'a> {
                 self.compile_array_constructor(array_constructor, span)
             }
             ir::Expr::XmlName(xml_name) => self.compile_xml_name(xml_name, span),
-            ir::Expr::XmlRoot(root) => self.compile_xml_root(root, span),
+            ir::Expr::XmlDocument(root) => self.compile_xml_document(root, span),
             ir::Expr::XmlElement(element) => self.compile_xml_element(element, span),
             ir::Expr::XmlAttribute(attribute) => self.compile_xml_attribute(attribute, span),
             ir::Expr::XmlPrefix(prefix) => self.compile_xml_prefix(prefix, span),
@@ -810,12 +810,12 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_xml_root(
+    fn compile_xml_document(
         &mut self,
         _root: &ir::XmlRoot,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.builder.emit(Instruction::XmlRoot, span);
+        self.builder.emit(Instruction::XmlDocument, span);
         Ok(())
     }
 

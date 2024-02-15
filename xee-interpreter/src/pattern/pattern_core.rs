@@ -109,7 +109,7 @@ pub(crate) trait PredicateMatcher {
     ) -> bool {
         let node_match = self.matches_relative_steps(steps, node);
         if let NodeMatch::Match(Some(node)) = node_match {
-            self.xot().is_root(node)
+            self.xot().is_document(node)
         } else {
             false
         }
@@ -125,7 +125,7 @@ pub(crate) trait PredicateMatcher {
             // we need to be under root
             let mut current_node = node;
             loop {
-                if self.xot().is_root(current_node) {
+                if self.xot().is_document(current_node) {
                     return true;
                 }
                 if let Some(parent) = self.xot().parent(current_node) {

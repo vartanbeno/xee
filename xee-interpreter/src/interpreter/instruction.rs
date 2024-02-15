@@ -67,7 +67,7 @@ pub enum Instruction {
     BuildComplete,
     IsNumeric,
     XmlName,
-    XmlRoot,
+    XmlDocument,
     XmlElement,
     XmlAttribute,
     XmlPrefix,
@@ -146,7 +146,7 @@ pub(crate) enum EncodedInstruction {
     BuildComplete,
     IsNumeric,
     XmlName,
-    XmlRoot,
+    XmlDocument,
     XmlElement,
     XmlAttribute,
     XmlPrefix,
@@ -275,7 +275,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::BuildComplete => (Instruction::BuildComplete, 1),
         EncodedInstruction::IsNumeric => (Instruction::IsNumeric, 1),
         EncodedInstruction::XmlName => (Instruction::XmlName, 1),
-        EncodedInstruction::XmlRoot => (Instruction::XmlRoot, 1),
+        EncodedInstruction::XmlDocument => (Instruction::XmlDocument, 1),
         EncodedInstruction::XmlElement => (Instruction::XmlElement, 1),
         EncodedInstruction::XmlAttribute => (Instruction::XmlAttribute, 1),
         EncodedInstruction::XmlPrefix => (Instruction::XmlPrefix, 1),
@@ -420,7 +420,7 @@ pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         }
         Instruction::IsNumeric => bytes.push(EncodedInstruction::IsNumeric.to_u8().unwrap()),
         Instruction::XmlName => bytes.push(EncodedInstruction::XmlName.to_u8().unwrap()),
-        Instruction::XmlRoot => bytes.push(EncodedInstruction::XmlRoot.to_u8().unwrap()),
+        Instruction::XmlDocument => bytes.push(EncodedInstruction::XmlDocument.to_u8().unwrap()),
         Instruction::XmlElement => bytes.push(EncodedInstruction::XmlElement.to_u8().unwrap()),
         Instruction::XmlAttribute => bytes.push(EncodedInstruction::XmlAttribute.to_u8().unwrap()),
         Instruction::XmlPrefix => bytes.push(EncodedInstruction::XmlPrefix.to_u8().unwrap()),
@@ -497,7 +497,7 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Lookup
         | Instruction::WildcardLookup
         | Instruction::XmlName
-        | Instruction::XmlRoot
+        | Instruction::XmlDocument
         | Instruction::XmlElement
         | Instruction::XmlAttribute
         | Instruction::XmlPrefix

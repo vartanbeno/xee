@@ -41,7 +41,7 @@ pub enum Expr {
     MapConstructor(MapConstructor),
     ArrayConstructor(ArrayConstructor),
     XmlName(XmlName),
-    XmlRoot(XmlRoot),
+    XmlDocument(XmlRoot),
     XmlElement(XmlElement),
     XmlAttribute(XmlAttribute),
     XmlPrefix(XmlPrefix),

@@ -514,8 +514,8 @@ impl<'a> Interpreter<'a> {
                     let name = xee_name::Name::new(local_name, namespace, None);
                     self.state.push(name.into());
                 }
-                EncodedInstruction::XmlRoot => {
-                    let root_node = self.state.xot.new_root_unconnected();
+                EncodedInstruction::XmlDocument => {
+                    let root_node = self.state.xot.new_document();
                     let item = sequence::Item::Node(root_node);
                     self.state.push(item.into());
                 }
@@ -1079,7 +1079,7 @@ impl<'a> Interpreter<'a> {
                         string_values.clear();
                     }
                     match self.state.xot.value(node) {
-                        xot::Value::Root => {
+                        xot::Value::Document => {
                             todo!("Handle adding all the children instead");
                         }
                         xot::Value::Text(text) => {
@@ -1126,7 +1126,7 @@ impl<'a> Interpreter<'a> {
         let value = xot.value(node);
         match value {
             // root and element are shallow copies
-            xot::Value::Root => xot.new_root_unconnected(),
+            xot::Value::Document => xot.new_document(),
             // TODO: work on copying prefixes
             xot::Value::Element(element) => xot.new_element(element.name()),
             // we can clone (deep-copy) these nodes as it's the same

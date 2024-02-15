@@ -24,7 +24,7 @@ fn test_generate_element() {
     let element_name = ir::Name::new("element".to_string());
 
     // create a root element
-    let root_expr = ir::Expr::XmlRoot(ir::XmlRoot {});
+    let root_expr = ir::Expr::XmlDocument(ir::XmlRoot {});
 
     // create an element of element_name
     let element_expr = ir::Expr::XmlElement(ir::XmlElement {

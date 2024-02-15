@@ -44,7 +44,7 @@ fn attribute_test(test: Option<&ast::ElementOrAttributeTest>, xot: &Xot, node: x
 }
 
 fn document_test(test: Option<&ast::DocumentTest>, xot: &Xot, node: xot::Node) -> bool {
-    if !xot.is_root(node) {
+    if !xot.is_document(node) {
         return false;
     }
 

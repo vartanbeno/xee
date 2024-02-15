@@ -3699,7 +3699,7 @@ checksum = "4d25c75bf9ea12c4040a97f829154768bbbce366287e2dc044af160cd79a13fd"
 [[package]]
 name = "xot"
 version = "0.20.0"
-source = "git+https://github.com/faassen/xot.git?branch=attribute-ns-nodes#1bc54862a0972f997883f4e3b6635af5dffcf39b"
+source = "git+https://github.com/faassen/xot.git?branch=attribute-ns-nodes#1b87b62d4990c4ab3185612dd1fb5c69dfa6ef42"
 dependencies = [
  "ahash 0.8.6",
  "encoding_rs",
