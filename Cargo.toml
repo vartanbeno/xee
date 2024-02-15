@@ -22,7 +22,7 @@ resolver = "2"
 ahash = "0.8.6"
 strum = "0.25"
 strum_macros = "0.25"
-xot = { git = "https://github.com/faassen/xot.git", branch = "attribute-ns-nodes" }
+xot = "0.21"
 clap = "4.2.7"
 ibig = "0.3.6"
 ordered-float = "3.7.0"
