@@ -885,6 +885,24 @@ fn test_xsl_attribute_with_select() {
 }
 
 #[test]
+fn test_xsl_attribute_name_value_template() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+    <xsl:template match="/">
+      <o><xsl:attribute name="{'foo'}" select="'FOO'"/></o>
+    </xsl:template>
+  </xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o foo="FOO"/>"#);
+}
+
+#[test]
 fn test_xsl_attribute_with_content() {
     let mut xot = Xot::new();
     let output = evaluate(
