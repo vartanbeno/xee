@@ -1,4 +1,3 @@
-use xee_name::Name;
 use xee_xpath_type::ast::KindTest;
 use xot::Xot;
 

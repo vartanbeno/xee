@@ -66,7 +66,7 @@ impl From<value_template::Error> for ElementError {
 }
 
 impl From<xot::Error> for ElementError {
-    fn from(e: xot::Error) -> Self {
+    fn from(_e: xot::Error) -> Self {
         ElementError::Internal
     }
 }
