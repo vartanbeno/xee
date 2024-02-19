@@ -1,6 +1,7 @@
 use chumsky::{input::ValueInput, prelude::*};
 use ordered_float::OrderedFloat;
 use std::borrow::Cow;
+use xot::xmlname::NameStrInfo;
 
 use crate::ast::Span;
 use crate::lexer::Token;

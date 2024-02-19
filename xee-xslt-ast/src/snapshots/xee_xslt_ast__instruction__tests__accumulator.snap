@@ -8,10 +8,10 @@ Ok(Transform(
   extension_element_prefixes: None,
   declarations: [
     Accumulator(Accumulator(
-      name: Name(
-        name: "foo",
-        prefix: None,
-        namespace: None,
+      name: OwnedName(
+        local_name_str: "foo",
+        namespace_str: "",
+        prefix_str: "",
       ),
       initial_value: Expression(
         xpath: XPath(Expr([
@@ -38,10 +38,10 @@ Ok(Transform(
               steps: [
                 AxisStep(AxisStep(
                   forward: Child,
-                  node_test: NameTest(Name(Name(
-                    name: "foo",
-                    prefix: None,
-                    namespace: None,
+                  node_test: NameTest(Name(OwnedName(
+                    local_name_str: "foo",
+                    namespace_str: "",
+                    prefix_str: "",
                   ))),
                   predicates: [],
                 )),

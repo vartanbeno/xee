@@ -7,10 +7,10 @@ Ok(Path(PathExpr(
     AxisStep(AxisStep(
       axis: Self_,
       node_test: KindTest(Attribute(Some(ElementOrAttributeTest(
-        name_or_wildcard: Name(Name(
-          name: "foo",
-          prefix: None,
-          namespace: None,
+        name_or_wildcard: Name(OwnedName(
+          local_name_str: "foo",
+          namespace_str: "",
+          prefix_str: "",
         )),
         type_name: None,
       )))),

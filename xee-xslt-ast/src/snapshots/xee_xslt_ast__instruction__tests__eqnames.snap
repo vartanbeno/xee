@@ -7,20 +7,20 @@ Ok(Instruction(Copy(Copy(
   copy_namespaces: true,
   inherit_namespaces: true,
   use_attribute_sets: Some([
-    Name(
-      name: "foo",
-      prefix: None,
-      namespace: None,
+    OwnedName(
+      local_name_str: "foo",
+      namespace_str: "",
+      prefix_str: "",
     ),
-    Name(
-      name: "bar",
-      prefix: None,
-      namespace: None,
+    OwnedName(
+      local_name_str: "bar",
+      namespace_str: "",
+      prefix_str: "",
     ),
-    Name(
-      name: "baz",
-      prefix: None,
-      namespace: None,
+    OwnedName(
+      local_name_str: "baz",
+      namespace_str: "",
+      prefix_str: "",
     ),
   ]),
   type_: None,

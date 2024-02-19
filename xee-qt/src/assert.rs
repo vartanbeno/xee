@@ -884,7 +884,7 @@ fn run_xpath_with_result(
     xot: &mut Xot,
 ) -> Result<Sequence> {
     let namespaces = Namespaces::default();
-    let name = Name::unprefixed("result");
+    let name = Name::name("result");
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
     let program = parse(&static_context, &expr.0).map_err(|e| e.error)?;

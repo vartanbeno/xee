@@ -7,10 +7,10 @@ Ok(Path(PathExpr(
     PrimaryExpr(InlineFunction(InlineFunction(
       params: [
         Param(
-          name: Name(
-            name: "placeholder0",
-            prefix: None,
-            namespace: None,
+          name: OwnedName(
+            local_name_str: "placeholder0",
+            namespace_str: "",
+            prefix_str: "",
           ),
           type_: None,
         ),
@@ -20,18 +20,18 @@ Ok(Path(PathExpr(
         Path(PathExpr(
           steps: [
             PrimaryExpr(FunctionCall(FunctionCall(
-              name: Name(
-                name: "my_function",
-                prefix: None,
-                namespace: Some("http://www.w3.org/2005/xpath-functions"),
+              name: OwnedName(
+                local_name_str: "my_function",
+                namespace_str: "http://www.w3.org/2005/xpath-functions",
+                prefix_str: "",
               ),
               arguments: [
                 Path(PathExpr(
                   steps: [
-                    PrimaryExpr(VarRef(Name(
-                      name: "placeholder0",
-                      prefix: None,
-                      namespace: None,
+                    PrimaryExpr(VarRef(OwnedName(
+                      local_name_str: "placeholder0",
+                      namespace_str: "",
+                      prefix_str: "",
                     ))),
                   ],
                 )),

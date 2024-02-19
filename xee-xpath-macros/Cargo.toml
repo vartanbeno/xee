@@ -20,6 +20,9 @@ quote = "1"
 syn = { version = "2", features = ["full", "extra-traits"] }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
 xee-schema-type = { path = "../xee-schema-type" }
+xot = { workspace = true }
 
 [dev-dependencies]
+serde = { workspace = true, features = ["derive"] }
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
+xot = { workspace = true, features = ["serde"] }

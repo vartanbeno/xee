@@ -41,10 +41,10 @@ Ok(
                                             node_test: NameTest(
                                                 Name(
                                                     Spanned {
-                                                        value: Name {
-                                                            name: "a",
-                                                            prefix: None,
-                                                            namespace: None,
+                                                        value: OwnedName {
+                                                            local_name_str: "a",
+                                                            namespace_str: "",
+                                                            prefix_str: "",
                                                         },
                                                         span: 7..8,
                                                     },

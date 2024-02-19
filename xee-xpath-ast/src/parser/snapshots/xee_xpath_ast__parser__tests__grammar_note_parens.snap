@@ -7,10 +7,10 @@ Ok(XPath(Expr([
     steps: [
       AxisStep(AxisStep(
         axis: Child,
-        node_test: NameTest(Name(Name(
-          name: "address",
-          prefix: None,
-          namespace: None,
+        node_test: NameTest(Name(OwnedName(
+          local_name_str: "address",
+          namespace_str: "",
+          prefix_str: "",
         ))),
         predicates: [],
       )),

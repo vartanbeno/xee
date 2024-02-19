@@ -8,10 +8,10 @@ Ok(Instruction(ForEach(ForEach(
       Path(PathExpr(
         steps: [
           PrimaryExpr(FunctionCall(FunctionCall(
-            name: Name(
-              name: "true",
-              prefix: None,
-              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            name: OwnedName(
+              local_name_str: "true",
+              namespace_str: "http://www.w3.org/2005/xpath-functions",
+              prefix_str: "",
             ),
             arguments: [],
           ))),

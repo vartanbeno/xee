@@ -5,10 +5,10 @@ expression: "ast::ExprSingle::parse(\"$foo()\")"
 Ok(Path(PathExpr(
   steps: [
     PostfixExpr(
-      primary: VarRef(Name(
-        name: "foo",
-        prefix: None,
-        namespace: None,
+      primary: VarRef(OwnedName(
+        local_name_str: "foo",
+        namespace_str: "",
+        prefix_str: "",
       )),
       postfixes: [
         ArgumentList([]),

@@ -1,5 +1,5 @@
 use ahash::HashSet;
 
-use crate::name::Name;
+use crate::Name;
 
 pub type VariableNames = HashSet<Name>;

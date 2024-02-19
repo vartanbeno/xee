@@ -3630,9 +3630,11 @@ dependencies = [
  "insta",
  "proc-macro2 1.0.67",
  "quote 1.0.33",
+ "serde",
  "syn 2.0.37",
  "xee-schema-type",
  "xee-xpath-ast",
+ "xot",
 ]
 
 [[package]]
@@ -3642,6 +3644,7 @@ dependencies = [
  "serde",
  "xee-name",
  "xee-schema-type",
+ "xot",
 ]
 
 [[package]]
@@ -3699,14 +3702,14 @@ checksum = "4d25c75bf9ea12c4040a97f829154768bbbce366287e2dc044af160cd79a13fd"
 [[package]]
 name = "xot"
 version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f537dac1b4d2db44959853f1ae1d73f03a154b77c33a378717748b02caf7183f"
+source = "git+https://github.com/faassen/xot.git?branch=xmlname#36bb8d3b3b3b5e3b039f25b123a0e9b2bc1e9cba"
 dependencies = [
  "ahash 0.8.6",
  "encoding_rs",
  "genawaiter",
  "indextree",
  "proptest",
+ "serde",
  "xhtmlchardet",
  "xmlparser",
 ]

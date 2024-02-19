@@ -8,10 +8,10 @@ Ok(XPath(Expr([
       AxisStep(AxisStep(
         axis: Attribute,
         node_test: KindTest(Attribute(Some(ElementOrAttributeTest(
-          name_or_wildcard: Name(Name(
-            name: "foo",
-            prefix: None,
-            namespace: Some("http://example.com"),
+          name_or_wildcard: Name(OwnedName(
+            local_name_str: "foo",
+            namespace_str: "http://example.com",
+            prefix_str: "",
           )),
           type_name: None,
         )))),

@@ -8,10 +8,10 @@ Ok(Instruction(If(If(
       Path(PathExpr(
         steps: [
           PrimaryExpr(FunctionCall(FunctionCall(
-            name: Name(
-              name: "true",
-              prefix: None,
-              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            name: OwnedName(
+              local_name_str: "true",
+              namespace_str: "http://www.w3.org/2005/xpath-functions",
+              prefix_str: "",
             ),
             arguments: [],
           ))),
@@ -25,18 +25,18 @@ Ok(Instruction(If(If(
   ),
   sequence_constructor: [
     Content(Element(ElementNode(
-      name: Name(
-        name: "p",
-        prefix: None,
-        namespace: None,
+      name: OwnedName(
+        local_name_str: "p",
+        namespace_str: "",
+        prefix_str: "",
       ),
       attributes: [],
       sequence_constructor: [
         Content(Element(ElementNode(
-          name: Name(
-            name: "another",
-            prefix: None,
-            namespace: None,
+          name: OwnedName(
+            local_name_str: "another",
+            namespace_str: "",
+            prefix_str: "",
           ),
           attributes: [],
           sequence_constructor: [],

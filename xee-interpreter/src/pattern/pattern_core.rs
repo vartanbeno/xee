@@ -259,11 +259,13 @@ pub(crate) trait PredicateMatcher {
     fn matches_name_test(name_test: &pattern::NameTest, node: xot::Node, xot: &Xot) -> bool {
         match name_test {
             pattern::NameTest::Name(expected_name) => {
-                if let Some(name) = xot.node_name(node) {
-                    Name::from_xot(name, xot) == expected_name.value
+                // TODO: unwrap - what if prefix couldn't be identified?
+                if let Some(node_name) = xot.node_name_ref(node).unwrap() {
+                    expected_name.value.maybe_to_ref(xot) == Some(node_name)
                 } else {
                     false
                 }
+                // TODO: expected_name.value should already be a StateName at this point
             }
             pattern::NameTest::Star => true,
             pattern::NameTest::LocalName(expected_local_name) => {
@@ -408,8 +410,8 @@ mod tests {
             vec![("d", "different"), ("o", "other")]
                 .into_iter()
                 .collect(),
-            None,
-            None,
+            "",
+            "",
         );
 
         let mut pm = BasicPredicateMatcher::new(&xot);

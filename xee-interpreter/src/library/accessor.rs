@@ -14,7 +14,7 @@ fn node_name(
     arg: Option<xot::Node>,
 ) -> error::Result<Option<ast::Name>> {
     Ok(if let Some(node) = arg {
-        ast::Name::from_xot_node(node, interpreter.xot())?
+        interpreter.xot().node_name_ref(node)?.map(|n| n.to_owned())
     } else {
         None
     })

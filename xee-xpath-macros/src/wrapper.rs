@@ -4,6 +4,7 @@ use syn::spanned::Spanned;
 use syn::{ItemFn, LitStr, Type};
 
 use xee_xpath_ast::ast::Signature;
+use xot::xmlname::NameStrInfo;
 
 use crate::convert::convert_sequence_type;
 use crate::parse::XPathFnOptions;

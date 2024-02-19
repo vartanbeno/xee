@@ -5,6 +5,7 @@ use xee_interpreter::{context::StaticContext, error, interpreter};
 use xee_ir::{compile_xslt, ir, Bindings, Variables};
 use xee_xpath_ast::{ast as xpath_ast, pattern::transform_pattern, span::Spanned};
 use xee_xslt_ast::{ast, parse_transform};
+use xot::xmlname::NameStrInfo;
 
 struct IrConverter<'a> {
     variables: Variables,
@@ -56,23 +57,23 @@ impl<'a> IrConverter<'a> {
     }
 
     fn simple_content_atom(&mut self) -> ir::Atom {
-        self.static_function_atom("simple-content", Some(FN_NAMESPACE), 2)
+        self.static_function_atom("simple-content", FN_NAMESPACE, 2)
     }
 
     fn concat_atom(&mut self, arity: u8) -> ir::Atom {
-        self.static_function_atom("concat", Some(FN_NAMESPACE), arity)
+        self.static_function_atom("concat", FN_NAMESPACE, arity)
     }
 
     // fn error_atom(&mut self) -> ir::Atom {
     //     self.static_function_atom("error", Some(FN_NAMESPACE), 0)
     // }
 
-    fn static_function_atom(&mut self, name: &str, namespace: Option<&str>, arity: u8) -> ir::Atom {
+    fn static_function_atom(&mut self, name: &str, namespace: &str, arity: u8) -> ir::Atom {
         ir::Atom::Const(ir::Const::StaticFunctionReference(
             self.static_context
                 .functions
                 .get_by_name(
-                    &Name::new(name.to_string(), namespace.map(|ns| ns.to_string()), None),
+                    &Name::new(name.to_string(), namespace.to_string(), String::new()),
                     arity,
                 )
                 .unwrap(),

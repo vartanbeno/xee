@@ -7,12 +7,10 @@ Ok(
         stack_value: One(
             Atomic(
                 QName(
-                    Name {
-                        name: "foo",
-                        prefix: None,
-                        namespace: Some(
-                            "http://example.com",
-                        ),
+                    OwnedName {
+                        local_name_str: "foo",
+                        namespace_str: "http://example.com",
+                        prefix_str: "",
                     },
                 ),
             ),

@@ -3,20 +3,20 @@ source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" name=\"foo\" select=\"true()\">Hello</xsl:variable>\"#)"
 ---
 Ok(Instruction(Variable(Variable(
-  name: Name(
-    name: "foo",
-    prefix: None,
-    namespace: None,
+  name: OwnedName(
+    local_name_str: "foo",
+    namespace_str: "",
+    prefix_str: "",
   ),
   select: Some(Expression(
     xpath: XPath(Expr([
       Path(PathExpr(
         steps: [
           PrimaryExpr(FunctionCall(FunctionCall(
-            name: Name(
-              name: "true",
-              prefix: None,
-              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            name: OwnedName(
+              local_name_str: "true",
+              namespace_str: "http://www.w3.org/2005/xpath-functions",
+              prefix_str: "",
             ),
             arguments: [],
           ))),

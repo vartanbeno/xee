@@ -174,12 +174,11 @@ impl Context {
             let uri = state.xot.namespace_str(*ns);
             namespaces.insert(prefix, uri);
         }
-        let xpath_default_namespace = if !self.xpath_default_namespace.is_empty() {
-            Some(self.xpath_default_namespace.as_str())
-        } else {
-            None
-        };
-        Namespaces::new(namespaces, xpath_default_namespace, Some(FN_NAMESPACE))
+        Namespaces::new(
+            namespaces,
+            self.xpath_default_namespace.as_str(),
+            FN_NAMESPACE,
+        )
     }
 
     pub(crate) fn variable_names(&self) -> &VariableNames {

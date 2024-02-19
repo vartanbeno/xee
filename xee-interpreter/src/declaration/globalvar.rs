@@ -74,8 +74,8 @@ mod tests {
 
     #[test]
     fn test_single_global_variable() {
-        let foo = Name::from("foo");
-        let bar = Name::from("bar");
+        let foo = Name::name("foo");
+        let bar = Name::name("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
         global_variables.add_declaration(&foo);
@@ -93,8 +93,8 @@ mod tests {
 
     #[test]
     fn test_circular() {
-        let foo = Name::from("foo");
-        let bar = Name::from("bar");
+        let foo = Name::name("foo");
+        let bar = Name::name("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
         global_variables.add_declaration(&foo);
@@ -111,8 +111,8 @@ mod tests {
 
     #[test]
     fn test_cache() {
-        let foo = Name::from("foo");
-        let bar = Name::from("bar");
+        let foo = Name::name("foo");
+        let bar = Name::name("bar");
         // first declare a few global variables
         let mut global_variables = GlobalVariables::<u64>::new();
         global_variables.add_declaration(&foo);

@@ -42,10 +42,10 @@ TestSet {
                 resources: [],
                 params: [
                     Param {
-                        name: Name {
-                            name: "collation",
-                            prefix: None,
-                            namespace: None,
+                        name: OwnedName {
+                            local_name_str: "collation",
+                            namespace_str: "",
+                            prefix_str: "",
                         },
                         select: Some(
                             "'http://www.w3.org/2013/collation/UCA?'",
@@ -70,10 +70,10 @@ TestSet {
                 resources: [],
                 params: [
                     Param {
-                        name: Name {
-                            name: "collation",
-                            prefix: None,
-                            namespace: None,
+                        name: OwnedName {
+                            local_name_str: "collation",
+                            namespace_str: "",
+                            prefix_str: "",
                         },
                         select: Some(
                             "'http://www.w3.org/2013/collation/UCA?lang=en;'",
@@ -98,10 +98,10 @@ TestSet {
                 resources: [],
                 params: [
                     Param {
-                        name: Name {
-                            name: "collation",
-                            prefix: None,
-                            namespace: None,
+                        name: OwnedName {
+                            local_name_str: "collation",
+                            namespace_str: "",
+                            prefix_str: "",
                         },
                         select: Some(
                             "'http://www.w3.org/2013/collation/UCA?lang=en;strength=primary;'",

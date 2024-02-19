@@ -5,6 +5,7 @@ use ibig::IBig;
 
 use xee_name::Name;
 use xee_schema_type::Xs;
+use xot::xmlname::NameStrInfo;
 use xot::Xot;
 
 use crate::atomic::{self, AtomicCompare};
@@ -504,14 +505,10 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::XmlName => {
                     let local_name_value = self.pop_atomic()?;
                     let namespace_value = self.pop_atomic()?;
-                    let namespace_str: &str = namespace_value.to_str()?;
-                    let namespace = if !namespace_str.is_empty() {
-                        Some(namespace_str.to_string())
-                    } else {
-                        None
-                    };
+                    let namespace = namespace_value.to_str()?;
                     let local_name = local_name_value.to_string()?;
-                    let name = xee_name::Name::new(local_name, namespace, None);
+                    let name =
+                        xee_name::Name::new(local_name, namespace.to_string(), String::new());
                     self.state.push(name.into());
                 }
                 EncodedInstruction::XmlDocument => {
@@ -1021,14 +1018,9 @@ impl<'a> Interpreter<'a> {
     fn pop_xot_name(&mut self) -> error::Result<xot::NameId> {
         let value = self.pop_atomic()?;
         let name: xee_name::Name = value.try_into()?;
-        if let Some(namespace) = name.namespace() {
-            let ns = self.state.xot.add_namespace(namespace);
-            // println!("name {}, namespace {}", name.local_name(), namespace);
-            Ok(self.state.xot.add_name_ns(name.local_name(), ns))
-        } else {
-            // println!("no namespace");
-            Ok(self.state.xot.add_name(name.local_name()))
-        }
+        let namespace = name.namespace();
+        let ns = self.state.xot.add_namespace(namespace);
+        Ok(self.state.xot.add_name_ns(name.local_name(), ns))
     }
 
     fn pop_node(&mut self) -> error::Result<xot::Node> {

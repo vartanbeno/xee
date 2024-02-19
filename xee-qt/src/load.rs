@@ -29,8 +29,8 @@ impl qt::TestSet {
         let root = xot.parse(xml)?;
         let namespaces = Namespaces::new(
             Namespaces::default_namespaces(),
-            Some(NS),
-            Some(Namespaces::FN_NAMESPACE),
+            NS,
+            Namespaces::FN_NAMESPACE,
         );
 
         let static_context = StaticContext::from_namespaces(namespaces);
@@ -65,8 +65,8 @@ impl qt::Catalog {
 
         let namespaces = Namespaces::new(
             Namespaces::default_namespaces(),
-            Some(NS),
-            Some(Namespaces::FN_NAMESPACE),
+            NS,
+            Namespaces::FN_NAMESPACE,
         );
 
         let static_context = StaticContext::from_namespaces(namespaces);
@@ -445,7 +445,7 @@ fn environment_spec_query<'a>(
         let declared = declared.map(|declared| declared == "true").unwrap_or(false);
 
         // TODO: do not handle prefixes yet
-        let name = Name::unprefixed(&name);
+        let name = Name::name(&name);
 
         Ok(qt::Param {
             name,

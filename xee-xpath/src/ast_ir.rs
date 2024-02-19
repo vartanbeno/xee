@@ -2,6 +2,7 @@ use xee_interpreter::{context, error, error::Error, function, xml};
 use xee_ir::{ir, ir::AtomS, Binding, Bindings, Variables};
 use xee_schema_type::Xs;
 use xee_xpath_ast::{ast, ast::Span, span::Spanned, FN_NAMESPACE};
+use xot::xmlname::NameStrInfo;
 
 #[derive(Debug)]
 pub struct IrConverter<'a> {
@@ -18,10 +19,10 @@ impl<'a> IrConverter<'a> {
             static_context,
             fn_position: ast::Name::new(
                 "position".to_string(),
-                Some(FN_NAMESPACE.to_string()),
-                None,
+                FN_NAMESPACE.to_string(),
+                String::new(),
             ),
-            fn_last: ast::Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            fn_last: ast::Name::new("last".to_string(), FN_NAMESPACE.to_string(), String::new()),
         }
     }
 

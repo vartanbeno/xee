@@ -4,20 +4,20 @@ expression: "pattern::Pattern::parse(\"$a/foo\", &namespaces, &variable_names)"
 ---
 Ok(Expr(Path(PathExpr(
   root: Rooted(
-    root: VarRef(Name(
-      name: "a",
-      prefix: None,
-      namespace: None,
+    root: VarRef(OwnedName(
+      local_name_str: "a",
+      namespace_str: "",
+      prefix_str: "",
     )),
     predicates: [],
   ),
   steps: [
     AxisStep(AxisStep(
       forward: Child,
-      node_test: NameTest(Name(Name(
-        name: "foo",
-        prefix: None,
-        namespace: None,
+      node_test: NameTest(Name(OwnedName(
+        local_name_str: "foo",
+        namespace_str: "",
+        prefix_str: "",
       ))),
       predicates: [],
     )),
