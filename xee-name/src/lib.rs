@@ -1,4 +1,3 @@
-mod name;
 mod namespaces;
 mod variable_names;
 
