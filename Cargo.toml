@@ -19,7 +19,7 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-xot = { git = "https://github.com/faassen/xot.git", branch = "xmlname" }
+xot = "0.22.0"
 ahash = "0.8.6"
 strum = "0.25"
 strum_macros = "0.25"
