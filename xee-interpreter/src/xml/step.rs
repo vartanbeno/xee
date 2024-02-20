@@ -1,7 +1,6 @@
 use xot::{ValueType, Xot};
 
 use xee_xpath_ast::ast;
-use xot::xmlname::NameIdInfo;
 
 use crate::sequence;
 use crate::stack;

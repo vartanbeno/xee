@@ -1,6 +1,5 @@
 use std::sync::OnceLock;
 
-use xot::xmlname::NameIdInfo;
 use xot::Node;
 
 use crate::ast_core::{self as ast};
