@@ -709,11 +709,11 @@ fn test_text_value_template() {
         &mut xot,
         r#"<doc>VALUE</doc>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o>Value: {string()}</o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o>Value: {string()}</o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -727,11 +727,11 @@ fn test_literal_attribute() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><foo bar="baz"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><foo bar="baz"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -745,11 +745,11 @@ fn test_literal_attributes() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><foo bar="BAR" qux="QUX"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><foo bar="BAR" qux="QUX"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -763,11 +763,11 @@ fn test_literal_attribute_with_value_template() {
         &mut xot,
         r#"<doc>value</doc>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><foo bar="found: {doc/string()}"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><foo bar="found: {doc/string()}"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -781,11 +781,11 @@ fn test_xsl_element() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:element name="foo">content</xsl:element></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:element name="foo">content</xsl:element></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -819,11 +819,11 @@ fn test_xsl_text() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:text>content</xsl:text></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:text>content</xsl:text></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -837,11 +837,11 @@ fn test_xsl_text_empty() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:text/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:text/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -855,11 +855,11 @@ fn test_xsl_text_value_template() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:text>Content: {"foo"}</xsl:text></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:text>Content: {"foo"}</xsl:text></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -873,11 +873,11 @@ fn test_xsl_attribute_with_select() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:attribute name="foo" select="'FOO'"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:attribute name="foo" select="'FOO'"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -891,11 +891,11 @@ fn test_xsl_attribute_name_value_template() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:attribute name="{'foo'}" select="'FOO'"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:attribute name="{'foo'}" select="'FOO'"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -909,11 +909,11 @@ fn test_xsl_attribute_with_content() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:attribute name="foo">FOO</xsl:attribute></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:attribute name="foo">FOO</xsl:attribute></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
@@ -927,13 +927,31 @@ fn test_namespace() {
         &mut xot,
         r#"<doc/>"#,
         r#"
-  <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-    <xsl:template match="/">
-      <o><xsl:namespace name="foo" select="'http://example.com'"/></o>
-    </xsl:template>
-  </xsl:transform>"#,
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:namespace name="foo" select="'http://example.com'"/></o>
+  </xsl:template>
+</xsl:transform>"#,
     )
     .unwrap();
 
     assert_eq!(xml(&xot, output), r#"<o xmlns:foo="http://example.com"/>"#);
+}
+
+#[test]
+fn test_comment() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:comment>comment</xsl:comment></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><!--comment--></o>"#);
 }

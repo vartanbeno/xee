@@ -236,6 +236,7 @@ impl<'a> IrConverter<'a> {
             Text(text) => self.text(text),
             Attribute(attribute) => self.attribute(attribute),
             Namespace(namespace) => self.namespace(namespace),
+            Comment(comment) => self.comment(comment),
             // xsl:variable does not produce content and is handled earlier already
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -747,6 +748,16 @@ impl<'a> IrConverter<'a> {
                 prefix: ncname_atom,
                 namespace: text_atom,
             }),
+        ))
+    }
+
+    fn comment(&mut self, comment: &ast::Comment) -> error::SpannedResult<Bindings> {
+        let (atom, bindings) = self
+            .select_or_sequence_constructor_simple_content(comment)?
+            .atom_bindings();
+        Ok(bindings.bind_expr_no_span(
+            &mut self.variables,
+            ir::Expr::XmlComment(ir::XmlComment { value: atom }),
         ))
     }
 

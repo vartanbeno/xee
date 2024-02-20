@@ -548,7 +548,13 @@ impl<'a> Interpreter<'a> {
                     let item = sequence::Item::Node(text_node);
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlComment => {}
+                EncodedInstruction::XmlComment => {
+                    let text_atomic = self.pop_atomic()?;
+                    let text = text_atomic.into_canonical();
+                    let comment_node = self.state.xot.new_comment(&text);
+                    let item = sequence::Item::Node(comment_node);
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlProcessingInstruction => {}
                 EncodedInstruction::XmlAppend => {
                     let child_value = self.state.pop();
