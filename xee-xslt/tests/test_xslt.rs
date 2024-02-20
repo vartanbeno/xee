@@ -1040,6 +1040,31 @@ fn test_priority_declaration_order_last_one_wins() {
     assert_eq!(xml(&xot, output), r#"<o>foo2</o>"#);
 }
 
+#[test]
+fn test_priority_more_specific_default_priority_wins() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc><foo/></doc>"#,
+        r#"
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="foo">
+    <o>foo</o>
+  </xsl:template>
+  <xsl:template match="*">
+    <o>foo2</o>
+  </xsl:template>
+  <xsl:template match="/">
+    <xsl:apply-templates select="doc/foo"/>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    // foo matches as it's more specific
+    assert_eq!(xml(&xot, output), r#"<o>foo</o>"#);
+}
+
 // #[test]
 // fn test_modes() {
 //     let mut xot = Xot::new();
