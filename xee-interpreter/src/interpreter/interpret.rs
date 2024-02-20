@@ -532,7 +532,15 @@ impl<'a> Interpreter<'a> {
                     let item = sequence::Item::Node(attribute_node);
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlPrefix => {}
+                EncodedInstruction::XmlNamespace => {
+                    let uri = self.pop_atomic()?;
+                    let namespace_id = self.state.xot.add_namespace(&uri.string_value()?);
+                    let prefix = self.pop_atomic()?;
+                    let prefix_id = self.state.xot.add_prefix(&prefix.string_value()?);
+                    let namespace_node = self.state.xot.new_namespace_node(prefix_id, namespace_id);
+                    let item = sequence::Item::Node(namespace_node);
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlText => {
                     let text_atomic = self.pop_atomic()?;
                     let text = text_atomic.into_canonical();

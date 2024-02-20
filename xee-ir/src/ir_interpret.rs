@@ -73,7 +73,7 @@ impl<'a> InterpreterCompiler<'a> {
             ir::Expr::XmlDocument(root) => self.compile_xml_document(root, span),
             ir::Expr::XmlElement(element) => self.compile_xml_element(element, span),
             ir::Expr::XmlAttribute(attribute) => self.compile_xml_attribute(attribute, span),
-            ir::Expr::XmlPrefix(prefix) => self.compile_xml_prefix(prefix, span),
+            ir::Expr::XmlNamespace(namespace) => self.compile_xml_namespace(namespace, span),
             ir::Expr::XmlText(text) => self.compile_xml_text(text, span),
             ir::Expr::XmlComment(comment) => self.compile_xml_comment(comment, span),
             ir::Expr::XmlProcessingInstruction(processing_instruction) => {
@@ -840,15 +840,14 @@ impl<'a> InterpreterCompiler<'a> {
         Ok(())
     }
 
-    fn compile_xml_prefix(
+    fn compile_xml_namespace(
         &mut self,
-        prefix: &ir::XmlPrefix,
+        prefix: &ir::XmlNamespace,
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
-        self.compile_atom(&prefix.element)?;
-        self.compile_atom(&prefix.name)?;
-        self.compile_atom(&prefix.uri)?;
-        self.builder.emit(Instruction::XmlPrefix, span);
+        self.compile_atom(&prefix.prefix)?;
+        self.compile_atom(&prefix.namespace)?;
+        self.builder.emit(Instruction::XmlNamespace, span);
         Ok(())
     }
 

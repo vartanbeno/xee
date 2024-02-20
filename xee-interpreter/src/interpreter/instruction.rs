@@ -70,7 +70,7 @@ pub enum Instruction {
     XmlDocument,
     XmlElement,
     XmlAttribute,
-    XmlPrefix,
+    XmlNamespace,
     XmlText,
     XmlComment,
     XmlProcessingInstruction,
@@ -149,7 +149,7 @@ pub(crate) enum EncodedInstruction {
     XmlDocument,
     XmlElement,
     XmlAttribute,
-    XmlPrefix,
+    XmlNamespace,
     XmlText,
     XmlComment,
     XmlProcessingInstruction,
@@ -278,7 +278,7 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::XmlDocument => (Instruction::XmlDocument, 1),
         EncodedInstruction::XmlElement => (Instruction::XmlElement, 1),
         EncodedInstruction::XmlAttribute => (Instruction::XmlAttribute, 1),
-        EncodedInstruction::XmlPrefix => (Instruction::XmlPrefix, 1),
+        EncodedInstruction::XmlNamespace => (Instruction::XmlNamespace, 1),
         EncodedInstruction::XmlText => (Instruction::XmlText, 1),
         EncodedInstruction::XmlComment => (Instruction::XmlComment, 1),
         EncodedInstruction::XmlProcessingInstruction => (Instruction::XmlProcessingInstruction, 1),
@@ -423,7 +423,7 @@ pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::XmlDocument => bytes.push(EncodedInstruction::XmlDocument.to_u8().unwrap()),
         Instruction::XmlElement => bytes.push(EncodedInstruction::XmlElement.to_u8().unwrap()),
         Instruction::XmlAttribute => bytes.push(EncodedInstruction::XmlAttribute.to_u8().unwrap()),
-        Instruction::XmlPrefix => bytes.push(EncodedInstruction::XmlPrefix.to_u8().unwrap()),
+        Instruction::XmlNamespace => bytes.push(EncodedInstruction::XmlNamespace.to_u8().unwrap()),
         Instruction::XmlText => bytes.push(EncodedInstruction::XmlText.to_u8().unwrap()),
         Instruction::XmlComment => bytes.push(EncodedInstruction::XmlComment.to_u8().unwrap()),
         Instruction::XmlProcessingInstruction => bytes.push(
@@ -500,7 +500,7 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::XmlDocument
         | Instruction::XmlElement
         | Instruction::XmlAttribute
-        | Instruction::XmlPrefix
+        | Instruction::XmlNamespace
         | Instruction::XmlText
         | Instruction::XmlComment
         | Instruction::XmlProcessingInstruction

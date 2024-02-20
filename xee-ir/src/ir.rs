@@ -44,7 +44,7 @@ pub enum Expr {
     XmlDocument(XmlRoot),
     XmlElement(XmlElement),
     XmlAttribute(XmlAttribute),
-    XmlPrefix(XmlPrefix),
+    XmlNamespace(XmlNamespace),
     XmlText(XmlText),
     XmlComment(XmlComment),
     XmlProcessingInstruction(XmlProcessingInstruction),
@@ -268,10 +268,9 @@ pub struct XmlAttribute {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XmlPrefix {
-    pub element: AtomS,
-    pub name: AtomS,
-    pub uri: AtomS,
+pub struct XmlNamespace {
+    pub prefix: AtomS,
+    pub namespace: AtomS,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
