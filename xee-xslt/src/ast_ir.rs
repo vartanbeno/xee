@@ -127,8 +127,19 @@ impl<'a> IrConverter<'a> {
                     };
                     let function_definition =
                         self.sequence_constructor_function(&template.sequence_constructor)?;
+
+                    let modes = template
+                        .mode
+                        .iter()
+                        .map(|m| match m {
+                            ast::EqNameOrDefault::Default => ir::Mode::Default,
+                            ast::EqNameOrDefault::EqName(name) => ir::Mode::Named(name.clone()),
+                        })
+                        .collect();
+
                     declarations.rules.push(ir::Rule {
                         priority,
+                        modes,
                         pattern: transform_pattern(&pattern.pattern, |expr| {
                             self.pattern_predicate(expr)
                         })?,

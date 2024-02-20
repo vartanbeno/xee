@@ -1,14 +1,14 @@
-use crate::{function, pattern::PatternLookup};
+use crate::{function, pattern::ModeLookup};
 
 #[derive(Debug)]
 pub struct Declarations {
-    pub pattern_lookup: PatternLookup<function::InlineFunctionId>,
+    pub mode_lookup: ModeLookup<function::InlineFunctionId>,
 }
 
 impl Declarations {
     pub(crate) fn new() -> Self {
         Self {
-            pattern_lookup: PatternLookup::new(),
+            mode_lookup: ModeLookup::new(),
         }
     }
 }

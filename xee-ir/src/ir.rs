@@ -13,6 +13,7 @@ use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, UnaryOperator};
 use xee_xpath_ast::span::Spanned;
 use xee_xpath_ast::Pattern;
+use xot::xmlname;
 
 pub type AtomS = Spanned<Atom>;
 pub type ExprS = Spanned<Expr>;
@@ -310,9 +311,15 @@ pub struct CopyDeep {
     pub select: AtomS,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Mode {
+    Default,
+    Named(xmlname::OwnedName),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rule {
-    // pub mode: Option<Name>,
+    pub modes: Vec<Mode>,
     pub priority: Decimal,
     pub pattern: Pattern<FunctionDefinition>,
     pub function_definition: FunctionDefinition,

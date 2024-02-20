@@ -107,7 +107,8 @@ impl<'a> InterpreterCompiler<'a> {
             self.compile_function_id(function_definition, (0..0).into())
         })?;
 
-        self.builder.add_rule(rule.priority, &pattern, function_id);
+        self.builder
+            .add_rule(&rule.modes, rule.priority, &pattern, function_id);
         Ok(())
     }
 

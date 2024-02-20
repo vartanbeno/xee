@@ -1492,7 +1492,7 @@ pub struct Template {
     pub match_: Option<Pattern>,
     pub name: Option<EqName>,
     pub priority: Option<Decimal>,
-    pub mode: Option<Vec<Token>>,
+    pub mode: Vec<EqNameOrDefault>,
     pub as_: Option<SequenceType>,
     pub visibility: Option<VisibilityWithAbstract>,
 
@@ -1501,6 +1501,13 @@ pub struct Template {
     pub sequence_constructor: SequenceConstructor,
 
     pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum EqNameOrDefault {
+    EqName(EqName),
+    Default,
 }
 
 impl From<Template> for OverrideContent {

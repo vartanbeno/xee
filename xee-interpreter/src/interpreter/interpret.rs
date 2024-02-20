@@ -1200,8 +1200,8 @@ impl<'a> Interpreter<'a> {
         self.runnable
             .program()
             .declarations
-            .pattern_lookup
-            .lookup(|pattern| self.matches(pattern, item))
+            .mode_lookup
+            .lookup(&None, |pattern| self.matches(pattern, item))
             .copied()
     }
 

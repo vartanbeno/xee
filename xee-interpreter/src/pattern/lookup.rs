@@ -1,12 +1,47 @@
 use std::rc::Rc;
 
+use ahash::{HashMap, HashMapExt};
 use xee_xpath_ast::Pattern;
-use xot::Xot;
+use xot::{xmlname, Xot};
 
 use crate::function;
 use crate::interpreter::Interpreter;
 use crate::pattern::pattern_core::PredicateMatcher;
 use crate::sequence::Item;
+
+#[derive(Debug, Default)]
+pub struct ModeLookup<V: Clone> {
+    pub(crate) modes: HashMap<Option<xmlname::OwnedName>, PatternLookup<V>>,
+}
+
+impl<V: Clone> ModeLookup<V> {
+    pub(crate) fn new() -> Self {
+        Self {
+            modes: HashMap::new(),
+        }
+    }
+
+    pub(crate) fn lookup(
+        &self,
+        mode: &Option<xmlname::OwnedName>,
+        mut matches: impl FnMut(&Pattern<function::InlineFunctionId>) -> bool,
+    ) -> Option<&V> {
+        self.modes
+            .get(mode)
+            .and_then(|lookup| lookup.lookup(&mut matches))
+    }
+
+    pub fn add_rules(
+        &mut self,
+        mode: &Option<xmlname::OwnedName>,
+        rules: Vec<(Pattern<function::InlineFunctionId>, V)>,
+    ) {
+        self.modes
+            .entry(mode.clone())
+            .or_insert_with(PatternLookup::new)
+            .add_rules(rules);
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct PatternLookup<V: Clone> {
@@ -69,13 +104,13 @@ impl<'a> PredicateMatcher for Interpreter<'a> {
 }
 
 impl<V: Clone> PatternLookup<V> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             patterns: Vec::new(),
         }
     }
 
-    pub fn add_rules(&mut self, rules: Vec<(Pattern<function::InlineFunctionId>, V)>) {
+    pub(crate) fn add_rules(&mut self, rules: Vec<(Pattern<function::InlineFunctionId>, V)>) {
         self.patterns.extend(rules);
     }
 

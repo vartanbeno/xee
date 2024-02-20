@@ -1,3 +1,4 @@
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rust_decimal::Decimal;
 use xee_xpath_ast::{ast, Pattern};
 
@@ -5,6 +6,7 @@ use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
 };
 use xee_interpreter::{function, interpreter, span, stack, xml};
+use xot::xmlname;
 
 use crate::ir;
 
@@ -40,7 +42,7 @@ pub struct FunctionBuilder<'a> {
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
     rule_declaration_order: i64,
-    rule_builders: Vec<RuleBuilder>,
+    rule_builders: HashMap<Option<xmlname::OwnedName>, Vec<RuleBuilder>>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -55,7 +57,7 @@ impl<'a> FunctionBuilder<'a> {
             sequence_types: Vec::new(),
             closure_names: Vec::new(),
             rule_declaration_order: 0,
-            rule_builders: Vec::new(),
+            rule_builders: HashMap::new(),
         }
     }
 
@@ -209,36 +211,60 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn add_rule(
         &mut self,
+        modes: &[ir::Mode],
         priority: Decimal,
         pattern: &Pattern<function::InlineFunctionId>,
         function_id: function::InlineFunctionId,
     ) {
+        // ensure there are no duplicate modes
+        let mut mode_set = HashSet::new();
+        for mode in modes {
+            mode_set.insert(mode);
+        }
+
         let declaration_order = self.rule_declaration_order;
         self.rule_declaration_order += 1;
-        self.rule_builders.push(RuleBuilder {
-            priority,
-            declaration_order,
-            pattern: pattern.clone(),
-            function_id,
-        });
+        for mode in mode_set {
+            // TODO: deal with overriding default modes
+            let mode = if let ir::Mode::Named(name) = mode {
+                Some(name.clone())
+            } else {
+                None
+            };
+
+            self.rule_builders
+                .entry(mode)
+                .or_default()
+                .push(RuleBuilder {
+                    priority,
+                    declaration_order,
+                    pattern: pattern.clone(),
+                    function_id,
+                });
+        }
     }
 
     pub(crate) fn add_rules(&mut self) {
-        // higher priorities first, same priorities last declaration order wins
-        self.rule_builders
-            .sort_by_key(|rule_builder| (-rule_builder.priority, -rule_builder.declaration_order));
-        let rules = self
-            .rule_builders
-            .drain(..)
-            .map(|rule_builder| {
-                let RuleBuilder {
-                    pattern,
-                    function_id,
-                    ..
-                } = rule_builder;
-                (pattern, function_id)
-            })
-            .collect();
-        self.program.declarations.pattern_lookup.add_rules(rules)
+        for (mode, mut rule_builders) in self.rule_builders.drain() {
+            // higher priorities first, same priorities last declaration order wins
+            rule_builders.sort_by_key(|rule_builder| {
+                (-rule_builder.priority, -rule_builder.declaration_order)
+            });
+            let rules = rule_builders
+                .drain(..)
+                .map(|rule_builder| {
+                    let RuleBuilder {
+                        pattern,
+                        function_id,
+                        ..
+                    } = rule_builder;
+                    (pattern, function_id)
+                })
+                .collect();
+            self.program
+                .declarations
+                .mode_lookup
+                .add_rules(&mode, rules)
+        }
     }
 }
