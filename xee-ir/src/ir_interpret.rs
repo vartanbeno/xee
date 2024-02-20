@@ -95,6 +95,8 @@ impl<'a> InterpreterCompiler<'a> {
         for rule in &declarations.rules {
             self.compile_rule(rule)?;
         }
+        // now add compiled rules from builder to the program
+        self.builder.add_rules();
         self.compile_function_definition(&declarations.main, (0..0).into())
     }
 
@@ -105,7 +107,7 @@ impl<'a> InterpreterCompiler<'a> {
             self.compile_function_id(function_definition, (0..0).into())
         })?;
 
-        self.builder.add_rule(&pattern, function_id);
+        self.builder.add_rule(rule.priority, &pattern, function_id);
         Ok(())
     }
 

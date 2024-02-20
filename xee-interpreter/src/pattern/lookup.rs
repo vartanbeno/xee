@@ -9,7 +9,7 @@ use crate::pattern::pattern_core::PredicateMatcher;
 use crate::sequence::Item;
 
 #[derive(Debug, Default)]
-pub struct PatternLookup<V> {
+pub struct PatternLookup<V: Clone> {
     pub(crate) patterns: Vec<(Pattern<function::InlineFunctionId>, V)>,
 }
 
@@ -68,15 +68,15 @@ impl<'a> PredicateMatcher for Interpreter<'a> {
     }
 }
 
-impl<V> PatternLookup<V> {
+impl<V: Clone> PatternLookup<V> {
     pub fn new() -> Self {
         Self {
             patterns: Vec::new(),
         }
     }
 
-    pub fn add(&mut self, pattern: &Pattern<function::InlineFunctionId>, value: V) {
-        self.patterns.push((pattern.clone(), value));
+    pub fn add_rules(&mut self, rules: Vec<(Pattern<function::InlineFunctionId>, V)>) {
+        self.patterns.extend(rules);
     }
 
     pub(crate) fn lookup(

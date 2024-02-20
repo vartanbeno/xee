@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use xee_xpath_ast::{ast, Pattern};
 
 use xee_interpreter::interpreter::instruction::{
@@ -22,6 +23,13 @@ pub(crate) enum JumpCondition {
     False,
 }
 
+pub(crate) struct RuleBuilder {
+    priority: Decimal,
+    declaration_order: i64,
+    pattern: Pattern<function::InlineFunctionId>,
+    function_id: function::InlineFunctionId,
+}
+
 pub struct FunctionBuilder<'a> {
     program: &'a mut interpreter::Program,
     compiled: Vec<u8>,
@@ -31,6 +39,8 @@ pub struct FunctionBuilder<'a> {
     cast_types: Vec<function::CastType>,
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
+    rule_declaration_order: i64,
+    rule_builders: Vec<RuleBuilder>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -44,6 +54,8 @@ impl<'a> FunctionBuilder<'a> {
             cast_types: Vec::new(),
             sequence_types: Vec::new(),
             closure_names: Vec::new(),
+            rule_declaration_order: 0,
+            rule_builders: Vec::new(),
         }
     }
 
@@ -197,12 +209,36 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn add_rule(
         &mut self,
+        priority: Decimal,
         pattern: &Pattern<function::InlineFunctionId>,
         function_id: function::InlineFunctionId,
     ) {
-        self.program
-            .declarations
-            .pattern_lookup
-            .add(pattern, function_id);
+        let declaration_order = self.rule_declaration_order;
+        self.rule_declaration_order += 1;
+        self.rule_builders.push(RuleBuilder {
+            priority,
+            declaration_order,
+            pattern: pattern.clone(),
+            function_id,
+        });
+    }
+
+    pub(crate) fn add_rules(&mut self) {
+        // higher priorities first, same priorities last declaration order wins
+        self.rule_builders
+            .sort_by_key(|rule_builder| (-rule_builder.priority, -rule_builder.declaration_order));
+        let rules = self
+            .rule_builders
+            .drain(..)
+            .map(|rule_builder| {
+                let RuleBuilder {
+                    pattern,
+                    function_id,
+                    ..
+                } = rule_builder;
+                (pattern, function_id)
+            })
+            .collect();
+        self.program.declarations.pattern_lookup.add_rules(rules)
     }
 }
