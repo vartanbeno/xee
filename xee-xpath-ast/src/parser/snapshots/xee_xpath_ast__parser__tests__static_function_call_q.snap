@@ -5,10 +5,10 @@ expression: "ast::ExprSingle::parse(\"Q{http://example.com}something()\")"
 Ok(Path(PathExpr(
   steps: [
     PrimaryExpr(FunctionCall(FunctionCall(
-      name: Name(
-        name: "something",
-        prefix: None,
-        namespace: Some("http://example.com"),
+      name: OwnedName(
+        local_name_str: "something",
+        namespace_str: "http://example.com",
+        prefix_str: "",
       ),
       arguments: [],
     ))),

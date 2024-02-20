@@ -74,7 +74,11 @@ fn default_collation(context: &DynamicContext) -> String {
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         StaticFunctionDescription {
-            name: Name::new("position".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new(
+                "position".to_string(),
+                FN_NAMESPACE.to_string(),
+                String::new(),
+            ),
             signature: ast::Signature::parse("fn:position() as xs:integer", &Namespaces::default())
                 .unwrap()
                 .into(),
@@ -82,7 +86,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
             func: bound_position,
         },
         StaticFunctionDescription {
-            name: Name::new("last".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new("last".to_string(), FN_NAMESPACE.to_string(), String::new()),
             signature: ast::Signature::parse("fn:last() as xs:integer", &Namespaces::default())
                 .unwrap()
                 .into(),

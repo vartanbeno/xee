@@ -20,6 +20,7 @@ serde = [
     "xee-schema-type/serde",
     "xee-xpath-type/serde",
     "xee-name/serde",
+    "xot/serde",
 ]
 
 [dependencies]

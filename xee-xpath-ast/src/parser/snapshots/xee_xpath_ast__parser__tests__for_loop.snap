@@ -3,10 +3,10 @@ source: xee-xpath-ast/src/parser/mod.rs
 expression: "ast::ExprSingle::parse(\"for $x in 1 to 2 return $x\")"
 ---
 Ok(For(ForExpr(
-  var_name: Name(
-    name: "x",
-    prefix: None,
-    namespace: None,
+  var_name: OwnedName(
+    local_name_str: "x",
+    namespace_str: "",
+    prefix_str: "",
   ),
   var_expr: Path(PathExpr(
     steps: [
@@ -33,10 +33,10 @@ Ok(For(ForExpr(
   )),
   return_expr: Path(PathExpr(
     steps: [
-      PrimaryExpr(VarRef(Name(
-        name: "x",
-        prefix: None,
-        namespace: None,
+      PrimaryExpr(VarRef(OwnedName(
+        local_name_str: "x",
+        namespace_str: "",
+        prefix_str: "",
       ))),
     ],
   )),

@@ -637,7 +637,11 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         occurrence: ast::Occurrence::One,
         item_type: ast::ItemType::AtomicOrUnionType(Xs::String),
     });
-    let name = Name::new("concat".to_string(), Some(FN_NAMESPACE.to_string()), None);
+    let name = Name::new(
+        "concat".to_string(),
+        FN_NAMESPACE.to_string(),
+        String::new(),
+    );
 
     for arity in 2..MAX_CONCAT_ARITY {
         let signature = function::Signature {

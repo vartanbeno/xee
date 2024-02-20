@@ -4,10 +4,10 @@ expression: "ast::ExprSingle::parse(\"$foo\")"
 ---
 Ok(Path(PathExpr(
   steps: [
-    PrimaryExpr(VarRef(Name(
-      name: "foo",
-      prefix: None,
-      namespace: None,
+    PrimaryExpr(VarRef(OwnedName(
+      local_name_str: "foo",
+      namespace_str: "",
+      prefix_str: "",
     ))),
   ],
 )))

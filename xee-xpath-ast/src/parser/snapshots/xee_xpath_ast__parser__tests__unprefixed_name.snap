@@ -1,9 +1,9 @@
 ---
 source: xee-xpath-ast/src/parser/mod.rs
-expression: "ast::Name::parse(\"foo\")"
+expression: "parse_name(\"foo\", &namespaces)"
 ---
-Ok(Name(
-  name: "foo",
-  prefix: None,
-  namespace: None,
+Ok(OwnedName(
+  local_name_str: "foo",
+  namespace_str: "",
+  prefix_str: "",
 ))

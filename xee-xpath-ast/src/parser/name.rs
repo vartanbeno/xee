@@ -39,26 +39,32 @@ where
         .then_ignore(just(Token::Colon))
         .then(ncname.clone())
         .try_map_with_state(|(prefix, local_name), span, state: &mut State| {
-            ast::Name::prefixed(prefix, local_name, state.namespaces.as_ref())
-                .map(|name| name.with_span(span))
-                .ok_or_else(|| ParserError::UnknownPrefix {
-                    prefix: prefix.to_string(),
-                    span,
-                })
+            ast::Name::prefixed(prefix, local_name, move |prefix| {
+                state.namespaces.by_prefix(prefix).map(|s| s.to_string())
+            })
+            .map(|name| name.with_span(span))
+            .map_err(|_e| ParserError::UnknownPrefix {
+                prefix: prefix.to_string(),
+                span,
+            })
         })
         .boxed();
 
     let qname = prefixed_name
         .or(ncname
             .clone()
-            .map_with_span(|local_name, span| ast::Name::unprefixed(local_name).with_span(span)))
+            .map_with_span(|local_name, span| ast::Name::name(local_name).with_span(span)))
         .boxed();
 
     let uri_qualified_name = braced_uri_literal
         .clone()
         .then(ncname.clone())
         .map_with_span(|(uri, local_name), span| {
-            ast::Name::uri_qualified(uri, local_name).with_span(span)
+            ast::Name::namespaced(local_name.to_string(), uri.to_string(), |_| {
+                Some(String::new())
+            })
+            .unwrap()
+            .with_span(span)
         })
         .boxed();
 

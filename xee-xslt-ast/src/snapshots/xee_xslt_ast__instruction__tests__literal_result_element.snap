@@ -3,10 +3,10 @@ source: xee-xslt-ast/src/instruction.rs
 expression: "parse_sequence_constructor_item(r#\"<foo/>\"#)"
 ---
 Ok(Content(Element(ElementNode(
-  name: Name(
-    name: "foo",
-    prefix: None,
-    namespace: None,
+  name: OwnedName(
+    local_name_str: "foo",
+    namespace_str: "",
+    prefix_str: "",
   ),
   attributes: [],
   sequence_constructor: [],

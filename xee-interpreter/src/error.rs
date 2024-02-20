@@ -615,13 +615,13 @@ impl From<xot::Error> for Error {
     }
 }
 
-impl From<xee_name::Error> for Error {
-    fn from(e: xee_name::Error) -> Self {
-        match e {
-            xee_name::Error::MissingPrefix => Error::XPST0081,
-        }
-    }
-}
+// impl From<xee_name::Error> for Error {
+//     fn from(e: xee_name::Error) -> Self {
+//         match e {
+//             xee_name::Error::MissingPrefix => Error::XPST0081,
+//         }
+//     }
+// }
 
 impl From<OutOfBoundsError> for Error {
     fn from(_e: OutOfBoundsError) -> Self {

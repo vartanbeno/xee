@@ -1,5 +1,6 @@
 use chumsky::{input::ValueInput, prelude::*};
 use xee_schema_type::Xs;
+use xot::xmlname::NameStrInfo;
 
 use crate::ast;
 use crate::ast::Span;

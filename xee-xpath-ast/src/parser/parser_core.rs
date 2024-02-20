@@ -166,7 +166,7 @@ where
         fn static_function_call(
             name: ast::NameS,
             arguments: Vec<ArgumentOrPlaceholder>,
-            default_function_namespace: Option<&str>,
+            default_function_namespace: &str,
             span: Span,
         ) -> ast::PrimaryExprS {
             let name = name.map(|name| name.with_default_namespace(default_function_namespace));
@@ -946,7 +946,7 @@ fn root_step(span: Span) -> ast::StepExprS {
 
     ast::StepExpr::PrimaryExpr(
         ast::PrimaryExpr::FunctionCall(ast::FunctionCall {
-            name: ast::Name::new("root".to_string(), Some(FN_NAMESPACE.to_string()), None)
+            name: ast::Name::new("root".to_string(), FN_NAMESPACE.to_string(), String::new())
                 .with_empty_span(),
             arguments: vec![path_arg],
         })
@@ -980,7 +980,7 @@ fn placeholder_arguments(
                 // XXX what if someone uses this as a parameter name?
                 let param_name = format!("placeholder{}", placeholder_index);
                 placeholder_index += 1;
-                let name = ast::Name::unprefixed(&param_name);
+                let name = ast::Name::name(&param_name);
                 let param = ast::Param {
                     name: name.clone(),
                     type_: None,

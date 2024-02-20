@@ -9,10 +9,10 @@ Ok(Expr(BinaryExpr(BinaryExpr(
     steps: [
       AxisStep(AxisStep(
         forward: Child,
-        node_test: NameTest(Name(Name(
-          name: "foo",
-          prefix: None,
-          namespace: None,
+        node_test: NameTest(Name(OwnedName(
+          local_name_str: "foo",
+          namespace_str: "",
+          prefix_str: "",
         ))),
         predicates: [],
       )),
@@ -23,10 +23,10 @@ Ok(Expr(BinaryExpr(BinaryExpr(
     steps: [
       AxisStep(AxisStep(
         forward: Child,
-        node_test: NameTest(Name(Name(
-          name: "bar",
-          prefix: None,
-          namespace: None,
+        node_test: NameTest(Name(OwnedName(
+          local_name_str: "bar",
+          namespace_str: "",
+          prefix_str: "",
         ))),
         predicates: [],
       )),

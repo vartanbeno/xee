@@ -15,7 +15,7 @@ documentation = "https://docs.rs/xee-xslt"
 homepage = "https://github.com/Paligo/xee-xslt"
 
 [features]
-serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath/serde"]
+serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath/serde", "xot/serde"]
 
 [dependencies]
 ahash = { workspace = true }

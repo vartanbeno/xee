@@ -1,6 +1,6 @@
 ---
 source: xee-xslt-ast/src/value_template.rs
-expression: "parse(\"hello {world}!\", &namespaces)"
+expression: "parse(\"hello {world}!\", &parser_context)"
 ---
 Ok([
   String(
@@ -16,10 +16,10 @@ Ok([
         steps: [
           AxisStep(AxisStep(
             axis: Child,
-            node_test: NameTest(Name(Name(
-              name: "world",
-              prefix: None,
-              namespace: None,
+            node_test: NameTest(Name(OwnedName(
+              local_name_str: "world",
+              namespace_str: "",
+              prefix_str: "",
             ))),
             predicates: [],
           )),

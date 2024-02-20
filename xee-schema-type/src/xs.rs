@@ -87,8 +87,8 @@ impl RustInfo {
 }
 
 impl Xs {
-    pub fn by_name(namespace: Option<&str>, local_name: &str) -> Option<Self> {
-        if namespace == Some(XS_NAMESPACE) {
+    pub fn by_name(namespace: &str, local_name: &str) -> Option<Self> {
+        if namespace == XS_NAMESPACE {
             Xs::by_local_name(local_name)
         } else {
             None

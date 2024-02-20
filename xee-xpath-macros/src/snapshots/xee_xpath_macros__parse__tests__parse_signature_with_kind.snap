@@ -6,14 +6,10 @@ Ok(
     XPathFnOptions {
         signature: Signature {
             name: Spanned {
-                value: Name {
-                    name: "foo",
-                    prefix: Some(
-                        "fn",
-                    ),
-                    namespace: Some(
-                        "http://www.w3.org/2005/xpath-functions",
-                    ),
+                value: OwnedName {
+                    local_name_str: "foo",
+                    namespace_str: "http://www.w3.org/2005/xpath-functions",
+                    prefix_str: "fn",
                 },
                 span: 0..6,
             },

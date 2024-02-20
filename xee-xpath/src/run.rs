@@ -12,7 +12,7 @@ use crate::compile::parse;
 pub fn evaluate(
     xml: &str,
     xpath: &str,
-    default_element_namespace: Option<&str>,
+    default_element_namespace: &str,
 ) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let root = xot.parse(xml).unwrap();
@@ -24,12 +24,12 @@ pub fn evaluate_root(
     xot: &mut Xot,
     root: xot::Node,
     xpath: &str,
-    default_element_namespace: Option<&str>,
+    default_element_namespace: &str,
 ) -> SpannedResult<Sequence> {
     let namespaces = Namespaces::new(
         Namespaces::default_namespaces(),
         default_element_namespace,
-        Some(FN_NAMESPACE),
+        FN_NAMESPACE,
     );
     let static_context = StaticContext::from_namespaces(namespaces);
     let uri = Uri::new("http://example.com");

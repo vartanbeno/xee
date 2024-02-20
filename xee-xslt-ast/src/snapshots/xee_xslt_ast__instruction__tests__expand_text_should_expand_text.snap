@@ -8,10 +8,10 @@ Ok(Instruction(If(If(
       Path(PathExpr(
         steps: [
           PrimaryExpr(FunctionCall(FunctionCall(
-            name: Name(
-              name: "true",
-              prefix: None,
-              namespace: Some("http://www.w3.org/2005/xpath-functions"),
+            name: OwnedName(
+              local_name_str: "true",
+              namespace_str: "http://www.w3.org/2005/xpath-functions",
+              prefix_str: "",
             ),
             arguments: [],
           ))),
@@ -31,10 +31,10 @@ Ok(Instruction(If(If(
           steps: [
             AxisStep(AxisStep(
               axis: Child,
-              node_test: NameTest(Name(Name(
-                name: "world",
-                prefix: None,
-                namespace: None,
+              node_test: NameTest(Name(OwnedName(
+                local_name_str: "world",
+                namespace_str: "",
+                prefix_str: "",
               ))),
               predicates: [],
             )),

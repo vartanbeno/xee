@@ -59,8 +59,9 @@ fn node_test(node_test: &ast::NodeTest, axis: &ast::Axis, xot: &Xot, node: xot::
             }
             match name_test {
                 ast::NameTest::Name(name) => {
-                    let name_id = name.value.to_name_id(xot);
-                    if let Some(name_id) = name_id {
+                    let name = name.value.maybe_to_ref(xot);
+                    if let Some(name) = name {
+                        let name_id = name.name_id();
                         match xot.value(node) {
                             xot::Value::Element(element) => element.name() == name_id,
                             xot::Value::Attribute(attribute) => attribute.name() == name_id,
@@ -156,7 +157,7 @@ mod tests {
         let step = Step {
             axis: ast::Axis::Child,
             node_test: ast::NodeTest::NameTest(ast::NameTest::Name(
-                ast::Name::unprefixed("a").with_empty_span(),
+                ast::Name::name("a").with_empty_span(),
             )),
         };
         let value = resolve_step(&step, doc_el, &xot);

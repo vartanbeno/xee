@@ -7,7 +7,7 @@ const ROOT_FIXTURE: &str = include_str!("fixtures/root.xml");
 
 #[test]
 fn test_test_cases() {
-    let sequence = evaluate(ROOT_FIXTURE, "/test-set/test-case", Some(NS)).unwrap();
+    let sequence = evaluate(ROOT_FIXTURE, "/test-set/test-case", NS).unwrap();
     assert_eq!(sequence.len(), 38);
 }
 
@@ -16,7 +16,7 @@ fn test_specific_attribute() {
     let sequence = evaluate(
         ROOT_FIXTURE,
         "/test-set/test-case[@name eq 'fn-root-1']",
-        Some(NS),
+        NS,
     )
     .unwrap();
     assert_eq!(sequence.len(), 1);

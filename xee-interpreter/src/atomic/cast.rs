@@ -2,6 +2,7 @@ use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::rc::Rc;
+use xot::xmlname::NameStrInfo;
 
 use xee_schema_type::Xs;
 
@@ -82,7 +83,7 @@ impl atomic::Atomic {
                 atomic::BinaryType::Base64 => Self::canonical_base64_binary(data.as_ref()),
                 atomic::BinaryType::Hex => Self::canonical_hex_binary(data.as_ref()),
             },
-            atomic::Atomic::QName(name) => name.to_full_name(),
+            atomic::Atomic::QName(name) => name.full_name().to_string(),
         }
     }
 

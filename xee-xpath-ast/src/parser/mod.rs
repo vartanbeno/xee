@@ -141,11 +141,8 @@ mod tests {
     }
 
     fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParserError> {
-        let namespaces = Namespaces::new(
-            Namespaces::default_namespaces(),
-            Some("http://example.com"),
-            None,
-        );
+        let namespaces =
+            Namespaces::new(Namespaces::default_namespaces(), "http://example.com", "");
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 

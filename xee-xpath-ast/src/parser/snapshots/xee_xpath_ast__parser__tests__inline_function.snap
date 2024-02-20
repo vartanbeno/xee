@@ -7,10 +7,10 @@ Ok(Path(PathExpr(
     PrimaryExpr(InlineFunction(InlineFunction(
       params: [
         Param(
-          name: Name(
-            name: "x",
-            prefix: None,
-            namespace: None,
+          name: OwnedName(
+            local_name_str: "x",
+            namespace_str: "",
+            prefix_str: "",
           ),
           type_: None,
         ),
@@ -19,10 +19,10 @@ Ok(Path(PathExpr(
       body: Some(Expr([
         Path(PathExpr(
           steps: [
-            PrimaryExpr(VarRef(Name(
-              name: "x",
-              prefix: None,
-              namespace: None,
+            PrimaryExpr(VarRef(OwnedName(
+              local_name_str: "x",
+              namespace_str: "",
+              prefix_str: "",
             ))),
           ],
         )),

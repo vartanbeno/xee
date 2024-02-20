@@ -1,5 +1,6 @@
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
+use xot::xmlname::NameStrInfo;
 
 use crate::ast::Span;
 use crate::lexer::Token;
@@ -63,7 +64,7 @@ where
 
     let outer_function_name = name.try_map(|name, span| {
         let name = name.value;
-        if name.namespace() == Some(FN_NAMESPACE) || name.namespace().is_none() {
+        if name.namespace() == FN_NAMESPACE || name.namespace().is_empty() {
             {
                 match name.local_name() {
                     "doc" => Ok(pattern::OuterFunctionName::Doc),

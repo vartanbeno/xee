@@ -23,10 +23,10 @@ Ok(Instruction(ApplyTemplates(ApplyTemplates(
       ),
     )),
     WithParam(WithParam(
-      name: Name(
-        name: "a",
-        prefix: None,
-        namespace: None,
+      name: OwnedName(
+        local_name_str: "a",
+        namespace_str: "",
+        prefix_str: "",
       ),
       select: None,
       as_: None,

@@ -40,7 +40,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(my_function),
         wrap_xpath_fn!(generate_id),
         StaticFunctionDescription {
-            name: Name::new("error".to_string(), Some(FN_NAMESPACE.to_string()), None),
+            name: Name::new("error".to_string(), FN_NAMESPACE.to_string(), String::new()),
             // TODO: this is not the right signature for fn:error, as it always
             // returns a none
             signature: ast::Signature::parse("fn:error() as item()*", &Default::default())

@@ -6,10 +6,10 @@ Ok(Expr(BinaryExpr(BinaryExpr(
   operator: Union,
   left: Path(PathExpr(
     root: Rooted(
-      root: VarRef(Name(
-        name: "a",
-        prefix: None,
-        namespace: None,
+      root: VarRef(OwnedName(
+        local_name_str: "a",
+        namespace_str: "",
+        prefix_str: "",
       )),
       predicates: [],
     ),
@@ -17,10 +17,10 @@ Ok(Expr(BinaryExpr(BinaryExpr(
   )),
   right: Path(PathExpr(
     root: Rooted(
-      root: VarRef(Name(
-        name: "b",
-        prefix: None,
-        namespace: None,
+      root: VarRef(OwnedName(
+        local_name_str: "b",
+        namespace_str: "",
+        prefix_str: "",
       )),
       predicates: [],
     ),

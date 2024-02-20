@@ -2,6 +2,7 @@
 
 use ahash::HashMap;
 use std::rc::Rc;
+use xot::xmlname::NameStrInfo;
 use xot::Xot;
 
 use xee_name::{Name, Namespaces};
@@ -41,7 +42,7 @@ fn element_namespaces(node: xot::Node, xot: &Xot) -> Namespaces {
         })
         .collect::<HashMap<_, _>>();
 
-    Namespaces::new(pairs, None, None)
+    Namespaces::new(pairs, "", "")
 }
 
 #[xpath_fn("fn:QName($paramURI as xs:string?, $paramQName as xs:string) as xs:QName")]
@@ -67,14 +68,14 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
     };
     let pairs = HashMap::from_iter(pairs);
     // TODO: see efficiency note for resolve-QName
-    let namespaces = Namespaces::new(pairs, None, None);
+    let namespaces = Namespaces::new(pairs, "", "");
     let name = parse_name(param_qname, &namespaces)
         .map_err(|_| error::Error::FOCA0002)?
         .value;
     // TODO: the parser should do this already
     // put in default namespace if required
-    if name.namespace().is_none() && !param_uri.is_empty() {
-        Ok(name.with_default_namespace(Some(param_uri)).into())
+    if name.namespace().is_empty() && !param_uri.is_empty() {
+        Ok(name.with_default_namespace(param_uri).into())
     } else {
         Ok(name.into())
     }
@@ -83,7 +84,8 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
 #[xpath_fn("fn:prefix-from-QName($arg as xs:QName?) as xs:NCName?")]
 fn prefix_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
-        if let Some(prefix) = arg.prefix() {
+        let prefix = arg.prefix();
+        if !prefix.is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::NCName,
                 Rc::new(prefix.to_string()),
@@ -111,7 +113,8 @@ fn local_name_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atom
 #[xpath_fn("fn:namespace-uri-from-QName($arg as xs:QName?) as xs:anyURI?")]
 fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
-        if let Some(namespace) = arg.namespace() {
+        let namespace = arg.namespace();
+        if !arg.namespace().is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::AnyURI,
                 Rc::new(namespace.to_string()),

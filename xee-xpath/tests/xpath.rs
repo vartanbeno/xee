@@ -36,11 +36,11 @@ fn run_with_variables(s: &str, variables: Variables) -> SpannedResult<Sequence> 
 // }
 
 fn run_xml(xml: &str, xpath: &str) -> SpannedResult<Sequence> {
-    evaluate(xml, xpath, None)
+    evaluate(xml, xpath, "")
 }
 
 fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> SpannedResult<Sequence> {
-    evaluate(xml, xpath, Some(ns))
+    evaluate(xml, xpath, ns)
 }
 
 fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> SpannedResult<()>
@@ -51,7 +51,7 @@ where
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
     documents.add(&mut xot, &uri, xml).unwrap();
-    let namespaces = Namespaces::new(Namespaces::default_namespaces(), None, None);
+    let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
     let context = DynamicContext::from_documents(&static_context, &documents);
     let document = documents.get(&uri).unwrap();
@@ -764,7 +764,7 @@ fn test_external_variable() {
     assert_debug_snapshot!(run_with_variables(
         "$foo",
         Variables::from([(
-            ast::Name::unprefixed("foo"),
+            ast::Name::name("foo"),
             Item::from(Atomic::from("FOO")).into()
         )]),
     ))
@@ -776,11 +776,11 @@ fn test_external_variables() {
         "$foo + $bar",
         Variables::from([
             (
-                ast::Name::unprefixed("foo"),
+                ast::Name::name("foo"),
                 Item::from(Atomic::from(1i64)).into()
             ),
             (
-                ast::Name::unprefixed("bar"),
+                ast::Name::name("bar"),
                 Item::from(Atomic::from(2i64)).into()
             )
         ])

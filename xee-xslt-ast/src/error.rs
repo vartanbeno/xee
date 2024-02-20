@@ -64,3 +64,9 @@ impl From<value_template::Error> for ElementError {
         ElementError::ValueTemplate(e)
     }
 }
+
+impl From<xot::Error> for ElementError {
+    fn from(_e: xot::Error) -> Self {
+        ElementError::Internal
+    }
+}

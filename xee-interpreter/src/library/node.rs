@@ -55,11 +55,7 @@ fn namespace_uri(interpreter: &Interpreter, arg: Option<xot::Node>) -> atomic::A
 
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<xot::Node> {
-    if let Some(arg) = arg {
-        Some(interpreter.xot().root(arg))
-    } else {
-        None
-    }
+    arg.map(|arg| interpreter.xot().root(arg))
 }
 
 #[xpath_fn("fn:has-children($node as node()?) as xs:boolean", context_first)]

@@ -35,7 +35,7 @@ impl EnvironmentSpec {
             if let qt::SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, documents)?;
-                variables.insert(Name::unprefixed(name), Item::from(node).into());
+                variables.insert(Name::name(name), Item::from(node).into());
             }
         }
         for param in &self.params {

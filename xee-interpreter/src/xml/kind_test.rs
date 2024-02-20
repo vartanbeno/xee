@@ -81,9 +81,9 @@ fn element_or_attribute_test(
         // the name has to match first
         let name_matches = match &test.name_or_wildcard {
             ast::NameOrWildcard::Name(name) => {
-                if let Some(node_name) = xot.node_name(node) {
-                    let name_id = name.to_name_id(xot);
-                    Some(node_name) == name_id
+                // TODO: what if we can't find a prefix here?
+                if let Some(node_name) = xot.node_name_ref(node).unwrap() {
+                    name.maybe_to_ref(xot) == Some(node_name)
                 } else {
                     false
                 }

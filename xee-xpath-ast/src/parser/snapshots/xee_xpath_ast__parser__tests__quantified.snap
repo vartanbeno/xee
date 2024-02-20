@@ -4,10 +4,10 @@ expression: "ast::ExprSingle::parse(\"every $x in (1, 2) satisfies $x > 0\")"
 ---
 Ok(Quantified(QuantifiedExpr(
   quantifier: Every,
-  var_name: Name(
-    name: "x",
-    prefix: None,
-    namespace: None,
+  var_name: OwnedName(
+    local_name_str: "x",
+    namespace_str: "",
+    prefix_str: "",
   ),
   var_expr: Path(PathExpr(
     steps: [
@@ -36,10 +36,10 @@ Ok(Quantified(QuantifiedExpr(
           operator: GenGt,
           left: PathExpr(
             steps: [
-              PrimaryExpr(VarRef(Name(
-                name: "x",
-                prefix: None,
-                namespace: None,
+              PrimaryExpr(VarRef(OwnedName(
+                local_name_str: "x",
+                namespace_str: "",
+                prefix_str: "",
               ))),
             ],
           ),

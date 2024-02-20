@@ -149,7 +149,7 @@ impl atomic::Atomic {
                 match name {
                     Ok(name) => {
                         let name = name.value;
-                        if name.has_namespace_without_prefix() {
+                        if name.in_default_namespace() {
                             // we deliberately do not parse Qualified names, as they are not
                             // legal for xs:QName
                             Err(error::Error::FORG0001)
