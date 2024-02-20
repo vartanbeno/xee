@@ -42,6 +42,8 @@ TODO
 
 ## xsl:attribute
 
+Cannot add after normal child.
+
 Not yet:
 
 - type
@@ -74,7 +76,7 @@ Done
 
 ## xsl:comment
 
-TODO: nodes
+Done
 
 ## xsl:context-item
 
@@ -102,7 +104,15 @@ TODO: nodes
 
 ## xsl:element
 
-TODO: nodes
+Not yet:
+
+* inherit-namespaces
+
+* use-attribute sets
+
+* type
+
+* validation
 
 ## xsl:evaluate
 
@@ -200,7 +210,9 @@ TODO
 
 ## xsl:namespace
 
-TODO: nodes
+Not yet:
+
+* validation that namespace cannot be added if a normal child has been added already.
 
 ## xsl:namespace-alias
 
@@ -272,7 +284,7 @@ TODO
 
 ## xsl:processing-instruction
 
-TODO: nodes
+Done
 
 ## xsl:result-document
 
@@ -300,13 +312,13 @@ Not yet: all of the attibutes
 
 ## xsl:template
 
+Including priority.
+
 Not yet:
 
 - match: variable support, rooted paths, certain axes
 
 - name
-
-- priority
 
 - mode
 
@@ -316,7 +328,9 @@ Not yet:
 
 ## xsl:text
 
-TODO
+Not yet:
+
+* depcreated disable-output-escaping
 
 ## xsl:transform
 
