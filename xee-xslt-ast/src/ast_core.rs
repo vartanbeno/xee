@@ -1369,6 +1369,16 @@ impl From<ProcessingInstruction> for SequenceConstructorItem {
     }
 }
 
+impl SelectOrSequenceConstructor for ProcessingInstruction {
+    fn select(&self) -> Option<&Expression> {
+        self.select.as_ref()
+    }
+
+    fn sequence_constructor(&self) -> &SequenceConstructor {
+        &self.sequence_constructor
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ResultDocument {

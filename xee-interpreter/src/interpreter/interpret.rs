@@ -555,7 +555,21 @@ impl<'a> Interpreter<'a> {
                     let item = sequence::Item::Node(comment_node);
                     self.state.push(item.into());
                 }
-                EncodedInstruction::XmlProcessingInstruction => {}
+                EncodedInstruction::XmlProcessingInstruction => {
+                    let text_atomic = self.pop_atomic()?;
+                    let text = text_atomic.into_canonical();
+                    let text = if !text.is_empty() {
+                        Some(text.as_str())
+                    } else {
+                        None
+                    };
+                    let target_atomic = self.pop_atomic()?;
+                    let target = target_atomic.into_canonical();
+                    let target_id = self.state.xot.add_name(&target);
+                    let pi_node = self.state.xot.new_processing_instruction(target_id, text);
+                    let item = sequence::Item::Node(pi_node);
+                    self.state.push(item.into());
+                }
                 EncodedInstruction::XmlAppend => {
                     let child_value = self.state.pop();
                     let parent_node = self.pop_node()?;

@@ -955,3 +955,39 @@ fn test_comment() {
 
     assert_eq!(xml(&xot, output), r#"<o><!--comment--></o>"#);
 }
+
+#[test]
+fn test_pi_with_text() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:processing-instruction name="foo">bar</xsl:processing-instruction></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><?foo bar?></o>"#);
+}
+
+#[test]
+fn test_pi_without_text() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc/>"#,
+        r#"
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:processing-instruction name="foo"/></o>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
+
+    assert_eq!(xml(&xot, output), r#"<o><?foo?></o>"#);
+}

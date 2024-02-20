@@ -237,6 +237,7 @@ impl<'a> IrConverter<'a> {
             Attribute(attribute) => self.attribute(attribute),
             Namespace(namespace) => self.namespace(namespace),
             Comment(comment) => self.comment(comment),
+            ProcessingInstruction(pi) => self.processing_instruction(pi),
             // xsl:variable does not produce content and is handled earlier already
             Variable(_variable) => unreachable!(),
             _ => todo!(),
@@ -758,6 +759,24 @@ impl<'a> IrConverter<'a> {
         Ok(bindings.bind_expr_no_span(
             &mut self.variables,
             ir::Expr::XmlComment(ir::XmlComment { value: atom }),
+        ))
+    }
+
+    fn processing_instruction(
+        &mut self,
+        pi: &ast::ProcessingInstruction,
+    ) -> error::SpannedResult<Bindings> {
+        let (ncname_atom, ncname_bindings) = self.ncname_dynamic(&pi.name)?.atom_bindings();
+        let (content_atom, content_bindings) = self
+            .select_or_sequence_constructor_simple_content(pi)?
+            .atom_bindings();
+        let bindings = ncname_bindings.concat(content_bindings);
+        Ok(bindings.bind_expr_no_span(
+            &mut self.variables,
+            ir::Expr::XmlProcessingInstruction(ir::XmlProcessingInstruction {
+                target: ncname_atom,
+                content: content_atom,
+            }),
         ))
     }
 
