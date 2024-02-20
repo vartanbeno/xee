@@ -264,7 +264,6 @@ pub(crate) trait PredicateMatcher {
                 } else {
                     false
                 }
-                // TODO: expected_name.value should already be a StateName at this point
             }
             pattern::NameTest::Star => true,
             pattern::NameTest::LocalName(expected_local_name) => {
