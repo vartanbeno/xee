@@ -991,3 +991,25 @@ fn test_pi_without_text() {
 
     assert_eq!(xml(&xot, output), r#"<o><?foo?></o>"#);
 }
+
+// #[test]
+// fn test_modes() {
+//     let mut xot = Xot::new();
+//     let output = evaluate(
+//         &mut xot,
+//         r#"<doc><foo/></doc>"#,
+//         r#"
+// <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+//   <xsl:mode name="bar"/>
+//   <xsl:template match="/">
+//     <o><xsl:apply-templates select="doc/foo" mode="bar"/></o>
+//   </xsl:template>
+//   <xsl:template match="foo" mode="bar">
+//     <bar/>
+//   </xsl:template>
+// <xsl:transform>"#,
+//     )
+//     .unwrap();
+
+//     assert_eq!(xml(&xot, output), r#"<o><bar/></o>"#);
+// }

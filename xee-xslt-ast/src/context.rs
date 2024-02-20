@@ -1,4 +1,7 @@
+use std::str::FromStr;
+
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use rust_decimal::Decimal;
 use xee_xpath_ast::{ast as xpath_ast, VariableNames, XPathParserContext};
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
@@ -17,7 +20,7 @@ pub(crate) struct Context {
     default_mode: ast::DefaultMode,
     default_validation: ast::DefaultValidation,
     pub(crate) expand_text: bool,
-    version: ast::Decimal,
+    version: Decimal,
     xpath_default_namespace: ast::Uri,
     // cumulative
     exclude_result_prefixes: ast::ExcludeResultPrefixes,
@@ -41,7 +44,7 @@ impl Context {
             default_mode: ast::DefaultMode::Unnamed,
             default_validation: ast::DefaultValidation::Strip,
             expand_text: false,
-            version: "3.0".to_string(),
+            version: Decimal::from_str("3.0").unwrap(),
             xpath_default_namespace: "".to_string(),
             exclude_result_prefixes: ast::ExcludeResultPrefixes::Prefixes(vec![]),
             extension_element_prefixes: vec![],

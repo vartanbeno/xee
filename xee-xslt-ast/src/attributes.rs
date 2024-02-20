@@ -1,4 +1,7 @@
+use std::str::FromStr;
+
 use ahash::{HashSet, HashSetExt};
+use rust_decimal::Decimal;
 use xee_xpath_ast::{ast as xpath_ast, parse_item_type, parse_name, parse_sequence_type};
 
 use crate::ast_core as ast;
@@ -551,14 +554,14 @@ impl<'a> Attributes<'a> {
         |s, span| self._item_type(s, span)
     }
 
-    fn _decimal(s: &str, _span: Span) -> Result<ast::Decimal, AttributeError> {
-        // TODO
-        Ok(s.to_string())
+    fn _decimal(s: &str, span: Span) -> Result<Decimal, AttributeError> {
+        Decimal::from_str(s).map_err(|_| AttributeError::Invalid {
+            value: s.to_string(),
+            span: span,
+        })
     }
 
-    pub(crate) fn decimal(
-        &self,
-    ) -> impl Fn(&'a str, Span) -> Result<ast::Decimal, AttributeError> + '_ {
+    pub(crate) fn decimal(&self) -> impl Fn(&'a str, Span) -> Result<Decimal, AttributeError> + '_ {
         Self::_decimal
     }
 

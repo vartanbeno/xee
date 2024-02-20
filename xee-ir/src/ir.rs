@@ -312,6 +312,8 @@ pub struct CopyDeep {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rule {
+    // pub mode: Option<Name>,
+    pub priority: Decimal,
     pub pattern: Pattern<FunctionDefinition>,
     pub function_definition: FunctionDefinition,
 }

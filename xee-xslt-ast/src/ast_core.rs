@@ -1,4 +1,6 @@
+use rust_decimal::Decimal;
 use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
+
 pub use xee_name::Name;
 use xee_xpath_ast::ast as xpath_ast;
 
@@ -42,7 +44,6 @@ pub type Token = String;
 pub type Uri = String;
 pub type Language = String;
 pub type Prefix = String;
-pub type Decimal = String; // HTML version
 pub type NmToken = String;
 pub type Id = String;
 pub type PcData = String;

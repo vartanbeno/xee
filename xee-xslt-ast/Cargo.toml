@@ -28,6 +28,7 @@ serde = { workspace = true, features = ["derive"], optional = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 blanket = { workspace = true }
+rust_decimal = { workspace = true }
 
 [dev-dependencies]
 # we want to depend on serde feature during tests

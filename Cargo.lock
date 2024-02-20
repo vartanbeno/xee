@@ -3676,6 +3676,7 @@ dependencies = [
  "blanket",
  "insta",
  "ron 0.8.1",
+ "rust_decimal",
  "serde",
  "strum",
  "strum_macros",

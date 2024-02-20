@@ -7,6 +7,8 @@ use xee_xpath_ast::{ast as xpath_ast, pattern::transform_pattern, span::Spanned}
 use xee_xslt_ast::{ast, parse_transform};
 use xot::xmlname::NameStrInfo;
 
+use crate::priority::default_priority;
+
 struct IrConverter<'a> {
     variables: Variables,
     static_context: &'a StaticContext<'a>,
@@ -111,9 +113,22 @@ impl<'a> IrConverter<'a> {
         match declaration {
             Template(template) => {
                 if let Some(pattern) = &template.match_ {
+                    let priority = if let Some(priority) = &template.priority {
+                        *priority
+                    } else {
+                        let default_priorities =
+                            default_priority(&pattern.pattern).collect::<Vec<_>>();
+                        if default_priorities.len() > 1 {
+                            // for now, we can't deal with multiple registration yet
+                            todo!("Deal with multiple priorities for one rule")
+                        } else {
+                            default_priorities.first().unwrap().1
+                        }
+                    };
                     let function_definition =
                         self.sequence_constructor_function(&template.sequence_constructor)?;
                     declarations.rules.push(ir::Rule {
+                        priority,
                         pattern: transform_pattern(&pattern.pattern, |expr| {
                             self.pattern_predicate(expr)
                         })?,
