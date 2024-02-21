@@ -1,6 +1,8 @@
 use xee_interpreter::{context::StaticContext, error::SpannedResult, interpreter::Program};
 
-use crate::{ir, FunctionBuilder, FunctionCompiler, Scopes};
+use crate::{
+    declaration_compiler::DeclarationCompiler, ir, FunctionBuilder, FunctionCompiler, Scopes,
+};
 
 pub fn compile_xpath(expr: ir::ExprS, static_context: &StaticContext) -> SpannedResult<Program> {
     let mut program = Program::new(expr.span);
@@ -16,9 +18,7 @@ pub fn compile_xslt(
     static_context: &StaticContext,
 ) -> SpannedResult<Program> {
     let mut program = Program::new((0..0).into());
-    let mut scopes = Scopes::new();
-    let builder = FunctionBuilder::new(&mut program);
-    let mut compiler = FunctionCompiler::new(builder, &mut scopes, static_context);
+    let mut compiler = DeclarationCompiler::new(&mut program, static_context);
     compiler.compile_declarations(&declarations)?;
     Ok(program)
 }

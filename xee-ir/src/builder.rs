@@ -1,6 +1,4 @@
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use rust_decimal::Decimal;
-use xee_xpath_ast::{ast, Pattern};
+use xee_xpath_ast::ast;
 
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
@@ -24,25 +22,6 @@ pub(crate) enum JumpCondition {
     False,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct RuleBuilder {
-    priority: Decimal,
-    declaration_order: i64,
-    pattern: Pattern<function::InlineFunctionId>,
-    function_id: function::InlineFunctionId,
-}
-
-impl RuleBuilder {
-    fn rule(
-        self,
-    ) -> (
-        Pattern<function::InlineFunctionId>,
-        function::InlineFunctionId,
-    ) {
-        (self.pattern, self.function_id)
-    }
-}
-
 pub struct FunctionBuilder<'a> {
     program: &'a mut interpreter::Program,
     compiled: Vec<u8>,
@@ -52,8 +31,6 @@ pub struct FunctionBuilder<'a> {
     cast_types: Vec<function::CastType>,
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
-    rule_declaration_order: i64,
-    rule_builders: HashMap<ir::ModeValue, Vec<RuleBuilder>>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -67,8 +44,6 @@ impl<'a> FunctionBuilder<'a> {
             cast_types: Vec::new(),
             sequence_types: Vec::new(),
             closure_names: Vec::new(),
-            rule_declaration_order: 0,
-            rule_builders: HashMap::new(),
         }
     }
 
@@ -218,67 +193,5 @@ impl<'a> FunctionBuilder<'a> {
         function: function::InlineFunction,
     ) -> function::InlineFunctionId {
         self.program.add_function(function)
-    }
-
-    pub(crate) fn add_rule(
-        &mut self,
-        modes: &[ir::ModeValue],
-        priority: Decimal,
-        pattern: &Pattern<function::InlineFunctionId>,
-        function_id: function::InlineFunctionId,
-    ) {
-        // ensure there are no duplicate modes
-        let mut mode_set = HashSet::new();
-        for mode in modes {
-            mode_set.insert(mode);
-        }
-
-        let declaration_order = self.rule_declaration_order;
-        self.rule_declaration_order += 1;
-        for mode in mode_set {
-            self.rule_builders
-                .entry(mode.clone())
-                .or_default()
-                .push(RuleBuilder {
-                    priority,
-                    declaration_order,
-                    pattern: pattern.clone(),
-                    function_id,
-                });
-        }
-    }
-
-    pub(crate) fn add_rules(&mut self) {
-        // we don't want to register #all normally
-        let all_rule_builders = self.rule_builders.remove(&ir::ModeValue::All);
-
-        // we add the all rule builders to each rule builders, as they apply to
-        // all modes. We do this before the final registration so we benefit
-        // from priority sorting later
-        if let Some(all_rule_builders) = all_rule_builders {
-            for rule_builders in self.rule_builders.values_mut() {
-                for all_rule_builder in &all_rule_builders {
-                    rule_builders.push(all_rule_builder.clone());
-                }
-            }
-        }
-
-        for (mode, mut rule_builders) in self.rule_builders.drain() {
-            // higher priorities first, same priorities last declaration order wins
-            rule_builders.sort_by_key(|rule_builder| {
-                (-rule_builder.priority, -rule_builder.declaration_order)
-            });
-            let rules = rule_builders
-                .drain(..)
-                .map(|rule_builder| rule_builder.rule())
-                .collect();
-            let name = match mode {
-                ir::ModeValue::Unnamed => None,
-                ir::ModeValue::Named(name) => Some(name),
-                _ => unreachable!("ModeValue type should already be handled"),
-            };
-            // TODO: put in proper ModeId
-            self.program.declarations.mode_lookup.add_rules(None, rules)
-        }
     }
 }

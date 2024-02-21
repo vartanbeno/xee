@@ -1,13 +1,11 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rust_decimal::Decimal;
-use xee_xpath_ast::{ast, Pattern};
+use xee_xpath_ast::Pattern;
 
 use crate::function_compiler::Scopes;
 use crate::{ir, FunctionBuilder, FunctionCompiler};
-use xee_interpreter::interpreter::instruction::{
-    encode_instruction, instruction_size, Instruction,
-};
-use xee_interpreter::{context, error, function, interpreter, span, stack, xml};
+
+use xee_interpreter::{context, error, function, interpreter};
 use xee_xpath_ast::pattern::transform_pattern;
 
 #[derive(Debug, Clone)]
@@ -82,7 +80,7 @@ impl<'a> DeclarationCompiler<'a> {
         Ok(())
     }
 
-    pub(crate) fn add_rule(
+    fn add_rule(
         &mut self,
         modes: &[ir::ModeValue],
         priority: Decimal,
@@ -110,7 +108,7 @@ impl<'a> DeclarationCompiler<'a> {
         }
     }
 
-    pub(crate) fn add_rules(&mut self) {
+    fn add_rules(&mut self) {
         // we don't want to register #all normally
         let all_rule_builders = self.rule_builders.remove(&ir::ModeValue::All);
 

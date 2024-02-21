@@ -5,7 +5,6 @@ use xee_interpreter::function::FunctionRule;
 use xee_interpreter::interpreter::instruction::Instruction;
 use xee_interpreter::span::SourceSpan;
 use xee_interpreter::{context, error, function, stack};
-use xee_xpath_ast::pattern::transform_pattern;
 
 use crate::ir;
 
@@ -86,30 +85,6 @@ impl<'a> FunctionCompiler<'a> {
             ir::Expr::CopyShallow(copy_shallow) => self.compile_copy_shallow(copy_shallow, span),
             ir::Expr::CopyDeep(copy_deep) => self.compile_copy_deep(copy_deep, span),
         }
-    }
-
-    pub fn compile_declarations(
-        &mut self,
-        declarations: &ir::Declarations,
-    ) -> error::SpannedResult<()> {
-        for rule in &declarations.rules {
-            self.compile_rule(rule)?;
-        }
-        // now add compiled rules from builder to the program
-        self.builder.add_rules();
-        self.compile_function_definition(&declarations.main, (0..0).into())
-    }
-
-    fn compile_rule(&mut self, rule: &ir::Rule) -> error::SpannedResult<()> {
-        let function_id = self.compile_function_id(&rule.function_definition, (0..0).into())?;
-
-        let pattern = transform_pattern(&rule.pattern, |function_definition| {
-            self.compile_function_id(function_definition, (0..0).into())
-        })?;
-
-        self.builder
-            .add_rule(&rule.modes, rule.priority, &pattern, function_id);
-        Ok(())
     }
 
     fn compile_atom(&mut self, atom: &ir::AtomS) -> error::SpannedResult<()> {
