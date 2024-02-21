@@ -42,7 +42,9 @@ impl<'a> IrConverter<'a> {
     fn main_sequence_constructor(&mut self) -> ast::SequenceConstructor {
         vec![ast::SequenceConstructorItem::Instruction(
             ast::SequenceConstructorInstruction::ApplyTemplates(Box::new(ast::ApplyTemplates {
-                mode: None,
+                // TODO: mode should be configurable from the outside somehow,
+                // the XSTL test suite I think requires this.
+                mode: ast::ApplyTemplatesModeValue::Unnamed,
                 select: Some(ast::Expression {
                     xpath: xee_xpath_ast::ast::XPath::parse(
                         "/",

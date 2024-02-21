@@ -4,7 +4,7 @@ expression: "parse_sequence_constructor_item(r#\"<xsl:apply-templates xmlns:xsl=
 ---
 Ok(Instruction(ApplyTemplates(ApplyTemplates(
   select: None,
-  mode: None,
+  mode: Unnamed,
   content: [
     Sort(Sort(
       select: None,

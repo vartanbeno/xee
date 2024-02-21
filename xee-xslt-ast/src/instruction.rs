@@ -276,9 +276,22 @@ impl InstructionParser for ast::ApplyTemplates {
             )
         });
 
+        let mode = attributes.optional(names.mode, attributes.apply_templates_mode())?;
+
+        let mode = if let Some(mode) = mode {
+            mode
+        } else {
+            match &content.context.default_mode {
+                ast::DefaultMode::Unnamed => ast::ApplyTemplatesModeValue::Unnamed,
+                ast::DefaultMode::EqName(name) => {
+                    ast::ApplyTemplatesModeValue::EqName(name.clone())
+                }
+            }
+        };
+
         Ok(ast::ApplyTemplates {
             select: attributes.optional(names.select, attributes.xpath())?,
-            mode: attributes.optional(names.mode, attributes.token())?,
+            mode,
 
             span: content.span()?,
 

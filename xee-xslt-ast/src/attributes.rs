@@ -361,6 +361,30 @@ impl<'a> Attributes<'a> {
         Ok(s.to_string())
     }
 
+    fn _apply_templates_mode(
+        &self,
+        s: &str,
+        span: Span,
+    ) -> Result<ast::ApplyTemplatesModeValue, AttributeError> {
+        Ok(match s {
+            "#default" => match &self.content.context.default_mode {
+                ast::DefaultMode::Unnamed => return Ok(ast::ApplyTemplatesModeValue::Unnamed),
+                ast::DefaultMode::EqName(name) => {
+                    return Ok(ast::ApplyTemplatesModeValue::EqName(name.clone()))
+                }
+            },
+            "#unnamed" => ast::ApplyTemplatesModeValue::Unnamed,
+            "#current" => ast::ApplyTemplatesModeValue::Current,
+            _ => ast::ApplyTemplatesModeValue::EqName(self._eqname(s, span)?),
+        })
+    }
+
+    pub(crate) fn apply_templates_mode(
+        &self,
+    ) -> impl Fn(&'a str, Span) -> Result<ast::ApplyTemplatesModeValue, AttributeError> + '_ {
+        |s, span| self._apply_templates_mode(s, span)
+    }
+
     pub(crate) fn token(
         &self,
     ) -> impl Fn(&'a str, Span) -> Result<ast::Token, AttributeError> + '_ {

@@ -300,11 +300,19 @@ impl From<ApplyImports> for SequenceConstructorItem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ApplyTemplates {
     pub select: Option<Expression>,
-    pub mode: Option<Token>,
+    pub mode: ApplyTemplatesModeValue,
 
     pub content: Vec<ApplyTemplatesContent>,
 
     pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub enum ApplyTemplatesModeValue {
+    EqName(EqName),
+    Unnamed,
+    Current,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
