@@ -325,26 +325,31 @@ impl<'a> Attributes<'a> {
         |s, span| self._eqnames(s, span)
     }
 
-    fn _eqname_or_defaults(
-        &self,
-        s: &str,
-        span: Span,
-    ) -> Result<Vec<ast::EqNameOrDefault>, AttributeError> {
+    fn _modes(&self, s: &str, span: Span) -> Result<Vec<ast::ModeValue>, AttributeError> {
         let mut result = Vec::new();
         for (s, span) in split_whitespace_with_spans(s, span) {
-            if s == "#default" {
-                result.push(ast::EqNameOrDefault::Default);
-            } else {
-                result.push(ast::EqNameOrDefault::EqName(self._eqname(s, span)?));
+            match s {
+                "#default" => {
+                    result.push(ast::ModeValue::Default);
+                }
+                "#all" => {
+                    result.push(ast::ModeValue::All);
+                }
+                "#unnamed" => {
+                    result.push(ast::ModeValue::Unnamed);
+                }
+                _ => {
+                    result.push(ast::ModeValue::EqName(self._eqname(s, span)?));
+                }
             }
         }
         Ok(result)
     }
 
-    pub(crate) fn eqname_or_defaults(
+    pub(crate) fn modes(
         &self,
-    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::EqNameOrDefault>, AttributeError> + '_ {
-        |s, span| self._eqname_or_defaults(s, span)
+    ) -> impl Fn(&'a str, Span) -> Result<Vec<ast::ModeValue>, AttributeError> + '_ {
+        |s, span| self._modes(s, span)
     }
 
     fn _token(s: &str, _span: Span) -> Result<ast::Token, AttributeError> {

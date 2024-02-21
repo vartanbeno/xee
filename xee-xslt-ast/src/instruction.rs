@@ -1513,7 +1513,7 @@ impl InstructionParser for ast::Template {
         let match_ = attributes.optional(names.match_, attributes.pattern())?;
         let name = attributes.optional(names.name, attributes.eqname())?;
         let priority = attributes.optional(names.priority, attributes.decimal())?;
-        let mode = attributes.optional(names.mode, attributes.eqname_or_defaults())?;
+        let mode = attributes.optional(names.mode, attributes.modes())?;
         let as_ = attributes.optional(names.as_, attributes.sequence_type())?;
         let visibility =
             attributes.optional(names.visibility, attributes.visibility_with_abstract())?;
@@ -1527,7 +1527,7 @@ impl InstructionParser for ast::Template {
             )
         });
 
-        let mode = mode.unwrap_or(vec![ast::EqNameOrDefault::Default]);
+        let mode = mode.unwrap_or(vec![ast::ModeValue::Default]);
 
         let span = content.span()?;
         let ((context_item, params), sequence_constructor) = parse(content)?;

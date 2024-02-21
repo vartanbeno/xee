@@ -8,6 +8,7 @@ use rust_decimal::Decimal;
 
 pub use xee_interpreter::function::Name;
 use xee_interpreter::function::{CastType, Signature, StaticFunctionId};
+use xee_interpreter::pattern::ModeValue;
 use xee_interpreter::xml;
 use xee_schema_type::Xs;
 pub use xee_xpath_ast::ast::{BinaryOperator, SequenceType, UnaryOperator};
@@ -311,15 +312,9 @@ pub struct CopyDeep {
     pub select: AtomS,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Mode {
-    Default,
-    Named(xmlname::OwnedName),
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rule {
-    pub modes: Vec<Mode>,
+    pub modes: Vec<ModeValue>,
     pub priority: Decimal,
     pub pattern: Pattern<FunctionDefinition>,
     pub function_definition: FunctionDefinition,

@@ -1,7 +1,7 @@
 use ahash::HashSetExt;
 use xee_name::{Name, Namespaces, FN_NAMESPACE};
 
-use xee_interpreter::{context::StaticContext, error, interpreter};
+use xee_interpreter::{context::StaticContext, error, interpreter, pattern::ModeValue};
 use xee_ir::{compile_xslt, ir, Bindings, Variables};
 use xee_xpath_ast::{ast as xpath_ast, pattern::transform_pattern, span::Spanned};
 use xee_xslt_ast::{ast, parse_transform};
@@ -131,10 +131,7 @@ impl<'a> IrConverter<'a> {
                     let modes = template
                         .mode
                         .iter()
-                        .map(|m| match m {
-                            ast::EqNameOrDefault::Default => ir::Mode::Default,
-                            ast::EqNameOrDefault::EqName(name) => ir::Mode::Named(name.clone()),
-                        })
+                        .map(Self::ast_mode_value_to_mode_value)
                         .collect();
 
                     declarations.rules.push(ir::Rule {
@@ -153,6 +150,15 @@ impl<'a> IrConverter<'a> {
             _ => {
                 todo!("Unsupported declaration")
             }
+        }
+    }
+
+    fn ast_mode_value_to_mode_value(mode: &ast::ModeValue) -> ModeValue {
+        match mode {
+            ast::ModeValue::EqName(name) => ModeValue::Named(name.clone()),
+            ast::ModeValue::Default => ModeValue::Default,
+            ast::ModeValue::Unnamed => ModeValue::Unnamed,
+            ast::ModeValue::All => ModeValue::All,
         }
     }
 

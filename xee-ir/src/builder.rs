@@ -1,12 +1,12 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rust_decimal::Decimal;
+use xee_interpreter::pattern::ModeValue;
 use xee_xpath_ast::{ast, Pattern};
 
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
 };
 use xee_interpreter::{function, interpreter, span, stack, xml};
-use xot::xmlname;
 
 use crate::ir;
 
@@ -25,11 +25,23 @@ pub(crate) enum JumpCondition {
     False,
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct RuleBuilder {
     priority: Decimal,
     declaration_order: i64,
     pattern: Pattern<function::InlineFunctionId>,
     function_id: function::InlineFunctionId,
+}
+
+impl RuleBuilder {
+    fn rule(
+        self,
+    ) -> (
+        Pattern<function::InlineFunctionId>,
+        function::InlineFunctionId,
+    ) {
+        (self.pattern, self.function_id)
+    }
 }
 
 pub struct FunctionBuilder<'a> {
@@ -42,7 +54,7 @@ pub struct FunctionBuilder<'a> {
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
     rule_declaration_order: i64,
-    rule_builders: HashMap<Option<xmlname::OwnedName>, Vec<RuleBuilder>>,
+    rule_builders: HashMap<ModeValue, Vec<RuleBuilder>>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -211,7 +223,7 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn add_rule(
         &mut self,
-        modes: &[ir::Mode],
+        modes: &[ModeValue],
         priority: Decimal,
         pattern: &Pattern<function::InlineFunctionId>,
         function_id: function::InlineFunctionId,
@@ -225,15 +237,8 @@ impl<'a> FunctionBuilder<'a> {
         let declaration_order = self.rule_declaration_order;
         self.rule_declaration_order += 1;
         for mode in mode_set {
-            // TODO: deal with overriding default modes
-            let mode = if let ir::Mode::Named(name) = mode {
-                Some(name.clone())
-            } else {
-                None
-            };
-
             self.rule_builders
-                .entry(mode)
+                .entry(mode.clone())
                 .or_default()
                 .push(RuleBuilder {
                     priority,
@@ -245,6 +250,26 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub(crate) fn add_rules(&mut self) {
+        // we don't want to register #default and #all normally
+        // let _default_rule_builders = self.rule_builders.remove(&ModeValue::Default);
+        let all_rule_builders = self.rule_builders.remove(&ModeValue::All);
+
+        // TODO: handle _default_rule_builders. We should add it to the default
+        // mode, but we don't have the default mode here yet. Possibly we handle
+        // this in the AST already, so we can forget about ModeValue::Default
+        // here entirely?
+
+        // we add the all rule builders to each rule builders, as they apply to
+        // all modes. We do this before the final registration so we benefit
+        // from priority sorting later
+        if let Some(all_rule_builders) = all_rule_builders {
+            for rule_builders in self.rule_builders.values_mut() {
+                for all_rule_builder in &all_rule_builders {
+                    rule_builders.push(all_rule_builder.clone());
+                }
+            }
+        }
+
         for (mode, mut rule_builders) in self.rule_builders.drain() {
             // higher priorities first, same priorities last declaration order wins
             rule_builders.sort_by_key(|rule_builder| {
@@ -252,19 +277,16 @@ impl<'a> FunctionBuilder<'a> {
             });
             let rules = rule_builders
                 .drain(..)
-                .map(|rule_builder| {
-                    let RuleBuilder {
-                        pattern,
-                        function_id,
-                        ..
-                    } = rule_builder;
-                    (pattern, function_id)
-                })
+                .map(|rule_builder| rule_builder.rule())
                 .collect();
-            self.program
-                .declarations
-                .mode_lookup
-                .add_rules(&mode, rules)
+            let name = match mode {
+                ModeValue::Unnamed => None,
+                // TODO: for now, Default is handled like Unnamed
+                ModeValue::Default => None,
+                ModeValue::Named(name) => Some(name),
+                _ => unreachable!("ModeValue type should already be handled"),
+            };
+            self.program.declarations.mode_lookup.add_rules(name, rules)
         }
     }
 }

@@ -1492,7 +1492,7 @@ pub struct Template {
     pub match_: Option<Pattern>,
     pub name: Option<EqName>,
     pub priority: Option<Decimal>,
-    pub mode: Vec<EqNameOrDefault>,
+    pub mode: Vec<ModeValue>,
     pub as_: Option<SequenceType>,
     pub visibility: Option<VisibilityWithAbstract>,
 
@@ -1505,9 +1505,11 @@ pub struct Template {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub enum EqNameOrDefault {
+pub enum ModeValue {
     EqName(EqName),
     Default,
+    Unnamed,
+    All,
 }
 
 impl From<Template> for OverrideContent {
