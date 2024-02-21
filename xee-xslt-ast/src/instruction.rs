@@ -2063,4 +2063,25 @@ mod tests {
             r##"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3"><xsl:template match="*" mode="#default">a</xsl:template></xsl:transform>"##
         ));
     }
+
+    #[test]
+    fn test_apply_templates_implicit_default_mode_is_unnamed() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:apply-templates xmlns:xsl="http://www.w3.org/1999/XSL/Transform" />"#
+        ));
+    }
+
+    #[test]
+    fn test_apply_templates_explicit_default_mode() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:apply-templates default-mode="foo" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="*"/>"#
+        ));
+    }
+
+    #[test]
+    fn test_apply_templates_explicit_mode() {
+        assert_ron_snapshot!(parse_sequence_constructor_item(
+            r#"<xsl:apply-templates mode="foo" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="*"/>"#
+        ));
+    }
 }
