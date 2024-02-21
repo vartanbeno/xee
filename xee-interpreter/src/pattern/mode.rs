@@ -7,14 +7,6 @@ use crate::function;
 
 use super::pattern_lookup::PatternLookup;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ModeValue {
-    Named(xmlname::OwnedName),
-    Default,
-    Unnamed,
-    All,
-}
-
 #[derive(Debug, Default)]
 pub struct ModeLookup<V: Clone> {
     pub(crate) modes: HashMap<Option<xmlname::OwnedName>, PatternLookup<V>>,

@@ -1,6 +1,5 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rust_decimal::Decimal;
-use xee_interpreter::pattern::ModeValue;
 use xee_xpath_ast::{ast, Pattern};
 
 use xee_interpreter::interpreter::instruction::{
@@ -54,7 +53,7 @@ pub struct FunctionBuilder<'a> {
     sequence_types: Vec<ast::SequenceType>,
     closure_names: Vec<ir::Name>,
     rule_declaration_order: i64,
-    rule_builders: HashMap<ModeValue, Vec<RuleBuilder>>,
+    rule_builders: HashMap<ir::ModeValue, Vec<RuleBuilder>>,
 }
 
 impl<'a> FunctionBuilder<'a> {
@@ -223,7 +222,7 @@ impl<'a> FunctionBuilder<'a> {
 
     pub(crate) fn add_rule(
         &mut self,
-        modes: &[ModeValue],
+        modes: &[ir::ModeValue],
         priority: Decimal,
         pattern: &Pattern<function::InlineFunctionId>,
         function_id: function::InlineFunctionId,
@@ -252,7 +251,7 @@ impl<'a> FunctionBuilder<'a> {
     pub(crate) fn add_rules(&mut self) {
         // we don't want to register #default and #all normally
         // let _default_rule_builders = self.rule_builders.remove(&ModeValue::Default);
-        let all_rule_builders = self.rule_builders.remove(&ModeValue::All);
+        let all_rule_builders = self.rule_builders.remove(&ir::ModeValue::All);
 
         // TODO: handle _default_rule_builders. We should add it to the default
         // mode, but we don't have the default mode here yet. Possibly we handle
@@ -280,10 +279,10 @@ impl<'a> FunctionBuilder<'a> {
                 .map(|rule_builder| rule_builder.rule())
                 .collect();
             let name = match mode {
-                ModeValue::Unnamed => None,
+                ir::ModeValue::Unnamed => None,
                 // TODO: for now, Default is handled like Unnamed
-                ModeValue::Default => None,
-                ModeValue::Named(name) => Some(name),
+                ir::ModeValue::Default => None,
+                ir::ModeValue::Named(name) => Some(name),
                 _ => unreachable!("ModeValue type should already be handled"),
             };
             self.program.declarations.mode_lookup.add_rules(name, rules)
