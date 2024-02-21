@@ -111,45 +111,48 @@ impl<'a> IrConverter<'a> {
     ) -> error::SpannedResult<()> {
         use ast::Declaration::*;
         match declaration {
-            Template(template) => {
-                if let Some(pattern) = &template.match_ {
-                    let priority = if let Some(priority) = &template.priority {
-                        *priority
-                    } else {
-                        let default_priorities =
-                            default_priority(&pattern.pattern).collect::<Vec<_>>();
-                        if default_priorities.len() > 1 {
-                            // for now, we can't deal with multiple registration yet
-                            todo!("Deal with multiple priorities for one rule")
-                        } else {
-                            default_priorities.first().unwrap().1
-                        }
-                    };
-                    let function_definition =
-                        self.sequence_constructor_function(&template.sequence_constructor)?;
-
-                    let modes = template
-                        .mode
-                        .iter()
-                        .map(Self::ast_mode_value_to_ir_mode_value)
-                        .collect();
-
-                    declarations.rules.push(ir::Rule {
-                        priority,
-                        modes,
-                        pattern: transform_pattern(&pattern.pattern, |expr| {
-                            self.pattern_predicate(expr)
-                        })?,
-                        function_definition,
-                    });
-                    Ok(())
-                } else {
-                    todo!();
-                }
-            }
+            Template(template) => self.template(declarations, template),
             _ => {
                 todo!("Unsupported declaration")
             }
+        }
+    }
+
+    fn template(
+        &mut self,
+        declarations: &mut ir::Declarations,
+        template: &ast::Template,
+    ) -> error::SpannedResult<()> {
+        if let Some(pattern) = &template.match_ {
+            let priority = if let Some(priority) = &template.priority {
+                *priority
+            } else {
+                let default_priorities = default_priority(&pattern.pattern).collect::<Vec<_>>();
+                if default_priorities.len() > 1 {
+                    // for now, we can't deal with multiple registration yet
+                    todo!("Deal with multiple priorities for one rule")
+                } else {
+                    default_priorities.first().unwrap().1
+                }
+            };
+            let function_definition =
+                self.sequence_constructor_function(&template.sequence_constructor)?;
+
+            let modes = template
+                .mode
+                .iter()
+                .map(Self::ast_mode_value_to_ir_mode_value)
+                .collect();
+
+            declarations.rules.push(ir::Rule {
+                priority,
+                modes,
+                pattern: transform_pattern(&pattern.pattern, |expr| self.pattern_predicate(expr))?,
+                function_definition,
+            });
+            Ok(())
+        } else {
+            todo!();
         }
     }
 
