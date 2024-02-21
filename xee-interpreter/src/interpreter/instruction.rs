@@ -77,7 +77,9 @@ pub enum Instruction {
     XmlAppend,
     CopyShallow,
     CopyDeep,
-    ApplyTemplates,
+    ApplyTemplatesNamed(u16),
+    ApplyTemplatesUnnamed,
+    ApplyTemplatesCurrent,
     PrintTop,
     PrintStack,
 }
@@ -154,7 +156,9 @@ pub(crate) enum EncodedInstruction {
     XmlComment,
     XmlProcessingInstruction,
     XmlAppend,
-    ApplyTemplates,
+    ApplyTemplatesNamed,
+    ApplyTemplatesUnnamed,
+    ApplyTemplatesCurrent,
     CopyShallow,
     CopyDeep,
     PrintTop,
@@ -285,7 +289,12 @@ pub(crate) fn decode_instruction(bytes: &[u8]) -> (Instruction, usize) {
         EncodedInstruction::XmlAppend => (Instruction::XmlAppend, 1),
         EncodedInstruction::CopyShallow => (Instruction::CopyShallow, 1),
         EncodedInstruction::CopyDeep => (Instruction::CopyDeep, 1),
-        EncodedInstruction::ApplyTemplates => (Instruction::ApplyTemplates, 1),
+        EncodedInstruction::ApplyTemplatesNamed => {
+            let mode_id = u16::from_le_bytes([bytes[1], bytes[2]]);
+            (Instruction::ApplyTemplatesNamed(mode_id), 3)
+        }
+        EncodedInstruction::ApplyTemplatesUnnamed => (Instruction::ApplyTemplatesUnnamed, 1),
+        EncodedInstruction::ApplyTemplatesCurrent => (Instruction::ApplyTemplatesCurrent, 1),
         EncodedInstruction::PrintTop => (Instruction::PrintTop, 1),
         EncodedInstruction::PrintStack => (Instruction::PrintStack, 1),
     }
@@ -434,8 +443,15 @@ pub fn encode_instruction(instruction: Instruction, bytes: &mut Vec<u8>) {
         Instruction::XmlAppend => bytes.push(EncodedInstruction::XmlAppend.to_u8().unwrap()),
         Instruction::CopyShallow => bytes.push(EncodedInstruction::CopyShallow.to_u8().unwrap()),
         Instruction::CopyDeep => bytes.push(EncodedInstruction::CopyDeep.to_u8().unwrap()),
-        Instruction::ApplyTemplates => {
-            bytes.push(EncodedInstruction::ApplyTemplates.to_u8().unwrap())
+        Instruction::ApplyTemplatesNamed(mode_id) => {
+            bytes.push(EncodedInstruction::ApplyTemplatesNamed.to_u8().unwrap());
+            bytes.extend_from_slice(&mode_id.to_le_bytes());
+        }
+        Instruction::ApplyTemplatesUnnamed => {
+            bytes.push(EncodedInstruction::ApplyTemplatesUnnamed.to_u8().unwrap())
+        }
+        Instruction::ApplyTemplatesCurrent => {
+            bytes.push(EncodedInstruction::ApplyTemplatesCurrent.to_u8().unwrap())
         }
         Instruction::PrintTop => bytes.push(EncodedInstruction::PrintTop.to_u8().unwrap()),
         Instruction::PrintStack => bytes.push(EncodedInstruction::PrintStack.to_u8().unwrap()),
@@ -507,7 +523,8 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::XmlAppend
         | Instruction::CopyShallow
         | Instruction::CopyDeep
-        | Instruction::ApplyTemplates
+        | Instruction::ApplyTemplatesUnnamed
+        | Instruction::ApplyTemplatesCurrent
         | Instruction::PrintTop
         | Instruction::PrintStack => 1,
         Instruction::Call(_) => 2,
@@ -526,6 +543,7 @@ pub fn instruction_size(instruction: &Instruction) -> usize {
         | Instruction::Treat(_)
         | Instruction::ReturnConvert(_)
         | Instruction::JumpIfFalse(_) => 3,
+        Instruction::ApplyTemplatesNamed(_) => 3,
     }
 }
 

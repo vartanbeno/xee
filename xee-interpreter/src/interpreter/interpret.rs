@@ -13,7 +13,6 @@ use crate::atomic::{
     op_add, op_div, op_idiv, op_mod, op_multiply, op_subtract, OpEq, OpGe, OpGt, OpLe, OpLt, OpNe,
 };
 use crate::context::DynamicContext;
-use crate::error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::pattern::PredicateMatcher;
@@ -21,6 +20,7 @@ use crate::sequence;
 use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
+use crate::{error, pattern};
 
 use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedInstruction};
 use super::runnable::Runnable;
@@ -617,9 +617,19 @@ impl<'a> Interpreter<'a> {
                     }
                     self.state.push(new_sequence.into());
                 }
-                EncodedInstruction::ApplyTemplates => {
+                EncodedInstruction::ApplyTemplatesUnnamed => {
                     let value = self.state.pop();
-                    let value = self.apply_templates_sequence(value.into())?;
+                    let value = self.apply_templates_sequence(None, value.into())?;
+                    self.state.push(value);
+                }
+                EncodedInstruction::ApplyTemplatesCurrent => {
+                    todo!("ApplyTemplatesCurrent not supported yet")
+                }
+                EncodedInstruction::ApplyTemplatesNamed => {
+                    let value = self.state.pop();
+                    let mode_id = self.read_u16();
+                    let mode = pattern::ModeId::new(mode_id as usize);
+                    let value = self.apply_templates_sequence(Some(mode), value.into())?;
                     self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
@@ -1150,6 +1160,7 @@ impl<'a> Interpreter<'a> {
 
     fn apply_templates_sequence(
         &mut self,
+        mode: Option<pattern::ModeId>,
         sequence: sequence::Sequence,
     ) -> error::Result<stack::Value> {
         let mut r: Vec<sequence::Item> = Vec::new();
@@ -1157,7 +1168,7 @@ impl<'a> Interpreter<'a> {
 
         for (i, item) in sequence.items().enumerate() {
             let item = item.unwrap(); // TODO
-            let sequence = self.apply_templates_item(item, i, size.clone())?;
+            let sequence = self.apply_templates_item(mode, item, i, size.clone())?;
             if let Some(sequence) = sequence {
                 for item in sequence.items() {
                     r.push(item.unwrap());
@@ -1169,11 +1180,12 @@ impl<'a> Interpreter<'a> {
 
     fn apply_templates_item(
         &mut self,
+        mode: Option<pattern::ModeId>,
         item: sequence::Item,
         position: usize,
         size: IBig,
     ) -> error::Result<Option<sequence::Sequence>> {
-        let function_id = self.lookup_pattern(&item);
+        let function_id = self.lookup_pattern(mode, &item);
 
         if let Some(function_id) = function_id {
             let position: IBig = (position + 1).into();
@@ -1195,13 +1207,14 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn lookup_pattern(
         &mut self,
+        mode: Option<pattern::ModeId>,
         item: &sequence::Item,
     ) -> Option<function::InlineFunctionId> {
         self.runnable
             .program()
             .declarations
             .mode_lookup
-            .lookup(&None, |pattern| self.matches(pattern, item))
+            .lookup(mode, |pattern| self.matches(pattern, item))
             .copied()
     }
 

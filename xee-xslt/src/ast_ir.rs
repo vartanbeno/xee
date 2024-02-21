@@ -395,9 +395,18 @@ impl<'a> IrConverter<'a> {
         let (select_atom, bindings) = self
             .expression(apply_templates.select.as_ref().unwrap())?
             .atom_bindings();
+        let mode = match &apply_templates.mode {
+            ast::ApplyTemplatesModeValue::EqName(name) => {
+                ir::ApplyTemplatesModeValue::Named(name.clone())
+            }
+            ast::ApplyTemplatesModeValue::Unnamed => ir::ApplyTemplatesModeValue::Unnamed,
+            ast::ApplyTemplatesModeValue::Current => ir::ApplyTemplatesModeValue::Current,
+        };
+
         Ok(bindings.bind_expr_no_span(
             &mut self.variables,
             ir::Expr::ApplyTemplates(ir::ApplyTemplates {
+                mode,
                 select: select_atom,
             }),
         ))

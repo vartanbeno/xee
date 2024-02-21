@@ -277,7 +277,8 @@ impl<'a> FunctionBuilder<'a> {
                 ir::ModeValue::Named(name) => Some(name),
                 _ => unreachable!("ModeValue type should already be handled"),
             };
-            self.program.declarations.mode_lookup.add_rules(name, rules)
+            // TODO: put in proper ModeId
+            self.program.declarations.mode_lookup.add_rules(None, rules)
         }
     }
 }

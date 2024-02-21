@@ -299,7 +299,15 @@ pub struct XmlAppend {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApplyTemplates {
+    pub mode: ApplyTemplatesModeValue,
     pub select: AtomS,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ApplyTemplatesModeValue {
+    Named(xmlname::OwnedName),
+    Unnamed,
+    Current,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

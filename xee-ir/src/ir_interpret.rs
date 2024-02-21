@@ -904,7 +904,18 @@ impl<'a> InterpreterCompiler<'a> {
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&apply_templates.select)?;
-        self.builder.emit(Instruction::ApplyTemplates, span);
+        match &apply_templates.mode {
+            ir::ApplyTemplatesModeValue::Unnamed => {
+                self.builder.emit(Instruction::ApplyTemplatesUnnamed, span);
+            }
+            ir::ApplyTemplatesModeValue::Named(_mode) => {
+                // TODO: put in the proper mode id
+                self.builder.emit(Instruction::ApplyTemplatesNamed(0), span);
+            }
+            ir::ApplyTemplatesModeValue::Current => {
+                self.builder.emit(Instruction::ApplyTemplatesCurrent, span);
+            }
+        }
         Ok(())
     }
 

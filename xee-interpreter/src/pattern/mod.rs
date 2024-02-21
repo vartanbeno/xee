@@ -5,5 +5,5 @@ mod mode;
 mod pattern_core;
 mod pattern_lookup;
 
-pub use mode::ModeLookup;
+pub use mode::{ModeId, ModeLookup};
 pub(crate) use pattern_core::PredicateMatcher;
