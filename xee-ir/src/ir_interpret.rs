@@ -14,13 +14,13 @@ use super::scope;
 
 pub(crate) type Scopes = scope::Scopes<ir::Name>;
 
-pub struct InterpreterCompiler<'a> {
+pub struct FunctionCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
     pub(crate) static_context: &'a context::StaticContext<'a>,
     pub(crate) builder: FunctionBuilder<'a>,
 }
 
-impl<'a> InterpreterCompiler<'a> {
+impl<'a> FunctionCompiler<'a> {
     pub fn new(
         builder: FunctionBuilder<'a>,
         scopes: &'a mut Scopes,
@@ -350,7 +350,7 @@ impl<'a> InterpreterCompiler<'a> {
         let nested_builder = self.builder.builder();
         self.scopes.push_scope();
 
-        let mut compiler = InterpreterCompiler {
+        let mut compiler = FunctionCompiler {
             builder: nested_builder,
             scopes: self.scopes,
             static_context: self.static_context,
