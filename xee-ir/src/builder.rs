@@ -249,14 +249,8 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub(crate) fn add_rules(&mut self) {
-        // we don't want to register #default and #all normally
-        // let _default_rule_builders = self.rule_builders.remove(&ModeValue::Default);
+        // we don't want to register #all normally
         let all_rule_builders = self.rule_builders.remove(&ir::ModeValue::All);
-
-        // TODO: handle _default_rule_builders. We should add it to the default
-        // mode, but we don't have the default mode here yet. Possibly we handle
-        // this in the AST already, so we can forget about ModeValue::Default
-        // here entirely?
 
         // we add the all rule builders to each rule builders, as they apply to
         // all modes. We do this before the final registration so we benefit
@@ -280,8 +274,6 @@ impl<'a> FunctionBuilder<'a> {
                 .collect();
             let name = match mode {
                 ir::ModeValue::Unnamed => None,
-                // TODO: for now, Default is handled like Unnamed
-                ir::ModeValue::Default => None,
                 ir::ModeValue::Named(name) => Some(name),
                 _ => unreachable!("ModeValue type should already be handled"),
             };

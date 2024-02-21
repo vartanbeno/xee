@@ -17,7 +17,7 @@ pub(crate) struct Context {
     variable_names: HashSet<xpath_ast::Name>,
 
     default_collation: Vec<ast::Uri>,
-    default_mode: ast::DefaultMode,
+    pub(crate) default_mode: ast::DefaultMode,
     default_validation: ast::DefaultValidation,
     pub(crate) expand_text: bool,
     version: Decimal,
@@ -129,7 +129,7 @@ impl Context {
         let version = if let Some(version) = standard.version {
             version
         } else {
-            self.version.clone()
+            self.version
         };
         let xpath_default_namespace =
             if let Some(xpath_default_namespace) = standard.xpath_default_namespace {

@@ -1527,7 +1527,12 @@ impl InstructionParser for ast::Template {
             )
         });
 
-        let mode = mode.unwrap_or(vec![ast::ModeValue::Default]);
+        let mode = mode.unwrap_or_else(|| {
+            vec![match &content.context.default_mode {
+                ast::DefaultMode::Unnamed => ast::ModeValue::Unnamed,
+                ast::DefaultMode::EqName(name) => ast::ModeValue::EqName(name.clone()),
+            }]
+        });
 
         let span = content.span()?;
         let ((context_item, params), sequence_constructor) = parse(content)?;
@@ -2002,6 +2007,47 @@ mod tests {
     fn test_attributes_on_literal_element() {
         assert_ron_snapshot!(parse_sequence_constructor_item(
             r#"<p xmlns:xsl="http://www.w3.org/1999/XSL/Transform" foo="FOO"/>"#
+        ));
+    }
+
+    #[test]
+    fn test_template_unnamed_mode() {
+        assert_ron_snapshot!(parse_transform(
+            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3"><xsl:template match="*">a</xsl:template></xsl:transform>"#
+        ));
+    }
+
+    #[test]
+    fn test_template_named_mode() {
+        assert_ron_snapshot!(parse_transform(
+            r#"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3"><xsl:template match="*" mode="foo">a</xsl:template></xsl:transform>"#
+        ));
+    }
+
+    #[test]
+    fn test_template_default_mode_explicit_fallback_to_default() {
+        // to include #" in the raw string, we need to mark it with double #
+        // https://rahul-thakoor.github.io/rust-raw-string-literals/
+        assert_ron_snapshot!(parse_transform(
+            r##"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" default-mode="foo"><xsl:template match="*" mode="#default">a</xsl:template></xsl:transform>"##
+        ));
+    }
+
+    #[test]
+    fn test_template_default_mode_implicit_fallback_to_default() {
+        // to include #" in the raw string, we need to mark it with double #
+        // https://rahul-thakoor.github.io/rust-raw-string-literals/
+        assert_ron_snapshot!(parse_transform(
+            r##"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3" default-mode="foo"><xsl:template match="*">a</xsl:template></xsl:transform>"##
+        ));
+    }
+
+    #[test]
+    fn test_template_default_mode_explicit_fallback_to_unnamed() {
+        // to include #" in the raw string, we need to mark it with double #
+        // https://rahul-thakoor.github.io/rust-raw-string-literals/
+        assert_ron_snapshot!(parse_transform(
+            r##"<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3"><xsl:template match="*" mode="#default">a</xsl:template></xsl:transform>"##
         ));
     }
 }

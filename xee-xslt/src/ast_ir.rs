@@ -156,7 +156,6 @@ impl<'a> IrConverter<'a> {
     fn ast_mode_value_to_ir_mode_value(mode: &ast::ModeValue) -> ir::ModeValue {
         match mode {
             ast::ModeValue::EqName(name) => ir::ModeValue::Named(name.clone()),
-            ast::ModeValue::Default => ir::ModeValue::Default,
             ast::ModeValue::Unnamed => ir::ModeValue::Unnamed,
             ast::ModeValue::All => ir::ModeValue::All,
         }

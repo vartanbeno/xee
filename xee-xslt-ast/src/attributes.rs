@@ -329,9 +329,14 @@ impl<'a> Attributes<'a> {
         let mut result = Vec::new();
         for (s, span) in split_whitespace_with_spans(s, span) {
             match s {
-                "#default" => {
-                    result.push(ast::ModeValue::Default);
-                }
+                "#default" => match &self.content.context.default_mode {
+                    ast::DefaultMode::Unnamed => {
+                        result.push(ast::ModeValue::Unnamed);
+                    }
+                    ast::DefaultMode::EqName(name) => {
+                        result.push(ast::ModeValue::EqName(name.clone()));
+                    }
+                },
                 "#all" => {
                     result.push(ast::ModeValue::All);
                 }
@@ -584,7 +589,7 @@ impl<'a> Attributes<'a> {
     fn _decimal(s: &str, span: Span) -> Result<Decimal, AttributeError> {
         Decimal::from_str(s).map_err(|_| AttributeError::Invalid {
             value: s.to_string(),
-            span: span,
+            span,
         })
     }
 

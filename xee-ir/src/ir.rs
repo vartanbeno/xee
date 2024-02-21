@@ -322,7 +322,6 @@ pub struct Rule {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ModeValue {
     Named(xmlname::OwnedName),
-    Default,
     Unnamed,
     All,
 }

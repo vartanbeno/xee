@@ -1507,7 +1507,6 @@ pub struct Template {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ModeValue {
     EqName(EqName),
-    Default,
     Unnamed,
     All,
 }
