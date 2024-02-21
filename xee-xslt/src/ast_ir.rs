@@ -112,6 +112,7 @@ impl<'a> IrConverter<'a> {
         use ast::Declaration::*;
         match declaration {
             Template(template) => self.template(declarations, template),
+            Mode(mode) => self.mode(declarations, mode),
             _ => {
                 todo!("Unsupported declaration")
             }
@@ -154,6 +155,15 @@ impl<'a> IrConverter<'a> {
         } else {
             todo!();
         }
+    }
+
+    fn mode(
+        &mut self,
+        declarations: &mut ir::Declarations,
+        mode: &ast::Mode,
+    ) -> error::SpannedResult<()> {
+        declarations.modes.insert(mode.name.clone(), ir::Mode {});
+        Ok(())
     }
 
     fn ast_mode_value_to_ir_mode_value(mode: &ast::ModeValue) -> ir::ModeValue {

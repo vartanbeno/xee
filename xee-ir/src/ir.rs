@@ -2,6 +2,7 @@
 // XXX is this really ANF? Maybe it is, though it doesn't support recursion
 // (without function arguments), as XPath doesn't.
 
+use ahash::{HashMap, HashMapExt};
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
@@ -327,8 +328,12 @@ pub enum ModeValue {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Mode {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Declarations {
     pub rules: Vec<Rule>,
+    pub modes: HashMap<Option<xmlname::OwnedName>, Mode>,
     pub functions: Vec<FunctionBinding>,
     pub main: FunctionDefinition,
 }
@@ -337,6 +342,7 @@ impl Declarations {
     pub fn new(main: FunctionDefinition) -> Self {
         Self {
             rules: Vec::new(),
+            modes: HashMap::new(),
             functions: Vec::new(),
             main,
         }
