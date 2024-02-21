@@ -378,7 +378,7 @@ impl<'a> FunctionCompiler<'a> {
         Ok(self.builder.add_function(function))
     }
 
-    fn compile_function_definition(
+    pub(crate) fn compile_function_definition(
         &mut self,
         function_definition: &ir::FunctionDefinition,
         span: SourceSpan,
