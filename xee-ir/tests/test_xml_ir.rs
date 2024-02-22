@@ -1,9 +1,10 @@
+use ahash::HashMapExt;
 use insta::assert_debug_snapshot;
 
 use xee_interpreter::context::{DynamicContext, StaticContext};
 use xee_interpreter::interpreter::{instruction::decode_instructions, Program};
 use xee_interpreter::occurrence::Occurrence;
-use xee_ir::{ir, FunctionBuilder, FunctionCompiler, Scopes};
+use xee_ir::{ir, FunctionBuilder, FunctionCompiler, ModeIds, Scopes};
 use xee_xpath_ast::span::Spanned;
 
 fn spanned<T>(t: T) -> Spanned<T> {
@@ -87,7 +88,13 @@ fn test_generate_element() {
     let namespaces = xee_interpreter::Namespaces::default();
     let variable_names = xee_interpreter::VariableNames::default();
     let static_context = xee_interpreter::context::StaticContext::new(namespaces, variable_names);
-    let mut compiler = FunctionCompiler::new(function_builder, &mut scopes, &static_context);
+    let empty_mode_ids = ModeIds::new();
+    let mut compiler = FunctionCompiler::new(
+        function_builder,
+        &mut scopes,
+        &static_context,
+        &empty_mode_ids,
+    );
 
     compiler.compile_expr(&outer_expr).unwrap();
 

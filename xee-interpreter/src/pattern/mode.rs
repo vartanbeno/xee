@@ -21,41 +21,32 @@ impl ModeId {
 
 #[derive(Debug, Default)]
 pub struct ModeLookup<V: Clone> {
-    pub(crate) unnamed_mode: Option<PatternLookup<V>>,
     pub(crate) modes: HashMap<ModeId, PatternLookup<V>>,
 }
 
 impl<V: Clone> ModeLookup<V> {
     pub(crate) fn new() -> Self {
         Self {
-            unnamed_mode: None,
             modes: HashMap::new(),
         }
     }
 
     pub(crate) fn lookup(
         &self,
-        mode: Option<ModeId>,
+        mode: ModeId,
         mut matches: impl FnMut(&Pattern<function::InlineFunctionId>) -> bool,
     ) -> Option<&V> {
-        let pattern_lookup = if let Some(mode) = mode {
-            self.modes.get(&mode)
-        } else {
-            self.unnamed_mode.as_ref()
-        }?;
+        let pattern_lookup = self.modes.get(&mode)?;
         pattern_lookup.lookup(&mut matches)
     }
 
     pub fn add_rules(
         &mut self,
-        mode: Option<ModeId>,
+        mode: ModeId,
         rules: Vec<(Pattern<function::InlineFunctionId>, V)>,
     ) {
-        let pattern_lookup = if let Some(mode) = mode {
-            self.modes.entry(mode).or_insert_with(PatternLookup::new)
-        } else {
-            self.unnamed_mode.get_or_insert_with(PatternLookup::new)
-        };
+        let pattern_lookup = self.modes.entry(mode).or_insert_with(PatternLookup::new);
+
         pattern_lookup.add_rules(rules);
     }
 }

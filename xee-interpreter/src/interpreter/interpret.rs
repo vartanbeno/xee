@@ -617,19 +617,11 @@ impl<'a> Interpreter<'a> {
                     }
                     self.state.push(new_sequence.into());
                 }
-                EncodedInstruction::ApplyTemplatesUnnamed => {
-                    let value = self.state.pop();
-                    let value = self.apply_templates_sequence(None, value.into())?;
-                    self.state.push(value);
-                }
-                EncodedInstruction::ApplyTemplatesCurrent => {
-                    todo!("ApplyTemplatesCurrent not supported yet")
-                }
-                EncodedInstruction::ApplyTemplatesNamed => {
+                EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop();
                     let mode_id = self.read_u16();
                     let mode = pattern::ModeId::new(mode_id as usize);
-                    let value = self.apply_templates_sequence(Some(mode), value.into())?;
+                    let value = self.apply_templates_sequence(mode, value.into())?;
                     self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
@@ -1160,7 +1152,7 @@ impl<'a> Interpreter<'a> {
 
     fn apply_templates_sequence(
         &mut self,
-        mode: Option<pattern::ModeId>,
+        mode: pattern::ModeId,
         sequence: sequence::Sequence,
     ) -> error::Result<stack::Value> {
         let mut r: Vec<sequence::Item> = Vec::new();
@@ -1180,7 +1172,7 @@ impl<'a> Interpreter<'a> {
 
     fn apply_templates_item(
         &mut self,
-        mode: Option<pattern::ModeId>,
+        mode: pattern::ModeId,
         item: sequence::Item,
         position: usize,
         size: IBig,
@@ -1207,7 +1199,7 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn lookup_pattern(
         &mut self,
-        mode: Option<pattern::ModeId>,
+        mode: pattern::ModeId,
         item: &sequence::Item,
     ) -> Option<function::InlineFunctionId> {
         self.runnable

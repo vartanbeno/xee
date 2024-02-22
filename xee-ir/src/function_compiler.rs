@@ -6,6 +6,7 @@ use xee_interpreter::interpreter::instruction::Instruction;
 use xee_interpreter::span::SourceSpan;
 use xee_interpreter::{context, error, function, stack};
 
+use crate::declaration_compiler::ModeIds;
 use crate::ir;
 
 use super::builder::{BackwardJumpRef, ForwardJumpRef, FunctionBuilder, JumpCondition};
@@ -16,6 +17,7 @@ pub(crate) type Scopes = scope::Scopes<ir::Name>;
 pub struct FunctionCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
     pub(crate) static_context: &'a context::StaticContext<'a>,
+    pub(crate) mode_ids: &'a ModeIds,
     pub(crate) builder: FunctionBuilder<'a>,
 }
 
@@ -24,11 +26,13 @@ impl<'a> FunctionCompiler<'a> {
         builder: FunctionBuilder<'a>,
         scopes: &'a mut Scopes,
         static_context: &'a context::StaticContext<'a>,
+        mode_ids: &'a ModeIds,
     ) -> Self {
         Self {
             builder,
             scopes,
             static_context,
+            mode_ids,
         }
     }
 
@@ -329,6 +333,7 @@ impl<'a> FunctionCompiler<'a> {
             builder: nested_builder,
             scopes: self.scopes,
             static_context: self.static_context,
+            mode_ids: self.mode_ids,
         };
 
         for param in &function_definition.params {
@@ -879,17 +884,22 @@ impl<'a> FunctionCompiler<'a> {
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         self.compile_atom(&apply_templates.select)?;
-        match &apply_templates.mode {
-            ir::ApplyTemplatesModeValue::Unnamed => {
-                self.builder.emit(Instruction::ApplyTemplatesUnnamed, span);
-            }
-            ir::ApplyTemplatesModeValue::Named(_mode) => {
-                // TODO: put in the proper mode id
-                self.builder.emit(Instruction::ApplyTemplatesNamed(0), span);
-            }
-            ir::ApplyTemplatesModeValue::Current => {
-                self.builder.emit(Instruction::ApplyTemplatesCurrent, span);
-            }
+
+        let mode_id = if matches!(
+            apply_templates.mode,
+            ir::ApplyTemplatesModeValue::Named(_) | ir::ApplyTemplatesModeValue::Unnamed
+        ) {
+            self.mode_ids.get(&apply_templates.mode)
+        } else {
+            todo!("#current mode not handled yet")
+        };
+        if let Some(mode_id) = mode_id {
+            self.builder
+                .emit(Instruction::ApplyTemplates(mode_id.get() as u16), span);
+        } else {
+            // the mode was never used by any templates, so compile the empty
+            // sequence
+            self.builder.emit_constant(stack::Value::Empty, span);
         }
         Ok(())
     }

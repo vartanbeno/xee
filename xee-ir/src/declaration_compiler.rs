@@ -1,5 +1,6 @@
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rust_decimal::Decimal;
+use xee_interpreter::pattern::ModeId;
 use xee_xpath_ast::Pattern;
 
 use crate::function_compiler::Scopes;
@@ -27,12 +28,15 @@ impl RuleBuilder {
     }
 }
 
+pub type ModeIds = HashMap<ir::ApplyTemplatesModeValue, ModeId>;
+
 pub struct DeclarationCompiler<'a> {
     program: &'a mut interpreter::Program,
     pub(crate) static_context: &'a context::StaticContext<'a>,
     scopes: Scopes,
     rule_declaration_order: i64,
     rule_builders: HashMap<ir::ModeValue, Vec<RuleBuilder>>,
+    mode_ids: ModeIds,
 }
 
 impl<'a> DeclarationCompiler<'a> {
@@ -46,18 +50,28 @@ impl<'a> DeclarationCompiler<'a> {
             scopes: Scopes::new(),
             rule_declaration_order: 0,
             rule_builders: HashMap::new(),
+            mode_ids: HashMap::new(),
         }
     }
 
     fn function_compiler(&mut self) -> FunctionCompiler<'_> {
         let function_builder = FunctionBuilder::new(self.program);
-        FunctionCompiler::new(function_builder, &mut self.scopes, self.static_context)
+        FunctionCompiler::new(
+            function_builder,
+            &mut self.scopes,
+            self.static_context,
+            &self.mode_ids,
+        )
     }
 
     pub fn compile_declarations(
         &mut self,
         declarations: &ir::Declarations,
     ) -> error::SpannedResult<()> {
+        // first keep track of what modes exist, to create a ModeId for them. We do
+        // this early so any mode reference within apply-templates will resolve.
+        self.compile_modes(declarations);
+
         for rule in &declarations.rules {
             self.compile_rule(rule)?;
         }
@@ -65,6 +79,24 @@ impl<'a> DeclarationCompiler<'a> {
         self.add_rules();
         let mut function_compiler = self.function_compiler();
         function_compiler.compile_function_definition(&declarations.main, (0..0).into())
+    }
+
+    fn compile_modes(&mut self, declarations: &ir::Declarations) {
+        for rule in &declarations.rules {
+            for mode_value in &rule.modes {
+                // we don't register All modes
+                if matches!(mode_value, ir::ModeValue::All) {
+                    continue;
+                }
+                let apply_templates_mode_value = match mode_value {
+                    ir::ModeValue::All => continue,
+                    ir::ModeValue::Named(name) => ir::ApplyTemplatesModeValue::Named(name.clone()),
+                    ir::ModeValue::Unnamed => ir::ApplyTemplatesModeValue::Unnamed,
+                };
+                let mode_id = ModeId::new(self.mode_ids.len());
+                self.mode_ids.insert(apply_templates_mode_value, mode_id);
+            }
+        }
     }
 
     fn compile_rule(&mut self, rule: &ir::Rule) -> error::SpannedResult<()> {
@@ -132,13 +164,22 @@ impl<'a> DeclarationCompiler<'a> {
                 .drain(..)
                 .map(|rule_builder| rule_builder.rule())
                 .collect();
-            let name = match mode {
-                ir::ModeValue::Unnamed => None,
-                ir::ModeValue::Named(name) => Some(name),
-                _ => unreachable!("ModeValue type should already be handled"),
+            let apply_templates_mode_value = match mode {
+                ir::ModeValue::Named(name) => ir::ApplyTemplatesModeValue::Named(name),
+                ir::ModeValue::Unnamed => ir::ApplyTemplatesModeValue::Unnamed,
+                ir::ModeValue::All => {
+                    unreachable!()
+                }
             };
-            // TODO: put in proper ModeId
-            self.program.declarations.mode_lookup.add_rules(None, rules)
+            let mode_id = self
+                .mode_ids
+                .get(&apply_templates_mode_value)
+                .cloned()
+                .expect("Mode should have been registered");
+            self.program
+                .declarations
+                .mode_lookup
+                .add_rules(mode_id, rules)
         }
     }
 }

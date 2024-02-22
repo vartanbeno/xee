@@ -1065,24 +1065,23 @@ fn test_priority_more_specific_default_priority_wins() {
     assert_eq!(xml(&xot, output), r#"<o>foo</o>"#);
 }
 
-// #[test]
-// fn test_modes() {
-//     let mut xot = Xot::new();
-//     let output = evaluate(
-//         &mut xot,
-//         r#"<doc><foo/></doc>"#,
-//         r#"
-// <xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
-//   <xsl:mode name="bar"/>
-//   <xsl:template match="/">
-//     <o><xsl:apply-templates select="doc/foo" mode="bar"/></o>
-//   </xsl:template>
-//   <xsl:template match="foo" mode="bar">
-//     <bar/>
-//   </xsl:template>
-// <xsl:transform>"#,
-//     )
-//     .unwrap();
+#[test]
+fn test_mode_undeclared() {
+    let mut xot = Xot::new();
+    let output = evaluate(
+        &mut xot,
+        r#"<doc><foo/></doc>"#,
+        r#"
+<xsl:transform expand-text="true" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3">
+  <xsl:template match="/">
+    <o><xsl:apply-templates select="doc/foo" mode="bar"/></o>
+  </xsl:template>
+  <xsl:template match="foo" mode="bar">
+    <bar/>
+  </xsl:template>
+</xsl:transform>"#,
+    )
+    .unwrap();
 
-//     assert_eq!(xml(&xot, output), r#"<o><bar/></o>"#);
-// }
+    assert_eq!(xml(&xot, output), r#"<o><bar/></o>"#);
+}
