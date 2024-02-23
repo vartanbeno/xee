@@ -1,0 +1,31 @@
+[package]
+name = "xee-testrunner"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath", "xslt", "testing"]
+license = "Apache-2.0"
+description = "Conformance testing for Xee's XPath and XSLT implementations"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-testrunner"
+homepage = "https://github.com/Paligo/xee"
+
+[dependencies]
+ahash = { workspace = true }
+thiserror = "1.0.40"
+xot = { workspace = true }
+xee-xpath = { path = "../xee-xpath" }
+xee-xslt = { path = "../xee-xslt" }
+fxhash = "0.2.1"
+indexmap = "1.9.3"
+clap = { workspace = true, features = ["derive"] }
+crossterm = "0.26.1"
+derive_builder = "0.12.0"
+globset = "0.4.10"
+chrono = { workspace = true }
+ibig = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
+tempfile = "3.5.0"
