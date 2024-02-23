@@ -10,4 +10,5 @@ mod xpath;
 mod xslt;
 
 pub(crate) use core::{Environment, EnvironmentRef, TestCaseEnvironment};
+pub(crate) use iterator::EnvironmentSpecIterator;
 pub(crate) use shared::SharedEnvironments;

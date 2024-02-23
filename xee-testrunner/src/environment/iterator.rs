@@ -3,9 +3,22 @@ use crate::error::{Error, Result};
 use super::{Environment, SharedEnvironments, TestCaseEnvironment};
 
 pub(crate) struct EnvironmentSpecIterator<'a, E: Environment> {
-    pub(crate) all_shared_environments: Vec<&'a SharedEnvironments<E>>,
+    pub(crate) inherited_shared_environments: Vec<&'a SharedEnvironments<E>>,
     pub(crate) environments: &'a [TestCaseEnvironment<E>],
     pub(crate) index: usize,
+}
+
+impl<'a, E: Environment> EnvironmentSpecIterator<'a, E> {
+    pub(crate) fn new(
+        inherited_shared_environments: Vec<&'a SharedEnvironments<E>>,
+        test_case_environments: &'a [TestCaseEnvironment<E>],
+    ) -> Self {
+        Self {
+            inherited_shared_environments,
+            environments: test_case_environments,
+            index: 0,
+        }
+    }
 }
 
 impl<'a, E: Environment> Iterator for EnvironmentSpecIterator<'a, E> {
@@ -20,7 +33,7 @@ impl<'a, E: Environment> Iterator for EnvironmentSpecIterator<'a, E> {
         match environment {
             TestCaseEnvironment::Local(local_environment_spec) => Some(Ok(local_environment_spec)),
             TestCaseEnvironment::Ref(environment_ref) => {
-                for shared_environments in &self.all_shared_environments {
+                for shared_environments in &self.inherited_shared_environments {
                     let environment_spec = shared_environments.get(environment_ref);
                     if let Some(environment_spec) = environment_spec {
                         return Some(Ok(environment_spec));
