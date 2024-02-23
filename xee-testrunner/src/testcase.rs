@@ -1,7 +1,11 @@
+use xee_xpath::{context::Variables, sequence, xml::Documents};
+
 use crate::{
     catalog::Catalog,
-    environment::{Environment, EnvironmentSpecIterator, TestCaseEnvironment},
+    environment::{Environment, EnvironmentIterator, TestCaseEnvironment},
+    error::Result,
     metadata::Metadata,
+    runcontext::RunContext,
     testset::TestSet,
 };
 
@@ -18,14 +22,56 @@ pub(crate) struct TestCase<E: Environment> {
 }
 
 impl<E: Environment> TestCase<E> {
-    fn environment_specs<'a>(
+    pub(crate) fn environments<'a>(
         &'a self,
         catalog: &'a Catalog<E>,
         test_set: &'a TestSet<E>,
-    ) -> EnvironmentSpecIterator<'a, E> {
-        EnvironmentSpecIterator::new(
+    ) -> EnvironmentIterator<'a, E> {
+        EnvironmentIterator::new(
             vec![&catalog.shared_environments, &test_set.shared_environments],
             &self.environments,
         )
+    }
+
+    fn context_item(
+        &self,
+        run_context: &mut RunContext<E>,
+        test_set: &TestSet<E>,
+    ) -> Result<Option<sequence::Item>> {
+        let environments = self
+            .environments(&run_context.catalog, test_set)
+            .collect::<Result<Vec<_>>>()?;
+        let xot = &mut run_context.xot;
+        let documents = &mut run_context.documents;
+        for environment in environments {
+            let item = environment
+                .environment_spec()
+                .context_item(xot, documents)?;
+            if let Some(item) = item {
+                return Ok(Some(item));
+            }
+        }
+        Ok(None)
+    }
+
+    fn variables(
+        &self,
+        run_context: &mut RunContext<E>,
+        test_set: &TestSet<E>,
+    ) -> Result<Variables> {
+        let environments = self
+            .environments(&run_context.catalog, test_set)
+            .collect::<Result<Vec<_>>>()?;
+        let mut variables = Variables::new();
+        let xot = &mut run_context.xot;
+        let source_cache = &mut run_context.documents;
+        for environment in environments {
+            variables.extend(
+                environment
+                    .environment_spec()
+                    .variables(xot, source_cache)?,
+            );
+        }
+        Ok(variables)
     }
 }

@@ -3598,6 +3598,7 @@ dependencies = [
  "insta",
  "tempfile",
  "thiserror",
+ "xee-name",
  "xee-xpath",
  "xee-xslt",
  "xot",

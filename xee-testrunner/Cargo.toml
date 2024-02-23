@@ -17,6 +17,7 @@ thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
 xee-xslt = { path = "../xee-xslt" }
+xee-name = { path = "../xee-name" }
 fxhash = "0.2.1"
 indexmap = "1.9.3"
 clap = { workspace = true, features = ["derive"] }

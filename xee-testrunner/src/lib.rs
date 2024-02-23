@@ -3,5 +3,7 @@ mod environment;
 mod error;
 mod hashmap;
 mod metadata;
+mod runcontext;
 mod testcase;
 mod testset;
+mod xpath_testcase;

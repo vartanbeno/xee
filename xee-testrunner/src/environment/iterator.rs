@@ -2,13 +2,13 @@ use crate::error::{Error, Result};
 
 use super::{Environment, SharedEnvironments, TestCaseEnvironment};
 
-pub(crate) struct EnvironmentSpecIterator<'a, E: Environment> {
+pub(crate) struct EnvironmentIterator<'a, E: Environment> {
     pub(crate) inherited_shared_environments: Vec<&'a SharedEnvironments<E>>,
     pub(crate) environments: &'a [TestCaseEnvironment<E>],
     pub(crate) index: usize,
 }
 
-impl<'a, E: Environment> EnvironmentSpecIterator<'a, E> {
+impl<'a, E: Environment> EnvironmentIterator<'a, E> {
     pub(crate) fn new(
         inherited_shared_environments: Vec<&'a SharedEnvironments<E>>,
         test_case_environments: &'a [TestCaseEnvironment<E>],
@@ -21,7 +21,7 @@ impl<'a, E: Environment> EnvironmentSpecIterator<'a, E> {
     }
 }
 
-impl<'a, E: Environment> Iterator for EnvironmentSpecIterator<'a, E> {
+impl<'a, E: Environment> Iterator for EnvironmentIterator<'a, E> {
     type Item = Result<&'a E>;
 
     fn next(&mut self) -> Option<Self::Item> {
