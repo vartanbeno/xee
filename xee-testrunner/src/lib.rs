@@ -1,4 +1,5 @@
 mod catalog;
+mod dependency;
 mod environment;
 mod error;
 mod hashmap;
