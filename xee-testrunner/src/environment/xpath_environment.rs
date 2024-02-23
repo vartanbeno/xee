@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use super::{core::EnvironmentSpec, decimal_format::DecimalFormat};
+use super::{
+    core::{Environment, EnvironmentSpec},
+    decimal_format::DecimalFormat,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct XPathEnvironmentSpec {
@@ -51,5 +54,15 @@ impl XPathEnvironmentSpec {
             .iter()
             .map(|ns| (ns.prefix.as_ref(), ns.uri.as_ref()))
             .collect()
+    }
+}
+
+impl Environment for XPathEnvironmentSpec {
+    fn empty() -> Self {
+        Self::empty()
+    }
+
+    fn environment_spec(&self) -> &EnvironmentSpec {
+        &self.environment_spec
     }
 }

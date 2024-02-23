@@ -17,6 +17,14 @@ use super::{
     source::{Source, SourceRole},
 };
 
+pub(crate) trait Environment {
+    // create an empty environment
+    fn empty() -> Self;
+
+    // get the underlying environment spec
+    fn environment_spec(&self) -> &EnvironmentSpec;
+}
+
 // environment information shared by XPath and XSLT
 #[derive(Debug, Default, Clone)]
 pub(crate) struct EnvironmentSpec {

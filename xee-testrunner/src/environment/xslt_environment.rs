@@ -1,4 +1,4 @@
-use super::core::EnvironmentSpec;
+use super::core::{Environment, EnvironmentSpec};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Package {
@@ -22,4 +22,25 @@ pub(crate) struct XsltEnvironmentSpec {
     pub(crate) packages: Vec<Package>,
     pub(crate) stylesheets: Vec<Stylesheet>,
     pub(crate) outputs: Vec<Output>,
+}
+
+impl XsltEnvironmentSpec {
+    pub(crate) fn empty() -> Self {
+        Self {
+            environment_spec: EnvironmentSpec::empty(),
+            packages: vec![],
+            stylesheets: vec![],
+            outputs: vec![],
+        }
+    }
+}
+
+impl Environment for XsltEnvironmentSpec {
+    fn empty() -> Self {
+        Self::empty()
+    }
+
+    fn environment_spec(&self) -> &EnvironmentSpec {
+        &self.environment_spec
+    }
 }
