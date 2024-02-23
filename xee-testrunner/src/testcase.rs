@@ -1,5 +1,5 @@
 use crate::{
-    environment::{Environment, EnvironmentRef},
+    environment::{Environment, TestCaseEnvironment},
     metadata::Metadata,
 };
 
@@ -13,10 +13,4 @@ pub(crate) struct TestCase<E: Environment> {
     // pub(crate) modules: Vec<Module>,
     // pub(crate) test: String,
     // pub(crate) result: TestCaseResult,
-}
-
-#[derive(Debug)]
-pub(crate) enum TestCaseEnvironment<E: Environment> {
-    Local(Box<E>),
-    Ref(EnvironmentRef),
 }

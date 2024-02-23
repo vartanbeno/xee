@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    fmt::{self, Display, Formatter},
+    path::PathBuf,
+};
 
 use xee_xpath::{
     context::{DynamicContext, StaticContext, Variables},
@@ -17,12 +20,32 @@ use super::{
     source::{Source, SourceRole},
 };
 
+// the abstract environment. Can be an XPath or XSLT environment.
 pub(crate) trait Environment {
     // create an empty environment
     fn empty() -> Self;
 
     // get the underlying environment spec
     fn environment_spec(&self) -> &EnvironmentSpec;
+}
+
+// In a test case we can include an environment directly, or refer to an environment
+#[derive(Debug)]
+pub(crate) enum TestCaseEnvironment<E: Environment> {
+    Local(Box<E>),
+    Ref(EnvironmentRef),
+}
+
+// a way to reference to other environments
+#[derive(Debug, Clone)]
+pub struct EnvironmentRef {
+    pub(crate) ref_: String,
+}
+
+impl Display for EnvironmentRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.ref_)
+    }
 }
 
 // environment information shared by XPath and XSLT

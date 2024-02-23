@@ -1,19 +1,6 @@
-use std::fmt::{self, Display, Formatter};
-
 use crate::hashmap::FxIndexMap;
 
-use super::core::Environment;
-
-#[derive(Debug, Clone)]
-pub struct EnvironmentRef {
-    pub(crate) ref_: String,
-}
-
-impl Display for EnvironmentRef {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.ref_)
-    }
-}
+use super::core::{Environment, EnvironmentRef};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments<E: Environment> {

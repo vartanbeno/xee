@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::environment::EnvironmentRef;
+
 // use crate::outcome;
-// use crate::qt;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -12,8 +13,8 @@ pub enum Error {
     NoCatalogFound,
     #[error("File not found in catalog: {0}")]
     FileNotFoundInCatalog(PathBuf),
-    // #[error("Unknown environment reference")]
-    // UnknownEnvironmentReference(qt::EnvironmentRef),
+    #[error("Unknown environment reference")]
+    UnknownEnvironmentReference(EnvironmentRef),
     #[error("Cannot represent as XML")]
     CannotRepresentAsXml,
     #[error("Xee XPath error")]
