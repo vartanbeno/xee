@@ -7,7 +7,7 @@ use xot::Xot;
 
 use crate::error::Result;
 
-use super::metadata::Metadata;
+use crate::metadata::Metadata;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Source {
