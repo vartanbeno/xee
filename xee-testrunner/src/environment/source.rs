@@ -6,7 +6,8 @@ use xee_xpath::xml::{Documents, Uri};
 use xot::Xot;
 
 use crate::error::Result;
-use crate::metadata::Metadata;
+
+use super::metadata::Metadata;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Source {

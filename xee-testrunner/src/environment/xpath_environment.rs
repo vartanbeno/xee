@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{decimal_format::DecimalFormat, environment::EnvironmentSpec};
+use super::{core::EnvironmentSpec, decimal_format::DecimalFormat};
 
 #[derive(Debug, Clone)]
 pub(crate) struct XPathEnvironmentSpec {

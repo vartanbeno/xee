@@ -1,4 +1,4 @@
-use crate::environment::EnvironmentSpec;
+use super::core::EnvironmentSpec;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Package {

@@ -8,10 +8,11 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::{
+use crate::error::Result;
+
+use super::{
     collation::Collation,
     collection::Collection,
-    error::Result,
     resource::Resource,
     source::{Source, SourceRole},
 };

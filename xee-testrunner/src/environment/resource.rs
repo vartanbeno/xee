@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::metadata::Metadata;
+use super::metadata::Metadata;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Resource {

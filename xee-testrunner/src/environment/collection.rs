@@ -1,4 +1,4 @@
-use crate::{resource::Resource, source::Source};
+use super::{resource::Resource, source::Source};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Collection {
