@@ -1,7 +1,9 @@
+mod catalog;
 mod collation;
 mod collection;
 mod decimal_format;
 mod environment;
+mod error;
 mod metadata;
 mod resource;
 mod source;

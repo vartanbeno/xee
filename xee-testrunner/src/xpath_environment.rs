@@ -6,7 +6,6 @@ use crate::{decimal_format::DecimalFormat, environment::EnvironmentSpec};
 pub(crate) struct XPathEnvironmentSpec {
     environment_spec: EnvironmentSpec,
 
-    pub(crate) base_dir: PathBuf,
     pub(crate) decimal_formats: Vec<DecimalFormat>,
     pub(crate) namespaces: Vec<Namespace>,
     pub(crate) context_items: Vec<ContextItem>,
@@ -34,4 +33,23 @@ pub(crate) struct Namespace {
 #[derive(Debug, Clone)]
 pub(crate) struct StaticBaseUri {
     uri: Option<String>,
+}
+
+impl XPathEnvironmentSpec {
+    pub(crate) fn empty() -> Self {
+        Self {
+            environment_spec: EnvironmentSpec::empty(),
+            decimal_formats: vec![],
+            namespaces: vec![],
+            context_items: vec![],
+            static_base_uris: vec![],
+        }
+    }
+
+    pub(crate) fn namespace_pairs(&self) -> Vec<(&str, &str)> {
+        self.namespaces
+            .iter()
+            .map(|ns| (ns.prefix.as_ref(), ns.uri.as_ref()))
+            .collect()
+    }
 }
