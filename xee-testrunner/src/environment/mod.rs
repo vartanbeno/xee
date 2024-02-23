@@ -6,8 +6,8 @@ mod iterator;
 mod resource;
 mod shared;
 mod source;
-mod xpath_environment;
-mod xslt_environment;
+mod xpath;
+mod xslt;
 
 pub(crate) use core::{Environment, EnvironmentRef, TestCaseEnvironment};
 pub(crate) use shared::SharedEnvironments;
