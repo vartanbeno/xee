@@ -1,7 +1,13 @@
 # xee-qt
 
-There is a big xpath conformance suite, and this contains the test runner
-for it.
+There is a big [xpath conformance suite](https://github.com/w3c/qt3tests), of
+which we've added a copy under `vendor`, and this contains the test runner for
+it.
+
+You can install the test runner, but that makes it difficult to check
+immediately against changes in the codebase. The instructions here describe how
+to run the tests against the current state of the Xee project. We compile in
+`--release` mode as otherwise running the tests takes a long time.
 
 To check against regressions, run:
 
