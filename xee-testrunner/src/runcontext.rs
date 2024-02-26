@@ -9,3 +9,17 @@ pub(crate) struct RunContext {
     pub(crate) known_dependencies: KnownDependencies,
     // pub(crate) verbose: bool,
 }
+
+impl RunContext {
+    pub(crate) fn new(
+        xot: Xot,
+        documents: Documents,
+        known_dependencies: KnownDependencies,
+    ) -> Self {
+        Self {
+            xot,
+            documents,
+            known_dependencies,
+        }
+    }
+}

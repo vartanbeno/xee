@@ -52,7 +52,7 @@ impl<E: Environment> TestCase<E> {
         test_set: &TestSet<E, R>,
     ) -> Result<Option<sequence::Item>> {
         let environments = self
-            .environments(&catalog, test_set)
+            .environments(catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
         let xot = &mut run_context.xot;
         let documents = &mut run_context.documents;
@@ -87,5 +87,73 @@ impl<E: Environment> TestCase<E> {
             );
         }
         Ok(variables)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use xee_xpath::xml::Documents;
+    use xot::Xot;
+
+    use crate::{dependency::KnownDependencies, environment::EnvironmentSpec};
+
+    use super::*;
+
+    #[test]
+    fn test_simple_runnable() {
+        struct FakeEnvironment {
+            environment_spec: EnvironmentSpec,
+        }
+
+        impl Environment for FakeEnvironment {
+            fn empty() -> Self {
+                Self {
+                    environment_spec: EnvironmentSpec::empty(),
+                }
+            }
+
+            fn environment_spec(&self) -> &EnvironmentSpec {
+                &self.environment_spec
+            }
+        }
+        // make a simple fake runnable
+        struct FakeRunnable {
+            test_case: TestCase<FakeEnvironment>,
+        }
+
+        impl Runnable<FakeEnvironment> for FakeRunnable {
+            fn test_case(&self) -> &TestCase<FakeEnvironment> {
+                &self.test_case
+            }
+
+            fn run(
+                &self,
+                _run_context: &mut RunContext,
+                _catalog: &Catalog<FakeEnvironment, Self>,
+                _test_set: &TestSet<FakeEnvironment, Self>,
+            ) -> TestOutcome {
+                TestOutcome::Passed
+            }
+        }
+
+        let runnable = FakeRunnable {
+            test_case: TestCase {
+                name: "test".to_string(),
+                metadata: Metadata {
+                    description: None,
+                    created: None,
+                    modified: vec![],
+                },
+                environments: vec![],
+                dependencies: Dependencies::empty(),
+            },
+        };
+
+        let xot = Xot::new();
+        let documents = Documents::new();
+        let known_dependencies = KnownDependencies::empty();
+        let run_context = RunContext::new(xot, documents, known_dependencies);
     }
 }

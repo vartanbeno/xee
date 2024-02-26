@@ -54,6 +54,12 @@ impl KnownDependencies {
         Self { specs }
     }
 
+    pub(crate) fn empty() -> Self {
+        Self {
+            specs: FxIndexSet::default(),
+        }
+    }
+
     fn is_supported(&self, dependency: &Dependency) -> bool {
         let contains = self.specs.contains(&dependency.spec);
         if dependency.satisfied {
@@ -65,6 +71,11 @@ impl KnownDependencies {
 }
 
 impl Dependencies {
+    pub(crate) fn empty() -> Self {
+        Self {
+            dependencies: Vec::new(),
+        }
+    }
     // the spec is supported if any of the spec dependencies is supported
     pub(crate) fn is_spec_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         let mut spec_dependency_seen: bool = false;
