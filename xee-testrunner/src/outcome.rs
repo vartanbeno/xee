@@ -22,6 +22,15 @@ pub enum TestOutcome {
     EnvironmentError(String),
 }
 
+impl TestOutcome {
+    pub(crate) fn is_passed(&self) -> bool {
+        matches!(self, Self::Passed | Self::PassedWithUnexpectedError(..))
+    }
+    pub(crate) fn is_exactly_passed(&self) -> bool {
+        matches!(self, Self::Passed)
+    }
+}
+
 impl std::fmt::Display for TestOutcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -44,6 +44,10 @@ impl XPathTestCase {
 }
 
 impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
+    fn test_case(&self) -> &TestCase<XPathEnvironmentSpec> {
+        &self.test_case
+    }
+
     fn run(
         &self,
         run_context: &mut RunContext<XPathEnvironmentSpec>,

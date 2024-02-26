@@ -12,6 +12,8 @@ use crate::{
 };
 
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
+    fn test_case(&self) -> &TestCase<E>;
+
     fn run(&self, run_context: &mut RunContext<E>, test_set: &TestSet<E, Self>) -> TestOutcome;
 }
 
