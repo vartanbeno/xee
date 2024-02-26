@@ -9,7 +9,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::outcome::{TestOutcome, UnexpectedError};
+use super::outcome::{TestOutcome, UnexpectedError};
 
 type XPathExpr = String;
 

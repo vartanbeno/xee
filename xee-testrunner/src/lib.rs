@@ -1,4 +1,3 @@
-mod assert;
 mod catalog;
 mod dependency;
 mod environment;
@@ -6,10 +5,8 @@ mod error;
 mod filter;
 mod hashmap;
 mod metadata;
-mod outcome;
 mod outcomes;
 mod renderer;
 mod runcontext;
 mod testcase;
 mod testset;
-mod xpath_testcase;

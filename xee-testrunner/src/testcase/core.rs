@@ -6,10 +6,11 @@ use crate::{
     environment::{Environment, EnvironmentIterator, TestCaseEnvironment},
     error::Result,
     metadata::Metadata,
-    outcome::TestOutcome,
     runcontext::RunContext,
     testset::TestSet,
 };
+
+use super::outcome::TestOutcome;
 
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
     fn test_case(&self) -> &TestCase<E>;
@@ -25,8 +26,6 @@ pub(crate) struct TestCase<E: Environment> {
     pub(crate) environments: Vec<TestCaseEnvironment<E>>,
     pub(crate) dependencies: Dependencies,
     // pub(crate) modules: Vec<Module>,
-    // pub(crate) test: String,
-    // pub(crate) result: TestCaseResult,
 }
 
 impl<E: Environment> TestCase<E> {

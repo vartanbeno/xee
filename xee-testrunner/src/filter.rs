@@ -244,7 +244,7 @@ pub(crate) enum UpdateResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::outcome::TestOutcome;
+    use crate::testcase::TestOutcome;
 
     use super::*;
 

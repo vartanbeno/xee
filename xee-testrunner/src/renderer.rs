@@ -3,8 +3,7 @@ use std::io::Stdout;
 use crate::{
     catalog::Catalog,
     environment::Environment,
-    outcome::TestOutcome,
-    testcase::{Runnable, TestCase},
+    testcase::{Runnable, TestCase, TestOutcome},
     testset::TestSet,
 };
 

@@ -7,14 +7,14 @@ use xee_xpath::{
 };
 
 use crate::{
-    assert::TestCaseResult,
-    catalog::Catalog,
-    environment::{Environment, XPathEnvironmentSpec},
-    error::Result,
-    outcome::TestOutcome,
-    runcontext::RunContext,
-    testcase::{Runnable, TestCase},
+    catalog::Catalog, environment::XPathEnvironmentSpec, error::Result, runcontext::RunContext,
     testset::TestSet,
+};
+
+use super::{
+    assert::TestCaseResult,
+    core::{Runnable, TestCase},
+    outcome::TestOutcome,
 };
 
 #[derive(Debug)]

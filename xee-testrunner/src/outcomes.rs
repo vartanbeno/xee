@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use crate::outcome::TestOutcome;
+use crate::testcase::TestOutcome;
 
 pub(crate) trait Outcomes {
     fn outcomes(&self) -> Vec<&TestCaseOutcome>;

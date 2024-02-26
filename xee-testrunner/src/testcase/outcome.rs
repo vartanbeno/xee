@@ -2,7 +2,7 @@ use crossterm::style::Stylize;
 
 use xee_xpath::error::Error;
 
-use crate::assert::Failure;
+use super::assert::Failure;
 
 #[derive(Debug, PartialEq)]
 pub enum UnexpectedError {
