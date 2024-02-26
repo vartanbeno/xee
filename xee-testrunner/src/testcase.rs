@@ -2,6 +2,7 @@ use xee_xpath::{context::Variables, sequence, xml::Documents};
 
 use crate::{
     catalog::Catalog,
+    dependency::Dependencies,
     environment::{Environment, EnvironmentIterator, TestCaseEnvironment},
     error::Result,
     metadata::Metadata,
@@ -15,7 +16,7 @@ pub(crate) struct TestCase<E: Environment> {
     pub(crate) metadata: Metadata,
     // environments can be a reference by name, or a locally defined environment
     pub(crate) environments: Vec<TestCaseEnvironment<E>>,
-    // pub(crate) dependencies: Dependencies,
+    pub(crate) dependencies: Dependencies,
     // pub(crate) modules: Vec<Module>,
     // pub(crate) test: String,
     // pub(crate) result: TestCaseResult,
@@ -33,7 +34,7 @@ impl<E: Environment> TestCase<E> {
         )
     }
 
-    fn context_item(
+    pub(crate) fn context_item(
         &self,
         run_context: &mut RunContext<E>,
         test_set: &TestSet<E>,
@@ -54,7 +55,7 @@ impl<E: Environment> TestCase<E> {
         Ok(None)
     }
 
-    fn variables(
+    pub(crate) fn variables(
         &self,
         run_context: &mut RunContext<E>,
         test_set: &TestSet<E>,

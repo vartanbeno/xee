@@ -3590,7 +3590,6 @@ dependencies = [
  "chrono",
  "clap",
  "crossterm",
- "derive_builder",
  "fxhash",
  "globset",
  "ibig",

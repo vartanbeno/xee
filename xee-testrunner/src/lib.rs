@@ -1,9 +1,11 @@
+mod assert;
 mod catalog;
 mod dependency;
 mod environment;
 mod error;
 mod hashmap;
 mod metadata;
+mod outcome;
 mod runcontext;
 mod testcase;
 mod testset;

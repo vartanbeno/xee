@@ -22,7 +22,6 @@ fxhash = "0.2.1"
 indexmap = "1.9.3"
 clap = { workspace = true, features = ["derive"] }
 crossterm = "0.26.1"
-derive_builder = "0.12.0"
 globset = "0.4.10"
 chrono = { workspace = true }
 ibig = { workspace = true }
