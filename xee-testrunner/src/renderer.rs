@@ -12,7 +12,7 @@ pub(crate) trait Renderer<E: Environment, R: Runnable<E>> {
         &self,
         stdout: &mut Stdout,
         test_set: &TestSet<E, R>,
-        catalog: &Catalog<E>,
+        catalog: &Catalog<E, R>,
     ) -> crossterm::Result<()>;
     fn render_test_case(
         &self,

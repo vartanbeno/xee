@@ -1,7 +1,11 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::environment::{Environment, SharedEnvironments};
+use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
+use crate::outcomes::CatalogOutcomes;
+use crate::runcontext::RunContext;
+use crate::testcase::Runnable;
 
 #[derive(Debug)]
 pub(crate) struct TestSetRef {
@@ -10,11 +14,25 @@ pub(crate) struct TestSetRef {
 }
 
 #[derive(Debug)]
-pub(crate) struct Catalog<E: Environment> {
+pub(crate) struct Catalog<E: Environment, R: Runnable<E>> {
     pub(crate) shared_environments: SharedEnvironments<E>,
     pub(crate) full_path: PathBuf,
     pub(crate) test_suite: String,
     pub(crate) version: String,
     pub(crate) test_sets: Vec<TestSetRef>,
     pub(crate) file_paths: FxIndexSet<PathBuf>,
+    _runnable: std::marker::PhantomData<R>,
+}
+
+impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
+    pub(crate) fn base_dir(&self) -> &Path {
+        self.full_path.parent().unwrap()
+    }
+
+    // pub(crate) fn run(
+    //     &self,
+    //     run_context: &mut RunContext,
+    //     test_filter: &impl TestFilter<E, R>,
+    // ) -> crate::error::Result<CatalogOutcomes> {
+    // }
 }

@@ -15,7 +15,12 @@ use super::outcome::TestOutcome;
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
     fn test_case(&self) -> &TestCase<E>;
 
-    fn run(&self, run_context: &mut RunContext<E>, test_set: &TestSet<E, Self>) -> TestOutcome;
+    fn run(
+        &self,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, Self>,
+        test_set: &TestSet<E, Self>,
+    ) -> TestOutcome;
 }
 
 #[derive(Debug)]
@@ -31,7 +36,7 @@ pub(crate) struct TestCase<E: Environment> {
 impl<E: Environment> TestCase<E> {
     pub(crate) fn environments<'a, R: Runnable<E>>(
         &'a self,
-        catalog: &'a Catalog<E>,
+        catalog: &'a Catalog<E, R>,
         test_set: &'a TestSet<E, R>,
     ) -> EnvironmentIterator<'a, E> {
         EnvironmentIterator::new(
@@ -42,11 +47,12 @@ impl<E: Environment> TestCase<E> {
 
     pub(crate) fn context_item<R: Runnable<E>>(
         &self,
-        run_context: &mut RunContext<E>,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
     ) -> Result<Option<sequence::Item>> {
         let environments = self
-            .environments(&run_context.catalog, test_set)
+            .environments(&catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
         let xot = &mut run_context.xot;
         let documents = &mut run_context.documents;
@@ -63,11 +69,12 @@ impl<E: Environment> TestCase<E> {
 
     pub(crate) fn variables<R: Runnable<E>>(
         &self,
-        run_context: &mut RunContext<E>,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
     ) -> Result<Variables> {
         let environments = self
-            .environments(&run_context.catalog, test_set)
+            .environments(catalog, test_set)
             .collect::<Result<Vec<_>>>()?;
         let mut variables = Variables::new();
         let xot = &mut run_context.xot;

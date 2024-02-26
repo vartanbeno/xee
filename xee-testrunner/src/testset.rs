@@ -1,6 +1,10 @@
-use std::{io::Stdout, path::PathBuf};
+use std::{
+    io::Stdout,
+    path::{Path, PathBuf},
+};
 
 use crate::{
+    catalog::Catalog,
     dependency::Dependencies,
     environment::{Environment, SharedEnvironments},
     error::Result,
@@ -8,7 +12,7 @@ use crate::{
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
-    testcase::Runnable,
+    testcase::{Runnable, TestCase},
 };
 
 #[derive(Debug)]
@@ -22,14 +26,23 @@ pub(crate) struct TestSet<E: Environment, R: Runnable<E>> {
 }
 
 impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
+    fn base_dir(&self) -> &Path {
+        self.full_path.parent().unwrap()
+    }
+
+    pub(crate) fn file_path(&self, catalog: &Catalog<E, R>) -> &Path {
+        self.full_path.strip_prefix(catalog.base_dir()).unwrap()
+    }
+
     fn run<Ren: Renderer<E, R>>(
-        run_context: &mut RunContext<E>,
-        test_filter: &impl TestFilter<E, R>,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
+        test_filter: &impl TestFilter<E, R>,
         stdout: &mut Stdout,
         renderer: Ren,
     ) -> Result<TestSetOutcomes> {
-        renderer.render_test_set(stdout, test_set, &run_context.catalog)?;
+        renderer.render_test_set(stdout, test_set, &catalog)?;
 
         let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
         for runner in &test_set.test_cases {
@@ -51,7 +64,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
                 continue;
             }
             renderer.render_test_case(stdout, test_case)?;
-            let outcome = runner.run(run_context, test_set);
+            let outcome = runner.run(run_context, catalog, test_set);
             renderer.render_test_outcome(stdout, &outcome)?;
             test_set_outcomes.add_outcome(&test_case.name, outcome);
         }

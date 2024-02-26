@@ -28,7 +28,7 @@ pub(crate) struct XPathTestCase {
 impl XPathTestCase {
     fn namespaces<'a>(
         &'a self,
-        catalog: &'a Catalog<XPathEnvironmentSpec>,
+        catalog: &'a Catalog<XPathEnvironmentSpec, Self>,
         test_set: &'a TestSet<XPathEnvironmentSpec, Self>,
     ) -> Result<Namespaces<'a>> {
         let environments = self
@@ -50,22 +50,23 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 
     fn run(
         &self,
-        run_context: &mut RunContext<XPathEnvironmentSpec>,
+        run_context: &mut RunContext,
+        catalog: &Catalog<XPathEnvironmentSpec, Self>,
         test_set: &TestSet<XPathEnvironmentSpec, Self>,
     ) -> TestOutcome {
-        let variables = self.test_case.variables(run_context, test_set);
+        let variables = self.test_case.variables(run_context, catalog, test_set);
         let variables = match variables {
             Ok(variables) => variables,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let context_item = self.test_case.context_item(run_context, test_set);
+        let context_item = self.test_case.context_item(run_context, catalog, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let namespaces = self.namespaces(&run_context.catalog, test_set);
+        let namespaces = self.namespaces(&catalog, test_set);
         let namespaces = match namespaces {
             Ok(namespaces) => namespaces,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
