@@ -1,3 +1,4 @@
+use std::io::stdout;
 use std::path::{Path, PathBuf};
 
 use crate::environment::{Environment, SharedEnvironments};
@@ -29,10 +30,21 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         self.full_path.parent().unwrap()
     }
 
-    // pub(crate) fn run(
-    //     &self,
-    //     run_context: &mut RunContext,
-    //     test_filter: &impl TestFilter<E, R>,
-    // ) -> crate::error::Result<CatalogOutcomes> {
-    // }
+    pub(crate) fn run(
+        &self,
+        run_context: &mut RunContext,
+        test_filter: &impl TestFilter<E, R>,
+    ) -> crate::error::Result<CatalogOutcomes> {
+        let mut stdout = stdout();
+
+        let mut catalog_outcomes = CatalogOutcomes::new();
+
+        for file_path in &self.file_paths {
+            // let test_set_outcomes =
+
+            //     run_path_helper(run_context, test_filter, file_path, &mut stdout)?;
+            // catalog_outcomes.add_outcomes(test_set_outcomes);
+        }
+        Ok(catalog_outcomes)
+    }
 }
