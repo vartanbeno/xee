@@ -1,10 +1,11 @@
-use std::io::stdout;
+use std::io::{stdout, Stdout};
 use std::path::{Path, PathBuf};
 
 use crate::environment::{Environment, SharedEnvironments};
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
 use crate::outcomes::CatalogOutcomes;
+use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
 use crate::testcase::Runnable;
 
@@ -30,13 +31,13 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         self.full_path.parent().unwrap()
     }
 
-    pub(crate) fn run(
+    pub(crate) fn run<Ren: Renderer<E, R>>(
         &self,
         run_context: &mut RunContext,
         test_filter: &impl TestFilter<E, R>,
+        stdout: &mut Stdout,
+        renderer: Ren,
     ) -> crate::error::Result<CatalogOutcomes> {
-        let mut stdout = stdout();
-
         let mut catalog_outcomes = CatalogOutcomes::new();
 
         for file_path in &self.file_paths {
