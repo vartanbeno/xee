@@ -6,9 +6,14 @@ use crate::{
     environment::{Environment, EnvironmentIterator, TestCaseEnvironment},
     error::Result,
     metadata::Metadata,
+    outcome::TestOutcome,
     runcontext::RunContext,
     testset::TestSet,
 };
+
+pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
+    fn run(&self, run_context: &mut RunContext<E>, test_set: &TestSet<Self, E>) -> TestOutcome;
+}
 
 #[derive(Debug)]
 pub(crate) struct TestCase<E: Environment> {
@@ -23,10 +28,10 @@ pub(crate) struct TestCase<E: Environment> {
 }
 
 impl<E: Environment> TestCase<E> {
-    pub(crate) fn environments<'a>(
+    pub(crate) fn environments<'a, R: Runnable<E>>(
         &'a self,
         catalog: &'a Catalog<E>,
-        test_set: &'a TestSet<E>,
+        test_set: &'a TestSet<R, E>,
     ) -> EnvironmentIterator<'a, E> {
         EnvironmentIterator::new(
             vec![&catalog.shared_environments, &test_set.shared_environments],
@@ -34,10 +39,10 @@ impl<E: Environment> TestCase<E> {
         )
     }
 
-    pub(crate) fn context_item(
+    pub(crate) fn context_item<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext<E>,
-        test_set: &TestSet<E>,
+        test_set: &TestSet<R, E>,
     ) -> Result<Option<sequence::Item>> {
         let environments = self
             .environments(&run_context.catalog, test_set)
@@ -55,10 +60,10 @@ impl<E: Environment> TestCase<E> {
         Ok(None)
     }
 
-    pub(crate) fn variables(
+    pub(crate) fn variables<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext<E>,
-        test_set: &TestSet<E>,
+        test_set: &TestSet<R, E>,
     ) -> Result<Variables> {
         let environments = self
             .environments(&run_context.catalog, test_set)

@@ -9,8 +9,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::error as testerror;
-use crate::outcome::{OutcomeStatus, UnexpectedError};
+use crate::outcome::{TestOutcome, UnexpectedError};
 
 type XPathExpr = String;
 
@@ -20,10 +19,10 @@ pub(crate) trait Assertable {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         match result {
             Ok(sequence) => self.assert_value(runnable, xot, sequence),
-            Err(error) => OutcomeStatus::RuntimeError(error.clone()),
+            Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
@@ -32,7 +31,7 @@ pub(crate) trait Assertable {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus;
+    ) -> TestOutcome;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,21 +42,21 @@ impl AssertAnyOf {
         Self(test_case_results)
     }
 
-    pub(crate) fn assert_error(&self, error: &Error) -> OutcomeStatus {
+    pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             if let TestCaseResult::AssertError(assert_error) = test_case_result {
                 let result = assert_error.assert_error(error);
                 match result {
-                    OutcomeStatus::Passed => return result,
+                    TestOutcome::Passed => return result,
                     _ => failed_test_results.push(result),
                 }
             } else {
                 // any non-error is a failure, as we arrived with an error
-                return OutcomeStatus::Failed;
+                return TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results));
             }
         }
-        OutcomeStatus::Failed
+        TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results))
     }
 }
 
@@ -67,18 +66,18 @@ impl Assertable for AssertAnyOf {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(runnable, xot, result);
             match result {
-                OutcomeStatus::Passed => return result,
+                TestOutcome::Passed => return result,
                 _ => failed_test_results.push(result),
             }
         }
         match result {
-            Ok(_value) => OutcomeStatus::Failed,
-            Err(error) => OutcomeStatus::RuntimeError(error.clone()),
+            Ok(_value) => TestOutcome::Failed(Failure::AnyOf(self.clone(), failed_test_results)),
+            Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
 
@@ -87,7 +86,7 @@ impl Assertable for AssertAnyOf {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         _sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         unreachable!();
     }
 }
@@ -107,15 +106,15 @@ impl Assertable for AssertAllOf {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(runnable, xot, result);
             match result {
-                OutcomeStatus::Passed | OutcomeStatus::PassedWithUnexpectedError(..) => {}
+                TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => {}
                 _ => return result,
             }
         }
-        OutcomeStatus::Passed
+        TestOutcome::Passed
     }
 
     fn assert_value(
@@ -123,7 +122,7 @@ impl Assertable for AssertAllOf {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         _sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         unreachable!();
     }
 }
@@ -143,11 +142,13 @@ impl Assertable for AssertNot {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let result = self.0.assert_result(runnable, xot, result);
         match result {
-            OutcomeStatus::Passed => OutcomeStatus::Failed,
-            OutcomeStatus::Failed => OutcomeStatus::Passed,
+            TestOutcome::Passed => {
+                TestOutcome::Failed(Failure::Not(self.clone(), Box::new(result)))
+            }
+            TestOutcome::Failed(_) => TestOutcome::Passed,
             _ => result,
         }
     }
@@ -157,7 +158,7 @@ impl Assertable for AssertNot {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         _sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         unreachable!();
     }
 }
@@ -183,21 +184,21 @@ impl Assertable for Assert {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let result_sequence = run_xpath_with_result(&self.0, sequence, runnable, xot);
 
         match result_sequence {
             Ok(result_sequence) => match result_sequence.effective_boolean_value() {
                 Ok(value) => {
                     if value {
-                        OutcomeStatus::Passed
+                        TestOutcome::Passed
                     } else {
-                        OutcomeStatus::Failed
+                        TestOutcome::Failed(Failure::Assert(self.clone(), sequence.clone()))
                     }
                 }
-                Err(error) => OutcomeStatus::RuntimeError(error),
+                Err(error) => TestOutcome::RuntimeError(error),
             },
-            Err(error) => OutcomeStatus::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error),
         }
     }
 }
@@ -217,7 +218,7 @@ impl Assertable for AssertEq {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let expected_sequence = run_xpath(&self.0, runnable, xot);
 
         match expected_sequence {
@@ -225,19 +226,19 @@ impl Assertable for AssertEq {
                 let atom = sequence.atomized(xot).one();
                 let atom = match atom {
                     Ok(atom) => atom,
-                    Err(error) => return OutcomeStatus::RuntimeError(error),
+                    Err(error) => return TestOutcome::RuntimeError(error),
                 };
                 let expected_atom = expected_sequence
                     .atomized(xot)
                     .one()
                     .expect("Should get single atom in sequence");
                 if expected_atom.simple_equal(&atom) {
-                    OutcomeStatus::Passed
+                    TestOutcome::Passed
                 } else {
-                    OutcomeStatus::Failed
+                    TestOutcome::Failed(Failure::Eq(self.clone(), sequence.clone()))
                 }
             }
-            Err(error) => OutcomeStatus::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error),
         }
     }
 }
@@ -257,7 +258,7 @@ impl Assertable for AssertDeepEq {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let expected_sequence = run_xpath(&self.0, runnable, xot);
 
         match expected_sequence {
@@ -271,12 +272,12 @@ impl Assertable for AssertDeepEq {
                     )
                     .unwrap_or(false)
                 {
-                    OutcomeStatus::Passed
+                    TestOutcome::Passed
                 } else {
-                    OutcomeStatus::Failed
+                    TestOutcome::Failed(Failure::DeepEq(self.clone(), sequence.clone()))
                 }
             }
-            Err(error) => OutcomeStatus::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error),
         }
     }
 }
@@ -296,12 +297,15 @@ impl Assertable for AssertCount {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let found_len = sequence.len();
         if found_len == self.0 {
-            OutcomeStatus::Passed
+            TestOutcome::Passed
         } else {
-            OutcomeStatus::Failed
+            TestOutcome::Failed(Failure::Count(
+                self.clone(),
+                AssertCountFailure::WrongCount(found_len),
+            ))
         }
     }
 }
@@ -321,7 +325,7 @@ impl Assertable for AssertPermutation {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         // sequence should consist of atoms. sort these so we only have to
         // compare to one permutation.
         let context = runnable.dynamic_context();
@@ -332,7 +336,7 @@ impl Assertable for AssertPermutation {
         let sequence = sequence.sorted(context, collation_str, xot);
 
         if let Err(err) = sequence {
-            return OutcomeStatus::RuntimeError(err);
+            return TestOutcome::RuntimeError(err);
         }
         let sequence = sequence.unwrap();
 
@@ -348,15 +352,18 @@ impl Assertable for AssertPermutation {
                         if let Ok(true) =
                             sequence.deep_equal(&value, collation.as_ref(), default_offset, xot)
                         {
-                            OutcomeStatus::Passed
+                            TestOutcome::Passed
                         } else {
-                            OutcomeStatus::Failed
+                            TestOutcome::Failed(Failure::Permutation(
+                                self.clone(),
+                                sequence.clone(),
+                            ))
                         }
                     }
-                    Err(error) => OutcomeStatus::RuntimeError(error),
+                    Err(error) => TestOutcome::RuntimeError(error),
                 }
             }
-            Err(error) => OutcomeStatus::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error),
         }
     }
 }
@@ -376,13 +383,16 @@ impl Assertable for AssertXml {
         _runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let xml = serialize(xot, sequence);
 
         let xml = if let Ok(xml) = xml {
             xml
         } else {
-            return OutcomeStatus::Failed;
+            return TestOutcome::Failed(Failure::Xml(
+                self.clone(),
+                AssertXmlFailure::WrongValue(sequence.clone()),
+            ));
         };
         // also wrap expected XML in a sequence element
         let expected_xml = format!("<sequence>{}</sequence>", self.0);
@@ -396,9 +406,9 @@ impl Assertable for AssertXml {
         let c = compare_xot.deep_equal(expected, found);
 
         if c {
-            OutcomeStatus::Passed
+            TestOutcome::Passed
         } else {
-            OutcomeStatus::Failed
+            TestOutcome::Failed(Failure::Xml(self.clone(), AssertXmlFailure::WrongXml(xml)))
         }
     }
 }
@@ -418,11 +428,11 @@ impl Assertable for AssertEmpty {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         if sequence.is_empty() {
-            OutcomeStatus::Passed
+            TestOutcome::Passed
         } else {
-            OutcomeStatus::Failed
+            TestOutcome::Failed(Failure::Empty(self.clone(), sequence.clone()))
         }
     }
 }
@@ -448,20 +458,20 @@ impl Assertable for AssertType {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let matches = sequence.matches_type(&self.0, xot, &|function| runnable.signature(function));
         match matches {
             Ok(matches) => {
                 if matches {
-                    OutcomeStatus::Passed
+                    TestOutcome::Passed
                 } else {
-                    OutcomeStatus::Failed
+                    TestOutcome::Failed(Failure::Type(self.clone(), sequence.clone()))
                 }
             }
             Err(_) => {
                 // we don't support this sequence type expression yet
                 // this should resolve itself once we do and we can parse it
-                OutcomeStatus::Unsupported
+                TestOutcome::Unsupported
             }
         }
     }
@@ -482,18 +492,18 @@ impl Assertable for AssertTrue {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
                 if let Ok(b) = b {
                     if b {
-                        return OutcomeStatus::Passed;
+                        return TestOutcome::Passed;
                     }
                 }
             }
         }
-        OutcomeStatus::Failed
+        TestOutcome::Failed(Failure::True(self.clone(), sequence.clone()))
     }
 }
 
@@ -512,18 +522,18 @@ impl Assertable for AssertFalse {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         if let Ok(item) = sequence.items().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: Result<bool> = atomic.try_into();
                 if let Ok(b) = b {
                     if !b {
-                        return OutcomeStatus::Passed;
+                        return TestOutcome::Passed;
                     }
                 }
             }
         }
-        OutcomeStatus::Failed
+        TestOutcome::Failed(Failure::False(self.clone(), sequence.clone()))
     }
 }
 
@@ -542,7 +552,7 @@ impl Assertable for AssertStringValue {
         _runnable: &Runnable<'_>,
         xot: &mut Xot,
         sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         let strings = sequence
             .items()
             .map(|item| item?.string_value(xot))
@@ -560,14 +570,20 @@ impl Assertable for AssertStringValue {
                     joined
                 };
                 if joined == self.0 {
-                    OutcomeStatus::Passed
+                    TestOutcome::Passed
                 } else {
                     // the string value is not what we expected
-                    OutcomeStatus::Failed
+                    TestOutcome::Failed(Failure::StringValue(
+                        self.clone(),
+                        AssertStringValueFailure::WrongStringValue(joined),
+                    ))
                 }
             }
             // we weren't able to produce a string value
-            Err(_) => OutcomeStatus::Failed,
+            Err(_) => TestOutcome::Failed(Failure::StringValue(
+                self.clone(),
+                AssertStringValueFailure::WrongValue(sequence.clone()),
+            )),
         }
     }
 }
@@ -580,14 +596,14 @@ impl AssertError {
         Self(code)
     }
 
-    pub(crate) fn assert_error(&self, error: &Error) -> OutcomeStatus {
+    pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
         // all errors are officially a pass, but we check whether the error
         // code matches too
         let code = error.to_string();
         if code == self.0 {
-            OutcomeStatus::Passed
+            TestOutcome::Passed
         } else {
-            OutcomeStatus::PassedWithUnexpectedError(UnexpectedError::Code(code.to_string()))
+            TestOutcome::PassedWithUnexpectedError(UnexpectedError::Code(code.to_string()))
         }
     }
 }
@@ -598,9 +614,9 @@ impl Assertable for AssertError {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         match result {
-            Ok(sequence) => OutcomeStatus::Failed,
+            Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
             Err(error) => self.assert_error(error),
         }
     }
@@ -610,7 +626,7 @@ impl Assertable for AssertError {
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
         _sequence: &Sequence,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         unreachable!();
     }
 }
@@ -695,7 +711,7 @@ impl TestCaseResult {
         runnable: &Runnable<'_>,
         xot: &mut Xot,
         result: &Result<Sequence>,
-    ) -> OutcomeStatus {
+    ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(runnable, xot, result),
             TestCaseResult::AllOf(a) => a.assert_result(runnable, xot, result),
@@ -712,7 +728,7 @@ impl TestCaseResult {
             TestCaseResult::AssertError(a) => a.assert_result(runnable, xot, result),
             TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, xot, result),
             TestCaseResult::AssertType(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::Unsupported => OutcomeStatus::Unsupported,
+            TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
             }
@@ -720,9 +736,141 @@ impl TestCaseResult {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum AssertCountFailure {
+    WrongCount(usize),
+    WrongValue(Sequence),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AssertStringValueFailure {
+    WrongStringValue(String),
+    WrongValue(Sequence),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AssertXmlFailure {
+    WrongXml(String),
+    WrongValue(Sequence),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Failure {
+    AnyOf(AssertAnyOf, Vec<TestOutcome>),
+    Not(AssertNot, Box<TestOutcome>),
+    Eq(AssertEq, Sequence),
+    DeepEq(AssertDeepEq, Sequence),
+    True(AssertTrue, Sequence),
+    False(AssertFalse, Sequence),
+    Count(AssertCount, AssertCountFailure),
+    StringValue(AssertStringValue, AssertStringValueFailure),
+    Xml(AssertXml, AssertXmlFailure),
+    Assert(Assert, Sequence),
+    Permutation(AssertPermutation, Sequence),
+    Empty(AssertEmpty, Sequence),
+    Error(AssertError, Sequence),
+    Type(AssertType, Sequence),
+}
+
+impl fmt::Display for Failure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Failure::AnyOf(_, outcomes) => {
+                writeln!(f, "any of:")?;
+                for outcome in outcomes {
+                    match outcome {
+                        TestOutcome::Failed(failure) => {
+                            writeln!(f, "  {}", failure)?;
+                        }
+                        _ => {
+                            writeln!(f, "  Unexpected test outcome {}", outcome)?;
+                        }
+                    }
+                }
+                Ok(())
+            }
+            Failure::Not(_a, _outcome) => {
+                writeln!(f, "not:")?;
+                // writeln!(f, "  {}", outcome)?;
+                Ok(())
+            }
+            Failure::Eq(a, value) => {
+                writeln!(f, "eq:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::DeepEq(a, value) => {
+                writeln!(f, "deep-eq:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::True(_a, value) => {
+                writeln!(f, "true:")?;
+                writeln!(f, "  expected: true")?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::False(_a, value) => {
+                writeln!(f, "false:")?;
+                writeln!(f, "  expected: false")?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::Count(a, failure) => {
+                writeln!(f, "count:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::StringValue(a, failure) => {
+                writeln!(f, "string-value:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Xml(a, failure) => {
+                writeln!(f, "xml:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Assert(_a, failure) => {
+                writeln!(f, "assert:")?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Permutation(a, failure) => {
+                writeln!(f, "permutation:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", failure)?;
+                Ok(())
+            }
+            Failure::Empty(_a, value) => {
+                writeln!(f, "empty:")?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+            Failure::Type(_a, value) => {
+                writeln!(f, "type:")?;
+                writeln!(f, "  expected type: {:?}", _a.0)?;
+                writeln!(f, "  value of wrong type: {:?}", value)?;
+                Ok(())
+            }
+            Failure::Error(a, value) => {
+                writeln!(f, "error:")?;
+                writeln!(f, "  expected: {:?}", a.0)?;
+                writeln!(f, "  actual: {:?}", value)?;
+                Ok(())
+            }
+        }
+    }
+}
+
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
     let static_context = StaticContext::default();
-    let program = parse(&static_context, expr).map_err(|e| e.error)?;
+    let program = parse(&static_context, &expr).map_err(|e| e.error)?;
     let dynamic_context =
         DynamicContext::from_documents(&static_context, runnable.dynamic_context().documents());
     let runnable = program.runnable(&dynamic_context);
@@ -739,7 +887,7 @@ fn run_xpath_with_result(
     let name = Name::name("result");
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
-    let program = parse(&static_context, expr).map_err(|e| e.error)?;
+    let program = parse(&static_context, &expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         &static_context,
@@ -750,9 +898,7 @@ fn run_xpath_with_result(
     runnable.many(None, xot).map_err(|e| e.error)
 }
 
-// represent items as XML, if possible, wrapped
-// in a sequence tag
-pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> testerror::Result<String> {
+pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<String> {
     let mut xmls = Vec::with_capacity(sequence.len());
     for item in sequence.items() {
         if let Ok(node) = item?.to_node() {
@@ -760,10 +906,10 @@ pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> testerror::Result<Str
             if let Ok(xml_value) = xml_value {
                 xmls.push(xml_value);
             } else {
-                return Err(testerror::Error::CannotRepresentAsXml);
+                return Err(crate::error::Error::CannotRepresentAsXml);
             }
         } else {
-            return Err(testerror::Error::CannotRepresentAsXml);
+            return Err(crate::error::Error::CannotRepresentAsXml);
         }
     }
     Ok(format!("<sequence>{}</sequence>", xmls.join("")))

@@ -9,11 +9,11 @@ use xee_xpath::{
 use crate::{
     assert::TestCaseResult,
     catalog::Catalog,
-    environment::XPathEnvironmentSpec,
+    environment::{Environment, XPathEnvironmentSpec},
     error::Result,
-    outcome::{OutcomeStatus, TestOutcome},
+    outcome::TestOutcome,
     runcontext::RunContext,
-    testcase::TestCase,
+    testcase::{Runnable, TestCase},
     testset::TestSet,
 };
 
@@ -26,39 +26,45 @@ pub(crate) struct XPathTestCase {
 }
 
 impl XPathTestCase {
-    pub(crate) fn run(
+    fn namespaces<'a>(
+        &'a self,
+        catalog: &'a Catalog<XPathEnvironmentSpec>,
+        test_set: &'a TestSet<Self, XPathEnvironmentSpec>,
+    ) -> Result<Namespaces<'a>> {
+        let environments = self
+            .test_case
+            .environments(catalog, test_set)
+            .collect::<Result<Vec<_>>>()?;
+        let mut namespaces = Namespaces::default();
+        for environment in environments {
+            namespaces.add(&environment.namespace_pairs())
+        }
+        Ok(namespaces)
+    }
+}
+
+impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
+    fn run(
         &self,
         run_context: &mut RunContext<XPathEnvironmentSpec>,
-        test_set: &TestSet<XPathEnvironmentSpec>,
+        test_set: &TestSet<Self, XPathEnvironmentSpec>,
     ) -> TestOutcome {
         let variables = self.test_case.variables(run_context, test_set);
         let variables = match variables {
             Ok(variables) => variables,
-            Err(error) => {
-                return TestOutcome {
-                    status: OutcomeStatus::EnvironmentError(error.to_string()),
-                }
-            }
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
         let context_item = self.test_case.context_item(run_context, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
-            Err(error) => {
-                return TestOutcome {
-                    status: OutcomeStatus::EnvironmentError(error.to_string()),
-                }
-            }
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
         let namespaces = self.namespaces(&run_context.catalog, test_set);
         let namespaces = match namespaces {
             Ok(namespaces) => namespaces,
-            Err(error) => {
-                return TestOutcome {
-                    status: OutcomeStatus::EnvironmentError(error.to_string()),
-                }
-            }
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
         let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
@@ -68,15 +74,12 @@ impl XPathTestCase {
             Ok(xpath) => xpath,
             Err(error) => {
                 return match &self.result {
-                    TestCaseResult::AssertError(assert_error) => TestOutcome {
-                        status: assert_error.assert_error(&error.error),
-                    },
-                    TestCaseResult::AnyOf(any_of) => TestOutcome {
-                        status: any_of.assert_error(&error.error),
-                    },
-                    _ => TestOutcome {
-                        status: OutcomeStatus::CompilationError(error.error),
-                    },
+                    TestCaseResult::AssertError(assert_error) => {
+                        assert_error.assert_error(&error.error)
+                    }
+
+                    TestCaseResult::AnyOf(any_of) => any_of.assert_error(&error.error),
+                    _ => TestOutcome::CompilationError(error.error),
                 }
             }
         };
@@ -88,28 +91,10 @@ impl XPathTestCase {
         );
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
-        TestOutcome {
-            status: self.result.assert_result(
-                &runnable,
-                &mut run_context.xot,
-                &result.map_err(|error| error.error),
-            ),
-        }
-    }
-
-    fn namespaces<'a>(
-        &'a self,
-        catalog: &'a Catalog<XPathEnvironmentSpec>,
-        test_set: &'a TestSet<XPathEnvironmentSpec>,
-    ) -> Result<Namespaces<'a>> {
-        let environments = self
-            .test_case
-            .environments(catalog, test_set)
-            .collect::<Result<Vec<_>>>()?;
-        let mut namespaces = Namespaces::default();
-        for environment in environments {
-            namespaces.add(&environment.namespace_pairs())
-        }
-        Ok(namespaces)
+        self.result.assert_result(
+            &runnable,
+            &mut run_context.xot,
+            &result.map_err(|error| error.error),
+        )
     }
 }
