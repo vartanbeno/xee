@@ -1,4 +1,4 @@
-use xee_xpath::{context::Variables, sequence, xml::Documents};
+use xee_xpath::{context::Variables, sequence};
 
 use crate::{
     catalog::Catalog,
@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
-    fn run(&self, run_context: &mut RunContext<E>, test_set: &TestSet<Self, E>) -> TestOutcome;
+    fn run(&self, run_context: &mut RunContext<E>, test_set: &TestSet<E, Self>) -> TestOutcome;
 }
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ impl<E: Environment> TestCase<E> {
     pub(crate) fn environments<'a, R: Runnable<E>>(
         &'a self,
         catalog: &'a Catalog<E>,
-        test_set: &'a TestSet<R, E>,
+        test_set: &'a TestSet<E, R>,
     ) -> EnvironmentIterator<'a, E> {
         EnvironmentIterator::new(
             vec![&catalog.shared_environments, &test_set.shared_environments],
@@ -42,7 +42,7 @@ impl<E: Environment> TestCase<E> {
     pub(crate) fn context_item<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext<E>,
-        test_set: &TestSet<R, E>,
+        test_set: &TestSet<E, R>,
     ) -> Result<Option<sequence::Item>> {
         let environments = self
             .environments(&run_context.catalog, test_set)
@@ -63,7 +63,7 @@ impl<E: Environment> TestCase<E> {
     pub(crate) fn variables<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext<E>,
-        test_set: &TestSet<R, E>,
+        test_set: &TestSet<E, R>,
     ) -> Result<Variables> {
         let environments = self
             .environments(&run_context.catalog, test_set)

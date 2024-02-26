@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub(crate) struct TestSet<R: Runnable<E>, E: Environment> {
+pub(crate) struct TestSet<E: Environment, R: Runnable<E>> {
     pub(crate) full_path: PathBuf,
     pub(crate) name: String,
     pub(crate) descriptions: Vec<String>,
@@ -15,3 +15,5 @@ pub(crate) struct TestSet<R: Runnable<E>, E: Environment> {
     pub(crate) shared_environments: SharedEnvironments<E>,
     pub(crate) test_cases: Vec<R>,
 }
+
+impl<E: Environment, R: Runnable<E>> TestSet<E, R> {}

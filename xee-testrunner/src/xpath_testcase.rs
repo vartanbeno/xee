@@ -29,7 +29,7 @@ impl XPathTestCase {
     fn namespaces<'a>(
         &'a self,
         catalog: &'a Catalog<XPathEnvironmentSpec>,
-        test_set: &'a TestSet<Self, XPathEnvironmentSpec>,
+        test_set: &'a TestSet<XPathEnvironmentSpec, Self>,
     ) -> Result<Namespaces<'a>> {
         let environments = self
             .test_case
@@ -47,7 +47,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
     fn run(
         &self,
         run_context: &mut RunContext<XPathEnvironmentSpec>,
-        test_set: &TestSet<Self, XPathEnvironmentSpec>,
+        test_set: &TestSet<XPathEnvironmentSpec, Self>,
     ) -> TestOutcome {
         let variables = self.test_case.variables(run_context, test_set);
         let variables = match variables {
