@@ -1,7 +1,11 @@
 use xee_xpath::{Queries, Query};
 use xot::Xot;
 
-use crate::{error::Result, hashmap::FxIndexSet, load::convert_string};
+use crate::{
+    error::Result,
+    hashmap::FxIndexSet,
+    load::{convert_string, Loadable},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct DependencySpec {
@@ -79,9 +83,9 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn query<'a>(
-        mut queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {
+    pub(crate) fn query(
+        mut queries: Queries,
+    ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>>)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
         let type_query = queries.one("@type/string()", convert_string)?;
         let value_query = queries.one("@value/string()", convert_string)?;
@@ -173,5 +177,18 @@ impl Dependencies {
             return false;
         }
         self.is_feature_supported(known_dependencies)
+    }
+}
+
+impl Loadable for Dependencies {
+    fn query(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
+        let (queries, dependency_query) = Dependency::query(queries)?;
+
+        Ok((
+            queries,
+            dependency_query.map(|dependencies| Dependencies {
+                dependencies: dependencies.into_iter().flatten().collect(),
+            }),
+        ))
     }
 }

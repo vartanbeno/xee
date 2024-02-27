@@ -140,6 +140,38 @@ impl<'s, 'x> Session<'s, 'x> {
 
 pub trait Query<V> {
     fn execute(&self, session: &mut Session, item: &Item) -> Result<V>;
+
+    fn map<T>(self, f: impl Fn(V) -> T) -> MapQuery<V, T, Self, impl Fn(V) -> T>
+    where
+        Self: Sized,
+    {
+        MapQuery {
+            query: self,
+            f,
+            v: std::marker::PhantomData,
+            t: std::marker::PhantomData,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
+where
+    F: Fn(V) -> T,
+{
+    query: Q,
+    f: F,
+    v: std::marker::PhantomData<V>,
+    t: std::marker::PhantomData<T>,
+}
+
+impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
+where
+    F: Fn(V) -> T,
+{
+    fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
+        self.query.execute(session, item).map(|v| (self.f)(v))
+    }
 }
 
 #[derive(Debug, Clone)]
