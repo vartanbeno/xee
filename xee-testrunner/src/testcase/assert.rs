@@ -3,11 +3,17 @@ use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
 use xee_xpath::{
-    context::DynamicContext, context::StaticContext, error::Error, error::Result,
-    occurrence::Occurrence, parse, sequence::Sequence, string::Collation, Name, Namespaces,
-    Runnable, VariableNames,
+    context::{DynamicContext, StaticContext},
+    error::{Error, Result},
+    occurrence::Occurrence,
+    parse,
+    sequence::{self, Sequence},
+    string::Collation,
+    Name, Namespaces, Queries, Recurse, Runnable, Session, VariableNames,
 };
 use xot::Xot;
+
+use crate::load::{convert_boolean, convert_string};
 
 use super::outcome::{TestOutcome, UnexpectedError};
 
@@ -733,6 +739,132 @@ impl TestCaseResult {
                 panic!("unimplemented test case result {:?}", self);
             }
         }
+    }
+
+    pub(crate) fn testcase_result_query<'a>(
+        _xot: &Xot,
+        mut queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl xee_xpath::Query<Self> + 'a)> {
+        let code_query = queries.one("@code/string()", convert_string)?;
+        let error_query = queries.one(".", move |session, item| {
+            Ok(TestCaseResult::AssertError(AssertError::new(
+                code_query.execute(session, item)?,
+            )))
+        })?;
+        let assert_count_query = queries.one("string()", |_, item| {
+            let count: String = item.to_atomic()?.try_into()?;
+            // XXX unwrap is a hack
+            let count = count.parse::<usize>().unwrap();
+            Ok(TestCaseResult::AssertCount(AssertCount::new(count)))
+        })?;
+
+        let assert_xml_query = queries.one("string()", |_, item| {
+            let xml: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::AssertXml(AssertXml::new(xml)))
+        })?;
+
+        let assert_eq_query = queries.one("string()", |_, item| {
+            let eq: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::AssertEq(AssertEq::new(eq)))
+        })?;
+
+        let assert_deep_eq_query = queries.one("string()", |_, item| {
+            let eq: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::AssertDeepEq(AssertDeepEq::new(eq)))
+        })?;
+
+        let string_value_contents = queries.one("string()", convert_string)?;
+        let normalize_space_query = queries.option("@normalize-space/string()", convert_boolean)?;
+
+        let assert_string_value_query = queries.one(".", move |session, item| {
+            let string_value = string_value_contents.execute(session, item)?;
+            let normalize_space = normalize_space_query
+                .execute(session, item)?
+                .unwrap_or(false);
+            Ok(TestCaseResult::AssertStringValue(AssertStringValue::new(
+                string_value,
+                normalize_space,
+            )))
+        })?;
+
+        let assert_type_query = queries.one("string()", |_, item| {
+            let string_value: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::AssertType(AssertType::new(string_value)))
+        })?;
+
+        let assert_query = queries.one("string()", |_, item| {
+            let xpath: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::Assert(Assert::new(xpath)))
+        })?;
+
+        let assert_permutation_query = queries.one("string()", |_, item| {
+            let xpath: String = item.to_atomic()?.try_into()?;
+            Ok(TestCaseResult::AssertPermutation(AssertPermutation::new(
+                xpath,
+            )))
+        })?;
+
+        let any_all_recurse = queries.many_recurse("*")?;
+        let not_recurse = queries.one_recurse("*")?;
+
+        // we use a local-name query here as it's the easiest way support this:
+        // there is a single entry in the "result" element, but this may be
+        // "any-of" and this contains a list of entries Using a relative path with
+        // `query.option()` to detect entries (like "error", "assert-true", etc)
+        // doesn't work for "any-of", as it contains a list of entries.
+        let local_name_query = queries.one("local-name()", convert_string)?;
+        let result_query = queries.one(
+            "result/*",
+            move |session: &mut Session, item: &sequence::Item| {
+                let f = |session: &mut Session,
+                         item: &sequence::Item,
+                         recurse: &Recurse<TestCaseResult>| {
+                    let local_name = local_name_query.execute(session, item)?;
+                    let r = if local_name == "any-of" {
+                        let contents = any_all_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::AnyOf(AssertAnyOf::new(contents))
+                    } else if local_name == "all-of" {
+                        let contents = any_all_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::AllOf(AssertAllOf::new(contents))
+                    } else if local_name == "not" {
+                        let contents = not_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::Not(AssertNot::new(contents))
+                    } else if local_name == "error" {
+                        error_query.execute(session, item)?
+                    } else if local_name == "assert-true" {
+                        TestCaseResult::AssertTrue(AssertTrue::new())
+                    } else if local_name == "assert-false" {
+                        TestCaseResult::AssertFalse(AssertFalse::new())
+                    } else if local_name == "assert-count" {
+                        assert_count_query.execute(session, item)?
+                    } else if local_name == "assert-xml" {
+                        assert_xml_query.execute(session, item)?
+                    } else if local_name == "assert-eq" {
+                        assert_eq_query.execute(session, item)?
+                    } else if local_name == "assert-deep-eq" {
+                        assert_deep_eq_query.execute(session, item)?
+                    } else if local_name == "assert-string-value" {
+                        assert_string_value_query.execute(session, item)?
+                    } else if local_name == "assert" {
+                        assert_query.execute(session, item)?
+                    } else if local_name == "assert-permutation" {
+                        assert_permutation_query.execute(session, item)?
+                    } else if local_name == "assert-empty" {
+                        TestCaseResult::AssertEmpty(AssertEmpty::new())
+                    } else if local_name == "assert-type" {
+                        assert_type_query.execute(session, item)?
+                    } else {
+                        TestCaseResult::Unsupported
+                        // qt::TestCaseResult::AssertFalse
+                        // panic!("unknown assertion: {}", local_name);
+                    };
+                    Ok(r)
+                };
+                let recurse = Recurse::new(&f);
+                recurse.execute(session, item)
+            },
+        )?;
+        Ok((queries, result_query))
     }
 }
 

@@ -7,7 +7,7 @@ use crate::hashmap::FxIndexMap;
 use crate::{error::Result, load::convert_string};
 
 use super::core::{Environment, EnvironmentRef};
-use super::EnvironmentSpec;
+use super::{EnvironmentSpec, XPathEnvironmentSpec};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments<E: Environment> {
@@ -28,23 +28,26 @@ impl<E: Environment> SharedEnvironments<E> {
         self.environments.get(&environment_ref.ref_)
     }
 
-    // pub(crate) fn shared_environments_query<'a>(
-    //     xot: &Xot,
-    //     path: &'a Path,
-    //     mut queries: Queries<'a>,
-    // ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-    //     let name_query = queries.one("@name/string()", convert_string)?;
-    //     let (mut queries, environment_spec_query) =
-    //         EnvironmentSpec::environment_spec_query(xot, path, queries)?;
-    //     let environments_query = queries.many("environment", move |session, item| {
-    //         let name = name_query.execute(session, item)?;
-    //         let environment_spec = environment_spec_query.execute(session, item)?;
-    //         Ok((name, environment_spec))
-    //     })?;
-    //     let shared_environments_query = queries.one(".", move |session, item| {
-    //         let environments = environments_query.execute(session, item)?;
-    //         Ok(SharedEnvironments::new(environments.into_iter().collect()))
-    //     })?;
-    //     Ok((queries, shared_environments_query))
-    // }
+    pub(crate) fn xpath_shared_environments_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        mut queries: Queries<'a>,
+    ) -> Result<(
+        Queries<'a>,
+        impl Query<SharedEnvironments<XPathEnvironmentSpec>> + 'a,
+    )> {
+        let name_query = queries.one("@name/string()", convert_string)?;
+        let (mut queries, environment_spec_query) =
+            XPathEnvironmentSpec::environment_spec_query(xot, path, queries)?;
+        let environments_query = queries.many("environment", move |session, item| {
+            let name = name_query.execute(session, item)?;
+            let environment_spec = environment_spec_query.execute(session, item)?;
+            Ok((name, environment_spec))
+        })?;
+        let shared_environments_query = queries.one(".", move |session, item| {
+            let environments = environments_query.execute(session, item)?;
+            Ok(SharedEnvironments::new(environments.into_iter().collect()))
+        })?;
+        Ok((queries, shared_environments_query))
+    }
 }

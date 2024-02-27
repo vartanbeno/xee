@@ -1,10 +1,16 @@
-use xee_xpath::{context::Variables, sequence};
+use std::path::Path;
+
+use xee_xpath::{context::Variables, sequence, Queries, Query};
+use xot::Xot;
 
 use crate::{
     catalog::Catalog,
-    dependency::Dependencies,
-    environment::{Environment, EnvironmentIterator, TestCaseEnvironment},
+    dependency::{Dependencies, Dependency},
+    environment::{
+        Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment, XPathEnvironmentSpec,
+    },
     error::Result,
+    load::convert_string,
     metadata::Metadata,
     runcontext::RunContext,
     testset::TestSet,
@@ -88,6 +94,53 @@ impl<E: Environment> TestCase<E> {
             );
         }
         Ok(variables)
+    }
+
+    pub(crate) fn test_cases_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        mut queries: Queries<'a>,
+    ) -> Result<(
+        Queries<'a>,
+        impl Query<Vec<TestCase<XPathEnvironmentSpec>>> + 'a,
+    )> {
+        let name_query = queries.one("@name/string()", convert_string)?;
+        let (mut queries, metadata_query) = Metadata::metadata_query(xot, queries)?;
+
+        let ref_query = queries.option("@ref/string()", convert_string)?;
+        let (mut queries, environment_query) =
+            XPathEnvironmentSpec::environment_spec_query(xot, path, queries)?;
+        let local_environment_query = queries.many("environment", move |session, item| {
+            let ref_ = ref_query.execute(session, item)?;
+            if let Some(ref_) = ref_ {
+                Ok(TestCaseEnvironment::Ref(EnvironmentRef { ref_ }))
+            } else {
+                Ok(TestCaseEnvironment::Local(Box::new(
+                    environment_query.execute(session, item)?,
+                )))
+            }
+        })?;
+
+        let (queries, result_query) = TestCaseResult::testcase_result_query(xot, queries)?;
+        let (mut queries, dependency_query) = Dependency::dependency_query(xot, queries)?;
+
+        let test_case_query = queries.many("test-case", move |session, item| {
+            Ok(TestCase {
+                name: name_query.execute(session, item)?,
+                metadata: metadata_query.execute(session, item)?,
+                environments: local_environment_query.execute(session, item)?,
+                dependencies: Dependencies::new(
+                    dependency_query
+                        .execute(session, item)?
+                        .into_iter()
+                        .flatten()
+                        .collect(),
+                ),
+                result: result_query.execute(session, item)?,
+            })
+        })?;
+
+        Ok((queries, test_case_query))
     }
 }
 
