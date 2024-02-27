@@ -1,17 +1,17 @@
 use std::{
     fmt::{self, Display, Formatter},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use xee_xpath::{
     context::{DynamicContext, StaticContext, Variables},
     parse, sequence,
     xml::Documents,
-    Name,
+    Name, Queries, Query,
 };
 use xot::Xot;
 
-use crate::error::Result;
+use crate::{error::Result, load::convert_string, metadata::Metadata};
 
 use super::{
     collation::Collation,
@@ -130,5 +130,63 @@ impl EnvironmentSpec {
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)
+    }
+
+    pub(crate) fn environment_spec_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
+        let (mut queries, sources_query) = Source::sources_query(xot, queries)?;
+
+        let name_query = queries.one("@name/string()", convert_string)?;
+        let select_query = queries.option("@select/string()", convert_string)?;
+        let as_query = queries.option("@as/string()", convert_string)?;
+        let source_query = queries.option("@source/string()", convert_string)?;
+        let declared_query = queries.option("@declared/string()", convert_string)?;
+
+        let params_query = queries.many("param", move |session, item| {
+            let name = name_query.execute(session, item)?;
+            let select = select_query.execute(session, item)?;
+            let as_ = as_query.execute(session, item)?;
+            let source = source_query.execute(session, item)?;
+            let declared = declared_query.execute(session, item)?;
+
+            let declared = declared.map(|declared| declared == "true").unwrap_or(false);
+
+            // TODO: do not handle prefixes yet
+            let name = Name::name(&name);
+
+            Ok(Param {
+                name,
+                select,
+                as_,
+                source,
+                declared,
+                // TODO
+                static_: false,
+            })
+        })?;
+
+        // the environment base_dir is the same as the catalog/test set path,
+        // but without the file name
+        let path = path.parent().unwrap();
+        let environment_query = queries.one(".", move |session, item| {
+            let sources = sources_query.execute(session, item)?;
+            // we need to flatten sources
+            let sources = sources.into_iter().flatten().collect::<Vec<Source>>();
+            let params = params_query.execute(session, item)?;
+
+            let environment_spec = EnvironmentSpec {
+                base_dir: path.to_path_buf(),
+                sources,
+                params,
+                ..Default::default()
+            };
+
+            Ok(environment_spec)
+        })?;
+
+        Ok((queries, environment_query))
     }
 }

@@ -3,10 +3,12 @@ use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use xee_xpath::xml::{Documents, Uri};
+use xee_xpath::{Queries, Query};
 use xot::Xot;
 
 use crate::error::Result;
 
+use crate::load::convert_string;
 use crate::metadata::Metadata;
 
 #[derive(Debug, Clone)]
@@ -63,5 +65,60 @@ impl Source {
         documents.add(xot, &uri, &xml)?;
         // now obtain what we just added
         Ok(documents.get(&uri).unwrap().root())
+    }
+
+    pub(crate) fn sources_query<'a>(
+        xot: &Xot,
+        mut queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Self>>> + 'a)> {
+        let file_query = queries.one("@file/string()", convert_string)?;
+        let role_query = queries.option("@role/string()", convert_string)?;
+        let uri_query = queries.option("@uri/string()", convert_string)?;
+        let (mut queries, metadata_query) = Metadata::metadata_query(xot, queries)?;
+
+        let sources_query = queries.many("source", move |session, item| {
+            let file = PathBuf::from(file_query.execute(session, item)?);
+            let role = role_query.execute(session, item)?;
+            let uri = uri_query.execute(session, item)?;
+            let metadata = metadata_query.execute(session, item)?;
+            // we can return multiple sources if both role and uri are set
+            // we flatten it later
+            let mut sources = Vec::new();
+            if let Some(role) = role {
+                if role == "." {
+                    sources.push(Source {
+                        metadata: metadata.clone(),
+                        role: SourceRole::Context,
+                        file: file.clone(),
+                        // TODO
+                        uri: None,
+                        validation: None,
+                    })
+                } else {
+                    sources.push(Source {
+                        metadata: metadata.clone(),
+                        role: SourceRole::Var(role),
+                        file: file.clone(),
+                        // TODO
+                        uri: None,
+                        validation: None,
+                    });
+                }
+            };
+
+            if let Some(uri) = uri {
+                sources.push(Source {
+                    metadata,
+                    role: SourceRole::Doc(uri),
+                    file,
+                    // TODO
+                    uri: None,
+                    validation: None,
+                });
+            }
+
+            Ok(sources)
+        })?;
+        Ok((queries, sources_query))
     }
 }

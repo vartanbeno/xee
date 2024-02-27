@@ -19,10 +19,8 @@ use super::{
 
 #[derive(Debug)]
 pub(crate) struct XPathTestCase {
-    test_case: TestCase<XPathEnvironmentSpec>,
-
+    pub(crate) test_case: TestCase<XPathEnvironmentSpec>,
     pub(crate) test: String,
-    pub(crate) result: TestCaseResult,
 }
 
 impl XPathTestCase {
@@ -66,7 +64,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let namespaces = self.namespaces(&catalog, test_set);
+        let namespaces = self.namespaces(catalog, test_set);
         let namespaces = match namespaces {
             Ok(namespaces) => namespaces,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
@@ -78,7 +76,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let program = match program {
             Ok(xpath) => xpath,
             Err(error) => {
-                return match &self.result {
+                return match &self.test_case.result {
                     TestCaseResult::AssertError(assert_error) => {
                         assert_error.assert_error(&error.error)
                     }
@@ -96,7 +94,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         );
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
-        self.result.assert_result(
+        self.test_case.result.assert_result(
             &runnable,
             &mut run_context.xot,
             &result.map_err(|error| error.error),

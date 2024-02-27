@@ -4,6 +4,7 @@ mod environment;
 mod error;
 mod filter;
 mod hashmap;
+mod load;
 mod metadata;
 mod outcomes;
 mod renderer;

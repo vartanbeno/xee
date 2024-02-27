@@ -1,9 +1,13 @@
-use std::path::PathBuf;
+use std::path::Path;
+
+use xee_xpath::{Queries, Query};
+use xot::Xot;
 
 use super::{
     core::{Environment, EnvironmentSpec},
     decimal_format::DecimalFormat,
 };
+use crate::{error::Result, load::convert_string};
 
 #[derive(Debug, Clone)]
 pub(crate) struct XPathEnvironmentSpec {
@@ -54,6 +58,34 @@ impl XPathEnvironmentSpec {
             .iter()
             .map(|ns| (ns.prefix.as_ref(), ns.uri.as_ref()))
             .collect()
+    }
+
+    pub(crate) fn environment_spec_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
+        let (mut queries, environment_spec_query) =
+            EnvironmentSpec::environment_spec_query(xot, path, queries)?;
+        let prefix_query = queries.one("@prefix/string()", convert_string)?;
+        let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
+
+        let namespaces_query = queries.many("namespace", move |session, item| {
+            let prefix = prefix_query.execute(session, item)?;
+            let uri = namespace_uri_query.execute(session, item)?;
+            Ok(Namespace { prefix, uri })
+        })?;
+        let xpath_environment_spec_query = queries.one(".", move |session, item| {
+            Ok(XPathEnvironmentSpec {
+                environment_spec: environment_spec_query.execute(session, item)?,
+                namespaces: namespaces_query.execute(session, item)?,
+                // TODO
+                decimal_formats: vec![],
+                context_items: vec![],
+                static_base_uris: vec![],
+            })
+        })?;
+        Ok((queries, xpath_environment_spec_query))
     }
 }
 

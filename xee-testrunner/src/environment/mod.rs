@@ -9,7 +9,8 @@ mod source;
 mod xpath;
 mod xslt;
 
-pub(crate) use core::{Environment, EnvironmentRef, EnvironmentSpec, TestCaseEnvironment};
+pub(crate) use core::{Environment, EnvironmentRef, EnvironmentSpec, Param, TestCaseEnvironment};
 pub(crate) use iterator::EnvironmentIterator;
 pub(crate) use shared::SharedEnvironments;
-pub(crate) use xpath::XPathEnvironmentSpec;
+pub(crate) use source::{Source, SourceRole};
+pub(crate) use xpath::{Namespace, XPathEnvironmentSpec};

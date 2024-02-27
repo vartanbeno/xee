@@ -1,4 +1,7 @@
-use crate::hashmap::FxIndexSet;
+use xee_xpath::{Queries, Query};
+use xot::Xot;
+
+use crate::{error::Result, hashmap::FxIndexSet, load::convert_string};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct DependencySpec {
@@ -17,6 +20,11 @@ pub(crate) struct Dependencies {
     pub(crate) dependencies: Vec<Dependency>,
 }
 
+impl Dependencies {
+    pub(crate) fn new(dependencies: Vec<Dependency>) -> Self {
+        Self { dependencies }
+    }
+}
 #[derive(Debug)]
 pub(crate) struct KnownDependencies {
     specs: FxIndexSet<DependencySpec>,
@@ -67,6 +75,45 @@ impl KnownDependencies {
         } else {
             !contains
         }
+    }
+}
+
+impl Dependency {
+    pub(crate) fn dependency_query<'a>(
+        _xot: &Xot,
+        mut queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {
+        let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
+        let type_query = queries.one("@type/string()", convert_string)?;
+        let value_query = queries.one("@value/string()", convert_string)?;
+
+        let dependency_query = queries.many("dependency", move |session, item| {
+            let satisfied = satisfied_query.execute(session, item)?;
+            let satisfied = if let Some(satisfied) = satisfied {
+                if satisfied == "true" {
+                    true
+                } else if satisfied == "false" {
+                    false
+                } else {
+                    panic!("Unexpected satisfied value: {:?}", satisfied);
+                }
+            } else {
+                true
+            };
+            let value = value_query.execute(session, item)?;
+            let values = value.split(' ');
+            let type_ = type_query.execute(session, item)?;
+            Ok(values
+                .map(|value| Dependency {
+                    spec: DependencySpec {
+                        type_: type_.clone(),
+                        value: value.to_string(),
+                    },
+                    satisfied,
+                })
+                .collect::<Vec<Dependency>>())
+        })?;
+        Ok((queries, dependency_query))
     }
 }
 
