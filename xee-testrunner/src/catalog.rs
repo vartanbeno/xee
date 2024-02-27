@@ -1,13 +1,18 @@
-use std::io::{stdout, Stdout};
+use std::io::Stdout;
 use std::path::{Path, PathBuf};
 
-use crate::environment::{Environment, SharedEnvironments};
+use xee_xpath::{Queries, Query};
+use xot::Xot;
+
+use crate::environment::{Environment, SharedEnvironments, XPathEnvironmentSpec};
+use crate::error::Result;
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
+use crate::load::convert_string;
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
-use crate::testcase::Runnable;
+use crate::testcase::{Runnable, XPathTestCase};
 
 #[derive(Debug)]
 pub(crate) struct TestSetRef {
@@ -47,5 +52,47 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
             // catalog_outcomes.add_outcomes(test_set_outcomes);
         }
         Ok(catalog_outcomes)
+    }
+
+    fn catalog_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        mut queries: Queries<'a>,
+    ) -> Result<(
+        Queries<'a>,
+        impl Query<Catalog<XPathEnvironmentSpec, XPathTestCase>> + 'a,
+    )> {
+        let test_suite_query = queries.one("@test-suite/string()", convert_string)?;
+        let version_query = queries.one("@version/string()", convert_string)?;
+
+        let (mut queries, shared_environments_query) =
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_shared_environments_query(
+                xot, path, queries,
+            )?;
+
+        let test_set_name_query = queries.one("@name/string()", convert_string)?;
+        let test_set_file_query = queries.one("@file/string()", convert_string)?;
+        let test_set_query = queries.many("test-set", move |session, item| {
+            let name = test_set_name_query.execute(session, item)?;
+            let file = PathBuf::from(test_set_file_query.execute(session, item)?);
+            Ok(TestSetRef { name, file })
+        })?;
+        let catalog_query = queries.one("catalog", move |session, item| {
+            let test_suite = test_suite_query.execute(session, item)?;
+            let version = version_query.execute(session, item)?;
+            let shared_environments = shared_environments_query.execute(session, item)?;
+            let test_sets = test_set_query.execute(session, item)?;
+            let file_paths = test_sets.iter().map(|t| t.file.clone()).collect();
+            Ok(Catalog {
+                full_path: path.to_path_buf(),
+                test_suite,
+                version,
+                shared_environments,
+                test_sets,
+                file_paths,
+                _runnable: std::marker::PhantomData,
+            })
+        })?;
+        Ok((queries, catalog_query))
     }
 }
