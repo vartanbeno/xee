@@ -1,9 +1,15 @@
 use std::{
-    io::Stdout,
+    fs::File,
+    io::{BufReader, Read, Stdout},
     path::{Path, PathBuf},
 };
 
-use xee_xpath::{Queries, Query};
+use xee_name::Namespaces;
+use xee_xpath::{
+    context::{DynamicContext, StaticContext},
+    sequence::Item,
+    Queries, Query,
+};
 use xot::Xot;
 
 use crate::{
@@ -12,7 +18,7 @@ use crate::{
     environment::{Environment, SharedEnvironments, XPathEnvironmentSpec},
     error::Result,
     filter::TestFilter,
-    load::convert_string,
+    load::{convert_string, XPATH_NS},
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
@@ -38,26 +44,26 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         self.full_path.strip_prefix(catalog.base_dir()).unwrap()
     }
 
-    fn run<Ren: Renderer<E, R>>(
+    pub(crate) fn run<Ren: Renderer<E, R>>(
+        &self,
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
-        test_set: &TestSet<E, R>,
         test_filter: &impl TestFilter<E, R>,
         stdout: &mut Stdout,
-        renderer: Ren,
+        renderer: &Ren,
     ) -> Result<TestSetOutcomes> {
-        renderer.render_test_set(stdout, test_set, catalog)?;
+        renderer.render_test_set(stdout, self, catalog)?;
 
-        let mut test_set_outcomes = TestSetOutcomes::new(&test_set.name);
-        for runner in &test_set.test_cases {
+        let mut test_set_outcomes = TestSetOutcomes::new(&self.name);
+        for runner in &self.test_cases {
             let test_case = runner.test_case();
-            if !test_filter.is_included(test_set, test_case) {
+            if !test_filter.is_included(self, test_case) {
                 test_set_outcomes.add_filtered();
                 continue;
             }
             // skip any test case we don't support, either on test set or
             // test case level
-            if !test_set
+            if !self
                 .dependencies
                 .is_supported(&run_context.known_dependencies)
                 || !test_case
@@ -68,11 +74,11 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
                 continue;
             }
             renderer.render_test_case(stdout, test_case)?;
-            let outcome = runner.run(run_context, catalog, test_set);
+            let outcome = runner.run(run_context, catalog, self);
             renderer.render_test_outcome(stdout, &outcome)?;
             test_set_outcomes.add_outcome(&test_case.name, outcome);
         }
-        renderer.render_test_set_summary(stdout, test_set)?;
+        renderer.render_test_set_summary(stdout, self)?;
         Ok(test_set_outcomes)
     }
 
@@ -108,5 +114,44 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
             })
         })?;
         Ok((queries, test_set_query))
+    }
+
+    pub(crate) fn xpath_load_from_file(
+        xot: &mut Xot,
+        path: &Path,
+    ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
+        let xml_file = File::open(path)?;
+        let mut buf_reader = BufReader::new(xml_file);
+        let mut xml = String::new();
+        buf_reader.read_to_string(&mut xml)?;
+        Self::xpath_load_from_xml(xot, path, &xml)
+    }
+
+    pub(crate) fn xpath_load_from_xml(
+        xot: &mut Xot,
+        path: &Path,
+        xml: &str,
+    ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
+        let root = xot.parse(xml)?;
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            XPATH_NS,
+            Namespaces::FN_NAMESPACE,
+        );
+
+        let static_context = StaticContext::from_namespaces(namespaces);
+        let r = {
+            let queries = Queries::new(&static_context);
+
+            let (queries, query) = Self::xpath_query(xot, path, queries)?;
+
+            let dynamic_context = DynamicContext::empty(&static_context);
+            let mut session = queries.session(&dynamic_context, xot);
+            // the query has a lifetime for the dynamic context, and a lifetime
+            // for the static context
+            query.execute(&mut session, &Item::from(root))?
+        };
+        xot.remove(root).unwrap();
+        Ok(r)
     }
 }

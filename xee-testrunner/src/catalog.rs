@@ -1,6 +1,10 @@
-use std::io::Stdout;
+use std::fs::File;
+use std::io::{BufReader, Read, Stdout};
 use std::path::{Path, PathBuf};
 
+use xee_name::Namespaces;
+use xee_xpath::context::{DynamicContext, StaticContext};
+use xee_xpath::sequence::Item;
 use xee_xpath::{Queries, Query};
 use xot::Xot;
 
@@ -8,11 +12,12 @@ use crate::environment::{Environment, SharedEnvironments, XPathEnvironmentSpec};
 use crate::error::Result;
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
-use crate::load::convert_string;
+use crate::load::{convert_string, XPATH_NS};
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
 use crate::testcase::{Runnable, XPathTestCase};
+use crate::testset::TestSet;
 
 #[derive(Debug)]
 pub(crate) struct TestSetRef {
@@ -34,24 +39,6 @@ pub(crate) struct Catalog<E: Environment, R: Runnable<E>> {
 impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
     pub(crate) fn base_dir(&self) -> &Path {
         self.full_path.parent().unwrap()
-    }
-
-    pub(crate) fn run<Ren: Renderer<E, R>>(
-        &self,
-        run_context: &mut RunContext,
-        test_filter: &impl TestFilter<E, R>,
-        stdout: &mut Stdout,
-        renderer: Ren,
-    ) -> crate::error::Result<CatalogOutcomes> {
-        let mut catalog_outcomes = CatalogOutcomes::new();
-
-        for file_path in &self.file_paths {
-            // let test_set_outcomes =
-
-            //     run_path_helper(run_context, test_filter, file_path, &mut stdout)?;
-            // catalog_outcomes.add_outcomes(test_set_outcomes);
-        }
-        Ok(catalog_outcomes)
     }
 
     fn xpath_query<'a>(
@@ -92,5 +79,68 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
             })
         })?;
         Ok((queries, catalog_query))
+    }
+
+    // XXX some duplication here with TestSet
+    pub(crate) fn xpath_load_from_file(
+        xot: &mut Xot,
+        path: &Path,
+    ) -> Result<Catalog<XPathEnvironmentSpec, XPathTestCase>> {
+        let xml_file = File::open(path)?;
+        let mut buf_reader = BufReader::new(xml_file);
+        let mut xml = String::new();
+        buf_reader.read_to_string(&mut xml)?;
+        Self::xpath_load_from_xml(xot, path, &xml)
+    }
+
+    pub(crate) fn xpath_load_from_xml(
+        xot: &mut Xot,
+        path: &Path,
+        xml: &str,
+    ) -> Result<Catalog<XPathEnvironmentSpec, XPathTestCase>> {
+        let root = xot.parse(xml)?;
+
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            XPATH_NS,
+            Namespaces::FN_NAMESPACE,
+        );
+
+        let static_context = StaticContext::from_namespaces(namespaces);
+
+        let r = {
+            let queries = Queries::new(&static_context);
+
+            let (queries, query) = Self::xpath_query(xot, path, queries)?;
+
+            let dynamic_context = DynamicContext::empty(&static_context);
+            let mut session = queries.session(&dynamic_context, xot);
+            query.execute(&mut session, &Item::from(root))?
+        };
+        xot.remove(root).unwrap();
+        Ok(r)
+    }
+}
+
+impl Catalog<XPathEnvironmentSpec, XPathTestCase> {
+    pub(crate) fn xpath_run<Ren: Renderer<XPathEnvironmentSpec, XPathTestCase>>(
+        &self,
+        run_context: &mut RunContext,
+        test_filter: &impl TestFilter<XPathEnvironmentSpec, XPathTestCase>,
+        stdout: &mut Stdout,
+        renderer: &Ren,
+    ) -> crate::error::Result<CatalogOutcomes> {
+        let mut catalog_outcomes = CatalogOutcomes::new();
+        for file_path in &self.file_paths {
+            let full_path = self.base_dir().join(file_path);
+            let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::xpath_load_from_file(
+                &mut run_context.xot,
+                &full_path,
+            )?;
+            let test_set_outcomes =
+                test_set.run(run_context, self, test_filter, stdout, renderer)?;
+            catalog_outcomes.add_outcomes(test_set_outcomes);
+        }
+        Ok(catalog_outcomes)
     }
 }
