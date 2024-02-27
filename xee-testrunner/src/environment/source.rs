@@ -8,7 +8,7 @@ use xot::Xot;
 
 use crate::error::Result;
 
-use crate::load::convert_string;
+use crate::load::{convert_string, Loadable};
 use crate::metadata::Metadata;
 
 #[derive(Debug, Clone)]
@@ -67,14 +67,13 @@ impl Source {
         Ok(documents.get(&uri).unwrap().root())
     }
 
-    pub(crate) fn query<'a>(
-        xot: &Xot,
-        mut queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Self>>> + 'a)> {
+    pub(crate) fn query(
+        mut queries: Queries,
+    ) -> Result<(Queries, impl Query<Vec<Vec<Self>>> + '_)> {
         let file_query = queries.one("@file/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;
         let uri_query = queries.option("@uri/string()", convert_string)?;
-        let (mut queries, metadata_query) = Metadata::query(xot, queries)?;
+        let (mut queries, metadata_query) = Metadata::query(queries)?;
 
         let sources_query = queries.many("source", move |session, item| {
             let file = PathBuf::from(file_query.execute(session, item)?);

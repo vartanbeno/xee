@@ -1,33 +1,29 @@
 use xee_xpath::{Queries, Query};
-use xot::Xot;
 
 use crate::error::Result;
-use crate::load::convert_string;
+use crate::load::{convert_string, Loadable};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Metadata {
     pub(crate) description: Option<String>,
     pub(crate) created: Option<Attribution>,
     pub(crate) modified: Vec<Modification>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Modification {
     pub(crate) attribution: Attribution,
     pub(crate) description: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Attribution {
     pub(crate) by: String,
     pub(crate) on: String, // should be a date
 }
 
-impl Metadata {
-    pub(crate) fn query<'a>(
-        _xot: &Xot,
-        mut queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
+impl Loadable for Metadata {
+    fn query(mut queries: Queries) -> Result<(Queries, impl Query<Metadata>)> {
         let description_query = queries.option("description/string()", convert_string)?;
         let by_query = queries.one("@by/string()", convert_string)?;
         let on_query = queries.one("@on/string()", convert_string)?;
@@ -69,5 +65,37 @@ impl Metadata {
         })?;
 
         Ok((queries, metadata_query))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use xot::Xot;
+
+    use crate::load::XPATH_NS;
+
+    #[test]
+    fn test_load() {
+        let mut xot = Xot::new();
+        let xml = r#"
+<container xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
+  <description>Description</description>
+  <created by="Foo Barson" on="2024-01-01"/>
+</container>"#;
+        let metadata = Metadata::load_from_xml(&mut xot, xml, XPATH_NS).unwrap();
+        assert_eq!(
+            metadata,
+            Metadata {
+                description: Some("Description".to_string()),
+                created: Some(Attribution {
+                    by: "Foo Barson".to_string(),
+                    on: "2024-01-01".to_string(),
+                }),
+                modified: vec![],
+            }
+        );
+        // Metadata::load_fom_xml(&mut xot, xml, XPATH_NS).unwrap();
     }
 }

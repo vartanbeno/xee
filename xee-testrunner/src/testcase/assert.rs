@@ -741,10 +741,7 @@ impl TestCaseResult {
         }
     }
 
-    pub(crate) fn query<'a>(
-        _xot: &Xot,
-        mut queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl xee_xpath::Query<Self> + 'a)> {
+    pub(crate) fn query(mut queries: Queries) -> Result<(Queries, impl xee_xpath::Query<Self>)> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
             Ok(TestCaseResult::AssertError(AssertError::new(
@@ -1002,7 +999,7 @@ impl fmt::Display for Failure {
 
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
     let static_context = StaticContext::default();
-    let program = parse(&static_context, &expr).map_err(|e| e.error)?;
+    let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let dynamic_context =
         DynamicContext::from_documents(&static_context, runnable.dynamic_context().documents());
     let runnable = program.runnable(&dynamic_context);
@@ -1019,7 +1016,7 @@ fn run_xpath_with_result(
     let name = Name::name("result");
     let names = VariableNames::from_iter([name.clone()]);
     let static_context = StaticContext::new(namespaces, names);
-    let program = parse(&static_context, &expr).map_err(|e| e.error)?;
+    let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         &static_context,

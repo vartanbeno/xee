@@ -10,7 +10,7 @@ use crate::{
         Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment, XPathEnvironmentSpec,
     },
     error::Result,
-    load::convert_string,
+    load::{convert_string, Loadable},
     metadata::Metadata,
     runcontext::RunContext,
     testset::TestSet,
@@ -97,15 +97,14 @@ impl<E: Environment> TestCase<E> {
     }
 
     pub(crate) fn xpath_query<'a>(
-        xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Vec<XPathTestCase>> + 'a)> {
         let name_query = queries.one("@name/string()", convert_string)?;
-        let (mut queries, metadata_query) = Metadata::query(xot, queries)?;
+        let (mut queries, metadata_query) = Metadata::query(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
-        let (mut queries, environment_query) = XPathEnvironmentSpec::query(xot, path, queries)?;
+        let (mut queries, environment_query) = XPathEnvironmentSpec::query(path, queries)?;
         let local_environment_query = queries.many("environment", move |session, item| {
             let ref_ = ref_query.execute(session, item)?;
             if let Some(ref_) = ref_ {
@@ -117,8 +116,8 @@ impl<E: Environment> TestCase<E> {
             }
         })?;
 
-        let (queries, result_query) = TestCaseResult::query(xot, queries)?;
-        let (mut queries, dependency_query) = Dependency::query(xot, queries)?;
+        let (queries, result_query) = TestCaseResult::query(queries)?;
+        let (mut queries, dependency_query) = Dependency::query(queries)?;
         let test_query = queries.one("test/string()", convert_string)?;
         let test_case_query = queries.many("test-case", move |session, item| {
             let test_case = TestCase {

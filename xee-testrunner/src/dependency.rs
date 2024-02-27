@@ -80,7 +80,6 @@ impl KnownDependencies {
 
 impl Dependency {
     pub(crate) fn query<'a>(
-        _xot: &Xot,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;

@@ -29,7 +29,6 @@ impl<E: Environment> SharedEnvironments<E> {
     }
 
     pub(crate) fn xpath_query<'a>(
-        xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
     ) -> Result<(
@@ -37,8 +36,7 @@ impl<E: Environment> SharedEnvironments<E> {
         impl Query<SharedEnvironments<XPathEnvironmentSpec>> + 'a,
     )> {
         let name_query = queries.one("@name/string()", convert_string)?;
-        let (mut queries, environment_spec_query) =
-            XPathEnvironmentSpec::query(xot, path, queries)?;
+        let (mut queries, environment_spec_query) = XPathEnvironmentSpec::query(path, queries)?;
         let environments_query = queries.many("environment", move |session, item| {
             let name = name_query.execute(session, item)?;
             let environment_spec = environment_spec_query.execute(session, item)?;

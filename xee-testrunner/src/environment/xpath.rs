@@ -61,11 +61,10 @@ impl XPathEnvironmentSpec {
     }
 
     pub(crate) fn query<'a>(
-        xot: &Xot,
         path: &'a Path,
         queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-        let (mut queries, environment_spec_query) = EnvironmentSpec::query(xot, path, queries)?;
+        let (mut queries, environment_spec_query) = EnvironmentSpec::query(path, queries)?;
         let prefix_query = queries.one("@prefix/string()", convert_string)?;
         let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
 

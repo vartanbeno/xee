@@ -42,7 +42,6 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
     }
 
     fn xpath_query<'a>(
-        xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
     ) -> Result<(
@@ -53,7 +52,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let version_query = queries.one("@version/string()", convert_string)?;
 
         let (mut queries, shared_environments_query) =
-            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(xot, path, queries)?;
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(path, queries)?;
 
         let test_set_name_query = queries.one("@name/string()", convert_string)?;
         let test_set_file_query = queries.one("@file/string()", convert_string)?;
@@ -111,7 +110,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = Self::xpath_query(xot, path, queries)?;
+            let (queries, query) = Self::xpath_query(path, queries)?;
 
             let dynamic_context = DynamicContext::empty(&static_context);
             let mut session = queries.session(&dynamic_context, xot);
