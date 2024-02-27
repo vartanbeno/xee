@@ -76,7 +76,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         Ok(test_set_outcomes)
     }
 
-    pub(crate) fn test_set_query<'a>(
+    pub(crate) fn xpath_query<'a>(
         xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
@@ -88,12 +88,10 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         let descriptions_query = queries.many("description/string()", convert_string)?;
 
         let (queries, shared_environments_query) =
-            SharedEnvironments::<XPathEnvironmentSpec>::xpath_shared_environments_query(
-                xot, path, queries,
-            )?;
-        let (queries, dependency_query) = Dependency::dependency_query(xot, queries)?;
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(xot, path, queries)?;
+        let (queries, dependency_query) = Dependency::query(xot, queries)?;
         let (mut queries, test_cases_query) =
-            TestCase::<XPathEnvironmentSpec>::test_cases_query(xot, path, queries)?;
+            TestCase::<XPathEnvironmentSpec>::xpath_query(xot, path, queries)?;
         let test_set_query = queries.one("/test-set", move |session, item| {
             let name = name_query.execute(session, item)?;
             let descriptions = descriptions_query.execute(session, item)?;

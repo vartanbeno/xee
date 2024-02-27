@@ -67,14 +67,14 @@ impl Source {
         Ok(documents.get(&uri).unwrap().root())
     }
 
-    pub(crate) fn sources_query<'a>(
+    pub(crate) fn query<'a>(
         xot: &Xot,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Self>>> + 'a)> {
         let file_query = queries.one("@file/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;
         let uri_query = queries.option("@uri/string()", convert_string)?;
-        let (mut queries, metadata_query) = Metadata::metadata_query(xot, queries)?;
+        let (mut queries, metadata_query) = Metadata::query(xot, queries)?;
 
         let sources_query = queries.many("source", move |session, item| {
             let file = PathBuf::from(file_query.execute(session, item)?);

@@ -24,7 +24,7 @@ pub(crate) struct Attribution {
 }
 
 impl Metadata {
-    pub(crate) fn metadata_query<'a>(
+    pub(crate) fn query<'a>(
         _xot: &Xot,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {

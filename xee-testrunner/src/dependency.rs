@@ -79,7 +79,7 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn dependency_query<'a>(
+    pub(crate) fn query<'a>(
         _xot: &Xot,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {

@@ -54,7 +54,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         Ok(catalog_outcomes)
     }
 
-    fn catalog_query<'a>(
+    fn xpath_query<'a>(
         xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
@@ -66,9 +66,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let version_query = queries.one("@version/string()", convert_string)?;
 
         let (mut queries, shared_environments_query) =
-            SharedEnvironments::<XPathEnvironmentSpec>::xpath_shared_environments_query(
-                xot, path, queries,
-            )?;
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(xot, path, queries)?;
 
         let test_set_name_query = queries.one("@name/string()", convert_string)?;
         let test_set_file_query = queries.one("@file/string()", convert_string)?;

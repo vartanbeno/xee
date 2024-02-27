@@ -132,12 +132,12 @@ impl EnvironmentSpec {
         Ok(variables)
     }
 
-    pub(crate) fn environment_spec_query<'a>(
+    pub(crate) fn query<'a>(
         xot: &Xot,
         path: &'a Path,
         queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-        let (mut queries, sources_query) = Source::sources_query(xot, queries)?;
+        let (mut queries, sources_query) = Source::query(xot, queries)?;
 
         let name_query = queries.one("@name/string()", convert_string)?;
         let select_query = queries.option("@select/string()", convert_string)?;

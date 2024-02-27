@@ -741,7 +741,7 @@ impl TestCaseResult {
         }
     }
 
-    pub(crate) fn testcase_result_query<'a>(
+    pub(crate) fn query<'a>(
         _xot: &Xot,
         mut queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl xee_xpath::Query<Self> + 'a)> {
