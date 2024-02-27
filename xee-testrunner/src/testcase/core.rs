@@ -16,7 +16,7 @@ use crate::{
     testset::TestSet,
 };
 
-use super::{assert::TestCaseResult, outcome::TestOutcome};
+use super::{assert::TestCaseResult, outcome::TestOutcome, XPathTestCase};
 
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
     fn test_case(&self) -> &TestCase<E>;
@@ -100,10 +100,7 @@ impl<E: Environment> TestCase<E> {
         xot: &Xot,
         path: &'a Path,
         mut queries: Queries<'a>,
-    ) -> Result<(
-        Queries<'a>,
-        impl Query<Vec<TestCase<XPathEnvironmentSpec>>> + 'a,
-    )> {
+    ) -> Result<(Queries<'a>, impl Query<Vec<XPathTestCase>> + 'a)> {
         let name_query = queries.one("@name/string()", convert_string)?;
         let (mut queries, metadata_query) = Metadata::metadata_query(xot, queries)?;
 
@@ -123,9 +120,9 @@ impl<E: Environment> TestCase<E> {
 
         let (queries, result_query) = TestCaseResult::testcase_result_query(xot, queries)?;
         let (mut queries, dependency_query) = Dependency::dependency_query(xot, queries)?;
-
+        let test_query = queries.one("test/string()", convert_string)?;
         let test_case_query = queries.many("test-case", move |session, item| {
-            Ok(TestCase {
+            let test_case = TestCase {
                 name: name_query.execute(session, item)?,
                 metadata: metadata_query.execute(session, item)?,
                 environments: local_environment_query.execute(session, item)?,
@@ -137,7 +134,12 @@ impl<E: Environment> TestCase<E> {
                         .collect(),
                 ),
                 result: result_query.execute(session, item)?,
-            })
+            };
+            let xpath_test_case = XPathTestCase {
+                test_case,
+                test: test_query.execute(session, item)?,
+            };
+            Ok(xpath_test_case)
         })?;
 
         Ok((queries, test_case_query))

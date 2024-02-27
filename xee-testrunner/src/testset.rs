@@ -3,16 +3,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use xee_xpath::{Queries, Query};
+use xot::Xot;
+
 use crate::{
     catalog::Catalog,
-    dependency::Dependencies,
-    environment::{Environment, SharedEnvironments},
+    dependency::{Dependencies, Dependency},
+    environment::{Environment, SharedEnvironments, XPathEnvironmentSpec},
     error::Result,
     filter::TestFilter,
+    load::convert_string,
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
-    testcase::{Runnable, TestCase},
+    testcase::{Runnable, TestCase, XPathTestCase},
 };
 
 #[derive(Debug)]
@@ -70,5 +74,41 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         }
         renderer.render_test_set_summary(stdout, test_set)?;
         Ok(test_set_outcomes)
+    }
+
+    pub(crate) fn test_set_query<'a>(
+        xot: &Xot,
+        path: &'a Path,
+        mut queries: Queries<'a>,
+    ) -> Result<(
+        Queries<'a>,
+        impl Query<TestSet<XPathEnvironmentSpec, XPathTestCase>> + 'a,
+    )> {
+        let name_query = queries.one("@name/string()", convert_string)?;
+        let descriptions_query = queries.many("description/string()", convert_string)?;
+
+        let (queries, shared_environments_query) =
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_shared_environments_query(
+                xot, path, queries,
+            )?;
+        let (queries, dependency_query) = Dependency::dependency_query(xot, queries)?;
+        let (mut queries, test_cases_query) =
+            TestCase::<XPathEnvironmentSpec>::test_cases_query(xot, path, queries)?;
+        let test_set_query = queries.one("/test-set", move |session, item| {
+            let name = name_query.execute(session, item)?;
+            let descriptions = descriptions_query.execute(session, item)?;
+            let dependencies = dependency_query.execute(session, item)?;
+            let shared_environments = shared_environments_query.execute(session, item)?;
+            let test_cases = test_cases_query.execute(session, item)?;
+            Ok(TestSet {
+                full_path: path.to_path_buf(),
+                name,
+                descriptions,
+                dependencies: Dependencies::new(dependencies.into_iter().flatten().collect()),
+                shared_environments,
+                test_cases,
+            })
+        })?;
+        Ok((queries, test_set_query))
     }
 }
