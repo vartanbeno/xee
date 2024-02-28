@@ -25,12 +25,18 @@ use super::{
 };
 
 // the abstract environment. Can be an XPath or XSLT environment.
-pub(crate) trait Environment {
+pub(crate) trait Environment: Sized {
     // create an empty environment
     fn empty() -> Self;
 
     // get the underlying environment spec
     fn environment_spec(&self) -> &EnvironmentSpec;
+
+    // a query to load it from XML
+    fn query<'a>(
+        queries: Queries<'a>,
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>;
 }
 
 // In a test case we can include an environment directly, or refer to an environment

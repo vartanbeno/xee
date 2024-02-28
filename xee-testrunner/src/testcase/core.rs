@@ -27,6 +27,13 @@ pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
         catalog: &Catalog<E, Self>,
         test_set: &TestSet<E, Self>,
     ) -> TestOutcome;
+
+    fn query<'a>(
+        queries: Queries<'a>,
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        E: 'a;
 }
 
 #[derive(Debug)]
@@ -99,12 +106,15 @@ impl<E: Environment> TestCase<E> {
     pub(crate) fn xpath_query<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Vec<XPathTestCase>> + 'a)> {
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        E: 'a,
+    {
         let name_query = queries.one("@name/string()", convert_string)?;
         let (mut queries, metadata_query) = Metadata::query(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
-        let (mut queries, environment_query) = XPathEnvironmentSpec::query(queries, path)?;
+        let (mut queries, environment_query) = E::query(queries, path)?;
         let local_environment_query = queries.many("environment", move |session, item| {
             let ref_ = ref_query.execute(session, item)?;
             if let Some(ref_) = ref_ {
@@ -119,7 +129,7 @@ impl<E: Environment> TestCase<E> {
         let (queries, result_query) = TestCaseResult::query(queries)?;
         let (mut queries, dependency_query) = Dependency::query(queries)?;
         let test_query = queries.one("test/string()", convert_string)?;
-        let test_case_query = queries.many("test-case", move |session, item| {
+        let test_case_query = queries.one(".", move |session, item| {
             let test_case = TestCase {
                 name: name_query.execute(session, item)?,
                 metadata: metadata_query.execute(session, item)?,
@@ -133,11 +143,11 @@ impl<E: Environment> TestCase<E> {
                 ),
                 result: result_query.execute(session, item)?,
             };
-            let xpath_test_case = XPathTestCase {
-                test_case,
-                test: test_query.execute(session, item)?,
-            };
-            Ok(xpath_test_case)
+            // let xpath_test_case = XPathTestCase {
+            //     test_case,
+            //     test: test_query.execute(session, item)?,
+            // };
+            Ok(test_case)
         })?;
 
         Ok((queries, test_case_query))

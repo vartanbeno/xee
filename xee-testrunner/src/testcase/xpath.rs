@@ -1,14 +1,14 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, path::Path};
 
 use xee_name::Namespaces;
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
-    parse,
+    parse, Queries, Query,
 };
 
 use crate::{
-    catalog::Catalog, environment::XPathEnvironmentSpec, error::Result, runcontext::RunContext,
-    testset::TestSet,
+    catalog::Catalog, environment::XPathEnvironmentSpec, error::Result, load::convert_string,
+    runcontext::RunContext, testset::TestSet,
 };
 
 use super::{
@@ -99,5 +99,23 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             &mut run_context.xot,
             &result.map_err(|error| error.error),
         )
+    }
+
+    fn query<'a>(
+        mut queries: Queries<'a>,
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        XPathEnvironmentSpec: 'a,
+    {
+        let test_query = queries.one("test/string()", convert_string)?;
+        let (queries, test_case_query) = TestCase::xpath_query(queries, path)?;
+        let test_case_query = test_case_query.map(move |test_case, session, item| {
+            Ok(XPathTestCase {
+                test_case,
+                test: test_query.execute(session, item)?,
+            })
+        });
+        Ok((queries, test_case_query))
     }
 }

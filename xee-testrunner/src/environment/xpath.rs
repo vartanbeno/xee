@@ -62,8 +62,18 @@ impl XPathEnvironmentSpec {
             .map(|ns| (ns.prefix.as_ref(), ns.uri.as_ref()))
             .collect()
     }
+}
 
-    pub(crate) fn query<'a>(
+impl Environment for XPathEnvironmentSpec {
+    fn empty() -> Self {
+        Self::empty()
+    }
+
+    fn environment_spec(&self) -> &EnvironmentSpec {
+        &self.environment_spec
+    }
+
+    fn query<'a>(
         queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
@@ -88,15 +98,5 @@ impl XPathEnvironmentSpec {
             })
         })?;
         Ok((queries, xpath_environment_spec_query))
-    }
-}
-
-impl Environment for XPathEnvironmentSpec {
-    fn empty() -> Self {
-        Self::empty()
-    }
-
-    fn environment_spec(&self) -> &EnvironmentSpec {
-        &self.environment_spec
     }
 }

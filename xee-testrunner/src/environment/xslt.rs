@@ -1,4 +1,9 @@
+use std::path::Path;
+
+use xee_xpath::{Queries, Query};
+
 use super::core::{Environment, EnvironmentSpec};
+use crate::{error::Result, load::ContextLoadable};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Package {
@@ -42,5 +47,23 @@ impl Environment for XsltEnvironmentSpec {
 
     fn environment_spec(&self) -> &EnvironmentSpec {
         &self.environment_spec
+    }
+
+    fn query<'a>(
+        queries: Queries<'a>,
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
+        let (mut queries, environment_spec_query) =
+            EnvironmentSpec::query_with_context(queries, path)?;
+        let xslt_environment_spec_query = queries.one(".", move |session, item| {
+            Ok(XsltEnvironmentSpec {
+                environment_spec: environment_spec_query.execute(session, item)?,
+                // TODO
+                packages: vec![],
+                stylesheets: vec![],
+                outputs: vec![],
+            })
+        })?;
+        Ok((queries, xslt_environment_spec_query))
     }
 }

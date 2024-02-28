@@ -52,7 +52,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let version_query = queries.one("@version/string()", convert_string)?;
 
         let (mut queries, shared_environments_query) =
-            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(path, queries)?;
+            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(queries, path)?;
 
         let test_set_name_query = queries.one("@name/string()", convert_string)?;
         let test_set_file_query = queries.one("@file/string()", convert_string)?;
@@ -122,24 +122,24 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
 }
 
 impl Catalog<XPathEnvironmentSpec, XPathTestCase> {
-    pub(crate) fn xpath_run<Ren: Renderer<XPathEnvironmentSpec, XPathTestCase>>(
-        &self,
-        run_context: &mut RunContext,
-        test_filter: &impl TestFilter<XPathEnvironmentSpec, XPathTestCase>,
-        stdout: &mut Stdout,
-        renderer: &Ren,
-    ) -> crate::error::Result<CatalogOutcomes> {
-        let mut catalog_outcomes = CatalogOutcomes::new();
-        for file_path in &self.file_paths {
-            let full_path = self.base_dir().join(file_path);
-            let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::xpath_load_from_file(
-                &mut run_context.xot,
-                &full_path,
-            )?;
-            let test_set_outcomes =
-                test_set.run(run_context, self, test_filter, stdout, renderer)?;
-            catalog_outcomes.add_outcomes(test_set_outcomes);
-        }
-        Ok(catalog_outcomes)
-    }
+    // pub(crate) fn xpath_run<Ren: Renderer<XPathEnvironmentSpec, XPathTestCase>>(
+    //     &self,
+    //     run_context: &mut RunContext,
+    //     test_filter: &impl TestFilter<XPathEnvironmentSpec, XPathTestCase>,
+    //     stdout: &mut Stdout,
+    //     renderer: &Ren,
+    // ) -> crate::error::Result<CatalogOutcomes> {
+    //     let mut catalog_outcomes = CatalogOutcomes::new();
+    //     for file_path in &self.file_paths {
+    //         let full_path = self.base_dir().join(file_path);
+    //         let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::xpath_load_from_file(
+    //             &mut run_context.xot,
+    //             &full_path,
+    //         )?;
+    //         let test_set_outcomes =
+    //             test_set.run(run_context, self, test_filter, stdout, renderer)?;
+    //         catalog_outcomes.add_outcomes(test_set_outcomes);
+    //     }
+    //     Ok(catalog_outcomes)
+    // }
 }

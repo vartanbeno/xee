@@ -185,8 +185,10 @@ impl Loadable for Dependencies {
 
         Ok((
             queries,
-            dependency_query.map(|dependencies| Dependencies {
-                dependencies: dependencies.into_iter().flatten().collect(),
+            dependency_query.map(|dependencies, _, _| {
+                Ok(Dependencies {
+                    dependencies: dependencies.into_iter().flatten().collect(),
+                })
             }),
         ))
     }

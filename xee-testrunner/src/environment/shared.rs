@@ -29,14 +29,14 @@ impl<E: Environment> SharedEnvironments<E> {
     }
 
     pub(crate) fn xpath_query<'a>(
-        path: &'a Path,
         mut queries: Queries<'a>,
-    ) -> Result<(
-        Queries<'a>,
-        impl Query<SharedEnvironments<XPathEnvironmentSpec>> + 'a,
-    )> {
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<SharedEnvironments<E>> + 'a)>
+    where
+        E: 'a,
+    {
         let name_query = queries.one("@name/string()", convert_string)?;
-        let (mut queries, environment_spec_query) = XPathEnvironmentSpec::query(queries, path)?;
+        let (mut queries, environment_spec_query) = E::query(queries, path)?;
         let environments_query = queries.many("environment", move |session, item| {
             let name = name_query.execute(session, item)?;
             let environment_spec = environment_spec_query.execute(session, item)?;

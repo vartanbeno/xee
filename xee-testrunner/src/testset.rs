@@ -85,18 +85,20 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
     pub(crate) fn xpath_query<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
-    ) -> Result<(
-        Queries<'a>,
-        impl Query<TestSet<XPathEnvironmentSpec, XPathTestCase>> + 'a,
-    )> {
+    ) -> Result<(Queries<'a>, impl Query<TestSet<E, R>> + 'a)>
+    where
+        E: 'a,
+        R: 'a,
+    {
         let name_query = queries.one("@name/string()", convert_string)?;
         let descriptions_query = queries.many("description/string()", convert_string)?;
 
-        let (queries, shared_environments_query) =
-            SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(path, queries)?;
+        let (queries, shared_environments_query) = SharedEnvironments::xpath_query(queries, path)?;
         let (queries, dependency_query) = Dependency::query(queries)?;
-        let (mut queries, test_cases_query) =
-            TestCase::<XPathEnvironmentSpec>::xpath_query(queries, path)?;
+        let (mut queries, test_case_query) = R::query(queries, path)?;
+        let test_cases_query = queries.many("test-case", move |session, item| {
+            test_case_query.execute(session, item)
+        })?;
         let test_set_query = queries.one("/test-set", move |session, item| {
             let name = name_query.execute(session, item)?;
             let descriptions = descriptions_query.execute(session, item)?;
@@ -115,42 +117,42 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         Ok((queries, test_set_query))
     }
 
-    pub(crate) fn xpath_load_from_file(
-        xot: &mut Xot,
-        path: &Path,
-    ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
-        let xml_file = File::open(path)?;
-        let mut buf_reader = BufReader::new(xml_file);
-        let mut xml = String::new();
-        buf_reader.read_to_string(&mut xml)?;
-        Self::xpath_load_from_xml(xot, path, &xml)
-    }
+    // pub(crate) fn xpath_load_from_file(
+    //     xot: &mut Xot,
+    //     path: &Path,
+    // ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
+    //     let xml_file = File::open(path)?;
+    //     let mut buf_reader = BufReader::new(xml_file);
+    //     let mut xml = String::new();
+    //     buf_reader.read_to_string(&mut xml)?;
+    //     Self::xpath_load_from_xml(xot, path, &xml)
+    // }
 
-    pub(crate) fn xpath_load_from_xml(
-        xot: &mut Xot,
-        path: &Path,
-        xml: &str,
-    ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
-        let root = xot.parse(xml)?;
-        let namespaces = Namespaces::new(
-            Namespaces::default_namespaces(),
-            XPATH_NS,
-            Namespaces::FN_NAMESPACE,
-        );
+    // pub(crate) fn xpath_load_from_xml(
+    //     xot: &mut Xot,
+    //     path: &Path,
+    //     xml: &str,
+    // ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
+    //     let root = xot.parse(xml)?;
+    //     let namespaces = Namespaces::new(
+    //         Namespaces::default_namespaces(),
+    //         XPATH_NS,
+    //         Namespaces::FN_NAMESPACE,
+    //     );
 
-        let static_context = StaticContext::from_namespaces(namespaces);
-        let r = {
-            let queries = Queries::new(&static_context);
+    //     let static_context = StaticContext::from_namespaces(namespaces);
+    //     let r = {
+    //         let queries = Queries::new(&static_context);
 
-            let (queries, query) = Self::xpath_query(queries, path)?;
+    //         let (queries, query) = Self::xpath_query(queries, path)?;
 
-            let dynamic_context = DynamicContext::empty(&static_context);
-            let mut session = queries.session(&dynamic_context, xot);
-            // the query has a lifetime for the dynamic context, and a lifetime
-            // for the static context
-            query.execute(&mut session, &Item::from(root))?
-        };
-        xot.remove(root).unwrap();
-        Ok(r)
-    }
+    //         let dynamic_context = DynamicContext::empty(&static_context);
+    //         let mut session = queries.session(&dynamic_context, xot);
+    //         // the query has a lifetime for the dynamic context, and a lifetime
+    //         // for the static context
+    //         query.execute(&mut session, &Item::from(root))?
+    //     };
+    //     xot.remove(root).unwrap();
+    //     Ok(r)
+    // }
 }

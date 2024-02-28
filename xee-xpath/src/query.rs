@@ -141,7 +141,10 @@ impl<'s, 'x> Session<'s, 'x> {
 pub trait Query<V> {
     fn execute(&self, session: &mut Session, item: &Item) -> Result<V>;
 
-    fn map<T>(self, f: impl Fn(V) -> T) -> MapQuery<V, T, Self, impl Fn(V) -> T>
+    fn map<T>(
+        self,
+        f: impl Fn(V, &mut Session, &Item) -> Result<T>,
+    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T>>
     where
         Self: Sized,
     {
@@ -157,7 +160,7 @@ pub trait Query<V> {
 #[derive(Debug, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V) -> T,
+    F: Fn(V, &mut Session, &Item) -> Result<T>,
 {
     query: Q,
     f: F,
@@ -167,10 +170,11 @@ where
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V) -> T,
+    F: Fn(V, &mut Session, &Item) -> Result<T>,
 {
     fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
-        self.query.execute(session, item).map(|v| (self.f)(v))
+        let v = self.query.execute(session, item)?;
+        (self.f)(v, session, item)
     }
 }
 
