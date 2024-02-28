@@ -31,7 +31,7 @@ pub(crate) struct Catalog<E: Environment, R: Runnable<E>> {
     pub(crate) full_path: PathBuf,
     pub(crate) test_suite: String,
     pub(crate) version: String,
-    pub(crate) test_sets: Vec<TestSetRef>,
+    // pub(crate) test_sets: Vec<TestSetRef>,
     pub(crate) file_paths: FxIndexSet<PathBuf>,
     _runnable: std::marker::PhantomData<R>,
 }
@@ -81,7 +81,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
             let file = PathBuf::from(test_set_file_query.execute(session, item)?);
             Ok(TestSetRef { name, file })
         })?;
-        let catalog_query = queries.one("catalog", move |session, item| {
+        let catalog_query = queries.one("/catalog", move |session, item| {
             let test_suite = test_suite_query.execute(session, item)?;
             let version = version_query.execute(session, item)?;
             let shared_environments = shared_environments_query.execute(session, item)?;
@@ -92,7 +92,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
                 test_suite,
                 version,
                 shared_environments,
-                test_sets,
+                // test_sets,
                 file_paths,
                 _runnable: std::marker::PhantomData,
             })

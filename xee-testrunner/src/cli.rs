@@ -130,6 +130,7 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
             println!("Cannot check without filter file");
             return Ok(());
         }
+
         let catalog = self.load_catalog()?;
 
         let test_filter = self.load_check_test_filter()?;
