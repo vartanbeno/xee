@@ -1,13 +1,14 @@
 use xee_xpath::xml::Documents;
 use xot::Xot;
 
-use crate::{catalog::Catalog, dependency::KnownDependencies, environment::Environment};
+use crate::dependency::KnownDependencies;
 
 pub(crate) struct RunContext {
     pub(crate) xot: Xot,
     pub(crate) documents: Documents,
     pub(crate) known_dependencies: KnownDependencies,
-    // pub(crate) verbose: bool,
+    pub(crate) ns: String,
+    pub(crate) verbose: bool,
 }
 
 impl RunContext {
@@ -15,11 +16,15 @@ impl RunContext {
         xot: Xot,
         documents: Documents,
         known_dependencies: KnownDependencies,
+        ns: String,
+        verbose: bool,
     ) -> Self {
         Self {
             xot,
             documents,
             known_dependencies,
+            ns,
+            verbose,
         }
     }
 }

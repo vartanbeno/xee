@@ -84,3 +84,15 @@ impl<T: Loadable> ContextLoadable<()> for T {
         Self::query(queries)
     }
 }
+
+pub(crate) trait PathLoadable: ContextLoadable<Path> {
+    fn load_from_file(xot: &mut Xot, ns: &str, path: &Path) -> Result<Self> {
+        let xml_file = File::open(path)?;
+        let mut buf_reader = BufReader::new(xml_file);
+        let mut xml = String::new();
+        buf_reader.read_to_string(&mut xml)?;
+        Self::load_from_xml_with_context(xot, &xml, ns, path)
+    }
+}
+
+impl<T: ContextLoadable<Path>> PathLoadable for T {}

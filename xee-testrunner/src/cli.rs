@@ -1,13 +1,17 @@
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
+use xee_xpath::xml::Documents;
 use xot::Xot;
 
 use crate::catalog::Catalog;
+use crate::dependency::xpath_known_dependencies;
 use crate::error::Result;
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter};
+use crate::load::{PathLoadable, XPATH_NS};
 use crate::outcomes::Outcomes;
 use crate::paths::paths;
+use crate::runcontext::RunContext;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -91,20 +95,21 @@ pub fn cli() -> Result<()> {
 // fn check(path: &Path, verbose: bool) -> Result<()> {
 //     let path_info = paths(path)?;
 //     let mut xot = Xot::new();
-//     let catalog = Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
 
-//     let mut run_context = RunContextBuilder::default()
-//         .xot(xot)
-//         .catalog(catalog)
-//         .verbose(verbose)
-//         .build()
-//         .unwrap();
+//     let run_context = RunContext::new(
+//         xot,
+//         Documents::new(),
+//         xpath_known_dependencies(),
+//         XPATH_NS.to_string(),
+//         verbose,
+//     );
 
 //     if !path_info.filter_path.exists() {
 //         // we cannot check if we don't have a filter file yet
 //         println!("Cannot check without filter file");
 //         return Ok(());
 //     }
+//     let catalog = Catalog::load_from_file(&mut xot, &run_context.ns, &path_info.catalog_path)?;
 
 //     let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
 //     if path_info.whole_catalog() {

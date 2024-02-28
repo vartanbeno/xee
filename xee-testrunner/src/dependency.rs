@@ -33,7 +33,7 @@ pub(crate) struct KnownDependencies {
     specs: FxIndexSet<DependencySpec>,
 }
 
-fn xpath_known_dependencies() -> KnownDependencies {
+pub(crate) fn xpath_known_dependencies() -> KnownDependencies {
     let specs = vec![
         DependencySpec {
             type_: "spec".to_string(),
