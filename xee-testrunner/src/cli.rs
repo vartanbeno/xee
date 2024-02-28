@@ -8,9 +8,9 @@ use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
 use crate::environment::{Environment, XPathEnvironmentSpec};
 use crate::error::Result;
-use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter};
+use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter, TestFilter};
 use crate::load::{PathLoadable, XPATH_NS};
-use crate::outcomes::Outcomes;
+use crate::outcomes::{CatalogOutcomes, Outcomes, TestSetOutcomes};
 use crate::paths::{paths, PathInfo};
 use crate::renderer::{CharacterRenderer, VerboseRenderer};
 use crate::runcontext::RunContext;
@@ -97,131 +97,145 @@ pub fn cli() -> Result<()> {
         cli.verbose,
     );
 
+    let mut runner = Runner::<XPathEnvironmentSpec, XPathTestCase>::new(run_context, path_info);
+
     match cli.command {
-        // Commands::Initialize { path } => initialize(&path, run_context),
-        Commands::Check { .. } => {
-            check::<XPathEnvironmentSpec, XPathTestCase>(run_context, &path_info)
-        }
-        // Commands::Update { path } => update(&path, verbose),
-        // Commands::All { path, name_filter } => all(&path, verbose, name_filter),
-        _ => todo!(),
+        Commands::Initialize { .. } => runner.initialize(),
+        Commands::Check { .. } => runner.check(),
+        Commands::Update { .. } => runner.update(),
+        Commands::All { name_filter, .. } => runner.all(name_filter),
     }
 }
 
-fn check<E: Environment, R: Runnable<E>>(
-    mut run_context: RunContext,
-    path_info: &PathInfo,
-) -> Result<()> {
-    if !path_info.filter_path.exists() {
-        // we cannot check if we don't have a filter file yet
-        println!("Cannot check without filter file");
-        return Ok(());
+struct Runner<E: Environment, R: Runnable<E>> {
+    run_context: RunContext,
+    path_info: PathInfo,
+    _e: std::marker::PhantomData<E>,
+    _r: std::marker::PhantomData<R>,
+}
+
+impl<E: Environment, R: Runnable<E>> Runner<E, R> {
+    fn new(run_context: RunContext, path_info: PathInfo) -> Self {
+        Self {
+            run_context,
+            path_info,
+            _e: std::marker::PhantomData,
+            _r: std::marker::PhantomData,
+        }
     }
-    let catalog = Catalog::<E, R>::load_from_file(&mut run_context, &path_info.catalog_path)?;
 
-    let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
-    let mut out = std::io::stdout();
+    fn check(&mut self) -> Result<()> {
+        if !self.path_info.filter_path.exists() {
+            // we cannot check if we don't have a filter file yet
+            println!("Cannot check without filter file");
+            return Ok(());
+        }
+        let catalog = self.load_catalog()?;
 
-    let renderer = run_context.renderer();
-    if path_info.whole_catalog() {
-        let outcomes = catalog.run(&mut run_context, &test_filter, &mut out, &renderer)?;
-        println!("{}", outcomes.display());
-    } else {
-        let test_set = TestSet::load_from_file(&mut run_context, &path_info.relative_path)?;
-        let outcomes = test_set.run(
-            &mut run_context,
-            &catalog,
-            &test_filter,
+        let test_filter = self.load_check_test_filter()?;
+        if self.path_info.whole_catalog() {
+            let outcomes = self.catalog_outcomes(&catalog, &test_filter)?;
+            println!("{}", outcomes.display());
+        } else {
+            let outcomes = self.test_set_outcomes(&catalog, &test_filter)?;
+            println!("{}", outcomes.display());
+        }
+        Ok(())
+    }
+
+    fn all(&mut self, name_filter: Option<String>) -> Result<()> {
+        let catalog = self.load_catalog()?;
+
+        let test_filter = NameFilter::new(name_filter);
+
+        if self.path_info.whole_catalog() {
+            let outcomes = self.catalog_outcomes(&catalog, &test_filter)?;
+            println!("{}", outcomes.display());
+        } else {
+            let outcomes = self.test_set_outcomes(&catalog, &test_filter)?;
+            println!("{}", outcomes.display());
+        }
+        Ok(())
+    }
+
+    fn update(&mut self) -> Result<()> {
+        if !self.path_info.filter_path.exists() {
+            // we cannot update if we don't have a filter file yet
+            println!("Cannot update without filter file");
+            return Ok(());
+        }
+        let catalog = self.load_catalog()?;
+        let test_filter = IncludeAllFilter::new();
+        let mut update_filter = ExcludedNamesFilter::load_from_file(&self.path_info.filter_path)?;
+        if self.path_info.whole_catalog() {
+            let outcomes = self.catalog_outcomes(&catalog, &test_filter)?;
+            update_filter.update_with_catalog_outcomes(&outcomes);
+            println!("{}", outcomes.display());
+        } else {
+            let outcomes = self.test_set_outcomes(&catalog, &test_filter)?;
+            update_filter.update_with_test_set_outcomes(&outcomes);
+            println!("{}", outcomes.display());
+        }
+
+        let filter_data = update_filter.to_string();
+        fs::write(&self.path_info.filter_path, filter_data)?;
+        Ok(())
+    }
+
+    fn initialize(&mut self) -> Result<()> {
+        if self.path_info.filter_path.exists() {
+            println!("Cannot reinitialize filters. Use update or delete filters file first");
+            return Ok(());
+        }
+
+        let catalog = self.load_catalog()?;
+
+        let test_filter = IncludeAllFilter::new();
+
+        let outcomes = self.catalog_outcomes(&catalog, &test_filter)?;
+
+        let test_filter = ExcludedNamesFilter::from_outcomes(&outcomes);
+        let filter_data = test_filter.to_string();
+        fs::write(&self.path_info.filter_path, filter_data)?;
+        Ok(())
+    }
+
+    fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
+        Catalog::load_from_file(&mut self.run_context, &self.path_info.catalog_path)
+    }
+
+    fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
+        TestSet::load_from_file(&mut self.run_context, &self.path_info.relative_path)
+    }
+
+    fn load_check_test_filter(&self) -> Result<impl TestFilter<E, R>> {
+        ExcludedNamesFilter::load_from_file(&self.path_info.filter_path)
+    }
+
+    fn catalog_outcomes(
+        &mut self,
+        catalog: &Catalog<E, R>,
+        test_filter: &impl TestFilter<E, R>,
+    ) -> Result<CatalogOutcomes> {
+        let mut out = std::io::stdout();
+        let renderer = self.run_context.renderer();
+        catalog.run(&mut self.run_context, test_filter, &mut out, &renderer)
+    }
+
+    fn test_set_outcomes(
+        &mut self,
+        catalog: &Catalog<E, R>,
+        test_filter: &impl TestFilter<E, R>,
+    ) -> Result<TestSetOutcomes> {
+        let mut out = std::io::stdout();
+        let renderer = self.run_context.renderer();
+        let test_set = self.load_test_set()?;
+        test_set.run(
+            &mut self.run_context,
+            catalog,
+            test_filter,
             &mut out,
             &renderer,
-        )?;
-        println!("{}", outcomes.display());
+        )
     }
-    Ok(())
 }
-
-// fn all(path: &Path, verbose: bool, name_filter: Option<String>) -> Result<()> {
-//     let path_info = paths(path)?;
-//     let mut xot = Xot::new();
-//     let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
-
-//     let mut run_context = RunContextBuilder::default()
-//         .xot(xot)
-//         .catalog(catalog)
-//         .verbose(verbose)
-//         .build()
-//         .unwrap();
-
-//     let test_filter = NameFilter::new(name_filter);
-
-//     if path_info.whole_catalog() {
-//         let outcomes = run(&mut run_context, &test_filter)?;
-//         println!("{}", outcomes.display());
-//     } else {
-//         let outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
-//         println!("{}", outcomes.display());
-//     }
-//     Ok(())
-// }
-
-// fn update(path: &Path, verbose: bool) -> Result<()> {
-//     let path_info = paths(path)?;
-//     let mut xot = Xot::new();
-//     let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
-
-//     let mut run_context = RunContextBuilder::default()
-//         .xot(xot)
-//         .catalog(catalog)
-//         .verbose(verbose)
-//         .build()
-//         .unwrap();
-
-//     if !path_info.filter_path.exists() {
-//         // we cannot update if we don't have a filter file yet
-//         println!("Cannot update without filter file");
-//         return Ok(());
-//     }
-//     let test_filter = IncludeAllFilter::new();
-//     let mut update_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
-//     if path_info.whole_catalog() {
-//         let catalog_outcomes = run(&mut run_context, &test_filter)?;
-
-//         update_filter.update_with_catalog_outcomes(&catalog_outcomes);
-//         println!("{}", catalog_outcomes.display());
-//     } else {
-//         let test_set_outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
-//         update_filter.update_with_test_set_outcomes(&test_set_outcomes);
-//         println!("{}", test_set_outcomes.display());
-//     }
-
-//     let filter_data = update_filter.to_string();
-//     fs::write(&path_info.filter_path, filter_data)?;
-//     Ok(())
-// }
-
-// fn initialize(path: &Path, verbose: bool) -> Result<()> {
-//     let path_info = paths(path)?;
-//     if path_info.filter_path.exists() {
-//         println!("Cannot reinitialize filters. Use update or delete filters file first");
-//         return Ok(());
-//     }
-
-//     let mut xot = Xot::new();
-//     let catalog = qt::Catalog::load_from_file(&mut xot, &path_info.catalog_path)?;
-
-//     let mut run_context = RunContextBuilder::default()
-//         .xot(xot)
-//         .catalog(catalog)
-//         .verbose(verbose)
-//         .build()
-//         .unwrap();
-
-//     let test_filter = IncludeAllFilter::new();
-
-//     let catalog_outcomes = run(&mut run_context, &test_filter)?;
-
-//     let test_filter = ExcludedNamesFilter::from_outcomes(&catalog_outcomes);
-//     let filter_data = test_filter.to_string();
-//     fs::write(&path_info.filter_path, filter_data)?;
-//     Ok(())
-// }

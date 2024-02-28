@@ -13,3 +13,6 @@ mod renderer;
 mod runcontext;
 mod testcase;
 mod testset;
+
+pub use cli::cli;
+pub use error::Result;
