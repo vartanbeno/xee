@@ -52,6 +52,12 @@ pub struct EnvironmentRef {
     pub(crate) ref_: String,
 }
 
+impl EnvironmentRef {
+    pub(crate) fn new(ref_: String) -> Self {
+        Self { ref_ }
+    }
+}
+
 impl Display for EnvironmentRef {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.ref_)

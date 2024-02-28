@@ -113,3 +113,68 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
         Ok((queries, test_set_query))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        environment::{EnvironmentRef, XPathEnvironmentSpec},
+        load::XPATH_NS,
+        testcase::XPathTestCase,
+    };
+
+    use super::*;
+
+    use xot::Xot;
+
+    #[test]
+    fn test_load_set_set() {
+        let xml = r#"
+<test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="testset-name">
+   <description>Test set</description>
+
+   <environment name="x">
+      <param name="a"
+         select="''"
+         declared="true"/>
+      <param name="b"
+         select="()"
+         declared="true"/>
+      <param name="c"
+         select="0"
+         declared="true"/>
+   </environment>
+
+   <test-case name="test-1">
+      <description>Test 1</description>
+      <created by="Bar Quxson" on="2024-01-01"/>
+      <test>1</test>
+      <result>
+         <assert-true/>
+      </result>
+   </test-case>
+
+   <test-case name="test-2">
+      <description>Test 2</description>
+      <created by="Flurb Flurba" on="2024-02-01"/>
+      <test>2</test>
+      <result>
+         <assert-true/>
+      </result>
+   </test-case>
+</test-set>"#;
+
+        let mut xot = Xot::new();
+
+        let path = PathBuf::from("bar/foo");
+        let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_xml_with_context(
+            &mut xot, xml, XPATH_NS, &path,
+        )
+        .unwrap();
+        assert_eq!(test_set.name, "testset-name");
+        assert_eq!(test_set.test_cases.len(), 2);
+        assert!(test_set
+            .shared_environments
+            .get(&EnvironmentRef::new("x".to_string()))
+            .is_some());
+    }
+}
