@@ -117,7 +117,7 @@ impl Assertable for AssertAllOf {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(runnable, xot, result);
             match result {
-                TestOutcome::Passed | TestOutcome::PassedWithUnexpectedError(..) => {}
+                TestOutcome::Passed | TestOutcome::UnexpectedError(..) => {}
                 _ => return result,
             }
         }
@@ -610,7 +610,7 @@ impl AssertError {
         if code == self.0 {
             TestOutcome::Passed
         } else {
-            TestOutcome::PassedWithUnexpectedError(UnexpectedError::Code(code.to_string()))
+            TestOutcome::UnexpectedError(UnexpectedError::Code(code.to_string()))
         }
     }
 }

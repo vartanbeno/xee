@@ -25,8 +25,8 @@ pub(crate) trait Outcomes {
     fn passed(&self) -> usize {
         self.count(|outcome| matches!(outcome.outcome, TestOutcome::Passed))
     }
-    fn passed_with_unexpected_error(&self) -> usize {
-        self.count(|outcome| matches!(outcome.outcome, TestOutcome::PassedWithUnexpectedError(..)))
+    fn unexpected_error(&self) -> usize {
+        self.count(|outcome| matches!(outcome.outcome, TestOutcome::UnexpectedError(..)))
     }
     fn failed(&self) -> usize {
         self.count(|outcome| matches!(outcome.outcome, TestOutcome::Failed(..)))
@@ -51,7 +51,7 @@ pub(crate) trait Outcomes {
         write!(s, " Passed: {}", self.passed()).unwrap();
         write!(s, " Failed: {}", self.failed()).unwrap();
         write!(s, " Error: {}", self.erroring()).unwrap();
-        write!(s, " WrongE: {}", self.passed_with_unexpected_error()).unwrap();
+        write!(s, " WrongE: {}", self.unexpected_error()).unwrap();
         write!(s, " Filtered: {}", self.filtered()).unwrap();
         write!(s, " Unsupported: {}", self.unsupported()).unwrap();
         s
@@ -92,7 +92,7 @@ impl TestSetOutcomes {
     }
 
     pub(crate) fn has_failures(&self) -> bool {
-        self.passed_with_unexpected_error() > 0 || self.failed() > 0 || self.erroring() > 0
+        self.unexpected_error() > 0 || self.failed() > 0 || self.erroring() > 0
     }
 
     pub(crate) fn add_outcome(&mut self, test_case_name: &str, outcome: TestOutcome) {

@@ -45,7 +45,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         stdout: &mut Stdout,
         renderer: &Ren,
     ) -> Result<TestSetOutcomes> {
-        renderer.render_test_set(stdout, self, catalog)?;
+        renderer.render_test_set(stdout, catalog, self)?;
 
         let mut test_set_outcomes = TestSetOutcomes::new(&self.name);
         for runner in &self.test_cases {

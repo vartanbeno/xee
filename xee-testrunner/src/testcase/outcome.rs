@@ -13,7 +13,7 @@ pub enum UnexpectedError {
 #[derive(Debug, PartialEq)]
 pub enum TestOutcome {
     Passed,
-    PassedWithUnexpectedError(UnexpectedError),
+    UnexpectedError(UnexpectedError),
     Failed(Failure),
     RuntimeError(Error),
     CompilationError(Error),
@@ -24,7 +24,7 @@ pub enum TestOutcome {
 
 impl TestOutcome {
     pub(crate) fn is_passed(&self) -> bool {
-        matches!(self, Self::Passed | Self::PassedWithUnexpectedError(..))
+        matches!(self, Self::Passed | Self::UnexpectedError(..))
     }
     pub(crate) fn is_exactly_passed(&self) -> bool {
         matches!(self, Self::Passed)
@@ -35,7 +35,7 @@ impl std::fmt::Display for TestOutcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TestOutcome::Passed => write!(f, "{}", "PASS".green()),
-            TestOutcome::PassedWithUnexpectedError(error) => match error {
+            TestOutcome::UnexpectedError(error) => match error {
                 UnexpectedError::Code(s) => write!(f, "{} code: {}", "WRONG ERROR".yellow(), s),
                 UnexpectedError::Error(e) => {
                     write!(f, "{} error: {}", "WRONG ERROR".yellow(), e)
