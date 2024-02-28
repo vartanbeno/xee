@@ -6,12 +6,16 @@ use xot::Xot;
 
 use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
+use crate::environment::XPathEnvironmentSpec;
 use crate::error::Result;
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter};
 use crate::load::{PathLoadable, XPATH_NS};
 use crate::outcomes::Outcomes;
 use crate::paths::paths;
+use crate::renderer::{CharacterRenderer, VerboseRenderer};
 use crate::runcontext::RunContext;
+use crate::testcase::XPathTestCase;
+use crate::testset::TestSet;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -92,35 +96,51 @@ pub fn cli() -> Result<()> {
     // }
 }
 
-// fn check(path: &Path, verbose: bool) -> Result<()> {
-//     let path_info = paths(path)?;
-//     let mut xot = Xot::new();
+fn check(path: &Path, verbose: bool) -> Result<()> {
+    let path_info = paths(path)?;
+    let xot = Xot::new();
 
-//     let run_context = RunContext::new(
-//         xot,
-//         Documents::new(),
-//         xpath_known_dependencies(),
-//         XPATH_NS.to_string(),
-//         verbose,
-//     );
+    let mut run_context = RunContext::new(
+        xot,
+        Documents::new(),
+        xpath_known_dependencies(),
+        XPATH_NS.to_string(),
+        verbose,
+    );
 
-//     if !path_info.filter_path.exists() {
-//         // we cannot check if we don't have a filter file yet
-//         println!("Cannot check without filter file");
-//         return Ok(());
-//     }
-//     let catalog = Catalog::load_from_file(&mut xot, &run_context.ns, &path_info.catalog_path)?;
+    if !path_info.filter_path.exists() {
+        // we cannot check if we don't have a filter file yet
+        println!("Cannot check without filter file");
+        return Ok(());
+    }
+    let catalog = Catalog::<XPathEnvironmentSpec, XPathTestCase>::load_from_file(
+        &mut run_context,
+        &path_info.catalog_path,
+    )?;
 
-//     let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
-//     if path_info.whole_catalog() {
-//         let outcomes = run(&mut run_context, &test_filter)?;
-//         println!("{}", outcomes.display());
-//     } else {
-//         let outcomes = run_path(run_context, &test_filter, &path_info.relative_path)?;
-//         println!("{}", outcomes.display());
-//     }
-//     Ok(())
-// }
+    let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
+    let mut out = std::io::stdout();
+
+    let renderer = run_context.renderer();
+    if path_info.whole_catalog() {
+        let outcomes = catalog.run(&mut run_context, &test_filter, &mut out, &renderer)?;
+        println!("{}", outcomes.display());
+    } else {
+        let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_file(
+            &mut run_context,
+            &path_info.relative_path,
+        )?;
+        let outcomes = test_set.run(
+            &mut run_context,
+            &catalog,
+            &test_filter,
+            &mut out,
+            &renderer,
+        )?;
+        println!("{}", outcomes.display());
+    }
+    Ok(())
+}
 
 // fn all(path: &Path, verbose: bool, name_filter: Option<String>) -> Result<()> {
 //     let path_info = paths(path)?;

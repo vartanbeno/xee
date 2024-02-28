@@ -12,7 +12,7 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::error::Result;
+use crate::{error::Result, runcontext::RunContext};
 
 pub(crate) const XPATH_NS: &str = "http://www.w3.org/2010/09/qt-fots-catalog";
 
@@ -86,12 +86,12 @@ impl<T: Loadable> ContextLoadable<()> for T {
 }
 
 pub(crate) trait PathLoadable: ContextLoadable<Path> {
-    fn load_from_file(xot: &mut Xot, ns: &str, path: &Path) -> Result<Self> {
+    fn load_from_file(run_context: &mut RunContext, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
         buf_reader.read_to_string(&mut xml)?;
-        Self::load_from_xml_with_context(xot, &xml, ns, path)
+        Self::load_from_xml_with_context(&mut run_context.xot, &xml, &run_context.ns, path)
     }
 }
 

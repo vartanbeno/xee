@@ -37,15 +37,15 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         self.full_path.strip_prefix(catalog.base_dir()).unwrap()
     }
 
-    pub(crate) fn run<Ren: Renderer<E, R>>(
+    pub(crate) fn run(
         &self,
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_filter: &impl TestFilter<E, R>,
-        stdout: &mut Stdout,
-        renderer: &Ren,
+        out: &mut Stdout,
+        renderer: &Box<dyn Renderer<E, R>>,
     ) -> Result<TestSetOutcomes> {
-        renderer.render_test_set(stdout, catalog, self)?;
+        renderer.render_test_set(out, catalog, self)?;
 
         let mut test_set_outcomes = TestSetOutcomes::new(&self.name);
         for runner in &self.test_cases {
@@ -66,12 +66,12 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
                 test_set_outcomes.add_unsupported();
                 continue;
             }
-            renderer.render_test_case(stdout, test_case)?;
+            renderer.render_test_case(out, test_case)?;
             let outcome = runner.run(run_context, catalog, self);
-            renderer.render_test_outcome(stdout, &outcome)?;
+            renderer.render_test_outcome(out, &outcome)?;
             test_set_outcomes.add_outcome(&test_case.name, outcome);
         }
-        renderer.render_test_set_summary(stdout, self)?;
+        renderer.render_test_set_summary(out, self)?;
         Ok(test_set_outcomes)
     }
 }

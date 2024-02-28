@@ -35,10 +35,10 @@ pub(crate) trait Renderer<E: Environment, R: Runnable<E>> {
     ) -> crossterm::Result<()>;
 }
 
-struct VerboseRenderer {}
+pub(crate) struct VerboseRenderer {}
 
 impl VerboseRenderer {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {}
     }
 }
@@ -86,10 +86,10 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
     }
 }
 
-struct CharacterRenderer {}
+pub(crate) struct CharacterRenderer {}
 
 impl CharacterRenderer {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {}
     }
 }

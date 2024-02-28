@@ -41,20 +41,18 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         self.full_path.parent().unwrap()
     }
 
-    pub(crate) fn run<Ren: Renderer<E, R>>(
+    pub(crate) fn run(
         &self,
         run_context: &mut RunContext,
         test_filter: &impl TestFilter<E, R>,
-        stdout: &mut Stdout,
-        renderer: &Ren,
+        out: &mut Stdout,
+        renderer: &Box<dyn Renderer<E, R>>,
     ) -> crate::error::Result<CatalogOutcomes> {
         let mut catalog_outcomes = CatalogOutcomes::new();
         for file_path in &self.file_paths {
             let full_path = self.base_dir().join(file_path);
-            let test_set =
-                TestSet::load_from_file(&mut run_context.xot, &run_context.ns, &full_path)?;
-            let test_set_outcomes =
-                test_set.run(run_context, self, test_filter, stdout, renderer)?;
+            let test_set = TestSet::load_from_file(run_context, &full_path)?;
+            let test_set_outcomes = test_set.run(run_context, self, test_filter, out, renderer)?;
             catalog_outcomes.add_outcomes(test_set_outcomes);
         }
         Ok(catalog_outcomes)
