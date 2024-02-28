@@ -123,3 +123,23 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         Ok((queries, test_case_query))
     }
 }
+
+impl ContextLoadable<Path> for XPathTestCase {
+    fn query_with_context<'a>(
+        mut queries: Queries<'a>,
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        XPathEnvironmentSpec: 'a,
+    {
+        let test_query = queries.one("test/string()", convert_string)?;
+        let (queries, test_case_query) = TestCase::query_with_context(queries, path)?;
+        let test_case_query = test_case_query.map(move |test_case, session, item| {
+            Ok(XPathTestCase {
+                test_case,
+                test: test_query.execute(session, item)?,
+            })
+        });
+        Ok((queries, test_case_query))
+    }
+}
