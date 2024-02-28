@@ -81,8 +81,10 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         renderer.render_test_set_summary(stdout, self)?;
         Ok(test_set_outcomes)
     }
+}
 
-    pub(crate) fn xpath_query<'a>(
+impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
+    fn query_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<TestSet<E, R>> + 'a)>
@@ -117,43 +119,4 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         })?;
         Ok((queries, test_set_query))
     }
-
-    // pub(crate) fn xpath_load_from_file(
-    //     xot: &mut Xot,
-    //     path: &Path,
-    // ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
-    //     let xml_file = File::open(path)?;
-    //     let mut buf_reader = BufReader::new(xml_file);
-    //     let mut xml = String::new();
-    //     buf_reader.read_to_string(&mut xml)?;
-    //     Self::xpath_load_from_xml(xot, path, &xml)
-    // }
-
-    // pub(crate) fn xpath_load_from_xml(
-    //     xot: &mut Xot,
-    //     path: &Path,
-    //     xml: &str,
-    // ) -> Result<TestSet<XPathEnvironmentSpec, XPathTestCase>> {
-    //     let root = xot.parse(xml)?;
-    //     let namespaces = Namespaces::new(
-    //         Namespaces::default_namespaces(),
-    //         XPATH_NS,
-    //         Namespaces::FN_NAMESPACE,
-    //     );
-
-    //     let static_context = StaticContext::from_namespaces(namespaces);
-    //     let r = {
-    //         let queries = Queries::new(&static_context);
-
-    //         let (queries, query) = Self::xpath_query(queries, path)?;
-
-    //         let dynamic_context = DynamicContext::empty(&static_context);
-    //         let mut session = queries.session(&dynamic_context, xot);
-    //         // the query has a lifetime for the dynamic context, and a lifetime
-    //         // for the static context
-    //         query.execute(&mut session, &Item::from(root))?
-    //     };
-    //     xot.remove(root).unwrap();
-    //     Ok(r)
-    // }
 }
