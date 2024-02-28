@@ -42,8 +42,8 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
     }
 
     fn xpath_query<'a>(
-        path: &'a Path,
         mut queries: Queries<'a>,
+        path: &'a Path,
     ) -> Result<(
         Queries<'a>,
         impl Query<Catalog<XPathEnvironmentSpec, XPathTestCase>> + 'a,
@@ -110,7 +110,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = Self::xpath_query(path, queries)?;
+            let (queries, query) = Self::xpath_query(queries, path)?;
 
             let dynamic_context = DynamicContext::empty(&static_context);
             let mut session = queries.session(&dynamic_context, xot);

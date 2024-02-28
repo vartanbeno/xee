@@ -83,8 +83,8 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
     }
 
     pub(crate) fn xpath_query<'a>(
-        path: &'a Path,
         mut queries: Queries<'a>,
+        path: &'a Path,
     ) -> Result<(
         Queries<'a>,
         impl Query<TestSet<XPathEnvironmentSpec, XPathTestCase>> + 'a,
@@ -96,7 +96,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
             SharedEnvironments::<XPathEnvironmentSpec>::xpath_query(path, queries)?;
         let (queries, dependency_query) = Dependency::query(queries)?;
         let (mut queries, test_cases_query) =
-            TestCase::<XPathEnvironmentSpec>::xpath_query(path, queries)?;
+            TestCase::<XPathEnvironmentSpec>::xpath_query(queries, path)?;
         let test_set_query = queries.one("/test-set", move |session, item| {
             let name = name_query.execute(session, item)?;
             let descriptions = descriptions_query.execute(session, item)?;
@@ -142,7 +142,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         let r = {
             let queries = Queries::new(&static_context);
 
-            let (queries, query) = Self::xpath_query(path, queries)?;
+            let (queries, query) = Self::xpath_query(queries, path)?;
 
             let dynamic_context = DynamicContext::empty(&static_context);
             let mut session = queries.session(&dynamic_context, xot);

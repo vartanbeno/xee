@@ -97,8 +97,8 @@ impl<E: Environment> TestCase<E> {
     }
 
     pub(crate) fn xpath_query<'a>(
-        path: &'a Path,
         mut queries: Queries<'a>,
+        path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Vec<XPathTestCase>> + 'a)> {
         let name_query = queries.one("@name/string()", convert_string)?;
         let (mut queries, metadata_query) = Metadata::query(queries)?;
