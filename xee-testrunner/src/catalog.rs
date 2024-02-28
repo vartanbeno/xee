@@ -46,7 +46,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         run_context: &mut RunContext,
         test_filter: &impl TestFilter<E, R>,
         out: &mut Stdout,
-        renderer: &Box<dyn Renderer<E, R>>,
+        renderer: &dyn Renderer<E, R>,
     ) -> crate::error::Result<CatalogOutcomes> {
         let mut catalog_outcomes = CatalogOutcomes::new();
         for file_path in &self.file_paths {

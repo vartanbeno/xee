@@ -43,7 +43,7 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         catalog: &Catalog<E, R>,
         test_filter: &impl TestFilter<E, R>,
         out: &mut Stdout,
-        renderer: &Box<dyn Renderer<E, R>>,
+        renderer: &dyn Renderer<E, R>,
     ) -> Result<TestSetOutcomes> {
         renderer.render_test_set(out, catalog, self)?;
 

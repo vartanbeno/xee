@@ -219,7 +219,12 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
     ) -> Result<CatalogOutcomes> {
         let mut out = std::io::stdout();
         let renderer = self.run_context.renderer();
-        catalog.run(&mut self.run_context, test_filter, &mut out, &renderer)
+        catalog.run(
+            &mut self.run_context,
+            test_filter,
+            &mut out,
+            renderer.as_ref(),
+        )
     }
 
     fn test_set_outcomes(
@@ -235,7 +240,7 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
             catalog,
             test_filter,
             &mut out,
-            &renderer,
+            renderer.as_ref(),
         )
     }
 }
