@@ -1,28 +1,21 @@
 use std::{
-    fs::File,
-    io::{BufReader, Read, Stdout},
+    io::Stdout,
     path::{Path, PathBuf},
 };
 
-use xee_name::Namespaces;
-use xee_xpath::{
-    context::{DynamicContext, StaticContext},
-    sequence::Item,
-    Queries, Query,
-};
-use xot::Xot;
+use xee_xpath::{Queries, Query};
 
 use crate::{
     catalog::Catalog,
     dependency::{Dependencies, Dependency},
-    environment::{Environment, SharedEnvironments, XPathEnvironmentSpec},
+    environment::{Environment, SharedEnvironments},
     error::Result,
     filter::TestFilter,
-    load::{convert_string, ContextLoadable, XPATH_NS},
+    load::{convert_string, ContextLoadable},
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
-    testcase::{Runnable, TestCase, XPathTestCase},
+    testcase::Runnable,
 };
 
 #[derive(Debug)]
