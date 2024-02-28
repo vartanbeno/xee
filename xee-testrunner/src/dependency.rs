@@ -1,5 +1,4 @@
 use xee_xpath::{Queries, Query};
-use xot::Xot;
 
 use crate::{
     error::Result,
@@ -195,9 +194,11 @@ impl Loadable for Dependencies {
 
 #[cfg(test)]
 mod tests {
-    use crate::load::XPATH_NS;
-
     use super::*;
+
+    use xot::Xot;
+
+    use crate::load::XPATH_NS;
 
     #[test]
     fn test_load_dependencies() {
