@@ -13,7 +13,8 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::load::{convert_boolean, convert_string};
+use crate::error;
+use crate::load::{convert_boolean, convert_string, Loadable};
 
 use super::outcome::{TestOutcome, UnexpectedError};
 
@@ -740,8 +741,10 @@ impl TestCaseResult {
             }
         }
     }
+}
 
-    pub(crate) fn query(mut queries: Queries) -> Result<(Queries, impl xee_xpath::Query<Self>)> {
+impl Loadable for TestCaseResult {
+    fn query(mut queries: Queries) -> error::Result<(Queries, impl xee_xpath::Query<Self>)> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
             Ok(TestCaseResult::AssertError(AssertError::new(
@@ -810,9 +813,8 @@ impl TestCaseResult {
         // `query.option()` to detect entries (like "error", "assert-true", etc)
         // doesn't work for "any-of", as it contains a list of entries.
         let local_name_query = queries.one("local-name()", convert_string)?;
-        let result_query = queries.one(
-            "result/*",
-            move |session: &mut Session, item: &sequence::Item| {
+        let result_query =
+            queries.one("*", move |session: &mut Session, item: &sequence::Item| {
                 let f = |session: &mut Session,
                          item: &sequence::Item,
                          recurse: &Recurse<TestCaseResult>| {
@@ -859,12 +861,10 @@ impl TestCaseResult {
                 };
                 let recurse = Recurse::new(&f);
                 recurse.execute(session, item)
-            },
-        )?;
+            })?;
         Ok((queries, result_query))
     }
 }
-
 #[derive(Debug, PartialEq)]
 pub enum AssertCountFailure {
     WrongCount(usize),
@@ -1042,4 +1042,54 @@ pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<
         }
     }
     Ok(format!("<sequence>{}</sequence>", xmls.join("")))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::*;
+
+    use crate::load::XPATH_NS;
+
+    #[test]
+    fn test_test_case_result() {
+        let xml = format!(
+            r#"<result xmlns="{}"><assert-eq>0</assert-eq></result>"#,
+            XPATH_NS
+        );
+        let mut xot = Xot::new();
+        let test_case_result = TestCaseResult::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+        assert_eq!(
+            test_case_result,
+            TestCaseResult::AssertEq(AssertEq::new("0".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_test_case_result2() {
+        let xml = format!(
+            r#"
+<result xmlns="{}">
+  <any-of>
+    <assert>$result/x = ('http://www.example.com', 'http://www.example.com/')</assert>
+    <assert>$result/x = 'http://www.example.com/base'</assert>
+  </any-of>
+</result>"#,
+            XPATH_NS
+        );
+        let mut xot = Xot::new();
+        let test_case_result = TestCaseResult::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+        assert_eq!(
+            test_case_result,
+            TestCaseResult::AnyOf(AssertAnyOf::new(vec![
+                TestCaseResult::Assert(Assert::new(
+                    "$result/x = ('http://www.example.com', 'http://www.example.com/')".to_string()
+                )),
+                TestCaseResult::Assert(Assert::new(
+                    "$result/x = 'http://www.example.com/base'".to_string()
+                )),
+            ]))
+        );
+    }
 }
