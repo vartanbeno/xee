@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use xee_name::Namespaces;
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
@@ -21,16 +23,20 @@ pub(crate) fn convert_boolean(
     Ok(convert_string(session, item)? == "true")
 }
 
-pub(crate) trait Loadable: Sized {
-    fn query(queries: Queries) -> Result<(Queries, impl Query<Self>)>;
+pub(crate) trait ContextLoadable<C: ?Sized>: Sized {
+    fn query_with_context<'a>(
+        queries: Queries<'a>,
+        context: &'a C,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        Self: 'a;
 
-    fn load_from_xml(xot: &mut Xot, xml: &str, ns: &str) -> Result<Self> {
+    fn load_from_xml_with_context(xot: &mut Xot, xml: &str, ns: &str, context: &C) -> Result<Self> {
         let root = xot.parse(xml)?;
         let document_element = xot.document_element(root)?;
-        Self::load(xot, document_element, ns)
+        Self::load_with_context(xot, document_element, ns, context)
     }
-
-    fn load(xot: &mut Xot, node: xot::Node, ns: &str) -> Result<Self> {
+    fn load_with_context(xot: &mut Xot, node: xot::Node, ns: &str, context: &C) -> Result<Self> {
         let namespaces = Namespaces::new(
             Namespaces::default_namespaces(),
             ns,
@@ -40,7 +46,7 @@ pub(crate) trait Loadable: Sized {
         let queries = Queries::new(&static_context);
         let r = {
             let dynamic_context = DynamicContext::empty(&static_context);
-            let (queries, query) = Self::query(queries)?;
+            let (queries, query) = Self::query_with_context(queries, context)?;
 
             let mut session = queries.session(&dynamic_context, xot);
             // the query has a lifetime for the dynamic context, and a lifetime
@@ -48,5 +54,29 @@ pub(crate) trait Loadable: Sized {
             query.execute(&mut session, &Item::from(node))?
         };
         Ok(r)
+    }
+}
+
+pub(crate) trait Loadable: Sized {
+    fn query(queries: Queries) -> Result<(Queries, impl Query<Self>)>;
+
+    fn load_from_xml(xot: &mut Xot, xml: &str, ns: &str) -> Result<Self> {
+        Self::load_from_xml_with_context(xot, xml, ns, &())
+    }
+
+    fn load(xot: &mut Xot, node: xot::Node, ns: &str) -> Result<Self> {
+        Self::load_with_context(xot, node, ns, &())
+    }
+}
+
+impl<T: Loadable> ContextLoadable<()> for T {
+    fn query_with_context<'a>(
+        queries: Queries<'a>,
+        _context: &'a (),
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        T: 'a,
+    {
+        Self::query(queries)
     }
 }

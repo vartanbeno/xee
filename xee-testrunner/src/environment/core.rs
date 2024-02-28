@@ -11,7 +11,11 @@ use xee_xpath::{
 };
 use xot::Xot;
 
-use crate::{error::Result, load::convert_string, metadata::Metadata};
+use crate::{
+    error::Result,
+    load::{convert_string, ContextLoadable, Loadable},
+    metadata::Metadata,
+};
 
 use super::{
     collation::Collation,
@@ -131,11 +135,16 @@ impl EnvironmentSpec {
         }
         Ok(variables)
     }
+}
 
-    pub(crate) fn query<'a>(
-        path: &'a Path,
+impl ContextLoadable<Path> for EnvironmentSpec {
+    fn query_with_context<'a>(
         queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
+        path: &'a Path,
+    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    where
+        EnvironmentSpec: 'a,
+    {
         let (mut queries, sources_query) = Source::query(queries)?;
 
         let name_query = queries.one("@name/string()", convert_string)?;

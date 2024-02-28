@@ -7,7 +7,10 @@ use super::{
     core::{Environment, EnvironmentSpec},
     decimal_format::DecimalFormat,
 };
-use crate::{error::Result, load::convert_string};
+use crate::{
+    error::Result,
+    load::{convert_string, ContextLoadable},
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct XPathEnvironmentSpec {
@@ -64,7 +67,8 @@ impl XPathEnvironmentSpec {
         path: &'a Path,
         queries: Queries<'a>,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-        let (mut queries, environment_spec_query) = EnvironmentSpec::query(path, queries)?;
+        let (mut queries, environment_spec_query) =
+            EnvironmentSpec::query_with_context(queries, path)?;
         let prefix_query = queries.one("@prefix/string()", convert_string)?;
         let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
 
