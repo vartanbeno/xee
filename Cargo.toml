@@ -10,7 +10,6 @@ members = [
   "xee-xpath-macros",
   "xee-xpath",
   "xee-xslt-ast",
-  "xee-qt",
   "xee-testrunner",
   "xee-xslt",
 ]
