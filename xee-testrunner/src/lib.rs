@@ -1,4 +1,5 @@
 mod catalog;
+mod cli;
 mod dependency;
 mod environment;
 mod error;
@@ -7,6 +8,7 @@ mod hashmap;
 mod load;
 mod metadata;
 mod outcomes;
+mod paths;
 mod renderer;
 mod runcontext;
 mod testcase;
