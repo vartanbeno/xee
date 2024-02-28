@@ -11,7 +11,7 @@ use crate::error::Result;
 use crate::load::{convert_string, Loadable};
 use crate::metadata::Metadata;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Source {
     pub(crate) metadata: Metadata,
     // note that in a collection source the role can be ommitted, so
@@ -22,14 +22,14 @@ pub(crate) struct Source {
     pub(crate) validation: Option<Validation>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Validation {
     Strict,
     Lax,
     Skip,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SourceRole {
     Context,
     Var(String),

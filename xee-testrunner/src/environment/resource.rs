@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::metadata::Metadata;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Resource {
     metadata: Metadata,
     file: Option<PathBuf>,

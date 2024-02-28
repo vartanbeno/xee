@@ -1,6 +1,6 @@
 use super::{resource::Resource, source::Source};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Collection {
     uri: Option<String>,
     query: Vec<Query>,
@@ -9,7 +9,7 @@ pub(crate) struct Collection {
     resource: Vec<Resource>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Query {
     expression: String,
 }

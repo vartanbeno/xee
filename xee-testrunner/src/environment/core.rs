@@ -53,7 +53,7 @@ impl Display for EnvironmentRef {
 }
 
 // environment information shared by XPath and XSLT
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct EnvironmentSpec {
     pub(crate) base_dir: PathBuf,
 
@@ -72,10 +72,10 @@ pub(crate) struct EnvironmentSpec {
 }
 
 // Not supported yet: schema support not implemented in Xee
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Schema {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Param {
     pub(crate) name: Name,
     pub(crate) select: Option<String>,
@@ -196,5 +196,80 @@ impl ContextLoadable<Path> for EnvironmentSpec {
         })?;
 
         Ok((queries, environment_query))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::load::XPATH_NS;
+
+    use super::*;
+
+    #[test]
+    fn test_load_environment_spec() {
+        let xml = format!(
+            r#"
+            <environment xmlns="{}">
+                <source file="a.xml" role="."/>
+                <source file="b.xml" role="$var"/>
+                <param name="p1" select="'1'"/>
+                <param name="p2" select="'2'"/>
+            </environment>"#,
+            XPATH_NS
+        );
+
+        let mut xot = Xot::new();
+        let path = Path::new("bar/foo");
+        let environment_spec =
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &xml, XPATH_NS, path).unwrap();
+        assert_eq!(
+            environment_spec,
+            EnvironmentSpec {
+                base_dir: PathBuf::from("bar"),
+                sources: vec![
+                    Source {
+                        file: PathBuf::from("a.xml"),
+                        role: SourceRole::Context,
+                        metadata: Metadata {
+                            description: None,
+                            created: None,
+                            modified: vec![],
+                        },
+                        uri: None,
+                        validation: None,
+                    },
+                    Source {
+                        file: PathBuf::from("b.xml"),
+                        role: SourceRole::Var("$var".to_string()),
+                        metadata: Metadata {
+                            description: None,
+                            created: None,
+                            modified: vec![],
+                        },
+                        uri: None,
+                        validation: None,
+                    },
+                ],
+                params: vec![
+                    Param {
+                        name: Name::name("p1"),
+                        select: Some("'1'".to_string()),
+                        as_: None,
+                        static_: false,
+                        declared: false,
+                        source: None,
+                    },
+                    Param {
+                        name: Name::name("p2"),
+                        select: Some("'2'".to_string()),
+                        as_: None,
+                        static_: false,
+                        declared: false,
+                        source: None,
+                    },
+                ],
+                ..Default::default()
+            }
+        )
     }
 }
