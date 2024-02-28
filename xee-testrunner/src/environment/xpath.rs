@@ -64,8 +64,8 @@ impl XPathEnvironmentSpec {
     }
 
     pub(crate) fn query<'a>(
-        path: &'a Path,
         queries: Queries<'a>,
+        path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
         let (mut queries, environment_spec_query) =
             EnvironmentSpec::query_with_context(queries, path)?;

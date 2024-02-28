@@ -104,7 +104,7 @@ impl<E: Environment> TestCase<E> {
         let (mut queries, metadata_query) = Metadata::query(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
-        let (mut queries, environment_query) = XPathEnvironmentSpec::query(path, queries)?;
+        let (mut queries, environment_query) = XPathEnvironmentSpec::query(queries, path)?;
         let local_environment_query = queries.many("environment", move |session, item| {
             let ref_ = ref_query.execute(session, item)?;
             if let Some(ref_) = ref_ {
