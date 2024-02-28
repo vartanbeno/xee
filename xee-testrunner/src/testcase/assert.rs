@@ -819,43 +819,34 @@ impl Loadable for TestCaseResult {
                          item: &sequence::Item,
                          recurse: &Recurse<TestCaseResult>| {
                     let local_name = local_name_query.execute(session, item)?;
-                    let r = if local_name == "any-of" {
-                        let contents = any_all_recurse.execute(session, item, recurse)?;
-                        TestCaseResult::AnyOf(AssertAnyOf::new(contents))
-                    } else if local_name == "all-of" {
-                        let contents = any_all_recurse.execute(session, item, recurse)?;
-                        TestCaseResult::AllOf(AssertAllOf::new(contents))
-                    } else if local_name == "not" {
-                        let contents = not_recurse.execute(session, item, recurse)?;
-                        TestCaseResult::Not(AssertNot::new(contents))
-                    } else if local_name == "error" {
-                        error_query.execute(session, item)?
-                    } else if local_name == "assert-true" {
-                        TestCaseResult::AssertTrue(AssertTrue::new())
-                    } else if local_name == "assert-false" {
-                        TestCaseResult::AssertFalse(AssertFalse::new())
-                    } else if local_name == "assert-count" {
-                        assert_count_query.execute(session, item)?
-                    } else if local_name == "assert-xml" {
-                        assert_xml_query.execute(session, item)?
-                    } else if local_name == "assert-eq" {
-                        assert_eq_query.execute(session, item)?
-                    } else if local_name == "assert-deep-eq" {
-                        assert_deep_eq_query.execute(session, item)?
-                    } else if local_name == "assert-string-value" {
-                        assert_string_value_query.execute(session, item)?
-                    } else if local_name == "assert" {
-                        assert_query.execute(session, item)?
-                    } else if local_name == "assert-permutation" {
-                        assert_permutation_query.execute(session, item)?
-                    } else if local_name == "assert-empty" {
-                        TestCaseResult::AssertEmpty(AssertEmpty::new())
-                    } else if local_name == "assert-type" {
-                        assert_type_query.execute(session, item)?
-                    } else {
-                        TestCaseResult::Unsupported
-                        // qt::TestCaseResult::AssertFalse
-                        // panic!("unknown assertion: {}", local_name);
+                    let r = match local_name.as_ref() {
+                        "any-of" => {
+                            let contents = any_all_recurse.execute(session, item, recurse)?;
+                            TestCaseResult::AnyOf(AssertAnyOf::new(contents))
+                        }
+                        "all-of" => {
+                            let contents = any_all_recurse.execute(session, item, recurse)?;
+                            TestCaseResult::AllOf(AssertAllOf::new(contents))
+                        }
+                        "not" => {
+                            let contents = not_recurse.execute(session, item, recurse)?;
+                            TestCaseResult::Not(AssertNot::new(contents))
+                        }
+                        "error" => error_query.execute(session, item)?,
+                        "assert-true" => TestCaseResult::AssertTrue(AssertTrue::new()),
+                        "assert-false" => TestCaseResult::AssertFalse(AssertFalse::new()),
+                        "assert-count" => assert_count_query.execute(session, item)?,
+                        "assert-xml" => assert_xml_query.execute(session, item)?,
+                        "assert-eq" => assert_eq_query.execute(session, item)?,
+                        "assert-deep-eq" => assert_deep_eq_query.execute(session, item)?,
+                        "assert-string-value" => {
+                            assert_string_value_query.execute(session, item)?
+                        }
+                        "assert" => assert_query.execute(session, item)?,
+                        "assert-permutation" => assert_permutation_query.execute(session, item)?,
+                        "assert-empty" => TestCaseResult::AssertEmpty(AssertEmpty::new()),
+                        "assert-type" => assert_type_query.execute(session, item)?,
+                        _ => TestCaseResult::Unsupported,
                     };
                     Ok(r)
                 };
