@@ -6,20 +6,23 @@ use xot::Xot;
 
 use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
-use crate::environment::XPathEnvironmentSpec;
+use crate::environment::{Environment, XPathEnvironmentSpec};
 use crate::error::Result;
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter};
 use crate::load::{PathLoadable, XPATH_NS};
 use crate::outcomes::Outcomes;
-use crate::paths::paths;
+use crate::paths::{paths, PathInfo};
 use crate::renderer::{CharacterRenderer, VerboseRenderer};
 use crate::runcontext::RunContext;
-use crate::testcase::XPathTestCase;
+use crate::testcase::{Runnable, XPathTestCase};
 use crate::testset::TestSet;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Verbose mode
+    #[clap(short, long)]
+    verbose: bool,
     #[command(subcommand)]
     command: Commands,
 }
@@ -33,9 +36,6 @@ enum Commands {
     Initialize {
         /// A path to a qttests directory or individual test file
         path: PathBuf,
-        /// Verbose mode
-        #[clap(short, long)]
-        verbose: bool,
     },
     /// Check with filters engaged.
     ///
@@ -47,9 +47,6 @@ enum Commands {
         /// If individual test file, it runs only the tests in that file,
         /// otherwise it runs the tests in the `catalog.xml`.
         path: PathBuf,
-        /// Verbose mode
-        #[clap(short, long)]
-        verbose: bool,
     },
     /// Update the filters.
     ///
@@ -62,9 +59,6 @@ enum Commands {
         /// If individual test file, it updates only the tests in that file,
         /// otherwise it updates tests in the `catalog.xml`.
         path: PathBuf,
-        /// Verbose mode
-        #[clap(short, long)]
-        verbose: bool,
     },
     /// Run all tests.
     ///
@@ -74,49 +68,56 @@ enum Commands {
         path: PathBuf,
         /// Name filter, only test-cases that contain this name are found.
         name_filter: Option<String>,
-        /// Verbose mode
-        #[clap(short, long)]
-        verbose: bool,
     },
+}
+
+impl Commands {
+    fn path(&self) -> &Path {
+        match self {
+            Commands::Initialize { path } => path,
+            Commands::Check { path } => path,
+            Commands::Update { path } => path,
+            Commands::All { path, .. } => path,
+        }
+    }
 }
 
 pub fn cli() -> Result<()> {
     let cli = Cli::parse();
 
-    todo!();
-    // match cli.command {
-    //     Commands::Initialize { path, verbose } => initialize(&path, verbose),
-    //     Commands::Check { path, verbose } => check(&path, verbose),
-    //     Commands::Update { path, verbose } => update(&path, verbose),
-    //     Commands::All {
-    //         path,
-    //         verbose,
-    //         name_filter,
-    //     } => all(&path, verbose, name_filter),
-    // }
-}
-
-fn check(path: &Path, verbose: bool) -> Result<()> {
+    let path = cli.command.path();
     let path_info = paths(path)?;
-    let xot = Xot::new();
 
-    let mut run_context = RunContext::new(
+    let xot = Xot::new();
+    let run_context = RunContext::new(
         xot,
         Documents::new(),
         xpath_known_dependencies(),
         XPATH_NS.to_string(),
-        verbose,
+        cli.verbose,
     );
 
+    match cli.command {
+        // Commands::Initialize { path } => initialize(&path, run_context),
+        Commands::Check { .. } => {
+            check::<XPathEnvironmentSpec, XPathTestCase>(run_context, &path_info)
+        }
+        // Commands::Update { path } => update(&path, verbose),
+        // Commands::All { path, name_filter } => all(&path, verbose, name_filter),
+        _ => todo!(),
+    }
+}
+
+fn check<E: Environment, R: Runnable<E>>(
+    mut run_context: RunContext,
+    path_info: &PathInfo,
+) -> Result<()> {
     if !path_info.filter_path.exists() {
         // we cannot check if we don't have a filter file yet
         println!("Cannot check without filter file");
         return Ok(());
     }
-    let catalog = Catalog::<XPathEnvironmentSpec, XPathTestCase>::load_from_file(
-        &mut run_context,
-        &path_info.catalog_path,
-    )?;
+    let catalog = Catalog::<E, R>::load_from_file(&mut run_context, &path_info.catalog_path)?;
 
     let test_filter = ExcludedNamesFilter::load_from_file(&path_info.filter_path)?;
     let mut out = std::io::stdout();
@@ -126,10 +127,7 @@ fn check(path: &Path, verbose: bool) -> Result<()> {
         let outcomes = catalog.run(&mut run_context, &test_filter, &mut out, &renderer)?;
         println!("{}", outcomes.display());
     } else {
-        let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_file(
-            &mut run_context,
-            &path_info.relative_path,
-        )?;
+        let test_set = TestSet::load_from_file(&mut run_context, &path_info.relative_path)?;
         let outcomes = test_set.run(
             &mut run_context,
             &catalog,
