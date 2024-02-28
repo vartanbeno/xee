@@ -4,6 +4,7 @@ use xee_xpath::{Queries, Query};
 use xot::Xot;
 
 use crate::hashmap::FxIndexMap;
+use crate::load::ContextLoadable;
 use crate::{error::Result, load::convert_string};
 
 use super::core::{Environment, EnvironmentRef};
@@ -27,8 +28,10 @@ impl<E: Environment> SharedEnvironments<E> {
     pub(crate) fn get(&self, environment_ref: &EnvironmentRef) -> Option<&E> {
         self.environments.get(&environment_ref.ref_)
     }
+}
 
-    pub(crate) fn xpath_query<'a>(
+impl<E: Environment> ContextLoadable<Path> for SharedEnvironments<E> {
+    fn query_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<SharedEnvironments<E>> + 'a)>

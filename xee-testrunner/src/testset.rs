@@ -18,7 +18,7 @@ use crate::{
     environment::{Environment, SharedEnvironments, XPathEnvironmentSpec},
     error::Result,
     filter::TestFilter,
-    load::{convert_string, XPATH_NS},
+    load::{convert_string, ContextLoadable, XPATH_NS},
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
@@ -93,7 +93,8 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
         let name_query = queries.one("@name/string()", convert_string)?;
         let descriptions_query = queries.many("description/string()", convert_string)?;
 
-        let (queries, shared_environments_query) = SharedEnvironments::xpath_query(queries, path)?;
+        let (queries, shared_environments_query) =
+            SharedEnvironments::query_with_context(queries, path)?;
         let (queries, dependency_query) = Dependency::query(queries)?;
         let (mut queries, test_case_query) = R::query(queries, path)?;
         let test_cases_query = queries.many("test-case", move |session, item| {
