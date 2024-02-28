@@ -13,13 +13,13 @@ pub(crate) struct DependencySpec {
     pub(crate) value: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Dependency {
     pub(crate) spec: DependencySpec,
     pub(crate) satisfied: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Dependencies {
     pub(crate) dependencies: Vec<Dependency>,
 }
@@ -190,5 +190,55 @@ impl Loadable for Dependencies {
                 dependencies: dependencies.into_iter().flatten().collect(),
             }),
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::load::XPATH_NS;
+
+    use super::*;
+
+    #[test]
+    fn test_load_dependencies() {
+        let xml = format!(
+            r#"
+<doc xmlns="{}">
+  <dependency type="feature" value="non_unicode_codepoint_collation"/>
+  <dependency type="spec" value="XP31 XQ31"/>
+</doc>"#,
+            XPATH_NS
+        );
+        let mut xot = Xot::new();
+        let dependencies = Dependencies::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+
+        assert_eq!(
+            dependencies,
+            Dependencies {
+                dependencies: vec![
+                    Dependency {
+                        spec: DependencySpec {
+                            type_: "feature".to_string(),
+                            value: "non_unicode_codepoint_collation".to_string(),
+                        },
+                        satisfied: true,
+                    },
+                    Dependency {
+                        spec: DependencySpec {
+                            type_: "spec".to_string(),
+                            value: "XP31".to_string(),
+                        },
+                        satisfied: true,
+                    },
+                    Dependency {
+                        spec: DependencySpec {
+                            type_: "spec".to_string(),
+                            value: "XQ31".to_string(),
+                        },
+                        satisfied: true,
+                    },
+                ],
+            }
+        );
     }
 }
