@@ -7,8 +7,12 @@ use xee_xpath::{
 };
 
 use crate::{
-    catalog::Catalog, environment::XPathEnvironmentSpec, error::Result, load::convert_string,
-    runcontext::RunContext, testset::TestSet,
+    catalog::Catalog,
+    environment::XPathEnvironmentSpec,
+    error::Result,
+    load::{convert_string, ContextLoadable},
+    runcontext::RunContext,
+    testset::TestSet,
 };
 
 use super::{
@@ -109,7 +113,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         XPathEnvironmentSpec: 'a,
     {
         let test_query = queries.one("test/string()", convert_string)?;
-        let (queries, test_case_query) = TestCase::xpath_query(queries, path)?;
+        let (queries, test_case_query) = TestCase::query_with_context(queries, path)?;
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,

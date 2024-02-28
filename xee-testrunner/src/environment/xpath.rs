@@ -12,7 +12,7 @@ use crate::{
     load::{convert_string, ContextLoadable},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct XPathEnvironmentSpec {
     environment_spec: EnvironmentSpec,
 
@@ -23,13 +23,13 @@ pub(crate) struct XPathEnvironmentSpec {
 }
 
 // Only is used by some XPath tests, not by XSLT
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ContextItem {
     pub(crate) select: String,
 }
 
 // only in XPath, not in use by XSLT
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Namespace {
     pub(crate) prefix: String,
     pub(crate) uri: String,
@@ -40,7 +40,7 @@ pub(crate) struct Namespace {
 // pub(crate) struct FunctionLibrary {}
 
 // Only in use by the XPath test suite
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct StaticBaseUri {
     uri: Option<String>,
 }

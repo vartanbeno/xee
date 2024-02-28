@@ -10,7 +10,7 @@ use crate::{
         Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment, XPathEnvironmentSpec,
     },
     error::Result,
-    load::{convert_string, Loadable},
+    load::{convert_string, ContextLoadable, Loadable},
     metadata::Metadata,
     runcontext::RunContext,
     testset::TestSet,
@@ -36,7 +36,7 @@ pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
         E: 'a;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct TestCase<E: Environment> {
     pub(crate) name: String,
     pub(crate) metadata: Metadata,
@@ -102,8 +102,10 @@ impl<E: Environment> TestCase<E> {
         }
         Ok(variables)
     }
+}
 
-    pub(crate) fn xpath_query<'a>(
+impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
+    fn query_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
@@ -128,7 +130,6 @@ impl<E: Environment> TestCase<E> {
 
         let (queries, result_query) = TestCaseResult::query(queries)?;
         let (mut queries, dependency_query) = Dependency::query(queries)?;
-        let test_query = queries.one("test/string()", convert_string)?;
         let test_case_query = queries.one(".", move |session, item| {
             let test_case = TestCase {
                 name: name_query.execute(session, item)?,
@@ -143,10 +144,6 @@ impl<E: Environment> TestCase<E> {
                 ),
                 result: result_query.execute(session, item)?,
             };
-            // let xpath_test_case = XPathTestCase {
-            //     test_case,
-            //     test: test_query.execute(session, item)?,
-            // };
             Ok(test_case)
         })?;
 
@@ -158,67 +155,51 @@ impl<E: Environment> TestCase<E> {
 mod tests {
     use std::path::PathBuf;
 
-    use xee_xpath::xml::Documents;
     use xot::Xot;
 
-    use crate::{dependency::KnownDependencies, environment::EnvironmentSpec};
+    use crate::{load::XPATH_NS, metadata::Attribution, testcase::assert::AssertTrue};
 
     use super::*;
 
-    // #[test]
-    // fn test_simple_runnable() {
-    //     struct FakeEnvironment {
-    //         environment_spec: EnvironmentSpec,
-    //     }
+    #[test]
+    fn test_load_test_case() {
+        let xml = format!(
+            r#"
+<test-case xmlns="{}" name="foo">
+  <description>A test case</description>
+  <created by="Bar Quxson" on="2024-01-01"/>
+  <test>1</test>
+  <result>
+    <assert-true/>
+  </result>
+</test-case>"#,
+            XPATH_NS
+        );
 
-    //     impl Environment for FakeEnvironment {
-    //         fn empty() -> Self {
-    //             Self {
-    //                 environment_spec: EnvironmentSpec::empty(),
-    //             }
-    //         }
+        let mut xot = Xot::new();
 
-    //         fn environment_spec(&self) -> &EnvironmentSpec {
-    //             &self.environment_spec
-    //         }
-    //     }
-    //     // make a simple fake runnable
-    //     struct FakeRunnable {
-    //         test_case: TestCase<FakeEnvironment>,
-    //     }
+        let path = PathBuf::from("bar/foo");
 
-    //     impl Runnable<FakeEnvironment> for FakeRunnable {
-    //         fn test_case(&self) -> &TestCase<FakeEnvironment> {
-    //             &self.test_case
-    //         }
-
-    //         fn run(
-    //             &self,
-    //             _run_context: &mut RunContext,
-    //             _catalog: &Catalog<FakeEnvironment, Self>,
-    //             _test_set: &TestSet<FakeEnvironment, Self>,
-    //         ) -> TestOutcome {
-    //             TestOutcome::Passed
-    //         }
-    //     }
-
-    //     let runnable = FakeRunnable {
-    //         test_case: TestCase {
-    //             name: "test".to_string(),
-    //             metadata: Metadata {
-    //                 description: None,
-    //                 created: None,
-    //                 modified: vec![],
-    //             },
-    //             environments: vec![],
-    //             dependencies: Dependencies::empty(),
-
-    //         },
-    //     };
-
-    //     let xot = Xot::new();
-    //     let documents = Documents::new();
-    //     let known_dependencies = KnownDependencies::empty();
-    //     let run_context = RunContext::new(xot, documents, known_dependencies);
-    // }
+        let test_case = TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(
+            &mut xot, &xml, XPATH_NS, &path,
+        )
+        .unwrap();
+        assert_eq!(
+            test_case,
+            TestCase {
+                name: "foo".to_string(),
+                metadata: Metadata {
+                    description: Some("A test case".to_string()),
+                    created: Some(Attribution {
+                        by: "Bar Quxson".to_string(),
+                        on: "2024-01-01".to_string(),
+                    }),
+                    modified: vec![],
+                },
+                environments: vec![],
+                dependencies: Dependencies::empty(),
+                result: TestCaseResult::AssertTrue(AssertTrue),
+            }
+        )
+    }
 }

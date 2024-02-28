@@ -40,14 +40,14 @@ pub(crate) trait Environment: Sized {
 }
 
 // In a test case we can include an environment directly, or refer to an environment
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum TestCaseEnvironment<E: Environment> {
     Local(Box<E>),
     Ref(EnvironmentRef),
 }
 
 // a way to reference to other environments
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EnvironmentRef {
     pub(crate) ref_: String,
 }

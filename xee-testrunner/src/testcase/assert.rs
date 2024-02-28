@@ -41,7 +41,7 @@ pub(crate) trait Assertable {
     ) -> TestOutcome;
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertAnyOf(Vec<TestCaseResult>);
 
 impl AssertAnyOf {
@@ -98,7 +98,7 @@ impl Assertable for AssertAnyOf {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct AssertAllOf(Vec<TestCaseResult>);
 
 impl AssertAllOf {
@@ -134,7 +134,7 @@ impl Assertable for AssertAllOf {
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Eq)]
 pub struct AssertNot(Box<TestCaseResult>);
 
 impl AssertNot {
@@ -176,7 +176,7 @@ impl fmt::Debug for AssertNot {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Assert(XPathExpr);
 
 impl Assert {
@@ -210,7 +210,7 @@ impl Assertable for Assert {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertEq(XPathExpr);
 
 impl AssertEq {
@@ -250,7 +250,7 @@ impl Assertable for AssertEq {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertDeepEq(XPathExpr);
 
 impl AssertDeepEq {
@@ -289,7 +289,7 @@ impl Assertable for AssertDeepEq {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertCount(usize);
 
 impl AssertCount {
@@ -317,7 +317,7 @@ impl Assertable for AssertCount {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertPermutation(XPathExpr);
 
 impl AssertPermutation {
@@ -375,7 +375,7 @@ impl Assertable for AssertPermutation {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertXml(String);
 
 impl AssertXml {
@@ -420,7 +420,7 @@ impl Assertable for AssertXml {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertEmpty;
 
 impl AssertEmpty {
@@ -444,13 +444,13 @@ impl Assertable for AssertEmpty {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct AssertSerializationMatches;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct AssertSerializationError(String);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertType(String);
 
 impl AssertType {
@@ -484,7 +484,7 @@ impl Assertable for AssertType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertTrue;
 
 impl AssertTrue {
@@ -514,7 +514,7 @@ impl Assertable for AssertTrue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertFalse;
 
 impl AssertFalse {
@@ -544,7 +544,7 @@ impl Assertable for AssertFalse {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertStringValue(String, bool);
 
 impl AssertStringValue {
@@ -595,7 +595,7 @@ impl Assertable for AssertStringValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssertError(String);
 
 impl AssertError {
@@ -638,7 +638,7 @@ impl Assertable for AssertError {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TestCaseResult {
     AnyOf(AssertAnyOf),
     AllOf(AssertAllOf),
