@@ -213,7 +213,7 @@ impl ContextLoadable<Path> for EnvironmentSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::load::XPATH_NS;
+    use crate::{environment::source::SourceContent, load::XPATH_NS};
 
     use super::*;
 
@@ -240,7 +240,7 @@ mod tests {
                 base_dir: PathBuf::from("bar"),
                 sources: vec![
                     Source {
-                        file: PathBuf::from("a.xml"),
+                        content: SourceContent::Path(PathBuf::from("a.xml")),
                         role: SourceRole::Context,
                         metadata: Metadata {
                             description: None,
@@ -251,7 +251,7 @@ mod tests {
                         validation: None,
                     },
                     Source {
-                        file: PathBuf::from("b.xml"),
+                        content: SourceContent::Path(PathBuf::from("b.xml")),
                         role: SourceRole::Var("$var".to_string()),
                         metadata: Metadata {
                             description: None,
@@ -280,6 +280,40 @@ mod tests {
                         source: None,
                     },
                 ],
+                ..Default::default()
+            }
+        )
+    }
+
+    #[test]
+    fn test_load_environment_spec_with_content() {
+        let xml = format!(
+            r#"
+            <environment xmlns="{}">
+                <source role="."><content>Foo</content></source>
+            </environment>"#,
+            XPATH_NS
+        );
+
+        let mut xot = Xot::new();
+        let path = Path::new("bar/foo");
+        let environment_spec =
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &xml, XPATH_NS, path).unwrap();
+        assert_eq!(
+            environment_spec,
+            EnvironmentSpec {
+                base_dir: PathBuf::from("bar"),
+                sources: vec![Source {
+                    content: SourceContent::String("Foo".to_string()),
+                    role: SourceRole::Context,
+                    metadata: Metadata {
+                        description: None,
+                        created: None,
+                        modified: vec![],
+                    },
+                    uri: None,
+                    validation: None,
+                },],
                 ..Default::default()
             }
         )

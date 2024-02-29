@@ -69,6 +69,14 @@ impl Documents {
     pub fn get(&self, uri: &Uri) -> Option<&Document> {
         self.documents.get(uri)
     }
+
+    pub fn len(&self) -> usize {
+        self.documents.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty()
+    }
 }
 
 impl Default for Documents {

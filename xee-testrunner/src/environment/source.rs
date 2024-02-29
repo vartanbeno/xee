@@ -17,9 +17,15 @@ pub(crate) struct Source {
     // note that in a collection source the role can be ommitted, so
     // we may need to define this differently
     pub(crate) role: SourceRole,
-    pub(crate) file: PathBuf,
+    pub(crate) content: SourceContent,
     pub(crate) uri: Option<String>,
     pub(crate) validation: Option<Validation>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum SourceContent {
+    Path(PathBuf),
+    String(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,40 +49,61 @@ impl Source {
         base_dir: &Path,
         documents: &mut Documents,
     ) -> Result<xot::Node> {
-        let full_path = base_dir.join(&self.file);
-        // construct a Uri
-        // TODO: this is not really a proper URI but
-        // what matters is that it's unique here
-        let uri = Uri::new(&full_path.to_string_lossy());
+        match &self.content {
+            SourceContent::Path(path) => {
+                let full_path = base_dir.join(path);
+                // construct a Uri
+                // TODO: this is not really a proper URI but
+                // what matters is that it's unique here
+                let uri = Uri::new(&full_path.to_string_lossy());
 
-        // try to get the cached version of the document
-        let document = documents.get(&uri);
-        if let Some(document) = document {
-            let root = document.root();
-            return Ok(root);
+                // try to get the cached version of the document
+                let document = documents.get(&uri);
+                if let Some(document) = document {
+                    let root = document.root();
+                    return Ok(root);
+                }
+
+                // could not get cached version, so load up document
+                let xml_file = File::open(&full_path)?;
+                let mut buf_reader = BufReader::new(xml_file);
+                let mut xml = String::new();
+                buf_reader.read_to_string(&mut xml)?;
+
+                documents.add(xot, &uri, &xml)?;
+                // now obtain what we just added
+                Ok(documents.get(&uri).unwrap().root())
+            }
+            SourceContent::String(value) => {
+                // create a new unique uri
+                let uri = Uri::new(&format!("string-source-{}", documents.len()));
+                // we don't try to get a cached version of the document, as
+                // that would be different each time. we just add it to documents
+                // and return it
+                documents.add(xot, &uri, value)?;
+                Ok(documents.get(&uri).unwrap().root())
+            }
         }
-
-        // could not get cached version, so load up document
-        let xml_file = File::open(&full_path)?;
-        let mut buf_reader = BufReader::new(xml_file);
-        let mut xml = String::new();
-        buf_reader.read_to_string(&mut xml)?;
-
-        documents.add(xot, &uri, &xml)?;
-        // now obtain what we just added
-        Ok(documents.get(&uri).unwrap().root())
     }
 
     pub(crate) fn query(
         mut queries: Queries,
     ) -> Result<(Queries, impl Query<Vec<Vec<Self>>> + '_)> {
-        let file_query = queries.one("@file/string()", convert_string)?;
+        let file_query = queries.option("@file/string()", convert_string)?;
+        let content_query = queries.one("content/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;
         let uri_query = queries.option("@uri/string()", convert_string)?;
         let (mut queries, metadata_query) = Metadata::query(queries)?;
 
         let sources_query = queries.many("source", move |session, item| {
-            let file = PathBuf::from(file_query.execute(session, item)?);
+            let content = if let Some(file) = file_query.execute(session, item)? {
+                SourceContent::Path(PathBuf::from(file))
+            } else {
+                // look for content inside
+                let s = content_query.execute(session, item)?;
+                SourceContent::String(s)
+            };
+            // let file = PathBuf::from(file_query.execute(session, item)?);
             let role = role_query.execute(session, item)?;
             let uri = uri_query.execute(session, item)?;
             let metadata = metadata_query.execute(session, item)?;
@@ -88,7 +115,7 @@ impl Source {
                     sources.push(Source {
                         metadata: metadata.clone(),
                         role: SourceRole::Context,
-                        file: file.clone(),
+                        content: content.clone(),
                         // TODO
                         uri: None,
                         validation: None,
@@ -97,7 +124,7 @@ impl Source {
                     sources.push(Source {
                         metadata: metadata.clone(),
                         role: SourceRole::Var(role),
-                        file: file.clone(),
+                        content: content.clone(),
                         // TODO
                         uri: None,
                         validation: None,
@@ -109,7 +136,7 @@ impl Source {
                 sources.push(Source {
                     metadata,
                     role: SourceRole::Doc(uri),
-                    file,
+                    content,
                     // TODO
                     uri: None,
                     validation: None,
