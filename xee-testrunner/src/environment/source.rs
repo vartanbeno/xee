@@ -103,7 +103,6 @@ impl Source {
                 let s = content_query.execute(session, item)?;
                 SourceContent::String(s)
             };
-            // let file = PathBuf::from(file_query.execute(session, item)?);
             let role = role_query.execute(session, item)?;
             let uri = uri_query.execute(session, item)?;
             let metadata = metadata_query.execute(session, item)?;
