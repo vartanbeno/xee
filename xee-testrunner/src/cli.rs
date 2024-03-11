@@ -1,18 +1,18 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
 use xee_xpath::xml::Documents;
+use xee_xpath_load::PathLoadable;
 use xot::Xot;
 
 use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
 use crate::environment::{Environment, XPathEnvironmentSpec};
-use crate::error::Result;
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter, TestFilter};
-use crate::load::{PathLoadable, XPATH_NS};
+use crate::ns::{namespaces, XPATH_NS};
 use crate::outcomes::{CatalogOutcomes, Outcomes, TestSetOutcomes};
 use crate::paths::{paths, PathInfo};
-use crate::renderer::{CharacterRenderer, VerboseRenderer};
 use crate::runcontext::RunContext;
 use crate::testcase::{Runnable, XPathTestCase};
 use crate::testset::TestSet;
@@ -202,11 +202,19 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
     }
 
     fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
-        Catalog::load_from_file(&mut self.run_context, &self.path_info.catalog_path)
+        Catalog::load_from_file(
+            &mut self.run_context.xot,
+            namespaces(&self.run_context.ns),
+            &self.path_info.catalog_path,
+        )
     }
 
     fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
-        TestSet::load_from_file(&mut self.run_context, &self.path_info.relative_path)
+        TestSet::load_from_file(
+            &mut self.run_context.xot,
+            namespaces(&self.run_context.ns),
+            &self.path_info.relative_path,
+        )
     }
 
     fn load_check_test_filter(&self) -> Result<impl TestFilter<E, R>> {

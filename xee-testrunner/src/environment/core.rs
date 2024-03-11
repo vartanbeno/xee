@@ -1,21 +1,16 @@
+use anyhow::Result;
 use std::{
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
-
 use xee_xpath::{
     context::{DynamicContext, StaticContext, Variables},
     parse, sequence,
     xml::Documents,
-    Name, Queries, Query,
+    Name,
 };
+use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
 use xot::Xot;
-
-use crate::{
-    error::Result,
-    load::{convert_string, ContextLoadable, Loadable},
-    metadata::Metadata,
-};
 
 use super::{
     collation::Collation,
@@ -213,7 +208,11 @@ impl ContextLoadable<Path> for EnvironmentSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::{environment::source::SourceContent, load::XPATH_NS};
+    use crate::{
+        environment::source::SourceContent,
+        metadata::Metadata,
+        ns::{namespaces, XPATH_NS},
+    };
 
     use super::*;
 
@@ -233,7 +232,8 @@ mod tests {
         let mut xot = Xot::new();
         let path = Path::new("bar/foo");
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &xml, XPATH_NS, path).unwrap();
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, namespaces(XPATH_NS), &xml, path)
+                .unwrap();
         assert_eq!(
             environment_spec,
             EnvironmentSpec {
@@ -298,7 +298,8 @@ mod tests {
         let mut xot = Xot::new();
         let path = Path::new("bar/foo");
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &xml, XPATH_NS, path).unwrap();
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, namespaces(XPATH_NS), &xml, path)
+                .unwrap();
         assert_eq!(
             environment_spec,
             EnvironmentSpec {

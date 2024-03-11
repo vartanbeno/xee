@@ -2,19 +2,18 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
+use xee_xpath::error::Result;
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
-    error::{Error, Result},
+    error::Error,
     occurrence::Occurrence,
     parse,
     sequence::{self, Sequence},
     string::Collation,
-    Name, Namespaces, Queries, Recurse, Runnable, Session, VariableNames,
+    Name, Namespaces, Runnable, VariableNames,
 };
+use xee_xpath_load::{convert_boolean, convert_string, Loadable, Queries, Query, Recurse, Session};
 use xot::Xot;
-
-use crate::error;
-use crate::load::{convert_boolean, convert_string, Loadable};
 
 use super::outcome::{TestOutcome, UnexpectedError};
 
@@ -744,7 +743,7 @@ impl TestCaseResult {
 }
 
 impl Loadable for TestCaseResult {
-    fn query(mut queries: Queries) -> error::Result<(Queries, impl xee_xpath::Query<Self>)> {
+    fn query(mut queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
             Ok(TestCaseResult::AssertError(AssertError::new(
@@ -1043,7 +1042,7 @@ mod tests {
 
     use super::*;
 
-    use crate::load::XPATH_NS;
+    use crate::ns::{namespaces, XPATH_NS};
 
     #[test]
     fn test_test_case_result() {
@@ -1052,7 +1051,8 @@ mod tests {
             XPATH_NS
         );
         let mut xot = Xot::new();
-        let test_case_result = TestCaseResult::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+        let test_case_result =
+            TestCaseResult::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AssertEq(AssertEq::new("0".to_string()))
@@ -1074,7 +1074,8 @@ mod tests {
             XPATH_NS
         );
         let mut xot = Xot::new();
-        let test_case_result = TestCaseResult::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+        let test_case_result =
+            TestCaseResult::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AnyOf(AssertAnyOf::new(vec![

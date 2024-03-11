@@ -1,14 +1,11 @@
+use anyhow::Result;
 use std::path::Path;
 
-use xee_xpath::{Queries, Query};
-use xot::Xot;
+use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
 
 use crate::hashmap::FxIndexMap;
-use crate::load::ContextLoadable;
-use crate::{error::Result, load::convert_string};
 
 use super::core::{Environment, EnvironmentRef};
-use super::{EnvironmentSpec, XPathEnvironmentSpec};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct SharedEnvironments<E: Environment> {

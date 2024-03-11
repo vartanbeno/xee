@@ -1,15 +1,10 @@
+use anyhow::Result;
 use std::path::Path;
-
-use xee_xpath::{Queries, Query};
-use xot::Xot;
+use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
 
 use super::{
     core::{Environment, EnvironmentSpec},
     decimal_format::DecimalFormat,
-};
-use crate::{
-    error::Result,
-    load::{convert_string, ContextLoadable},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

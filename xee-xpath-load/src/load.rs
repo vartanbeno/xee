@@ -8,15 +8,17 @@ use std::{
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
     sequence::Item,
-    Namespaces, Queries, Query, Session,
+    Namespaces,
 };
 use xot::Xot;
 
-pub fn convert_string(_: &mut Session, item: &Item) -> xee_xpath::error::Result<String> {
-    item.to_atomic()?.try_into()
+use crate::{Queries, Query, Session};
+
+pub fn convert_string(_: &mut Session, item: &Item) -> Result<String> {
+    Ok(item.to_atomic()?.try_into()?)
 }
 
-pub fn convert_boolean(session: &mut Session, item: &Item) -> xee_xpath::error::Result<bool> {
+pub fn convert_boolean(session: &mut Session, item: &Item) -> Result<bool> {
     Ok(convert_string(session, item)? == "true")
 }
 

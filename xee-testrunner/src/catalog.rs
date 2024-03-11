@@ -1,22 +1,16 @@
-use std::fs::File;
-use std::io::{BufReader, Read, Stdout};
+use anyhow::Result;
+use std::io::Stdout;
 use std::path::{Path, PathBuf};
+use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable, Queries, Query};
 
-use xee_name::Namespaces;
-use xee_xpath::context::{DynamicContext, StaticContext};
-use xee_xpath::sequence::Item;
-use xee_xpath::{Queries, Query};
-use xot::Xot;
-
-use crate::environment::{Environment, SharedEnvironments, XPathEnvironmentSpec};
-use crate::error::Result;
+use crate::environment::{Environment, SharedEnvironments};
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
-use crate::load::{convert_string, ContextLoadable, PathLoadable, XPATH_NS};
+use crate::ns::{namespaces, XPATH_NS};
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
-use crate::testcase::{Runnable, XPathTestCase};
+use crate::testcase::Runnable;
 use crate::testset::TestSet;
 
 #[derive(Debug)]
@@ -47,11 +41,15 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         test_filter: &impl TestFilter<E, R>,
         out: &mut Stdout,
         renderer: &dyn Renderer<E, R>,
-    ) -> crate::error::Result<CatalogOutcomes> {
+    ) -> Result<CatalogOutcomes> {
         let mut catalog_outcomes = CatalogOutcomes::new();
         for file_path in &self.file_paths {
             let full_path = self.base_dir().join(file_path);
-            let test_set = TestSet::load_from_file(run_context, &full_path)?;
+            let test_set = TestSet::load_from_file(
+                &mut run_context.xot,
+                namespaces(&run_context.ns),
+                &full_path,
+            )?;
             let test_set_outcomes = test_set.run(run_context, self, test_filter, out, renderer)?;
             catalog_outcomes.add_outcomes(test_set_outcomes);
         }

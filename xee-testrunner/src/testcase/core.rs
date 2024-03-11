@@ -1,22 +1,19 @@
 use std::path::Path;
 
-use xee_xpath::{context::Variables, sequence, Queries, Query};
-use xot::Xot;
+// use anyhow::Result;
+use xee_xpath::{context::Variables, sequence};
+use xee_xpath_load::{convert_string, ContextLoadable, Loadable, Queries, Query};
 
 use crate::{
     catalog::Catalog,
     dependency::{Dependencies, Dependency},
-    environment::{
-        Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment, XPathEnvironmentSpec,
-    },
-    error::Result,
-    load::{convert_string, ContextLoadable, Loadable},
+    environment::{Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment},
     metadata::Metadata,
     runcontext::RunContext,
     testset::TestSet,
 };
 
-use super::{assert::TestCaseResult, outcome::TestOutcome, XPathTestCase};
+use super::{assert::TestCaseResult, outcome::TestOutcome};
 
 pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
     fn test_case(&self) -> &TestCase<E>;
@@ -31,7 +28,7 @@ pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
     fn query<'a>(
         queries: Queries<'a>,
         path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
     where
         E: 'a;
 }
@@ -64,10 +61,10 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> Result<Option<sequence::Item>> {
+    ) -> anyhow::Result<Option<sequence::Item>> {
         let environments = self
             .environments(catalog, test_set)
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
         let xot = &mut run_context.xot;
         let documents = &mut run_context.documents;
         for environment in environments {
@@ -86,10 +83,10 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> Result<Variables> {
+    ) -> anyhow::Result<Variables> {
         let environments = self
             .environments(catalog, test_set)
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
         let mut variables = Variables::new();
         let xot = &mut run_context.xot;
         let source_cache = &mut run_context.documents;
@@ -108,7 +105,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
     fn query_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
+    ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
     where
         E: 'a,
     {
@@ -157,7 +154,12 @@ mod tests {
 
     use xot::Xot;
 
-    use crate::{load::XPATH_NS, metadata::Attribution, testcase::assert::AssertTrue};
+    use crate::{
+        environment::XPathEnvironmentSpec,
+        metadata::Attribution,
+        ns::{namespaces, XPATH_NS},
+        testcase::assert::AssertTrue,
+    };
 
     use super::*;
 
@@ -181,7 +183,10 @@ mod tests {
         let path = PathBuf::from("bar/foo");
 
         let test_case = TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(
-            &mut xot, &xml, XPATH_NS, &path,
+            &mut xot,
+            namespaces(XPATH_NS),
+            &xml,
+            &path,
         )
         .unwrap();
         assert_eq!(

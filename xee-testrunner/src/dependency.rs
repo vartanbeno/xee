@@ -1,10 +1,7 @@
-use xee_xpath::{Queries, Query};
+use anyhow::Result;
+use xee_xpath_load::{convert_string, Loadable, Queries, Query};
 
-use crate::{
-    error::Result,
-    hashmap::FxIndexSet,
-    load::{convert_string, Loadable},
-};
+use crate::hashmap::FxIndexSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct DependencySpec {
@@ -63,12 +60,6 @@ impl KnownDependencies {
     fn new(specs: &[DependencySpec]) -> Self {
         let specs = specs.iter().cloned().collect();
         Self { specs }
-    }
-
-    pub(crate) fn empty() -> Self {
-        Self {
-            specs: FxIndexSet::default(),
-        }
     }
 
     fn is_supported(&self, dependency: &Dependency) -> bool {
@@ -200,7 +191,7 @@ mod tests {
 
     use xot::Xot;
 
-    use crate::load::XPATH_NS;
+    use crate::ns::{namespaces, XPATH_NS};
 
     #[test]
     fn test_load_dependencies() {
@@ -213,7 +204,8 @@ mod tests {
             XPATH_NS
         );
         let mut xot = Xot::new();
-        let dependencies = Dependencies::load_from_xml(&mut xot, &xml, XPATH_NS).unwrap();
+        let dependencies =
+            Dependencies::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
 
         assert_eq!(
             dependencies,

@@ -1,18 +1,14 @@
+use anyhow::Result;
 use std::{borrow::Cow, path::Path};
-
 use xee_name::Namespaces;
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
-    parse, Queries, Query,
+    parse,
 };
+use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
 
 use crate::{
-    catalog::Catalog,
-    environment::XPathEnvironmentSpec,
-    error::Result,
-    load::{convert_string, ContextLoadable},
-    runcontext::RunContext,
-    testset::TestSet,
+    catalog::Catalog, environment::XPathEnvironmentSpec, runcontext::RunContext, testset::TestSet,
 };
 
 use super::{
@@ -32,11 +28,11 @@ impl XPathTestCase {
         &'a self,
         catalog: &'a Catalog<XPathEnvironmentSpec, Self>,
         test_set: &'a TestSet<XPathEnvironmentSpec, Self>,
-    ) -> Result<Namespaces<'a>> {
+    ) -> anyhow::Result<Namespaces<'a>> {
         let environments = self
             .test_case
             .environments(catalog, test_set)
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, crate::error::Error>>()?;
         let mut namespaces = Namespaces::default();
         for environment in environments {
             namespaces.add(&environment.namespace_pairs())

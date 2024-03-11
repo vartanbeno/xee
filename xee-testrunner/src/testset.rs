@@ -3,15 +3,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use xee_xpath::{Queries, Query};
+use anyhow::Result;
+use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
 
 use crate::{
     catalog::Catalog,
     dependency::{Dependencies, Dependency},
     environment::{Environment, SharedEnvironments},
-    error::Result,
     filter::TestFilter,
-    load::{convert_string, ContextLoadable},
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
@@ -118,7 +117,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
 mod tests {
     use crate::{
         environment::{EnvironmentRef, XPathEnvironmentSpec},
-        load::XPATH_NS,
+        ns::{namespaces, XPATH_NS},
         testcase::XPathTestCase,
     };
 
@@ -167,7 +166,10 @@ mod tests {
 
         let path = PathBuf::from("bar/foo");
         let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_xml_with_context(
-            &mut xot, xml, XPATH_NS, &path,
+            &mut xot,
+            namespaces(XPATH_NS),
+            xml,
+            &path,
         )
         .unwrap();
         assert_eq!(test_set.name, "testset-name");

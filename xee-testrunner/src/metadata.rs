@@ -1,7 +1,5 @@
-use xee_xpath::{Queries, Query};
-
-use crate::error::Result;
-use crate::load::{convert_string, Loadable};
+use anyhow::Result;
+use xee_xpath_load::{convert_string, Loadable, Queries, Query};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Metadata {
@@ -74,7 +72,7 @@ mod tests {
 
     use xot::Xot;
 
-    use crate::load::XPATH_NS;
+    use crate::ns::{namespaces, XPATH_NS};
 
     #[test]
     fn test_load() {
@@ -84,7 +82,7 @@ mod tests {
   <description>Description</description>
   <created by="Foo Barson" on="2024-01-01"/>
 </container>"#;
-        let metadata = Metadata::load_from_xml(&mut xot, xml, XPATH_NS).unwrap();
+        let metadata = Metadata::load_from_xml(&mut xot, namespaces(XPATH_NS), xml).unwrap();
         assert_eq!(
             metadata,
             Metadata {

@@ -12,10 +12,12 @@ documentation = "https://docs.rs/xee-testrunner"
 homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 ahash = { workspace = true }
-thiserror = "1.0.40"
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
+xee-xpath-load = { path = "../xee-xpath-load" }
 xee-xslt = { path = "../xee-xslt" }
 xee-name = { path = "../xee-name" }
 fxhash = "0.2.1"

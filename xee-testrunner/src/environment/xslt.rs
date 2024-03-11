@@ -1,9 +1,8 @@
+use anyhow::Result;
 use std::path::Path;
-
-use xee_xpath::{Queries, Query};
+use xee_xpath_load::{ContextLoadable, Queries, Query};
 
 use super::core::{Environment, EnvironmentSpec};
-use crate::{error::Result, load::ContextLoadable};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Package {

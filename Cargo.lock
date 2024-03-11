@@ -3495,6 +3495,7 @@ name = "xee-testrunner"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.6",
+ "anyhow",
  "chrono",
  "clap",
  "crossterm",
@@ -3507,6 +3508,7 @@ dependencies = [
  "thiserror",
  "xee-name",
  "xee-xpath",
+ "xee-xpath-load",
  "xee-xslt",
  "xot",
 ]

@@ -1,14 +1,12 @@
+use anyhow::Result;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use xee_xpath::xml::{Documents, Uri};
-use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, Loadable, Queries, Query};
 use xot::Xot;
 
-use crate::error::Result;
-
-use crate::load::{convert_string, Loadable};
 use crate::metadata::Metadata;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
