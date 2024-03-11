@@ -18,6 +18,7 @@ xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
+anyhow = "1.0.80"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

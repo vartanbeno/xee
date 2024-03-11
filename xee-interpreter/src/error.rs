@@ -577,6 +577,15 @@ impl Error {
 }
 impl std::error::Error for Error {}
 
+impl std::fmt::Display for SpannedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let span = self.span.range();
+        write!(f, "{} ({}..{})", self.error, span.start, span.end)
+    }
+}
+
+impl std::error::Error for SpannedError {}
+
 // note: this is only used for internal conversions of names
 // for now, not the full grammar.
 impl From<xee_xpath_ast::ParserError> for Error {

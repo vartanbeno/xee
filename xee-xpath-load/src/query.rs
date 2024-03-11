@@ -1,4 +1,4 @@
-use xee_xpath::error::Result;
+use anyhow::Result;
 
 use xee_xpath::interpreter::Program;
 use xee_xpath::parse;
@@ -196,7 +196,7 @@ where
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item), session.xot).map_err(|e| e.error)?;
+        let item = runnable.one(Some(item), session.xot)?;
         (self.convert)(session, &item)
     }
 }
@@ -224,7 +224,7 @@ impl OneRecurseQuery {
     ) -> Result<V> {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
-        let item = runnable.one(Some(item), session.xot).map_err(|e| e.error)?;
+        let item = runnable.one(Some(item), session.xot)?;
         recurse.execute(session, &item)
     }
 }
@@ -362,7 +362,6 @@ impl ManyRecurseQuery {
 #[cfg(test)]
 mod tests {
     use ibig::{ibig, IBig};
-    use xee_xpath::error::Result;
     use xot::Xot;
 
     use super::*;
@@ -373,8 +372,8 @@ mod tests {
         let mut queries = Queries::new(&static_context);
         let q = queries
             .one("1 + 2", |_, item| {
-                let v: Result<IBig> = item.to_atomic()?.try_into();
-                v
+                let v: IBig = item.to_atomic()?.try_into()?;
+                Ok(v)
             })
             .unwrap();
 
@@ -397,8 +396,9 @@ mod tests {
         }
 
         let any_of_recurse = queries.option_recurse("any-of")?;
-        let value_query =
-            queries.option("value/string()", |_, item| item.to_atomic()?.to_string())?;
+        let value_query = queries.option("value/string()", |_, item| {
+            Ok(item.to_atomic()?.to_string()?)
+        })?;
 
         let result_query = queries.one("doc/result", |session: &mut Session, item: &Item| {
             let f = |session: &mut Session, item: &Item, recurse: &Recurse<Expr>| {
