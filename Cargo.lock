@@ -3553,6 +3553,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xpath-load"
+version = "0.1.0"
+dependencies = [
+ "ibig",
+ "insta",
+ "rust_decimal",
+ "thiserror",
+ "xee-xpath",
+ "xot",
+]
+
+[[package]]
 name = "xee-xpath-macros"
 version = "0.1.0"
 dependencies = [

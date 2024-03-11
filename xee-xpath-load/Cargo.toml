@@ -1,0 +1,23 @@
+[package]
+name = "xee-xpath-load"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "Load XML into structs using XPath"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath-load"
+homepage = "https://github.com/Paligo/xee"
+
+
+[dependencies]
+thiserror = { workspace = true }
+xot = { workspace = true }
+xee-xpath = { path = "../xee-xpath" }
+ibig = { workspace = true }
+rust_decimal = { workspace = true }
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
