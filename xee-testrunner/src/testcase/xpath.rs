@@ -109,7 +109,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         XPathEnvironmentSpec: 'a,
     {
         let test_query = queries.one("test/string()", convert_string)?;
-        let (queries, test_case_query) = TestCase::query_with_context(queries, path)?;
+        let (queries, test_case_query) = TestCase::load_with_context(queries, path)?;
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
@@ -121,7 +121,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 }
 
 impl ContextLoadable<Path> for XPathTestCase {
-    fn query_with_context<'a>(
+    fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
@@ -129,7 +129,7 @@ impl ContextLoadable<Path> for XPathTestCase {
         XPathEnvironmentSpec: 'a,
     {
         let test_query = queries.one("test/string()", convert_string)?;
-        let (queries, test_case_query) = TestCase::query_with_context(queries, path)?;
+        let (queries, test_case_query) = TestCase::load_with_context(queries, path)?;
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,

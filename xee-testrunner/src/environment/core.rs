@@ -145,7 +145,7 @@ impl EnvironmentSpec {
 }
 
 impl ContextLoadable<Path> for EnvironmentSpec {
-    fn query_with_context<'a>(
+    fn load_with_context<'a>(
         queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>

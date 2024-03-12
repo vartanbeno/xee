@@ -58,7 +58,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
-    fn query_with_context<'a>(
+    fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Catalog<E, R>> + 'a)>
@@ -70,7 +70,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
         let version_query = queries.one("@version/string()", convert_string)?;
 
         let (mut queries, shared_environments_query) =
-            SharedEnvironments::query_with_context(queries, path)?;
+            SharedEnvironments::load_with_context(queries, path)?;
 
         let test_set_name_query = queries.one("@name/string()", convert_string)?;
         let test_set_file_query = queries.one("@file/string()", convert_string)?;

@@ -28,7 +28,7 @@ impl<E: Environment> SharedEnvironments<E> {
 }
 
 impl<E: Environment> ContextLoadable<Path> for SharedEnvironments<E> {
-    fn query_with_context<'a>(
+    fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<SharedEnvironments<E>> + 'a)>

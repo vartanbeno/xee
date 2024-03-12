@@ -102,7 +102,7 @@ impl<E: Environment> TestCase<E> {
 }
 
 impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
-    fn query_with_context<'a>(
+    fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
@@ -110,7 +110,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
         E: 'a,
     {
         let name_query = queries.one("@name/string()", convert_string)?;
-        let (mut queries, metadata_query) = Metadata::query(queries)?;
+        let (mut queries, metadata_query) = Metadata::load(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
         let (mut queries, environment_query) = E::query(queries, path)?;
@@ -125,7 +125,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
             }
         })?;
 
-        let (queries, result_query) = TestCaseResult::query(queries)?;
+        let (queries, result_query) = TestCaseResult::load(queries)?;
         let (mut queries, dependency_query) = Dependency::query(queries)?;
         let test_case_query = queries.one(".", move |session, item| {
             let test_case = TestCase {

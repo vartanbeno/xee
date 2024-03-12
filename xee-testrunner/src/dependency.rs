@@ -171,7 +171,7 @@ impl Dependencies {
 }
 
 impl Loadable for Dependencies {
-    fn query(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
+    fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
         let (queries, dependency_query) = Dependency::query(queries)?;
 
         Ok((

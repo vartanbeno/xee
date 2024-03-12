@@ -21,7 +21,7 @@ pub(crate) struct Attribution {
 }
 
 impl Loadable for Metadata {
-    fn query(mut queries: Queries) -> Result<(Queries, impl Query<Metadata>)> {
+    fn load(mut queries: Queries) -> Result<(Queries, impl Query<Metadata>)> {
         let description_query = queries.option("description/string()", convert_string)?;
         let by_query = queries.one("@by/string()", convert_string)?;
         let on_query = queries.one("@on/string()", convert_string)?;

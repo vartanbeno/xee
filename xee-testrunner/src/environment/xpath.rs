@@ -73,7 +73,7 @@ impl Environment for XPathEnvironmentSpec {
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
         let (mut queries, environment_spec_query) =
-            EnvironmentSpec::query_with_context(queries, path)?;
+            EnvironmentSpec::load_with_context(queries, path)?;
         let prefix_query = queries.one("@prefix/string()", convert_string)?;
         let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
 

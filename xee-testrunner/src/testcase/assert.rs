@@ -743,7 +743,7 @@ impl TestCaseResult {
 }
 
 impl Loadable for TestCaseResult {
-    fn query(mut queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
+    fn load(mut queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
             Ok(TestCaseResult::AssertError(AssertError::new(

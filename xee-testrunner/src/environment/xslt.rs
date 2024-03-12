@@ -53,7 +53,7 @@ impl Environment for XsltEnvironmentSpec {
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
         let (mut queries, environment_spec_query) =
-            EnvironmentSpec::query_with_context(queries, path)?;
+            EnvironmentSpec::load_with_context(queries, path)?;
         let xslt_environment_spec_query = queries.one(".", move |session, item| {
             Ok(XsltEnvironmentSpec {
                 environment_spec: environment_spec_query.execute(session, item)?,

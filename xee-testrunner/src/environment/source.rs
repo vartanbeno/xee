@@ -91,7 +91,7 @@ impl Source {
         let content_query = queries.one("content/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;
         let uri_query = queries.option("@uri/string()", convert_string)?;
-        let (mut queries, metadata_query) = Metadata::query(queries)?;
+        let (mut queries, metadata_query) = Metadata::load(queries)?;
 
         let sources_query = queries.many("source", move |session, item| {
             let content = if let Some(file) = file_query.execute(session, item)? {
