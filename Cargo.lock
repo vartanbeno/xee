@@ -330,7 +330,8 @@ dependencies = [
 [[package]]
 name = "chumsky"
 version = "1.0.0-alpha.6"
-source = "git+https://github.com/zesterer/chumsky.git#e3b91d80da96a38d9798fccf6549bd28d00e52cc"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9c28d4e5dd9a9262a38b231153591da6ce1471b818233f4727985d3dd0ed93c"
 dependencies = [
  "hashbrown 0.14.0",
  "regex-automata 0.3.8",
