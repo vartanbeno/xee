@@ -5,7 +5,7 @@ use crate::lexer::Token;
 use crate::span::WithSpan;
 use crate::{ast, error::ParserError};
 
-use super::types::{BoxedParser, State};
+use super::types::BoxedParser;
 
 #[derive(Clone)]
 pub(crate) struct ParserNameOutput<'a, I>
@@ -38,14 +38,15 @@ where
         .clone()
         .then_ignore(just(Token::Colon))
         .then(ncname.clone())
-        .try_map_with_state(|(prefix, local_name), span, state: &mut State| {
+        .try_map_with(|(prefix, local_name), extra| {
+            let state = extra.state();
             ast::Name::prefixed(prefix, local_name, move |prefix| {
                 state.namespaces.by_prefix(prefix).map(|s| s.to_string())
             })
-            .map(|name| name.with_span(span))
+            .map(|name| name.with_span(extra.span()))
             .map_err(|_e| ParserError::UnknownPrefix {
                 prefix: prefix.to_string(),
-                span,
+                span: extra.span(),
             })
         })
         .boxed();
@@ -53,18 +54,18 @@ where
     let qname = prefixed_name
         .or(ncname
             .clone()
-            .map_with_span(|local_name, span| ast::Name::name(local_name).with_span(span)))
+            .map_with(|local_name, extra| ast::Name::name(local_name).with_span(extra.span())))
         .boxed();
 
     let uri_qualified_name = braced_uri_literal
         .clone()
         .then(ncname.clone())
-        .map_with_span(|(uri, local_name), span| {
+        .map_with(|(uri, local_name), extra| {
             ast::Name::namespaced(local_name.to_string(), uri.to_string(), |_| {
                 Some(String::new())
             })
             .unwrap()
-            .with_span(span)
+            .with_span(extra.span())
         })
         .boxed();
 

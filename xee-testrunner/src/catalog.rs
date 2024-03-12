@@ -6,7 +6,7 @@ use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable, Queries, Que
 use crate::environment::{Environment, SharedEnvironments};
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
-use crate::ns::{namespaces, XPATH_NS};
+use crate::ns::namespaces;
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;

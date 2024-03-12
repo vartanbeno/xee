@@ -30,7 +30,7 @@ where
     let single_type = eqname
         .clone()
         .then(just(Token::QuestionMark).or_not())
-        .map_with_span(|(name, question_mark), _span| ast::SingleType {
+        .map(|(name, question_mark)| ast::SingleType {
             name,
             optional: question_mark.is_some(),
         })
@@ -134,7 +134,7 @@ where
                         .delimited_by(just(Token::LeftParen), just(Token::RightParen))
                         .then_ignore(just(Token::As))
                         .then(sequence_type)
-                        .map_with_span(|(parameter_types, return_type), _span| {
+                        .map(|(parameter_types, return_type)| {
                             ast::FunctionTest::TypedFunctionTest(Box::new(ast::TypedFunctionTest {
                                 parameter_types,
                                 return_type,

@@ -50,7 +50,7 @@ where
         .separated_by(just(Token::Comma))
         .at_least(1)
         .collect::<Vec<_>>()
-        .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
+        .map_with(|exprs, extra| ast::Expr(exprs).with_span(extra.span()))
         .boxed();
     let predicate = expr
         .clone()

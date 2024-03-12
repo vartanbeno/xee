@@ -8,7 +8,7 @@ use crate::lexer::Token;
 use crate::span::WithSpan;
 use crate::{ast, error::ParserError};
 
-use super::types::{BoxedParser, State};
+use super::types::BoxedParser;
 
 #[derive(Clone)]
 pub(crate) struct ParserPrimaryOutput<'a, I>
@@ -60,37 +60,34 @@ where
         .or(integer_literal.clone())
         .or(decimal_literal)
         .or(double_literal)
-        .map_with_span(|literal, span| ast::PrimaryExpr::Literal(literal).with_span(span))
+        .map_with(|literal, extra| ast::PrimaryExpr::Literal(literal).with_span(extra.span()))
         .boxed();
 
     let var_ref = just(Token::Dollar)
         .ignore_then(eqname.clone())
-        .map_with_span(|name, span| ast::PrimaryExpr::VarRef(name.value).with_span(span))
+        .map_with(|name, extra| ast::PrimaryExpr::VarRef(name.value).with_span(extra.span()))
         .boxed();
 
     let context_item_expr = just(Token::Dot)
-        .map_with_span(|_, span| ast::PrimaryExpr::ContextItem.with_span(span))
+        .map_with(|_, extra| ast::PrimaryExpr::ContextItem.with_span(extra.span()))
         .boxed();
 
     let named_function_ref = eqname
         .clone()
         .then_ignore(just(Token::Hash))
         .then(integer)
-        .try_map(|(name, arity), span| {
-            check_reserved(&name, span)?;
-            Ok((name, arity))
-        })
-        .try_map_with_state(|(name, arity), span, state: &mut State| {
+        .try_map_with(|(name, arity), extra| {
+            check_reserved(&name, extra.span())?;
             let arity: u8 = arity
                 .try_into()
-                .map_err(|_| ParserError::ArityOverflow { span })?;
+                .map_err(|_| ParserError::ArityOverflow { span: extra.span() })?;
             Ok(ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
                 name: name.map(|name| {
-                    name.with_default_namespace(state.namespaces.default_function_namespace)
+                    name.with_default_namespace(extra.state().namespaces.default_function_namespace)
                 }),
                 arity,
             })
-            .with_span(span))
+            .with_span(extra.span()))
         })
         .boxed();
 
@@ -129,9 +126,13 @@ pub(crate) fn check_reserved(
     span: Span,
 ) -> std::result::Result<(), ParserError> {
     let local_name = name.value.local_name();
-    if RESERVED_FUNCTION_NAMES.contains(&local_name) {
+    check_reserved_str(local_name, span)
+}
+
+pub(crate) fn check_reserved_str(name: &str, span: Span) -> std::result::Result<(), ParserError> {
+    if RESERVED_FUNCTION_NAMES.contains(&name) {
         return Err(ParserError::Reserved {
-            name: local_name.to_string(),
+            name: name.to_string(),
             span,
         });
     }

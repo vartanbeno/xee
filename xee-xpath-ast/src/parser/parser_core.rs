@@ -13,7 +13,7 @@ use super::kind_test::{parser_kind_test, ParserKindTestOutput};
 use super::name::{parser_name, ParserNameOutput};
 use super::primary::{check_reserved, parser_primary, ParserPrimaryOutput};
 use super::signature::{parser_signature, ParserSignatureOutput};
-use super::types::{BoxedParser, State};
+use super::types::BoxedParser;
 use super::xpath_type::{parser_type, ParserTypeOutput};
 
 #[derive(Clone)]
@@ -88,7 +88,7 @@ where
             .separated_by(just(Token::Comma))
             .at_least(1)
             .collect::<Vec<_>>()
-            .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
+            .map_with(|exprs, extra| ast::Expr(exprs).with_span(extra.span()))
             .boxed();
 
         expr_ = Some(expr.clone());
@@ -99,12 +99,12 @@ where
             .clone()
             .or_not()
             .delimited_by(just(Token::LeftParen), just(Token::RightParen))
-            .map_with_span(|expr, span| expr.map(|expr| expr.value).with_span(span))
+            .map_with(|expr, extra| expr.map(|expr| expr.value).with_span(extra.span()))
             .boxed();
 
         let parenthesized_expr_primary = parenthesized_expr
             .clone()
-            .map_with_span(|expr, span| ast::PrimaryExpr::Expr(expr).with_span(span))
+            .map_with(|expr, extra| ast::PrimaryExpr::Expr(expr).with_span(extra.span()))
             .boxed();
 
         let argument_placeholder = just(Token::QuestionMark)
@@ -135,12 +135,12 @@ where
 
         let argument_list_postfix = argument_list
             .clone()
-            .map_with_span(|arguments, span| {
+            .map_with(|arguments, extra| {
                 let (arguments, params) = placeholder_arguments(&arguments);
                 if params.is_empty() {
                     PostfixOrPlaceholderWrapper::Postfix(ast::Postfix::ArgumentList(arguments))
                 } else {
-                    PostfixOrPlaceholderWrapper::PlaceholderWrapper(arguments, params, span)
+                    PostfixOrPlaceholderWrapper::PlaceholderWrapper(arguments, params, extra.span())
                 }
             })
             .boxed();
@@ -186,17 +186,14 @@ where
         let function_call = eqname
             .clone()
             .then(argument_list.clone())
-            .try_map(|(name, arguments), span| {
-                check_reserved(&name, span)?;
-                Ok((name, arguments))
-            })
-            .map_with_state(move |(name, arguments), span, state: &mut State| {
-                static_function_call(
+            .try_map_with(move |(name, arguments), extra| {
+                check_reserved(&name, extra.span())?;
+                Ok(static_function_call(
                     name,
                     arguments,
-                    state.namespaces.default_function_namespace,
-                    span,
-                )
+                    extra.state().namespaces.default_function_namespace,
+                    extra.span(),
+                ))
             })
             .boxed();
 
@@ -206,11 +203,11 @@ where
 
         let function_body = enclosed_expr
             .clone()
-            .map_with_span(|expr, span| {
+            .map_with(|expr, extra| {
                 if let Some(expr) = expr {
-                    Some(expr.value).with_span(span)
+                    Some(expr.value).with_span(extra.span())
                 } else {
-                    None.with_span(span)
+                    None.with_span(extra.span())
                 }
             })
             .boxed();
@@ -219,14 +216,14 @@ where
             .ignore_then(param_list.delimited_by(just(Token::LeftParen), just(Token::RightParen)))
             .then(just(Token::As).ignore_then(sequence_type.clone()).or_not())
             .then(function_body)
-            .map_with_span(|((params, return_type), body), span| {
+            .map_with(|((params, return_type), body), extra| {
                 ast::PrimaryExpr::InlineFunction(ast::InlineFunction {
                     params,
                     return_type,
                     body,
                     wrapper: false,
                 })
-                .with_span(span)
+                .with_span(extra.span())
             })
             .boxed();
 
@@ -247,37 +244,38 @@ where
 
         let map_constructor = just(Token::Map)
             .ignore_then(map_contents)
-            .map_with_span(|entries, span| {
-                ast::PrimaryExpr::MapConstructor(ast::MapConstructor { entries }).with_span(span)
+            .map_with(|entries, extra| {
+                ast::PrimaryExpr::MapConstructor(ast::MapConstructor { entries })
+                    .with_span(extra.span())
             })
             .boxed();
 
         let curly_array_constructor = just(Token::Array)
             .ignore_then(enclosed_expr)
-            .map_with_span(|expr, span| {
-                ast::ArrayConstructor::Curly(expr.map(|expr| expr.value).with_span(span))
+            .map_with(|expr, extra| {
+                ast::ArrayConstructor::Curly(expr.map(|expr| expr.value).with_span(extra.span()))
             })
             .boxed();
         let square_array_constructor = expr_single
             .clone()
             .separated_by(just(Token::Comma))
             .collect::<Vec<_>>()
-            .map_with_span(|exprs, span| ast::Expr(exprs).with_span(span))
+            .map_with(|exprs, extra| ast::Expr(exprs).with_span(extra.span()))
             .delimited_by(just(Token::LeftBracket), just(Token::RightBracket))
             .map(ast::ArrayConstructor::Square)
             .boxed();
         let array_constructor = square_array_constructor
             .or(curly_array_constructor)
             .boxed()
-            .map_with_span(|constructor, span| {
-                ast::PrimaryExpr::ArrayConstructor(constructor).with_span(span)
+            .map_with(|constructor, extra| {
+                ast::PrimaryExpr::ArrayConstructor(constructor).with_span(extra.span())
             });
 
         let unary_lookup = just(Token::QuestionMark)
             .ignore_then(key_specifier)
             .boxed()
-            .map_with_span(|key_specifier, span| {
-                ast::PrimaryExpr::UnaryLookup(key_specifier).with_span(span)
+            .map_with(|key_specifier, extra| {
+                ast::PrimaryExpr::UnaryLookup(key_specifier).with_span(extra.span())
             });
 
         let primary_expr = parenthesized_expr_primary
@@ -294,7 +292,7 @@ where
 
         let postfix_expr = primary_expr
             .then(postfix.repeated().collect::<Vec<_>>())
-            .map_with_span(|(primary, postfixes), span| {
+            .map_with(|(primary, postfixes), extra| {
                 // in case of a placeholder argument list we need to
                 // wrap the existing primary
                 let mut normal_postfixes = Vec::new();
@@ -323,13 +321,13 @@ where
                     }
                 }
                 if normal_postfixes.is_empty() {
-                    ast::StepExpr::PrimaryExpr(primary).with_span(span)
+                    ast::StepExpr::PrimaryExpr(primary).with_span(extra.span())
                 } else {
                     ast::StepExpr::PostfixExpr {
                         primary,
                         postfixes: normal_postfixes,
                     }
-                    .with_span(span)
+                    .with_span(extra.span())
                 }
             })
             .boxed();
@@ -343,13 +341,13 @@ where
 
         let axis_step = axis_node_test
             .then(predicate_list)
-            .map_with_span(|((axis, node_test), predicates), span| {
+            .map_with(|((axis, node_test), predicates), extra| {
                 ast::StepExpr::AxisStep(ast::AxisStep {
                     axis,
                     node_test,
                     predicates,
                 })
-                .with_span(span)
+                .with_span(extra.span())
             })
             .boxed();
 
@@ -388,7 +386,7 @@ where
             .boxed();
 
         let slash_prefix_path_expr = just(Token::Slash)
-            .map_with_span(|_, span| span)
+            .to_span()
             .then(relative_path_expr.clone().or_not())
             .map(|(slash_span, steps)| {
                 let root_step = root_step(slash_span);
@@ -404,7 +402,7 @@ where
             .boxed();
 
         let doubleslash_prefix_path_expr = just(Token::DoubleSlash)
-            .map_with_span(|_, span| span)
+            .to_span()
             .then(relative_path_expr.clone().or_not())
             .map(|(double_slash_span, steps)| {
                 let root_step = root_step(double_slash_span);
@@ -437,15 +435,15 @@ where
             .separated_by(just(Token::ExclamationMark))
             .at_least(1)
             .collect::<Vec<_>>()
-            .map_with_span(|path_exprs, span| {
+            .map_with(|path_exprs, extra| {
                 if path_exprs.len() == 1 {
-                    ast::ExprSingle::Path(path_exprs[0].clone()).with_span(span)
+                    ast::ExprSingle::Path(path_exprs[0].clone()).with_span(extra.span())
                 } else {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
                         operator: ast::ApplyOperator::SimpleMap(path_exprs[1..].to_vec()),
                         path_expr: path_exprs[0].clone(),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 }
             })
             .boxed();
@@ -459,7 +457,7 @@ where
             .repeated()
             .collect::<Vec<_>>()
             .then(value_expr.clone())
-            .map_with_span(|(unary_operators, expr), span| {
+            .map_with(|(unary_operators, expr), extra| {
                 if unary_operators.is_empty() {
                     expr
                 } else {
@@ -467,7 +465,7 @@ where
                         operator: ast::ApplyOperator::Unary(unary_operators),
                         path_expr: expr_single_to_path_expr(expr),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 }
             })
             .boxed();
@@ -514,39 +512,37 @@ where
                 .repeated()
                 .collect::<Vec<(ArrowFunctionSpecifier, Vec<ArgumentOrPlaceholder>)>>(),
             )
-            .map_with_state(
-                |(unary_expr, arrow_function_specifiers), span, state: &mut State| {
-                    if arrow_function_specifiers.is_empty() {
-                        return unary_expr;
-                    }
-                    arrow_function_specifiers.into_iter().fold(
-                        unary_expr,
-                        |expr, (specifier, argument_list)| {
-                            let mut argument_list = argument_list.clone();
-                            argument_list.insert(0, ArgumentOrPlaceholder::Argument(expr));
+            .map_with(|(unary_expr, arrow_function_specifiers), extra| {
+                if arrow_function_specifiers.is_empty() {
+                    return unary_expr;
+                }
+                arrow_function_specifiers.into_iter().fold(
+                    unary_expr,
+                    |expr, (specifier, argument_list)| {
+                        let mut argument_list = argument_list.clone();
+                        argument_list.insert(0, ArgumentOrPlaceholder::Argument(expr));
 
-                            match specifier {
-                                ArrowFunctionSpecifier::EQName(name) => {
-                                    primary_expr_to_expr_single(static_function_call(
-                                        name.clone(),
-                                        argument_list,
-                                        state.namespaces.default_function_namespace,
-                                        span,
-                                    ))
-                                }
-                                ArrowFunctionSpecifier::VarRef(primary) => {
-                                    dynamic_function_call(primary, argument_list, span)
-                                }
-                                ArrowFunctionSpecifier::ParenthesizedExpr(parenthesized_expr) => {
-                                    let primary =
-                                        ast::PrimaryExpr::Expr(parenthesized_expr).with_span(span);
-                                    dynamic_function_call(primary, argument_list, span)
-                                }
+                        match specifier {
+                            ArrowFunctionSpecifier::EQName(name) => {
+                                primary_expr_to_expr_single(static_function_call(
+                                    name.clone(),
+                                    argument_list,
+                                    extra.state().namespaces.default_function_namespace,
+                                    extra.span(),
+                                ))
                             }
-                        },
-                    )
-                },
-            );
+                            ArrowFunctionSpecifier::VarRef(primary) => {
+                                dynamic_function_call(primary, argument_list, extra.span())
+                            }
+                            ArrowFunctionSpecifier::ParenthesizedExpr(parenthesized_expr) => {
+                                let primary = ast::PrimaryExpr::Expr(parenthesized_expr)
+                                    .with_span(extra.span());
+                                dynamic_function_call(primary, argument_list, extra.span())
+                            }
+                        }
+                    },
+                )
+            });
 
         let cast_expr = arrow_expr
             .then(
@@ -555,13 +551,13 @@ where
                     .ignore_then(single_type.clone())
                     .or_not(),
             )
-            .map_with_span(|(expr, single_type), span| {
+            .map_with(|(expr, single_type), extra| {
                 if let Some(single_type) = single_type {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
                         path_expr: expr_single_to_path_expr(expr),
                         operator: ast::ApplyOperator::Cast(single_type),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 } else {
                     expr
                 }
@@ -575,13 +571,13 @@ where
                     .ignore_then(single_type)
                     .or_not(),
             )
-            .map_with_span(|(expr, single_type), span| {
+            .map_with(|(expr, single_type), extra| {
                 if let Some(single_type) = single_type {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
                         path_expr: expr_single_to_path_expr(expr),
                         operator: ast::ApplyOperator::Castable(single_type),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 } else {
                     expr
                 }
@@ -595,13 +591,13 @@ where
                     .ignore_then(sequence_type.clone())
                     .or_not(),
             )
-            .map_with_span(|(expr, sequence_type), span| {
+            .map_with(|(expr, sequence_type), extra| {
                 if let Some(sequence_type) = sequence_type {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
                         path_expr: expr_single_to_path_expr(expr),
                         operator: ast::ApplyOperator::Treat(sequence_type),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 } else {
                     expr
                 }
@@ -615,13 +611,13 @@ where
                     .ignore_then(sequence_type.clone())
                     .or_not(),
             )
-            .map_with_span(|(expr, sequence_type), span| {
+            .map_with(|(expr, sequence_type), extra| {
                 if let Some(sequence_type) = sequence_type {
                     ast::ExprSingle::Apply(ast::ApplyExpr {
                         path_expr: expr_single_to_path_expr(expr),
                         operator: ast::ApplyOperator::InstanceOf(sequence_type),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 } else {
                     expr
                 }
@@ -692,16 +688,16 @@ where
             .clone()
             .then(comparison_operator)
             .then(string_concat_expr.clone())
-            .map_with_span(|((left, operator), right), span| {
+            .map_with(|((left, operator), right), extra| {
                 ast::ExprSingle::Binary(ast::BinaryExpr {
                     operator,
                     left: expr_single_to_path_expr(left),
                     right: expr_single_to_path_expr(right),
                 })
-                .with_span(span)
+                .with_span(extra.span())
             }))
-        .or(string_concat_expr.map_with_span(|expr, span| {
-            ast::ExprSingle::Path(expr_single_to_path_expr(expr)).with_span(span)
+        .or(string_concat_expr.map_with(|expr, extra| {
+            ast::ExprSingle::Path(expr_single_to_path_expr(expr)).with_span(extra.span())
         }))
         .boxed();
 
@@ -709,8 +705,8 @@ where
         let or_expr = binary_expr(and_expr, Token::Or, ast::BinaryOperator::Or).boxed();
 
         let path_expr = or_expr
-            .map_with_span(|expr_single, span| {
-                ast::ExprSingle::Path(expr_single_to_path_expr(expr_single)).with_span(span)
+            .map_with(|expr_single, extra| {
+                ast::ExprSingle::Path(expr_single_to_path_expr(expr_single)).with_span(extra.span())
             })
             .boxed();
 
@@ -733,7 +729,7 @@ where
         let let_expr = simple_let_clause
             .then_ignore(just(Token::Return))
             .then(expr_single.clone())
-            .map_with_span(|(bindings, return_expr), span| {
+            .map_with(|(bindings, return_expr), extra| {
                 bindings
                     .iter()
                     .rev()
@@ -743,7 +739,7 @@ where
                             var_expr: Box::new(var_expr.clone()),
                             return_expr: Box::new(return_expr),
                         })
-                        .with_span(span)
+                        .with_span(extra.span())
                     })
             })
             .boxed();
@@ -767,7 +763,7 @@ where
             .clone()
             .then_ignore(just(Token::Return))
             .then(expr_single.clone())
-            .map_with_span(|(bindings, return_expr), span| {
+            .map_with(|(bindings, return_expr), extra| {
                 bindings
                     .iter()
                     .rev()
@@ -777,7 +773,7 @@ where
                             var_expr: Box::new(var_expr.clone()),
                             return_expr: Box::new(return_expr),
                         })
-                        .with_span(span)
+                        .with_span(extra.span())
                     })
             })
             .boxed();
@@ -791,13 +787,13 @@ where
             .then(expr_single.clone())
             .then_ignore(just(Token::Else))
             .then(expr_single.clone())
-            .map_with_span(|((condition, then), else_), span| {
+            .map_with(|((condition, then), else_), extra| {
                 ast::ExprSingle::If(ast::IfExpr {
                     condition,
                     then: Box::new(then),
                     else_: Box::new(else_),
                 })
-                .with_span(span)
+                .with_span(extra.span())
             })
             .boxed();
 
@@ -808,7 +804,7 @@ where
         .then(for_bindings.clone())
         .then_ignore(just(Token::Satisfies))
         .then(expr_single)
-        .map_with_span(|((quantifier, bindings), satisfies_expr), span| {
+        .map_with(|((quantifier, bindings), satisfies_expr), extra| {
             bindings
                 .iter()
                 .rev()
@@ -819,7 +815,7 @@ where
                         var_expr: Box::new(var_expr.clone()),
                         satisfies_expr: Box::new(satisfies_expr),
                     })
-                    .with_span(span)
+                    .with_span(extra.span())
                 })
         })
         .boxed();

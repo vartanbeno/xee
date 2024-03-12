@@ -5,7 +5,7 @@ use crate::ast::Span;
 use crate::lexer::Token;
 use crate::{ast, error::ParserError};
 
-use super::types::{BoxedParser, State};
+use super::types::BoxedParser;
 use super::xpath_type::name_to_xs;
 
 #[derive(Clone)]
@@ -35,16 +35,14 @@ where
 
     let name_or_wildcard = just(Token::Asterisk)
         .to(ast::NameOrWildcard::Wildcard)
-        .or(eqname
-            .clone()
-            .map_with_state(|name, _span, state: &mut State| {
-                // use default element namespace; we can do this without worrying
-                // about context, as it's an element name test
-                ast::NameOrWildcard::Name(
-                    name.value
-                        .with_default_namespace(state.namespaces.default_element_namespace),
-                )
-            }))
+        .or(eqname.clone().map_with(|name, extra| {
+            // use default element namespace; we can do this without worrying
+            // about context, as it's an element name test
+            ast::NameOrWildcard::Name(
+                name.value
+                    .with_default_namespace(extra.state().namespaces.default_element_namespace),
+            )
+        }))
         .boxed();
 
     let type_name = eqname.clone();
