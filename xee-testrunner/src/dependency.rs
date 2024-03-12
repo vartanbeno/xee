@@ -189,6 +189,7 @@ impl Loadable for Dependencies {
 mod tests {
     use super::*;
 
+    use xee_xpath::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
     use crate::ns::{namespaces, XPATH_NS};
@@ -204,8 +205,11 @@ mod tests {
             XPATH_NS
         );
         let mut xot = Xot::new();
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
+
         let dependencies =
-            Dependencies::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
+            Dependencies::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
 
         assert_eq!(
             dependencies,

@@ -1,4 +1,4 @@
-use xee_xpath::xml::Documents;
+use xee_xpath::context::DynamicContext;
 use xot::Xot;
 
 use crate::{
@@ -8,28 +8,24 @@ use crate::{
     testcase::Runnable,
 };
 
-pub(crate) struct RunContext {
+pub(crate) struct RunContext<'a> {
     pub(crate) xot: Xot,
-    pub(crate) documents: Documents,
+    pub(crate) dynamic_context: DynamicContext<'a>,
     pub(crate) known_dependencies: KnownDependencies,
-    pub(crate) ns: String,
-
     pub(crate) verbose: bool,
 }
 
-impl RunContext {
+impl<'a> RunContext<'a> {
     pub(crate) fn new(
         xot: Xot,
-        documents: Documents,
+        dynamic_context: DynamicContext<'a>,
         known_dependencies: KnownDependencies,
-        ns: String,
         verbose: bool,
     ) -> Self {
         Self {
             xot,
-            documents,
+            dynamic_context,
             known_dependencies,
-            ns,
             verbose,
         }
     }

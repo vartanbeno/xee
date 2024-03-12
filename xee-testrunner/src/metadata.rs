@@ -70,6 +70,7 @@ impl Loadable for Metadata {
 mod tests {
     use super::*;
 
+    use xee_xpath::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
     use crate::ns::{namespaces, XPATH_NS};
@@ -77,12 +78,15 @@ mod tests {
     #[test]
     fn test_load() {
         let mut xot = Xot::new();
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
+
         let xml = r#"
 <container xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
   <description>Description</description>
   <created by="Foo Barson" on="2024-01-01"/>
 </container>"#;
-        let metadata = Metadata::load_from_xml(&mut xot, namespaces(XPATH_NS), xml).unwrap();
+        let metadata = Metadata::load_from_xml(&mut xot, &mut dynamic_context, xml).unwrap();
         assert_eq!(
             metadata,
             Metadata {

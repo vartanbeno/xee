@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
+use xee_xpath::context::{DynamicContext, StaticContext};
 use xee_xpath::xml::Documents;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
@@ -89,11 +90,14 @@ pub fn cli() -> Result<()> {
     let path_info = paths(path)?;
 
     let xot = Xot::new();
+    let ns = XPATH_NS;
+    let static_context = StaticContext::from_namespaces(namespaces(ns));
+    let dynamic_context = DynamicContext::empty(&static_context);
+
     let run_context = RunContext::new(
         xot,
-        Documents::new(),
+        dynamic_context,
         xpath_known_dependencies(),
-        XPATH_NS.to_string(),
         cli.verbose,
     );
 
@@ -107,15 +111,15 @@ pub fn cli() -> Result<()> {
     }
 }
 
-struct Runner<E: Environment, R: Runnable<E>> {
-    run_context: RunContext,
+struct Runner<'a, E: Environment, R: Runnable<E>> {
+    run_context: RunContext<'a>,
     path_info: PathInfo,
     _e: std::marker::PhantomData<E>,
     _r: std::marker::PhantomData<R>,
 }
 
-impl<E: Environment, R: Runnable<E>> Runner<E, R> {
-    fn new(run_context: RunContext, path_info: PathInfo) -> Self {
+impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
+    fn new(run_context: RunContext<'a>, path_info: PathInfo) -> Self {
         Self {
             run_context,
             path_info,
@@ -204,7 +208,7 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
     fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
         Catalog::load_from_file(
             &mut self.run_context.xot,
-            namespaces(&self.run_context.ns),
+            &mut self.run_context.dynamic_context,
             &self.path_info.catalog_path,
         )
     }
@@ -212,7 +216,7 @@ impl<E: Environment, R: Runnable<E>> Runner<E, R> {
     fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
         TestSet::load_from_file(
             &mut self.run_context.xot,
-            namespaces(&self.run_context.ns),
+            &mut self.run_context.dynamic_context,
             &self.path_info.relative_path,
         )
     }

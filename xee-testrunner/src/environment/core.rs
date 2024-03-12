@@ -230,9 +230,11 @@ mod tests {
         );
 
         let mut xot = Xot::new();
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
         let path = Path::new("bar/foo");
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, namespaces(XPATH_NS), &xml, path)
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)
                 .unwrap();
         assert_eq!(
             environment_spec,
@@ -297,8 +299,11 @@ mod tests {
 
         let mut xot = Xot::new();
         let path = Path::new("bar/foo");
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
+
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, namespaces(XPATH_NS), &xml, path)
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)
                 .unwrap();
         assert_eq!(
             environment_spec,

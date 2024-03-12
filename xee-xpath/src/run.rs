@@ -32,15 +32,16 @@ pub fn evaluate_root(
         FN_NAMESPACE,
     );
     let static_context = StaticContext::from_namespaces(namespaces);
+    // TODO: isn't the right URI
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
     documents.add_root(xot, &uri, root);
-    let context = DynamicContext::from_documents(&static_context, &documents);
-    let document = documents.get(&uri).unwrap();
+    let root = documents.get(&uri).unwrap().root;
+    let context = DynamicContext::from_documents(&static_context, documents);
 
     let program = parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
-    runnable.many_xot_node(document.root, xot)
+    runnable.many_xot_node(root, xot)
 }
 
 pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {

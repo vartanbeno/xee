@@ -18,10 +18,10 @@ pub fn evaluate_program(
     let uri = xee_interpreter::xml::Uri::new("http://example.com");
     let mut documents = xee_interpreter::xml::Documents::new();
     documents.add_root(xot, &uri, root);
-    let context = DynamicContext::from_documents(static_context, &documents);
     let document = documents.get(&uri).unwrap();
-    let runnable = program.runnable(&context);
     let item: sequence::Item = document.root.into();
+    let context = DynamicContext::from_documents(static_context, documents);
+    let runnable = program.runnable(&context);
     runnable.many(Some(&item), xot)
 }
 

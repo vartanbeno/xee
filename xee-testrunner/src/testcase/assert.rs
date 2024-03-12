@@ -990,11 +990,9 @@ impl fmt::Display for Failure {
 }
 
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
-    let static_context = StaticContext::default();
-    let program = parse(&static_context, expr).map_err(|e| e.error)?;
-    let dynamic_context =
-        DynamicContext::from_documents(&static_context, runnable.dynamic_context().documents());
-    let runnable = program.runnable(&dynamic_context);
+    let program = parse(runnable.dynamic_context().static_context, expr).map_err(|e| e.error)?;
+
+    let runnable = program.runnable(runnable.dynamic_context());
     runnable.many(None, xot).map_err(|e| e.error)
 }
 
@@ -1012,7 +1010,10 @@ fn run_xpath_with_result(
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         &static_context,
-        Cow::Borrowed(runnable.dynamic_context().documents()),
+        // TODO: This clone is really expensive and only needed because we want
+        // to change the variables. really want to pass variables in separate
+        // from the dynamic context to avoid this
+        runnable.dynamic_context().documents().clone(),
         Cow::Owned(variables),
     );
     let runnable = program.runnable(&dynamic_context);
@@ -1050,9 +1051,12 @@ mod tests {
             r#"<doc xmlns="{}"><result><assert-eq>0</assert-eq></result></doc>"#,
             XPATH_NS
         );
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
+
         let mut xot = Xot::new();
         let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
+            TestCaseResult::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AssertEq(AssertEq::new("0".to_string()))
@@ -1074,8 +1078,11 @@ mod tests {
             XPATH_NS
         );
         let mut xot = Xot::new();
+        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
+        let mut dynamic_context = DynamicContext::empty(&static_context);
+
         let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, namespaces(XPATH_NS), &xml).unwrap();
+            TestCaseResult::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AnyOf(AssertAnyOf::new(vec![
