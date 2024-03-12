@@ -68,7 +68,7 @@ impl Environment for XPathEnvironmentSpec {
         &self.environment_spec
     }
 
-    fn query<'a>(
+    fn load<'a>(
         queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {

@@ -84,9 +84,7 @@ impl Source {
         }
     }
 
-    pub(crate) fn query(
-        mut queries: Queries,
-    ) -> Result<(Queries, impl Query<Vec<Vec<Self>>> + '_)> {
+    pub(crate) fn load(mut queries: Queries) -> Result<(Queries, impl Query<Vec<Vec<Self>>> + '_)> {
         let file_query = queries.option("@file/string()", convert_string)?;
         let content_query = queries.one("content/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;

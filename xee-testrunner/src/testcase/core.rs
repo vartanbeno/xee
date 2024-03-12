@@ -25,7 +25,7 @@ pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
         test_set: &TestSet<E, Self>,
     ) -> TestOutcome;
 
-    fn query<'a>(
+    fn load<'a>(
         queries: Queries<'a>,
         path: &'a Path,
     ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
@@ -113,7 +113,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
         let (mut queries, metadata_query) = Metadata::load(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
-        let (mut queries, environment_query) = E::query(queries, path)?;
+        let (mut queries, environment_query) = E::load(queries, path)?;
         let local_environment_query = queries.many("environment", move |session, item| {
             let ref_ = ref_query.execute(session, item)?;
             if let Some(ref_) = ref_ {
@@ -126,7 +126,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
         })?;
 
         let (queries, result_query) = TestCaseResult::load(queries)?;
-        let (mut queries, dependency_query) = Dependency::query(queries)?;
+        let (mut queries, dependency_query) = Dependency::load(queries)?;
         let test_case_query = queries.one(".", move |session, item| {
             let test_case = TestCase {
                 name: name_query.execute(session, item)?,

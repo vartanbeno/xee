@@ -89,8 +89,8 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
 
         let (queries, shared_environments_query) =
             SharedEnvironments::load_with_context(queries, path)?;
-        let (queries, dependency_query) = Dependency::query(queries)?;
-        let (mut queries, test_case_query) = R::query(queries, path)?;
+        let (queries, dependency_query) = Dependency::load(queries)?;
+        let (mut queries, test_case_query) = R::load(queries, path)?;
         let test_cases_query = queries.many("test-case", move |session, item| {
             test_case_query.execute(session, item)
         })?;

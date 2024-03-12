@@ -101,7 +101,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         )
     }
 
-    fn query<'a>(
+    fn load<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>

@@ -73,7 +73,7 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn query(
+    pub(crate) fn load(
         mut queries: Queries,
     ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>>)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
@@ -172,7 +172,7 @@ impl Dependencies {
 
 impl Loadable for Dependencies {
     fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
-        let (queries, dependency_query) = Dependency::query(queries)?;
+        let (queries, dependency_query) = Dependency::load(queries)?;
 
         Ok((
             queries,
