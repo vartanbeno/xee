@@ -144,8 +144,8 @@ pub trait Query<V> {
 
     fn map<T>(
         self,
-        f: impl Fn(V, &mut Session, &Item) -> Result<T>,
-    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T>>
+        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Clone,
+    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T> + Clone>
     where
         Self: Sized,
     {
@@ -161,7 +161,7 @@ pub trait Query<V> {
 #[derive(Debug, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T>,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
     query: Q,
     f: F,
@@ -171,7 +171,7 @@ where
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T>,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
     fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let v = self.query.execute(session, item)?;
@@ -430,5 +430,44 @@ mod tests {
         let r = result_query.execute(&mut session, &Item::from(root2))?;
         assert_eq!(r, Expr::Value("A".to_string()));
         Ok(())
+    }
+
+    #[test]
+    fn test_map_query() {
+        let static_context = StaticContext::default();
+        let mut queries = Queries::new(&static_context);
+        let q = queries
+            .one("1 + 2", |_, item| {
+                let v: IBig = item.to_atomic()?.try_into()?;
+                Ok(v)
+            })
+            .unwrap()
+            .map(|v, _, _| Ok(v + ibig!(1)));
+
+        let mut xot = Xot::new();
+        let dynamic_context = DynamicContext::empty(&static_context);
+        let mut session = queries.session(&dynamic_context, &mut xot);
+        let r = q.execute(&mut session, &1i64.into()).unwrap();
+        assert_eq!(r, ibig!(4));
+    }
+
+    #[test]
+    fn test_map_query_clone() {
+        let static_context = StaticContext::default();
+        let mut queries = Queries::new(&static_context);
+        let q = queries
+            .one("1 + 2", |_, item| {
+                let v: IBig = item.to_atomic()?.try_into()?;
+                Ok(v)
+            })
+            .unwrap()
+            .map(|v, _, _| Ok(v + ibig!(1)));
+        let q = q.clone();
+
+        let mut xot = Xot::new();
+        let dynamic_context = DynamicContext::empty(&static_context);
+        let mut session = queries.session(&dynamic_context, &mut xot);
+        let r = q.execute(&mut session, &1i64.into()).unwrap();
+        assert_eq!(r, ibig!(4));
     }
 }
