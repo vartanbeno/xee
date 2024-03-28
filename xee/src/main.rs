@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
+use xot::output::xml::Parameters;
 use xot::Xot;
 
 #[derive(Parser)]
@@ -88,9 +89,15 @@ fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
         xot::Value::Namespace(..) => {
             todo!()
         }
-        _ => xot
-            .with_serialize_options(xot::SerializeOptions { pretty: true })
-            .to_string(node),
+        _ => xot.serialize_xml_string(
+            {
+                Parameters {
+                    indentation: Default::default(),
+                    ..Default::default()
+                }
+            },
+            node,
+        ),
     }
 }
 
