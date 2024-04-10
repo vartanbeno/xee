@@ -22,6 +22,9 @@ use super::comparison;
 pub enum Value {
     Empty,
     One(sequence::Item),
+    // TODO: would like to make this a Rc<[sequence::Item]> as it should be
+    // more efficient (losing one indirection), but constructing iterators
+    // leads to lifetime issues I haven't resolved yet.
     Many(Rc<Vec<sequence::Item>>),
     Absent,
 }
