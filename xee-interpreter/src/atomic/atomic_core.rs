@@ -26,8 +26,8 @@ use super::{AtomicCompare, OpGt};
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Atomic {
-    Untyped(Rc<String>),
-    String(StringType, Rc<String>),
+    Untyped(Rc<str>),
+    String(StringType, Rc<str>),
     Float(OrderedFloat<f32>),
     Double(OrderedFloat<f64>),
     Decimal(Rc<Decimal>),
@@ -45,7 +45,7 @@ pub enum Atomic {
     GDay(Rc<GDay>),
     GMonth(Rc<GMonth>),
     Boolean(bool),
-    Binary(BinaryType, Rc<Vec<u8>>),
+    Binary(BinaryType, Rc<[u8]>),
     QName(Rc<Name>),
 }
 
@@ -324,19 +324,19 @@ impl fmt::Display for Atomic {
 
 impl From<String> for Atomic {
     fn from(s: String) -> Self {
-        Atomic::String(StringType::String, Rc::new(s))
+        Atomic::String(StringType::String, Rc::from(s))
     }
 }
 
 impl From<&str> for Atomic {
     fn from(s: &str) -> Self {
-        Atomic::String(StringType::String, Rc::new(s.to_string()))
+        Atomic::String(StringType::String, Rc::from(s))
     }
 }
 
 impl From<&String> for Atomic {
     fn from(s: &String) -> Self {
-        Atomic::String(StringType::String, Rc::new(s.clone()))
+        Atomic::String(StringType::String, Rc::from(s.clone()))
     }
 }
 
@@ -345,7 +345,7 @@ impl TryFrom<Atomic> for String {
 
     fn try_from(a: Atomic) -> Result<Self, Self::Error> {
         match a {
-            Atomic::String(_, s) => Ok(s.as_ref().clone()),
+            Atomic::String(_, s) => Ok(s.to_string()),
             _ => Err(error::Error::XPTY0004),
         }
     }

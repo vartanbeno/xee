@@ -20,7 +20,7 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MapKey {
-    String(Rc<String>),
+    String(Rc<str>),
     PositiveInfinity,
     NegativeInfinity,
     NaN,
@@ -41,7 +41,7 @@ pub enum MapKey {
     GMonthDay(Rc<GMonthDay>),
     GDay(Rc<GDay>),
     Boolean(bool),
-    Binary(BinaryType, Rc<Vec<u8>>),
+    Binary(BinaryType, Rc<[u8]>),
     QName(Rc<Name>),
 }
 
@@ -195,7 +195,7 @@ mod tests {
     #[test]
     fn test_string_and_untyped() {
         let a: Atomic = "foo".into();
-        let b: Atomic = Atomic::Untyped(Rc::new("foo".to_string()));
+        let b: Atomic = Atomic::Untyped(Rc::from("foo"));
         assert_eq!(MapKey::new(a).unwrap(), MapKey::new(b).unwrap());
     }
 

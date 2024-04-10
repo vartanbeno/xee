@@ -180,7 +180,7 @@ impl AtomizedNodeIter {
 fn typed_value(xot: &Xot, node: xot::Node) -> Vec<atomic::Atomic> {
     // for now we don't know any types of nodes yet; everything is untyped
     let s = xot.string_value(node);
-    vec![atomic::Atomic::Untyped(Rc::new(s))]
+    vec![atomic::Atomic::Untyped(Rc::from(s))]
 }
 
 impl Iterator for AtomizedNodeIter {

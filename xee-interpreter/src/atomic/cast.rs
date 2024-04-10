@@ -39,8 +39,8 @@ impl atomic::Atomic {
     // from an atomic type to a canonical representation as a string
     pub(crate) fn into_canonical(self) -> String {
         match self {
-            atomic::Atomic::Untyped(s) => s.as_ref().clone(),
-            atomic::Atomic::String(_, s) => s.as_ref().clone(),
+            atomic::Atomic::Untyped(s) => s.to_string(),
+            atomic::Atomic::String(_, s) => s.to_string(),
             atomic::Atomic::Float(OrderedFloat(f)) => Self::canonical_float(f),
             atomic::Atomic::Double(OrderedFloat(f)) => Self::canonical_float(f),
             atomic::Atomic::Decimal(d) => {
@@ -220,7 +220,7 @@ impl atomic::Atomic {
                 let s = s.as_ref();
                 let s = whitespace_remove(s);
                 let data = decode(&s)?;
-                Ok(atomic::Atomic::Binary(binary_type, Rc::new(data)))
+                Ok(atomic::Atomic::Binary(binary_type, Rc::from(data)))
             }
             atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             _ => Err(error::Error::XPTY0004),

@@ -86,7 +86,7 @@ mod tests {
     #[test]
     fn test_compare_cast_untyped() {
         let a: atomic::Atomic = "foo".into();
-        let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::new("foo".to_string()));
+        let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::from("foo".to_string()));
 
         assert!(OpEq::atomic_compare(a.clone(), b.clone(), str::cmp, default_offset()).unwrap());
         assert!(!OpNe::atomic_compare(a, b, str::cmp, default_offset()).unwrap());

@@ -88,7 +88,7 @@ fn prefix_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>>
         if !prefix.is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::NCName,
-                Rc::new(prefix.to_string()),
+                Rc::from(prefix.to_string()),
             )))
         } else {
             Ok(None)
@@ -103,7 +103,7 @@ fn local_name_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atom
     if let Some(arg) = arg {
         Ok(Some(atomic::Atomic::String(
             atomic::StringType::NCName,
-            Rc::new(arg.local_name().to_string()),
+            Rc::from(arg.local_name().to_string()),
         )))
     } else {
         Ok(None)
@@ -117,7 +117,7 @@ fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::A
         if !arg.namespace().is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::AnyURI,
-                Rc::new(namespace.to_string()),
+                Rc::from(namespace.to_string()),
             )))
         } else {
             Ok(None)
@@ -142,7 +142,7 @@ fn namespace_uri_for_prefix(
         let namespaces = element_namespaces(node, interpreter.xot());
         Ok(namespaces
             .by_prefix(prefix)
-            .map(|s| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::new(s.to_string()))))
+            .map(|s| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::from(s.to_string()))))
     } else {
         Ok(None)
     }

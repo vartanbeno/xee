@@ -24,11 +24,11 @@ static NC_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
 
 impl atomic::Atomic {
     pub(crate) fn cast_to_string(self) -> atomic::Atomic {
-        atomic::Atomic::String(atomic::StringType::String, Rc::new(self.into_canonical()))
+        atomic::Atomic::String(atomic::StringType::String, Rc::from(self.into_canonical()))
     }
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
-        atomic::Atomic::Untyped(Rc::new(self.into_canonical()))
+        atomic::Atomic::Untyped(Rc::from(self.into_canonical()))
     }
 
     pub(crate) fn cast_to_any_uri(self) -> error::Result<atomic::Atomic> {
@@ -36,7 +36,7 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(_, s) => Ok(atomic::Atomic::String(
                 StringType::AnyURI,
-                Rc::new(whitespace_collapse(&s)),
+                Rc::from(whitespace_collapse(&s)),
             )),
             atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(StringType::AnyURI, s.clone())),
             _ => Err(error::Error::XPTY0004),
@@ -45,12 +45,12 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
         let s = whitespace_replace(&self.into_canonical());
-        atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::new(s))
+        atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::from(s))
     }
 
     pub(crate) fn cast_to_token(self) -> atomic::Atomic {
         let s = whitespace_collapse(&self.into_canonical());
-        atomic::Atomic::String(atomic::StringType::Token, Rc::new(s))
+        atomic::Atomic::String(atomic::StringType::Token, Rc::from(s))
     }
 
     fn cast_to_regex<F>(
@@ -65,7 +65,7 @@ impl atomic::Atomic {
         let regex = regex_once_lock.get_or_init(f);
         let s = whitespace_collapse(&self.into_canonical());
         if regex.is_match(&s) {
-            Ok(atomic::Atomic::String(string_type, Rc::new(s)))
+            Ok(atomic::Atomic::String(string_type, Rc::from(s)))
         } else {
             Err(error::Error::FORG0001)
         }
